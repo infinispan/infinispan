@@ -22,15 +22,16 @@
  */
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * A mortal cache value, to correspond with {@link org.infinispan.container.entries.MortalCacheEntry}
@@ -43,8 +44,8 @@ public class MortalCacheValue extends ImmortalCacheValue {
    long created;
    long lifespan = -1;
 
-   MortalCacheValue(Object value, long created, long lifespan) {
-      super(value);
+   MortalCacheValue(Object value, EntryVersion version, long created, long lifespan) {
+      super(value, version);
       this.created = created;
       this.lifespan = lifespan;
    }
@@ -84,7 +85,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MortalCacheEntry(key, value, lifespan, created);
+      return new MortalCacheEntry(key, value, version, lifespan, created);
    }
 
    @Override
@@ -127,6 +128,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
       @Override
       public void writeObject(ObjectOutput output, MortalCacheValue mcv) throws IOException {
          output.writeObject(mcv.value);
+         output.writeObject(mcv.version);
          UnsignedNumeric.writeUnsignedLong(output, mcv.created);
          output.writeLong(mcv.lifespan); // could be negative so should not use unsigned longs
       }
@@ -134,9 +136,10 @@ public class MortalCacheValue extends ImmortalCacheValue {
       @Override
       public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
+         EntryVersion version = (EntryVersion) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
-         return new MortalCacheValue(v, created, lifespan);
+         return new MortalCacheValue(v, version, created, lifespan);
       }
 
       @Override

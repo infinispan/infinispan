@@ -180,7 +180,12 @@ public class LegacyConfigurationAdaptor {
       }
         
       legacy.unsafe().unreliableReturnValues(config.unsafe().unreliableReturnValues());
-      
+
+      if (config.versioningConfiguration().enabled()) {
+         legacy.versioning()
+               .enable()
+               .versioningScheme(config.versioningConfiguration().scheme());
+      }
       
       return legacy.build();
    }

@@ -28,6 +28,7 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.container.versioning.EntryVersionsMap;
 
 /**
  * The default response generator for most cache modes
@@ -38,16 +39,18 @@ import org.infinispan.commands.tx.CommitCommand;
 public class DefaultResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue == null) return null;
-      if (requiresResponse(command.getCommandId())) {
+      if (requiresResponse(command.getCommandId(), returnValue)) {
          return new SuccessfulResponse(returnValue);
       } else {
          return null; // saves on serializing a response!
       }
    }
 
-   private boolean requiresResponse(byte commandId) {
-      return commandId == ClusteredGetCommand.COMMAND_ID || commandId == GetInDoubtTransactionsCommand.COMMAND_ID
+   private boolean requiresResponse(byte commandId, Object rv) {
+      boolean commandRequiresResp = commandId == ClusteredGetCommand.COMMAND_ID || commandId == GetInDoubtTransactionsCommand.COMMAND_ID
             || commandId == GetInDoubtTxInfoCommand.COMMAND_ID || commandId == CompleteTransactionCommand.COMMAND_ID
             || commandId == CommitCommand.COMMAND_ID;
+
+      return commandRequiresResp || rv instanceof EntryVersionsMap;
    }
 }

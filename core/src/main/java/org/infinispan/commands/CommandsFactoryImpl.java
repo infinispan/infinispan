@@ -44,19 +44,13 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distexec.mapreduce.Mapper;
@@ -149,6 +143,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags);
    }
 
+   public VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
+      return new VersionedPutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags, version);
+   }
+
    public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
       return new RemoveCommand(key, value, notifier, flags);
    }
@@ -217,8 +215,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
+   public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
+      return new VersionedPrepareCommand(cacheName, gtx, modifications);
+   }
+
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
       return new CommitCommand(cacheName, gtx);
+   }
+
+   public VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx) {
+      return new VersionedCommitCommand(cacheName, gtx);
    }
 
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
@@ -244,6 +250,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (c == null) return;
       switch (c.getCommandId()) {
          case PutKeyValueCommand.COMMAND_ID:
+         case VersionedPutKeyValueCommand.COMMAND_ID:
             ((PutKeyValueCommand) c).init(notifier);
             break;
          case PutMapCommand.COMMAND_ID:
@@ -276,6 +283,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ilc.init(configuration, distributionManager, notifier, dataContainer);
             break;
          case PrepareCommand.COMMAND_ID:
+         case VersionedPrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
             pc.init(interceptorChain, icc, txTable);
             pc.initialize(notifier, recoveryManager);
@@ -290,6 +298,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             }
             break;
          case CommitCommand.COMMAND_ID:
+         case VersionedCommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
             commitCommand.init(interceptorChain, icc, txTable);
             commitCommand.markTransactionAsRemote(isRemote);

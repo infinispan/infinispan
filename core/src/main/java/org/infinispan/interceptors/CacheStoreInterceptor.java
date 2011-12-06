@@ -354,7 +354,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (entry instanceof InternalCacheEntry) {
          return (InternalCacheEntry) entry;
       } else {
-         return InternalEntryFactory.create(entry.getKey(), entry.getValue(), entry.getLifespan(), entry.getMaxIdle());
+         return InternalEntryFactory.create(entry.getKey(), entry.getValue(), entry.getVersion(), entry.getLifespan(), entry.getMaxIdle());
       }
    }
 }

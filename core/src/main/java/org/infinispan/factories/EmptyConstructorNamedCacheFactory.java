@@ -52,7 +52,7 @@ import static org.infinispan.util.Util.loadClass;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
+@DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
         CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
         BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class,
         TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})

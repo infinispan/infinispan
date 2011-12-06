@@ -88,7 +88,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    @Override
    void validate() {
       // If L1 is disabled, L1ForRehash should also be disabled
-      if (!enabled && onRehash)
+      if (!enabled && onRehash != null && onRehash)
          throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
    }
 

@@ -22,15 +22,16 @@
  */
 package org.infinispan.config;
 
-import static java.util.Collections.synchronizedCollection;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
+import static java.util.Collections.synchronizedCollection;
 
 public class QueryableDataContainer implements DataContainer {
 	
@@ -69,9 +70,9 @@ public class QueryableDataContainer implements DataContainer {
 	}
 
 	@Override
-	public void put(Object k, Object v, long lifespan, long maxIdle) {
+	public void put(Object k, Object v, EntryVersion ev, long lifespan, long maxIdle) {
 		loggedOperations.add("put(" + k + ", " + v + ", " + lifespan + ", " + maxIdle + ")");
-		delegate.put(k, v, lifespan, maxIdle);
+		delegate.put(k, v, ev, lifespan, maxIdle);
 	}
 
 	@Override

@@ -23,6 +23,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.EntryVersion;
 
 import java.util.Map;
 
@@ -119,7 +120,7 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     *
     * @param container data container to commit to
     */
-   void commit(DataContainer container);
+   void commit(DataContainer container, EntryVersion newVersion);
 
    /**
     * Rolls back changes
@@ -144,4 +145,16 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     * flag is set to false.
     */
    boolean undelete(boolean doUndelete);
+   // TODO- do we need an un-versioned CacheEntry as well?
+    /**
+    * @return the version of the entry.  May be null if versioning is not supported, and must never be null if versioning
+    * is supported.
+    */
+   EntryVersion getVersion();
+
+   /**
+    * Sets the version on this entry.
+    * @param version version to set
+    */
+   void setVersion(EntryVersion version);
 }

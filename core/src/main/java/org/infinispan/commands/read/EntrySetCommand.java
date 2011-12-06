@@ -22,13 +22,6 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
@@ -36,6 +29,13 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
+
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
 
@@ -176,7 +176,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                   CacheEntry e = it1.next();
                   if (e.isCreated()) {
                      next = immutableInternalCacheEntry(
-                        InternalEntryFactory.create(e.getKey(), e.getValue()));
+                        InternalEntryFactory.create(e.getKey(), e.getValue(), e.getVersion()));
                      found = true;
                      break;
                   }
@@ -201,7 +201,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                   }
                   if (e.isChanged()) {
                      next = immutableInternalCacheEntry(
-                           InternalEntryFactory.create(key, e.getValue()));
+                           InternalEntryFactory.create(key, e.getValue(), e.getVersion()));
                      found = true;
                      break;
                   }

@@ -26,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -36,19 +37,19 @@ import org.infinispan.util.logging.LogFactory;
 public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
 
-   public RepeatableReadEntry(Object key, Object value, long lifespan) {
-      super(key, value, lifespan);
+   public RepeatableReadEntry(Object key, Object value, EntryVersion version, long lifespan) {
+      super(key, value, version, lifespan);
    }
 
    @Override
-   public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
+   public void copyForUpdate(DataContainer container, boolean localModeWriteSkewCheck) {
       if (isChanged()) return; // already copied
 
       // mark entry as changed.
       setChanged();
 
-      if (writeSkewCheck) {
-      // check for write skew.
+      if (localModeWriteSkewCheck) {
+         // check for write skew.
          InternalCacheEntry ice = container.get(key);
          Object actualValue = ice == null ? null : ice.getValue();
 
@@ -57,6 +58,13 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
          if (actualValue != null && actualValue != value) {
             log.unableToCopyEntryForUpdate(getKey());
             throw new CacheException("Detected write skew");
+         }
+
+         if (ice == null && !isCreated()) {
+            // We still have a write-skew here.  When this wrapper was created there was an entry in the data container
+            // (hence isCreated() == false) but 'ice' is now null.
+            log.unableToCopyEntryForUpdate(getKey());
+            throw new CacheException("Detected write skew - concurrent removal of entry!");
          }
       }
       // make a backup copy

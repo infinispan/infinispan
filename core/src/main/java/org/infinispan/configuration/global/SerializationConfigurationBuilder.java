@@ -14,7 +14,7 @@ import org.infinispan.marshall.VersionAwareMarshaller;
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SerializationConfiguration> {
    
    private Class<? extends Marshaller> marshallerClass = VersionAwareMarshaller.class;
-   private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR);
+   private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR.replace(".", ""));
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
    
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {

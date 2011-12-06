@@ -22,15 +22,16 @@
  */
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * A transient cache value, to correspond with {@link org.infinispan.container.entries.TransientCacheEntry}
@@ -42,8 +43,8 @@ public class TransientCacheValue extends ImmortalCacheValue {
    long maxIdle = -1;
    long lastUsed;
 
-   TransientCacheValue(Object value, long maxIdle, long lastUsed) {
-      super(value);
+   TransientCacheValue(Object value, EntryVersion version, long maxIdle, long lastUsed) {
+      super(value, version);
       this.maxIdle = maxIdle;
       this.lastUsed = lastUsed;
    }
@@ -83,7 +84,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new TransientCacheEntry(key, value, maxIdle, lastUsed);
+      return new TransientCacheEntry(key, value, version, maxIdle, lastUsed);
    }
 
    @Override
@@ -125,6 +126,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
       @Override
       public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);
+         output.writeObject(tcv.version);
          UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
          output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
       }
@@ -132,9 +134,10 @@ public class TransientCacheValue extends ImmortalCacheValue {
       @Override
       public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
+         EntryVersion version = (EntryVersion) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
-         return new TransientCacheValue(v, maxIdle, lastUsed);
+         return new TransientCacheValue(v, version, maxIdle, lastUsed);
       }
 
       @Override

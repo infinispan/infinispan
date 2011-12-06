@@ -27,7 +27,9 @@ import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -41,6 +43,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
@@ -88,6 +91,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    // closed during state transfer, open the rest of the time
    private final ReclosableLatch stateTransferInProgressLatch = new ReclosableLatch(false);
    private volatile BaseStateTransferTask stateTransferTask;
+   private CommandBuilder commandBuilder;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -113,6 +117,29 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
    @Start(priority = 60)
    private void start() throws Exception {
+      if (configuration.isTransactionalCache() &&
+            configuration.isEnableVersioning() &&
+            configuration.isWriteSkewCheck() &&
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC &&
+            configuration.getCacheMode().isClustered()) {
+
+         // We need to use a special form of PutKeyValueCommand that can apply versions too.
+         commandBuilder = new CommandBuilder() {
+            @Override
+            public PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e) {
+               EntryVersion version = e.getVersion();
+               return cf.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), ctx.getFlags());
+            }
+         };
+      } else {
+         commandBuilder = new CommandBuilder() {
+            @Override
+            public PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e) {
+               return cf.buildPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), ctx.getFlags());
+            }
+         };
+      }
+
       if (trace) log.tracef("Starting state transfer manager on " + getAddress());
 
       // set up the old CH, but it shouldn't be used until we get the prepare call
@@ -216,7 +243,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
                       SKIP_OWNERSHIP_CHECK);
          try {
-            PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), ctx.getFlags());
+            PutKeyValueCommand put = commandBuilder.buildPut(ctx, e);
             interceptorChain.invoke(ctx, put);
          } catch (Exception ee) {
             log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
@@ -343,4 +370,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);
+
+   private static interface CommandBuilder {
+      PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e);
+   }
 }

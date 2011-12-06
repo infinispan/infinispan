@@ -22,16 +22,17 @@
  */
 package org.infinispan.container.entries;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
 
@@ -161,10 +162,10 @@ public class DeltaAwareCacheEntry implements CacheEntry {
          oldValue = value;
    }
 
-   public final void commit(DataContainer container) {
+   public final void commit(DataContainer container, EntryVersion version) {
       // only do stuff if there are changes.
       if (wrappedEntry != null) {
-         wrappedEntry.commit(container);
+         wrappedEntry.commit(container, version);
       }
       if (value != null && !deltas.isEmpty()) {
          for (Delta delta : deltas) {
@@ -285,5 +286,15 @@ public class DeltaAwareCacheEntry implements CacheEntry {
          return true;
       }
       return false;
+   }
+
+   @Override
+   public EntryVersion getVersion() {
+      return null;  // DeltaAware are always unversioned!  Since concurrent version updates are possible with the FineGrainedAtomicMap
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+      // TODO: DeltaAware are always unversioned!  Since concurrent version updates are possible with the FineGrainedAtomicMap
    }
 }

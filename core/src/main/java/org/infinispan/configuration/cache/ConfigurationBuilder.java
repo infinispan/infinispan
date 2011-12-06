@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static java.util.Arrays.asList;
+
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    private String name;
@@ -17,6 +19,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final LockingConfigurationBuilder locking;
    private final StoreAsBinaryConfigurationBuilder storeAsBinary;
    private final TransactionConfigurationBuilder transaction;
+   private final VersioningConfigurationBuilder versioning;
    private final UnsafeConfigurationBuilder unsafe;
    
    public ConfigurationBuilder() {
@@ -33,6 +36,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.locking = new LockingConfigurationBuilder(this);
       this.storeAsBinary = new StoreAsBinaryConfigurationBuilder(this);
       this.transaction = new TransactionConfigurationBuilder(this);
+      this.versioning = new VersioningConfigurationBuilder(this);
       this.unsafe = new UnsafeConfigurationBuilder(this);
    }
    
@@ -114,27 +118,26 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public TransactionConfigurationBuilder transaction() {
       return transaction;
    }
+
+   @Override
+   public VersioningConfigurationBuilder versioning() {
+      return versioning;
+   }
    
    @Override
    public UnsafeConfigurationBuilder unsafe() {
       return unsafe;
    }
-   
+
+   @SuppressWarnings("unchecked")
    public void validate() {
-      clustering.validate();
-      dataContainer.validate();
-      deadlockDetection.validate();
-      eviction.validate();
-      expiration.validate();
-      indexing.validate();
-      invocationBatching.validate();
-      jmxStatistics.validate();
-      loaders.validate();
-      locking.validate();
-      storeAsBinary.validate();
-      transaction.validate();
-      unsafe.validate();
-      
+      for (AbstractConfigurationChildBuilder<?> validatable:
+            asList(clustering, dataContainer, deadlockDetection, eviction, expiration, indexing,
+                   invocationBatching, jmxStatistics, loaders, locking, storeAsBinary, transaction,
+                   versioning, unsafe)) {
+         validatable.validate();
+      }
+
       // TODO validate that a transport is set if a singleton store is set
    }
 
@@ -155,7 +158,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             locking.create(),
             storeAsBinary.create(),
             transaction.create(),
-            unsafe.create(), classLoader );// TODO
+            unsafe.create(),
+            versioning.create(),
+            classLoader );// TODO
    }
 
    

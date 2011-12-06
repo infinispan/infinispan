@@ -1,16 +1,18 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+
+import java.util.concurrent.TimeUnit;
 
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
 
    private int concurrencyLevel = 32;
-   private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+   IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
    private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean useLockStriping = false;
-   private boolean writeSkewCheck = false;
+   boolean writeSkewCheck = false;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -44,8 +46,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
+      if (writeSkewCheck) {
+         if (isolationLevel != IsolationLevel.REPEATABLE_READ) throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level");
+         if (transaction().lockingMode != LockingMode.OPTIMISTIC) throw new ConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
+         if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)
+            throw new ConfigurationException("Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
+         if (clustering().cacheMode() != CacheMode.DIST_SYNC && clustering().cacheMode() != CacheMode.REPL_SYNC &&
+               clustering().cacheMode() != CacheMode.LOCAL)
+            throw new ConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  " + clustering().cacheMode() + " cannot be used with write-skew checking");
+      }
    }
 
    @Override

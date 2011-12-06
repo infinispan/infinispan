@@ -36,7 +36,7 @@ public class NullMarkerEntry extends NullMarkerEntryForRemoval {
    private static final NullMarkerEntry INSTANCE = new NullMarkerEntry();
 
    private NullMarkerEntry() {
-      super(null);
+      super(null, null);
    }
 
    public static NullMarkerEntry getInstance() {
@@ -47,7 +47,7 @@ public class NullMarkerEntry extends NullMarkerEntryForRemoval {
     * A no-op.
     */
    @Override
-   public final void copyForUpdate(DataContainer d, boolean b) {
+   public final void copyForUpdate(DataContainer d, boolean localModeWriteSkewCheck) {
       // no op
    }
 }

@@ -28,16 +28,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -62,8 +53,8 @@ import java.util.Set;
 public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private EntryFactory entryFactory;
-   private DataContainer dataContainer;
-   private ClusteringDependentLogic cll;
+   protected DataContainer dataContainer;
+   protected ClusteringDependentLogic cll;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
    @Inject
@@ -168,7 +159,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitRemoveCommand(ctx, command);
    }
 
-   private void commitContextEntries(InvocationContext ctx) {
+   protected void commitContextEntries(InvocationContext ctx) {
       Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
@@ -176,12 +167,16 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          Map.Entry<Object, CacheEntry> e = it.next();
          CacheEntry entry = e.getValue();
          if (entry != null && entry.isChanged()) {
-            cll.commitEntry(entry, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
+            commitContextEntry(entry, ctx, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
             if (trace) log.tracef("Committed entry %s", entry);
          } else {
             if (trace) log.tracef("Entry for key %s is null or not changed(%s), not calling commitUpdate", e.getKey(), entry);
          }
       }
+   }
+
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
+      cll.commitEntry(entry, null, skipOwnershipCheck);
    }
 
    private Object invokeNextAndApplyChanges(InvocationContext ctx, VisitableCommand command) throws Throwable {

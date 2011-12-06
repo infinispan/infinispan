@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
 
 import java.util.List;
 import java.util.Map;
@@ -76,4 +77,8 @@ public interface CacheTransaction {
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
     */
    boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException;
+
+   EntryVersionsMap getUpdatedEntryVersions();
+
+   void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
 }

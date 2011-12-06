@@ -246,6 +246,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
+   protected void defineConfigurationOnAllManagers(String cacheName, ConfigurationBuilder b) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         cm.defineConfiguration(cacheName, b.build());
+      }
+   }
+
    private List<Cache> getCaches(String cacheName) {
       List<Cache> caches;
       caches = new ArrayList<Cache>();
@@ -519,8 +525,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return name == null ? cache(index) : cache(index, name);
    }
 
-   protected void forceTwoPhase(int cacheIndex, String cacheName) throws SystemException, RollbackException {
-      TransactionManager tm = tm(cacheIndex, cacheName);
+   protected void forceTwoPhase(int cacheIndex) throws SystemException, RollbackException {
+      TransactionManager tm = tm(cacheIndex);
       Transaction tx = tm.getTransaction();
       tx.enlistResource(new XAResourceAdapter());
    }

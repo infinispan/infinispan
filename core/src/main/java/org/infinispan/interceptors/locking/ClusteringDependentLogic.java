@@ -23,13 +23,23 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.CacheException;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
+import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -37,9 +47,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Abstractization for logic related to different clustering modes: replicated or distributed.
- * This implements the <a href="http://en.wikipedia.org/wiki/Bridge_pattern">Bridge</a> pattern as described by the GoF:
- * this plays the role of the <b>Implementor</b> and various LockingInterceptors are the <b>Abstraction</b>.
+ * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
+ * href="http://en.wikipedia.org/wiki/Bridge_pattern">Bridge</a> pattern as described by the GoF: this plays the role of
+ * the <b>Implementor</b> and various LockingInterceptors are the <b>Abstraction</b>.
  *
  * @author Mircea Markus
  * @since 5.1
@@ -52,9 +62,12 @@ public interface ClusteringDependentLogic {
 
    boolean localNodeIsPrimaryOwner(Object key);
 
-   void commitEntry(CacheEntry entry, boolean skipOwnershipCheck);
+   void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck);
 
    Collection<Address> getOwners(Collection<Object> keys);
+
+   EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
+
 
    /**
     * This logic is used when a changing a key affects all the nodes in the cluster, e.g. int the replicated,
@@ -83,12 +96,36 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, boolean skipOwnershipCheck) {
-         entry.commit(dataContainer);
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck) {
+         entry.commit(dataContainer, newVersion);
       }
 
       @Override
       public Collection<Address> getOwners(Collection<Object> keys) {
+         return null;
+      }
+
+      @Override
+      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         // In REPL mode, this happens if we are the coordinator.
+         if (rpcManager.getTransport().isCoordinator()) {
+            // Perform a write skew check on each entry.
+            EntryVersionsMap uv = new EntryVersionsMap();
+            for (WriteCommand c : prepareCommand.getModifications()) {
+               for (Object k : c.getAffectedKeys()) {
+                  ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
+                  if (entry.performWriteSkewCheck(dataContainer)) {
+                     IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
+                     uv.put(k, newVersion);
+                  } else {
+                     // Write skew check detected!
+                     throw new CacheException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
+                  }
+               }
+            }
+            context.getCacheTransaction().setUpdatedEntryVersions(uv);
+            return uv;
+         }
          return null;
       }
    }
@@ -123,7 +160,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, boolean skipOwnershipCheck) {
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck) {
          boolean doCommit = true;
          // ignore locality for removals, even if skipOwnershipCheck is not true
          if (!skipOwnershipCheck && !entry.isRemoved() && !localNodeIsOwner(entry.getKey())) {
@@ -134,7 +171,7 @@ public interface ClusteringDependentLogic {
             }
          }
          if (doCommit)
-            entry.commit(dataContainer);
+            entry.commit(dataContainer, newVersion);
          else
             entry.rollback();
       }
@@ -142,6 +179,43 @@ public interface ClusteringDependentLogic {
       @Override
       public Collection<Address> getOwners(Collection<Object> keys) {
          return dm.getAffectedNodes(keys);
+      }
+
+      @Override
+      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         // Perform a write skew check on mapped entries.
+         EntryVersionsMap uv = new EntryVersionsMap();
+
+         for (WriteCommand c : prepareCommand.getModifications()) {
+            for (Object k : c.getAffectedKeys()) {
+
+               if (localNodeIsPrimaryOwner(k)) {
+                  ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
+
+                  if (!context.isOriginLocal()) {
+                     // What version did the transaction originator see??
+                     EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
+                     if (versionSeen != null) entry.setVersion(versionSeen);
+                  }
+
+                  if (entry.performWriteSkewCheck(dataContainer)) {
+                     IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
+                     uv.put(k, newVersion);
+                  } else {
+                     // Write skew check detected!
+                     throw new CacheException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
+                  }
+               }
+            }
+         }
+         CacheTransaction cacheTransaction = context.getCacheTransaction();
+         EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
+         if (uvOld != null && !uvOld.isEmpty()) {
+            uvOld.putAll(uv);
+            uv = uvOld;
+         }
+         cacheTransaction.setUpdatedEntryVersions(uv);
+         return (uv.isEmpty()) ? null : uv;
       }
    }
 }

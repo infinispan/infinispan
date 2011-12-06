@@ -25,6 +25,7 @@ package org.infinispan.container;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -136,11 +137,12 @@ public class DefaultDataContainer implements DataContainer {
       return e;
    }
 
-   public void put(Object k, Object v, long lifespan, long maxIdle) {
+   public void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle) {
       InternalCacheEntry e = entries.get(k);
       if (e != null) {
          e.setValue(v);
-         InternalCacheEntry original = e;
+         InternalCacheEntry original = e.clone();
+         e.setVersion(version);
          e = entryFactory.update(e, lifespan, maxIdle);
          // we have the same instance. So we need to reincarnate.
          if(original == e) {
@@ -148,7 +150,7 @@ public class DefaultDataContainer implements DataContainer {
          }
       } else {
          // this is a brand-new entry
-         e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);
+         e = entryFactory.createNewEntry(k, v, version, lifespan, maxIdle);
       }
       entries.put(k, e);
    }

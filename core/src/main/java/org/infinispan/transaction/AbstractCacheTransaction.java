@@ -25,6 +25,7 @@ package org.infinispan.transaction;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -69,6 +70,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected volatile boolean prepared;
    protected Integer viewId;
+
+   private EntryVersionsMap updatedEntryVersions;
 
    public AbstractCacheTransaction(GlobalTransaction tx) {
       this.tx = tx;
@@ -183,5 +186,15 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private void initAffectedKeys() {
       if (affectedKeys == null) affectedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+   }
+
+   @Override
+   public EntryVersionsMap getUpdatedEntryVersions() {
+      return updatedEntryVersions;
+   }
+
+   @Override
+   public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
+      this.updatedEntryVersions = updatedEntryVersions;
    }
 }
