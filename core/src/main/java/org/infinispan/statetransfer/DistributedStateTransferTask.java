@@ -112,7 +112,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
          int numOwners = configuration.getNumOwners();
 
-         // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
+         // Contains the state to be pushed to various servers. The state is a hashmap of servers to entry collections
          final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
 
          for (InternalCacheEntry ice : dataContainer) {
@@ -133,8 +133,12 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
          checkIfCancelled();
 
-         // Now for each server S in states.keys(): push states.get(S) to S via RPC
-         pushState(states);
+         // Push any remaining state chunks
+         for (Map.Entry<Address, Collection<InternalCacheEntry>> entry : states.entrySet()) {
+            pushPartialState(Collections.singleton(entry.getKey()), entry.getValue());
+         }
+         // And wait for all the push RPCs to end
+         finishPushingState();
       } else {
          if (!initialView) log.trace("Rehash not enabled, so not pushing state");
       }
@@ -170,7 +174,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
     * @param keysToRemove A list that the keys that we need to remove will be added to
     */
    private void rebalance(Object key, InternalCacheEntry value, int numOwners, ConsistentHash chOld, ConsistentHash chNew,
-                            CacheStore cacheStore, Map<Address, Collection<InternalCacheEntry>> states, List<Object> keysToRemove) {
+                            CacheStore cacheStore, Map<Address, Collection<InternalCacheEntry>> states, List<Object> keysToRemove) throws StateTransferCancelledException {
       // 1. Get the old and new servers for key K
       List<Address> oldOwners = chOld.locate(key, numOwners);
       List<Address> newOwners = chNew.locate(key, numOwners);
@@ -212,6 +216,12 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
                }
                if (value != null)
                   map.add(value);
+
+               // if we have a full chunk, start pushing it to the new owner
+               if (map.size() >= stateTransferChunkSize) {
+                  pushPartialState(Collections.singleton(server), map);
+                  states.remove(server);
+               }
             }
          }
       }

@@ -27,13 +27,11 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.AggregatingNotifyingFutureBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -58,10 +56,12 @@ public abstract class BaseStateTransferTask {
    protected final ConsistentHash chNew;
    protected final boolean initialView;
    private long stateTransferStartMillis;
+   private final AggregatingNotifyingFutureBuilder statePushFuture;
 
    private boolean running;
    private boolean cancelled;
    private final Object lock = new Object();
+   protected int stateTransferChunkSize = 10000;
 
    public BaseStateTransferTask(BaseStateTransferManagerImpl stateTransferManager, RpcManager rpcManager,
                                 StateTransferLock stateTransferLock, CacheNotifier cacheNotifier,
@@ -78,6 +78,7 @@ public abstract class BaseStateTransferTask {
       this.dataContainer = dataContainer;
       this.chNew = chNew;
       this.chOld = chOld;
+      this.statePushFuture = new AggregatingNotifyingFutureBuilder(null, members.size());
    }
 
    public void performStateTransfer() throws Exception {
@@ -136,19 +137,15 @@ public abstract class BaseStateTransferTask {
    }
 
 
-   protected void pushState(Map<Address, Collection<InternalCacheEntry>> states)
-         throws InterruptedException, ExecutionException, StateTransferCancelledException, TimeoutException {
-      NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, states.size());
-      for (Map.Entry<Address, Collection<InternalCacheEntry>> entry : states.entrySet()) {
-         checkIfCancelled();
-         final Address target = entry.getKey();
-         Collection<InternalCacheEntry> state = entry.getValue();
-         stateTransferManager.pushStateToNode(stateTransferFuture, newViewId, target, state);
-      }
-
+   protected void finishPushingState() throws InterruptedException, ExecutionException, TimeoutException {
       // wait to see if all servers received the new state
-      stateTransferFuture.get(configuration.getRehashRpcTimeout(), TimeUnit.MILLISECONDS);
+      statePushFuture.get(configuration.getRehashRpcTimeout(), TimeUnit.MILLISECONDS);
       log.debugf("Node finished pushing data for cache views %d.", newViewId);
+   }
+
+   protected void pushPartialState(Collection<Address> targets, Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
+      checkIfCancelled();
+      stateTransferManager.pushStateToNode(statePushFuture, newViewId, targets, state);
    }
 
    protected void checkIfCancelled() throws StateTransferCancelledException {
