@@ -22,8 +22,10 @@
  */
 package org.infinispan.lock;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -35,9 +37,16 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.NotSupportedException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 
@@ -94,6 +103,64 @@ public class APITest extends MultipleCacheManagersTest {
       tm(0).begin();
       assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock("k");
       tm(0).rollback();
+   }
+
+   public void testSilentLockFailureAffectsPostOperations() throws Exception {
+      final Cache<Integer, String> cache = cache(0);
+      final TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      final ExecutorService e = Executors.newCachedThreadPool();
+      final CountDownLatch waitLatch = new CountDownLatch(1);
+      final CountDownLatch continueLatch = new CountDownLatch(1);
+      cache.put(1, "v1");
+
+      Future<Void> f1 = e.submit(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            tm.begin();
+            try {
+               cache.put(1, "v2");
+               waitLatch.countDown();
+               continueLatch.await();
+            } catch (Exception e) {
+               tm.setRollbackOnly();
+               throw e;
+            } finally {
+               if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+               else tm.rollback();
+            }
+            return null;
+         }
+      });
+
+
+      Future<Void> f2 = e.submit(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            waitLatch.await();
+            tm.begin();
+            try {
+               AdvancedCache<Integer, String> silentCache = cache.getAdvancedCache().withFlags(
+                     Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+               silentCache.put(1, "v3");
+               assert !silentCache.lock(1);
+               // TODO: Uncomment assert once ISPN-1609 is fixed...
+               // assert "v1".equals(cache.get(1));
+               cache.get(1);
+            } catch (Exception e) {
+               tm.setRollbackOnly();
+               throw e;
+            } finally {
+               if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+               else tm.rollback();
+
+               continueLatch.countDown();
+            }
+            return null;
+         }
+      });
+
+      f1.get();
+      f2.get();      
    }
 
    public void testMultiLockSuccess() throws SystemException, NotSupportedException {

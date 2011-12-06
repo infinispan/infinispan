@@ -221,7 +221,8 @@ public class TxInterceptor extends CommandInterceptor {
       try {
          rv = invokeNextInterceptor(ctx, command);
       } catch (Throwable throwable) {
-         if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+         // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
+         if (ctx.isOriginLocal() && ctx.isInTxScope() && !ctx.hasFlag(Flag.FAIL_SILENTLY)) {
             TxInvocationContext txCtx = (TxInvocationContext) ctx;
             txCtx.getTransaction().setRollbackOnly();
             final LocalTransaction cacheTransaction = (LocalTransaction) txCtx.getCacheTransaction();
