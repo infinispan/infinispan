@@ -1,23 +1,23 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+
+import java.util.concurrent.TimeUnit;
 
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
    private boolean autoCommit = true;
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
    private boolean eagerLockingSingleNode = false;
-   private LockingMode lockingMode = LockingMode.OPTIMISTIC;
+   LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
    private TransactionManagerLookup transactionManagerLookup ;
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   private TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
+   TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
    private boolean useEagerLocking = false;
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;

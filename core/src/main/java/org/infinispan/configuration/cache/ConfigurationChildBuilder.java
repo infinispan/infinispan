@@ -2,34 +2,35 @@ package org.infinispan.configuration.cache;
 
 public interface ConfigurationChildBuilder {
 
-   public ClusteringConfigurationBuilder clustering();
+   ClusteringConfigurationBuilder clustering();
    
-   public CustomInterceptorsConfigurationBuilder customInterceptors();
+   CustomInterceptorsConfigurationBuilder customInterceptors();
    
-   public DataContainerConfigurationBuilder dataContainer();
+   DataContainerConfigurationBuilder dataContainer();
    
-   public DeadlockDetectionConfigurationBuilder deadlockDetection();
+   DeadlockDetectionConfigurationBuilder deadlockDetection();
    
-   public EvictionConfigurationBuilder eviction();
+   EvictionConfigurationBuilder eviction();
    
-   public ExpirationConfigurationBuilder expiration();
+   ExpirationConfigurationBuilder expiration();
    
-   public IndexingConfigurationBuilder indexing();
+   IndexingConfigurationBuilder indexing();
    
-   public InvocationBatchingConfigurationBuilder invocationBatching();
+   InvocationBatchingConfigurationBuilder invocationBatching();
    
-   public JMXStatisticsConfigurationBuilder jmxStatistics();
+   JMXStatisticsConfigurationBuilder jmxStatistics();
    
-   public LoadersConfigurationBuilder loaders();
+   LoadersConfigurationBuilder loaders();
    
-   public LockingConfigurationBuilder locking();
+   LockingConfigurationBuilder locking();
    
-   public StoreAsBinaryConfigurationBuilder storeAsBinary();
+   StoreAsBinaryConfigurationBuilder storeAsBinary();
    
-   public TransactionConfigurationBuilder transaction();
+   TransactionConfigurationBuilder transaction();
+   
+   VersioningConfigurationBuilder versioning();
   
-   public UnsafeConfigurationBuilder unsafe();
+   UnsafeConfigurationBuilder unsafe();
    
-   public Configuration build();
-   
+   Configuration build();
 }

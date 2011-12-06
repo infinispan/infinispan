@@ -23,6 +23,8 @@
 package org.infinispan.container.entries;
 
 
+import org.infinispan.container.versioning.EntryVersion;
+
 /**
  * A null entry that is read in for removal
  *
@@ -31,8 +33,8 @@ package org.infinispan.container.entries;
  */
 public class NullMarkerEntryForRemoval extends RepeatableReadEntry {
 
-   public NullMarkerEntryForRemoval(Object key) {
-      super(key, null, -1);
+   public NullMarkerEntryForRemoval(Object key, EntryVersion version) {
+      super(key, null, version, -1);
    }
 
    /**

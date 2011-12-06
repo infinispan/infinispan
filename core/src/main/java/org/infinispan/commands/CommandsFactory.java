@@ -42,16 +42,11 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -89,6 +84,17 @@ public interface CommandsFactory {
     * @return a PutKeyValueCommand
     */
    PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
+
+   /**
+    * Builds a special form of {@link PutKeyValueCommand} that also holds a reference to a version to be applied.
+    * @param key key to put
+    * @param value value to put
+    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
+    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @param version version to apply with this put
+    * @return a PutKeyValueCommand
+    */
+   VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags);
 
    /**
     * Builds a RemoveCommand
@@ -195,11 +201,26 @@ public interface CommandsFactory {
    PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
 
    /**
+    * Builds a VersionedPrepareCommand
+    * @param gtx global transaction associated with the prepare
+    * @param modifications list of modifications
+    * @return a VersionedPrepareCommand
+    */
+   VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications);
+
+   /**
     * Builds a CommitCommand
     * @param gtx global transaction associated with the commit
     * @return a CommitCommand
     */
    CommitCommand buildCommitCommand(GlobalTransaction gtx);
+
+   /**
+    * Builds a VersionedCommitCommand
+    * @param gtx global transaction associated with the commit
+    * @return a VersionedCommitCommand
+    */
+   VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx);
 
    /**
     * Builds a RollbackCommand
@@ -253,7 +274,7 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, java.util.Set}
+    * Same as {@link #buildLockControlCommand(Object, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
     * but for locking a single key vs a collection of keys.
     */
    LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
@@ -341,4 +362,6 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
+
+
 }

@@ -139,7 +139,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
-         if (needsRemoteGet(ctx, command.getKey(), returnValue == null) && !dm.getLocality(command.getKey()).isLocal())
+         if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
             returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
          return returnValue;
       } catch (SuspectException e) {
@@ -350,7 +350,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn)
          throws TimeoutException, InterruptedException {
-      // we only send the commit command to the nodes that 
+      // we only send the commit command to the nodes that
       Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
       // By default, use the configured commit sync settings
@@ -394,8 +394,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-         // this method will return immediately if we're the only member (because exclude_self=true)
-         rpcManager.invokeRemotely(recipients, command, sync);
+         prepareOnAffectedNodes(ctx, command, recipients, sync);
 
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
       } else if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
@@ -404,6 +403,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          flushL1Caches(ctx);
       }
       return retVal;
+   }
+
+   protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
+      // this method will return immediately if we're the only member (because exclude_self=true)
+      rpcManager.invokeRemotely(recipients, command, sync);
    }
 
    @Override

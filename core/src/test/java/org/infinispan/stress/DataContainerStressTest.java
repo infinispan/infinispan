@@ -93,7 +93,7 @@ public class DataContainerStressTest {
             while (use_time && run.get() || runs < actual_num_loops) {
                if (runs % 100000 == 0) log.info("PUT run # " + runs);
 //               TestingUtil.sleepThread(10);
-               dc.put(key + R.nextInt(NUM_KEYS), "value", -1, -1);
+               dc.put(key + R.nextInt(NUM_KEYS), "value", null, -1, -1);
                runs++;
             }
             perf.put("PUT", opsPerMS(System.nanoTime() - start, runs));

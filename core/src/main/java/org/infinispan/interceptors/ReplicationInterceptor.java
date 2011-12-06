@@ -50,8 +50,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
- * rollback() messages which are received 'side-ways' (see docs/design/Refactoring.txt).
+ * Takes care of replicating modifications to other caches in a cluster.
  *
  * @author Bela Ban
  * @since 4.0
@@ -112,10 +111,14 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
 
-         boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
-         rpcManager.broadcastRpcCommand(command, !async, false);
+         broadcastPrepare(ctx, command);
       }
       return retVal;
+   }
+
+   protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
+      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+      rpcManager.broadcastRpcCommand(command, !async, false);
    }
 
    @Override

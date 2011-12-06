@@ -22,6 +22,7 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
@@ -40,9 +41,9 @@ import java.util.Set;
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    private ImmortalCacheValue cacheValue;
 
-   ImmortalCacheEntry(Object key, Object value) {
+   ImmortalCacheEntry(Object key, Object value, EntryVersion version) {
       super(key);
-      this.cacheValue = new ImmortalCacheValue(value);
+      this.cacheValue = new ImmortalCacheValue(value, version);
    }
 
    public final boolean isExpired(long now) {
@@ -53,48 +54,69 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       return false;
    }
 
+   @Override
    public final boolean canExpire() {
       return false;
    }
 
+   @Override
    public final long getCreated() {
       return -1;
    }
 
+   @Override
    public final long getLastUsed() {
       return -1;
    }
 
+   @Override
    public final long getLifespan() {
       return -1;
    }
 
+   @Override
    public final long getMaxIdle() {
       return -1;
    }
 
+   @Override
    public final long getExpiryTime() {
       return -1;
    }
 
+   @Override
    public final void touch() {
       // no-op
    }
 
+   @Override
    public final void reincarnate() {
       // no-op
    }
 
+   @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }
 
+   @Override
    public Object getValue() {
       return cacheValue.value;
    }
 
+   @Override
    public Object setValue(Object value) {
       return this.cacheValue.setValue(value);
+   }
+
+   @Override
+   public EntryVersion getVersion() {
+      return this.cacheValue.version;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+      this.cacheValue.version = version;
    }
 
    @Override
@@ -128,14 +150,16 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       @Override
       public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);      
+         output.writeObject(ice.cacheValue.value);
+         output.writeObject(ice.cacheValue.version);
       }
 
       @Override
       public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
-         return new ImmortalCacheEntry(k, v);
+         EntryVersion version = (EntryVersion) input.readObject();
+         return new ImmortalCacheEntry(k, v, version);
       }
 
       @Override

@@ -58,7 +58,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testExpiredData() throws InterruptedException {
-      dc.put("k", "v", -1, 6000000);
+      dc.put("k", "v", null, -1, 6000000);
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
@@ -68,10 +68,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
-      dc.put("k", "v", -1, 0);
+      dc.put("k", "v", null, -1, 0);
       dc.purgeExpired();
 
-      dc.put("k", "v", 6000000, -1);
+      dc.put("k", "v", null, 6000000, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
 
@@ -80,12 +80,12 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assert entry.getClass().equals(mortaltype()) : "Expected "+mortaltype()+", was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
-      dc.put("k", "v", 0, -1);
+      dc.put("k", "v", null, 0, -1);
       Thread.sleep(10);
       assert dc.get("k") == null;
       assert dc.size() == 0;
 
-      dc.put("k", "v", 0, -1);
+      dc.put("k", "v", null, 0, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
       dc.purgeExpired();
@@ -94,13 +94,13 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;
-      dc.put("k", "v", -1, -1);
+      dc.put("k", "v", null, -1, -1);
       InternalCacheEntry ice = dc.get("k");
       assert ice.getClass().equals(immortaltype());
       assert ice.getExpiryTime() == -1;
       assert ice.getMaxIdle() == -1;
       assert ice.getLifespan() == -1;
-      dc.put("k", "v", -1, idle);
+      dc.put("k", "v", null, -1, idle);
       long oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
@@ -141,27 +141,27 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    public void testExpirableToImmortalAndBack() {
       String value = "v";
-      dc.put("k", value, 6000000, -1);
+      dc.put("k", value, null, 6000000, -1);
       assertContainerEntry(mortaltype(), value);
 
       value = "v2";
-      dc.put("k", value, -1, -1);
+      dc.put("k", value, null, -1, -1);
       assertContainerEntry(immortaltype(), value);
 
       value = "v3";
-      dc.put("k", value, -1, 6000000);
+      dc.put("k", value, null, -1, 6000000);
       assertContainerEntry(transienttype(), value);
 
       value = "v4";
-      dc.put("k", value, 6000000, 6000000);
+      dc.put("k", value, null, 6000000, 6000000);
       assertContainerEntry(transientmortaltype(), value);
 
       value = "v41";
-      dc.put("k", value, 6000000, 6000000);
+      dc.put("k", value, null, 6000000, 6000000);
       assertContainerEntry(transientmortaltype(), value);
 
       value = "v5";
-      dc.put("k", value, 6000000, -1);
+      dc.put("k", value, null, 6000000, -1);
       assertContainerEntry(mortaltype(), value);
    }
 
@@ -174,10 +174,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testKeySet() {
-      dc.put("k1", "v", 6000000, -1);
-      dc.put("k2", "v", -1, -1);
-      dc.put("k3", "v", -1, 6000000);
-      dc.put("k4", "v", 6000000, 6000000);
+      dc.put("k1", "v", null, 6000000, -1);
+      dc.put("k2", "v", null, -1, -1);
+      dc.put("k3", "v", null, -1, 6000000);
+      dc.put("k4", "v", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -191,10 +191,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testContainerIteration() {
-      dc.put("k1", "v", 6000000, -1);
-      dc.put("k2", "v", -1, -1);
-      dc.put("k3", "v", -1, 6000000);
-      dc.put("k4", "v", 6000000, 6000000);
+      dc.put("k1", "v", null, 6000000, -1);
+      dc.put("k2", "v", null, -1, -1);
+      dc.put("k3", "v", null, -1, 6000000);
+      dc.put("k4", "v", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -210,10 +210,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
    
    public void testKeys() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -227,10 +227,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testValues() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("v1");
@@ -244,10 +244,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testEntrySet() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add(Immutables.immutableInternalCacheEntry(dc.get("k1")));
@@ -262,7 +262,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testGetDuringKeySetLoop() {
-      for (int i = 0; i < 10; i++) dc.put(i, "value", -1, -1);
+      for (int i = 0; i < 10; i++) dc.put(i, "value", null, -1, -1);
 
       int i = 0;
       for (Object key : dc.keySet()) {

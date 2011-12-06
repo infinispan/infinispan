@@ -243,7 +243,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
          }
-         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value,
+         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value, entry.getVersion(),
                                                                                                           entry.getCreated(), entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle()));
          copy.add(newEntry);
       }

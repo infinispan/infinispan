@@ -23,6 +23,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container
@@ -41,7 +42,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       this.key = key;
    }
 
-   public final void commit(DataContainer container) {
+   public final void commit(DataContainer container, EntryVersion newVersion) {
       // no-op
    }
 
@@ -103,7 +104,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    public void setLifespan(long lifespan) {
    }
-
 
    public final Object getKey() {
       return key;

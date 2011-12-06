@@ -22,6 +22,8 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.EntryVersion;
+
 /**
  * A factory for internal entries
  *
@@ -31,50 +33,74 @@ package org.infinispan.container.entries;
 public class InternalEntryFactory {
 
    public static InternalCacheEntry create(Object key, Object value) {
-      return new ImmortalCacheEntry(key, value);
+      return create(key, value, null);
+   }
+
+   public static InternalCacheEntry create(Object key, Object value, EntryVersion version) {
+      return new ImmortalCacheEntry(key, value, version);
    }
 
    public static InternalCacheEntry create(Object key, Object value, long lifespan) {
-      return lifespan > -1 ? new MortalCacheEntry(key, value, lifespan) : new ImmortalCacheEntry(key, value);
+      return create(key, value, null, lifespan);
+   }
+
+   public static InternalCacheEntry create(Object key, Object value, EntryVersion version, long lifespan) {
+      return lifespan > -1 ? new MortalCacheEntry(key, value, version, lifespan) : new ImmortalCacheEntry(key, value, version);
    }
 
    public static InternalCacheEntry create(Object key, Object value, long lifespan, long maxIdle) {
-      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
-      if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan);
-      if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle);
-      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
+      return create(key, value, null, lifespan, maxIdle);
+   }
+
+   public static InternalCacheEntry create(Object key, Object value, EntryVersion version, long lifespan, long maxIdle) {
+      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value, version);
+      if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, version, lifespan);
+      if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, version, maxIdle);
+      return new TransientMortalCacheEntry(key, value, version, maxIdle, lifespan);
    }
 
    public static InternalCacheEntry create(Object key, Object value, long created, long lifespan, long lastUsed, long maxIdle) {
-      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
-      if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, created);
-      if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, lastUsed);
-      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, lastUsed, created);
+      return create(key, value, null, created, lifespan, lastUsed, maxIdle);
+   }
+
+   public static InternalCacheEntry create(Object key, Object value, EntryVersion version, long created, long lifespan, long lastUsed, long maxIdle) {
+      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value, version);
+      if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, version, lifespan, created);
+      if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, version, maxIdle, lastUsed);
+      return new TransientMortalCacheEntry(key, value, version, maxIdle, lifespan, lastUsed, created);
    }
 
    public static InternalCacheValue createValue(Object v) {
-      return new ImmortalCacheValue(v);
+      return createValue(v, null);
+   }
+
+   public static InternalCacheValue createValue(Object v, EntryVersion version) {
+      return new ImmortalCacheValue(v, version);
    }
 
    public static InternalCacheValue createValue(Object v, long created, long lifespan, long lastUsed, long maxIdle) {
-      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheValue(v);
-      if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(v, created, lifespan);
-      if (lifespan < 0 && maxIdle > -1) return new TransientCacheValue(v, maxIdle, lastUsed);
-      return new TransientMortalCacheValue(v, created, lifespan, maxIdle, lastUsed);
+      return createValue(v, null, created, lifespan, lastUsed, maxIdle);
    }
 
-   public InternalCacheEntry createNewEntry(Object key, Object value, long lifespan, long maxIdle) {
+   public static InternalCacheValue createValue(Object v, EntryVersion version, long created, long lifespan, long lastUsed, long maxIdle) {
+      if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheValue(v, version);
+      if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(v, version, created, lifespan);
+      if (lifespan < 0 && maxIdle > -1) return new TransientCacheValue(v, version, maxIdle, lastUsed);
+      return new TransientMortalCacheValue(v, version, created, lifespan, maxIdle, lastUsed);
+   }
+
+   public InternalCacheEntry createNewEntry(Object key, Object value, EntryVersion version, long lifespan, long maxIdle) {
       if (lifespan < 0 && maxIdle < 0)
-         return new ImmortalCacheEntry(key, value);
+         return new ImmortalCacheEntry(key, value, version);
 
       if (lifespan > -1 && maxIdle < 0)
-         return new MortalCacheEntry(key, value, lifespan);
+         return new MortalCacheEntry(key, value, version, lifespan);
 
       if (lifespan < 0 && maxIdle > -1)
-         return new TransientCacheEntry(key, value, maxIdle);
+         return new TransientCacheEntry(key, value, version, maxIdle);
 
       // else...
-      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
+      return new TransientMortalCacheEntry(key, value, version, maxIdle, lifespan);
    }
 
    /**
@@ -94,22 +120,22 @@ public class InternalEntryFactory {
             if (maxIdle < 0) {
                return ice;
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle);
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), lifespan);
             } else {
                long ctm = System.currentTimeMillis();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof MortalCacheEntry) {
          if (lifespan < 0) {
             if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+               return new ImmortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion());
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle);
             }
          } else {
             if (maxIdle < 0) {
@@ -117,35 +143,35 @@ public class InternalEntryFactory {
                return ice;
             } else {
                long ctm = System.currentTimeMillis();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof TransientCacheEntry) {
          if (lifespan < 0) {
             if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+               return new ImmortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion());
             } else {
                ice.setMaxIdle(maxIdle);
                return ice;
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), lifespan);
             } else {
                long ctm = System.currentTimeMillis();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof TransientMortalCacheEntry) {
          if (lifespan < 0) {
             if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+               return new ImmortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion());
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), maxIdle);
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), ice.getVersion(), lifespan);
             } else {
                ice.setLifespan(lifespan);
                ice.setMaxIdle(maxIdle);

@@ -42,6 +42,8 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -50,6 +52,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -109,6 +112,9 @@ public class RemoteCommandsFactory {
          switch (id) {
             case PutKeyValueCommand.COMMAND_ID:
                command = new PutKeyValueCommand();
+               break;
+            case VersionedPutKeyValueCommand.COMMAND_ID:
+               command = new VersionedPutKeyValueCommand();
                break;
             case PutMapCommand.COMMAND_ID:
                command = new PutMapCommand();
@@ -170,8 +176,14 @@ public class RemoteCommandsFactory {
             case PrepareCommand.COMMAND_ID:
                command = new PrepareCommand(cacheName);
                break;
+            case VersionedPrepareCommand.COMMAND_ID:
+               command = new VersionedPrepareCommand(cacheName);
+               break;
             case CommitCommand.COMMAND_ID:
                command = new CommitCommand(cacheName);
+               break;
+            case VersionedCommitCommand.COMMAND_ID:
+               command = new VersionedCommitCommand(cacheName);
                break;
             case RollbackCommand.COMMAND_ID:
                command = new RollbackCommand(cacheName);

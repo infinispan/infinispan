@@ -80,6 +80,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    public InterceptorChain buildInterceptorChain() {
+      boolean needsVersionAwareComponents = configuration.isTransactionalCache() && configuration.isWriteSkewCheck() &&
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC && configuration.isEnableVersioning();
+
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
 
@@ -142,7 +145,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
       }
 
-      interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
+      if (needsVersionAwareComponents && configuration.getCacheMode().isClustered())
+         interceptorChain.appendInterceptor(createInterceptor(VersionedEntryWrappingInterceptor.class));
+      else
+         interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
@@ -168,6 +174,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       switch (configuration.getCacheMode()) {
          case REPL_SYNC:
+            if (needsVersionAwareComponents) {
+               interceptorChain.appendInterceptor(createInterceptor(VersionedReplicationInterceptor.class));
+               break;
+            }
          case REPL_ASYNC:
             interceptorChain.appendInterceptor(createInterceptor(ReplicationInterceptor.class));
             break;
@@ -176,6 +186,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendInterceptor(createInterceptor(InvalidationInterceptor.class));
             break;
          case DIST_SYNC:
+            if (needsVersionAwareComponents) {
+               interceptorChain.appendInterceptor(createInterceptor(VersionedDistributionInterceptor.class));
+               break;
+            }
          case DIST_ASYNC:
             interceptorChain.appendInterceptor(createInterceptor(DistributionInterceptor.class));
             break;

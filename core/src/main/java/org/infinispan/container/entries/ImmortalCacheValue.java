@@ -22,14 +22,15 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
-
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -40,13 +41,15 @@ import org.infinispan.util.Util;
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    Object value;
+   volatile EntryVersion version;
 
-   ImmortalCacheValue(Object value) {
+   ImmortalCacheValue(Object value, EntryVersion version) {
       this.value = value;
+      this.version = version;
    }
 
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new ImmortalCacheEntry(key, value);
+      return new ImmortalCacheEntry(key, value, version);
    }
 
    public final Object setValue(Object value) {
@@ -108,6 +111,7 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    public String toString() {
       return "ImmortalCacheValue{" +
             "value=" + value +
+            "version=" + version +
             '}';
    }
 
@@ -124,12 +128,14 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       @Override
       public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
+         output.writeObject(icv.version);
       }
 
       @Override
       public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
-         return new ImmortalCacheValue(v);
+         EntryVersion ver = (EntryVersion) input.readObject();
+         return new ImmortalCacheValue(v, ver);
       }
 
       @Override

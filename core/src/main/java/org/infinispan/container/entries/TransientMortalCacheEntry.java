@@ -22,6 +22,7 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -44,21 +45,21 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    private TransientMortalCacheValue cacheValue;
 
-   TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
+   TransientMortalCacheEntry(Object key, Object value, EntryVersion version, long maxIdle, long lifespan) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis(), lifespan, maxIdle);
+      cacheValue = new TransientMortalCacheValue(value, version, System.currentTimeMillis(), lifespan, maxIdle);
       touch();
    }
 
-   TransientMortalCacheEntry(Object key, Object value) {
+   TransientMortalCacheEntry(Object key, Object value, EntryVersion version) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis());
+      cacheValue = new TransientMortalCacheValue(value, version, System.currentTimeMillis());
       touch();
    }
 
-   public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long lastUsed, long created) {
+   public TransientMortalCacheEntry(Object key, Object value, EntryVersion version, long maxIdle, long lifespan, long lastUsed, long created) {
       super(key);
-      this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
+      this.cacheValue = new TransientMortalCacheValue(value, version, created, lifespan, maxIdle, lastUsed);
    }
 
    public void setLifespan(long lifespan) {
@@ -126,6 +127,16 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public EntryVersion getVersion() {
+      return cacheValue.version;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+      this.cacheValue.version = version;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -166,6 +177,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       public void writeObject(ObjectOutput output, TransientMortalCacheEntry entry) throws IOException {
          output.writeObject(entry.key);
          output.writeObject(entry.cacheValue.value);
+         output.writeObject(entry.cacheValue.version);
          UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.created);
          output.writeLong(entry.cacheValue.lifespan); // could be negative so should not use unsigned longs
          UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.lastUsed);
@@ -176,11 +188,12 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       public TransientMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
+         EntryVersion version = (EntryVersion) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
-         return new TransientMortalCacheEntry(k, v, maxIdle, lifespan, lastUsed, created);
+         return new TransientMortalCacheEntry(k, v, version, maxIdle, lifespan, lastUsed, created);
       }
 
       @Override

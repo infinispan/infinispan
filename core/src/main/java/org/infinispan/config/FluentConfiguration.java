@@ -24,6 +24,7 @@
 package org.infinispan.config;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Group;
@@ -777,6 +778,13 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       IndexingConfig addProperty(String key, String value);
    }
 
+   @Deprecated
+   public static interface VersioningConfig extends FluentTypes {
+      VersioningConfig enable();
+      VersioningConfig disable();
+      VersioningConfig versioningScheme(VersioningScheme scheme);
+   }
+
    @Deprecated public static interface DataContainerConfig extends FluentTypes {
 
       DataContainerConfig dataContainerClass(Class<? extends DataContainer> dataContainerClass);
@@ -867,6 +875,8 @@ interface FluentTypes {
     */
    FluentConfiguration.InvocationBatchingConfig invocationBatching();
 
+   FluentConfiguration.VersioningConfig versioning();
+
    Configuration build();
 }
 
@@ -940,6 +950,11 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
    @Override
    public FluentConfiguration.StoreAsBinaryConfig storeAsBinary() {
       return config.storeAsBinary.enabled(true);
+   }
+
+   @Override
+   public FluentConfiguration.VersioningConfig versioning() {
+      return config.versioning.enable();
    }
 
    @Override

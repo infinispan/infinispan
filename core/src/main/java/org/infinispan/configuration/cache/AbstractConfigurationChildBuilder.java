@@ -72,6 +72,11 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
    public TransactionConfigurationBuilder transaction() {
       return builder.transaction();
    }
+
+   @Override
+   public VersioningConfigurationBuilder versioning() {
+     return builder.versioning();
+   }
    
    @Override
    public UnsafeConfigurationBuilder unsafe() {
@@ -85,7 +90,7 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
    public Configuration build() {
       return builder.build();
    }
-   
+
    abstract void validate();
    
    abstract T create();

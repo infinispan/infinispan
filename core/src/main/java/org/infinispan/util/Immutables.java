@@ -25,6 +25,7 @@ package org.infinispan.util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
@@ -36,19 +37,8 @@ import java.io.ObjectOutput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Factory for generating immutable type wrappers.
@@ -458,6 +448,10 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      public void commit(DataContainer container, EntryVersion newVersion) {
+         throw new UnsupportedOperationException();
+      }
+
       @SuppressWarnings("unchecked")
       public boolean equals(Object o) {
          if (!(o instanceof InternalCacheEntry))
@@ -515,7 +509,6 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
-      @Override
       public boolean undelete(boolean doUndelete) {
          throw new UnsupportedOperationException();
       }
@@ -524,7 +517,7 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
-      public void commit(DataContainer container) {
+      public void setVersion(EntryVersion version) {
          throw new UnsupportedOperationException();
       }
 
@@ -580,9 +573,12 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
-      @Override
       public boolean isLockPlaceholder() {
          return entry.isLockPlaceholder();
+      }
+
+      public EntryVersion getVersion() {
+         return entry.getVersion();
       }
 
       public InternalCacheEntry clone() {
@@ -771,7 +767,10 @@ public class Immutables {
    private static class ImmutableTypedProperties extends TypedProperties {
       
       ImmutableTypedProperties(TypedProperties properties) {
-         super(properties);
+         super();
+         if (properties != null && !properties.isEmpty()) {
+            for (Map.Entry<Object, Object> e: properties.entrySet()) super.put(e.getKey(), e.getValue());
+         }
       }
 
       @Override

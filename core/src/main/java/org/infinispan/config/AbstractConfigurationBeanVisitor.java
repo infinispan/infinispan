@@ -243,6 +243,11 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
       defaultVisit(config);
    }
 
+   @Override
+   public void visitVersioningConfigurationBean(Configuration.VersioningConfigurationBean config) {
+      defaultVisit(config);
+   }
+
    public void defaultVisit(AbstractConfigurationBean c) {
    }
 }

@@ -24,12 +24,12 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -51,7 +51,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       setValid(true);
    }
 
-   public ReadCommittedEntry(Object key, Object value, long lifespan) {
+   public ReadCommittedEntry(Object key, Object value, EntryVersion version, long lifespan) {
       setValid(true);
       this.key = key;
       this.value = value;
@@ -156,8 +156,10 @@ public class ReadCommittedEntry implements MVCCEntry {
          unsetFlag(LOCK_PLACEHOLDER);
    }
 
-   @SuppressWarnings("unchecked")
-   public final void commit(DataContainer container) {
+   @Override
+   public final void commit(DataContainer container, EntryVersion newVersion) {
+      // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
+
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
@@ -174,7 +176,7 @@ public class ReadCommittedEntry implements MVCCEntry {
          if (isRemoved()) {
             container.remove(key);
          } else if (value != null) {
-            container.put(key, value, lifespan, maxIdle);
+            container.put(key, value, newVersion, lifespan, maxIdle);
          }
          reset();
       }
@@ -215,6 +217,15 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public boolean isLockPlaceholder() {
       return isFlagSet(LOCK_PLACEHOLDER);
+   }
+
+   @Override
+   public EntryVersion getVersion() {
+      return null;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
    }
 
    public final boolean isCreated() {

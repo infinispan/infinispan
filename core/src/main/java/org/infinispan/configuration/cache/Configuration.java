@@ -17,6 +17,7 @@ public class Configuration {
    private final LockingConfiguration lockingConfiguration;
    private final StoreAsBinaryConfiguration storeAsBinaryConfiguration;
    private final TransactionConfiguration transactionConfiguration;
+   private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
 
    Configuration(String name, ClusteringConfiguration clusteringConfiguration,
@@ -27,7 +28,8 @@ public class Configuration {
          JMXStatisticsConfiguration jmxStatisticsConfiguration,
          LoadersConfiguration loadersConfiguration,
          LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
-         TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration, ClassLoader cl) {
+         TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
+         VersioningConfiguration versioningConfiguration, ClassLoader cl) {
       this.name = name;
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
@@ -43,6 +45,7 @@ public class Configuration {
       this.storeAsBinaryConfiguration = storeAsBinaryConfiguration;
       this.transactionConfiguration = transactionConfiguration;
       this.unsafeConfiguration = unsafeConfiguration;
+      this.versioningConfiguration = versioningConfiguration;
       this.classLoader = cl;
    }
 
@@ -114,15 +117,17 @@ public class Configuration {
    public UnsafeConfiguration unsafe() {
       return unsafeConfiguration;
    }
-   
+
+   public VersioningConfiguration versioningConfiguration() {
+      return versioningConfiguration;
+   }
+
    public boolean stateTransferEnabled() {
       return clustering().stateRetrieval().fetchInMemoryState() || loaders().fetchPersistentState();
    }
-   
+
    @Deprecated
    public boolean onePhaseCommit() {
       return clusteringConfiguration.cacheMode().isSynchronous();
    }
-
-
 }

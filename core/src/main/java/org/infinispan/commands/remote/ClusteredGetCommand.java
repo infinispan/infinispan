@@ -131,7 +131,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (cacheEntry instanceof MVCCEntry) {
          if (trace) log.trace("Handling an internal cache entry...");
          MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
-         return InternalEntryFactory.createValue(mvccEntry.getValue(), -1, mvccEntry.getLifespan(), -1, mvccEntry.getMaxIdle());
+         return InternalEntryFactory.createValue(mvccEntry.getValue(), mvccEntry.getVersion(), -1, mvccEntry.getLifespan(), -1, mvccEntry.getMaxIdle());
       } else {
          InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
          return internalCacheEntry.toInternalCacheValue();

@@ -18,27 +18,7 @@
  */
 package org.infinispan.config;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.infinispan.config.Configuration.AsyncType;
-import org.infinispan.config.Configuration.BooleanAttributeType;
-import org.infinispan.config.Configuration.ClusteringType;
-import org.infinispan.config.Configuration.CustomInterceptorsType;
-import org.infinispan.config.Configuration.DataContainerType;
-import org.infinispan.config.Configuration.DeadlockDetectionType;
-import org.infinispan.config.Configuration.EvictionType;
-import org.infinispan.config.Configuration.ExpirationType;
-import org.infinispan.config.Configuration.HashType;
-import org.infinispan.config.Configuration.L1Type;
-import org.infinispan.config.Configuration.LockingType;
-import org.infinispan.config.Configuration.QueryConfigurationBean;
-import org.infinispan.config.Configuration.RecoveryType;
-import org.infinispan.config.Configuration.StateRetrievalType;
-import org.infinispan.config.Configuration.StoreAsBinary;
-import org.infinispan.config.Configuration.SyncType;
-import org.infinispan.config.Configuration.TransactionType;
-import org.infinispan.config.Configuration.UnsafeType;
+import org.infinispan.config.Configuration.*;
 import org.infinispan.config.GlobalConfiguration.AdvancedExternalizersType;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
@@ -49,22 +29,25 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * DelegatingConfigurationVisitor wraps a list of ConfigurationBeanVisitor visitors and delegates
- * visitor callbacks to all delegates in the list.
- * 
+ * DelegatingConfigurationVisitor wraps a list of ConfigurationBeanVisitor visitors and delegates visitor callbacks to
+ * all delegates in the list.
+ *
  * @author Vladimir Blagojevic
  * @since 5.0
  */
 public class DelegatingConfigurationVisitor implements ConfigurationBeanVisitor {
-   
+
    private List<ConfigurationBeanVisitor> delegates;
-   
-   public DelegatingConfigurationVisitor(ConfigurationBeanVisitor [] visitors){
+
+   public DelegatingConfigurationVisitor(ConfigurationBeanVisitor[] visitors) {
       delegates = Arrays.asList(visitors);
    }
-   
-   public DelegatingConfigurationVisitor(List<ConfigurationBeanVisitor> visitors){
+
+   public DelegatingConfigurationVisitor(List<ConfigurationBeanVisitor> visitors) {
       delegates = visitors;
    }
 
@@ -179,7 +162,7 @@ public class DelegatingConfigurationVisitor implements ConfigurationBeanVisitor 
          delegate.visitExpirationType(bean);
       }
    }
-   
+
    @Override
    public void visitGroupConfig(GroupsConfiguration bean) {
       for (ConfigurationBeanVisitor delegate : delegates) {
@@ -303,6 +286,13 @@ public class DelegatingConfigurationVisitor implements ConfigurationBeanVisitor 
    public void visitStoreAsBinaryType(StoreAsBinary bean) {
       for (ConfigurationBeanVisitor delegate : delegates) {
          delegate.visitStoreAsBinaryType(bean);
+      }
+   }
+
+   @Override
+   public void visitVersioningConfigurationBean(Configuration.VersioningConfigurationBean config) {
+      for (ConfigurationBeanVisitor delegate : delegates) {
+         delegate.visitVersioningConfigurationBean(config);
       }
    }
 }

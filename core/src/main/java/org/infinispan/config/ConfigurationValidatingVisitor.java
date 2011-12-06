@@ -125,6 +125,10 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    }
 
    @Override
+   public void visitVersioningConfigurationBean(Configuration.VersioningConfigurationBean config) {
+   }
+
+   @Override
    public void visitEvictionType(EvictionType et) {
       evictionEnabled = et.strategy.isEnabled();
       if (et.strategy.isEnabled() && et.maxEntries <= 0)

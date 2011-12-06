@@ -22,15 +22,16 @@
  */
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * A transient, mortal cache value to correspond with {@link org.infinispan.container.entries.TransientMortalCacheEntry}
@@ -42,18 +43,18 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    long maxIdle = -1;
    long lastUsed;
 
-   TransientMortalCacheValue(Object value, long created, long lifespan, long maxIdle, long lastUsed) {
-      this(value, created, lifespan, maxIdle);
+   TransientMortalCacheValue(Object value, EntryVersion version, long created, long lifespan, long maxIdle, long lastUsed) {
+      this(value, version, created, lifespan, maxIdle);
       this.lastUsed = lastUsed;
    }
 
-   public TransientMortalCacheValue(Object value, long created, long lifespan, long maxIdle) {
-      super(value, created, lifespan);
+   public TransientMortalCacheValue(Object value, EntryVersion version, long created, long lifespan, long maxIdle) {
+      super(value, version, created, lifespan);
       this.maxIdle = maxIdle;
    }
 
-   public TransientMortalCacheValue(Object value, long created) {
-      super(value, created, -1);
+   public TransientMortalCacheValue(Object value, EntryVersion version, long created) {
+      super(value, version, created, -1);
    }
 
    @Override
@@ -86,7 +87,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, lastUsed, created);
+      return new TransientMortalCacheEntry(key, value, version, maxIdle, lifespan, lastUsed, created);
    }
 
    @Override
@@ -128,6 +129,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       @Override
       public void writeObject(ObjectOutput output, TransientMortalCacheValue value) throws IOException {
          output.writeObject(value.value);
+         output.writeObject(value.version);
          UnsignedNumeric.writeUnsignedLong(output, value.created);
          output.writeLong(value.lifespan); // could be negative so should not use unsigned longs
          UnsignedNumeric.writeUnsignedLong(output, value.lastUsed);
@@ -137,11 +139,12 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       @Override
       public TransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
+         EntryVersion version = (EntryVersion) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
-         return new TransientMortalCacheValue(v, created, lifespan, maxIdle, lastUsed);
+         return new TransientMortalCacheValue(v, version, created, lifespan, maxIdle, lastUsed);
       }
 
       @Override

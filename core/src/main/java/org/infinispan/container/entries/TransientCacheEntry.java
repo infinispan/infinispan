@@ -22,6 +22,7 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -41,13 +42,13 @@ import java.util.Set;
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
    private TransientCacheValue cacheValue;
 
-   TransientCacheEntry(Object key, Object value, long maxIdle) {
-      this(key, value, maxIdle, System.currentTimeMillis());
+   TransientCacheEntry(Object key, Object value, EntryVersion version, long maxIdle) {
+      this(key, value, version, maxIdle, System.currentTimeMillis());
    }
 
-   TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
+   TransientCacheEntry(Object key, Object value, EntryVersion version, long maxIdle, long lastUsed) {
       super(key);
-      cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
+      cacheValue = new TransientCacheValue(value, version, maxIdle, lastUsed);
    }
 
    public Object getValue() {
@@ -56,6 +57,16 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    public Object setValue(Object value) {
       return cacheValue.setValue(value);
+   }
+
+   @Override
+   public EntryVersion getVersion() {
+      return cacheValue.version;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+      this.cacheValue.version = version;
    }
 
    public final void touch() {
@@ -143,6 +154,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
          output.writeObject(tce.key);
          output.writeObject(tce.cacheValue.value);
+         output.writeObject(tce.cacheValue.version);
          UnsignedNumeric.writeUnsignedLong(output, tce.cacheValue.lastUsed);
          output.writeLong(tce.cacheValue.maxIdle); // could be negative so should not use unsigned longs
       }
@@ -151,9 +163,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
+         EntryVersion version = (EntryVersion) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
-         return new TransientCacheEntry(k, v, maxIdle, lastUsed);
+         return new TransientCacheEntry(k, v, version, maxIdle, lastUsed);
       }
 
       @Override

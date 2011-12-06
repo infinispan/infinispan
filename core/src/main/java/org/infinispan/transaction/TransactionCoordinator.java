@@ -26,16 +26,21 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
+
+import java.util.List;
 
 import static javax.transaction.xa.XAResource.XA_OK;
 import static javax.transaction.xa.XAResource.XA_RDONLY;
@@ -56,6 +61,7 @@ public class TransactionCoordinator {
    private InterceptorChain invoker;
    private TransactionTable txTable;
    private Configuration configuration;
+   private CommandCreator commandCreator;
 
    boolean trace;
 
@@ -70,6 +76,37 @@ public class TransactionCoordinator {
       trace = log.isTraceEnabled();
    }
 
+   @Start
+   public void start() {
+      if (configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC
+            && configuration.isEnableVersioning()) {
+         // We need to create versioned variants of PrepareCommand and CommitCommand
+         commandCreator = new CommandCreator() {
+            @Override
+            public CommitCommand createCommitCommand(GlobalTransaction gtx) {
+               return commandsFactory.buildVersionedCommitCommand(gtx);
+            }
+
+            @Override
+            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
+               return commandsFactory.buildVersionedPrepareCommand(gtx, modifications);
+            }
+         };
+      } else {
+         commandCreator = new CommandCreator() {
+            @Override
+            public CommitCommand createCommitCommand(GlobalTransaction gtx) {
+               return commandsFactory.buildCommitCommand(gtx);
+            }
+
+            @Override
+            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
+               return commandsFactory.buildPrepareCommand(gtx, modifications, false);
+            }
+         };
+      }
+   }
+
    public final int prepare(LocalTransaction localTransaction) throws XAException {
       return prepare(localTransaction, false);
    }
@@ -82,7 +119,7 @@ public class TransactionCoordinator {
          return XA_OK;
       }
 
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
+      PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications());
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
@@ -124,7 +161,7 @@ public class TransactionCoordinator {
             handleCommitFailure(e, localTransaction);
          }
       } else {
-         CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
+         CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
          try {
             invoker.invoke(ctx, commitCommand);
             txTable.removeLocalTransaction(localTransaction);
@@ -182,5 +219,10 @@ public class TransactionCoordinator {
 
    private boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
       return configuration.isUse1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
+   }
+
+   private static interface CommandCreator {
+      CommitCommand createCommitCommand(GlobalTransaction gtx);
+      PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications);
    }
 }
