@@ -35,6 +35,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
@@ -85,6 +86,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          assert cache.containsKey(mircea);
          assert cache.containsKey(dan);
       } finally {
+         TestingUtil.clearCacheLoader(cache);
          cache.stop();
          cm.stop();
       }
@@ -148,6 +150,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          if (!started) {
             sharedFactory = new PooledConnectionFactory();
             sharedFactory.start(config, classLoader);
+            started = true;
          }
       }
 

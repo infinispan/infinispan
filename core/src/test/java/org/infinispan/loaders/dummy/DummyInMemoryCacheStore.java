@@ -245,8 +245,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void stop() {
+   public void stop() throws CacheLoaderException {
       record("stop");
+      super.stop();
+
       if (config.isPurgeOnStartup()) {
          String storeName = config.getStoreName();
          if (storeName != null) {
