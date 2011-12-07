@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -77,9 +77,9 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    @Override
    public void testPurgeExpired() throws Exception {
       long lifespan = 1000;
-      InternalCacheEntry k1 = InternalEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry k2 = InternalEntryFactory.create("k2", "v2", lifespan);
-      InternalCacheEntry k3 = InternalEntryFactory.create("k3", "v3", lifespan);
+      InternalCacheEntry k1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry k2 = TestInternalCacheEntryFactory.create("k2", "v2", lifespan);
+      InternalCacheEntry k3 = TestInternalCacheEntryFactory.create("k3", "v3", lifespan);
       cs.store(k1);
       cs.store(k2);
       cs.store(k3);
@@ -100,10 +100,10 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
 
       long lifespan = 1;
       long idle = 1;
-      InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
-      InternalCacheEntry se3 = InternalEntryFactory.create("k3", "v3", -1, idle);
-      InternalCacheEntry se4 = InternalEntryFactory.create("k4", "v4", lifespan, idle);
+      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", "v2");
+      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", "v4", lifespan, idle);
 
       cs.store(se1);
       cs.store(se2);
@@ -129,8 +129,8 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    }
 
    public void testIterator() throws Exception {
-      InternalCacheEntry k1 = InternalEntryFactory.create("k1", "v1");
-      InternalCacheEntry k2 = InternalEntryFactory.create("k2", "v2");
+      InternalCacheEntry k1 = TestInternalCacheEntryFactory.create("k1", "v1");
+      InternalCacheEntry k2 = TestInternalCacheEntryFactory.create("k2", "v2");
       cs.store(k1);
       cs.store(k2);
       

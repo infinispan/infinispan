@@ -24,7 +24,7 @@ package org.infinispan.loaders.bdbje;
 
 import static org.easymock.classextension.EasyMock.*;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
@@ -48,7 +48,7 @@ public class ModificationsTransactionWorkerTest {
    public void testDoWorkOnStore() throws Exception {
       CacheStore cs = createMock(CacheStore.class);
       Store store = createMock(Store.class);
-      InternalCacheEntry entry = InternalEntryFactory.create("1", "2");
+      InternalCacheEntry entry = TestInternalCacheEntryFactory.create("1", "2");
       expect(store.getType()).andReturn(Modification.Type.STORE);
       expect(store.getStoredEntry()).andReturn(entry);
       cs.store(entry);

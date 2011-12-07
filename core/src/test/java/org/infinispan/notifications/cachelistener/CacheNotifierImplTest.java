@@ -25,7 +25,7 @@ package org.infinispan.notifications.cachelistener;
 import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
@@ -138,7 +138,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntriesEvicted() {
-      InternalCacheEntry ice = InternalEntryFactory.create("k", "v");
+      InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k", "v");
       n.notifyCacheEntriesEvicted(Collections.singleton(ice), null);
 
       assert cl.isReceivedPost();

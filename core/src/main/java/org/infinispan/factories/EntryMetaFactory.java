@@ -22,25 +22,37 @@ package org.infinispan.factories;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.container.IncrementalVersionableEntryFactoryImpl;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.VersionedInternalEntryFactoryImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
-@DefaultFactoryFor(classes = EntryFactory.class)
+@DefaultFactoryFor(classes = {EntryFactory.class, InternalEntryFactory.class})
 public class EntryMetaFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
+
       // If we are repeatable-read and have write skew checking enabled and are clustered, lets create an appropriate EntryFactory.
-      if (configuration.getCacheMode().isClustered() &&
+      boolean useVersioning = configuration.getCacheMode().isClustered() &&
             configuration.isTransactionalCache() &&
             configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ &&
             configuration.isWriteSkewCheck() &&
-            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC) {
-         return (T) new IncrementalVersionableEntryFactoryImpl();
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC;
+
+      if (componentType.equals(EntryFactory.class)) {
+         if (useVersioning)
+            return (T) new IncrementalVersionableEntryFactoryImpl();
+         else
+            return (T) new EntryFactoryImpl();
+      } else {
+         if (useVersioning)
+            return (T) new VersionedInternalEntryFactoryImpl();
+         else
+            return (T) new InternalEntryFactoryImpl();
       }
-      // a "regular" entry factory
-      return (T) new EntryFactoryImpl();
    }
 }

@@ -22,7 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
@@ -39,11 +38,16 @@ import java.util.Set;
  * @since 4.0
  */
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
-   private ImmortalCacheValue cacheValue;
+   protected ImmortalCacheValue cacheValue;
 
-   ImmortalCacheEntry(Object key, Object value, EntryVersion version) {
+   protected ImmortalCacheEntry(Object key, ImmortalCacheValue value) {
       super(key);
-      this.cacheValue = new ImmortalCacheValue(value, version);
+      this.cacheValue = value;
+   }
+
+   public ImmortalCacheEntry(Object key, Object value) {
+      super(key);
+      this.cacheValue = new ImmortalCacheValue(value);
    }
 
    public final boolean isExpired(long now) {
@@ -110,16 +114,6 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public EntryVersion getVersion() {
-      return this.cacheValue.version;
-   }
-
-   @Override
-   public void setVersion(EntryVersion version) {
-      this.cacheValue.version = version;
-   }
-
-   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -151,15 +145,13 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.cacheValue.value);
-         output.writeObject(ice.cacheValue.version);
       }
 
       @Override
       public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
-         EntryVersion version = (EntryVersion) input.readObject();
-         return new ImmortalCacheEntry(k, v, version);
+         return new ImmortalCacheEntry(k, v);
       }
 
       @Override

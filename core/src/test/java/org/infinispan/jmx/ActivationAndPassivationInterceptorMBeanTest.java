@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -102,7 +102,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
       assert cache.get(k(m)).equals(v(m));
       assertActivationCount(1);
@@ -113,7 +113,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
       cache.put(k(m), v(m, 2));
       assert cache.get(k(m)).equals(v(m, 2));
@@ -125,7 +125,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
       assert cache.remove(k(m)).equals(v(m));
       assertActivationCount(1);
@@ -136,7 +136,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
       assert cache.replace(k(m), v(m, 2)).equals(v(m));
       assertActivationCount(1);
@@ -147,7 +147,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
 
       Map toAdd = new HashMap();

@@ -34,9 +34,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -83,6 +83,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
+   private InternalEntryFactory entryFactory;
 
    public CacheStoreInterceptor() {
       log = LogFactory.getLog(getClass());
@@ -90,8 +91,9 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void init(CacheLoaderManager loaderManager) {
+   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory) {
       this.loaderManager = loaderManager;
+      this.entryFactory = entryFactory;
    }
 
    @Start(priority = 15)
@@ -354,7 +356,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (entry instanceof InternalCacheEntry) {
          return (InternalCacheEntry) entry;
       } else {
-         return InternalEntryFactory.create(entry.getKey(), entry.getValue(), entry.getVersion(), entry.getLifespan(), entry.getMaxIdle());
+         return entryFactory.create(entry);
       }
    }
 }

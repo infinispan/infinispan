@@ -25,7 +25,7 @@ package org.infinispan.loaders.jdbc.binary;
 import static org.easymock.classextension.EasyMock.*;
 
 import org.infinispan.CacheImpl;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -88,11 +88,11 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
    public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
-      cs.store(InternalEntryFactory.create(k1, "value"));
-      cs.store(InternalEntryFactory.create(k2, "value", 60000)); // will expire
+      cs.store(TestInternalCacheEntryFactory.create(k1, "value"));
+      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 60000)); // will expire
       for (int i = 0; i < 120; i++) {
-         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
-         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
       }
       assert cs.containsKey(k1);
       assert cs.containsKey(k2);
