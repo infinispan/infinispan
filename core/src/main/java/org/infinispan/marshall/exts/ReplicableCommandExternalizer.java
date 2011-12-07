@@ -91,7 +91,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
       // Write an indexer to separate commands defined external to the
       // infinispan core module from the ones defined via module commands
-      if (moduleCommands.contains(command.getClass()))
+      if (moduleCommands != null && moduleCommands.contains(command.getClass()))
          output.writeByte(1);
       else
          output.writeByte(0);
@@ -140,7 +140,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
-      return globalComponentRegistry.getModuleProperties().moduleCommands(null);
+      return globalComponentRegistry.getModuleProperties().moduleCommands();
    }
 
 }
