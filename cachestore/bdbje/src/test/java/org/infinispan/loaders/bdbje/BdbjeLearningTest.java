@@ -39,7 +39,7 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
 import org.easymock.EasyMock;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
@@ -394,7 +394,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
    public void testLoadAndStore() throws InterruptedException, CacheLoaderException {
       assert !cacheMap.containsKey("k");
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v");
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v");
       store(se);
 
       assert load("k").getValue().equals("v");
@@ -403,7 +403,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       assert cacheMap.containsKey("k");
 
       long lifespan = 120000;
-      se = InternalEntryFactory.create("k", "v", lifespan);
+      se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       store(se);
 
       assert load("k").getValue().equals("v");
@@ -412,7 +412,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       assert cacheMap.containsKey("k");
 
       lifespan = 1;
-      se = InternalEntryFactory.create("k", "v", lifespan);
+      se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       store(se);
       Thread.sleep(100);
       assert se.isExpired();
@@ -423,8 +423,8 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
    public void testOnePhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       prepare(mods, tx, true);
@@ -437,10 +437,10 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       cacheMap.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, true);
       assert !cacheMap.containsKey("k1");
@@ -452,8 +452,8 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
    public void testTwoPhaseCommit() throws Throwable {
       final List<Throwable> throwables = new ArrayList<Throwable>();
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       prepare(mods, tx, false);
@@ -483,10 +483,10 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       cacheMap.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, false);
 
@@ -520,12 +520,12 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
    public void testRollback() throws Throwable {
 
-      store(InternalEntryFactory.create("old", "old"));
+      store(TestInternalCacheEntryFactory.create("old", "old"));
 
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
@@ -538,10 +538,10 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       assert cacheMap.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, false);
 
@@ -555,19 +555,19 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
-      store(InternalEntryFactory.create("old", "old"));
+      store(TestInternalCacheEntryFactory.create("old", "old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       commit(tx);
-      store(InternalEntryFactory.create("old", "old"));
+      store(TestInternalCacheEntryFactory.create("old", "old"));
       rollback(tx);
 
       assert cacheMap.containsKey("old");
    }
 
    public void testPreload() throws CacheLoaderException {
-      store(InternalEntryFactory.create("k1", "v1"));
-      store(InternalEntryFactory.create("k2", "v2"));
-      store(InternalEntryFactory.create("k3", "v3"));
+      store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       Set<InternalCacheEntry> set = loadAll();
 
@@ -583,9 +583,9 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
    public void testPurgeExpired() throws Exception {
       long now = System.currentTimeMillis();
       long lifespan = 1000;
-      store(InternalEntryFactory.create("k1", "v1", lifespan));
-      store(InternalEntryFactory.create("k2", "v2", lifespan));
-      store(InternalEntryFactory.create("k3", "v3", lifespan));
+      store(TestInternalCacheEntryFactory.create("k1", "v1", lifespan));
+      store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan));
+      store(TestInternalCacheEntryFactory.create("k3", "v3", lifespan));
 
       assert cacheMap.containsKey("k1");
       assert cacheMap.containsKey("k2");
@@ -599,9 +599,9 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
 
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store(InternalEntryFactory.create("k1", "v1"));
-      store(InternalEntryFactory.create("k2", "v2"));
-      store(InternalEntryFactory.create("k3", "v3"));
+      store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       toStream(out);
@@ -622,9 +622,9 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
 
    public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store(InternalEntryFactory.create("k1", "v1"));
-      store(InternalEntryFactory.create("k2", "v2"));
-      store(InternalEntryFactory.create("k3", "v3"));
+      store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -674,7 +674,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               store(InternalEntryFactory.create(keys[randomInt], values[randomInt]));
+               store(TestInternalCacheEntryFactory.create(keys[randomInt], values[randomInt]));
             } catch (Throwable e) {
                throwables.add(e);
             }

@@ -25,9 +25,9 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 
 import java.util.AbstractSet;
@@ -48,9 +48,11 @@ import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
  */
 public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
+   private final InternalEntryFactory entryFactory;
 
-   public EntrySetCommand(DataContainer container) {
+   public EntrySetCommand(DataContainer container, InternalEntryFactory internalEntryFactory) {
       this.container = container;
+      this.entryFactory = internalEntryFactory;
    }
 
    @Override
@@ -75,7 +77,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
             '}';
    }
 
-   private static class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
+   private class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
       final Set<InternalCacheEntry> entrySet;
       final Map<Object, CacheEntry> lookedUpEntries;
 
@@ -175,8 +177,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                while (it1.hasNext()) {
                   CacheEntry e = it1.next();
                   if (e.isCreated()) {
-                     next = immutableInternalCacheEntry(
-                        InternalEntryFactory.create(e.getKey(), e.getValue(), e.getVersion()));
+                     next = immutableInternalCacheEntry(entryFactory.create(e.getKey(), e.getValue(), e.getVersion()));
                      found = true;
                      break;
                   }
@@ -200,8 +201,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      break;
                   }
                   if (e.isChanged()) {
-                     next = immutableInternalCacheEntry(
-                           InternalEntryFactory.create(key, e.getValue(), e.getVersion()));
+                     next = immutableInternalCacheEntry(entryFactory.create(key, e.getValue(), e.getVersion()));
                      found = true;
                      break;
                   }

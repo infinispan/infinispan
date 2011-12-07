@@ -22,7 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -41,11 +40,11 @@ import java.util.Set;
  */
 public class MortalCacheValue extends ImmortalCacheValue {
 
-   long created;
-   long lifespan = -1;
+   protected long created;
+   protected long lifespan = -1;
 
-   MortalCacheValue(Object value, EntryVersion version, long created, long lifespan) {
-      super(value, version);
+   public MortalCacheValue(Object value, long created, long lifespan) {
+      super(value);
       this.created = created;
       this.lifespan = lifespan;
    }
@@ -85,7 +84,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MortalCacheEntry(key, value, version, lifespan, created);
+      return new MortalCacheEntry(key, value, lifespan, created);
    }
 
    @Override
@@ -128,7 +127,6 @@ public class MortalCacheValue extends ImmortalCacheValue {
       @Override
       public void writeObject(ObjectOutput output, MortalCacheValue mcv) throws IOException {
          output.writeObject(mcv.value);
-         output.writeObject(mcv.version);
          UnsignedNumeric.writeUnsignedLong(output, mcv.created);
          output.writeLong(mcv.lifespan); // could be negative so should not use unsigned longs
       }
@@ -136,10 +134,9 @@ public class MortalCacheValue extends ImmortalCacheValue {
       @Override
       public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
-         EntryVersion version = (EntryVersion) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
-         return new MortalCacheValue(v, version, created, lifespan);
+         return new MortalCacheValue(v, created, lifespan);
       }
 
       @Override

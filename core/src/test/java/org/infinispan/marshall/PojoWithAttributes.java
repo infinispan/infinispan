@@ -24,7 +24,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.data.Key;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class PojoWithAttributes {
 
    public PojoWithAttributes(int age, String key) {
       this.age = age;
-      this.entry = InternalEntryFactory.create(
+      this.entry = TestInternalCacheEntryFactory.create(
             "internalkey-" + key, "internalvalue-" + age, (age * 17));
       this.key = new Key(key, false);
       this.uuid = UUID.randomUUID();

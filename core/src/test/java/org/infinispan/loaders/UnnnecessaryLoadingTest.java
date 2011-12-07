@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -71,7 +71,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    public void testRepeatedLoads() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
-      store.store(InternalEntryFactory.create("k1", "v1"));
+      store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
 
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
@@ -90,7 +90,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
       
-      store.store(InternalEntryFactory.create("k1", "v1"));
+      store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
 
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
@@ -105,7 +105,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       
       // now check that put won't return the stored value
-      store.store(InternalEntryFactory.create("k2", "v2"));
+      store.store(TestInternalCacheEntryFactory.create("k2", "v2"));
       Object putReturn = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).put("k2", "v2-second");
       assert putReturn == null;
       assert countingCS.numLoads == 1 : "Expected 1, was " + countingCS.numLoads;
@@ -148,8 +148,8 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    public void testSkipCacheLoadFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
       
-      store.store(InternalEntryFactory.create("home", "Vermezzo"));
-      store.store(InternalEntryFactory.create("home-second", "Newcastle Upon Tyne"));
+      store.store(TestInternalCacheEntryFactory.create("home", "Vermezzo"));
+      store.store(TestInternalCacheEntryFactory.create("home-second", "Newcastle Upon Tyne"));
 
       assert countingCS.numLoads == 0;
       //load using SKIP_CACHE_LOAD should not find the object in the store
