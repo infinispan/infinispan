@@ -257,11 +257,16 @@ public class TableManipulation implements Cloneable {
 
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
-         //handle type conversion specifically for SYBASE -> ISPN-1592 
-         if (DatabaseType.SYBASE == getDatabaseType()) { 
-            updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
-         } else {
-            updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+               break;
          }
       }
       return updateRowSql;
@@ -269,10 +274,16 @@ public class TableManipulation implements Cloneable {
 
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         if (DatabaseType.SYBASE == getDatabaseType()) { 
-            selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
-         } else { 
-            selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
          }
       }
       return selectRowSql;
@@ -280,10 +291,16 @@ public class TableManipulation implements Cloneable {
 
    public String getDeleteRowSql() {
       if (deleteRowSql == null) {
-         if (DatabaseType.SYBASE == getDatabaseType()) { 
-            deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
-         } else {
-            deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
          }
       }
       return deleteRowSql;
