@@ -69,7 +69,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
    
-   public TransactionConfigurationBuilder transactionSyncrontizationRegisteryLookup(TransactionSynchronizationRegistryLookup lookup) {
+   public TransactionConfigurationBuilder transactionSyncronizationRegisteryLookup(TransactionSynchronizationRegistryLookup lookup) {
       this.transactionSynchronizationRegistryLookup = lookup;
       return this;
    }

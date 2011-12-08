@@ -68,7 +68,7 @@ public class LegacyConfigurationAdaptor {
             .fetchInMemoryState(config.clustering().stateRetrieval().fetchInMemoryState())
             .initialRetryWaitTime(config.clustering().stateRetrieval().initialRetryWaitTime())
             .logFlushTimeout(config.clustering().stateRetrieval().logFlushTimeout())
-            .maxNonProgressingLogWrites(config.clustering().stateRetrieval().maxNonPorgressingLogWrites())
+            .maxNonProgressingLogWrites(config.clustering().stateRetrieval().maxNonProgressingLogWrites())
             .numRetries(config.clustering().stateRetrieval().numRetries())
             .retryWaitTimeIncreaseFactor(config.clustering().stateRetrieval().retryWaitTimeIncreaseFactor())
             .timeout(config.clustering().stateRetrieval().timeout());
