@@ -10,7 +10,7 @@ public class StateRetrievalConfiguration {
    private boolean fetchInMemoryState;
    private final long initialRetryWaitTime;
    private final long logFlushTimeout;
-   private final int maxNonPorgressingLogWrites;
+   private final int maxNonProgressingLogWrites;
    private final int numRetries;
    private final int retryWaitTimeIncreaseFactor;
    private long timeout;
@@ -21,7 +21,7 @@ public class StateRetrievalConfiguration {
       this.fetchInMemoryState = fetchInMemoryState;
       this.initialRetryWaitTime = initialRetryWaitTime;
       this.logFlushTimeout = logFlushTimeout;
-      this.maxNonPorgressingLogWrites = maxNonPorgressingLogWrites;
+      this.maxNonProgressingLogWrites = maxNonPorgressingLogWrites;
       this.numRetries = numRetries;
       this.retryWaitTimeIncreaseFactor = retryWaitTimeIncreaseFactory;
       this.timeout = timeout;
@@ -71,8 +71,8 @@ public class StateRetrievalConfiguration {
     * This is the maximum number of non-progressing transaction log writes after which a
     * brute-force flush approach is resorted to, to synchronize transaction logs.
     */
-   public int maxNonPorgressingLogWrites() {
-      return maxNonPorgressingLogWrites;
+   public int maxNonProgressingLogWrites() {
+      return maxNonProgressingLogWrites;
    }
 
    /**

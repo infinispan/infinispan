@@ -19,7 +19,7 @@ public class StateRetrievalConfigurationBuilder extends
    private Boolean fetchInMemoryState = null;
    private long initialRetryWaitTime = 500L;
    private long logFlushTimeout = TimeUnit.MINUTES.toMillis(1);
-   private int maxNonPorgressingLogWrites = 100;
+   private int maxNonProgressingLogWrites = 100;
    private int numRetries = 5;
    private int retryWaitTimeIncreaseFactor = 2;
    private long timeout = TimeUnit.MINUTES.toMillis(4);
@@ -67,8 +67,8 @@ public class StateRetrievalConfigurationBuilder extends
     * This is the maximum number of non-progressing transaction log writes after which a brute-force
     * flush approach is resorted to, to synchronize transaction logs.
     */
-   public StateRetrievalConfigurationBuilder maxNonPorgressingLogWrites(int i) {
-      this.maxNonPorgressingLogWrites = i;
+   public StateRetrievalConfigurationBuilder maxNonProgressingLogWrites(int i) {
+      this.maxNonProgressingLogWrites = i;
       return this;
    }
 
@@ -117,7 +117,7 @@ public class StateRetrievalConfigurationBuilder extends
       if (fetchInMemoryState == null)
          fetchInMemoryState = false;
       return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState.booleanValue(),
-            initialRetryWaitTime, logFlushTimeout, maxNonPorgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
+            initialRetryWaitTime, logFlushTimeout, maxNonProgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
    }
 
 }
