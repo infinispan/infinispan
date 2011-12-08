@@ -112,5 +112,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    IndexingConfiguration create() {
       return new IndexingConfiguration(TypedProperties.toTypedProperties(properties), enabled, indexLocalOnly);
    }
+   
+   @Override
+   public IndexingConfigurationBuilder read(IndexingConfiguration template) {
+      this.enabled = template.enabled();
+      this.indexLocalOnly = template.indexLocalOnly();
+      this.properties = template.properties();
+      
+      return this;
+   }
 
 }

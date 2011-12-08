@@ -59,5 +59,13 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    DataContainerConfiguration create() {
       return new DataContainerConfiguration(dataContainer, TypedProperties.toTypedProperties(properties));
    }
+   
+   @Override
+   public DataContainerConfigurationBuilder read(DataContainerConfiguration template) {
+      this.dataContainer = template.dataContainer();
+      this.properties = template.properties();
+      
+      return this;
+   }
 
 }

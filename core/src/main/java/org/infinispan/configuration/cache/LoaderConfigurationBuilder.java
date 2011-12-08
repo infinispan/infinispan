@@ -7,7 +7,7 @@ import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChildBuilder<LoaderConfiguration> implements
+public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuilder<LoaderConfiguration> implements
       LoaderConfigurationChildBuilder {
 
    private static final Log log = LogFactory.getLog(LoaderConfigurationBuilder.class);
@@ -18,14 +18,10 @@ public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChil
    private boolean purgeOnStartup = false;
    private int purgerThreads = 1;
    private boolean purgeSynchronously = false;
-   private final AsyncLoaderConfigurationBuilder async;
-   private final SingletonStoreConfigurationBuilder singletonStore;
    private Properties properties = new Properties();
 
    LoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.async = new AsyncLoaderConfigurationBuilder(this);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
    public LoaderConfigurationBuilder cacheLoader(CacheLoader cacheLoader) {
@@ -98,13 +94,19 @@ public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChil
    }
 
    @Override
-   public AsyncLoaderConfigurationBuilder async() {
-      return async;
-   }
-
-   @Override
-   public SingletonStoreConfigurationBuilder singletonStore() {
-      return singletonStore;
+   public LoaderConfigurationBuilder read(LoaderConfiguration template) {
+      this.cacheLoader = template.cacheLoader();
+      this.fetchPersistentState = template.fetchPersistentState();
+      this.ignoreModifications = template.ignoreModifications();
+      this.properties = template.properties();
+      this.purgeOnStartup = template.purgeOnStartup();
+      this.purgerThreads = template.purgerThreads();
+      this.purgeSynchronously = template.purgeSynchronously();
+      
+      this.async.read(template.async());
+      this.singletonStore.read(template.singletonStore());
+      
+      return this;
    }
 
 }

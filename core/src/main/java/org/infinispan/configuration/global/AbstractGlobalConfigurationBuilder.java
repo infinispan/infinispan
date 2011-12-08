@@ -54,4 +54,6 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    
    abstract T create();
    
+   abstract GlobalConfigurationChildBuilder read(T template);
+   
 }

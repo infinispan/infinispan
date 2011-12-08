@@ -50,5 +50,16 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    InterceptorConfiguration create() {
       return new InterceptorConfiguration(after, before, interceptor, index, position);
    }
+   
+   @Override
+   public InterceptorConfigurationBuilder read(InterceptorConfiguration template) {
+      this.after = template.after();
+      this.before = template.before();
+      this.index = template.index();
+      this.interceptor = template.interceptor();
+      this.position = template.position();
+      
+      return this;
+   }
 
 }

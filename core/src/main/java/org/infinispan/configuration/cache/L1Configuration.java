@@ -19,7 +19,7 @@ public class L1Configuration {
       this.onRehash = onRehash;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 

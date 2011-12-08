@@ -43,14 +43,14 @@ public class LegacyConfigurationAdaptor {
       .hash()
             .numOwners(config.clustering().hash().numOwners())
             .numVirtualNodes(config.clustering().hash().numVirtualNodes())
-            .rehashEnabled(config.clustering().hash().isRehashEnabled())
+            .rehashEnabled(config.clustering().hash().rehashEnabled())
             .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
             .rehashWait(config.clustering().hash().rehashWait())
             .groups()
                .enabled(config.clustering().hash().groupsConfiguration().enabled())
                .groupers(config.clustering().hash().groupsConfiguration().groupers());
       
-      if (config.clustering().l1().isEnabled()) {
+      if (config.clustering().l1().enabled()) {
          legacy.clustering()
             .l1()
                .invalidationThreshold(config.clustering().l1().invalidationThreshold())
@@ -181,10 +181,10 @@ public class LegacyConfigurationAdaptor {
         
       legacy.unsafe().unreliableReturnValues(config.unsafe().unreliableReturnValues());
 
-      if (config.versioningConfiguration().enabled()) {
+      if (config.versioning().enabled()) {
          legacy.versioning()
                .enable()
-               .versioningScheme(config.versioningConfiguration().scheme());
+               .versioningScheme(config.versioning().scheme());
       }
       
       return legacy.build();

@@ -21,6 +21,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useEagerLocking = false;
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
+   
+   // TODO clean this up? It's not used
    private boolean use1PcForAutoCommitTransactions = false;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
@@ -110,5 +112,24 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          lockingMode = LockingMode.PESSIMISTIC;
       }
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());
+   }
+   
+   @Override
+   public TransactionConfigurationBuilder read(TransactionConfiguration template) {
+      this.autoCommit = template.autoCommit();
+      this.cacheStopTimeout = template.cacheStopTimeout();
+      this.eagerLockingSingleNode = template.eagerLockingSingleNode();
+      this.lockingMode = template.lockingMode();
+      this.syncCommitPhase = template.syncCommitPhase();
+      this.syncRollbackPhase = template.syncRollbackPhase();
+      this.transactionManagerLookup = template.transactionManagerLookup();
+      this.transactionMode = template.transactionMode();
+      this.transactionSynchronizationRegistryLookup = template.transactionSynchronizationRegistryLookup();
+      this.useEagerLocking = template.useEagerLocking();
+      this.useSynchronization = template.useSynchronization();
+      
+      this.recovery.read(template.recovery());
+      
+      return this;
    }
 }

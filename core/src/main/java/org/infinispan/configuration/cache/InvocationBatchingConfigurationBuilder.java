@@ -29,4 +29,11 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
       return new InvocationBatchingConfiguration(enabled);
    }
    
+   @Override
+   public InvocationBatchingConfigurationBuilder read(InvocationBatchingConfiguration template) {
+      this.enabled = template.enabled();
+      
+      return this;
+   }
+   
 }

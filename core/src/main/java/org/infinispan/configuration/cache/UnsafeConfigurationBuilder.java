@@ -23,5 +23,12 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
    UnsafeConfiguration create() {
       return new UnsafeConfiguration(unreliableReturnValues);
    }
+   
+   @Override
+   public UnsafeConfigurationBuilder read(UnsafeConfiguration template) {
+      this.unreliableReturnValues = template.unreliableReturnValues();
+      
+      return this;
+   }
 
 }

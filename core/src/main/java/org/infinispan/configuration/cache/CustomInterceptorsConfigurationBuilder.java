@@ -28,5 +28,11 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
    CustomInterceptorsConfiguration create() {
       return new CustomInterceptorsConfiguration(interceptors);
    }
+   
+   @Override
+   public CustomInterceptorsConfigurationBuilder read(CustomInterceptorsConfiguration template) {
+      this.interceptors = template.interceptors();
+      return this;
+   }
 
 }

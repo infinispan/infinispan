@@ -20,6 +20,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
+import org.infinispan.util.TypedProperties;
 
 /**
  * // TODO: Document this
@@ -33,10 +34,14 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
    private final long fsyncInterval;
    private final FsyncMode fsyncMode;
    private final int streamBufferSize;
+   
+   
 
-   FileCacheStoreConfiguration(long lockAcquistionTimeout, int lockConcurrencyLevel,
-               String location, long fsyncInterval, FsyncMode fsyncMode, int streamBufferSize) {
-      super(lockAcquistionTimeout, lockConcurrencyLevel);
+   FileCacheStoreConfiguration(String location, long fsyncInterval, FsyncMode fsyncMode, int streamBufferSize, long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup,
+         boolean purgeSynchronously, boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
+         AsyncLoaderConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, fetchPersistentState,
+            ignoreModifications, properties, async, singletonStore);
       this.location = location;
       this.fsyncInterval = fsyncInterval;
       this.fsyncMode = fsyncMode;

@@ -163,6 +163,27 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             classLoader );// TODO
    }
 
-   
+   public ConfigurationBuilder read(Configuration template) {
+      this.classLoader = template.classLoader();
+      this.name = template.name();
+      
+      this.clustering.read(template.clustering());
+      this.customInterceptors.read(template.customInterceptors());
+      this.dataContainer.read(template.dataContainer());
+      this.deadlockDetection.read(template.deadlockDetection());
+      this.eviction.read(template.eviction());
+      this.expiration.read(template.expiration());
+      this.indexing.read(template.indexing());
+      this.invocationBatching.read(template.invocationBatching());
+      this.jmxStatistics.read(template.jmxStatistics());
+      this.loaders.read(template.loaders());
+      this.locking.read(template.locking());
+      this.storeAsBinary.read(template.storeAsBinary());
+      this.transaction.read(template.transaction());
+      this.unsafe.read(template.unsafe());
+      this.versioning.read(template.versioning());
+      
+      return this;
+   }
    
 }

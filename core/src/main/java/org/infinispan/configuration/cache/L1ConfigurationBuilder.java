@@ -104,5 +104,15 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       
       return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash.booleanValue());
    }
+   
+   @Override
+   public L1ConfigurationBuilder read(L1Configuration template) {
+      enabled = template.enabled();
+      invalidationThreshold = template.invalidationThreshold();
+      lifespan = template.lifespan();
+      onRehash = template.onRehash();
+      
+      return this;
+   }
 
 }

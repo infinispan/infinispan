@@ -95,4 +95,6 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
    
    abstract T create();
    
+   public abstract ConfigurationChildBuilder read(T template);
+   
 }
