@@ -49,4 +49,12 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
       return new DeadlockDetectionConfiguration(enabled, spinDuration);
    }
    
+   @Override
+   public DeadlockDetectionConfigurationBuilder read(DeadlockDetectionConfiguration template) {
+      this.enabled = template.enabled();
+      this.spinDuration = template.spinDuration();
+      
+      return this;
+   }
+   
 }

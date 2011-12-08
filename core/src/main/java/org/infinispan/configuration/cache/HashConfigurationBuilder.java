@@ -136,4 +136,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
             rehashWait, groupsConfigurationBuilder.create());
    }
 
+   @Override
+   public HashConfigurationBuilder read(HashConfiguration template) {
+      this.consistentHash = template.consistentHash();
+      this.hash = template.hash();
+      this.numOwners = template.numOwners();
+      this.numVirtualNodes = template.numVirtualNodes();
+      this.rehashEnabled = template.rehashEnabled();
+      this.rehashRpcTimeout = template.rehashRpcTimeout();
+      this.rehashWait = template.rehashWait();
+      
+      this.groupsConfigurationBuilder.read(template.groupsConfiguration());
+      
+      return this;
+   }
+   
 }

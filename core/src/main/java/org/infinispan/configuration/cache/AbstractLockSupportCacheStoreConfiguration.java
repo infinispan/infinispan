@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+w * Copyright 2011 Red Hat, Inc. and/or its affiliates.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,27 +19,31 @@
 
 package org.infinispan.configuration.cache;
 
+import org.infinispan.util.TypedProperties;
+
 /**
  * // TODO: Document this
  *
  * @author Galder Zamarreño
  * @since // TODO
  */
-public abstract class AbstractLockSupportCacheStoreConfiguration {
+public abstract class AbstractLockSupportCacheStoreConfiguration extends AbstractLoaderConfiguration {
 
    private final int lockConcurrencyLevel;
    private final long lockAcquistionTimeout;
-
-   AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout, int lockConcurrencyLevel) {
+   AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously, boolean fetchPersistentState,
+         boolean ignoreModifications, TypedProperties properties, AsyncLoaderConfiguration async,
+         SingletonStoreConfiguration singletonStore) {
+      super(purgeOnStartup, purgeSynchronously, fetchPersistentState, ignoreModifications, properties, async, singletonStore);
       this.lockAcquistionTimeout = lockAcquistionTimeout;
       this.lockConcurrencyLevel = lockConcurrencyLevel;
    }
 
-   public long getLockAcquistionTimeout() {
+   public long lockAcquistionTimeout() {
       return lockAcquistionTimeout;
    }
 
-   public int getLockConcurrencyLevel() {
+   public int lockConcurrencyLevel() {
       return lockConcurrencyLevel;
    }
 

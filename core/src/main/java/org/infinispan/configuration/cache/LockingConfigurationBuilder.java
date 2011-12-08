@@ -61,4 +61,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    LockingConfiguration create() {
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
+   
+   @Override
+   public LockingConfigurationBuilder read(LockingConfiguration template) {
+      concurrencyLevel = template.concurrencyLevel();
+      isolationLevel = template.isolationLevel();
+      lockAcquisitionTimeout = template.lockAcquisitionTimeout();
+      useLockStriping = template.useLockStriping();
+      writeSkewCheck = template.writeSkewCheck();
+      
+      return this;
+   }
 }

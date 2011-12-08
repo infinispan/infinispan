@@ -74,5 +74,17 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    ClusteringConfiguration create() {
       return new ClusteringConfiguration(cacheMode, asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(), l1ConfigurationBuilder.create(), stateRetrievalConfigurationBuilder.create(), syncConfigurationBuilder.create());
    }
+   
+   @Override
+   public ClusteringConfigurationBuilder read(ClusteringConfiguration template) {
+      this.cacheMode = template.cacheMode();
+      asyncConfigurationBuilder.read(template.async());
+      hashConfigurationBuilder.read(template.hash());
+      l1ConfigurationBuilder.read(template.l1());
+      stateRetrievalConfigurationBuilder.read(template.stateRetrieval());
+      syncConfigurationBuilder.read(template.sync());
+      
+      return this;
+   }
 
 }

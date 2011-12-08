@@ -64,4 +64,17 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return new LoadersConfiguration(passivation, preload, shared, loaders);
    }
    
+   @Override
+   public LoadersConfigurationBuilder read(LoadersConfiguration template) {
+      for (LoaderConfiguration c : template.cacheLoaders()) {
+         // TODO is this right?!?
+         this.addCacheLoader().read(c);
+      }
+      this.passivation = template.passivation();
+      this.preload = template.preload();
+      this.shared = template.shared();
+      
+      return this;
+   }
+   
 }

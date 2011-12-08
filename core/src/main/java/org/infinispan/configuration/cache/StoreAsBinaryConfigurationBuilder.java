@@ -47,4 +47,11 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       return new StoreAsBinaryConfiguration(enabled, storeKeysAsBinary, storeValuesAsBinary);
    }   
    
+   public StoreAsBinaryConfigurationBuilder read(StoreAsBinaryConfiguration template) {
+      this.enabled = template.enabled();
+      this.storeKeysAsBinary = template.storeKeysAsBinary();
+      this.storeValuesAsBinary = template.storeValuesAsBinary();
+      
+      return this;
+   }
 }

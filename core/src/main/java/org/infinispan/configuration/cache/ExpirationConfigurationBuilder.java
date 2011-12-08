@@ -88,5 +88,15 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    ExpirationConfiguration create() {
       return new ExpirationConfiguration(lifespan, maxIdle, reaperEnabled, wakeUpInterval);
    }
+   
+   @Override
+   public ExpirationConfigurationBuilder read(ExpirationConfiguration template) {
+      this.lifespan = template.lifespan();
+      this.maxIdle = template.maxIdle();
+      this.reaperEnabled = template.reaperEnabled();
+      this.wakeUpInterval = template.wakeUpInterval();
+      
+      return this;
+   }
 
 }

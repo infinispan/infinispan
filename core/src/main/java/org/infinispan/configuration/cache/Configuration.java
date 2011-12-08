@@ -118,7 +118,7 @@ public class Configuration {
       return unsafeConfiguration;
    }
 
-   public VersioningConfiguration versioningConfiguration() {
+   public VersioningConfiguration versioning() {
       return versioningConfiguration;
    }
 

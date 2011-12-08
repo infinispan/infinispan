@@ -40,5 +40,13 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    RecoveryConfiguration create() {
       return new RecoveryConfiguration(enabled, recoveryInfoCacheName);
    }
+   
+   @Override
+   public RecoveryConfigurationBuilder read(RecoveryConfiguration template) {
+      this.enabled = template.enabled();
+      this.recoveryInfoCacheName = template.recoveryInfoCacheName();
+      
+      return this;
+   }
 
 }

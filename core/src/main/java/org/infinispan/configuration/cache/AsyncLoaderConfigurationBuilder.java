@@ -10,7 +10,7 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
    private long shutdownTimeout = TimeUnit.SECONDS.toMillis(25);
    private int threadPoolSize = 1;
    
-   AsyncLoaderConfigurationBuilder(LoaderConfigurationBuilder builder) {
+   AsyncLoaderConfigurationBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
       super(builder);
    }
 
@@ -58,6 +58,17 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
    @Override
    AsyncLoaderConfiguration create() {
       return new AsyncLoaderConfiguration(enabled, flushLockTimeout, modificationQueueSize, shutdownTimeout, threadPoolSize);
+   }
+   
+   @Override
+   public AsyncLoaderConfigurationBuilder read(AsyncLoaderConfiguration template) {
+      this.enabled = template.enabled();
+      this.flushLockTimeout = template.flushLockTimeout();
+      this.modificationQueueSize = template.modificationQueueSize();
+      this.shutdownTimeout = template.shutdownTimeout();
+      this.threadPoolSize = template.threadPoolSize();
+      
+      return this;
    }
 
 }

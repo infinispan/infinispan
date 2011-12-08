@@ -92,4 +92,13 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    SerializationConfiguration create() {
       return new SerializationConfiguration(marshallerClass, marshallVersion, advancedExternalizers);
    }
+   
+   @Override
+   SerializationConfigurationBuilder read(SerializationConfiguration template) {
+      this.advancedExternalizers = template.advancedExternalizers();
+      this.marshallerClass = template.marshallerClass();
+      this.marshallVersion = template.version();
+      
+      return this;
+   }
 }

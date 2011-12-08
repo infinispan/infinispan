@@ -62,4 +62,12 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
       return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
    }
    
+   @Override
+   ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
+      this.factory = template.factory();
+      this.properties = template.properties();
+      
+      return this;
+   }
+   
 }

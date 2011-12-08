@@ -56,4 +56,12 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
    VersioningConfiguration create() {
       return new VersioningConfiguration(enabled, scheme);
    }
+   
+   @Override
+   public VersioningConfigurationBuilder read(VersioningConfiguration template) {
+      this.enabled = template.enabled();
+      this.scheme = template.scheme();
+      
+      return this;
+   }
 }

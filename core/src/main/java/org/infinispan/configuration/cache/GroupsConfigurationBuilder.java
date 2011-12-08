@@ -84,4 +84,12 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       return new GroupsConfiguration(enabled, groupers);
    }
 
+   @Override
+   public GroupsConfigurationBuilder read(GroupsConfiguration template) {
+      this.enabled = template.enabled();
+      this.groupers = template.groupers();
+      
+      return this;
+   }
+   
 }

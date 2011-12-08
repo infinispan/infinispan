@@ -78,7 +78,7 @@ public class HashConfiguration {
     * If false, no rebalancing or rehashing will take place when a new node joins the cluster or a
     * node leaves
     */
-   public boolean isRehashEnabled() {
+   public boolean rehashEnabled() {
       return rehashEnabled;
    }
 

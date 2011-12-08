@@ -119,5 +119,18 @@ public class StateRetrievalConfigurationBuilder extends
       return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState.booleanValue(),
             initialRetryWaitTime, logFlushTimeout, maxNonProgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
    }
+   
+   public StateRetrievalConfigurationBuilder read(StateRetrievalConfiguration template) {
+      this.alwaysProvideInMemoryState = template.alwaysProvideInMemoryState();
+      this.fetchInMemoryState = template.fetchInMemoryState();
+      this.initialRetryWaitTime = template.initialRetryWaitTime();
+      this.logFlushTimeout = template.logFlushTimeout();
+      this.maxNonProgressingLogWrites = template.maxNonProgressingLogWrites();
+      this.numRetries = template.numRetries();
+      this.retryWaitTimeIncreaseFactor = template.retryWaitTimeIncreaseFactor();
+      this.timeout = template.timeout();
+      
+      return this;
+   }
 
 }
