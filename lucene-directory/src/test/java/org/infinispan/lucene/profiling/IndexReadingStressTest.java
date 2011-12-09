@@ -118,7 +118,7 @@ public class IndexReadingStressTest {
    }
 
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
-      SharedState state = fillDirectory(dir);
+      SharedState state = fillDirectory(dir, TERMS_NUMBER);
       ExecutorService e = Executors.newFixedThreadPool(THREADS);
       for (int i = 0; i < THREADS; i++) {
          e.execute(new IndependentLuceneReaderThread(dir, state, i, 1, TERMS_NUMBER));
@@ -134,11 +134,11 @@ public class IndexReadingStressTest {
                + writerTaskCount);
    }
 
-   private SharedState fillDirectory(Directory directory) throws CorruptIndexException, LockObtainFailedException, IOException {
+   static SharedState fillDirectory(Directory directory, int termsNumber) throws CorruptIndexException, LockObtainFailedException, IOException {
       CacheTestSupport.initializeDirectory(directory);
       SharedState state = new SharedState(0);
       IndexWriter iwriter = LuceneSettings.openWriter(directory, 100000);
-      for (int i = 0; i <= TERMS_NUMBER; i++) {
+      for (int i = 0; i <= termsNumber; i++) {
          Document doc = new Document();
          String term = String.valueOf(i);
          //For even values of i we add to "main" field
