@@ -108,8 +108,8 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
    }
 
    private CacheStore extractCacheStore() {
-      CacheLoaderManager m = TestingUtil.extractComponent(cache.getCache(), CacheLoaderManager.class);
-      return m.getCacheStore();
+      return cache.getCache().getAdvancedCache().getComponentRegistry()
+            .getComponent(CacheLoaderManager.class).getCacheStore();
    }
 
    private void restartCache() {

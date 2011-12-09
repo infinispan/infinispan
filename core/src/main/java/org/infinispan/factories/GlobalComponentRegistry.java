@@ -107,7 +107,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
-         Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories(configuration.getClassLoader());
+         moduleProperties.loadModuleCommandHandlers(configuration.getClassLoader());
+         Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
@@ -175,9 +176,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public Map<Byte,ModuleCommandInitializer> getModuleCommandInitializers() {
-            return moduleProperties.moduleCommandInitializers(defaultClassLoader);
+      return moduleProperties.moduleCommandInitializers();
    }
-
 
    @Override
    public void start() {

@@ -69,7 +69,7 @@ public class SyncReplTxTest extends MultipleCacheManagersTest {
    }
 
    private TransactionManager beginTransaction(Cache cache) throws NotSupportedException, SystemException {
-      TransactionManager mgr = TestingUtil.getTransactionManager(cache);
+      TransactionManager mgr = cache.getAdvancedCache().getTransactionManager();
       mgr.begin();
       return mgr;
    }
