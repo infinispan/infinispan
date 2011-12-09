@@ -784,9 +784,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
+   
+   public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
+      return new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration);
+   }
 
    public Configuration getDefaultConfiguration() {
       return defaultConfiguration;
+   }
+   
+   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
+      return new LegacyConfigurationAdaptor().adapt(defaultConfiguration);
    }
 
    public Set<String> getCacheNames() {

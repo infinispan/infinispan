@@ -61,6 +61,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public Configuration getConfiguration() {
       return cache.getConfiguration();
    }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
+      return cache.getCacheConfiguration();
+   }
 
    public boolean startBatch() {
       return cache.startBatch();
