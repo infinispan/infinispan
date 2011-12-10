@@ -23,12 +23,15 @@
 
 package org.infinispan.configuration;
 
+import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -118,5 +121,15 @@ public class ConfigurationUnitTest {
       org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
    }
    
+   @Test(expectedExceptions=IllegalStateException.class)
+   public void testInvocationBatchingAndNonTransactional() {
+      Configuration c = new ConfigurationBuilder()
+         .transaction()
+            .transactionMode(NON_TRANSACTIONAL)
+         .invocationBatching()
+            .enable()
+         .build();
+      new DefaultCacheManager(c);
+   }
    
 }
