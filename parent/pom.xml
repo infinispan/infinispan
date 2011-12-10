@@ -593,6 +593,18 @@
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
             </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-pmd-plugin</artifactId>
+               <!-- See also reporting plugins -->
+               <version>2.6</version>
+               <configuration>
+                  <minimumTokens>100</minimumTokens>
+                  <targetJdk>1.6</targetJdk>
+                  <linkXref>false</linkXref>
+                  <sourceEncoding>utf-8</sourceEncoding>
+               </configuration>
+            </plugin>
             <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
@@ -682,14 +694,12 @@
                <xmlOutputDirectory>target</xmlOutputDirectory>
             </configuration>
          </plugin>
+         <!-- PMD report -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <version>1.9</version>
-            <configuration>
-               <minimumTokens>100</minimumTokens>
-               <targetJdk>1.6</targetJdk>
-            </configuration>
+            <!-- Needs to be re-defined and configured in pluginManagement section -->
+            <version>2.6</version>
          </plugin>
       </plugins>
    </reporting>
