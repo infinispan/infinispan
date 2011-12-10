@@ -2,11 +2,9 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 
-import org.infinispan.transaction.TransactionMode;
-
 public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder<InvocationBatchingConfiguration> {
 
-   private boolean enabled = false;
+   boolean enabled = false;
    
    InvocationBatchingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -24,7 +22,7 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    void validate() {
-      if (enabled && getBuilder().transaction().transactionMode.equals(NON_TRANSACTIONAL))
+      if (enabled && getBuilder().transaction().transactionMode != null && getBuilder().transaction().transactionMode.equals(NON_TRANSACTIONAL))
          throw new IllegalStateException("Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL");
    }
 

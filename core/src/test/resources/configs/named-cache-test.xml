@@ -94,7 +94,7 @@
                    autoCommit="false" />
    </namedCache>
 
-   <namedCache>
+   <namedCache name="testCache1">
       <locking lockAcquisitionTimeout="20000"/>
       <clustering mode="invalidation">
          <async useReplQueue="false" asyncMarshalling="false"/>
@@ -123,7 +123,7 @@
    </namedCache>
 
    <namedCache name="txSyncRepl">
-      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL"/>
       <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
@@ -203,7 +203,7 @@
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">
-      <clustering mode="r" >
+      <clustering mode="repl" >
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
       <jmxStatistics enabled="false"/>
@@ -237,7 +237,7 @@
    </namedCache>
 
    <namedCache name="withReplicationQueue">
-      <clustering mode="r">
+      <clustering mode="repl">
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
    </namedCache>

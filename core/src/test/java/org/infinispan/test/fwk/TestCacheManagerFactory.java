@@ -85,42 +85,12 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, gc, c);
    }
 
-
-   public static EmbeddedCacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
-      InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
-            xmlFile,
-            InfinispanConfiguration.resolveSchemaPath(),
-            Thread.currentThread().getContextClassLoader());
-      return fromConfigFileParser(parser, allowDupeDomains);
-   }
-
    public static EmbeddedCacheManager fromXml(String xmlFile) throws IOException {
-      return fromXml(xmlFile, false);
+      return new DefaultCacheManager(xmlFile);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
-      return fromStream(is, false);
-   }
-
-   public static EmbeddedCacheManager fromStream(InputStream is, boolean allowDupeDomains) throws IOException {
-      InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
-            is, InfinispanConfiguration.findSchemaInputStream());
-      return fromConfigFileParser(parser, allowDupeDomains);
-   }
-
-   private static EmbeddedCacheManager fromConfigFileParser(InfinispanConfiguration parser, boolean allowDupeDomains) {
-      GlobalConfiguration gc = parser.parseGlobalConfiguration();
-      if (allowDupeDomains) gc.setAllowDuplicateDomains(true);
-      Map<String, Configuration> named = parser.parseNamedConfigurations();
-      Configuration c = parser.parseDefaultConfiguration();
-
-      minimizeThreads(gc);
-      amendTransport(gc);
-
-      EmbeddedCacheManager cm = newDefaultCacheManager(true, gc, c, false);
-      for (Map.Entry<String, Configuration> e : named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
-      cm.start();
-      return cm;
+      return new DefaultCacheManager(is);
    }
 
    /**
