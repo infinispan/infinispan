@@ -471,7 +471,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Channel does not contain STREAMING_STATE_TRANSFER. " +
          "Cannot support state transfers!", id = 91)
-   void streamingStateTransferNotPresent();
+   void           ingStateTransferNotPresent();
 
    @LogMessage(level = WARN)
    @Message(value = "Channel not set up properly!", id = 92)
@@ -806,4 +806,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
    void customInterceptorExpectsInjection(String customInterceptorFQCN);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error reading configuration", id = 174)
+   void errorReadingConfiguration(@Cause Exception e);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error closing resource", id = 175)
+   void failedToCloseResource(@Cause Throwable e);
+   
 }

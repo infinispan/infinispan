@@ -90,7 +90,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    public GlobalJmxStatisticsConfigurationBuilder enable() {
-      this.enabled = false;
+      this.enabled = true;
       return this;
    }
    

@@ -27,7 +27,7 @@
     xmlns="urn:infinispan:config:5.1">
 
     <default>
-        <transaction cacheStopTimeout="2"/>
+        <transaction cacheStopTimeout="2" transactionMode="TRANSACTIONAL"/>
         <invocationBatching enabled="true" />
     </default>
 

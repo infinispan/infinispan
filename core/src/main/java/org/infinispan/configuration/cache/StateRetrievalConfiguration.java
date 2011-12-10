@@ -7,7 +7,8 @@ package org.infinispan.configuration.cache;
 public class StateRetrievalConfiguration {
 
    private final boolean alwaysProvideInMemoryState;
-   private boolean fetchInMemoryState;
+   private Boolean fetchInMemoryState;
+   private final Boolean originalFetchInMemoryState;
    private final long initialRetryWaitTime;
    private final long logFlushTimeout;
    private final int maxNonProgressingLogWrites;
@@ -15,10 +16,11 @@ public class StateRetrievalConfiguration {
    private final int retryWaitTimeIncreaseFactor;
    private long timeout;
 
-   StateRetrievalConfiguration(boolean alwaysProvideInMemoryState, boolean fetchInMemoryState, long initialRetryWaitTime,
+   StateRetrievalConfiguration(boolean alwaysProvideInMemoryState, boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long initialRetryWaitTime,
          long logFlushTimeout, int maxNonPorgressingLogWrites, int numRetries, int retryWaitTimeIncreaseFactory, long timeout) {
       this.alwaysProvideInMemoryState = alwaysProvideInMemoryState;
       this.fetchInMemoryState = fetchInMemoryState;
+      this.originalFetchInMemoryState = originalFetchInMemoryState;
       this.initialRetryWaitTime = initialRetryWaitTime;
       this.logFlushTimeout = logFlushTimeout;
       this.maxNonProgressingLogWrites = maxNonPorgressingLogWrites;
@@ -51,6 +53,11 @@ public class StateRetrievalConfiguration {
       this.fetchInMemoryState = b;
       return this;
    }
+   
+   protected Boolean originalFetchInMemoryState() {
+      return originalFetchInMemoryState;
+   }
+   
 
    /**
     * Initial wait time when backing off before retrying state transfer retrieval

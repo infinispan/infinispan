@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -15,7 +16,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup ;
+   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
    private boolean useEagerLocking = false;
@@ -92,6 +93,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
    
    public RecoveryConfigurationBuilder recovery() {
+      recovery.enable();
       return recovery;
    }
 

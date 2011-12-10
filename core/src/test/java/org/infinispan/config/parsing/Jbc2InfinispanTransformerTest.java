@@ -65,16 +65,15 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
-         //System.out.println("Output file is:\n" + baos.toString());
+         System.out.println("Output file is:\n" + baos.toString());
 
          EmbeddedCacheManager ecm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()), false);
          Configuration defaultConfig = ecm.getDefaultConfiguration();
          GlobalConfiguration globalConfig = ecm.getGlobalConfiguration();
          assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
          assert defaultConfig.getLockAcquisitionTimeout() == 234000;
-         assert defaultConfig.isWriteSkewCheck();
          assert defaultConfig.getConcurrencyLevel() == 510;
-         assert defaultConfig.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
+         assert defaultConfig.getTransactionManagerLookup().getClass().getName().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
          assert !defaultConfig.isSyncCommitPhase();
          assert defaultConfig.isSyncRollbackPhase();
          assert defaultConfig.isExposeJmxStatistics();
