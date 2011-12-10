@@ -41,6 +41,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -365,8 +366,14 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
+   @Deprecated
    public Configuration getConfiguration() {
       return config;
+   }
+   
+   public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
+      // TODO Once we switch to the new configuration as the canonical configuration, we can remove the adaptor
+      return new LegacyConfigurationAdaptor().adapt(config);
    }
 
    public void addListener(Object listener) {

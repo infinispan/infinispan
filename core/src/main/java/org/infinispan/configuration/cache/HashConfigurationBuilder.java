@@ -76,6 +76,15 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.rehashEnabled = true;
       return this;
    }
+   
+   /**
+    * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
+    * node leaves
+    */
+   public HashConfigurationBuilder rehashEnabled(boolean enabled) {
+      this.rehashEnabled = enabled;
+      return this;
+   }
 
    /**
     * Disable rebalancing and rehashing, which would have taken place when a new node joins the

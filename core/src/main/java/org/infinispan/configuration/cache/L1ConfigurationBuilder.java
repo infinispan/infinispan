@@ -61,6 +61,14 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       this.onRehash = true;
       return this;
    }
+   
+   /**
+    * Entries removed due to a rehash will be moved to L1 rather than being removed altogether.
+    */
+   public L1ConfigurationBuilder onRehash(boolean enabled) {
+      this.onRehash = enabled;
+      return this;
+   }
 
    /**
     * Entries removed due to a rehash will be removed altogether rather than bring moved to L1.

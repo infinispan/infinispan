@@ -17,6 +17,11 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
       return this;
    }
    
+   public SingletonStoreConfigurationBuilder enabled(boolean enabled) {
+      this.enabled = enabled;
+      return this;
+   }
+   
    public SingletonStoreConfigurationBuilder disable() {
       this.enabled = false;
       return this;
