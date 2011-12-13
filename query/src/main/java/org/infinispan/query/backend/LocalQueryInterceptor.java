@@ -28,6 +28,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -45,8 +47,15 @@ import java.util.concurrent.ExecutorService;
  */
 public class LocalQueryInterceptor extends QueryInterceptor {
 
+   private static final Log log = (Log) LogFactory.getLog(LocalQueryInterceptor.class);
+
    public LocalQueryInterceptor(SearchFactoryIntegrator searchFactory) {
       super(searchFactory);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    // The Async Executor is injected here as well due to a limitation in the way core injects dependencies in
