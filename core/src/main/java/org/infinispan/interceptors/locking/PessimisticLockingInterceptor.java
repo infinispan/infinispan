@@ -69,7 +69,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private CommandsFactory cf;
    private RpcManager rpcManager;
 
-   private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
+   private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
 
    @Override
    protected Log getLog() {
