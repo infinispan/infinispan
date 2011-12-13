@@ -30,6 +30,8 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
@@ -40,6 +42,12 @@ import org.infinispan.factories.annotations.Inject;
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
    private VersionGenerator versionGenerator;
+   private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void initialize(VersionGenerator versionGenerator) {
@@ -63,7 +71,6 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
          return invokeNextInterceptor(ctx, command);
       } finally {
-         log.fatal("Commit command is " + command);
          if (!ctx.isOriginLocal())
             ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
          commitContextEntries(ctx);

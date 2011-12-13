@@ -58,6 +58,8 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -98,6 +100,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
    };
    private boolean isPessimisticCache;
+
+   private static final Log log = LogFactory.getLog(DistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,

@@ -29,7 +29,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -134,14 +133,14 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (enabled) {
-            log.trace("Wait for evict to give go ahead...");
+            getLog().trace("Wait for evict to give go ahead...");
             if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see get after 60 seconds!");
          }
          try {
             return invokeNextInterceptor(ctx, command);
          } finally {
-            log.trace("After get, now let evict go through");
+            getLog().trace("After get, now let evict go through");
             if (enabled) getLatch.countDown();
          }
       }
@@ -150,7 +149,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
          if (enabled) {
             evictLatch.countDown();
-            log.trace("Wait for get to finish...");
+            getLog().trace("Wait for get to finish...");
             if (!getLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see evict after 60 seconds!");
          }

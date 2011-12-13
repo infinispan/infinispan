@@ -34,6 +34,8 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -65,6 +67,14 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong removeMisses = new AtomicLong(0);
 
    private DataContainer dataContainer;
+
+   private static final Log log = LogFactory.getLog(CacheMgmtInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void setDependencies(DataContainer dataContainer) {

@@ -29,6 +29,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -40,6 +42,14 @@ import java.util.Map;
  * @since 5.1
  */
 public class VersionedDistributionInterceptor extends DistributionInterceptor {
+
+   private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
 

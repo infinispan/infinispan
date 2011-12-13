@@ -66,14 +66,11 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class CommandInterceptor extends AbstractVisitor {
    private CommandInterceptor next;
 
-   protected Log log;
-   protected boolean trace;
 
    protected Configuration configuration;
 
-   public CommandInterceptor() {
-      log = LogFactory.getLog(getClass());
-      trace = log.isTraceEnabled();
+   protected Log getLog() {
+      return LogFactory.getLog(CommandInterceptor.class);
    }
 
    @Inject

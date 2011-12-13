@@ -46,6 +46,8 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -81,6 +83,13 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    private CommandsFactory commandsFactory;
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
+
+   private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDependencies(CommandsFactory commandsFactory) {
@@ -240,7 +249,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    private boolean isPutForExternalRead(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-         if (trace) log.debug("Put for external read called.  Suppressing clustered invalidation.");
+         if (log.isTraceEnabled()) log.trace("Put for external read called.  Suppressing clustered invalidation.");
          return true;
       }
       return false;

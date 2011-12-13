@@ -32,6 +32,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Locking interceptor to be used for non-transactional caches.
@@ -40,6 +42,13 @@ import org.infinispan.context.InvocationContext;
  * @since 5.1
  */
 public class NonTransactionalLockingInterceptor extends AbstractLockingInterceptor {
+
+   private static final Log log = LogFactory.getLog(NonTransactionalLockingInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {

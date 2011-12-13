@@ -36,6 +36,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An interceptor that any commands when the {@link StateTransferLock} is locked.
@@ -47,6 +49,13 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
 
    public static final int RETRY_COUNT = 3;
    StateTransferLock stateTransferLock;
+
+   private static final Log log = LogFactory.getLog(StateTransferLockInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDistributionManager(StateTransferLock stateTransferLock) {

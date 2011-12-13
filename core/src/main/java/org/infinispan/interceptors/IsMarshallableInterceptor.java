@@ -39,6 +39,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.NotSerializableException;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
@@ -63,6 +65,14 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    private StreamingMarshaller marshaller;
    private DistributionManager distManager;
    private boolean storeAsBinary;
+
+   private static final Log log = LogFactory.getLog(IsMarshallableInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
