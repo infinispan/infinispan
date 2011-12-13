@@ -124,11 +124,11 @@ public class TransactionTable {
 
    @Start
    private void start() {
-      cleanupService.start(configuration, rpcManager, invoker);
-      cm.addListener(cleanupService);
-      cm.addListener(this);
-      notifier.addListener(cleanupService);
-      if (!isStandaloneCache()) {
+      if (configuration.getCacheMode().isClustered()) {
+         cleanupService.start(configuration, rpcManager, invoker);
+         cm.addListener(cleanupService);
+         cm.addListener(this);
+         notifier.addListener(cleanupService);
          minTxViewId = getCurrentViewId();
          log.debugf("Min view id set to %s", minTxViewId);
       }
@@ -136,10 +136,12 @@ public class TransactionTable {
 
    @Stop
    private void stop() {
-      notifier.removeListener(cleanupService);
-      cm.removeListener(cleanupService);
-      cleanupService.stop();
-      cm.removeListener(this);
+      if (configuration.getCacheMode().isClustered()) {
+         notifier.removeListener(cleanupService);
+         cm.removeListener(cleanupService);
+         cleanupService.stop();
+         cm.removeListener(this);
+      }
       shutDownGracefully();
    }
 
