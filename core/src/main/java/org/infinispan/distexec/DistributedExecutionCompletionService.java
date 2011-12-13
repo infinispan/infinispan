@@ -22,6 +22,7 @@
  */
 package org.infinispan.distexec;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -180,6 +181,28 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      */
     public NotifyingFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return completionQueue.poll(timeout, unit);
+    }
+    
+    public <K> Future<V> submit(Callable<V> task, K... input) {
+       NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, input);
+       f.attachListener(listener);
+       return f;
+    }
+
+    public List<Future<V>> submitEverywhere(Callable<V> task) {
+       List<Future<V>> fl = executor.submitEverywhere(task);
+       for (Future<V> f : fl) {
+          ((NotifyingFuture<V>) f).attachListener(listener);
+       }
+       return fl;
+    }
+
+    public <K> List<Future<V>> submitEverywhere(Callable<V> task, K... input) {
+       List<Future<V>> fl = executor.submitEverywhere(task, input);
+       for (Future<V> f : fl) {
+          ((NotifyingFuture<V>) f).attachListener(listener);
+       }
+       return fl;
     }
 
 }
