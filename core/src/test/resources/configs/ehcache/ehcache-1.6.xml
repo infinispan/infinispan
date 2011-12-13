@@ -166,7 +166,7 @@
                                      PING(timeout=2000;num_initial_members=6):
                                      MERGE2(min_interval=5000;max_interval=10000):
                                      FD_SOCK:VERIFY_SUSPECT(timeout=1500):
-                                     pbcast.NAKACK(gc_lag=10;retransmit_timeout=3000):
+                                     pbcast.NAKACK(retransmit_timeout=3000):
                                      UNICAST(timeout=5000):
                                      pbcast.STABLE(desired_avg_gossip=20000):
                                      FRAG:
