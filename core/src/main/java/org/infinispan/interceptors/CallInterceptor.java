@@ -31,6 +31,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -42,6 +44,15 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * @since 4.0
  */
 public class CallInterceptor extends CommandInterceptor {
+
+   private static final Log log = LogFactory.getLog(CallInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handlePrepareCommand.");

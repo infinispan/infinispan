@@ -41,6 +41,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -66,6 +68,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private CommandsFactory cf;
    private RpcManager rpcManager;
+
+   private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(CommandsFactory factory, RpcManager rpcManager) {

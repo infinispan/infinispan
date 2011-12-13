@@ -50,6 +50,8 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -84,6 +86,12 @@ public class TxInterceptor extends CommandInterceptor {
    private boolean statisticsEnabled;
    protected TransactionCoordinator txCoordinator;
 
+   private static final Log log = LogFactory.getLog(TxInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(TransactionTable txTable, TransactionLog transactionLog, Configuration c, TransactionCoordinator txCoordinator) {
@@ -248,7 +256,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private boolean localModeNotForced(InvocationContext icx) {
       if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (trace) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
+         if (getLog().isTraceEnabled()) getLog().debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return false;
       }
       return true;

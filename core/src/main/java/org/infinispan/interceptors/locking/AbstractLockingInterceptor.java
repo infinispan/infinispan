@@ -84,7 +84,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
                try {
                   lockKey(ctx, key);
                } catch (TimeoutException te) {
-                  log.unableToLockToInvalidate(key, transport.getAddress());
+                  getLog().unableToLockToInvalidate(key, transport.getAddress());
                   keysCopy.remove(key);
                   if (keysCopy.isEmpty())
                      return null;

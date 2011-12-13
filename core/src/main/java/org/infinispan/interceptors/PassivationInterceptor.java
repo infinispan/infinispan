@@ -31,6 +31,8 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -46,6 +48,13 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
 
    PassivationManager passivator;
    DataContainer dataContainer;
+
+   private static final Log log = LogFactory.getLog(PassivationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void setDependencies(PassivationManager passivator, DataContainer dataContainer) {

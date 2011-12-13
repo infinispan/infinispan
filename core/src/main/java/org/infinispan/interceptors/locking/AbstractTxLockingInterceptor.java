@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 5.1
  */
-public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
+public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
 
    protected TransactionTable txTable;
 
@@ -152,7 +152,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          checkForPendingLocks = viewId > txTable.getMinViewId();
       }
 
-      log.tracef("Locking key %s, checking for pending locks? %s", key, checkForPendingLocks);
+      getLog().tracef("Locking key %s, checking for pending locks? %s", key, checkForPendingLocks);
       if (!checkForPendingLocks) {
          lockManager.acquireLock(ctx, key);
       } else {
@@ -172,7 +172,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          if (remaining < 0) {
             throw newTimeoutException(key, txContext);
          } else {
-            log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
+            getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
             lockManager.acquireLock(ctx, key, remaining);
          }
       }

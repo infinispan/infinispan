@@ -36,6 +36,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Status;
@@ -53,6 +54,14 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    private ComponentRegistry componentRegistry;
    private TransactionTable txTable;
    private InvocationContextContainer invocationContextContainer;
+
+   private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable, InvocationContextContainer invocationContextContainer) {

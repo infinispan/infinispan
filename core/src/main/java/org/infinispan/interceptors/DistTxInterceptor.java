@@ -22,15 +22,11 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -39,10 +35,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.statetransfer.StateTransferLock;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A special form of the TxInterceptor that is aware of distribution and consistent hashing, and as such only replays
@@ -54,12 +48,16 @@ import java.util.Map;
 public class DistTxInterceptor extends TxInterceptor {
 
    DistributionManager dm;
-   private CommandsFactory commandsFactory;
+   private static final Log log = LogFactory.getLog(DistTxInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
-   public void injectDistributionManager(DistributionManager dm, StateTransferLock stateTransferLock, CommandsFactory commandsFactory) {
+   public void injectDistributionManager(DistributionManager dm) {
       this.dm = dm;
-      this.commandsFactory = commandsFactory;
    }
 
    @Override

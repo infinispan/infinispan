@@ -43,6 +43,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -59,6 +61,13 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
 
    private StateTransferLock stateTransferLock;
    private CommandsFactory cf;
+
+   private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
@@ -97,7 +106,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          }
 
          if (!resendTo.isEmpty()) {
-            log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+            getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
             // Make sure this is 1-Phase!!
             PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
             rpcManager.invokeRemotely(resendTo, pc, true, true);

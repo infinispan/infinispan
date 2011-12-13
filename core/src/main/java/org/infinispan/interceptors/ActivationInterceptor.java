@@ -35,6 +35,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -46,6 +48,14 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    private final AtomicLong activations = new AtomicLong(0);
    private CacheStore store;
+
+   private static final Log log = LogFactory.getLog(ActivationInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Start(priority = 15)
    public void setCacheStore() {

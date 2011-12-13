@@ -33,6 +33,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import static java.util.Collections.emptySet;
 
@@ -48,6 +50,14 @@ import static java.util.Collections.emptySet;
  * @since 4.0
  */
 public class DeadlockDetectingInterceptor extends CommandInterceptor {
+
+   private static final Log log = LogFactory.getLog(DeadlockDetectingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    /**
     * Only does a sanity check.

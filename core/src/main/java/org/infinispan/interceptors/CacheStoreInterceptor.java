@@ -52,6 +52,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -85,9 +86,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManager loaderManager;
    private InternalEntryFactory entryFactory;
 
-   public CacheStoreInterceptor() {
-      log = LogFactory.getLog(getClass());
-      trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(CacheStoreInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Inject
@@ -129,7 +132,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          if (ctx.hasModifications()) {
             // this is a commit call.
             GlobalTransaction tx = ctx.getGlobalTransaction();
-            if (trace) log.tracef("Calling loader.commit() for transaction %s", tx);
+            if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
             try {
                store.commit(tx);
             } catch (Throwable t) {
@@ -147,7 +150,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             }
             return invokeNextInterceptor(ctx, command);
          } else {
-            if (trace) log.trace("Commit called with no modifications; ignoring.");
+            if (getLog().isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -156,7 +159,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
          if (ctx.hasModifications()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
             // this is a rollback method
@@ -166,7 +169,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             }
             if (getStatisticsEnabled()) txStores.remove(tx);
          } else {
-            if (trace) log.trace("Rollback called with no modifications; ignoring.");
+            if (getLog().isTraceEnabled()) getLog().trace("Rollback called with no modifications; ignoring.");
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -175,7 +178,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
          prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
       return invokeNextInterceptor(ctx, command);
@@ -187,7 +190,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
-         if (trace) log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
       return retval;
    }
@@ -196,7 +199,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (!skip(ctx, command) && !ctx.isInTxScope()) {
          store.clear();
-         if (trace) log.trace("Cleared cache store");
+         if (getLog().isTraceEnabled()) getLog().trace("Cleared cache store");
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -209,7 +212,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.tracef("Stored entry %s under key %s", se, key);
+      if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -223,7 +226,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.tracef("Stored entry %s under key %s", se, key);
+      if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -238,7 +241,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       for (Object key : map.keySet()) {
          InternalCacheEntry se = getStoredEntry(key, ctx);
          store.store(se);
-         if (trace) log.tracef("Stored entry %s under key %s", se, key);
+         if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
@@ -251,14 +254,14 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       List<WriteCommand> modifications = transactionContext.getModifications();
 
       if (!transactionContext.hasModifications()) {
-         if (trace) log.trace("Transaction has not logged any modifications!");
+         if (getLog().isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
          return;
       }
-      if (trace) log.tracef("Cache loader modification list: %s", modifications);
+      if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
       StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled());
       for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
       int numMods = modsBuilder.modifications.size();
-      if (trace) log.tracef("Converted method calls to cache loader modifications.  List size: %s", numMods);
+      if (getLog().isTraceEnabled()) getLog().tracef("Converted method calls to cache loader modifications.  List size: %s", numMods);
 
       if (numMods > 0) {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();
