@@ -34,6 +34,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,13 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    DistributionManager dm;
    Transport transport;
    Address address;
+
+   private static final Log log = LogFactory.getLog(DistCacheStoreInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void inject(DistributionManager dm, Transport transport) {

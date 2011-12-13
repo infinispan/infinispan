@@ -29,6 +29,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners
@@ -38,6 +40,13 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  */
 public class NotificationInterceptor extends CommandInterceptor {
    private CacheNotifier notifier;
+
+   private static final Log log = LogFactory.getLog(NotificationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDependencies(CacheNotifier notifier) {

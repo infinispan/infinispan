@@ -43,6 +43,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,6 +76,14 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    private boolean wrapKeys = true;
    private boolean wrapValues = true;
    private InternalEntryFactory entryFactory;
+
+   private static final Log log = LogFactory.getLog(MarshalledValueInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller, InternalEntryFactory entryFactory) {

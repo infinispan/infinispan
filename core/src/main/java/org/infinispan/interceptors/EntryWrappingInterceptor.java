@@ -39,6 +39,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -56,6 +58,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected DataContainer dataContainer;
    protected ClusteringDependentLogic cll;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
+
+   private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
@@ -162,6 +171,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected void commitContextEntries(InvocationContext ctx) {
       Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
+      Log log = getLog();
+      boolean trace = log.isTraceEnabled();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();

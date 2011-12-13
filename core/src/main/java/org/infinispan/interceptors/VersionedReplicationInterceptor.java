@@ -26,6 +26,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
@@ -36,6 +38,13 @@ import java.util.Map;
  * @since 5.1
  */
 public class VersionedReplicationInterceptor extends ReplicationInterceptor {
+
+   private static final Log log = LogFactory.getLog(VersionedReplicationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Override
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {

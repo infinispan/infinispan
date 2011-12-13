@@ -74,7 +74,7 @@ class FailInterceptor extends CommandInterceptor {
          case EXEC:
             return super.handleDefault(ctx, command);
          case SKIP:
-            log.debugf("Skipped executing command %s", command);
+            getLog().debugf("Skipped executing command %s", command);
             return action.returnValue;
          case FAIL:
             throw new CacheException("Forced failure executing command " + command);
