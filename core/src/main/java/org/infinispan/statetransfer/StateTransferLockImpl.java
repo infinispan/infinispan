@@ -206,7 +206,7 @@ public class StateTransferLockImpl implements StateTransferLock {
             long end = System.currentTimeMillis() + lockTimeout;
             long timeout = lockTimeout;
             synchronized (lock) {
-               while (timeout >= 0 && blockingCacheViewId < newCacheViewId) {
+               while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
                   if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
                   lock.wait(timeout);
                   timeout = end - System.currentTimeMillis();
@@ -304,7 +304,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
             // retry, unless the timeout expired
             timeout = endTime - System.currentTimeMillis();
-            if (timeout < 0)
+            if (timeout <= 0)
                return false;
          }
       }

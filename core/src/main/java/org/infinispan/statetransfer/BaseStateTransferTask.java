@@ -23,6 +23,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -119,7 +120,7 @@ public abstract class BaseStateTransferTask {
          if (sync) {
             while (running) {
                try {
-                  lock.wait();
+                  lock.wait(configuration.getCacheStopTimeout());
                } catch (InterruptedException e) {
                   // restore the interrupted flag
                   Thread.currentThread().interrupt();

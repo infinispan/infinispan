@@ -169,7 +169,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
          //then try to acquire lock
          final long remaining = expectedEndTime - nowMillis();
-         if (remaining < 0) {
+         if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
          } else {
             getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
