@@ -31,7 +31,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
 import java.util.List;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
@@ -100,12 +99,6 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
    public boolean isLocationInDoubt(Object key) {
       return isStateTransferInProgress() && !chOld.locate(key, configuration.getNumOwners()).contains(getAddress())
             && chNew.locate(key, configuration.getNumOwners()).contains(getAddress());
-   }
-
-   @Override
-   public void updateLeavers(Collection<Address> leavers) {
-      super.updateLeavers(leavers);
-      dm.setLeavers(leavers);
    }
 }
 

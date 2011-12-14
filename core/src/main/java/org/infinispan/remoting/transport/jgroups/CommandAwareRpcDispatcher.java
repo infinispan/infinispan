@@ -30,7 +30,6 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -137,10 +136,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          ReplicableCommand cmd = null;
          try {
             cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            if (cmd instanceof CacheRpcCommand)
-               return executeCommand((CacheRpcCommand) cmd, req);
-            else
-               return cmd.perform(null);
+            return executeCommand(cmd, req);
          } catch (InterruptedException e) {
             log.warnf("Shutdown while handling command %s", cmd);
             return new ExceptionResponse(new CacheException("Cache is shutting down"));
@@ -156,10 +152,15 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
+   private Object executeCommand(ReplicableCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
-      if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
-      return inboundInvocationHandler.handle(cmd, JGroupsTransport.fromJGroupsAddress(req.getSrc()));
+      if (cmd instanceof CacheRpcCommand) {
+         if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
+         return inboundInvocationHandler.handle((CacheRpcCommand) cmd, JGroupsTransport.fromJGroupsAddress(req.getSrc()));
+      } else {
+         if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
+         return cmd.perform(null);
+      }
    }
 
    @Override

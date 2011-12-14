@@ -44,7 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.easymock.EasyMock.*;
 
@@ -84,7 +83,7 @@ public class CacheViewsManagerRecoverViewsTest extends AbstractInfinispanTest {
             isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS),
             anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
             .andReturn(noResponse);
-      mockListener.updateLeavers(Collections.<Address>emptySet());
+      mockListener.waitForPrepare();
       mockListener.commitView(v1_1.getViewId());
       expect(mockTransport.invokeRemotely(eq(members1_1),
             isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
@@ -118,7 +117,7 @@ public class CacheViewsManagerRecoverViewsTest extends AbstractInfinispanTest {
             isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS),
             anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
             .andReturn(nullResponses);
-      mockListener.updateLeavers(Collections.<Address>emptySet());
+      mockListener.waitForPrepare();
       mockListener.commitView(v2.getViewId());
       expect(mockTransport.invokeRemotely(eq(members1_2),
             isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
