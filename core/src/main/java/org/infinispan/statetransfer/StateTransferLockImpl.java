@@ -76,18 +76,17 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final Object lock = new Object();
 
    // stored configuration options
-   private boolean stateTransferEnabled;
    private boolean pessimisticLocking;
    private long lockTimeout;
+   private boolean isSync;
 
    public StateTransferLockImpl() {
    }
 
    @Inject
    public void injectDependencies(Configuration config) {
-      stateTransferEnabled = (config.getCacheMode().isDistributed() && config.isRehashEnabled())
-            || (config.getCacheMode().isReplicated() && config.isStateTransferEnabled());
       pessimisticLocking =  config.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
+      isSync = config.getCacheMode().isSynchronous();
       lockTimeout = config.getRehashWaitTime();
    }
 
@@ -274,8 +273,9 @@ public class StateTransferLockImpl implements StateTransferLock {
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
       // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command
-      if (!ctx.isOriginLocal())
+      // The originator should wait for the state transfer to end and retry the command,
+      // unless we are async, in which case we can't retry
+      if (!ctx.isOriginLocal() && isSync)
          return false;
 
       // A state transfer is in progress, wait for it to end
@@ -329,8 +329,9 @@ public class StateTransferLockImpl implements StateTransferLock {
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
       // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command
-      if (!ctx.isOriginLocal())
+      // The originator should wait for the state transfer to end and retry the command,
+      // unless we are async, in which case we can't retry
+      if (!ctx.isOriginLocal() && isSync)
          return false;
 
       // A state transfer is in progress, wait for it to end

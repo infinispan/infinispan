@@ -28,6 +28,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.StateTransferInProgressException;
@@ -39,16 +40,22 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * An interceptor that any commands when the {@link StateTransferLock} is locked.
+ * An interceptor that blocks any commands when the {@link StateTransferLock} is locked.
+ * <br/>
+ * To make the state transfer as short as possible, synchronous remote commands don't wait
+ * at all for the state transfer lock. So it's the originator's job to retry the command
+ * after the state transfer has ended. This interceptor handles the retries in {@code handleWithRetries}.
  *
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
  */
 public class StateTransferLockInterceptor extends CommandInterceptor {
 
-   public static final int RETRY_COUNT = 3;
    StateTransferLock stateTransferLock;
+   private long rpcTimeout;
 
    private static final Log log = LogFactory.getLog(StateTransferLockInterceptor.class);
 
@@ -58,8 +65,11 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void injectDistributionManager(StateTransferLock stateTransferLock) {
+   public void init(StateTransferLock stateTransferLock, Configuration configuration) {
       this.stateTransferLock = stateTransferLock;
+      // no need to retry for asynchronous caches
+      this.rpcTimeout = configuration.getCacheMode().isSynchronous()
+            ? configuration.getSyncReplTimeout() : 0;
    }
 
    @Override
@@ -68,7 +78,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -81,7 +91,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       }
       try {
          // technically rollback commands don't need retries, but we're doing it for consistency
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -93,7 +103,8 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         // retry commit commands indefinitely
+         return handleWithRetries(ctx, command, Long.MAX_VALUE);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -105,7 +116,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          return signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -117,7 +128,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -129,7 +140,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -141,7 +152,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -153,7 +164,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -165,7 +176,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
          signalStateTransferInProgress();
       }
       try {
-         return handleWithRetries(ctx, command);
+         return handleWithRetries(ctx, command, rpcTimeout);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -182,21 +193,20 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       throw new StateTransferInProgressException(viewId, "Timed out waiting for the state transfer lock, state transfer in progress for view " + viewId);
    }
 
-   private Object handleWithRetries(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      int retries = RETRY_COUNT;
+   private Object handleWithRetries(InvocationContext ctx, VisitableCommand command, long timeoutMillis) throws Throwable {
+      long endNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
       while (true) {
          int newCacheViewId = -1;
          try {
             return invokeNextInterceptor(ctx, command);
          } catch (StateTransferInProgressException e) {
             newCacheViewId = e.getNewCacheViewId();
-            if (retries < 0) {
-               throw new TimeoutException("Timed out waiting for the state transfer to end", e);
-            }
          } catch (SuspectException e) {
-            if (retries < 0) {
-               throw new TimeoutException("Timed out waiting for the state transfer to end", e);
-            }
+            // a node has left, that means the coordinator will soon install a new cache view
+            newCacheViewId = newCacheViewId + 1;
+         }
+         if (endNanos < System.nanoTime()) {
+            throw new TimeoutException("Timed out waiting for the state transfer to end");
          }
 
          // the remote node has thrown an exception, but we will retry the operation
