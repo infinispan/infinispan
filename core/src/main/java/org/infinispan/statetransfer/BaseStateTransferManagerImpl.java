@@ -156,6 +156,12 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void stop() {
       chOld = null;
       chNew = null;
+      // cancel any pending state transfer before leaving
+      BaseStateTransferTask tempTask = stateTransferTask;
+      if (tempTask != null) {
+         tempTask.cancelStateTransfer(true, false);
+         stateTransferTask = null;
+      }
       cacheViewsManager.leave(configuration.getName());
       joinStartedLatch.countDown();
       joinCompletedLatch.countDown();
@@ -309,7 +315,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Override
    public void commitView(int viewId) {
-      if (stateTransferTask == null) {
+      BaseStateTransferTask tempTask = stateTransferTask;
+      if (tempTask == null) {
          if (viewId == oldView.getViewId()) {
             log.tracef("Ignoring commit for cache view %d as we have already committed it", viewId);
             return;
@@ -319,14 +326,15 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
       }
 
-      stateTransferTask.commitStateTransfer();
+      tempTask.commitStateTransfer();
       stateTransferTask = null;
       endStateTransfer();
    }
 
    @Override
    public void rollbackView(int committedViewId) {
-      if (stateTransferTask == null) {
+      BaseStateTransferTask tempTask = stateTransferTask;
+      if (tempTask == null) {
          if (committedViewId == oldView.getViewId()) {
             log.tracef("Ignoring rollback for cache view %d as we don't have a state transfer in progress",
                   committedViewId);
@@ -337,7 +345,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
       }
 
-      stateTransferTask.cancelStateTransfer(true, false);
+      tempTask.cancelStateTransfer(true, false);
       stateTransferTask = null;
 
       // TODO Use the new view id
