@@ -19,10 +19,6 @@
 
 package org.infinispan.cacheviews;
 
-import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-
 /**
  * Callback interface for installing views on a cache.
  *
@@ -40,5 +36,5 @@ public interface CacheViewListener {
    void prepareView(CacheView newView, CacheView oldView) throws Exception;
    void commitView(int viewId);
    void rollbackView(int committedViewId);
-   void updateLeavers(Collection<Address> leavers);
+   void waitForPrepare();
 }

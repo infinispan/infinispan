@@ -19,9 +19,8 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.CacheException;
-import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheView;
+import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -52,9 +51,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -85,7 +82,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private volatile CacheView oldView;
    protected volatile ConsistentHash chNew;
    private volatile CacheView newView;
-   private volatile Collection<Address> leavers = Collections.emptySet();
    // closed before the component has been started, open afterwards
    private final CountDownLatch joinStartedLatch = new CountDownLatch(1);
    // closed before the initial state transfer has completed, open afterwards
@@ -168,10 +164,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    protected Address getAddress() {
       return rpcManager.getAddress();
-   }
-
-   protected Collection<Address> getLeavers() {
-      return leavers;
    }
 
    @Override
@@ -290,13 +282,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Collection<Address> targets,
                                Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
-      for (Address target : targets) {
-         if (leavers.contains(target)) {
-            log.debugf("One of the nodes we were supposed to push state to (%s) has already left, cancelling state push", target);
-            throw new CacheException("One of the nodes we were supposed to push state to has already left, cancelling state push");
-         }
-      }
-
       log.debugf("Pushing to nodes %s %d keys", targets, state.size());
       log.tracef("Pushing to nodes %s keys: %s", targets, keys(state));
 
@@ -352,7 +337,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
       }
 
-      stateTransferTask.cancelStateTransfer();
+      stateTransferTask.cancelStateTransfer(true, false);
       stateTransferTask = null;
 
       // TODO Use the new view id
@@ -364,13 +349,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void updateLeavers(Collection<Address> leavers) {
-      this.leavers = leavers;
-   }
-
-   @Override
-   public void pruneInvalidMembers(Collection<Address> targets) {
-      targets.removeAll(leavers);
+   public void waitForPrepare() {
+      stateTransferLock.blockNewTransactionsAsync();
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);

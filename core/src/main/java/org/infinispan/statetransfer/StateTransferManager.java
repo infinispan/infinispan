@@ -57,8 +57,6 @@ public interface StateTransferManager {
 
    void waitForStateTransferToComplete() throws InterruptedException;
 
-   void pruneInvalidMembers(Collection<Address> targets);
-
    void applyState(Collection<InternalCacheEntry> state, Address sender, int viewId) throws InterruptedException;
 
    /**

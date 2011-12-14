@@ -436,7 +436,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // tell the upper layer to stop sending commands to the nodes that already left
       CacheViewListener cacheViewListener = cacheViewInfo.getListener();
       if (cacheViewListener != null) {
-         cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
+         cacheViewListener.waitForPrepare();
       }
    }
 
@@ -447,23 +447,25 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          throw new IllegalStateException(String.format("Received prepare request for cache %s, which is not running", cacheName));
       }
 
-      CacheView lastCommittedView = cacheViewInfo.getCommittedView();
-
+      log.tracef("%s: Preparing cache view %s, committed view is %s", cacheName, pendingView, committedView);
       boolean isLocal = pendingView.contains(self);
-      if (isLocal || isCoordinator) {
-         log.tracef("%s: Preparing cache view %s, committed view is %s", cacheName, pendingView, committedView);
-         // The first time we get a PREPARE_VIEW our committed view id is -1, we need to accept any view
-         if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
-            log.prepareViewIdMismatch(lastCommittedView, committedView);
-         }
-         cacheViewInfo.prepareView(pendingView);
+      if (!isLocal && !isCoordinator) {
+         throw new IllegalStateException(String.format("%s: Received prepare cache view request, but we are not a member. View is %s",
+               cacheName, pendingView));
       }
+
+      // The first time we get a PREPARE_VIEW our committed view id is -1, we need to accept any view
+      CacheView lastCommittedView = cacheViewInfo.getCommittedView();
+      if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
+         log.prepareViewIdMismatch(lastCommittedView, committedView);
+      }
+      cacheViewInfo.prepareView(pendingView);
       if (isLocal) {
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          if (cacheViewListener != null) {
             cacheViewListener.prepareView(pendingView, lastCommittedView);
          } else {
-            log.tracef("%s: Received cache view prepare request after the local node has already shut down", cacheName);
+            throw new IllegalStateException(String.format("%s: Received cache view prepare request after the local node has already shut down", cacheName));
          }
       }
       // any exception here will be propagated back to the coordinator, which will roll back the view installation
@@ -489,7 +491,6 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          // we only prepared the view if it was local, so we can't commit it here
          boolean isLocal = committedView.contains(self);
          if (isLocal && cacheViewListener != null) {
-            cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
             cacheViewListener.commitView(viewId);
          }
       } else {
@@ -555,13 +556,10 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    private void checkRemoteResponse(String cacheName, CacheViewControlCommand cmd, Map<Address, Response> rspList) {
       boolean success = true;
       for (Map.Entry<Address, Response> response : rspList.entrySet()) {
-         // ignore null responses
-         if (response.getValue() == null)
-            continue;
-
-         if (!response.getValue().isSuccessful()) {
+         Response responseValue = response.getValue();
+         if (responseValue == null || !responseValue.isSuccessful()) {
             success = false;
-            log.debugf("%s: Received unsuccessful response from node %s: %s", cacheName, response.getKey(), response.getValue());
+            log.debugf("%s: Received unsuccessful response from node %s: %s", cacheName, response.getKey(), responseValue);
          }
       }
       if (!success) {
