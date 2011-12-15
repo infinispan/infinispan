@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory
  */
 trait Log extends org.infinispan.server.core.logging.Log {
 
-   private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
+   private[hotrod] lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 
    def logViewNullWhileDetectingCrashedMember = log.viewNullWhileDetectingCrashedMember
 
