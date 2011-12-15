@@ -169,15 +169,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    public void stop() {
       cacheManagerNotifier.removeListener(listener);
       running = false;
-      viewTriggerThread.interrupt();
+      viewTriggerThread.wakeUp();
       cacheViewInstallerExecutor.shutdown();
       try {
          viewTriggerThread.join(timeout);
          if (viewTriggerThread.isAlive()) {
             log.debugf("The cache view trigger thread did not stop in %d millis", timeout);
          }
-         // otherwise the thread will hang onto its context ClassLoader
-         viewTriggerThread = null;
          cacheViewInstallerExecutor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          // reset interruption flag
@@ -418,8 +416,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    @Override
    public void handleRequestLeave(Address sender, String cacheName) {
       handleLeavers(Collections.singleton(sender), cacheName);
-      if (isRunning())
-         viewTriggerThread.wakeUp();
+      viewTriggerThread.wakeUp();
    }
 
    private void handleLeavers(Collection<Address> leavers, String cacheName) {
@@ -743,6 +740,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       public ViewTriggerThread() {
          super("CacheViewTrigger," + self);
          setDaemon(true);
+         // ViewTriggerThread could be created on a user thread, and we don't want to
+         // hold a reference to that classloader
+         setContextClassLoader(ViewTriggerThread.class.getClassLoader());
          start();
       }
 
