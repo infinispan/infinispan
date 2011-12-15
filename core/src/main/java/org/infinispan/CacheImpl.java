@@ -340,7 +340,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          putIfAbsent(key, value, defaultLifespan, TimeUnit.MILLISECONDS, defaultMaxIdleTime, TimeUnit.MILLISECONDS, flags, explicitClassLoader);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
-      } finally {
+      }
+      finally {
          try {
             if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
          } catch (Exception e) {
@@ -388,8 +389,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return notifier.getListeners();
    }
 
-   private InvocationContext getInvocationContextForWrite(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount) {
-      InvocationContext ctx = icc.createInvocationContext(true, keyCount);
+   private InvocationContext getInvocationContextForWrite(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRed) {
+      InvocationContext ctx = isPutForExternalRed ?
+            icc.createNonTxInvocationContext() : icc.createInvocationContext(true, keyCount);
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
@@ -414,7 +416,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private InvocationContext getInvocationContextWithImplicitTransaction(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount) {
       InvocationContext invocationContext;
       boolean txInjected = false;
-      if (config.isTransactionalCache()) {
+      final boolean isPutForExternalRed = isPutForExternalRed(explicitFlags);
+      if (config.isTransactionalCache() && !isPutForExternalRed) {
          Transaction transaction = getOngoingTransaction();
          if (transaction == null && config.isTransactionAutoCommit()) {
             try {
@@ -428,13 +431,17 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          }
          invocationContext = getInvocationContext(transaction, explicitFlags, explicitClassLoader);
       } else {
-         invocationContext = getInvocationContextForWrite(explicitFlags, explicitClassLoader, keyCount);
+         invocationContext = getInvocationContextForWrite(explicitFlags, explicitClassLoader, keyCount, isPutForExternalRed);
       }
       if (txInjected) {
          ((TxInvocationContext) invocationContext).setImplicitTransaction(true);
          if (trace) log.tracef("Marked tx as implicit.");
       }
       return invocationContext;
+   }
+
+   private boolean isPutForExternalRed(EnumSet<Flag> explicitFlags) {
+      return explicitFlags != null && explicitFlags.contains(PUT_FOR_EXTERNAL_READ);
    }
 
    private InvocationContext getInvocationContext(Transaction tx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
@@ -462,7 +469,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
-      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader, UNBOUNDED);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader, UNBOUNDED, false);
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
@@ -471,7 +478,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (locksToAcquire == null || locksToAcquire.length == 0) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
-      InvocationContext ctx = getInvocationContextForWrite(null, null, UNBOUNDED);
+      InvocationContext ctx = getInvocationContextForWrite(null, null, UNBOUNDED, false);
       ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta, Arrays.asList(locksToAcquire));
       invoker.invoke(ctx, command);
    }
