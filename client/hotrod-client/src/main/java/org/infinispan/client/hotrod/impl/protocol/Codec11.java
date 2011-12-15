@@ -21,7 +21,6 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -50,6 +49,7 @@ public class Codec11 extends Codec10 {
 
    @Override
    protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
+      final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
       topologyId.set(newTopologyId);
       int numKeyOwners = transport.readUnsignedShort();
@@ -59,123 +59,49 @@ public class Codec11 extends Codec10 {
          ch = transport.getTransportFactory().getConsistentHashFactory()
                .newConsistentHash(hashFctVersion);
       else
-         log.trace("Not using a consistent hash function (hash function version == 0)");
+         localLog.trace("Not using a consistent hash function (hash function version == 0)");
 
-//      if (hashFctVersion == 0) {
-//         log.trace("Not using a consistent hash function (hash function version == 0).");
-//         // Client can receive hash topology updates but cache is not configured with distribution
-//         transport.readVInt(); // Ignore hash space
-//         int clusterSize = transport.readVInt();
-//         transport.readVInt(); // Ignore virtual nodes
-//         Set<SocketAddress> addresses = new HashSet<SocketAddress>();
-//         for (int i = 0; i < clusterSize; i++) {
-//            String host = transport.readString();
-//            int port = transport.readUnsignedShort();
-//            transport.read4ByteInt(); // Ignore hash code...
-//            log.tracef("Server read: %s:%d", host, port);
-//            addresses.add(new InetSocketAddress(host, port));
-//         }
-//
-//         if (log.isInfoEnabled())
-//            log.newTopology(addresses);
-//
-//         transport.getTransportFactory().updateServers(addresses);
-//      } else {
-      
-      
-         
-         int hashSpace = transport.readVInt();
-         int clusterSize = transport.readVInt();
-         // New in 1.1
-         int numVirtualNodes = transport.readVInt();
+      int hashSpace = transport.readVInt();
+      int clusterSize = transport.readVInt();
+      // New in 1.1
+      int numVirtualNodes = transport.readVInt();
 
-         log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-               "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
-               newTopologyId, numKeyOwners, hashFctVersion, hashSpace, clusterSize,
-               numVirtualNodes);
+      localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+            "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
+            newTopologyId, numKeyOwners, hashFctVersion, hashSpace, clusterSize,
+            numVirtualNodes);
 
-         Map<SocketAddress, Set<Integer>> servers2Hash =
-               new LinkedHashMap<SocketAddress, Set<Integer>>();
+      Map<SocketAddress, Set<Integer>> servers2Hash =
+            new LinkedHashMap<SocketAddress, Set<Integer>>();
 
-         for (int i = 0; i < clusterSize; i++) {
-            String host = transport.readString();
-            int port = transport.readUnsignedShort();
-            // TODO: Performance improvement, since hash positions are fixed, we could maybe only calculate for those nodes that the client is not aware of?
-            int baseHashCode = transport.read4ByteInt();
-            int normalizedHashCode = getNormalizedHash(baseHashCode, ch);
-            log.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
-                       host, port, baseHashCode, normalizedHashCode);
-            cacheHashCode(servers2Hash, host, port, normalizedHashCode);
-            if (numVirtualNodes > 1)
-               calcVirtualHashCodes(baseHashCode, numVirtualNodes, servers2Hash, host, port, ch);
-         }
+      for (int i = 0; i < clusterSize; i++) {
+         String host = transport.readString();
+         int port = transport.readUnsignedShort();
+         // TODO: Performance improvement, since hash positions are fixed, we could maybe only calculate for those nodes that the client is not aware of?
+         int baseHashCode = transport.read4ByteInt();
+         int normalizedHashCode = getNormalizedHash(baseHashCode, ch);
+         localLog.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
+                    host, port, baseHashCode, normalizedHashCode);
+         cacheHashCode(servers2Hash, host, port, normalizedHashCode);
+         if (numVirtualNodes > 1)
+            calcVirtualHashCodes(baseHashCode, numVirtualNodes, servers2Hash, host, port, ch);
+      }
 
-         if (log.isInfoEnabled()) {
-            log.newTopology(servers2Hash.keySet());
-         }
-         transport.getTransportFactory().updateServers(servers2Hash.keySet());
-         if (hashFctVersion == 0) {
-            log.trace("Not using a consistent hash function (hash function version == 0)");
-         } else {
-            transport.getTransportFactory().updateHashFunction(
-                  servers2Hash, numKeyOwners, hashFctVersion, hashSpace);
-         }
-//      }
+      if (localLog.isInfoEnabled()) {
+         localLog.newTopology(servers2Hash.keySet());
+      }
+      transport.getTransportFactory().updateServers(servers2Hash.keySet());
+      if (hashFctVersion == 0) {
+         localLog.trace("Not using a consistent hash function (hash function version == 0)");
+      } else {
+         transport.getTransportFactory().updateHashFunction(
+               servers2Hash, numKeyOwners, hashFctVersion, hashSpace);
+      }
+   }
 
-
-//      if (hashFctVersion == 0) {
-//         log.trace("Not using a consistent hash function (hash function version == 0).");
-//         // Client can receive hash topology updates but cache is not configured with distribution
-//         transport.readVInt(); // Ignore hash space
-//         int clusterSize = transport.readVInt();
-//         transport.readVInt(); // Ignore virtual nodes
-//         Set<SocketAddress> addresses = new HashSet<SocketAddress>();
-//         for (int i = 0; i < clusterSize; i++) {
-//            String host = transport.readString();
-//            int port = transport.readUnsignedShort();
-//            transport.read4ByteInt(); // Ignore hash code...
-//            log.tracef("Server read: %s:%d", host, port);
-//            addresses.add(new InetSocketAddress(host, port));
-//         }
-//
-//         if (log.isInfoEnabled())
-//            log.newTopology(addresses);
-//
-//         transport.getTransportFactory().updateServers(addresses);
-//      } else {
-//         ConsistentHash ch = transport.getTransportFactory()
-//               .getConsistentHashFactory().newConsistentHash(hashFctVersion);
-//         int hashSpace = transport.readVInt();
-//         int clusterSize = transport.readVInt();
-//         // New in 1.1
-//         int numVirtualNodes = transport.readVInt();
-//
-//         log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-//               "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
-//               newTopologyId, numKeyOwners, hashFctVersion, hashSpace, clusterSize,
-//               numVirtualNodes);
-//
-//         Map<SocketAddress, Set<Integer>> servers2Hash =
-//               new LinkedHashMap<SocketAddress, Set<Integer>>();
-//
-//         for (int i = 0; i < clusterSize; i++) {
-//            String host = transport.readString();
-//            int port = transport.readUnsignedShort();
-//            log.tracef("Server read: %s:%d", host, port);
-//            // TODO: Performance improvement, since hash positions are fixed, we could maybe only calculate for those nodes that the client is not aware of?
-//            int addrHashCode = transport.read4ByteInt();
-//            cacheHashCode(servers2Hash, host, port, addrHashCode);
-//            if (numVirtualNodes > 1)
-//               calcVirtualHashCodes(addrHashCode, numVirtualNodes, servers2Hash, host, port);
-//         }
-//
-//         if (log.isInfoEnabled()) {
-//            log.newTopology(servers2Hash.keySet());
-//         }
-//         transport.getTransportFactory().updateServers(servers2Hash.keySet());
-//         transport.getTransportFactory().updateHashFunction(
-//               servers2Hash, numKeyOwners, hashFctVersion, hashSpace);
-//      }
+   @Override
+   public Log getLog() {
+      return log;
    }
 
    private int getNormalizedHash(int baseHashCode, ConsistentHash ch) {
@@ -203,17 +129,8 @@ public class Codec11 extends Codec10 {
          servers2Hash.put(address, hashes);
       }
       hashes.add(hashCode);
-      log.tracef("Hash code is: %d", hashCode);
+      getLog().tracef("Hash code is: %d", hashCode);
    }
-
-//   // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a node
-//   // address hash code calculation, so any changes to the implementation
-//   // require modification of the protocol.
-//   private int calcNodeHashCode(String host, int port, ConsistentHash ch) {
-//      byte[] addressBytes = String.format("%s:%d", host, port)
-//            .getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
-//      return ch.getNormalizedHash(Arrays.hashCode(addressBytes));
-//   }
 
    // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a virtual
    // node address hash code calculation, so any changes to the implementation

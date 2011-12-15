@@ -20,6 +20,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.logging.Log;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -40,5 +41,10 @@ public interface Codec {
     * of the response.
     */
    short readHeader(Transport transport, HeaderParams params);
+
+   /**
+    * Logger for Hot Rod client codec
+    */
+   Log getLog();
 
 }

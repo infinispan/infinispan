@@ -74,20 +74,21 @@ public class Codec10 implements Codec {
       transport.writeVInt(params.topologyId.get());
       //todo change once TX support is added
       transport.writeByte(params.txMarker);
-      log.tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
+      getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
                  params.messageId, params.opCode, flagInt);
       return params;
    }
 
-
+   @Override
    public short readHeader(Transport transport, HeaderParams params) {
       short magic = transport.readByte();
-      boolean isTrace = log.isTraceEnabled();
+      final Log localLog = getLog();
+      boolean isTrace = localLog.isTraceEnabled();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
-         log.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
+         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
          if (isTrace)
-            log.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
@@ -95,12 +96,12 @@ public class Codec10 implements Codec {
       // message id was detected, so don't consider it to a message id error
       if (receivedMessageId != params.messageId && receivedMessageId != 0) {
          String message = "Invalid message id. Expected %d and received %d";
-         log.invalidMessageId(params.messageId, receivedMessageId);
+         localLog.invalidMessageId(params.messageId, receivedMessageId);
          if (isTrace)
-            log.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
       }
-      log.tracef("Received response for message id: %d", receivedMessageId);
+      localLog.tracef("Received response for message id: %d", receivedMessageId);
 
       short receivedOpCode = transport.readByte();
       if (receivedOpCode != params.opRespCode) {
@@ -111,7 +112,7 @@ public class Codec10 implements Codec {
                "Invalid response operation. Expected %#x and received %#x",
                params.opRespCode, receivedOpCode));
       }
-      log.tracef("Received operation code is: %#04x", receivedOpCode);
+      localLog.tracef("Received operation code is: %#04x", receivedOpCode);
 
       short status = transport.readByte();
       // There's not need to check for errors in status here because if there
@@ -120,9 +121,15 @@ public class Codec10 implements Codec {
       return status;
    }
 
+   @Override
+   public Log getLog() {
+      return log;
+   }
+
    private void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {
-      final boolean isTrace = log.isTraceEnabled();
-      if (isTrace) log.tracef("Received operation status: %#x", status);
+      final Log localLog = getLog();
+      boolean isTrace = localLog.isTraceEnabled();
+      if (isTrace) localLog.tracef("Received operation status: %#x", status);
 
       switch ((int) status) {
          case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
@@ -134,15 +141,15 @@ public class Codec10 implements Codec {
             readNewTopologyIfPresent(transport, params);
             String msgFromServer = transport.readString();
             if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
-               log.tracef("Server-side timeout performing operation: %s", msgFromServer);
+               localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
             } if (msgFromServer.contains("SuspectException")) {
                if (isTrace)
-                  log.tracef("A remote node was suspected while executing messageId=%d. " +
+                  localLog.tracef("A remote node was suspected while executing messageId=%d. " +
                      "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
                // TODO: This will be better handled with its own status id in version 2 of protocol
                throw new RemoteNodeSuspecException(msgFromServer, params.messageId, status);
             } else {
-               log.errorFromServer(msgFromServer);
+               localLog.errorFromServer(msgFromServer);
             }
             throw new HotRodClientException(msgFromServer, params.messageId, status);
          }
@@ -159,6 +166,7 @@ public class Codec10 implements Codec {
    }
 
    protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
+      final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
       topologyId.set(newTopologyId);
       int numKeyOwners = transport.readUnsignedShort();
@@ -166,7 +174,7 @@ public class Codec10 implements Codec {
       int hashSpace = transport.readVInt();
       int clusterSize = transport.readVInt();
 
-      log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+      localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                        "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
                  newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
 
@@ -176,7 +184,7 @@ public class Codec10 implements Codec {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
          int hashCode = transport.read4ByteInt();
-         log.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
+         localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
          InetSocketAddress address = new InetSocketAddress(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
@@ -184,15 +192,15 @@ public class Codec10 implements Codec {
             servers2Hash.put(address, hashes);
          }
          hashes.add(hashCode);
-         log.tracef("Hash code is: %d", hashCode);
+         localLog.tracef("Hash code is: %d", hashCode);
       }
 
-      if (log.isInfoEnabled()) {
-         log.newTopology(servers2Hash.keySet());
+      if (localLog.isInfoEnabled()) {
+         localLog.newTopology(servers2Hash.keySet());
       }
       transport.getTransportFactory().updateServers(servers2Hash.keySet());
       if (hashFunctionVersion == 0) {
-         log.trace("Not using a consistent hash function (hash function version == 0).");
+         localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
          transport.getTransportFactory().updateHashFunction(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
       }
