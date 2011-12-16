@@ -720,6 +720,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             // we install a new view even if the member list of this cache didn't change, just to make sure
             cacheViewInfo.getPendingChanges().recoveredViews(recoveredMembers, recoveredJoiners);
          }
+
+         shouldRecoverViews = false;
       } catch (Exception e) {
          log.error("Error recovering views from the cluster members", e);
          return;
@@ -761,19 +763,18 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          outer: while (isRunning()) {
             if (shouldRecoverViews) {
                recoverViews();
-               shouldRecoverViews = false;
-            }
-
-            lock.lock();
-            try {
-               // Ensure at least viewChangeCooldown between cache view changes
-               condition.await(viewChangeCooldown, TimeUnit.MILLISECONDS);
-               log.tracef("Woke up, shouldRecoverViews=%s", shouldRecoverViews);
-            } catch (InterruptedException e) {
-               // shutting down
-               break;
-            } finally {
-               lock.unlock();
+            } else {
+               lock.lock();
+               try {
+                  // Ensure at least viewChangeCooldown between cache view changes
+                  condition.await(viewChangeCooldown, TimeUnit.MILLISECONDS);
+                  log.tracef("Woke up, shouldRecoverViews=%s", shouldRecoverViews);
+               } catch (InterruptedException e) {
+                  // shutting down
+                  break;
+               } finally {
+                  lock.unlock();
+               }
             }
 
             if (isCoordinator && isRunning()) {
