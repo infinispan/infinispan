@@ -43,7 +43,8 @@ import org.infinispan.container.versioning.EntryVersion;
  * @since 5.1
  */
 public class VersionedInternalEntryFactoryImpl extends InternalEntryFactoryImpl {
-      @Override
+
+   @Override
    public InternalCacheEntry create(Object key, Object value, EntryVersion version) {
       return new VersionedImmortalCacheEntry(key, value, version);
    }

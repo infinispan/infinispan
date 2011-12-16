@@ -31,6 +31,7 @@ import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
 import java.util.Properties
+import org.infinispan.factories.components.ComponentMetadataRepo
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -112,7 +113,12 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
          val groupName = "type=Server,name=%s".format(threadNamePrefix)
          val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
-         val dynamicMBean = new ResourceDMBean(transport)
+
+         // Pick up metadata from the component metadata repository
+         val meta = ComponentMetadataRepo.findComponentMetadata(transport.getClass).toManageableComponentMetadata
+         // And use this metadata when registering the transport as a dynamic MBean
+         val dynamicMBean = new ResourceDMBean(transport, meta)
+
          transportObjName = new ObjectName(
             "%s:%s,component=Transport".format(jmxDomain, groupName))
          JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)

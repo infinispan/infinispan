@@ -28,6 +28,7 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -83,8 +84,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private final ModuleProperties moduleProperties = new ModuleProperties();
    final List<ModuleLifecycle> moduleLifecycles;
-   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -97,6 +96,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       super(configuration.getClassLoader()); // registers the default classloader
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
+
+      // Load up the component metadata
+      ComponentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(defaultClassLoader));
+
       try {
          // this order is important ... 
          globalConfiguration = configuration;

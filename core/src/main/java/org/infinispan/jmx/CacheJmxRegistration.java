@@ -131,7 +131,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       String groupName = CACHE_JMX_GROUP
             + "," + ComponentsJmxRegistration.NAME_KEY + "="
             + ObjectName.quote(cache.getName() + "(" + cache.getConfiguration().getCacheModeString().toLowerCase() + ")")
-            + ",manager=" + ObjectName.quote(cache.getConfiguration().getGlobalConfiguration().getCacheManagerName());
+            + ",manager=" + ObjectName.quote(globalConfig.getCacheManagerName());
       ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, groupName);
       updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
       return registrar;
@@ -139,15 +139,14 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    
    protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
                                MBeanServer mBeanServer, String groupName) {
-      GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
-      if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
-         String tmpJmxDomain = JmxUtil.buildJmxDomain(gc, mBeanServer, groupName);
+      if (!globalConfig.isExposeGlobalJmxStatistics() && jmxDomain == null) {
+         String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig, mBeanServer, groupName);
          synchronized (managerJmxReg) {
             if (managerJmxReg.jmxDomain == null) {
-               if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
-                  log.cacheManagerAlreadyRegistered(gc.getJmxDomain());
-                  throw new JmxDomainConflictException(String.format("Domain already registered %s", gc.getJmxDomain()));
+               if (!tmpJmxDomain.equals(globalConfig.getJmxDomain()) && !globalConfig.isAllowDuplicateDomains()) {
+                  log.cacheManagerAlreadyRegistered(globalConfig.getJmxDomain());
+                  throw new JmxDomainConflictException(String.format("Domain already registered %s", globalConfig.getJmxDomain()));
                }
                // Set manager component's jmx domain so that other caches under same manager 
                // can see it, particularly important when jmx is only enabled at the cache level
@@ -160,7 +159,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       } else {
          // If global stats were enabled, manager's jmxDomain would have been populated 
          // when cache manager was started, so no need for synchronization here.
-         jmxDomain = managerJmxReg.jmxDomain == null ? gc.getJmxDomain() : managerJmxReg.jmxDomain;
+         jmxDomain = managerJmxReg.jmxDomain == null ? globalConfig.getJmxDomain() : managerJmxReg.jmxDomain;
       }
       registrar.setJmxDomain(jmxDomain);
    }

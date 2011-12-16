@@ -22,6 +22,8 @@
  */
 package org.infinispan.factories;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +43,13 @@ public class KnownComponentNames {
    public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
    public static final String GLOBAL_MARSHALLER = "org.infinispan.marshaller.global";
    public static final String CACHE_MARSHALLER = "org.infinispan.marshaller.cache";
+   public static final String CLASS_LOADER = "java.lang.ClassLoader";
+
+   // Please make sure this is kept up to date
+   public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
+      ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, EVICTION_SCHEDULED_EXECUTOR, ASYNC_REPLICATION_QUEUE_EXECUTOR,
+      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER
+   );
 
    private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(2);
    private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(4);

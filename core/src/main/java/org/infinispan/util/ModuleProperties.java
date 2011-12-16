@@ -28,15 +28,16 @@ import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -65,7 +66,7 @@ public class ModuleProperties extends Properties {
             ServiceLoader.load(ModuleLifecycle.class, cl);
 
       if (moduleLifecycleLoader.iterator().hasNext()) {
-         List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
+         List<ModuleLifecycle> lifecycles = new LinkedList<ModuleLifecycle>();
          for (ModuleLifecycle lifecycle : moduleLifecycleLoader) {
             log.debugf("Loading lifecycle SPI class: %s", lifecycle);
             lifecycles.add(lifecycle);
@@ -75,6 +76,15 @@ public class ModuleProperties extends Properties {
          log.debugf("No module lifecycle SPI classes available");
          return Collections.emptyList();
       }
+   }
+
+   /**
+    * Retrieves an Iterable containing metadata file finders declared by each module.
+    * @param cl class loader to use
+    * @return an Iterable of ModuleMetadataFileFinders
+    */
+   public Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
+      return ServiceLoader.load(ModuleMetadataFileFinder.class, cl);
    }
 
    @SuppressWarnings("unchecked")

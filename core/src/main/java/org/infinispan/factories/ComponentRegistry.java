@@ -28,8 +28,8 @@ import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.ScopeDetector;
-import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -37,7 +37,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.emptyMap;
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
@@ -49,10 +48,6 @@ import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIA
  * @since 4.0
  */
 public class ComponentRegistry extends AbstractComponentRegistry {
-
-   // cached component scopes
-   private static final Map<Class, Scopes> componentScopeLookup = new ConcurrentHashMap<Class, Scopes>(1);
-
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
@@ -102,40 +97,37 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public final <T> T getComponent(Class<T> componentType, String name) {
-      if (isGlobal(componentType)) {
-         return globalComponents.getComponent(componentType, name);
+   @SuppressWarnings("unchecked")
+   public final <T> T getComponent(String componentTypeName, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentTypeName)) {
+         return (T) globalComponents.getComponent(componentTypeName, name, nameIsFQCN);
       } else {
-         return getLocalComponent(componentType, name);
+         return (T) getLocalComponent(componentTypeName, name, nameIsFQCN);
       }
    }
 
    @SuppressWarnings("unchecked")
-   public final <T> T getLocalComponent(Class<T> componentType, String name) {
-      return super.getComponent(componentType, name);
+   public final <T> T getLocalComponent(String componentTypeName, String name, boolean nameIsFQCN) {
+      return (T) super.getComponent(componentTypeName, name, nameIsFQCN);
    }
 
+   @SuppressWarnings("unchecked")
    public final <T> T getLocalComponent(Class<T> componentType) {
-      return getLocalComponent(componentType, componentType.getName());
+      String componentTypeName = componentType.getName();
+      return (T) getLocalComponent(componentTypeName, componentTypeName, true);
    }
 
    @Override
-   protected final Map<String, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
-      // delegate to parent.  No sense maintaining multiple copies of this map.
-      return globalComponents.getDefaultFactoryMap();
-   }
-
-   @Override
-   protected final Component lookupComponent(Class componentClass, String name) {
-      if (isGlobal(componentClass)) {
-         return globalComponents.lookupComponent(componentClass, name);
+   protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentClassName)) {
+         return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
-         return lookupLocalComponent(componentClass, name);
+         return lookupLocalComponent(componentClassName, name, nameIsFQCN);
       }
    }
 
-   protected final Component lookupLocalComponent(Class componentClass, String name) {
-      return super.lookupComponent(componentClass, name);
+   protected final Component lookupLocalComponent(String componentClassName, String name, boolean nameIsFQCN) {
+      return super.lookupComponent(componentClassName, name, nameIsFQCN);
    }
 
    public final GlobalComponentRegistry getGlobalComponentRegistry() {
@@ -143,24 +135,17 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected void registerComponentInternal(Object component, String name, boolean nonVolatile) {
-      if (isGlobal(component.getClass())) {
-         globalComponents.registerComponentInternal(component, name, nonVolatile);
+   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
+         globalComponents.registerComponentInternal(component, name, nameIsFQCN);
       } else {
-         super.registerComponentInternal(component, name, nonVolatile);
+         super.registerComponentInternal(component, name, nameIsFQCN);
       }
    }
 
-   private boolean isGlobal(Class clazz) {
-      Scopes componentScope = componentScopeLookup.get(clazz);
-      if (componentScope == null) {
-         // Because the detectScope call is not protected by a lock, we can end up doing duplicate work
-         // However this will happen rarely enough that we can afford to ignore the duplicate work.
-         componentScope = ScopeDetector.detectScope(clazz);
-         componentScopeLookup.put(clazz, componentScope);
-      }
-
-      return componentScope == Scopes.GLOBAL;
+   private boolean isGlobal(String className) {
+      ComponentMetadata m = ComponentMetadataRepo.findComponentMetadata(className);
+      return m != null && m.isGlobalScope();
    }
 
    @Override

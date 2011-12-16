@@ -37,6 +37,8 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -54,6 +56,7 @@ import java.util.List;
  * @author Mircea Markus
  * @since 5.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
 
    static final Log log = LogFactory.getLog(ClusteringDependentLogic.class);
