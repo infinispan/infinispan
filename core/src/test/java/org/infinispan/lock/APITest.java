@@ -143,8 +143,8 @@ public class APITest extends MultipleCacheManagersTest {
                      Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
                silentCache.put(1, "v3");
                assert !silentCache.lock(1);
-               // TODO: Uncomment assert once ISPN-1609 is fixed...
-               // assert "v1".equals(cache.get(1));
+               String object = cache.get(1);
+               assert "v1".equals(object) : "Expected v1 but got " + object;
                cache.get(1);
             } catch (Exception e) {
                tm.setRollbackOnly();
