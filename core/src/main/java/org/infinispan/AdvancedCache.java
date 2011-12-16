@@ -146,21 +146,28 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    /**
     * Locks a given key or keys eagerly across cache nodes in a cluster.
     * <p>
-    * Keys can be locked eagerly in the context of a transaction only
+    * Keys can be locked eagerly in the context of a transaction only.
     *
     * @param keys the keys to lock
-    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false otherwise.
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
+    * false will only be returned if the lock acquisition timed out and the
+    * operation has been called with {@link Flag#FAIL_SILENTLY}.
+    * @throws org.infinispan.util.concurrent.TimeoutException if the lock 
+    * cannot be acquired within the configured lock acquisition time.
     */   
    boolean lock(K... keys);
 
    /**
     * Locks collections of keys eagerly across cache nodes in a cluster.
     * <p>
-    * Collections of keys can be locked eagerly in the context of a transaction only
-    * 
+    * Collections of keys can be locked eagerly in the context of a transaction only.
     * 
     * @param keys collection of keys to lock
-    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false otherwise. 
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
+    * false will only be returned if the lock acquisition timed out and the
+    * operation has been called with {@link Flag#FAIL_SILENTLY}.
+    * @throws org.infinispan.util.concurrent.TimeoutException if the lock
+    * cannot be acquired within the configured lock acquisition time.
     */
    boolean lock(Collection<? extends K> keys);
    
