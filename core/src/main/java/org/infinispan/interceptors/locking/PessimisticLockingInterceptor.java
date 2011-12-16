@@ -116,7 +116,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
       final TxInvocationContext txContext = (TxInvocationContext) ctx;
       try {
-         Object result = invokeNextInterceptor(ctx, command);
          final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
          acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
          if (ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || localNodeOwnsLock) {
@@ -124,7 +123,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          } else if (cdl.localNodeIsOwner(command.getKey())) {
             txContext.getCacheTransaction().addBackupLockForKey(command.getKey());
          }
-         return result;
+         return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -134,13 +133,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
-         final Object result = invokeNextInterceptor(ctx, command);
          acquireRemoteIfNeeded(ctx, command.getMap().keySet());
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          for (Object key : command.getMap().keySet()) {
             lockAndRegisterBackupLock(txContext, key);
          }
-         return result;
+         return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -150,12 +148,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         final Object result = invokeNextInterceptor(ctx, command);
          final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
          acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          lockAndRegisterBackupLock(txContext, command.getKey(), localNodeOwnsLock);
-         return result;
+         return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -182,12 +179,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         final Object result = invokeNextInterceptor(ctx, command);
          final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
          acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          lockAndRegisterBackupLock(txContext, command.getKey(), localNodeOwnsLock);
-         return result;
+         return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
