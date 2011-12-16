@@ -25,6 +25,7 @@ package org.infinispan.factories;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 
 /**
  * A factory for the RpcManager
@@ -44,6 +45,6 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
       if (globalConfiguration.getTransportClass() == null)
          throw new ConfigurationException("Transport should be configured in order to use clustered caches");
 
-      return super.construct(componentType);
+      return componentType.cast(new RpcManagerImpl());
    }
 }

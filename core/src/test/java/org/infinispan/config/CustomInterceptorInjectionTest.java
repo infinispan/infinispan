@@ -48,5 +48,4 @@ public class CustomInterceptorInjectionTest extends SingleCacheManagerTest {
       assert cache1.getAdvancedCache().getInterceptorChain().get(0).getClass().getName().equals(SomeInterceptor.class.getName());
       assert SomeInterceptor.lm != null;
    }
-
 }

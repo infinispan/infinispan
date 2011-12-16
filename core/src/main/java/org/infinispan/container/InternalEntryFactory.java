@@ -23,6 +23,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * A factory for {@link InternalCacheEntry} and {@link InternalCacheValue} instances.
@@ -30,6 +32,7 @@ import org.infinispan.container.versioning.EntryVersion;
  * @author Manik Surtani
  * @since 5.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface InternalEntryFactory {
 
    /**

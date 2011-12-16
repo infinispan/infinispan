@@ -25,6 +25,7 @@ package org.infinispan.jmx;
 import org.infinispan.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -105,12 +106,13 @@ public class ComponentsJmxRegistration {
       }
    }
 
-   private List<ResourceDMBean> getResourceDMBeansFromComponents() {
+   private List<ResourceDMBean> getResourceDMBeansFromComponents() throws NoSuchFieldException, ClassNotFoundException {
       List<ResourceDMBean> resourceDMBeans = new ArrayList<ResourceDMBean>();
       for (ComponentRegistry.Component component : components) {
-         ResourceDMBean resourceDMBean = new ResourceDMBean(component.getInstance());
-         if (resourceDMBean.isManagedResource()) {
-            resourceDMBeans.add(resourceDMBean);
+         ComponentMetadata md = component.getMetadata();
+         if (md.isManageable()) {
+            ResourceDMBean resourceDMBean = new ResourceDMBean(component.getInstance(), md.toManageableComponentMetadata());
+               resourceDMBeans.add(resourceDMBean);
          }
       }
       return resourceDMBeans;

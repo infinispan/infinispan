@@ -36,6 +36,12 @@
    <packaging>bundle</packaging>
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
+
+   <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
+   <properties>
+      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

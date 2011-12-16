@@ -24,6 +24,8 @@ package org.infinispan.transaction;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -50,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Jason T. Greene
  */
+@Scope(Scopes.NAMED_CACHE)
 public class TransactionLog {
    private final Map<GlobalTransaction, PrepareCommand> pendingPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
    private final BlockingQueue<LogEntry> entries = new LinkedBlockingQueue<LogEntry>();
