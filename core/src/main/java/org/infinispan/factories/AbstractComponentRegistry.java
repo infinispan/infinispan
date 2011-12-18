@@ -689,7 +689,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       List<PrioritizedMethod> stopMethods = new ArrayList<PrioritizedMethod>(componentLookup.size());
       for (Component c : componentLookup.values()) {
-         Collections.addAll(stopMethods, c.stopMethods);
+         // if one of the components threw an exception during startup
+         // the stop methods list may not have been initialized
+         if (c.stopMethods != null) {
+            Collections.addAll(stopMethods, c.stopMethods);
+         }
       }
 
       Collections.sort(stopMethods);
