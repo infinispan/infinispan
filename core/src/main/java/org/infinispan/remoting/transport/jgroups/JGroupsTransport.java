@@ -265,7 +265,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // JGroups
       if (configuration.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
-         if (!startChannel) {
+         if (startChannel) {
             ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
 
                @Override

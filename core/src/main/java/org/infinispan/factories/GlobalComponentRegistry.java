@@ -225,11 +225,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          }
       }
 
-      // Grab the executor factory
-      NamedExecutorsFactory execFactory = getComponent(NamedExecutorsFactory.class);
       super.stop();
-      // Now that all components are stopped, shutdown their executors
-      execFactory.stop();
 
       if (state == ComponentStatus.TERMINATED && needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
