@@ -86,6 +86,11 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
+   public int getConnectTimeout() {
+      return 1000;
+   }
+
+   @Override
    public ConsistentHashFactory getConsistentHashFactory() {
       return null;
    }
