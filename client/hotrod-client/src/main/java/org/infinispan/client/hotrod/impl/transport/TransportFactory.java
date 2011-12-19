@@ -61,4 +61,7 @@ public interface TransportFactory {
    int getTransportCount();
 
    int getSoTimeout();
+
+   int getConnectTimeout();
+
 }

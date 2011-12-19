@@ -70,6 +70,7 @@ public class TcpTransportFactory implements TransportFactory {
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
    private volatile int soTimeout;
+   private volatile int connectTimeout;
 
    @Override
    public void start(Codec codec, ConfigurationProperties cfg,
@@ -83,10 +84,12 @@ public class TcpTransportFactory implements TransportFactory {
          balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, classLoader);
          tcpNoDelay = cfg.getTcpNoDelay();
          soTimeout = cfg.getSoTimeout();
+         connectTimeout = cfg.getConnectTimeout();
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", staticConfiguredServers);
             log.debugf("Load balancer class: %s", balancerClass);
-            log.debugf("Tcp no delay = %b; client socket timeout = %d ms", tcpNoDelay, soTimeout);
+            log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
+                       tcpNoDelay, soTimeout, connectTimeout);
          }
          PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(
                new TransportObjectFactory(codec, this, topologyId, pingOnStartup), cfg.getProperties());
@@ -289,6 +292,11 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public int getSoTimeout() {
       return soTimeout;
+   }
+
+   @Override
+   public int getConnectTimeout() {
+      return connectTimeout;
    }
 
    /**
