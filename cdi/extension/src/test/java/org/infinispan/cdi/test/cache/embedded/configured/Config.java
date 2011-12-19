@@ -23,7 +23,8 @@
 package org.infinispan.cdi.test.cache.embedded.configured;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 import javax.enterprise.inject.Produces;
 
@@ -37,11 +38,11 @@ public class Config {
     *
     * <p>This will use the default cache container.</p>
     */
-   @Produces
-   @ConfigureCache("tiny")
    @Tiny
+   @ConfigureCache("tiny")
+   @Produces
    public Configuration tinyConfiguration() {
-      return new Configuration().fluent()
+      return new ConfigurationBuilder()
             .eviction().maxEntries(1)
             .build();
    }
@@ -52,11 +53,11 @@ public class Config {
     *
     * <p>This will use the default cache container.</p>
     */
-   @Produces
-   @ConfigureCache("small")
    @Small
+   @ConfigureCache("small")
+   @Produces
    public Configuration smallConfiguration() {
-      return new Configuration().fluent()
+      return new ConfigurationBuilder()
             .eviction().maxEntries(10)
             .build();
    }

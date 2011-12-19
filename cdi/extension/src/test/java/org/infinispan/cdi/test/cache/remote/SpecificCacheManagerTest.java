@@ -75,7 +75,7 @@ public class SpecificCacheManagerTest extends Arquillian {
    @BeforeTest
    public void beforeMethod() {
       embeddedCacheManager = createLocalCacheManager(false);
-      embeddedCacheManager.defineConfiguration("small", embeddedCacheManager.getDefaultConfiguration());
+      embeddedCacheManager.defineConfiguration("small", embeddedCacheManager.getDefaultCacheConfiguration());
       hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 

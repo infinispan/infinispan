@@ -50,7 +50,7 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    public static Archive<?> deployment() {
       return baseDeployment()
             .addClass(CacheRemoveAllInterceptorTest.class)
-            .addPackage(CacheRemoveAllService.class.getPackage())
+            .addClass(CacheRemoveAllService.class)
             .addPackage(Config.class.getPackage());
    }
 

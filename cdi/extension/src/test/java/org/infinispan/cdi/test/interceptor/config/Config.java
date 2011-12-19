@@ -23,7 +23,8 @@
 package org.infinispan.cdi.test.interceptor.config;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -61,7 +62,7 @@ public class Config {
    @Produces
    @ApplicationScoped
    EmbeddedCacheManager smallCacheManager() {
-      return new DefaultCacheManager(new Configuration().fluent()
+      return new DefaultCacheManager(new ConfigurationBuilder()
                                            .eviction().maxEntries(4)
                                            .build());
    }
