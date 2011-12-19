@@ -98,10 +98,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
 
       // Load up the component metadata
-      ComponentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(defaultClassLoader));
+      ComponentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(defaultClassLoader), defaultClassLoader);
 
       try {
-         // this order is important ... 
+         // this order is important ...
          globalConfiguration = configuration;
 
          registerComponent(this, GlobalComponentRegistry.class);
@@ -122,6 +122,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   @Override
    protected Log getLog() {
       return log;
    }
@@ -217,6 +218,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   @Override
    public void stop() {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
