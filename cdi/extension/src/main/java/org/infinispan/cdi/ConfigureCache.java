@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.jboss.solder.bean.generic.GenericType;
 
 import java.lang.annotation.Retention;
