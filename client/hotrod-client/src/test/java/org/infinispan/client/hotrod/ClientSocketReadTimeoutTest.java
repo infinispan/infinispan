@@ -168,6 +168,11 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       }
 
       @Override
+      public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
+         return delegate.getDefaultCacheConfiguration();
+      }
+
+      @Override
       public Set<String> getCacheNames() {
          return delegate.getCacheNames();
       }
