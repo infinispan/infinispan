@@ -108,6 +108,12 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       this.lockConcurrencyLevel = lockConcurrencyLevel;
       return this;
    }
+   
+   @Override
+   public AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> withProperties(Properties p) {
+      this.properties = p;
+      return this;
+   }
 
    public static enum FsyncMode {
       DEFAULT, PER_WRITE, PERIODIC

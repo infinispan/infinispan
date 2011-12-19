@@ -123,6 +123,36 @@
          <scope>test</scope>
          <version>${version.javassist}</version>
       </dependency>
+      
+      <dependency>
+         <groupId>org.codehaus.woodstox</groupId>
+         <artifactId>woodstox-core-asl</artifactId>
+         <version>${version.org.codehaus.woodstox.woodstox-core-asl}</version>
+         <exclusions>
+            <exclusion>
+               <groupId>javax.xml.stream</groupId>
+               <artifactId>stax-api</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+     
+      <dependency>
+         <groupId>org.codehaus.woodstox</groupId>
+         <artifactId>stax2-api</artifactId>
+         <version>${version.org.codehaus.woodstox.stax2-api}</version>
+         <exclusions>
+            <exclusion>
+               <groupId>javax.xml.stream</groupId>
+               <artifactId>stax-api</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+     
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>staxmapper</artifactId>
+         <version>${version.org.jboss.staxmapper}</version>
+      </dependency>
 
    </dependencies>
    <build>

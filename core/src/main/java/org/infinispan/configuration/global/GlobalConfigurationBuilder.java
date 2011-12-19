@@ -96,6 +96,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     * {@link org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig#disable()}
     */
    public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
+      globalJmxStatistics.enable();
       return globalJmxStatistics;
    }
 
