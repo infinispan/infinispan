@@ -23,13 +23,13 @@
 package org.infinispan.cdi.test.cachemanager.embedded;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -55,7 +55,7 @@ public class DefaultConfigurationTest extends Arquillian {
    private Cache<?, ?> cache;
 
    public void testDefaultConfiguration() {
-      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 16);
+      assertEquals(cache.getCacheConfiguration().eviction().maxEntries(), 16);
       assertEquals(cache.getName(), DEFAULT_CACHE_NAME);
    }
 
@@ -65,9 +65,8 @@ public class DefaultConfigurationTest extends Arquillian {
     */
    public static class Config {
       @Produces
-      @ApplicationScoped
       public Configuration customDefaultConfiguration() {
-         return new Configuration().fluent()
+         return new ConfigurationBuilder()
                .eviction().maxEntries(16)
                .build();
       }

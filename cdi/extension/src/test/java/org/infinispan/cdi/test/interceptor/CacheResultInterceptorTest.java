@@ -55,7 +55,7 @@ public class CacheResultInterceptorTest extends Arquillian {
    public static Archive<?> deployment() {
       return baseDeployment()
             .addClass(CacheResultInterceptorTest.class)
-            .addPackage(CacheResultService.class.getPackage())
+            .addClass(CacheResultService.class)
             .addPackage(Config.class.getPackage());
    }
 
@@ -132,10 +132,6 @@ public class CacheResultInterceptorTest extends Arquillian {
    }
 
    public void testCacheResultWithCustomCacheKeyGenerator() throws NoSuchMethodException {
-      final StringBuilder cacheName = new StringBuilder()
-            .append(CacheResultService.class.getName())
-            .append(".cacheResultWithCacheKeyGenerator(java.lang.String)");
-
       final Method method = CacheResultService.class.getMethod("cacheResultWithCacheKeyGenerator", String.class);
 
       String message = service.cacheResultWithCacheKeyGenerator("Kevin");

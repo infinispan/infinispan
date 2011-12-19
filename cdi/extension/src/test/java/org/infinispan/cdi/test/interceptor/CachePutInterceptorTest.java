@@ -45,7 +45,7 @@ import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see javax.cache.interceptor.CachePut
+ * @see javax.cache.annotation.CachePut
  */
 @Test(groups = "functional", testName = "cdi.test.interceptor.CachePutInterceptorTest")
 public class CachePutInterceptorTest extends Arquillian {
@@ -54,7 +54,7 @@ public class CachePutInterceptorTest extends Arquillian {
    public static Archive<?> deployment() {
       return baseDeployment()
             .addClass(CachePutInterceptorTest.class)
-            .addPackage(CachePutService.class.getPackage())
+            .addClass(CachePutService.class)
             .addPackage(Config.class.getPackage());
    }
 

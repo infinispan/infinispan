@@ -21,9 +21,9 @@
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
-<infinispan xmlns="urn:infinispan:config:5.0"
+<infinispan xmlns="urn:infinispan:config:5.1"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-            xsi:schemaLocation="urn:infinispan:config:5.0 http://docs.jboss.org/infinispan/schemas/infinispan-config-5.0.xsd">
+            xsi:schemaLocation="urn:infinispan:config:5.1 http://docs.jboss.org/infinispan/schemas/infinispan-config-5.1.xsd">
    <default>
       <eviction maxEntries="1000" />
    </default>
