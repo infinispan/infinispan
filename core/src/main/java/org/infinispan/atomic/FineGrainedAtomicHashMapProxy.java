@@ -88,7 +88,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          boolean insertNewMap = map == null;
          // copy for write
-         AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<K, V>(true) : map.copyForWrite();
+         AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<K, V>(true) : map.copy();
          copy.initForWriting();
          if (insertNewMap) {
             cache.put(deltaMapKey, copy);
@@ -98,7 +98,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    public Set<K> keySet() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<K> result = new HashSet<K>(keySetUncommitted());
       if (map != null) {
          result.addAll(map.keySet());
@@ -113,7 +113,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    public Collection<V> values() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<V> result = new HashSet<V>(valuesUncommitted());
       if (map != null) {
          result.addAll(map.values());
@@ -128,7 +128,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    public Set<Entry<K, V>> entrySet() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<Entry<K, V>> result = new HashSet<Entry<K, V>>(entrySetUncommitted());
       if (map != null) {
          result.addAll(map.entrySet());

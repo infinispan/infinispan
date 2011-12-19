@@ -187,7 +187,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    }
 
    @SuppressWarnings("unchecked")
-   public AtomicHashMap<K, V> copyForWrite() {
+   public AtomicHashMap<K, V> copy() {
       try {
          AtomicHashMap<K, V> clone = (AtomicHashMap<K, V>) super.clone();
          clone.delegate = (FastCopyHashMap<K, V>) delegate.clone();

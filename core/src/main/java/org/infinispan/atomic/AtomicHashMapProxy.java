@@ -145,7 +145,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          
          // copy for write
-         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copyForWrite();          
+         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();          
          copy.initForWriting();                 
          cache.put(deltaMapKey, copy);         
          return copy;
