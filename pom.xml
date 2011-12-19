@@ -19,7 +19,7 @@
    <modules>
       <module>parent</module>
       <module>core</module>
-      <module>tools</module>
+<!--      <module>tools</module>
       <module>query</module>
       <module>tree</module>
       <module>lucene-directory</module>
@@ -49,7 +49,7 @@
       <module>demos/nearcache</module>
       <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
-      <module>cdi/tck-runner</module>
+      <module>cdi/tck-runner</module>-->
    </modules>
 
    <profiles>
