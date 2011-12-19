@@ -181,6 +181,7 @@
    -->
 
    <default>
+      <lazyDeserialization />
       <!--
          Tunes the locking and concurrency characteristics of the cache.
 

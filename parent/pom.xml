@@ -160,6 +160,10 @@
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.12.1.GA</version.javassist>
+      <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
+      <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
+      <version.org.jboss.staxmapper>1.0.0.Final</version.org.jboss.staxmapper>
+      
       <!-- 
          The Felix Bundle plugin used has an incompatibility with Maven's Source plugin. 
          Hence this workaround to use an older version of the Bundle plugin.  See

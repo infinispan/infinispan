@@ -34,8 +34,11 @@ import org.infinispan.config.DelegatingConfigurationVisitor;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.TimeoutConfigurationValidatingVisitor;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -52,6 +55,8 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
@@ -328,26 +333,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @throws java.io.IOException if there is a problem with the configuration file.
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
-      try {
-         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-               configurationFile, InfinispanConfiguration.resolveSchemaPath(),
-               Thread.currentThread().getContextClassLoader());
-
-         globalConfiguration = configuration.parseGlobalConfiguration();
-         globalConfiguration.accept(configurationValidator);
-         defaultConfiguration = configuration.parseDefaultConfiguration();
-         for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
-            Configuration c = defaultConfiguration.clone();
-            c.applyOverrides(entry.getValue());
-            configurationOverrides.put(entry.getKey(), c);
-         }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
-         cacheCreateLock = new ReentrantLock();
-      } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
-      }
-      if (start)
-         start();
+      this(FileLookupFactory.newInstance().lookupFile(configurationFile, Thread.currentThread().getContextClassLoader()));
    }
 
    /**
@@ -376,16 +362,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       InputStream schemaInputStream = InfinispanConfiguration.findSchemaInputStream();
       try {
-         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-                 configurationStream, schemaInputStream);
-         globalConfiguration = configuration.parseGlobalConfiguration();
+         ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
+         
+         globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(holder.getGlobalConfigurationBuilder().build());
          globalConfiguration.accept(configurationValidator);
-         defaultConfiguration = configuration.parseDefaultConfiguration();
-         for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
-            Configuration c = defaultConfiguration.clone();
-            c.applyOverrides(entry.getValue());
-            configurationOverrides.put(entry.getKey(), c);
+         defaultConfiguration = new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
+         
+         for (ConfigurationBuilder b : holder.getConfigurationBuilders()) {
+            org.infinispan.configuration.cache.Configuration c = b.build();
+            Configuration legacy = new LegacyConfigurationAdaptor().adapt(c);
+            configurationOverrides.put(c.name(), legacy);
          }
+         
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
@@ -414,40 +402,25 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(String globalConfigurationFile, String defaultConfigurationFile, String namedCacheFile,
                               boolean start) throws IOException {
-      try {
-         InfinispanConfiguration gconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                 globalConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 Thread.currentThread().getContextClassLoader());
-
-         globalConfiguration = gconfiguration.parseGlobalConfiguration();
-         globalConfiguration.accept(configurationValidator);
-
-         InfinispanConfiguration dconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                 defaultConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 Thread.currentThread().getContextClassLoader());
-
-         defaultConfiguration = dconfiguration.parseDefaultConfiguration();
-
-         if (namedCacheFile != null) {
-            InfinispanConfiguration NCconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                    namedCacheFile, InfinispanConfiguration.resolveSchemaPath(),
-                    Thread.currentThread().getContextClassLoader());
-
-            for (Map.Entry<String, Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
-               Configuration c = defaultConfiguration.clone();
-               c.applyOverrides(entry.getValue());
-               configurationOverrides.put(entry.getKey(), c);
-            }
-         }
-
-         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
-         cacheCreateLock = new ReentrantLock();
-      } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
+      Parser parser = new Parser(Thread.currentThread().getContextClassLoader());
+      
+      ConfigurationBuilderHolder globalConfigurationBuilderHolder = parser.parse(globalConfigurationFile);
+      ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parser.parse(defaultConfigurationFile);
+      
+      globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+      defaultConfiguration = new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+      
+      if (namedCacheFile != null) {
+         ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parse(namedCacheFile);
+         org.infinispan.configuration.cache.Configuration c = namedConfigurationBuilderHolder.getConfigurationBuilders().iterator().next().build();
+         defineConfiguration(c.name(), new LegacyConfigurationAdaptor().adapt(c));
       }
 
-      if (start)
-         start();
+      globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
+      cacheCreateLock = new ReentrantLock();
+
+   if (start)
+      start();
    }
 
 

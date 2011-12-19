@@ -1,7 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
+
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -15,9 +18,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup ;
+   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
+   TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
@@ -92,6 +95,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
    
    public RecoveryConfigurationBuilder recovery() {
+      recovery.enable();
       return recovery;
    }
 
@@ -111,6 +115,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if (useEagerLocking) {
          lockingMode = LockingMode.PESSIMISTIC;
       }
+      if (transactionMode == null && getBuilder().invocationBatching().enabled)
+         transactionMode = TransactionMode.TRANSACTIONAL;
+      else if (transactionMode == null)
+         transactionMode = TransactionMode.NON_TRANSACTIONAL;
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());
    }
    

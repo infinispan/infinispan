@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Properties;
+
 /*
  * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
  * rather than delegate to existing ones. 
@@ -23,5 +25,7 @@ public abstract class AbstractLoaderConfigurationBuilder<T extends AbstractLoade
    public SingletonStoreConfigurationBuilder singletonStore() {
       return singletonStore;
    }
+   
+   public abstract AbstractLoaderConfigurationBuilder<T> withProperties(Properties p);
 
 }

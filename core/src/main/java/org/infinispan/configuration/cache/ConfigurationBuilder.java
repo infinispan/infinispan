@@ -4,7 +4,7 @@ import static java.util.Arrays.asList;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
-   private String name;
+   protected String name;
    private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;

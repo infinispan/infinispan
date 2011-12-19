@@ -102,7 +102,7 @@ public class StateRetrievalConfigurationBuilder extends
       // certain combinations are illegal, such as state transfer + DIST
       if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isDistributed())
          throw new ConfigurationException(
-               "Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
+               "Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true on cache named " + getBuilder().name + ".  Perhaps you meant to enable rehashing?");
    }
 
    @Override
@@ -110,19 +110,22 @@ public class StateRetrievalConfigurationBuilder extends
 
       // If replicated and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
-      if (getClusteringBuilder().cacheMode().isReplicated() && fetchInMemoryState == null) {
+      Boolean _fetchInMemoryState = fetchInMemoryState;
+      if (getClusteringBuilder().cacheMode().isReplicated() && _fetchInMemoryState == null) {
          log.debug("Cache is replicated but state transfer was not defined, so force enabling it");
-         fetchInMemoryState(true);
+         _fetchInMemoryState = true;
       }
-      if (fetchInMemoryState == null)
-         fetchInMemoryState = false;
-      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState.booleanValue(),
+      
+      if (_fetchInMemoryState == null)
+         _fetchInMemoryState = false;
+      
+      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, _fetchInMemoryState.booleanValue(), fetchInMemoryState,
             initialRetryWaitTime, logFlushTimeout, maxNonProgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
    }
    
    public StateRetrievalConfigurationBuilder read(StateRetrievalConfiguration template) {
       this.alwaysProvideInMemoryState = template.alwaysProvideInMemoryState();
-      this.fetchInMemoryState = template.fetchInMemoryState();
+      this.fetchInMemoryState = template.originalFetchInMemoryState();
       this.initialRetryWaitTime = template.initialRetryWaitTime();
       this.logFlushTimeout = template.logFlushTimeout();
       this.maxNonProgressingLogWrites = template.maxNonProgressingLogWrites();

@@ -157,10 +157,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    @Override
    TransportConfiguration create() {
-      Transport t = transport;
-      if (t == null)
+      if (transport == null)
          defaultTransport();
-      return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, t, nodeName, TypedProperties.toTypedProperties(properties));
+      return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
    }
    
    public TransportConfigurationBuilder defaultTransport() {
