@@ -24,6 +24,7 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -75,6 +76,17 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
          lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      try {
+         return super.visitGetKeyValueCommand(ctx, command);
+      } finally {
+         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+         //locks need to be released in this situation as they might have been acquired from L1.
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
