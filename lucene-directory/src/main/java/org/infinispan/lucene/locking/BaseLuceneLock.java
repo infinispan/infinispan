@@ -49,7 +49,7 @@ class BaseLuceneLock extends Lock {
    private final FileCacheKey keyOfLock;
 
    BaseLuceneLock(Cache cache, String indexName, String lockName) {
-      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE);
+      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
       this.keyOfLock = new FileCacheKey(indexName, lockName);
