@@ -23,6 +23,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -56,10 +57,19 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retval = super.visitPrepareCommand(ctx, command);
+      if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
+         for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
+      }
+
+      Object retval = invokeNextInterceptor(ctx, command);
+
+      if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
+      
       EntryVersionsMap newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
-      return newVersionData == null ? retval : newVersionData;
+      if (newVersionData != null) retval = newVersionData;
+      if (command.isOnePhaseCommit()) commitContextEntries(ctx);
+      return retval;
    }
 
 

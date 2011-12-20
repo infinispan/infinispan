@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
    private StateTransferLock stateTransferLock;
-   private CommandsFactory cf;
+   CommandsFactory cf;
 
    private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
 
@@ -107,11 +107,15 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
 
          if (!resendTo.isEmpty()) {
             getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            // Make sure this is 1-Phase!!
-            PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
             rpcManager.invokeRemotely(resendTo, pc, true, true);
          }
       }
+   }
+
+   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
+      // Make sure this is 1-Phase!!
+      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
    }
 
    @Override

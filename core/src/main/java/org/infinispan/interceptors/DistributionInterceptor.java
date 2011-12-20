@@ -383,13 +383,16 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
          if (!resendTo.isEmpty()) {
             log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            // Make sure this is 1-Phase!!
-            PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
             rpcManager.invokeRemotely(resendTo, pc, true, true);
          }
       }
    }
-
+   
+   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
+      // Make sure this is 1-Phase!!
+      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+   }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

@@ -20,9 +20,15 @@
 package org.infinispan.container.versioning;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -155,5 +161,55 @@ public class ReplWriteSkewTest extends MultipleCacheManagersTest {
 
       assert null == cache0.get("hello");
       assert null == cache1.get("hello");
+   }
+   
+   public void testResendPrepare() throws Exception {
+      Cache<Object, Object> cache0 = cache(0);
+      Cache<Object, Object> cache1 = cache(1);
+
+      // Auto-commit is true
+      cache0.put("hello", "world");
+
+      // create a write skew
+      tm(1).begin();
+      assert "world".equals(cache1.get("hello"));
+      Transaction t = tm(1).suspend();
+
+      // Set up cache-1 to force the prepare to retry
+      cache(1).getAdvancedCache().addInterceptorAfter(new CommandInterceptor() {
+         boolean used = false;
+         @Override
+         public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand c) throws Throwable {
+            if (!used) {
+               used = true;
+               return CommitCommand.RESEND_PREPARE;
+            } else {
+               return invokeNextInterceptor(ctx, c);
+            }
+         }
+         @Override
+         protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return super.handleDefault(ctx, command);
+         }
+      }, InvocationContextInterceptor.class);
+
+      // Implicit tx.  Prepare should be retried.
+      cache(0).put("hello", "world2");      
+
+      assert "world2".equals(cache0.get("hello"));
+      assert "world2".equals(cache1.get("hello"));
+
+      tm(1).resume(t);
+      cache1.put("hello", "world3");
+
+      try {
+         tm(1).commit();
+         assert false : "This transaction should roll back";
+      } catch (RollbackException expected) {
+         // expected
+      }
+
+      assert "world2".equals(cache0.get("hello"));
+      assert "world2".equals(cache1.get("hello"));
    }
 }
