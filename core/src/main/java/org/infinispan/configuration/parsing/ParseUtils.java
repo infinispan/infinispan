@@ -46,7 +46,7 @@ public final class ParseUtils {
             return null;
         }
         Namespace readerNS = Namespace.forUri(reader.getNamespaceURI());
-        if ( !(readerNS == Namespace.INFINISPAN_5_1 || readerNS == Namespace.NONE)) {
+        if ( !(readerNS == Namespace.INFINISPAN_5_1 || readerNS == Namespace.INFINISPAN_5_0 || readerNS == Namespace.NONE)) {
             throw unexpectedElement(reader);
         }
         return Element.forName(reader.getLocalName());

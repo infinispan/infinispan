@@ -41,6 +41,7 @@ public enum Namespace {
     XML_SCHEMA_INSTANCE("http://www.w3.org/2001/XMLSchema-instance"),
 
     // configuration versions, oldest to newest
+    INFINISPAN_5_0("urn:infinispan:config:5.0"),
     INFINISPAN_5_1("urn:infinispan:config:5.1");
 
     /**
