@@ -608,6 +608,9 @@ public class Parser {
                else
                   builder.indexing().disable();
                break;
+            case INDEX_LOCAL_ONLY:
+                  builder.indexing().indexLocalOnly(Boolean.valueOf(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
