@@ -60,12 +60,13 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
       }
+      EntryVersionsMap newVersionData= null;
+      if (ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
       Object retval = invokeNextInterceptor(ctx, command);
 
+      if (!ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
-      
-      EntryVersionsMap newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
       if (newVersionData != null) retval = newVersionData;
       if (command.isOnePhaseCommit()) commitContextEntries(ctx);

@@ -171,10 +171,9 @@ public class ReplWriteSkewTest extends MultipleCacheManagersTest {
       cache0.put("hello", "world");
 
       // create a write skew
-      tm(1).begin();
-      assert "world".equals(cache1.get("hello"));
-      Transaction t = tm(1).suspend();
-
+      tm(0).begin();
+      assert "world".equals(cache0.get("hello"));
+      Transaction t = tm(0).suspend();
       // Set up cache-1 to force the prepare to retry
       cache(1).getAdvancedCache().addInterceptorAfter(new CommandInterceptor() {
          boolean used = false;
@@ -199,14 +198,17 @@ public class ReplWriteSkewTest extends MultipleCacheManagersTest {
       assert "world2".equals(cache0.get("hello"));
       assert "world2".equals(cache1.get("hello"));
 
-      tm(1).resume(t);
-      cache1.put("hello", "world3");
+      tm(0).resume(t);
+      cache0.put("hello", "world3");
 
       try {
-         tm(1).commit();
+         log.warn("----- Now committing ---- ");
+         tm(0).commit();
          assert false : "This transaction should roll back";
       } catch (RollbackException expected) {
          // expected
+         expected
+               .printStackTrace();
       }
 
       assert "world2".equals(cache0.get("hello"));
