@@ -23,7 +23,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -109,7 +108,6 @@ public abstract class BaseStateTransferTask {
       } catch (Exception e) {
          log.errorUnblockingTransactions(e);
       }
-      stateTransferManager.endStateTransfer();
       log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
             Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }

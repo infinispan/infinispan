@@ -34,7 +34,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 * @author Mircea.Markus@jboss.com
 * @since 4.1
 */
-@Listener
+@Listener(sync = false)
 public class ListenerRegistration {
    private final KeyAffinityServiceImpl keyAffinityService;
 

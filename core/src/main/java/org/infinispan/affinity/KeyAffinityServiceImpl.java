@@ -123,27 +123,29 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          throw new IllegalStateException("Address " + address + " is no longer in the cluster");
 
       try {
-         maxNumberInvariant.readLock().lock();
          Object result = null;
-         try {
-            while (result == null && !keyGenWorker.isStopped()) {
+         while (result == null && !keyGenWorker.isStopped()) {
+            // obtain the read lock inside the loop, otherwise a topology change will never be able
+            // to obtain the write lock
+            maxNumberInvariant.readLock().lock();
+            try {
                // first try to take an element without waiting
                result = queue.poll();
                if (result == null) {
                   // there are no elements in the queue, make sure the producer is started
                   keyProducerStartLatch.open();
                   // our address might have been removed from the consistent hash
-                  if (!address.equals(getAddressForKey(address)))
+                  if (!isNodeInConsistentHash(address))
                      throw new IllegalStateException("Address " + address + " is no longer in the cluster");
                }
+            } finally {
+               maxNumberInvariant.readLock().unlock();
             }
-         } finally {
-            maxNumberInvariant.readLock().unlock();
          }
          exitingNumberOfKeys.decrementAndGet();
          return result;
       } finally {
-         if (queue.size() < maxNumberOfKeys.get() * THRESHOLD + 1) {
+         if (queue.size() < bufferSize * THRESHOLD + 1) {
             keyProducerStartLatch.open();
          }
       }
@@ -257,14 +259,25 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       private void generateKeys() {
          maxNumberInvariant.readLock().lock();
          try {
-            while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get()) {
+            // if there's a topology change, some queues will stop receiving keys
+            // so we want to establish an upper bound on how many extra keys to generate
+            // in order to fill all the queues
+            int maxMisses = maxNumberOfKeys.get();
+            int missCount = 0;
+            while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get()
+                  && missCount < maxMisses) {
                Object key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
                if (interestedInAddress(addressForKey)) {
-                  tryAddKey(addressForKey, key);
+                  boolean added = tryAddKey(addressForKey, key);
+                  if (!added) missCount++;
                }
             }
-            keyProducerStartLatch.close();
+
+            // if we had too many misses, just release the lock and try again
+            if (missCount < maxMisses) {
+               keyProducerStartLatch.close();
+            }
          } finally {
             maxNumberInvariant.readLock().unlock();
          }
@@ -282,11 +295,11 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          return false;
       }
 
-      private void tryAddKey(Address address, Object key) {
+      private boolean tryAddKey(Address address, Object key) {
          BlockingQueue queue = address2key.get(address);
          // on node stop the distribution manager might still return the dead server for a while after we have already removed its queue
          if (queue == null)
-            return;
+            return false;
 
          boolean added = queue.offer(key);
          if (added) {
@@ -299,6 +312,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
             else
                log.tracef("Not added key(%s) to the address(%s)", key, address);
          }
+         return added;
       }
 
       public boolean isActive() {
@@ -354,6 +368,11 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       return addressList.get(0);
    }
 
+   private boolean isNodeInConsistentHash(Address address) {
+      DistributionManager distributionManager = getDistributionManager();
+      ConsistentHash hash = distributionManager.getConsistentHash();
+      return hash.getCaches().contains(address);
+   }
    private DistributionManager getDistributionManager() {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if (distributionManager == null) {
