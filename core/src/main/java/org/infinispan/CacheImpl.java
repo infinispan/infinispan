@@ -904,7 +904,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return rpcManager;
    }
 
-   public AdvancedCache<K, V> withFlags(Flag... flags) {
+   @Override
+   public AdvancedCache<K, V> withFlags(final Flag... flags) {
       if (flags == null || flags.length == 0)
          return this;
       else

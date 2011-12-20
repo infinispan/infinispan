@@ -25,6 +25,7 @@ import org.infinispan.util.concurrent.NotifyingFuture;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -40,16 +41,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * internal optimizations that can be made when the {@link ClassLoader} and {@link Flag} set is unchanging.
  *
  * @author Manik Surtani
+ * @author Sanne Grinovero
  * @see AdvancedCache#with(ClassLoader)
  * @see AdvancedCache#withFlags(org.infinispan.context.Flag...)
  * @since 5.1
  */
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
-   private EnumSet<Flag> flags;
-   private ClassLoader classLoader;
+   private final EnumSet<Flag> flags;
+   private final ClassLoader classLoader;
    private final CacheImpl<K, V> cacheImplementation;
-
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader) {
       this(delegate, classLoader, null);
@@ -76,20 +77,36 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       cacheImplementation = (CacheImpl<K, V>) delegate;
    }
 
-   @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      if (classLoader == null) throw new NullPointerException("ClassLoader passed in cannot be null!");
+   private DecoratedCache(CacheImpl<K, V> delegate, ClassLoader classLoader, EnumSet<Flag> newFlags) {
+      //this constructor is private so we already checked for argument validity
+      super(delegate);
+      this.flags = newFlags;
       this.classLoader = classLoader;
-      return this;
+      this.cacheImplementation = delegate;
    }
 
    @Override
-   public AdvancedCache<K, V> withFlags(Flag... flags) {
-      if (flags == null) throw new NullPointerException("Flags cannot be null!");
-      if (this.flags == null) this.flags = EnumSet.noneOf(Flag.class);
-      this.flags.addAll(Arrays.asList(flags));
+   public AdvancedCache<K, V> with(final ClassLoader classLoader) {
+      if (classLoader == null) throw new IllegalArgumentException("ClassLoader passed in cannot be null!");
+      return new DecoratedCache<K, V>(this.cacheImplementation, classLoader, flags);
+   }
 
-      return this;
+   @Override
+   public AdvancedCache<K, V> withFlags(final Flag... flags) {
+      if (flags == null || flags.length == 0)
+         return this;
+      else {
+         List<Flag> flagsToAdd = Arrays.asList(flags);
+         if (this.flags != null && this.flags.containsAll(flagsToAdd)) {
+            //we already have all specified flags
+            return this;
+         }
+         else {
+            EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
+            newFlags.addAll(flagsToAdd);
+            return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader, newFlags);
+         }
+      }
    }
 
    @Override
