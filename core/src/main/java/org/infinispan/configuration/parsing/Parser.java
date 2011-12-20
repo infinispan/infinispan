@@ -22,6 +22,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.AbstractLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
@@ -608,13 +609,30 @@ public class Parser {
                else
                   builder.indexing().disable();
                break;
+            case INDEX_LOCAL_ONLY:
+                  builder.indexing().indexLocalOnly(Boolean.valueOf(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      
-      builder.indexing().withProperties(parseProperties(reader));
-      
+      Properties indexingProperties = null;
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTIES: {
+               indexingProperties = parseProperties(reader);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      IndexingConfigurationBuilder indexing = builder.indexing();
+      if (indexingProperties != null) {
+         indexing.withProperties(indexingProperties);
+      }
    }
 
    private void parseExpiration(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {

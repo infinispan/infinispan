@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+    xmlns="urn:infinispan:config:5.1">
+
+    <default>
+        <indexing enabled="true">
+            <properties>
+                <property name="hibernate.search.default.directory_provider" value="someDefault" />
+            </properties>
+        </indexing>
+    </default>
+
+    <namedCache name="simple" />
+
+    <namedCache name="not-searchable">
+        <indexing enabled="false" />
+    </namedCache>
+
+    <namedCache name="memory-searchable">
+        <indexing enabled="true" indexLocalOnly="false">
+            <properties>
+                <property name="hibernate.search.default.directory_provider" value="ram" />
+            </properties>
+        </indexing>
+    </namedCache>
+
+    <namedCache name="disk-searchable">
+        <indexing enabled="true" indexLocalOnly="true">
+            <properties>
+                <property name="hibernate.search.default.directory_provider" value="filesystem" />
+                <property name="hibernate.search.cats.exclusive_index_use" value="true" />
+            </properties>
+        </indexing>
+    </namedCache>
+
+</infinispan>
