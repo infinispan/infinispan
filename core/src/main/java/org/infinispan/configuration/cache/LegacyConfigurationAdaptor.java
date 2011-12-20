@@ -161,7 +161,11 @@ public class LegacyConfigurationAdaptor {
             csc.setCacheLoaderClassName(((LoaderConfiguration) loader).cacheLoader().getClass().getName());
             csc.purgerThreads(((LoaderConfiguration) loader).purgerThreads());
          } else if (loader instanceof FileCacheStoreConfiguration) {
-            csc = new FileCacheStoreConfig();
+            FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
+            csc = fcsc;
+            String location = loader.properties().getProperty("location");
+            if (location != null)
+               fcsc.location(location);
          }
          csc.fetchPersistentState(loader.fetchPersistentState());
          csc.ignoreModifications(loader.ignoreModifications());
