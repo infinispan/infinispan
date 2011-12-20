@@ -65,9 +65,9 @@ public class Cache1Observers {
    }
 
    /**
-    * Observe the cache entry created event for the cache associated with @Cache1
-    * <p/>
-    * Get's called once (before) with pre false, once (after) with pre true
+    * <p>Observe the cache entry created event for the cache associated with @Cache1</p>
+    *
+    * <p>Get's called once (before) with pre false, once (after) with pre true</p>
     */
    void observeCacheEntryCreated(@Observes @Cache1 CacheEntryCreatedEvent event) {
       if (!event.isPre()) {

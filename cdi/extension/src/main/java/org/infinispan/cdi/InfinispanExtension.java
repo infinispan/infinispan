@@ -34,7 +34,7 @@ import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
 import org.infinispan.cdi.util.Version;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.solder.bean.BeanBuilder;
@@ -220,7 +220,7 @@ public class InfinispanExtension implements Extension {
                cacheManager.defineConfiguration(cacheName, cacheConfiguration);
                log.cacheConfigurationDefined(cacheName, cacheManager);
             } else if (!cacheManager.getCacheNames().contains(cacheName)) {
-               cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration().clone());
+               cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultCacheConfiguration());
                log.cacheConfigurationDefined(cacheName, cacheManager);
             }
          }

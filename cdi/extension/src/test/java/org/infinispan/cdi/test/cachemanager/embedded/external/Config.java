@@ -23,7 +23,8 @@
 package org.infinispan.cdi.test.cachemanager.embedded.external;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -40,17 +41,17 @@ public class Config {
    /**
     * Associates the externally defined "large" cache with the qualifier {@link Large}.
     */
-   @Produces
-   @ConfigureCache("large")
    @Large
+   @ConfigureCache("large")
+   @Produces
    public Configuration largeConfiguration;
 
    /**
     * Associates the externally defined "quick" cache with the qualifier {@link Quick}.
     */
-   @Produces
-   @ConfigureCache("quick")
    @Quick
+   @ConfigureCache("quick")
+   @Produces
    public Configuration quickConfiguration;
 
    /**
@@ -62,12 +63,12 @@ public class Config {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager();
 
       // define large configuration
-      externalCacheContainerManager.defineConfiguration("large", new Configuration().fluent()
+      externalCacheContainerManager.defineConfiguration("large", new ConfigurationBuilder()
             .eviction().maxEntries(100)
             .build());
 
       // define quick configuration
-      externalCacheContainerManager.defineConfiguration("quick", new Configuration().fluent()
+      externalCacheContainerManager.defineConfiguration("quick", new ConfigurationBuilder()
             .expiration().wakeUpInterval(1l)
             .build());
 

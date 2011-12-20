@@ -23,7 +23,8 @@
 package org.infinispan.cdi.test.cachemanager.embedded.xml;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.solder.resourceLoader.Resource;
@@ -45,17 +46,17 @@ public class Config {
     *
     * <p>The default configuration defined in "infinispan.xml" will be used.</p>
     */
-   @Produces
-   @ConfigureCache("very-large")
    @VeryLarge
+   @ConfigureCache("very-large")
+   @Produces
    public Configuration veryLargeConfiguration;
 
    /**
     * Associates the "quick-very-large" cache (configured below) with the qualifier {@link Quick}.
     */
-   @Produces
-   @ConfigureCache("quick-very-large")
    @Quick
+   @ConfigureCache("quick-very-large")
+   @Produces
    public Configuration quickVeryLargeConfiguration;
 
    /**
@@ -66,7 +67,8 @@ public class Config {
    public EmbeddedCacheManager defaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);
 
-      externalCacheContainerManager.defineConfiguration("quick-very-large", new Configuration().fluent()
+      externalCacheContainerManager.defineConfiguration("quick-very-large", new ConfigurationBuilder()
+            .read(externalCacheContainerManager.getDefaultCacheConfiguration())
             .expiration().wakeUpInterval(1l)
             .build());
 

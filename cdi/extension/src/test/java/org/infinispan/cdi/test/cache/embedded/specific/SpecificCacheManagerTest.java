@@ -64,21 +64,23 @@ public class SpecificCacheManagerTest extends Arquillian {
    private Cache<?, ?> smallCache;
 
    public void testSpecificCacheManager() throws Exception {
-      assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 2000);
-      assertEquals(largeCache.getConfiguration().getEvictionStrategy(), FIFO);
-      assertEquals(largeCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), FIFO);
+      assertEquals(largeCache.getCacheConfiguration().eviction().maxEntries(), 2000);
+      assertEquals(largeCache.getCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(largeCache.getCacheManager().getDefaultCacheConfiguration().eviction().maxEntries(), 4000);
+      assertEquals(largeCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), FIFO);
 
-      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 20);
-      assertEquals(smallCache.getConfiguration().getEvictionStrategy(), FIFO);
-      assertEquals(smallCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), FIFO);
+      assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 20);
+      assertEquals(smallCache.getCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(smallCache.getCacheManager().getDefaultCacheConfiguration().eviction().maxEntries(), 4000);
+      assertEquals(smallCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), FIFO);
 
       // asserts that the small and large cache are defined in the same cache manager
       assertTrue(smallCache.getCacheManager().equals(largeCache.getCacheManager()));
       assertFalse(smallCache.getCacheManager().equals(cache.getCacheManager()));
 
       // check that the default configuration has not been modified
-      assertEquals(cache.getConfiguration().getEvictionStrategy(), NONE);
-      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), -1);
-      assertEquals(cache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), NONE);
+      assertEquals(cache.getCacheConfiguration().eviction().strategy(), NONE);
+      assertEquals(cache.getCacheConfiguration().eviction().maxEntries(), -1);
+      assertEquals(cache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), NONE);
    }
 }
