@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
+import org.infinispan.config.FluentConfiguration.IndexingConfig;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -131,9 +132,11 @@ public class LegacyConfigurationAdaptor {
          .reaperEnabled(config.expiration().reaperEnabled())
          .wakeUpInterval(config.expiration().wakeUpInterval());
          
-      if (config.indexing().enabled())
-         legacy.indexing()
-            .indexLocalOnly(config.indexing().indexLocalOnly());
+      if (config.indexing().enabled()) {
+         IndexingConfig indexing = legacy.indexing();
+         indexing.indexLocalOnly(config.indexing().indexLocalOnly());
+         indexing.withProperties(config.indexing().properties());
+      }
       else
          legacy.indexing()
             .disable();
