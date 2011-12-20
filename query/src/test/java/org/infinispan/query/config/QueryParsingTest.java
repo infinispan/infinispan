@@ -81,19 +81,20 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       final Configuration simpleCfg = namedConfigurations.get("simple");
       simpleCfg.assertValid();
-      assert simpleCfg.isIndexingEnabled() == true;
-      assert simpleCfg.getIndexingProperties().size() == 1;
-      assert simpleCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("someDefault");
+      assert simpleCfg.isIndexingEnabled() == false;
+      assert simpleCfg.getIndexingProperties().size() == 0;
 
       final Configuration memoryCfg = namedConfigurations.get("memory-searchable");
       memoryCfg.assertValid();
       assert memoryCfg.isIndexingEnabled();
+      assert memoryCfg.isIndexLocalOnly() == false;
       assert memoryCfg.getIndexingProperties().size() == 1;
       assert memoryCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("ram");
 
       final Configuration diskCfg = namedConfigurations.get("disk-searchable");
       diskCfg.assertValid();
       assert diskCfg.isIndexingEnabled();
+      assert diskCfg.isIndexLocalOnly();
       assert diskCfg.getIndexingProperties().size() == 2;
       assert diskCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
       assert diskCfg.getIndexingProperties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
