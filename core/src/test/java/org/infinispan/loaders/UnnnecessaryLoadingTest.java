@@ -171,7 +171,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    }
 
    public static class CountingCacheStore extends AbstractCacheStore {
-      int numLoads, numContains;
+      public int numLoads, numContains;
 
       @Override
       public void store(InternalCacheEntry entry) throws CacheLoaderException {
