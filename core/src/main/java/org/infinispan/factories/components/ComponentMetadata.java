@@ -232,6 +232,10 @@ public class ComponentMetadata implements Serializable {
     * This class encapsulates metadata on an inject method, such as one annotated with {@link Inject}
     */
    public static class InjectMetadata implements Serializable {
+
+      //To avoid mismatches during development like as created by Maven vs IDE compiled classes:
+      private static final long serialVersionUID = 4848856551345751894L;
+
       String methodName;
       transient Method method;
       String[] parameters;
