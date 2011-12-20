@@ -263,7 +263,7 @@ public class DistWriteSkewTest extends MultipleCacheManagersTest {
 
       // create a write skew
       tm(2).begin();
-      assert "world".equals(cache1.get(hello));
+      assert "world".equals(cache2.get(hello));
       Transaction t = tm(2).suspend();
 
       // Set up cache-3 to force the prepare to retry
@@ -285,7 +285,7 @@ public class DistWriteSkewTest extends MultipleCacheManagersTest {
       }, InvocationContextInterceptor.class);
 
       // Implicit tx.  Prepare should be retried.
-      cache(0).put(hello, "world2");
+      cache(0).put(hello, "world 2");
 
       assert cache0.get(hello).equals("world 2");
       assert cache1.get(hello).equals("world 2");
@@ -293,7 +293,7 @@ public class DistWriteSkewTest extends MultipleCacheManagersTest {
       assert cache3.get(hello).equals("world 2");
 
       tm(2).resume(t);
-      cache2.put(hello, "world3");
+      cache2.put(hello, "world 3");
 
       try {
          tm(2).commit();
