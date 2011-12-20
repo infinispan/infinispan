@@ -49,7 +49,7 @@ public class ComponentMetadataRepo {
    public synchronized static void readMetadata(URL metadataFile) throws IOException, ClassNotFoundException {
       BufferedInputStream bis = new BufferedInputStream(metadataFile.openStream());
       ObjectInputStream ois = new ObjectInputStream(bis);
-      
+
       Map<String, ComponentMetadata> comp = (Map<String, ComponentMetadata>) ois.readObject();
       Map<String, String> fact = (Map<String, String>) ois.readObject();
 
@@ -58,7 +58,7 @@ public class ComponentMetadataRepo {
    }
 
    /**
-    * Locates metadata for a given component type if registered.  If not registered, superclasses/interfaces are 
+    * Locates metadata for a given component type if registered.  If not registered, superclasses/interfaces are
     * consulted, until, finally, an empty instance of {@link ComponentMetadata} is returned effectively declaring
     * that the component has no dependencies or any lifecycle methods declared.
     *
@@ -108,10 +108,10 @@ public class ComponentMetadataRepo {
     * iterable.
     * @param moduleMetadataFiles file finders to iterate through and load into the repository
     */
-   public static void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles) {
+   public static void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
       // First init core module metadata
       try {
-         readMetadata(ComponentMetadataRepo.class.getClassLoader().getResource("infinispan-core-component-metadata.dat"));
+         readMetadata(cl.getResource("infinispan-core-component-metadata.dat"));
       } catch (Exception e) {
          throw new CacheException("Unable to load component metadata!", e);
       }
@@ -119,7 +119,7 @@ public class ComponentMetadataRepo {
       // Now the modules
       for (ModuleMetadataFileFinder finder: moduleMetadataFiles) {
          try {
-            readMetadata(ComponentMetadataRepo.class.getClassLoader().getResource(finder.getMetadataFilename()));
+            readMetadata(cl.getResource(finder.getMetadataFilename()));
          } catch (Exception e) {
             throw new CacheException("Unable to load component metadata in file " + finder.getMetadataFilename(), e);
          }
