@@ -219,8 +219,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
-   public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
-      return new VersionedPrepareCommand(cacheName, gtx, modifications);
+   public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
+      return new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
    }
 
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {

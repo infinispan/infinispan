@@ -202,11 +202,13 @@ public interface CommandsFactory {
 
    /**
     * Builds a VersionedPrepareCommand
+    *
     * @param gtx global transaction associated with the prepare
     * @param modifications list of modifications
+    * @param onePhase
     * @return a VersionedPrepareCommand
     */
-   VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications);
+   VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase);
 
    /**
     * Builds a CommitCommand

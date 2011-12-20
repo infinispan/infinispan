@@ -89,7 +89,7 @@ public class TransactionCoordinator {
 
             @Override
             public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
-               return commandsFactory.buildVersionedPrepareCommand(gtx, modifications);
+               return commandsFactory.buildVersionedPrepareCommand(gtx, modifications, false);
             }
          };
       } else {
