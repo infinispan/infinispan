@@ -29,6 +29,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -77,9 +78,10 @@ public class InterceptorChain {
    }
 
    private void validateCustomInterceptor(Class<? extends CommandInterceptor> i) {
-      if (!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
+      if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
-            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) {
+            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
+            ComponentMetadataRepo.findComponentMetadata(i.getName()) == null) {
          log.customInterceptorExpectsInjection(i.getName());
       }      
    }
