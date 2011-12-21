@@ -1334,6 +1334,8 @@ public class Parser {
             case ENABLED: {
                if (!Boolean.valueOf(value))
                   builder.globalJmxStatistics().disable();
+               else
+                  builder.globalJmxStatistics().enable();
                break;
             }
             case JMX_DOMAIN: {
