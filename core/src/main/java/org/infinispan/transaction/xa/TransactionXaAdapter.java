@@ -221,6 +221,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       if (configuration.isTransactionRecoveryEnabled()) {
          recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
+         txTable.removeLocalTransaction(localTransaction);
       } else {
          releaseLocksForCompletedTransaction(localTransaction);
       }
