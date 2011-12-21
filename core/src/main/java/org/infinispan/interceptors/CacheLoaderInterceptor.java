@@ -27,12 +27,14 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -42,6 +44,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -59,6 +62,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheNotifier notifier;
    protected CacheLoader loader;
    private EntryFactory entryFactory;
+   private DistributionManager distributionManager;
+   private Transport transport;
+   private boolean remoteNodeMayNeedToLoad;
+   private Configuration.CacheMode cacheMode;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -68,22 +75,30 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier,
+                                     DistributionManager distributionManager, Transport transport) {
       this.clm = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
+      this.distributionManager = distributionManager;
+      this.transport = transport;
    }
 
    @Start(priority = 15)
    protected void startInterceptor() {
       loader = clm.getCacheLoader();
+      cacheMode = configuration.getCacheMode();
+      // For now the coordinator/primary data owner may need to load from the cache store, even if
+      // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
+      // happen if running in distributed mode and eviction is enabled.
+      remoteNodeMayNeedToLoad = configuration.isWriteSkewCheck() && cacheMode.isClustered();
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeeded(ctx, key);
+         loadIfNeeded(ctx, key, false);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -93,7 +108,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -103,7 +118,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       Object[] keys;
       if ((keys = command.getKeys()) != null && keys.length > 0) {
          for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key);
+            loadIfNeeded(ctx, key, false);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -113,7 +128,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, false);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -122,15 +137,25 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, false);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
-   private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
+   private boolean isPrimaryOwner(Object key) {
+      return (cacheMode.isReplicated() && transport.isCoordinator()) ||
+            (cacheMode.isDistributed() && distributionManager.locate(key).get(0).equals(transport.getAddress()));
+   }
+
+   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval) throws Throwable {
       if (ctx.hasFlag(Flag.SKIP_CACHE_STORE) || ctx.hasFlag(Flag.SKIP_CACHE_LOAD)) {
          return false; //skip operation
       }
+
+      // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
+      // are using eviction or write skew checking.
+      if (!isRetrieval && !ctx.isOriginLocal() && (!remoteNodeMayNeedToLoad || isPrimaryOwner(key))) return false;
+
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull() || e.getValue() == null) {
@@ -148,17 +173,15 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    /**
-    * This method records a loaded entry, performing the following steps:
-    * <ol>
-    * <li>Increments counters for reporting via JMX</li>
-    * <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents of
-    * 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the DataContainer
-    * when the call returns (in the LockingInterceptor, when locks are released)</li>
-    * <li>Notifies listeners</li>
-    * </ol>
-    * @param ctx the current invocation's context
-    * @param key key to record
-    * @param entry the appropriately locked entry in the caller's context
+    * This method records a loaded entry, performing the following steps: <ol> <li>Increments counters for reporting via
+    * JMX</li> <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents
+    * of 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the
+    * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li> <li>Notifies
+    * listeners</li> </ol>
+    *
+    * @param ctx         the current invocation's context
+    * @param key         key to record
+    * @param entry       the appropriately locked entry in the caller's context
     * @param loadedEntry the internal entry loaded from the cache store.
     */
    private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
@@ -195,8 +218,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx);
    }
 
-   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key) throws Throwable {
-      boolean found = loadIfNeeded(ctx, key);
+   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval) throws Throwable {
+      boolean found = loadIfNeeded(ctx, key, isRetrieval);
       if (!found && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }
