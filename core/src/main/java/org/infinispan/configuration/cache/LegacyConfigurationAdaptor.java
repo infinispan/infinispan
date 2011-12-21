@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Properties;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
@@ -7,6 +9,7 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
 import org.infinispan.config.FluentConfiguration.IndexingConfig;
+import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -14,6 +17,7 @@ import org.infinispan.loaders.AbstractCacheLoaderConfig;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
@@ -155,32 +159,50 @@ public class LegacyConfigurationAdaptor {
          .shared(config.loaders().shared());
 
       for (AbstractLoaderConfiguration loader : config.loaders().cacheLoaders()) {
-         AbstractCacheStoreConfig csc = null;
+         CacheLoaderConfig clc = null;
          if (loader instanceof LoaderConfiguration) {
-            csc = new AbstractCacheStoreConfig();
-            csc.setCacheLoaderClassName(((LoaderConfiguration) loader).cacheLoader().getClass().getName());
-            csc.purgerThreads(((LoaderConfiguration) loader).purgerThreads());
+            CacheLoader cacheLoader = ((LoaderConfiguration) loader).cacheLoader();
+            if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
+               clc = Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
+            } else {
+               AbstractCacheStoreConfig acsc = new AbstractCacheStoreConfig();
+               acsc.setCacheLoaderClassName(((LoaderConfiguration) loader).cacheLoader().getClass().getName());
+               clc = acsc;
+            }
+            
          } else if (loader instanceof FileCacheStoreConfiguration) {
             FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
-            csc = fcsc;
+            clc = fcsc;
             String location = loader.properties().getProperty("location");
             if (location != null)
                fcsc.location(location);
          }
-         csc.fetchPersistentState(loader.fetchPersistentState());
-         csc.ignoreModifications(loader.ignoreModifications());
-         csc.purgeOnStartup(loader.purgeOnStartup());  
-         csc.setPurgeSynchronously(loader.purgeSynchronously());
-         csc.getAsyncStoreConfig().setEnabled(loader.async().enabled());
-         csc.getAsyncStoreConfig().flushLockTimeout(loader.async().flushLockTimeout());
-         csc.getAsyncStoreConfig().modificationQueueSize(loader.async().modificationQueueSize());
-         csc.getAsyncStoreConfig().shutdownTimeout(loader.async().shutdownTimeout());
-         csc.getAsyncStoreConfig().threadPoolSize(loader.async().threadPoolSize());
-         csc.setProperties(loader.properties());
-         csc.getSingletonStoreConfig().enabled(loader.singletonStore().enabled());
-         csc.getSingletonStoreConfig().pushStateTimeout(loader.singletonStore().pushStateTimeout());
-         csc.getSingletonStoreConfig().pushStateWhenCoordinator(loader.singletonStore().pushStateWhenCoordinator());
-         legacy.loaders().addCacheLoader(csc);
+         if (clc instanceof CacheStoreConfig) {
+            CacheStoreConfig csc = (CacheStoreConfig) clc;
+            csc.fetchPersistentState(loader.fetchPersistentState());
+            csc.ignoreModifications(loader.ignoreModifications());
+            csc.purgeOnStartup(loader.purgeOnStartup());  
+            csc.setPurgeSynchronously(loader.purgeSynchronously());
+            csc.getAsyncStoreConfig().setEnabled(loader.async().enabled());
+            csc.getAsyncStoreConfig().flushLockTimeout(loader.async().flushLockTimeout());
+            csc.getAsyncStoreConfig().modificationQueueSize(loader.async().modificationQueueSize());
+            csc.getAsyncStoreConfig().shutdownTimeout(loader.async().shutdownTimeout());
+            csc.getAsyncStoreConfig().threadPoolSize(loader.async().threadPoolSize());
+            
+            csc.getSingletonStoreConfig().enabled(loader.singletonStore().enabled());
+            csc.getSingletonStoreConfig().pushStateTimeout(loader.singletonStore().pushStateTimeout());
+            csc.getSingletonStoreConfig().pushStateWhenCoordinator(loader.singletonStore().pushStateWhenCoordinator());
+         }
+         if (clc instanceof AbstractCacheStoreConfig) {
+            AbstractCacheStoreConfig acsc = (AbstractCacheStoreConfig) clc;
+            Properties p = loader.properties();
+            acsc.setProperties(p);
+            if (p != null) XmlConfigHelper.setValues(clc, p, false, true);
+            if (loader instanceof LoaderConfiguration)
+               acsc.purgerThreads(((LoaderConfiguration) loader).purgerThreads());
+         }
+         
+         legacy.loaders().addCacheLoader(clc);
       }
       
       legacy.locking()

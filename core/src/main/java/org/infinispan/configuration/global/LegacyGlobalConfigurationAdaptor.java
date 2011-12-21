@@ -42,8 +42,6 @@ public class LegacyGlobalConfigurationAdaptor {
             .cacheManagerName(config.globalJmxStatistics().cacheManagerName())
             .withProperties(config.globalJmxStatistics().properties());
       }
-      else
-         legacy.globalJmxStatistics().disable();
          
       
       legacy.serialization()
