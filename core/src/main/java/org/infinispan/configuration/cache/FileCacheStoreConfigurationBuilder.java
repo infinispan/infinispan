@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.util.TypedProperties;
 
 /**
- * // TODO: Document this
+ * File cache store configuration builder
  * 
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.1
  */
 public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> {
 
@@ -42,14 +42,10 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private boolean purgeSynchronously = false;
    private int lockConcurrencyLevel;
    private long lockAcquistionTimeout;
-   private final AsyncLoaderConfigurationBuilder async;
-   private final SingletonStoreConfigurationBuilder singletonStore;
    private Properties properties = new Properties();
 
    protected FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.async = new AsyncLoaderConfigurationBuilder(this);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
    public FileCacheStoreConfigurationBuilder location(String location) {
@@ -121,7 +117,11 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
 
    @Override
    FileCacheStoreConfiguration create() {
-      return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode, streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
+            streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
+            purgeOnStartup, purgeSynchronously, fetchPersistentState,
+            ignoreModifications, TypedProperties.toTypedProperties(properties),
+            async.create(), singletonStore.create());
    }
    
    @Override
