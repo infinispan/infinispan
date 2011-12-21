@@ -31,17 +31,13 @@ import org.infinispan.container.versioning.EntryVersionsMap;
  * @author Manik Surtani
  * @since 4.0
  */
-public class DefaultResponseGenerator extends AbstractResponseGenerator {
+public class DefaultResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue == null) return null;
-      if (requiresResponse(command.getCommandId(), returnValue)) {
+      if (returnValue instanceof EntryVersionsMap || command.isReturnValueExpected()) {
          return new SuccessfulResponse(returnValue);
       } else {
          return null; // saves on serializing a response!
       }
-   }
-
-   private boolean requiresResponse(byte commandId, Object rv) {
-      return commandNeedsNonNullResponse(commandId) || rv instanceof EntryVersionsMap;
    }
 }

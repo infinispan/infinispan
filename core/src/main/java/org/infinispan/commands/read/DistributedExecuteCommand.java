@@ -159,4 +159,8 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       return false;
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

@@ -211,4 +211,9 @@ public class CacheViewControlCommand implements CacheRpcCommand {
             ", oldMembers=" + oldMembers +
             '}';
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

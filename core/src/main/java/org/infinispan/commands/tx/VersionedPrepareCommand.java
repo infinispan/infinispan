@@ -90,4 +90,8 @@ public class VersionedPrepareCommand extends PrepareCommand {
       }
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

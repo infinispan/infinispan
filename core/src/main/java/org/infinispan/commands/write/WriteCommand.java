@@ -58,11 +58,4 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
     * an empty collection for this method.
     */
    Set<Object> getAffectedKeys();
-
-   /**
-    * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link org.infinispan.remoting.responses.ResponseGenerator}
-    * may choose to simply return null to save on marshalling costs.
-    * @return true or false
-    */
-   boolean isReturnValueExpected();
 }

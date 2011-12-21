@@ -74,4 +74,9 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    public void setParameters(int commandId, Object[] parameters) {
       // No parameters
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 }

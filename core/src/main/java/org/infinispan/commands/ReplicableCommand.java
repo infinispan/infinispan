@@ -66,4 +66,11 @@ public interface ReplicableCommand {
     * @param parameters object array of args
     */
    void setParameters(int commandId, Object[] parameters);
+
+   /**
+    * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link org.infinispan.remoting.responses.ResponseGenerator}
+    * may choose to simply return null to save on marshalling costs.
+    * @return true or false
+    */
+   boolean isReturnValueExpected();
 }
