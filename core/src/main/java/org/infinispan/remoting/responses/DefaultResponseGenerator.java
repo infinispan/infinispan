@@ -23,12 +23,6 @@
 package org.infinispan.remoting.responses;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
 
 /**
@@ -37,7 +31,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
  * @author Manik Surtani
  * @since 4.0
  */
-public class DefaultResponseGenerator implements ResponseGenerator {
+public class DefaultResponseGenerator extends AbstractResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue == null) return null;
       if (requiresResponse(command.getCommandId(), returnValue)) {
@@ -48,10 +42,6 @@ public class DefaultResponseGenerator implements ResponseGenerator {
    }
 
    private boolean requiresResponse(byte commandId, Object rv) {
-      boolean commandRequiresResp = commandId == ClusteredGetCommand.COMMAND_ID || commandId == GetInDoubtTransactionsCommand.COMMAND_ID
-            || commandId == GetInDoubtTxInfoCommand.COMMAND_ID || commandId == CompleteTransactionCommand.COMMAND_ID
-            || commandId == CommitCommand.COMMAND_ID || commandId == VersionedCommitCommand.COMMAND_ID;
-
-      return commandRequiresResp || rv instanceof EntryVersionsMap;
+      return commandNeedsNonNullResponse(commandId) || rv instanceof EntryVersionsMap;
    }
 }

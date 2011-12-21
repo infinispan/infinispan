@@ -114,6 +114,11 @@ public class ClearCommand implements WriteCommand {
    }
 
    @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
+
+   @Override
    public Set<Flag> getFlags() {
       return flags;
    }

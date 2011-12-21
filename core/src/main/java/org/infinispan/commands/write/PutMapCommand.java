@@ -157,6 +157,11 @@ public class PutMapCommand implements WriteCommand {
       return map.keySet();
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
+
    public long getLifespanMillis() {
       return lifespanMillis;
    }

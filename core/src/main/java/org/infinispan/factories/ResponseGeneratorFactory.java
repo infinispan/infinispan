@@ -25,6 +25,7 @@ package org.infinispan.factories;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.responses.DefaultResponseGenerator;
 import org.infinispan.remoting.responses.DistributionResponseGenerator;
+import org.infinispan.remoting.responses.NoReturnValuesDistributionResponseGenerator;
 import org.infinispan.remoting.responses.ResponseGenerator;
 
 /**
@@ -38,9 +39,12 @@ public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory
 
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (configuration.getCacheMode().isDistributed())
-         return (T) new DistributionResponseGenerator();
-      else
+      if (configuration.getCacheMode().isDistributed()) {
+         if (configuration.isUnsafeUnreliableReturnValues())
+            return (T) new NoReturnValuesDistributionResponseGenerator();
+         else
+            return (T) new DistributionResponseGenerator();
+      } else
          return (T) new DefaultResponseGenerator();
    }
 }

@@ -179,10 +179,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       Response resp = handleInternal(cmd);
 
       // A null response is valid and OK ...
-      if (resp == null || resp.isValid()) {
-         //TODO Check if message replaying is still needed without FLUSH
-         //if (replayIgnored) resp = new ExtendedResponse(resp, true);
-      } else {
+      if (trace && resp != null && !resp.isValid()) {
          // invalid response
          log.tracef("Unable to execute command, got invalid response %s", resp);
       }
@@ -208,3 +205,4 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return handleWithWaitForBlocks(cmd);
    }
 }
+

@@ -23,6 +23,8 @@
 package org.infinispan.remoting.responses;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
+import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -36,7 +38,7 @@ import org.infinispan.factories.annotations.Inject;
  * @author Manik Surtani
  * @since 4.0
  */
-public class DistributionResponseGenerator implements ResponseGenerator {
+public class DistributionResponseGenerator extends AbstractResponseGenerator {
    DistributionManager distributionManager;
 
    @Inject
@@ -46,23 +48,37 @@ public class DistributionResponseGenerator implements ResponseGenerator {
 
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
+         if (returnValue == null) return null;
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
          if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
             return UnsureResponse.INSTANCE;
-         return returnValue == null ? null : new SuccessfulResponse(returnValue);
+         return new SuccessfulResponse(returnValue);
       } else if (command instanceof SingleRpcCommand) {
          SingleRpcCommand src = (SingleRpcCommand) command;
          ReplicableCommand c = src.getCommand();
-
+         byte commandId = c.getCommandId();
          if (c instanceof WriteCommand) {
+            if (returnValue == null) return null;
             // check if this is successful.
-            if (((WriteCommand) c).isSuccessful())
-               return new SuccessfulResponse(returnValue);
-            else
-               return UnsuccessfulResponse.INSTANCE;
+            WriteCommand wc = (WriteCommand) c;
+            return handleWriteCommand(wc, returnValue);
+         } else if (commandId == MapReduceCommand.COMMAND_ID || commandId == DistributedExecuteCommand.COMMAND_ID) {
+            // Even null values should be wrapped in this case.
+            return new SuccessfulResponse(returnValue);
+         } else if (commandNeedsNonNullResponse(commandId)) {
+            if (returnValue == null) return null;
+            return new SuccessfulResponse(returnValue);
          }
+      } else if (commandNeedsNonNullResponse(command.getCommandId())) {
+         return new SuccessfulResponse(returnValue);
       }
-
-      return new SuccessfulResponse(returnValue);
+      return null; // no unnecessary response values!
+   }
+   
+   protected Response handleWriteCommand(WriteCommand wc, Object returnValue) {
+      if (wc.isSuccessful()) {
+         return wc.isReturnValueExpected() ? new SuccessfulResponse(returnValue) : null;
+      } else
+         return UnsuccessfulResponse.INSTANCE;
    }
 }
