@@ -154,7 +154,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
       // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && (!remoteNodeMayNeedToLoad || isPrimaryOwner(key))) return false;
+      if (!isRetrieval && !ctx.isOriginLocal() && !(remoteNodeMayNeedToLoad && isPrimaryOwner(key))) return false;
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
