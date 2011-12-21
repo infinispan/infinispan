@@ -82,7 +82,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       cache(1, "test");
       cache(2, "test");
 
-      TestingUtil.waitForInitRehashToComplete(caches("test"));
+      TestingUtil.waitForRehashToComplete(caches("test"));
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
