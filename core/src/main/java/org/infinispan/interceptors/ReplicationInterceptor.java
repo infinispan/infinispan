@@ -34,6 +34,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -125,6 +126,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
 
          broadcastPrepare(ctx, command);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
       }
       return retVal;
    }
