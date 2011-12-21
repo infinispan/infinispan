@@ -159,6 +159,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          }
       }
 
+      assert reordered.size() == INIT_CLUSTER_SIZE : "Reordering caches lost some caches: started with " + caches + ", ended with " + reordered;
       caches = reordered;
    }
 

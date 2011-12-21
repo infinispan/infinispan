@@ -176,6 +176,9 @@ public class TestingUtil {
       waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
    }
 
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
    public static void waitForInitRehashToComplete(Cache... caches) {
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
@@ -194,6 +197,9 @@ public class TestingUtil {
       }
    }
 
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
    public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
       Set<Cache> cachesSet = new HashSet<Cache>();
       cachesSet.addAll(caches);

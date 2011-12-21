@@ -142,7 +142,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       for (Thread t : threads) t.join();
 
-      TestingUtil.waitForInitRehashToComplete(cache(1));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
       for (int i = 0; i < 10; i++) {
          Object key = "OLD" + i;

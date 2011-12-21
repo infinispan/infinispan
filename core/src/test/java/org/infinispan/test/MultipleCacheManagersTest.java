@@ -267,7 +267,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       Cache<Object, Object> cache = caches.get(0);
       TestingUtil.blockUntilViewsReceived(10000, caches);
       if (cache.getConfiguration().getCacheMode().isDistributed()) {
-         TestingUtil.waitForInitRehashToComplete(caches);
+         TestingUtil.waitForRehashToComplete(caches);
       }
    }
 
