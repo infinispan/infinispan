@@ -166,7 +166,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
          log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
       }
@@ -188,7 +188,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
          log.trace("Node " + rpcManager.getAddress() + " finished join task.");
       }
