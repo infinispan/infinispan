@@ -46,4 +46,9 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
    public void init(RecoveryManager rm) {
       this.recoveryManager = rm;
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

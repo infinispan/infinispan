@@ -38,7 +38,7 @@ import org.infinispan.factories.annotations.Inject;
  * @author Manik Surtani
  * @since 4.0
  */
-public class DistributionResponseGenerator extends AbstractResponseGenerator {
+public class DistributionResponseGenerator implements ResponseGenerator {
    DistributionManager distributionManager;
 
    @Inject
@@ -65,11 +65,11 @@ public class DistributionResponseGenerator extends AbstractResponseGenerator {
          } else if (commandId == MapReduceCommand.COMMAND_ID || commandId == DistributedExecuteCommand.COMMAND_ID) {
             // Even null values should be wrapped in this case.
             return new SuccessfulResponse(returnValue);
-         } else if (commandNeedsNonNullResponse(commandId)) {
+         } else if (c.isReturnValueExpected()) {
             if (returnValue == null) return null;
             return new SuccessfulResponse(returnValue);
          }
-      } else if (commandNeedsNonNullResponse(command.getCommandId())) {
+      } else if (command.isReturnValueExpected()) {
          return new SuccessfulResponse(returnValue);
       }
       return null; // no unnecessary response values!

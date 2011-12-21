@@ -234,4 +234,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       WriteCommand wc = modifications[0];
       return wc instanceof PutKeyValueCommand || wc instanceof RemoveCommand || wc instanceof ReplaceCommand;
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 }

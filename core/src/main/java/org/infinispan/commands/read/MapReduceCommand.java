@@ -22,18 +22,6 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
@@ -46,6 +34,18 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * MapReduceCommand is used to migrate {@link Mapper} and {@link Reducer} to remote JVM where they
@@ -238,5 +238,10 @@ public class MapReduceCommand extends BaseRpcCommand {
       public Map<KOut, List<VOut>> collectedValues() {
          return store;
       }
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 }

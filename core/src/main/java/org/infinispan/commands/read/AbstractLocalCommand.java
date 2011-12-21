@@ -60,4 +60,8 @@ public class AbstractLocalCommand implements LocalCommand {
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 }

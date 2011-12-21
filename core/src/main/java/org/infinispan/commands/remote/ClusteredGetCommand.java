@@ -206,4 +206,9 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }
