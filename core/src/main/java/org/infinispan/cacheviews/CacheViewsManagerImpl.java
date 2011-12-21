@@ -611,6 +611,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // read the recovery info from every node
       final Map<Address, Map<String, CacheView>> recoveryInfo;
       try {
+         // Workaround for ISPN-1640: Wait a short amount of time before sending the RECOVER_VIEW command
+         Thread.sleep(100);
          log.debugf("Node %s is the new coordinator, recovering cache views", self);
 
          recoveryInfo = new HashMap<Address, Map<String, CacheView>>();
@@ -618,10 +620,28 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          recoveryInfo.put(self, handleRecoverViews());
 
          // then broadcast the recover command to all the members
-         CacheViewControlCommand cmd = new CacheViewControlCommand(
+         final CacheViewControlCommand cmd = new CacheViewControlCommand(
                DUMMY_CACHE_NAME_FOR_GLOBAL_COMMANDS, CacheViewControlCommand.Type.RECOVER_VIEW, self);
-         Map<Address, Response> rspList = transport.invokeRemotely(null, cmd,
-               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false);
+
+         // use unicast instead of broadcast so that the message doesn't reach the target before the merged view is installed
+         List<Address> tempMembers = members;
+         List<Future<Map<Address, Response>>> futures = new ArrayList<Future<Map<Address, Response>>>(tempMembers.size());
+         for (final Address member : tempMembers) {
+            Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
+               @Override
+               public Map<Address, Response> call() throws Exception {
+                  Map<Address, Response> rspList = transport.invokeRemotely(Collections.singleton(member), cmd,
+                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false);
+                  return rspList;
+               }
+            });
+            futures.add(future);
+         }
+
+         Map<Address, Response> rspList = new HashMap<Address, Response>(tempMembers.size());
+         for (Future<Map<Address, Response>> future : futures) {
+            rspList.putAll(future.get());
+         }
          checkRemoteResponse(null, cmd, rspList);
          for (Map.Entry<Address, Response> e : rspList.entrySet()) {
             SuccessfulResponse value = (SuccessfulResponse) e.getValue();
