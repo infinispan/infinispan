@@ -76,22 +76,22 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       cache1.put("nonLocal", "value");
       assert "value".equals(cache2.get("nonLocal"));
       assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 2; //TODO discuss this: should not need the LOAD on remote nodes!
+      assert getCacheStore(cache2).numLoads == 1; //not incremented since ISPN-1642
       
       AdvancedCache cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
       cache1SkipRemoteAndStores.put("again", "value");
       assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 2;
+      assert getCacheStore(cache2).numLoads == 1;
       assert cache1.get("again").equals("value");
       assert cache2.get("again") == null;
 
       assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 3; //"again" wasn't found in cache, looks into store
+      assert getCacheStore(cache2).numLoads == 2; //"again" wasn't found in cache, looks into store
       
       assert cache2.get("again") == null;
-      assert getCacheStore(cache2).numLoads == 4;
+      assert getCacheStore(cache2).numLoads == 3;
       assert cache2.withFlags(SKIP_CACHE_STORE).get("again") == null;
-      assert getCacheStore(cache2).numLoads == 4;
+      assert getCacheStore(cache2).numLoads == 3;
       
       assert getCacheStore(cache1).numLoads == 2;
       assert cache1LocalOnly.get("localStored") == null;
