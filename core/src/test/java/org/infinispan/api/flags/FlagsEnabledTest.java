@@ -60,7 +60,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       return countingCS;
    }
 
-   public void testWithFlagsSementics() {
+   public void testWithFlagsSemantics() {
       AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
       AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
       AdvancedCache cache1LocalOnly = cache1.withFlags(CACHE_MODE_LOCAL);

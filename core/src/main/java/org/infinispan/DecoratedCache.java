@@ -96,15 +96,20 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       if (flags == null || flags.length == 0)
          return this;
       else {
-         List<Flag> flagsToAdd = Arrays.asList(flags);
+         final List<Flag> flagsToAdd = Arrays.asList(flags);
          if (this.flags != null && this.flags.containsAll(flagsToAdd)) {
             //we already have all specified flags
             return this;
          }
          else {
-            EnumSet<Flag> newFlags = this.flags==null?EnumSet.noneOf(Flag.class):EnumSet.copyOf(this.flags);
-            newFlags.addAll(flagsToAdd);
-            return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader, newFlags);
+            if (this.flags==null) {
+               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader, EnumSet.copyOf(flagsToAdd));
+            }
+            else {
+               EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
+               newFlags.addAll(flagsToAdd);
+               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader, newFlags);
+            }
          }
       }
    }
@@ -362,5 +367,10 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public V replace(K key, V value) {
       return cacheImplementation.replace(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+   }
+
+   //Not exposed on interface
+   public EnumSet<Flag> getFlags() {
+      return flags;
    }
 }
