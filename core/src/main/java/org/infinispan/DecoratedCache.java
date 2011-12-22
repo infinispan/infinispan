@@ -102,7 +102,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             return this;
          }
          else {
-            EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
+            EnumSet<Flag> newFlags = this.flags==null?EnumSet.noneOf(Flag.class):EnumSet.copyOf(this.flags);
             newFlags.addAll(flagsToAdd);
             return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader, newFlags);
          }
