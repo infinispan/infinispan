@@ -27,6 +27,8 @@ import java.util.Set;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Collects operations on the existing fileList, stored as a Set<String> having key
@@ -37,7 +39,10 @@ import org.infinispan.util.concurrent.ConcurrentHashSet;
  */
 @SuppressWarnings("unchecked")
 final class FileListOperations {
-   
+
+   private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private final FileListCacheKey fileListCacheKey;
    private final AdvancedCache cache;
    private final String indexName;
@@ -49,7 +54,7 @@ final class FileListOperations {
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }
-   
+
    /**
     * @return the current list of files being part of the index 
     */
@@ -58,11 +63,13 @@ final class FileListOperations {
       if (fileList == null) {
          fileList = new ConcurrentHashSet<String>();
          Set<String> prev = (Set<String>) cache.putIfAbsent(fileListCacheKey, fileList);
-         return prev == null ? fileList : prev;
+         if ( prev != null ) {
+            fileList = prev;
+         }
       }
-      else {
-         return fileList;
-      }
+      if (trace)
+         log.trace("Refreshed file listing view");
+      return fileList;
    }
 
    /**
@@ -74,6 +81,8 @@ final class FileListOperations {
       boolean done = fileList.remove(fileName);
       if (done) {
          cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace)
+            log.trace("Updated file listing: removed " + fileName);
       }
    }
    
@@ -86,6 +95,8 @@ final class FileListOperations {
       boolean done = fileList.add(fileName);
       if (done) {
          cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace)
+            log.trace("Updated file listing: added " + fileName);
       }
    }
    
@@ -110,6 +121,10 @@ final class FileListOperations {
       boolean doneRemove = fileList.remove(toRemove);
       if (doneAdd || doneRemove) {
          cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace) {
+            if (doneAdd) log.trace("Updated file listing: added " + toAdd);
+            if (doneRemove) log.trace("Updated file listing: removed " + toRemove);
+         }
       }
    }
 
