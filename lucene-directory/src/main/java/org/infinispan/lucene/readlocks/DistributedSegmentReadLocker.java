@@ -109,11 +109,6 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       }
    }
 
-   @Override @Deprecated
-   public boolean aquireReadLock(String filename) {
-      return acquireReadLock(filename);
-   }
-   
    /**
     * Acquires a readlock on all chunks for this file, to make sure chunks are not deleted while
     * iterating on the group. This is needed to avoid an eager lock on all elements.
