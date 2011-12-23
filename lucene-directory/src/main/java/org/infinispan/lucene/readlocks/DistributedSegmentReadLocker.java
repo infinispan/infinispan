@@ -66,7 +66,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       if (indexName == null)
          throw new IllegalArgumentException("index name must not be null");
       this.indexName = indexName;
-      this.locksCache = locksCache.getAdvancedCache();
+      this.locksCache = locksCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.chunksCache = chunksCache.getAdvancedCache();
       this.metadataCache = metadataCache.getAdvancedCache();
       verifyCacheHasNoEviction(this.locksCache);
@@ -89,18 +89,18 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       int newValue = 0;
       boolean done = false;
-      Object lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+      Object lockValue = locksCache.get(readLockKey);
       while (done == false) {
          if (lockValue == null) {
-            lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).putIfAbsent(readLockKey, Integer.valueOf(0));
+            lockValue = locksCache.putIfAbsent(readLockKey, Integer.valueOf(0));
             done = (null == lockValue);
          }
          else {
             int refCount = (Integer) lockValue;
             newValue = refCount - 1;
-            done = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).replace(readLockKey, refCount, newValue);
+            done = locksCache.replace(readLockKey, refCount, newValue);
             if (!done) {
-               lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+               lockValue = locksCache.get(readLockKey);
             }
          }
       }
@@ -126,7 +126,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     */
    public boolean acquireReadLock(String filename) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
-      Object lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+      Object lockValue = locksCache.get(readLockKey);
       boolean done = false;
       while (done == false) {
          if (lockValue != null) {
@@ -136,21 +136,21 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
                return false;
             }
             Integer newValue = Integer.valueOf(refCount + 1);
-            done = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).replace(readLockKey, lockValue, newValue);
+            done = locksCache.replace(readLockKey, lockValue, newValue);
             if ( ! done) {
-               lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+               lockValue = locksCache.get(readLockKey);
             }
          } else {
             // readLocks are not stored, so if there's no value assume it's ==1, which means
             // existing file, not deleted, nobody else owning a read lock. but check for ambiguity
-            lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).putIfAbsent(readLockKey, Integer.valueOf(2));
+            lockValue = locksCache.putIfAbsent(readLockKey, Integer.valueOf(2));
             done = (null == lockValue);
             if (done) {
                // have to check now that the fileKey still exists to prevent the race condition of 
                // T1 fileKey exists - T2 delete file and remove readlock - T1 putIfAbsent(readlock, 2)
                final FileCacheKey fileKey = new FileCacheKey(indexName, filename);
                if (metadataCache.get(fileKey) == null) {
-                  locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE).removeAsync(readLockKey);
+                  locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
                   return false;
                }
             }
@@ -188,7 +188,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
       if (trace) log.tracef("deleting readlock: %s", readLockKey);
-      locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE).removeAsync(readLockKey);
+      locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
    }
    
    private static void verifyCacheHasNoEviction(AdvancedCache cache) {
