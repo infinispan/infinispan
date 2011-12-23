@@ -89,7 +89,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       int newValue = 0;
       boolean done = false;
-      Object lockValue = locksCache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+      Object lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
       while (done == false) {
          if (lockValue == null) {
             lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).putIfAbsent(readLockKey, Integer.valueOf(0));
@@ -100,7 +100,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             newValue = refCount - 1;
             done = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).replace(readLockKey, refCount, newValue);
             if (!done) {
-               lockValue = locksCache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+               lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
             }
          }
       }
@@ -126,7 +126,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     */
    public boolean acquireReadLock(String filename) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
-      Object lockValue = locksCache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+      Object lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
       boolean done = false;
       while (done == false) {
          if (lockValue != null) {
@@ -138,7 +138,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             Integer newValue = Integer.valueOf(refCount + 1);
             done = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).replace(readLockKey, lockValue, newValue);
             if ( ! done) {
-               lockValue = locksCache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
+               lockValue = locksCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD).get(readLockKey);
             }
          } else {
             // readLocks are not stored, so if there's no value assume it's ==1, which means
@@ -177,12 +177,12 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       final String filename = readLockKey.getFileName();
       FileCacheKey key = new FileCacheKey(indexName, filename);
       if (trace) log.tracef("deleting metadata: %s", key);
-      FileMetadata file = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).remove(key);
+      FileMetadata file = (FileMetadata) metadataCache.remove(key);
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
-            chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).removeAsync(chunkKey);
+            chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).removeAsync(chunkKey);
          }
       }
       // last operation, as being set as value==0 it prevents others from using it during the

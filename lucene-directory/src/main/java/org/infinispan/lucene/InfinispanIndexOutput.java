@@ -48,7 +48,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private static final boolean trace = log.isTraceEnabled();
 
    private final int bufferSize;
-   private final Cache chunksCacheLockSkipping;
+   private final Cache chunksCache;
    private final Cache chunksCacheForStorage;
    private final AdvancedCache metadataCache;
    private final FileMetadata file;
@@ -68,8 +68,8 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    public InfinispanIndexOutput(final AdvancedCache metadataCache, final AdvancedCache chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
       this.metadataCache = metadataCache;
-      this.chunksCacheLockSkipping = chunksCache.withFlags(Flag.SKIP_LOCKING);
-      this.chunksCacheForStorage = chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING);
+      this.chunksCache = chunksCache;
+      this.chunksCacheForStorage = chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
@@ -86,7 +86,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
          return new byte[bufferSize];
       }
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
-      byte[] readBuffer = (byte[]) chunksCacheLockSkipping.get(key);
+      byte[] readBuffer = (byte[]) chunksCache.get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];
       }
@@ -192,7 +192,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() {
-      final boolean microbatch = chunksCacheLockSkipping.startBatch();
+      final boolean microbatch = chunksCache.startBatch();
       if (currentChunkNumber==0) {
          //store current chunk, possibly resizing it
          storeCurrentBuffer(true);
@@ -206,9 +206,9 @@ public final class InfinispanIndexOutput extends IndexOutput {
       firstChunkBuffer = null;
       // override existing file header with updated accesstime
       file.touch();
-      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
+      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
-      if (microbatch) chunksCacheLockSkipping.endBatch(true);
+      if (microbatch) chunksCache.endBatch(true);
       if (trace) {
          log.tracef("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }

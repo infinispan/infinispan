@@ -237,7 +237,7 @@ public class InfinispanDirectory extends Directory {
       // rename metadata first
       boolean batching = metadataCache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
+      FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
       if (batching) metadataCache.endBatch(true);
@@ -277,7 +277,7 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+      FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }

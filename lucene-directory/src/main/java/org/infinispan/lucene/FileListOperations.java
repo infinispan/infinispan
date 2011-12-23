@@ -41,13 +41,11 @@ final class FileListOperations {
    private final FileListCacheKey fileListCacheKey;
    private final AdvancedCache cache;
    private final String indexName;
-   private final AdvancedCache cacheNoRetrieveNorLock;
-   private final AdvancedCache cacheNoLock;
+   private final AdvancedCache cacheNoRetrieve;
 
    FileListOperations(AdvancedCache cache, String indexName){
       this.cache = cache;
-      this.cacheNoLock = cache.withFlags(Flag.SKIP_LOCKING);
-      this.cacheNoRetrieveNorLock = cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_LOAD);
+      this.cacheNoRetrieve = cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }
@@ -56,7 +54,7 @@ final class FileListOperations {
     * @return the current list of files being part of the index 
     */
    Set<String> getFileList() {
-      Set<String> fileList = (Set<String>) cacheNoLock.get(fileListCacheKey);
+      Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
       if (fileList == null) {
          fileList = new ConcurrentHashSet<String>();
          Set<String> prev = (Set<String>) cache.putIfAbsent(fileListCacheKey, fileList);
@@ -75,7 +73,7 @@ final class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.remove(fileName);
       if (done) {
-         cacheNoRetrieveNorLock.put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
       }
    }
    
@@ -87,7 +85,7 @@ final class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.add(fileName);
       if (done) {
-         cacheNoRetrieveNorLock.put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
       }
    }
    
@@ -97,7 +95,7 @@ final class FileListOperations {
     */
    FileMetadata getFileMetadata(String fileName) {
       FileCacheKey key = new FileCacheKey(indexName, fileName);
-      FileMetadata metadata = (FileMetadata) cacheNoLock.get(key);
+      FileMetadata metadata = (FileMetadata) cache.get(key);
       return metadata;
    }
 
@@ -111,7 +109,7 @@ final class FileListOperations {
       boolean doneAdd = fileList.add(toAdd);
       boolean doneRemove = fileList.remove(toRemove);
       if (doneAdd || doneRemove) {
-         cacheNoRetrieveNorLock.put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
       }
    }
 
