@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+      <param name="File" value="lucene-infinispan-output.log"/>
+      <param name="Append" value="false"/>
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="[%c] (%t) %m%n"/>
+      </layout>
+   </appender>
+
+   <category name="org.infinispan.lucene">
+      <priority value="TRACE"/>
+   </category>
+
+   <category name="com.arjuna">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.infinispan">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="com.mchange">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jgroups">
+      <priority value="INFO"/>
+   </category>
+
+   <!-- ======================= -->
+   <!-- Setup the Root category -->
+   <!-- ======================= -->
+
+   <root>
+      <priority value="TRACE"/>
+      <appender-ref ref="FILE" />
+   </root>
+
+</log4j:configuration>
