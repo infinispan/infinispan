@@ -63,11 +63,6 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       this.delegate = new DistributedSegmentReadLocker(locksCache, chunksCache, metadataCache, indexName);
    }
 
-   @Override @Deprecated
-   public boolean aquireReadLock(String filename) {
-      return acquireReadLock(filename);
-   }
-
    /**
     * {@inheritDoc}
     */
