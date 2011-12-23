@@ -159,7 +159,7 @@ public class ResourceDMBean implements DynamicMBean {
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                                                              attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                             attributeMetadata.isIs(), field);
+                                                             attributeMetadata.isIs(), field, this);
          }
       }
 
@@ -167,7 +167,7 @@ public class ResourceDMBean implements DynamicMBean {
       Method getter = findGetter(objectClass, attributeMetadata.getName());
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                                                         attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                        attributeMetadata.isIs(), getter, setter);
+                                                        attributeMetadata.isIs(), getter, setter, this);
    }
 
    private MBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
@@ -323,7 +323,7 @@ public class ResourceDMBean implements DynamicMBean {
       return result;
    }
 
-   private abstract class InvokableMBeanAttributeInfo extends MBeanAttributeInfo {
+   private static abstract class InvokableMBeanAttributeInfo extends MBeanAttributeInfo {
       public InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs) {
          super(name, type, description, isReadable, isWritable, isIs);
       }
@@ -331,44 +331,48 @@ public class ResourceDMBean implements DynamicMBean {
       public abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
    }
 
-   private class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
-      private final Field field;
+   private static class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+      private transient final Field field;
+      private transient final ResourceDMBean resource;
 
-      public InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field) {
+      public InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field, ResourceDMBean resource) {
          super(name, type, description, isReadable, isWritable, isIs);
          this.field = field;
+         this.resource = resource;
       }
 
       @Override
       public Object invoke(Attribute a) throws IllegalAccessException {
          if (!Modifier.isPublic(field.getModifiers())) field.setAccessible(true);
          if (a == null) {
-            return field.get(getObject());
+            return field.get(resource.getObject());
          } else {
-            field.set(getObject(), a.getValue());
+            field.set(resource.getObject(), a.getValue());
             return null;
          }
       }
    }
 
-   private class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
-      private final Method setter;
-      private final Method getter;
+   private static class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+      private transient final Method setter;
+      private transient final Method getter;
+      private transient final ResourceDMBean resource;
 
-      public InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter) {
+      public InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter, ResourceDMBean resource) {
          super(name, type, description, isReadable, isWritable, isIs);
          this.setter = setter;
          this.getter = getter;
+         this.resource = resource;
       }
 
       @Override
       public Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException {
          if (a == null) {
             if (!Modifier.isPublic(getter.getModifiers())) getter.setAccessible(true);
-            return getter.invoke(getObject(), null);
+            return getter.invoke(resource.getObject(), null);
          } else {
             if (!Modifier.isPublic(setter.getModifiers())) setter.setAccessible(true);
-            return setter.invoke(getObject(), a.getValue());
+            return setter.invoke(resource.getObject(), a.getValue());
          }
       }
    }
