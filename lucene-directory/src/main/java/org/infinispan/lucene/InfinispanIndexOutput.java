@@ -210,7 +210,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       fileOps.addFileName(this.fileKey.getFileName());
       if (microbatch) chunksCache.endBatch(true);
       if (trace) {
-         log.tracef("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
+         log.tracef("Closed IndexOutput for %s", fileKey);
       }
    }
 
