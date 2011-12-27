@@ -1,30 +1,11 @@
 package org.infinispan.configuration.parsing;
 
-import static org.infinispan.configuration.cache.CacheMode.DIST_ASYNC;
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_ASYNC;
-import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
-import static org.infinispan.configuration.cache.CacheMode.LOCAL;
-import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
-import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
-
-import java.io.BufferedInputStream;
-import java.io.Closeable;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.Properties;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.AbstractLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -54,6 +35,18 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.BufferedInputStream;
+import java.io.Closeable;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Properties;
+
+import static org.infinispan.configuration.cache.CacheMode.*;
 
 public class Parser {
    
@@ -846,22 +839,22 @@ public class Parser {
       
       if (clusteringMode != null) {
          String mode = clusteringMode.toUpperCase();
-         if (mode.startsWith("REPL")) {
+         if (mode.startsWith("R")) {
             if (!asynchronous)
               builder.clustering().cacheMode(REPL_SYNC);
             else
                builder.clustering().cacheMode(REPL_ASYNC);
-         } else if (mode.startsWith("INV")) {
+         } else if (mode.startsWith("I")) {
             if (!asynchronous)
                builder.clustering().cacheMode(INVALIDATION_SYNC);
             else
                builder.clustering().cacheMode(INVALIDATION_ASYNC);
-         } else if (mode.startsWith("DIST")) {
+         } else if (mode.startsWith("D")) {
             if (!asynchronous)
                builder.clustering().cacheMode(DIST_SYNC);
             else
                builder.clustering().cacheMode(DIST_ASYNC);
-         } else if (mode.startsWith("LOCAL")) {
+         } else if (mode.startsWith("L")) {
             builder.clustering().cacheMode(LOCAL);
          } else {
             throw new ConfigurationException("Invalid clustering mode " + clusteringMode + ", " + reader.getLocation());
