@@ -95,9 +95,38 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.4.3-JBOSS</version>
             <configuration>
-               <excludes>
-                  <exclude>**/*StressTest.java</exclude>
-               </excludes>
+              <excludes>
+                <exclude>**/*StressTest.java</exclude>
+              </excludes>
+              <parallel>tests</parallel>
+              <threadCount>${infinispan.test.parallel.threads}</threadCount>
+              <groups>${defaultTestGroup}</groups>
+              <systemProperties>
+                <property>
+                  <name>infinispan.test.jgroups.protocol</name>
+                  <value>tcp</value>
+                </property>
+                <property>
+                  <name>jgroups.bind_addr</name>
+                  <value>127.0.0.1</value>
+                </property>
+                <property>
+                  <name>java.net.preferIPv4Stack</name>
+                  <value>true</value>
+                </property>
+                <property>
+                  <name>log4j.configuration</name>
+                  <value>custom-lucene-log4j.xml</value>
+                </property>
+              </systemProperties>
+              <trimStackTrace>false</trimStackTrace>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>${testNGListener}</value>
+                </property>
+              </properties>
+              <argLine>-Xmx2048m -XX:MaxPermSize=256m</argLine>
             </configuration>
          </plugin>
          <plugin>
