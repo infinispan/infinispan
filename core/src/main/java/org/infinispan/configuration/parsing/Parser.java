@@ -219,6 +219,8 @@ public class Parser {
    }
 
    private void parseTransaction(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      boolean forceSetTransactional = false;
+      boolean transactionModeSpecified = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceSystemProperties(reader.getAttributeValue(i));
@@ -244,9 +246,11 @@ public class Parser {
                break;
             case TRANSACTION_MANAGER_LOOKUP_CLASS:
                builder.transaction().transactionManagerLookup(Util.<TransactionManagerLookup>getInstance(value, cl));
+               forceSetTransactional = true;
                break;
             case TRANSACTION_MODE:
                builder.transaction().transactionMode(TransactionMode.valueOf(value));
+               transactionModeSpecified = true;
                break;
             case USE_EAGER_LOCKING:
                builder.transaction().useEagerLocking(Boolean.valueOf(value).booleanValue());
@@ -258,6 +262,8 @@ public class Parser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
+
+      if (!transactionModeSpecified && forceSetTransactional) builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
