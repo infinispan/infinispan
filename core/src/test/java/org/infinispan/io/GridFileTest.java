@@ -19,27 +19,48 @@
 
 package org.infinispan.io;
 
+import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
 
+import static org.testng.Assert.assertFalse;
+
 @Test(testName = "io.GridFileTest", groups = "functional")
 public class GridFileTest extends SingleCacheManagerTest {
+
+   private Cache<String, byte[]> dataCache;
+   private Cache<String, GridFile.Metadata> metadataCache;
+   private GridFilesystem fs;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       return new DefaultCacheManager();
    }
 
+   @BeforeMethod
+   protected void setUp() throws Exception {
+      dataCache = cacheManager.getCache("data");
+      metadataCache = cacheManager.getCache("metadata");
+      fs = new GridFilesystem(dataCache, metadataCache);
+   }
+
    public void testGridFS() throws IOException {
-      GridFilesystem fs = new GridFilesystem(cacheManager.<String, byte[]>getCache("data"), cacheManager.<String, GridFile.Metadata>getCache("metadata"));
       File gridDir = fs.getFile("/test");
       assert gridDir.mkdirs();
       File gridFile = fs.getFile("/test/myfile.txt");
       assert gridFile.createNewFile();
+   }
+
+   public void testNonExistentFileIsNeitherFileNorDirectory() throws IOException {
+      File file = fs.getFile("nonExistentFile.txt");
+      assertFalse(file.exists());
+      assertFalse(file.isFile());
+      assertFalse(file.isDirectory());
    }
 }
