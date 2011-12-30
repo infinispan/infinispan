@@ -65,21 +65,11 @@ public class GridFile extends File {
    }
 
    GridFile(String parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
-      super(parent, child);
-      this.fs = fs;
-      this.name = trim(parent + File.separator + child);
-      this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunk_size = chunk_size;
-      initMetadata();
+      this(parent + File.separator + child, metadataCache, chunk_size, fs);
    }
 
    GridFile(File parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
-      super(parent, child);
-      this.fs = fs;
-      this.name = trim(parent.getAbsolutePath() + File.separator + child);
-      this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunk_size = chunk_size;
-      initMetadata();
+      this(parent.getAbsolutePath() + File.separator + child, metadataCache, chunk_size, fs);
    }
 
    @Override
@@ -110,14 +100,18 @@ public class GridFile extends File {
 
    @Override
    public long length() {
-      Metadata metadata = metadataCache.get(getPath());
+      Metadata metadata = getMetadata();
       if (metadata != null)
          return metadata.length;
       return 0;
    }
 
+   private Metadata getMetadata() {
+      return metadataCache.get(getPath());
+   }
+
    void setLength(int new_length) {
-      Metadata metadata = metadataCache.get(getPath());
+      Metadata metadata = getMetadata();
       if (metadata != null) {
          metadata.length = new_length;
          metadata.setModificationTime(System.currentTimeMillis());
@@ -148,24 +142,18 @@ public class GridFile extends File {
    public boolean delete(boolean synchronous) {
       if (!exists())
          return false;
-      if (isFile()) {
-         fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
-         if (synchronous)
-            metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
-         else
-            metadataCache.remove(getPath()); // removes the metadata information
-         return true;
-      }
+
       if (isDirectory()) {
          File[] files = listFiles();
          if (files != null && files.length > 0)
             return false;
-         fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
-         if (synchronous)
-            metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
-         else
-            metadataCache.remove(getPath()); // removes the metadata information
       }
+
+      fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
+      if (synchronous)
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
+      else
+         metadataCache.remove(getPath()); // removes the metadata information
       return true;
    }
 
@@ -179,7 +167,6 @@ public class GridFile extends File {
          return true;
       }
       catch (IOException e) {
-         e.printStackTrace();
          return false;
       }
    }
@@ -200,7 +187,7 @@ public class GridFile extends File {
 
    @Override
    public boolean exists() {
-      return metadataCache.get(getPath()) != null;
+      return getMetadata() != null;
    }
 
    @Override
@@ -230,18 +217,18 @@ public class GridFile extends File {
 
    @Override
    public boolean isDirectory() {
-      Metadata val = metadataCache.get(getPath());
-      return val != null && val.isDirectory();
+      Metadata metadata = getMetadata();
+      return metadata != null && metadata.isDirectory();
    }
 
    @Override
    public boolean isFile() {
-      Metadata val = metadataCache.get(getPath());
-      return val != null && val.isFile();
+      Metadata metadata = getMetadata();
+      return metadata != null && metadata.isFile();
    }
 
    protected void initMetadata() {
-      Metadata metadata = metadataCache.get(getPath());
+      Metadata metadata = getMetadata();
       if (metadata != null)
          this.chunk_size = metadata.getChunkSize();
    }
@@ -412,19 +399,18 @@ public class GridFile extends File {
       }
 
       public String toString() {
-         boolean is_file = Util.isFlagSet(flags, FILE);
          StringBuilder sb = new StringBuilder();
          sb.append(getType());
-         if (is_file)
+         if (isFile())
             sb.append(", len=" + Util.printBytes(length) + ", chunk_size=" + chunk_size);
          sb.append(", mod_time=" + new Date(modification_time));
          return sb.toString();
       }
 
       private String getType() {
-         if (Util.isFlagSet(flags, FILE))
+         if (isFile())
             return "file";
-         if (Util.isFlagSet(flags, DIR))
+         if (isDirectory())
             return "dir";
          return "n/a";
       }
