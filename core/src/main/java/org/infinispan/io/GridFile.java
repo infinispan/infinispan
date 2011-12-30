@@ -231,13 +231,13 @@ public class GridFile extends File {
    @Override
    public boolean isDirectory() {
       Metadata val = metadataCache.get(getPath());
-      return val == null || val.isDirectory();
+      return val != null && val.isDirectory();
    }
 
    @Override
    public boolean isFile() {
       Metadata val = metadataCache.get(getPath());
-      return val == null || val.isFile();
+      return val != null && val.isFile();
    }
 
    protected void initMetadata() {
