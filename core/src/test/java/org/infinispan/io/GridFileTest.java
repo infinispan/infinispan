@@ -29,7 +29,8 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 
-import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 @Test(testName = "io.GridFileTest", groups = "functional")
 public class GridFileTest extends SingleCacheManagerTest {
@@ -63,4 +64,27 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertFalse(file.isFile());
       assertFalse(file.isDirectory());
    }
+
+   public void testGetParent() throws IOException {
+      File file = fs.getFile("file.txt");
+      assertEquals(file.getParent(), null);
+
+      file = fs.getFile("/parentdir/file.txt");
+      assertEquals(file.getParent(), "/parentdir");
+
+      file = fs.getFile("/parentdir/subdir/file.txt");
+      assertEquals(file.getParent(), "/parentdir/subdir");
+
+   }
+
+   public void testGetParentFile() throws IOException {
+      File file = fs.getFile("file.txt");
+      assertNull(file.getParentFile());
+
+      file = fs.getFile("/parentdir/file.txt");
+      File parentDir = file.getParentFile();
+      assertTrue(parentDir instanceof GridFile);
+      assertEquals(parentDir.getPath(), "/parentdir");
+   }
+
 }

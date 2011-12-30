@@ -86,16 +86,23 @@ public class GridFile extends File {
     */
    @Override
    public String getPath() {
-      String my_path = super.getPath();
+      return formatPath(super.getPath());
+
+   }
+
+   private String formatPath(String path) {
+      if (path == null)
+         return null;
+      
       // Regardless of platform, always use the same separator char, otherwise
       // keys might not be found when transfering metadata between different OS
-      my_path = my_path.replace('\\', SEPARATOR_CHAR);
-      if (my_path != null && my_path.endsWith(SEPARATOR)) {
-         int index = my_path.lastIndexOf(SEPARATOR);
+      path = path.replace('\\', SEPARATOR_CHAR);
+      if (path != null && path.endsWith(SEPARATOR)) {
+         int index = path.lastIndexOf(SEPARATOR);
          if (index != -1)
-            my_path = my_path.substring(0, index);
+            path = path.substring(0, index);
       }
-      return my_path;
+      return path;
    }
 
    @Override
@@ -188,6 +195,19 @@ public class GridFile extends File {
    @Override
    public boolean exists() {
       return getMetadata() != null;
+   }
+
+   @Override
+   public String getParent() {
+      return formatPath(super.getParent());
+   }
+
+   @Override
+   public File getParentFile() {
+      String parentPath = getParent();
+      if (parentPath == null)
+         return null;
+      return new GridFile(parentPath, metadataCache, chunk_size, fs);
    }
 
    @Override
