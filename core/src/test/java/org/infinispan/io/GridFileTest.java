@@ -27,6 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import static org.testng.Assert.*;
@@ -86,5 +87,37 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertTrue(parentDir instanceof GridFile);
       assertEquals(parentDir.getPath(), "/parentdir");
    }
+
+   @Test(expectedExceptions = FileNotFoundException.class)
+   public void testWritingToDirectoryThrowsException1() throws IOException {
+      GridFile dir = (GridFile) createDir();
+      fs.getOutput(dir);  // should throw exception
+   }
+
+   @Test(expectedExceptions = FileNotFoundException.class)
+   public void testWritingToDirectoryThrowsException2() throws IOException {
+      File dir = createDir();
+      fs.getOutput(dir.getPath());  // should throw exception
+   }
+
+   @Test(expectedExceptions = FileNotFoundException.class)
+   public void testReadingFromDirectoryThrowsException1() throws IOException {
+      File dir = createDir();
+      fs.getInput(dir);  // should throw exception
+   }
+
+   @Test(expectedExceptions = FileNotFoundException.class)
+   public void testReadingFromDirectoryThrowsException2() throws IOException {
+      File dir = createDir();
+      fs.getInput(dir.getPath());  // should throw exception
+   }
+
+   private File createDir() {
+      File dir = fs.getFile("mydir");
+      assert dir.mkdir();
+      assert dir.isDirectory();
+      return dir;
+   }
+
 
 }
