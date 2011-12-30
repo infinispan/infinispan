@@ -275,7 +275,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true);
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true, true);
       }
    }
 
