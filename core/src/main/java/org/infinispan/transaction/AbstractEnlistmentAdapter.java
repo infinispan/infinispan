@@ -78,12 +78,17 @@ public abstract class AbstractEnlistmentAdapter {
    }
 
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
-      if (isClustered() && !config.isSecondPhaseAsync()) {
+      if (mayHaveRemoteLocks(localTransaction) && isClustered() && !config.isSecondPhaseAsync()) {
          final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
          log.tracef("About to invoke tx completion notification on nodes %s", owners);
          rpcManager.invokeRemotely(owners, command, false);
       }
+   }
+
+   private boolean mayHaveRemoteLocks(LocalTransaction lt) {
+      return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty()) ||
+            (lt.getModifications() != null && !lt.getModifications().isEmpty());
    }
 
    /**
