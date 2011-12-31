@@ -34,6 +34,7 @@ import java.io.OutputStream;
  * Entry point for GridFile and GridInputStream / GridOutputStream
  *
  * @author Bela Ban
+ * @author Marko Luksa
  */
 public class GridFilesystem {
    protected final Cache<String, byte[]> data;
@@ -43,9 +44,9 @@ public class GridFilesystem {
    /**
     * Creates an instance. The data and metadata caches should already have been setup and started
     *
-    * @param data
-    * @param metadata
-    * @param default_chunk_size
+    * @param data the cache where the actual file contents are stored
+    * @param metadata the cache where file meta-data is stored
+    * @param default_chunk_size the default size of the file chunks
     */
    public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata,
                          int default_chunk_size) {
@@ -58,10 +59,23 @@ public class GridFilesystem {
       this(data, metadata, 8000);
    }
 
+   /**
+    * Returns the file denoted by pathname.
+    * @param pathname the full path of the requested file
+    * @return the File stored at pathname
+    */
    public File getFile(String pathname) {
       return getFile(pathname, default_chunk_size);
    }
 
+   /**
+    * Returns the file denoted by pathname. If the file does not yet exist, it is initialized with the given chunk_size.
+    * However, if the file at pathname already exists, the chunk_size parameter is ignored and the file's actual
+    * chunk_size is used.
+    * @param pathname the full path of the requested file
+    * @param chunk_size the size of the file's chunks. This parameter is only used for non-existing files.
+    * @return the File stored at pathname
+    */
    public File getFile(String pathname, int chunk_size) {
       return new GridFile(pathname, metadata, chunk_size, this);
    }
@@ -82,14 +96,39 @@ public class GridFilesystem {
       return new GridFile(parent, child, metadata, chunk_size, this);
    }
 
+   /**
+    * Opens an OutputStream for writing to the file denoted by pathname. If a file at pathname already exists, writing
+    * to the returned OutputStream will overwrite the contents of the file.
+    * @param pathname the path to write to
+    * @return an OutputStream for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
    public OutputStream getOutput(String pathname) throws IOException {
       return getOutput(pathname, false, default_chunk_size);
    }
 
+   /**
+    * Opens an OutputStream for writing to the file denoted by pathname. The OutputStream can either overwrite the
+    * existing file or append to it.
+    * @param pathname the path to write to
+    * @param append if true, the bytes written to the OutputStream will be appended to the end of the file. If false,
+    *               the bytes will overwrite the original contents.
+    * @return an OutputStream for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
    public OutputStream getOutput(String pathname, boolean append) throws IOException {
       return getOutput(pathname, append, default_chunk_size);
    }
 
+   /**
+    * Opens an OutputStream for writing to the file denoted by pathname.
+    * @param pathname the file to write to
+    * @param append if true, the bytes written to the OutputStream will be appended to the end of the file
+    * @param chunk_size the size of the file's chunks. This parameter is honored only when the file at pathname does
+    *        not yet exist. If the file already exists, the file's own chunkSize has precedence.
+    * @return the OutputStream for writing to the file
+    * @throws IOException if the file is a directory, cannot be created or some other error occurs
+    */
    public OutputStream getOutput(String pathname, boolean append, int chunk_size) throws IOException {
       GridFile file = (GridFile) getFile(pathname, chunk_size);
       if (file.isDirectory()) {
@@ -101,6 +140,12 @@ public class GridFilesystem {
       return new GridOutputStream(file, append, data);
    }
 
+   /**
+    * Opens an OutputStream for writing to the given file.
+    * @param file the file to write to
+    * @return an OutputStream for writing to the file
+    * @throws IOException if an error occurs
+    */
    public OutputStream getOutput(GridFile file) throws IOException {
       if (file.isDirectory()) {
          throw new FileNotFoundException("Cannot write to directory (" + file + ")");
@@ -110,7 +155,12 @@ public class GridFilesystem {
       return new GridOutputStream(file, false, data);
    }
 
-
+   /**
+    * Opens an InputStream for reading from the file denoted by pathname.
+    * @param pathname the full path of the file to read from
+    * @return an InputStream for reading from the file
+    * @throws FileNotFoundException if the file does not exist or is a directory
+    */
    public InputStream getInput(String pathname) throws FileNotFoundException {
       GridFile file = (GridFile) getFile(pathname);
       if (!file.exists())
@@ -121,11 +171,22 @@ public class GridFilesystem {
       return new GridInputStream(file, data);
    }
 
-   public InputStream getInput(File pathname) throws FileNotFoundException {
-      return pathname != null ? getInput(pathname.getPath()) : null;
+   /**
+    * Opens an InputStream for reading from the given file.
+    * @param file the file to open for reading
+    * @return an InputStream for reading from the file
+    * @throws FileNotFoundException if the file does not exist or is a directory
+    */
+   public InputStream getInput(File file) throws FileNotFoundException {
+      return file != null ? getInput(file.getPath()) : null;
    }
 
-
+   /**
+    * Removes the file denoted by path. This operation can either be executed synchronously or asynchronously.
+    * @param path the file to remove
+    * @param synchronous if true, the method will return only after the file has actually been removed;
+    *                    if false, the method will return immediately and the file will be removed asynchronously.
+    */
    public void remove(String path, boolean synchronous) {
       if (path == null)
          return;
