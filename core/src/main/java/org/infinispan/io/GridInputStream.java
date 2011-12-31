@@ -45,11 +45,11 @@ public class GridInputStream extends InputStream {
    byte[] current_buffer = null;
    boolean end_reached = false;
 
-   GridInputStream(GridFile file, Cache<String, byte[]> cache, int chunk_size) {
+   GridInputStream(GridFile file, Cache<String, byte[]> cache) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;
-      this.chunk_size = chunk_size;
+      this.chunk_size = file.getChunkSize();
    }
 
    public int read() throws IOException {
