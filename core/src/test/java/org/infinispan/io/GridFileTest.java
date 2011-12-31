@@ -150,32 +150,35 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    public void testAppend() throws Exception {
-      OutputStream out = fs.getOutput("append.txt");
-      try {
-         out.write("Hello".getBytes());
-      } finally {
-         out.close();
-      }
+      appendToFile("append.txt", "Hello");
+      appendToFile("append.txt", "World");
+      assertEquals(getContents("append.txt"), "HelloWorld");
+   }
 
-      out = fs.getOutput("append.txt", true);   // true = append
-      try {
-         out.write("World".getBytes());
-      } finally {
-         out.close();
-      }
-
+   public void testAppendWithDifferentChunkSize() throws Exception {
+      appendToFile("append.txt", "Hello", 2);   // chunkSize = 2
+      appendToFile("append.txt", "World", 5);        // chunkSize = 5
       assertEquals(getContents("append.txt"), "HelloWorld");
    }
 
    public void testAppendToEmptyFile() throws Exception {
-      OutputStream out = fs.getOutput("empty.txt", true);   // true = append
+      appendToFile("empty.txt", "Hello");
+      assertEquals(getContents("empty.txt"), "Hello");
+   }
+
+   private void appendToFile(String filePath, String text) throws IOException {
+      appendToFile(filePath, text, null);
+   }
+
+   private void appendToFile(String filePath, String text, Integer chunkSize) throws IOException {
+      OutputStream out = chunkSize == null
+         ? fs.getOutput(filePath, true)
+         : fs.getOutput(filePath, true, chunkSize);
       try {
-         out.write("Hello".getBytes());
+         out.write(text.getBytes());
       } finally {
          out.close();
       }
-
-      assertEquals(getContents("empty.txt"), "Hello");
    }
 
    private String getContents(String filePath) throws IOException {
