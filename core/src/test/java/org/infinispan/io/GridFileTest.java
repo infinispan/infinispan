@@ -29,6 +29,8 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import static org.testng.Assert.*;
 import static org.testng.Assert.assertEquals;
@@ -114,10 +116,49 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    private File createDir() {
       File dir = fs.getFile("mydir");
-      assert dir.mkdir();
-      assert dir.isDirectory();
+      boolean created = dir.mkdir();
+      assert created;
       return dir;
    }
 
+   public void testAppend() throws Exception {
+      OutputStream out = fs.getOutput("append.txt");
+      try {
+         out.write("Hello".getBytes());
+      } finally {
+         out.close();
+      }
+
+      out = fs.getOutput("append.txt", true);   // true = append
+      try {
+         out.write("World".getBytes());
+      } finally {
+         out.close();
+      }
+
+      assertEquals(getContents("append.txt"), "HelloWorld");
+   }
+
+   public void testAppendToEmptyFile() throws Exception {
+      OutputStream out = fs.getOutput("empty.txt", true);   // true = append
+      try {
+         out.write("Hello".getBytes());
+      } finally {
+         out.close();
+      }
+
+      assertEquals(getContents("empty.txt"), "Hello");
+   }
+
+   private String getContents(String filePath) throws IOException {
+      InputStream in = fs.getInput(filePath);
+      try {
+         byte[] buf = new byte[1000];
+         int bytesRead = in.read(buf);
+         return new String(buf, 0, bytesRead);
+      } finally {
+         in.close();
+      }
+   }
 
 }
