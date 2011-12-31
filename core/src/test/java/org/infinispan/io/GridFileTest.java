@@ -121,6 +121,34 @@ public class GridFileTest extends SingleCacheManagerTest {
       return dir;
    }
 
+   public void testWriteOverMultipleChunksWithNonDefaultChunkSize() throws Exception {
+      OutputStream out = fs.getOutput("multipleChunks.txt", false, 10);  // chunkSize = 10
+      try {
+         out.write("This text spans multiple chunks, because each chunk is only 10 bytes long.".getBytes());
+      } finally {
+         out.close();
+      }
+
+      String text = getContents("multipleChunks.txt");
+      assertEquals(text, "This text spans multiple chunks, because each chunk is only 10 bytes long.");
+   }
+
+   public void testWriteOverMultipleChunksWithNonDefaultChunkSizeAfterFileIsExplicitlyCreated() throws Exception {
+      GridFile file = (GridFile) fs.getFile("multipleChunks.txt", 20);  // chunkSize = 20
+      file.createNewFile();
+      
+      OutputStream out = fs.getOutput(file.getPath(), false, 10); // chunkSize = 10 (but it is ignored, because the
+                                                                  // file was already created with chunkSize = 20)
+      try {
+         out.write("This text spans multiple chunks, because each chunk is only 20 bytes long.".getBytes());
+      } finally {
+         out.close();
+      }
+
+      String text = getContents("multipleChunks.txt");
+      assertEquals(text, "This text spans multiple chunks, because each chunk is only 20 bytes long.");
+   }
+
    public void testAppend() throws Exception {
       OutputStream out = fs.getOutput("append.txt");
       try {

@@ -45,11 +45,11 @@ public class GridOutputStream extends OutputStream {
    static final Log log = LogFactory.getLog(GridOutputStream.class);
 
 
-   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache, int chunk_size) {
+   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;
-      this.chunk_size = chunk_size;
+      this.chunk_size = file.getChunkSize();
 
       index = append ? (int) file.length() : 0;
       local_index = index % chunk_size;

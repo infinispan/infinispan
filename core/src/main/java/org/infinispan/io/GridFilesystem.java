@@ -98,7 +98,7 @@ public class GridFilesystem {
       if (!file.createNewFile())
          throw new IOException("creation of " + pathname + " failed");
 
-      return new GridOutputStream(file, append, data, chunk_size);
+      return new GridOutputStream(file, append, data);
    }
 
    public OutputStream getOutput(GridFile file) throws IOException {
@@ -107,7 +107,7 @@ public class GridFilesystem {
       }
       if (!file.createNewFile())
          throw new IOException("creation of " + file + " failed");
-      return new GridOutputStream(file, false, data, default_chunk_size);
+      return new GridOutputStream(file, false, data);
    }
 
 
@@ -118,7 +118,7 @@ public class GridFilesystem {
       if (file.isDirectory()) {
          throw new FileNotFoundException("Cannot read from directory (" + file + ")");
       }
-      return new GridInputStream(file, data, default_chunk_size);
+      return new GridInputStream(file, data);
    }
 
    public InputStream getInput(File pathname) throws FileNotFoundException {
