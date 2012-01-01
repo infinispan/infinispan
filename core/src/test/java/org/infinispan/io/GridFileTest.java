@@ -61,6 +61,18 @@ public class GridFileTest extends SingleCacheManagerTest {
       assert gridFile.createNewFile();
    }
 
+   public void testCreateNewFile() throws IOException {
+      File file = fs.getFile("file.txt");
+      assertTrue(file.createNewFile());   // file should be created successfully
+      assertFalse(file.createNewFile());  // file should not be created, because it already exists
+   }
+
+   @Test(expectedExceptions = IOException.class)
+   public void testCreateNewFileInNonExistentDir() throws IOException {
+      File file = fs.getFile("nonExistent/file.txt");
+      file.createNewFile();
+   }
+
    public void testNonExistentFileIsNeitherFileNorDirectory() throws IOException {
       File file = fs.getFile("nonExistentFile.txt");
       assertFalse(file.exists());

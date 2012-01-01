@@ -139,7 +139,7 @@ public class GridFilesystem {
       if (file.isDirectory()) {
          throw new FileNotFoundException("Cannot write to directory (" + pathname + ")");
       }
-      if (!file.createNewFile())
+      if (!file.exists() && !file.createNewFile())
          throw new IOException("creation of " + pathname + " failed");
 
       return new GridOutputStream(file, append, data);
@@ -155,7 +155,7 @@ public class GridFilesystem {
       if (file.isDirectory()) {
          throw new FileNotFoundException("Cannot write to directory (" + file + ")");
       }
-      if (!file.createNewFile())
+      if (!file.exists() && !file.createNewFile())
          throw new IOException("creation of " + file + " failed");
       return new GridOutputStream(file, false, data);
    }
