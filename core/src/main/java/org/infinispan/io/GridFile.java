@@ -134,9 +134,9 @@ public class GridFile extends File {
    @Override
    public boolean createNewFile() throws IOException {
       if (exists())
-         return true;
-      if (!checkParentDirs(getPath(), false))
          return false;
+      if (!checkParentDirs(getPath(), false))
+         throw new IOException("Cannot create file " + getPath() + " (parent dir does not exist)");
       metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.FILE));
       return true;
    }
