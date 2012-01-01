@@ -43,7 +43,7 @@ public class GridOutputStream extends OutputStream {
    int local_index;
    final byte[] current_buffer;
    static final Log log = LogFactory.getLog(GridOutputStream.class);
-
+   private int numberOfChunksWhenOpened;
 
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       this.file = file;
@@ -54,6 +54,8 @@ public class GridOutputStream extends OutputStream {
       index = append ? (int) file.length() : 0;
       local_index = index % chunk_size;
       current_buffer = append && !isLastChunkFull() ? fetchLastChunk() : new byte[chunk_size];
+
+      numberOfChunksWhenOpened = getLastChunkNumber() + 1;
    }
 
    private boolean isLastChunkFull() {
@@ -115,7 +117,18 @@ public class GridOutputStream extends OutputStream {
    @Override
    public void close() throws IOException {
       flush();
+      removeExcessChunks();
       reset();
+   }
+
+   private void removeExcessChunks() {
+      for (int i = getLastChunkNumber()+1; i<numberOfChunksWhenOpened; i++) {
+         removeChunk(i);
+      }
+   }
+
+   private void removeChunk(int chunkNumber) {
+      cache.remove(getChunkKey(chunkNumber));
    }
 
    @Override
