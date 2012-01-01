@@ -173,6 +173,16 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(numberOfMetadataEntries(), 0);
    }
 
+   public void testOverwritingFileDoesNotLeaveExcessChunksInCache() throws Exception {
+      assertEquals(numberOfChunksInCache(), 0);
+
+      writeToFile("leak.txt", "12345abcde12345", 5); // file length = 15, chunkSize = 5
+      assertEquals(numberOfChunksInCache(), 3);
+
+      writeToFile("leak.txt", "12345", 5);           // file length = 5, chunkSize = 5
+      assertEquals(numberOfChunksInCache(), 1);
+   }
+
    private int numberOfChunksInCache() {
       return dataCache.size();
    }
