@@ -22,13 +22,18 @@
  */
 package org.infinispan.io;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.context.Flag;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
+import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
 
 /**
  * Entry point for GridFile and GridInputStream / GridOutputStream
@@ -193,8 +198,11 @@ public class GridFilesystem {
       GridFile.Metadata md = metadata.get(path);
       if (md == null)
          return;
-      int num_chunks = md.getLength() / md.getChunkSize() + 1;
-      for (int i = 0; i < num_chunks; i++)
-         data.remove(path + ".#" + i, synchronous);
+
+      Flag flag = synchronous ? FORCE_SYNCHRONOUS : FORCE_ASYNCHRONOUS;
+      AdvancedCache<String,byte[]> advancedCache = data.getAdvancedCache().withFlags(flag);
+      int numChunks = md.getLength() / md.getChunkSize() + 1;
+      for (int i = 0; i < numChunks; i++)
+         advancedCache.remove(path + ".#" + i);
    }
 }

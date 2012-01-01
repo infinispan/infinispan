@@ -121,42 +121,35 @@ public class GridFileTest extends SingleCacheManagerTest {
       return dir;
    }
 
-   public void testWriteOverMultipleChunksWithNonDefaultChunkSize() throws Exception {
-      OutputStream out = fs.getOutput("multipleChunks.txt", false, 10);  // chunkSize = 10
-      try {
-         out.write("This text spans multiple chunks, because each chunk is only 10 bytes long.".getBytes());
-      } finally {
-         out.close();
-      }
+   public void testWriteAcrossMultipleChunksWithNonDefaultChunkSize() throws Exception {
+      writeToFile("multipleChunks.txt",
+                  "This text spans multiple chunks, because each chunk is only 10 bytes long.",
+                  10);  // chunkSize = 10
 
       String text = getContents("multipleChunks.txt");
       assertEquals(text, "This text spans multiple chunks, because each chunk is only 10 bytes long.");
    }
 
-   public void testWriteOverMultipleChunksWithNonDefaultChunkSizeAfterFileIsExplicitlyCreated() throws Exception {
+   public void testWriteAcrossMultipleChunksWithNonDefaultChunkSizeAfterFileIsExplicitlyCreated() throws Exception {
       GridFile file = (GridFile) fs.getFile("multipleChunks.txt", 20);  // chunkSize = 20
       file.createNewFile();
-      
-      OutputStream out = fs.getOutput(file.getPath(), false, 10); // chunkSize = 10 (but it is ignored, because the
-                                                                  // file was already created with chunkSize = 20)
-      try {
-         out.write("This text spans multiple chunks, because each chunk is only 20 bytes long.".getBytes());
-      } finally {
-         out.close();
-      }
+
+      writeToFile("multipleChunks.txt",
+                  "This text spans multiple chunks, because each chunk is only 20 bytes long.",
+                  10);  // chunkSize = 10 (but it is ignored, because the file was already created with chunkSize = 20
 
       String text = getContents("multipleChunks.txt");
       assertEquals(text, "This text spans multiple chunks, because each chunk is only 20 bytes long.");
    }
 
    public void testAppend() throws Exception {
-      appendToFile("append.txt", "Hello");
+      writeToFile("append.txt", "Hello");
       appendToFile("append.txt", "World");
       assertEquals(getContents("append.txt"), "HelloWorld");
    }
 
    public void testAppendWithDifferentChunkSize() throws Exception {
-      appendToFile("append.txt", "Hello", 2);   // chunkSize = 2
+      writeToFile("append.txt", "Hello", 2);   // chunkSize = 2
       appendToFile("append.txt", "World", 5);        // chunkSize = 5
       assertEquals(getContents("append.txt"), "HelloWorld");
    }
@@ -166,14 +159,48 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(getContents("empty.txt"), "Hello");
    }
 
+   public void testDeleteRemovesAllChunks() throws Exception {
+      assertEquals(numberOfChunksInCache(), 0);
+      assertEquals(numberOfMetadataEntries(), 0);
+
+      writeToFile("delete.txt", "delete me", 100);
+
+      GridFile file = (GridFile) fs.getFile("delete.txt");
+      boolean deleted = file.delete(true);
+      assertTrue(deleted);
+      assertFalse(file.exists());
+      assertEquals(numberOfChunksInCache(), 0);
+      assertEquals(numberOfMetadataEntries(), 0);
+   }
+
+   private int numberOfChunksInCache() {
+      return dataCache.size();
+   }
+
+   private int numberOfMetadataEntries() {
+      return metadataCache.size();
+   }
+
    private void appendToFile(String filePath, String text) throws IOException {
       appendToFile(filePath, text, null);
    }
 
    private void appendToFile(String filePath, String text, Integer chunkSize) throws IOException {
+      writeToFile(filePath, text, true, chunkSize);
+   }
+
+   private void writeToFile(String filePath, String text) throws IOException {
+      writeToFile(filePath, text, null);
+   }
+
+   private void writeToFile(String filePath, String text, Integer chunkSize) throws IOException {
+      writeToFile(filePath, text, false, chunkSize);
+   }
+
+   private void writeToFile(String filePath, String text, boolean append, Integer chunkSize) throws IOException {
       OutputStream out = chunkSize == null
-         ? fs.getOutput(filePath, true)
-         : fs.getOutput(filePath, true, chunkSize);
+         ? fs.getOutput(filePath, append)
+         : fs.getOutput(filePath, append, chunkSize);
       try {
          out.write(text.getBytes());
       } finally {
