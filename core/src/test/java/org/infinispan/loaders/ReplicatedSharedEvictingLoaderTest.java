@@ -26,7 +26,6 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -46,7 +45,7 @@ public class ReplicatedSharedEvictingLoaderTest extends MultipleCacheManagersTes
       clmc.setPassivation(true);
       c.setCacheLoaderManagerConfig(clmc);
       createCluster(c, 2);
-      TestingUtil.blockUntilViewsReceived(100000, cache(0), cache(1));
+      waitForClusterToForm();
    }
 
    public void testRemovalFromCacheStoreOnEvict() {
