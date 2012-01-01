@@ -47,6 +47,7 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
             .mode(Configuration.CacheMode.REPL_SYNC)
          .build();
       createCluster(cfg, 3);
+      // don't create the caches here, we want them to join the cluster one by one
    }
 
    private List<CacheStore> cachestores() {

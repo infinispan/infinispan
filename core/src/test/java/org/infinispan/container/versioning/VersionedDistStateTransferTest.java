@@ -59,6 +59,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
                .syncCommitPhase(true);
 
       createCluster(builder, 4);
+      waitForClusterToForm();
    }
 
    public void testStateTransfer() throws Exception {

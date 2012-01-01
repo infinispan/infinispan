@@ -60,6 +60,7 @@ public class ReplWriteSkewTest extends MultipleCacheManagersTest {
                .syncCommitPhase(true);
 
       createCluster(builder, 2);
+      waitForClusterToForm();
    }
 
    public void testWriteSkew() throws Exception {
