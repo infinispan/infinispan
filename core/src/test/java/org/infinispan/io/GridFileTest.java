@@ -228,6 +228,27 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(numberOfChunksInCache(), 1);
    }
 
+   public void testLastModified() throws Exception {
+      assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
+
+      long time1 = System.currentTimeMillis();
+      File file = fs.getFile("file.txt");
+      file.createNewFile();
+      long time2 = System.currentTimeMillis();
+
+      assertTrue(time1 <= file.lastModified());
+      assertTrue(file.lastModified() <= time2);
+
+      Thread.sleep(100);
+
+      time1 = System.currentTimeMillis();
+      writeToFile(file.getPath(), "foo");
+      time2 = System.currentTimeMillis();
+
+      assertTrue(time1 <= file.lastModified());
+      assertTrue(file.lastModified() <= time2);
+   }
+
    private int numberOfChunksInCache() {
       return dataCache.size();
    }

@@ -45,6 +45,7 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
  * Subclass of File to iterate through directories and files in a grid
  *
  * @author Bela Ban
+ * @author Marko Luksa
  */
 public class GridFile extends File {
    private static final long serialVersionUID = -6729548421029004260L;
@@ -208,6 +209,12 @@ public class GridFile extends File {
       if (parentPath == null)
          return null;
       return new GridFile(parentPath, metadataCache, chunk_size, fs);
+   }
+
+   @Override
+   public long lastModified() {
+      Metadata metadata = getMetadata();
+      return metadata == null ? 0 : metadata.getModificationTime();
    }
 
    @Override
