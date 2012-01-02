@@ -320,6 +320,18 @@ public class GridFileTest extends SingleCacheManagerTest {
             asSet("/myDir/foo1.txt", "/myDir/foo2.txt", "/myDir/fooDir"));
    }
 
+   public void testRootDir() throws Exception {
+      File rootDir = fs.getFile("/");
+      assertTrue(rootDir.exists());
+      assertTrue(rootDir.isDirectory());
+
+      createFile("/foo.txt");
+      String[] filenames = rootDir.list();
+      assertNotNull(filenames);
+      assertEquals(filenames.length, 1);
+      assertEquals(filenames[0], "foo.txt");
+   }
+
    private String[] getPaths(File[] files) {
       String[] paths = new String[files.length];
       for (int i = 0; i < files.length; i++) {

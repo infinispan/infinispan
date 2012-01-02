@@ -49,6 +49,7 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
  */
 public class GridFile extends File {
    private static final long serialVersionUID = -6729548421029004260L;
+   private static final Metadata ROOT_DIR_METADATA = new Metadata(0, 0, 0, Metadata.DIR);
    private static final char SEPARATOR_CHAR = '/';
    private static final String SEPARATOR = "" + SEPARATOR_CHAR;
    private final AdvancedCache<String, Metadata> metadataCache;
@@ -115,7 +116,14 @@ public class GridFile extends File {
    }
 
    private Metadata getMetadata() {
+      if (isRootDir()) {
+         return ROOT_DIR_METADATA;
+      }
       return metadataCache.get(getPath());
+   }
+
+   private boolean isRootDir() {
+      return "".equals(getPath());
    }
 
    void setLength(int new_length) {
