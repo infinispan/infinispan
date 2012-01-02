@@ -61,6 +61,22 @@ public class GridFileTest extends SingleCacheManagerTest {
       assert gridFile.createNewFile();
    }
 
+   public void testGetFile() throws Exception {
+      assertEquals(fs.getFile("file.txt").getPath(), "file.txt");
+      assertEquals(fs.getFile("/file.txt").getPath(), "/file.txt");
+      assertEquals(fs.getFile("myDir/file.txt").getPath(), "myDir/file.txt");
+      assertEquals(fs.getFile("/myDir/file.txt").getPath(), "/myDir/file.txt");
+
+      assertEquals(fs.getFile("myDir", "file.txt").getPath(), "myDir/file.txt");
+      assertEquals(fs.getFile("/myDir", "file.txt").getPath(), "/myDir/file.txt");
+
+      File dir = fs.getFile("/myDir");
+      assertEquals(fs.getFile(dir, "file.txt").getPath(), "/myDir/file.txt");
+
+      dir = fs.getFile("myDir");
+      assertEquals(fs.getFile(dir, "file.txt").getPath(), "myDir/file.txt");
+   }
+
    public void testCreateNewFile() throws IOException {
       File file = fs.getFile("file.txt");
       assertTrue(file.createNewFile());   // file should be created successfully

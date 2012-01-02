@@ -70,7 +70,7 @@ public class GridFile extends File {
    }
 
    GridFile(File parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
-      this(parent.getAbsolutePath() + File.separator + child, metadataCache, chunk_size, fs);
+      this(parent.getPath(), child, metadataCache, chunk_size, fs);
    }
 
    @Override
