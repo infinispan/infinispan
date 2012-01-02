@@ -80,6 +80,40 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertFalse(file.isDirectory());
    }
 
+   public void testMkdir() throws IOException {
+      assertFalse(mkdir(""));
+      assertFalse(mkdir("/"));
+      assertFalse(mkdir("/nonExistentParentDir/subDir"));
+      assertTrue(mkdir("myDir1"));
+      assertTrue(mkdir("myDir1/mySubDir1"));
+      assertTrue(mkdir("/myDir2"));
+      assertTrue(mkdir("/myDir2/mySubDir2"));
+
+      fs.getFile("/file.txt").createNewFile();
+      assertFalse(mkdir("/file.txt/dir"));
+   }
+
+   private boolean mkdir(String pathname) {
+      return fs.getFile(pathname).mkdir();
+   }
+
+   public void testMkdirs() throws IOException {
+      assertFalse(mkdirs(""));
+      assertFalse(mkdirs("/"));
+      assertTrue(mkdirs("myDir1"));
+      assertTrue(mkdirs("myDir2/mySubDir"));
+      assertTrue(mkdirs("/myDir3"));
+      assertTrue(mkdirs("/myDir4/mySubDir"));
+      assertTrue(mkdirs("/myDir5/subDir/secondSubDir"));
+
+      fs.getFile("/file.txt").createNewFile();
+      assertFalse(mkdirs("/file.txt/dir"));
+   }
+
+   private boolean mkdirs(String pathname) {
+      return fs.getFile(pathname).mkdirs();
+   }
+
    public void testGetParent() throws IOException {
       File file = fs.getFile("file.txt");
       assertEquals(file.getParent(), null);
@@ -89,7 +123,6 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       file = fs.getFile("/parentdir/subdir/file.txt");
       assertEquals(file.getParent(), "/parentdir/subdir");
-
    }
 
    public void testGetParentFile() throws IOException {
