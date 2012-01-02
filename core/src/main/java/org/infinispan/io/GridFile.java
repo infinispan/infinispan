@@ -33,9 +33,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -260,26 +260,27 @@ public class GridFile extends File {
    protected File[] _listFiles(Object filter) {
       String[] files = _list(filter);
       if (files == null)
-         return new File[0];
+         return null;
       File[] retval = new File[files.length];
       for (int i = 0; i < files.length; i++)
-         retval[i] = new GridFile(files[i], metadataCache, chunk_size, fs);
+         retval[i] = new GridFile(this, files[i], metadataCache, chunk_size, fs);
       return retval;
    }
 
 
    protected String[] _list(Object filter) {
-      Set<String> keys = metadataCache.keySet();
-      if (keys == null)
+      if (!isDirectory())
          return null;
-      Collection<String> list = new ArrayList<String>(keys.size());
+
+      Set<String> keys = metadataCache.keySet();
+      Collection<String> list = new LinkedList<String>();
       for (String str : keys) {
          if (isChildOf(getPath(), str)) {
             if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(name), filename(str)))
                continue;
             else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(str)))
                continue;
-            list.add(str);
+            list.add(filename(str));
          }
       }
       return list.toArray(new String[list.size()]);
@@ -299,15 +300,15 @@ public class GridFile extends File {
          return false;
       if (child.length() <= parent.length())
          return false;
-      int from = parent.equals(File.separator) ? parent.length() : parent.length() + 1;
+      int from = parent.equals(SEPARATOR) ? parent.length() : parent.length() + 1;
       //  if(from-1 > child.length())
       // return false;
-      String[] comps = Util.components(child.substring(from), File.separator);
+      String[] comps = Util.components(child.substring(from), SEPARATOR);
       return comps != null && comps.length <= 1;
    }
 
    protected static String filename(String full_path) {
-      String[] comps = Util.components(full_path, File.separator);
+      String[] comps = Util.components(full_path, SEPARATOR);
       return comps != null ? comps[comps.length - 1] : null;
    }
 
