@@ -27,10 +27,15 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.testng.Assert.*;
 import static org.testng.Assert.assertEquals;
@@ -105,7 +110,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertTrue(mkdir("/myDir2"));
       assertTrue(mkdir("/myDir2/mySubDir2"));
 
-      fs.getFile("/file.txt").createNewFile();
+      createFile("/file.txt");
       assertFalse(mkdir("/file.txt/dir"));
    }
 
@@ -122,7 +127,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertTrue(mkdirs("/myDir4/mySubDir"));
       assertTrue(mkdirs("/myDir5/subDir/secondSubDir"));
 
-      fs.getFile("/file.txt").createNewFile();
+      createFile("/file.txt");
       assertFalse(mkdirs("/file.txt/dir"));
    }
 
@@ -176,7 +181,11 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    private File createDir() {
-      File dir = fs.getFile("mydir");
+      return createDir("mydir");
+   }
+
+   private File createDir(String pathname) {
+      File dir = fs.getFile(pathname);
       boolean created = dir.mkdir();
       assert created;
       return dir;
@@ -248,8 +257,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
 
       long time1 = System.currentTimeMillis();
-      File file = fs.getFile("file.txt");
-      file.createNewFile();
+      File file = createFile("file.txt");
       long time2 = System.currentTimeMillis();
 
       assertTrue(time1 <= file.lastModified());
@@ -263,6 +271,85 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       assertTrue(time1 <= file.lastModified());
       assertTrue(file.lastModified() <= time2);
+   }
+
+   public void testList() throws Exception {
+      assertNull(fs.getFile("nonExistentDir").list());
+      assertEquals(createDir("/emptyDir").list().length, 0);
+
+      File dir = createDirWithFiles();
+      String[] filenames = dir.list();
+      assertEquals(
+            asSet(filenames),
+            asSet("foo1.txt", "foo2.txt", "bar1.txt", "bar2.txt", "fooDir", "barDir"));
+   }
+
+   public void testListWithFilenameFilter() throws Exception {
+      File dir = createDirWithFiles();
+      String[] filenames = dir.list(new FooFilenameFilter());
+      assertEquals(
+            asSet(filenames),
+            asSet("foo1.txt", "foo2.txt", "fooDir"));
+   }
+
+   public void testListFiles() throws Exception {
+      assertNull(fs.getFile("nonExistentDir").listFiles());
+      assertEquals(createDir("/emptyDir").listFiles().length, 0);
+
+      File dir = createDirWithFiles();
+      File[] files = dir.listFiles();
+      assertEquals(
+            asSet(getPaths(files)),
+            asSet("/myDir/foo1.txt", "/myDir/foo2.txt", "/myDir/fooDir",
+                  "/myDir/bar1.txt", "/myDir/bar2.txt", "/myDir/barDir"));
+   }
+
+   public void testListFilesWithFilenameFilter() throws Exception {
+      File dir = createDirWithFiles();
+      File[] files = dir.listFiles(new FooFilenameFilter());
+      assertEquals(
+            asSet(getPaths(files)),
+            asSet("/myDir/foo1.txt", "/myDir/foo2.txt", "/myDir/fooDir"));
+   }
+
+   public void testListFilesWithFileFilter() throws Exception {
+      File dir = createDirWithFiles();
+      File[] files = dir.listFiles(new FooFileFilter());
+      assertEquals(
+            asSet(getPaths(files)),
+            asSet("/myDir/foo1.txt", "/myDir/foo2.txt", "/myDir/fooDir"));
+   }
+
+   private String[] getPaths(File[] files) {
+      String[] paths = new String[files.length];
+      for (int i = 0; i < files.length; i++) {
+         File file = files[i];
+         paths[i] = file.getPath();
+      }
+      return paths;
+   }
+
+   private Set<String> asSet(String... strings) {
+      return new HashSet<String>(Arrays.asList(strings));
+   }
+
+   private File createDirWithFiles() throws IOException {
+      File dir = createDir("/myDir");
+      createFile("/myDir/foo1.txt");
+      createFile("/myDir/foo2.txt");
+      createFile("/myDir/bar1.txt");
+      createFile("/myDir/bar2.txt");
+      createDir("/myDir/fooDir");
+      createFile("/myDir/fooDir/foo.txt");
+      createFile("/myDir/fooDir/bar.txt");
+      createDir("/myDir/barDir");
+      return dir;
+   }
+
+   private File createFile(String pathname) throws IOException {
+      File file = fs.getFile(pathname);
+      assert file.createNewFile();
+      return file;
    }
 
    private int numberOfChunksInCache() {
@@ -311,4 +398,17 @@ public class GridFileTest extends SingleCacheManagerTest {
       }
    }
 
+   private static class FooFilenameFilter implements FilenameFilter {
+      @Override
+      public boolean accept(File dir, String name) {
+         return name.startsWith("foo");
+      }
+   }
+
+   private static class FooFileFilter implements FileFilter {
+      @Override
+      public boolean accept(File file) {
+         return file.getName().startsWith("foo");
+      }
+   }
 }
