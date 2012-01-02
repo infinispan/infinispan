@@ -62,7 +62,7 @@ public class GridFile extends File {
       this.name = trim(pathname);
       this.metadataCache = metadataCache.getAdvancedCache();
       this.chunk_size = chunk_size;
-      initMetadata();
+      initChunkSizeFromMetadata();
    }
 
    GridFile(String parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
@@ -121,7 +121,7 @@ public class GridFile extends File {
    void setLength(int new_length) {
       Metadata metadata = getMetadata();
       if (metadata != null) {
-         metadata.length = new_length;
+         metadata.setLength(new_length);
          metadata.setModificationTime(System.currentTimeMillis());
          metadataCache.put(getPath(), metadata);
       } else
@@ -151,11 +151,8 @@ public class GridFile extends File {
       if (!exists())
          return false;
 
-      if (isDirectory()) {
-         File[] files = listFiles();
-         if (files != null && files.length > 0)
-            return false;
-      }
+      if (isDirectory() && hasChildren())
+         return false;
 
       fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
       if (synchronous)
@@ -165,27 +162,27 @@ public class GridFile extends File {
       return true;
    }
 
+   private boolean hasChildren() {
+      File[] files = listFiles();
+      return files != null && files.length > 0;
+   }
+
    @Override
    public boolean mkdir() {
-      try {
-         boolean parents_exist = checkParentDirs(getPath(), false);
-         if (!parents_exist)
-            return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
-         return true;
-      }
-      catch (IOException e) {
-         return false;
-      }
+      return mkdir(false);
    }
 
    @Override
    public boolean mkdirs() {
+      return mkdir(true);
+   }
+
+   private boolean mkdir(boolean alsoCreateParentDirs) {
       try {
-         boolean parents_exist = checkParentDirs(getPath(), true);
-         if (!parents_exist)
+         boolean parentsExist = checkParentDirs(getPath(), alsoCreateParentDirs);
+         if (!parentsExist)
             return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(),new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
          return true;
       }
       catch (IOException e) {
@@ -254,7 +251,7 @@ public class GridFile extends File {
       return metadata != null && metadata.isFile();
    }
 
-   protected void initMetadata() {
+   protected void initChunkSizeFromMetadata() {
       Metadata metadata = getMetadata();
       if (metadata != null)
          this.chunk_size = metadata.getChunkSize();
@@ -285,11 +282,7 @@ public class GridFile extends File {
             list.add(str);
          }
       }
-      String[] retval = new String[list.size()];
-      int index = 0;
-      for (String tmp : list)
-         retval[index++] = tmp;
-      return retval;
+      return list.toArray(new String[list.size()]);
    }
 
    /**
