@@ -340,6 +340,8 @@ public class GridFile extends File {
          }
          sb.append(tmp);
          String comp = sb.toString();
+         if (comp.equals(SEPARATOR))
+            continue;
          Metadata val = exists(comp);
          if (val != null) {
             if (val.isFile())
