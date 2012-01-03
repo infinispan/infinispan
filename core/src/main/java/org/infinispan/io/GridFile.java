@@ -95,7 +95,7 @@ public class GridFile extends File {
    private String formatPath(String path) {
       if (path == null)
          return null;
-      
+
       // Regardless of platform, always use the same separator char, otherwise
       // keys might not be found when transfering metadata between different OS
       path = path.replace('\\', SEPARATOR_CHAR);
@@ -128,12 +128,12 @@ public class GridFile extends File {
 
    void setLength(int new_length) {
       Metadata metadata = getMetadata();
-      if (metadata != null) {
-         metadata.setLength(new_length);
-         metadata.setModificationTime(System.currentTimeMillis());
-         metadataCache.put(getPath(), metadata);
-      } else
-         System.err.println("metadata for " + getPath() + " not found !");
+      if (metadata == null)
+         throw new IllegalStateException("metadata for " + getPath() + " not found.");
+
+      metadata.setLength(new_length);
+      metadata.setModificationTime(System.currentTimeMillis());
+      metadataCache.put(getPath(), metadata);
    }
 
    public int getChunkSize() {
