@@ -192,7 +192,7 @@ public class GridFilesystem {
     * @param synchronous if true, the method will return only after the file has actually been removed;
     *                    if false, the method will return immediately and the file will be removed asynchronously.
     */
-   public void remove(String path, boolean synchronous) {
+   void remove(String path, boolean synchronous) {
       if (path == null)
          return;
       GridFile.Metadata md = metadata.get(path);
