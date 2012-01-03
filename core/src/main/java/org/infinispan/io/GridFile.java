@@ -33,9 +33,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -45,9 +45,11 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
  * Subclass of File to iterate through directories and files in a grid
  *
  * @author Bela Ban
+ * @author Marko Luksa
  */
 public class GridFile extends File {
    private static final long serialVersionUID = -6729548421029004260L;
+   private static final Metadata ROOT_DIR_METADATA = new Metadata(0, 0, 0, Metadata.DIR);
    private static final char SEPARATOR_CHAR = '/';
    private static final String SEPARATOR = "" + SEPARATOR_CHAR;
    private final AdvancedCache<String, Metadata> metadataCache;
@@ -61,25 +63,15 @@ public class GridFile extends File {
       this.name = trim(pathname);
       this.metadataCache = metadataCache.getAdvancedCache();
       this.chunk_size = chunk_size;
-      initMetadata();
+      initChunkSizeFromMetadata();
    }
 
    GridFile(String parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
-      super(parent, child);
-      this.fs = fs;
-      this.name = trim(parent + File.separator + child);
-      this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunk_size = chunk_size;
-      initMetadata();
+      this(parent + File.separator + child, metadataCache, chunk_size, fs);
    }
 
    GridFile(File parent, String child, Cache<String, Metadata> metadataCache, int chunk_size, GridFilesystem fs) {
-      super(parent, child);
-      this.fs = fs;
-      this.name = trim(parent.getAbsolutePath() + File.separator + child);
-      this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunk_size = chunk_size;
-      initMetadata();
+      this(parent.getPath(), child, metadataCache, chunk_size, fs);
    }
 
    @Override
@@ -96,34 +88,52 @@ public class GridFile extends File {
     */
    @Override
    public String getPath() {
-      String my_path = super.getPath();
+      return formatPath(super.getPath());
+
+   }
+
+   private String formatPath(String path) {
+      if (path == null)
+         return null;
+
       // Regardless of platform, always use the same separator char, otherwise
       // keys might not be found when transfering metadata between different OS
-      my_path = my_path.replace('\\', SEPARATOR_CHAR);
-      if (my_path != null && my_path.endsWith(SEPARATOR)) {
-         int index = my_path.lastIndexOf(SEPARATOR);
+      path = path.replace('\\', SEPARATOR_CHAR);
+      if (path != null && path.endsWith(SEPARATOR)) {
+         int index = path.lastIndexOf(SEPARATOR);
          if (index != -1)
-            my_path = my_path.substring(0, index);
+            path = path.substring(0, index);
       }
-      return my_path;
+      return path;
    }
 
    @Override
    public long length() {
-      Metadata metadata = metadataCache.get(getPath());
+      Metadata metadata = getMetadata();
       if (metadata != null)
          return metadata.length;
       return 0;
    }
 
+   private Metadata getMetadata() {
+      if (isRootDir()) {
+         return ROOT_DIR_METADATA;
+      }
+      return metadataCache.get(getPath());
+   }
+
+   private boolean isRootDir() {
+      return "".equals(getPath());
+   }
+
    void setLength(int new_length) {
-      Metadata metadata = metadataCache.get(getPath());
-      if (metadata != null) {
-         metadata.length = new_length;
-         metadata.setModificationTime(System.currentTimeMillis());
-         metadataCache.put(getPath(), metadata);
-      } else
-         System.err.println("metadata for " + getPath() + " not found !");
+      Metadata metadata = getMetadata();
+      if (metadata == null)
+         throw new IllegalStateException("metadata for " + getPath() + " not found.");
+
+      metadata.setLength(new_length);
+      metadata.setModificationTime(System.currentTimeMillis());
+      metadataCache.put(getPath(), metadata);
    }
 
    public int getChunkSize() {
@@ -133,9 +143,9 @@ public class GridFile extends File {
    @Override
    public boolean createNewFile() throws IOException {
       if (exists())
-         return true;
-      if (!checkParentDirs(getPath(), false))
          return false;
+      if (!checkParentDirs(getPath(), false))
+         throw new IOException("Cannot create file " + getPath() + " (parent dir does not exist)");
       metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.FILE));
       return true;
    }
@@ -148,49 +158,39 @@ public class GridFile extends File {
    public boolean delete(boolean synchronous) {
       if (!exists())
          return false;
-      if (isFile()) {
-         fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
-         if (synchronous)
-            metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
-         else
-            metadataCache.remove(getPath()); // removes the metadata information
-         return true;
-      }
-      if (isDirectory()) {
-         File[] files = listFiles();
-         if (files != null && files.length > 0)
-            return false;
-         fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
-         if (synchronous)
-            metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
-         else
-            metadataCache.remove(getPath()); // removes the metadata information
-      }
+
+      if (isDirectory() && hasChildren())
+         return false;
+
+      fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
+      if (synchronous)
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
+      else
+         metadataCache.remove(getPath()); // removes the metadata information
       return true;
+   }
+
+   private boolean hasChildren() {
+      File[] files = listFiles();
+      return files != null && files.length > 0;
    }
 
    @Override
    public boolean mkdir() {
-      try {
-         boolean parents_exist = checkParentDirs(getPath(), false);
-         if (!parents_exist)
-            return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
-         return true;
-      }
-      catch (IOException e) {
-         e.printStackTrace();
-         return false;
-      }
+      return mkdir(false);
    }
 
    @Override
    public boolean mkdirs() {
+      return mkdir(true);
+   }
+
+   private boolean mkdir(boolean alsoCreateParentDirs) {
       try {
-         boolean parents_exist = checkParentDirs(getPath(), true);
-         if (!parents_exist)
+         boolean parentsExist = checkParentDirs(getPath(), alsoCreateParentDirs);
+         if (!parentsExist)
             return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(),new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
          return true;
       }
       catch (IOException e) {
@@ -200,7 +200,26 @@ public class GridFile extends File {
 
    @Override
    public boolean exists() {
-      return metadataCache.get(getPath()) != null;
+      return getMetadata() != null;
+   }
+
+   @Override
+   public String getParent() {
+      return formatPath(super.getParent());
+   }
+
+   @Override
+   public File getParentFile() {
+      String parentPath = getParent();
+      if (parentPath == null)
+         return null;
+      return new GridFile(parentPath, metadataCache, chunk_size, fs);
+   }
+
+   @Override
+   public long lastModified() {
+      Metadata metadata = getMetadata();
+      return metadata == null ? 0 : metadata.getModificationTime();
    }
 
    @Override
@@ -230,18 +249,18 @@ public class GridFile extends File {
 
    @Override
    public boolean isDirectory() {
-      Metadata val = metadataCache.get(getPath());
-      return val == null || val.isDirectory();
+      Metadata metadata = getMetadata();
+      return metadata != null && metadata.isDirectory();
    }
 
    @Override
    public boolean isFile() {
-      Metadata val = metadataCache.get(getPath());
-      return val == null || val.isFile();
+      Metadata metadata = getMetadata();
+      return metadata != null && metadata.isFile();
    }
 
-   protected void initMetadata() {
-      Metadata metadata = metadataCache.get(getPath());
+   protected void initChunkSizeFromMetadata() {
+      Metadata metadata = getMetadata();
       if (metadata != null)
          this.chunk_size = metadata.getChunkSize();
    }
@@ -249,33 +268,30 @@ public class GridFile extends File {
    protected File[] _listFiles(Object filter) {
       String[] files = _list(filter);
       if (files == null)
-         return new File[0];
+         return null;
       File[] retval = new File[files.length];
       for (int i = 0; i < files.length; i++)
-         retval[i] = new GridFile(files[i], metadataCache, chunk_size, fs);
+         retval[i] = new GridFile(this, files[i], metadataCache, chunk_size, fs);
       return retval;
    }
 
 
    protected String[] _list(Object filter) {
-      Set<String> keys = metadataCache.keySet();
-      if (keys == null)
+      if (!isDirectory())
          return null;
-      Collection<String> list = new ArrayList<String>(keys.size());
+
+      Set<String> keys = metadataCache.keySet();
+      Collection<String> list = new LinkedList<String>();
       for (String str : keys) {
          if (isChildOf(getPath(), str)) {
             if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(name), filename(str)))
                continue;
             else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(str)))
                continue;
-            list.add(str);
+            list.add(filename(str));
          }
       }
-      String[] retval = new String[list.size()];
-      int index = 0;
-      for (String tmp : list)
-         retval[index++] = tmp;
-      return retval;
+      return list.toArray(new String[list.size()]);
    }
 
    /**
@@ -292,15 +308,15 @@ public class GridFile extends File {
          return false;
       if (child.length() <= parent.length())
          return false;
-      int from = parent.equals(File.separator) ? parent.length() : parent.length() + 1;
+      int from = parent.equals(SEPARATOR) ? parent.length() : parent.length() + 1;
       //  if(from-1 > child.length())
       // return false;
-      String[] comps = Util.components(child.substring(from), File.separator);
+      String[] comps = Util.components(child.substring(from), SEPARATOR);
       return comps != null && comps.length <= 1;
    }
 
    protected static String filename(String full_path) {
-      String[] comps = Util.components(full_path, File.separator);
+      String[] comps = Util.components(full_path, SEPARATOR);
       return comps != null ? comps[comps.length - 1] : null;
    }
 
@@ -333,6 +349,8 @@ public class GridFile extends File {
          }
          sb.append(tmp);
          String comp = sb.toString();
+         if (comp.equals(SEPARATOR))
+            continue;
          Metadata val = exists(comp);
          if (val != null) {
             if (val.isFile())
@@ -412,19 +430,18 @@ public class GridFile extends File {
       }
 
       public String toString() {
-         boolean is_file = Util.isFlagSet(flags, FILE);
          StringBuilder sb = new StringBuilder();
          sb.append(getType());
-         if (is_file)
+         if (isFile())
             sb.append(", len=" + Util.printBytes(length) + ", chunk_size=" + chunk_size);
          sb.append(", mod_time=" + new Date(modification_time));
          return sb.toString();
       }
 
       private String getType() {
-         if (Util.isFlagSet(flags, FILE))
+         if (isFile())
             return "file";
-         if (Util.isFlagSet(flags, DIR))
+         if (isDirectory())
             return "dir";
          return "n/a";
       }

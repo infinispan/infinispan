@@ -31,6 +31,7 @@ import java.io.OutputStream;
 
 /**
  * @author Bela Ban
+ * @author Marko Luksa
  */
 public class GridOutputStream extends OutputStream {
    
@@ -38,18 +39,43 @@ public class GridOutputStream extends OutputStream {
    final int chunk_size;
    final String name;
    protected final GridFile file; // file representing this output stream
-   int index = 0;                // index into the file for writing
-   int local_index = 0;
+   int index;                     // index into the file for writing
+   int local_index;
    final byte[] current_buffer;
    static final Log log = LogFactory.getLog(GridOutputStream.class);
+   private int numberOfChunksWhenOpened;
 
-
-   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache, int chunk_size) {
+   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;
-      this.chunk_size = chunk_size;
-      current_buffer = new byte[chunk_size];
+      this.chunk_size = file.getChunkSize();
+
+      index = append ? (int) file.length() : 0;
+      local_index = index % chunk_size;
+      current_buffer = append && !isLastChunkFull() ? fetchLastChunk() : new byte[chunk_size];
+
+      numberOfChunksWhenOpened = getLastChunkNumber() + 1;
+   }
+
+   private boolean isLastChunkFull() {
+      long bytesRemainingInLastChunk = file.length() % chunk_size;
+      return bytesRemainingInLastChunk == 0;
+   }
+
+   private byte[] fetchLastChunk() {
+      String key = getChunkKey(getLastChunkNumber());
+      byte[] val = cache.get(key);
+
+      byte chunk[] = new byte[chunk_size];
+      if (val != null) {
+         System.arraycopy(val, 0, chunk, 0, val.length);
+      }
+      return chunk;
+   }
+
+   private int getLastChunkNumber() {
+      return getChunkNumber((int) file.length() - 1);
    }
 
    public void write(int b) throws IOException {
@@ -91,13 +117,23 @@ public class GridOutputStream extends OutputStream {
    @Override
    public void close() throws IOException {
       flush();
+      removeExcessChunks();
       reset();
+   }
+
+   private void removeExcessChunks() {
+      for (int i = getLastChunkNumber()+1; i<numberOfChunksWhenOpened; i++) {
+         removeChunk(i);
+      }
+   }
+
+   private void removeChunk(int chunkNumber) {
+      cache.remove(getChunkKey(chunkNumber));
    }
 
    @Override
    public void flush() throws IOException {
-      int chunk_number = getChunkNumber();
-      String key = name + ".#" + chunk_number;
+      String key = getChunkKey(getChunkNumberOfPreviousByte());
       byte[] val = new byte[local_index];
       System.arraycopy(current_buffer, 0, val, 0, local_index);
       cache.put(key, val);
@@ -106,13 +142,20 @@ public class GridOutputStream extends OutputStream {
       file.setLength(index);
    }
 
+   private String getChunkKey(int chunkNumber) {
+      return name + ".#" + chunkNumber;
+   }
+
    private int getBytesRemainingInChunk() {
       return chunk_size - local_index;
    }
 
+   private int getChunkNumberOfPreviousByte() {
+      return getChunkNumber(index - 1);
+   }
 
-   private int getChunkNumber() {
-      return (index - 1) / chunk_size;
+   private int getChunkNumber(int position) {
+      return position / chunk_size;
    }
 
    private void reset() {
