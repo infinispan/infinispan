@@ -30,6 +30,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 
 import javax.transaction.SystemException;
@@ -77,15 +78,19 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return localContext;
    }
 
+   @Override
    public LocalTxInvocationContext createTxInvocationContext() {
       LocalTxInvocationContext ctx = new LocalTxInvocationContext();
       ctxHolder.set(ctx);
       return ctx;
    }
 
-   public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
+   @Override
+   public RemoteTxInvocationContext createRemoteTxInvocationContext(
+         RemoteTransaction tx, Address origin) {
       RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
       ctx.setOrigin(origin);
+      ctx.setRemoteTransaction(tx);
       ctxHolder.set(ctx);
       return ctx;
    }

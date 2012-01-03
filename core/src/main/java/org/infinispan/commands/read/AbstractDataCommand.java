@@ -22,8 +22,8 @@
  */
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -35,9 +35,8 @@ import java.util.Set;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCommand {
+public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand implements DataCommand {
    protected Object key;
-   protected Set<Flag> flags;
 
    public Object getKey() {
       return key;
@@ -45,14 +44,6 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
 
    public void setKey(Object key) {
       this.key = key;
-   }
-   
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-   
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
    }
 
    protected AbstractDataCommand(Object key, Set<Flag> flags) {
