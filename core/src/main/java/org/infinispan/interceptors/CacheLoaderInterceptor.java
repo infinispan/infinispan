@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -98,7 +99,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeeded(ctx, key, false);
+         loadIfNeeded(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -108,7 +109,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, true);
+         loadIfNeededAndUpdateStats(ctx, key, true, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -118,7 +119,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       Object[] keys;
       if ((keys = command.getKeys()) != null && keys.length > 0) {
          for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key, false);
+            loadIfNeeded(ctx, key, false, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -128,7 +129,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, false);
+         loadIfNeededAndUpdateStats(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -137,7 +138,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, false);
+         loadIfNeededAndUpdateStats(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -147,8 +148,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             (cacheMode.isDistributed() && distributionManager.locate(key).get(0).equals(transport.getAddress()));
    }
 
-   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval) throws Throwable {
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE) || ctx.hasFlag(Flag.SKIP_CACHE_LOAD)) {
+   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)) {
          return false; //skip operation
       }
 
@@ -218,8 +219,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx);
    }
 
-   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval) throws Throwable {
-      boolean found = loadIfNeeded(ctx, key, isRetrieval);
+   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
       if (!found && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }

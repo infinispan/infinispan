@@ -180,7 +180,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
+    * @deprecated Use {@link #addClusterEnabledCacheManager(
+    *    org.infinispan.configuration.cache.ConfigurationBuilder)} instead
     */
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
@@ -195,7 +198,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
+    * @deprecacted Use {@link #addClusterEnabledCacheManager(
+    *    org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
     */
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, flags);
       cacheManagers.add(cm);
@@ -296,11 +302,26 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
+   /**
+    * @deprecated Use {@link #createClusteredCaches(
+    *    int, String, org.infinispan.configuration.cache.ConfigurationBuilder)} instead
+    */
+   @Deprecated
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
          int numMembersInCluster, String cacheName, Configuration c) {
       return createClusteredCaches(numMembersInCluster, cacheName, c, new TransportFlags());
    }
 
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
+      return createClusteredCaches(numMembersInCluster, cacheName, builder, new TransportFlags());
+   }
+
+   /**
+    * @deprecated Use {@link #createClusteredCaches(
+    *    int, String, org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
+    */
+   @Deprecated
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
          int numMembersInCluster, String cacheName, Configuration c, TransportFlags flags) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
@@ -314,6 +335,18 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches;
    }
 
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, ConfigurationBuilder builder, TransportFlags flags) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags);
+         cm.defineConfiguration(cacheName, builder.build());
+         Cache<K, V> cache = cm.getCache(cacheName);
+         caches.add(cache);
+      }
+      waitForClusterToForm(cacheName);
+      return caches;
+   }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);

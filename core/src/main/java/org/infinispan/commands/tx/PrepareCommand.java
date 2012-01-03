@@ -117,8 +117,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
 
       // 2. then set it on the invocation context
-      RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext(getOrigin());
-      ctx.setRemoteTransaction(remoteTransaction);
+      RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext(remoteTransaction, getOrigin());
 
       if (trace)
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);

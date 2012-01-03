@@ -24,13 +24,13 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
@@ -107,6 +107,23 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
                .cacheStopTimeout(0)
             .build();
       }
+   }
+
+   public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional) {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(transactional);
+      builder.
+         clustering()
+            .cacheMode(mode)
+            .stateRetrieval().fetchInMemoryState(false)
+         .transaction().syncCommitPhase(false).syncRollbackPhase(false)
+         .cacheStopTimeout(0L);
+
+      if (mode.isSynchronous())
+         builder.clustering().sync();
+      else
+         builder.clustering().async();
+
+      return builder;
    }
 
    protected boolean xor(boolean b1, boolean b2) {

@@ -27,6 +27,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.RemoteTransaction;
 
 import javax.transaction.Transaction;
 
@@ -38,6 +39,7 @@ import javax.transaction.Transaction;
  */
 public class NonTransactionalInvocationContextContainer extends AbstractInvocationContextContainer {
 
+   @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       if (keyCount == 1) {
          SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true);
@@ -56,6 +58,7 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
       return createNonTxInvocationContext();
    }
 
+   @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
       NonTxInvocationContext ctx = new NonTxInvocationContext();
       ctx.setOriginLocal(true);
@@ -63,6 +66,7 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
       return ctx;
    }
 
+   @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
       NonTxInvocationContext ctx = new NonTxInvocationContext();
       ctx.setOrigin(origin);
@@ -77,11 +81,14 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
       return invocationContext;
    }
 
+   @Override
    public LocalTxInvocationContext createTxInvocationContext() {
       throw exception();
    }
 
-   public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
+   @Override
+   public RemoteTxInvocationContext createRemoteTxInvocationContext(
+         RemoteTransaction tx, Address origin) {
       throw exception();
    }
 

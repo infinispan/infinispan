@@ -49,4 +49,12 @@ public interface FlagAffectedCommand {
     */
    public void setFlags(Set<Flag> flags);
 
+   /**
+    * Check whether a particular flag is present in the command
+    *
+    * @param flag to lookup in the command
+    * @return true if the flag is present
+    */
+   public boolean hasFlag(Flag flag);
+
 }

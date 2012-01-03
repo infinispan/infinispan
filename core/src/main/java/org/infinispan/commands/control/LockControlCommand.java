@@ -134,7 +134,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
       if (transaction == null) {
@@ -147,7 +146,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //create a remote tx without any modifications (we do not know modifications ahead of time)
          transaction = txTable.createRemoteTransaction(globalTx, null);
       }
-      ctxt.setRemoteTransaction(transaction);
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(transaction, getOrigin());
       TxInvocationContext ctx = ctxt;
       if (flags != null && !flags.isEmpty()) {
          ctx = new TransactionalInvocationContextFlagsOverride(ctxt, flags);
@@ -231,4 +230,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
    }
+
+   @Override
+   public boolean hasFlag(Flag flag) {
+      return flags != null && flags.contains(flag);
+   }
+
 }

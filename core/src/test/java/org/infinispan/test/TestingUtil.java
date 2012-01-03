@@ -63,6 +63,7 @@ import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
 import javax.management.ObjectName;
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -75,6 +76,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -1173,6 +1175,30 @@ public class TestingUtil {
    public static void assertNoLocks(Cache<?,?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
       for (Object key : cache.keySet()) assert !lm.isLocked(key);
+   }
+
+   /**
+    * Call an operation within a transaction. This method guarantees that the
+    * right pattern is used to make sure that the transaction is always either
+    * committed or rollbacked.
+    *
+    * @param tm transaction manager
+    * @param c callable instance to run within a transaction
+    * @param <T> type of callable return
+    * @return returns whatever the callable returns
+    * @throws Exception
+    */
+   public static <T> T withTx(TransactionManager tm, Callable<T> c) throws Exception {
+      tm.begin();
+      try {
+         return c.call();
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+         else tm.rollback();
+      }
    }
 
 }
