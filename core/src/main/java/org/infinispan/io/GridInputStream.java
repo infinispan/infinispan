@@ -23,45 +23,35 @@
 package org.infinispan.io;
 
 import org.infinispan.Cache;
-import org.jgroups.logging.Log;
-import org.jgroups.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * @author Bela Ban
+ * @author Marko Luksa
  */
 public class GridInputStream extends InputStream {
 
-   private static final Log log = LogFactory.getLog(GridInputStream.class);
-   
-   private final Cache<String, byte[]> cache;
-   private final int chunkSize;
-   private final String name;
-   protected final GridFile file; // file representing this input stream
    private int index = 0;                // index into the file for writing
    private int localIndex = 0;
    private byte[] currentBuffer = null;
    private boolean endReached = false;
+   private FileChunkMapper fileChunkMapper;
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache) {
-      this.file = file;
-      this.name = file.getPath();
-      this.cache = cache;
-      this.chunkSize = file.getChunkSize();
+      fileChunkMapper = new FileChunkMapper(file, cache);
    }
 
    public int read() throws IOException {
-      int bytesRemainingToRead = getBytesRemainingInChunk();
-      if (bytesRemainingToRead == 0) {
+      int remaining = getBytesRemainingInChunk();
+      if (remaining == 0) {
          if (endReached)
             return -1;
-         currentBuffer = fetchNextChunk();
-         localIndex = 0;
+         fetchNextChunk();
          if (currentBuffer == null)
             return -1;
-         else if (currentBuffer.length < chunkSize)
+         else if (isLastChunk())
             endReached = true;
       }
       int retval = currentBuffer[localIndex++];
@@ -76,31 +66,40 @@ public class GridInputStream extends InputStream {
 
    @Override
    public int read(byte[] b, int off, int len) throws IOException {
-      int bytesRead = 0;
+      int totalBytesRead = 0;
       while (len > 0) {
-         int bytesRemainingToRead = getBytesRemainingInChunk();
-         if (bytesRemainingToRead == 0) {
-            if (endReached)
-               return bytesRead > 0 ? bytesRead : -1;
-            currentBuffer = fetchNextChunk();
-            localIndex = 0;
-            if (currentBuffer == null)
-               return bytesRead > 0 ? bytesRead : -1;
-            else if (currentBuffer.length < chunkSize)
-               endReached = true;
-            bytesRemainingToRead = getBytesRemainingInChunk();
-         }
-         int bytesToRead = Math.min(len, bytesRemainingToRead);
-         // bytesToRead=Math.min(bytesToRead, currentBuffer.length - localIndex);
-         System.arraycopy(currentBuffer, localIndex, b, off, bytesToRead);
-         localIndex += bytesToRead;
-         off += bytesToRead;
-         len -= bytesToRead;
-         bytesRead += bytesToRead;
-         index += bytesToRead;
+         int bytesRead = readFromChunk(b, off, len);
+         if (bytesRead == -1)
+            return totalBytesRead > 0 ? totalBytesRead : -1;
+         off += bytesRead;
+         len -= bytesRead;
+         totalBytesRead += bytesRead;
       }
 
-      return bytesRead;
+      return totalBytesRead;
+   }
+
+   private int readFromChunk(byte[] b, int off, int len) {
+      int remaining = getBytesRemainingInChunk();
+      if (remaining == 0) {
+         if (endReached)
+            return -1;
+         fetchNextChunk();
+         if (currentBuffer == null)
+            return -1;
+         else if (isLastChunk())
+            endReached = true;
+         remaining = getBytesRemainingInChunk();
+      }
+      int bytesToRead = Math.min(len, remaining);
+      System.arraycopy(currentBuffer, localIndex, b, off, bytesToRead);
+      localIndex += bytesToRead;
+      index += bytesToRead;
+      return bytesToRead;
+   }
+
+   private boolean isLastChunk() {
+      return currentBuffer.length < getChunkSize();
    }
 
    @Override
@@ -120,23 +119,19 @@ public class GridInputStream extends InputStream {
    }
 
    private int getBytesRemainingInChunk() {
-      // return chunkSize - localIndex;
       return currentBuffer == null ? 0 : currentBuffer.length - localIndex;
    }
 
-   private byte[] fetchNextChunk() {
-      String key = getChunkKey(getChunkNumber());
-      byte[] val = cache.get(key);
-      if (log.isTraceEnabled())
-         log.trace("fetching index=" + index + ", key=" + key + ": " + (val != null ? val.length + " bytes" : "null"));
-      return val;
-   }
-
-   private String getChunkKey(int chunkNumber) {
-      return name + ".#" + chunkNumber;
+   private void fetchNextChunk() {
+      currentBuffer = fileChunkMapper.fetchChunk(getChunkNumber());
+      localIndex = 0;
    }
 
    private int getChunkNumber() {
-      return index / chunkSize;
+      return index / getChunkSize();
+   }
+
+   private int getChunkSize() {
+      return fileChunkMapper.getChunkSize();
    }
 }
