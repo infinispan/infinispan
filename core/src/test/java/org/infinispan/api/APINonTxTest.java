@@ -43,8 +43,8 @@ import java.util.Set;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "api.TestAPINonTxTest")
-public class TestAPINonTxTest extends SingleCacheManagerTest {
+@Test (groups = "functional", testName = "api.APINonTxTest")
+public class APINonTxTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -336,4 +336,10 @@ public class TestAPINonTxTest extends SingleCacheManagerTest {
       assert cache.replace("X", "A") == null;
       assert !cache.containsKey("X");
    }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testNullKeyParameter() {
+      cache.put(null, null);
+   }
+
 }
