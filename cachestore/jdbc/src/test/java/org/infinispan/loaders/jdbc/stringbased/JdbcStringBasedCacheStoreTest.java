@@ -24,10 +24,12 @@ package org.infinispan.loaders.jdbc.stringbased;
 
 import static org.easymock.classextension.EasyMock.*;
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.CacheImpl;
 import org.testng.annotations.Test;
@@ -77,4 +79,11 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       stringBasedCacheStore.stop();
       verify(tableManipulation, connectionFactory);
    }
+
+   @Override
+   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      super.testLoadAndStoreMarshalledValues();
+   }
+
 }
