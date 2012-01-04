@@ -481,15 +481,15 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       if (cacheViewInfo.hasPendingView()) {
          log.debugf("%s: Committing cache view %d", cacheName, viewId);
-         cacheViewInfo.commitView(viewId);
-         CacheView committedView = cacheViewInfo.getCommittedView();
-         cacheViewInfo.getPendingChanges().resetChanges(committedView);
+         CacheView viewToCommit = cacheViewInfo.getPendingView();
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          // we only prepared the view if it was local, so we can't commit it here
-         boolean isLocal = committedView.contains(self);
+         boolean isLocal = viewToCommit.contains(self);
          if (isLocal && cacheViewListener != null) {
             cacheViewListener.commitView(viewId);
          }
+         cacheViewInfo.commitView(viewId);
+         cacheViewInfo.getPendingChanges().resetChanges(viewToCommit);
       } else {
          log.debugf("%s: We don't have a pending view, ignoring commit", cacheName);
       }
