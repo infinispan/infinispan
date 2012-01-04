@@ -25,12 +25,14 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -80,4 +82,11 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
    public String getDatasourceLocation() {
       return "java:/StringStoreWithManagedConnectionTest/DS";
    }
+
+   @Override
+   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      super.testLoadAndStoreMarshalledValues();
+   }
+
 }

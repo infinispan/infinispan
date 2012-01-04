@@ -36,6 +36,7 @@ import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -56,6 +57,12 @@ import java.util.Set;
  * methods of their keys need to be aware of this.
  * <p />
  *
+ * This class can be marshalled either via its externalizer or via the JVM
+ * serialization.  The reason for supporting both methods is to enable
+ * third-party libraries to be able to marshall/unmarshall them using standard
+ * JVM serialization rules.  The Infinispan marshalling layer will always
+ * chose the most performant one, aka the externalizer method.
+ *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -63,7 +70,7 @@ import java.util.Set;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-public class MarshalledValue {
+public class MarshalledValue implements Serializable {
    volatile protected Object instance;
    volatile protected byte[] raw;
    volatile protected int serialisedSize = 128; //size of serialized representation: initial value is a guess
@@ -71,7 +78,7 @@ public class MarshalledValue {
    // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient volatile boolean equalityPreferenceForInstance = true;
    // A marshaller is needed at construction time to handle equals/hashCode impls
-   private final StreamingMarshaller marshaller;
+   private transient final StreamingMarshaller marshaller;
 
    public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");

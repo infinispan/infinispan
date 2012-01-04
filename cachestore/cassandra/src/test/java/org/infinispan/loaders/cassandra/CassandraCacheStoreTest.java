@@ -27,7 +27,9 @@ import java.io.IOException;
 import org.apache.cassandra.config.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -67,6 +69,12 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
       cs.init(clc, getCache(), getMarshaller());
       cs.start();
       return cs;
+   }
+
+   @Override
+   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      super.testLoadAndStoreMarshalledValues();
    }
 
 }
