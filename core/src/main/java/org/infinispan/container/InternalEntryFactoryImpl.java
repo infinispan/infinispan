@@ -118,7 +118,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       } else if (ice instanceof TransientCacheEntry) {
          if (lifespan < 0) {
             if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getVersion());
+               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
             } else {
                ice.setMaxIdle(maxIdle);
                return ice;

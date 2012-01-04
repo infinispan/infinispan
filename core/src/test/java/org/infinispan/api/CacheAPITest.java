@@ -39,7 +39,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertNull;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -49,7 +48,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  */
 @Test(groups = "functional")
-public abstract class CacheAPITest extends TestAPINonTxTest {
+public abstract class CacheAPITest extends APINonTxTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

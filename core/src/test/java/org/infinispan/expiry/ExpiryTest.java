@@ -451,6 +451,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testTransientEntrypUpdates() {
+      Cache<Integer, String> cache = cm.getCache();
+      cache.put(1, "boo", -1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
+      cache.put(1, "boo2");
+      cache.put(1, "boo3");
+   }
+
    private void doValuesAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
       Cache<Integer, String> cache = cc.getCache();
       // Values come as a Collection, but comparison of HashMap#Values is done
