@@ -430,6 +430,12 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          cacheViewInfo.getPendingChanges().requestLeave(leavers);
       }
 
+      // Since the messages are OOB, it is possible to receive the leave message only after the new view has been
+      // prepared (or even committed). In that case there isn't going to be another prepare, so we shouldn't call
+      // listener.waitForPrepare()
+      if (cacheViewInfo.getPendingView() != null || !cacheViewInfo.getCommittedView().containsAny(leavers))
+         return;
+
       // tell the upper layer to stop sending commands to the nodes that already left
       CacheViewListener cacheViewListener = cacheViewInfo.getListener();
       if (cacheViewListener != null) {
