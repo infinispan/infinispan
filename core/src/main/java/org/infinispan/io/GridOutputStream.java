@@ -35,31 +35,31 @@ import java.io.OutputStream;
  */
 public class GridOutputStream extends OutputStream {
    
-   final Cache<String, byte[]> cache;
-   final int chunk_size;
-   final String name;
+   private final Cache<String, byte[]> cache;
+   private final int chunkSize;
+   private final String name;
    protected final GridFile file; // file representing this output stream
-   int index;                     // index into the file for writing
-   int local_index;
-   final byte[] current_buffer;
-   static final Log log = LogFactory.getLog(GridOutputStream.class);
+   private int index;                     // index into the file for writing
+   private int localIndex;
+   private final byte[] currentBuffer;
+   private static final Log log = LogFactory.getLog(GridOutputStream.class);
    private int numberOfChunksWhenOpened;
 
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;
-      this.chunk_size = file.getChunkSize();
+      this.chunkSize = file.getChunkSize();
 
       index = append ? (int) file.length() : 0;
-      local_index = index % chunk_size;
-      current_buffer = append && !isLastChunkFull() ? fetchLastChunk() : new byte[chunk_size];
+      localIndex = index % chunkSize;
+      currentBuffer = append && !isLastChunkFull() ? fetchLastChunk() : new byte[chunkSize];
 
       numberOfChunksWhenOpened = getLastChunkNumber() + 1;
    }
 
    private boolean isLastChunkFull() {
-      long bytesRemainingInLastChunk = file.length() % chunk_size;
+      long bytesRemainingInLastChunk = file.length() % chunkSize;
       return bytesRemainingInLastChunk == 0;
    }
 
@@ -67,7 +67,7 @@ public class GridOutputStream extends OutputStream {
       String key = getChunkKey(getLastChunkNumber());
       byte[] val = cache.get(key);
 
-      byte chunk[] = new byte[chunk_size];
+      byte chunk[] = new byte[chunkSize];
       if (val != null) {
          System.arraycopy(val, 0, chunk, 0, val.length);
       }
@@ -82,11 +82,11 @@ public class GridOutputStream extends OutputStream {
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
          flush();
-         local_index = 0;
-         remaining = chunk_size;
+         localIndex = 0;
+         remaining = chunkSize;
       }
-      current_buffer[local_index] = (byte) b;
-      local_index++;
+      currentBuffer[localIndex] = (byte) b;
+      localIndex++;
       index++;
    }
 
@@ -102,15 +102,15 @@ public class GridOutputStream extends OutputStream {
          int remaining = getBytesRemainingInChunk();
          if (remaining == 0) {
             flush();
-            local_index = 0;
-            remaining = chunk_size;
+            localIndex = 0;
+            remaining = chunkSize;
          }
-         int bytes_to_write = Math.min(remaining, len);
-         System.arraycopy(b, off, current_buffer, local_index, bytes_to_write);
-         off += bytes_to_write;
-         len -= bytes_to_write;
-         local_index += bytes_to_write;
-         index += bytes_to_write;
+         int bytesToWrite = Math.min(remaining, len);
+         System.arraycopy(b, off, currentBuffer, localIndex, bytesToWrite);
+         off += bytesToWrite;
+         len -= bytesToWrite;
+         localIndex += bytesToWrite;
+         index += bytesToWrite;
       }
    }
 
@@ -134,8 +134,8 @@ public class GridOutputStream extends OutputStream {
    @Override
    public void flush() throws IOException {
       String key = getChunkKey(getChunkNumberOfPreviousByte());
-      byte[] val = new byte[local_index];
-      System.arraycopy(current_buffer, 0, val, 0, local_index);
+      byte[] val = new byte[localIndex];
+      System.arraycopy(currentBuffer, 0, val, 0, localIndex);
       cache.put(key, val);
       if (log.isTraceEnabled())
          log.trace("put(): index=" + index + ", key=" + key + ": " + val.length + " bytes");
@@ -147,7 +147,7 @@ public class GridOutputStream extends OutputStream {
    }
 
    private int getBytesRemainingInChunk() {
-      return chunk_size - local_index;
+      return chunkSize - localIndex;
    }
 
    private int getChunkNumberOfPreviousByte() {
@@ -155,10 +155,10 @@ public class GridOutputStream extends OutputStream {
    }
 
    private int getChunkNumber(int position) {
-      return position / chunk_size;
+      return position / chunkSize;
    }
 
    private void reset() {
-      index = local_index = 0;
+      index = localIndex = 0;
    }
 }
