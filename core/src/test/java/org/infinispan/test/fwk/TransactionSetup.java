@@ -36,6 +36,15 @@ import javax.transaction.UserTransaction;
  * @author Jason T. Greene
  */
 public class TransactionSetup {
+
+   static {
+      //make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
+      // so you need to set this before classloading the transaction system and can't change it within the same vm.
+
+      arjPropertyManager.getCoordinatorEnvironmentBean().setCommunicationStore(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
+      arjPropertyManager.getObjectStoreEnvironmentBean().setObjectStoreType(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
+   }
+
    private interface Operations {
       UserTransaction getUserTransaction();
 
@@ -60,10 +69,6 @@ public class TransactionSetup {
       String property = JTA;
       if (!DUMMY_TM.equalsIgnoreCase(property)) {
          System.out.println("Transaction manager used: JBossTM");
-
-         //make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
-         // so you need to set this before classloading the transaction system and can't change it within the same vm.
-         arjPropertyManager.getObjectStoreEnvironmentBean().setObjectStoreType(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
 
          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
          final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
