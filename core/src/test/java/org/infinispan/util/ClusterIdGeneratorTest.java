@@ -32,7 +32,7 @@ import java.util.List;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "util.ClusterIdGeneratorTest")
-   public class ClusterIdGeneratorTest {
+public class ClusterIdGeneratorTest {
 
    public void testGenerateVersion() {
       ClusterIdGenerator vg = new ClusterIdGenerator(null, null);
