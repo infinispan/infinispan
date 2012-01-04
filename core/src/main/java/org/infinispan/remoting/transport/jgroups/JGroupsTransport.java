@@ -431,8 +431,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (trace)
          log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
-      if (mode == ResponseMode.SYNCHRONOUS && recipients != null && !getMembers().containsAll(recipients)) {
-         throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
+      if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
+         if (mode == ResponseMode.SYNCHRONOUS)
+            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
+         else { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
+            recipients = new ArrayList<Address>(recipients);
+            recipients.retainAll(getMembers());
+         }
       }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
