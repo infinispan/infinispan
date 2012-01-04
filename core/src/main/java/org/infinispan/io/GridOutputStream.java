@@ -23,8 +23,6 @@
 package org.infinispan.io;
 
 import org.infinispan.Cache;
-import org.jgroups.logging.Log;
-import org.jgroups.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,40 +32,42 @@ import java.io.OutputStream;
  * @author Marko Luksa
  */
 public class GridOutputStream extends OutputStream {
-   
-   private final Cache<String, byte[]> cache;
-   private final int chunkSize;
-   private final String name;
-   protected final GridFile file; // file representing this output stream
+
    private int index;                     // index into the file for writing
    private int localIndex;
    private final byte[] currentBuffer;
-   private static final Log log = LogFactory.getLog(GridOutputStream.class);
    private int numberOfChunksWhenOpened;
 
+   private FileChunkMapper fileChunkMapper;
+   private GridFile file;
+
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
+      fileChunkMapper = new FileChunkMapper(file, cache);
       this.file = file;
-      this.name = file.getPath();
-      this.cache = cache;
-      this.chunkSize = file.getChunkSize();
 
       index = append ? (int) file.length() : 0;
-      localIndex = index % chunkSize;
-      currentBuffer = append && !isLastChunkFull() ? fetchLastChunk() : new byte[chunkSize];
+      localIndex = index % getChunkSize();
+      currentBuffer = append && !isLastChunkFull() ? fetchLastChunk() : createEmptyChunk();
 
       numberOfChunksWhenOpened = getLastChunkNumber() + 1;
    }
 
+   private byte[] createEmptyChunk() {
+      return new byte[getChunkSize()];
+   }
+
    private boolean isLastChunkFull() {
-      long bytesRemainingInLastChunk = file.length() % chunkSize;
+      long bytesRemainingInLastChunk = file.length() % getChunkSize();
       return bytesRemainingInLastChunk == 0;
    }
 
    private byte[] fetchLastChunk() {
-      String key = getChunkKey(getLastChunkNumber());
-      byte[] val = cache.get(key);
+      byte[] chunk = fileChunkMapper.fetchChunk(getLastChunkNumber());
+      return createFullSizeCopy(chunk);
+   }
 
-      byte chunk[] = new byte[chunkSize];
+   private byte[] createFullSizeCopy(byte[] val) {
+      byte chunk[] = createEmptyChunk();
       if (val != null) {
          System.arraycopy(val, 0, chunk, 0, val.length);
       }
@@ -83,7 +83,6 @@ public class GridOutputStream extends OutputStream {
       if (remaining == 0) {
          flush();
          localIndex = 0;
-         remaining = chunkSize;
       }
       currentBuffer[localIndex] = (byte) b;
       localIndex++;
@@ -99,19 +98,24 @@ public class GridOutputStream extends OutputStream {
    @Override
    public void write(byte[] b, int off, int len) throws IOException {
       while (len > 0) {
-         int remaining = getBytesRemainingInChunk();
-         if (remaining == 0) {
-            flush();
-            localIndex = 0;
-            remaining = chunkSize;
-         }
-         int bytesToWrite = Math.min(remaining, len);
-         System.arraycopy(b, off, currentBuffer, localIndex, bytesToWrite);
-         off += bytesToWrite;
-         len -= bytesToWrite;
-         localIndex += bytesToWrite;
-         index += bytesToWrite;
+         int bytesWritten = writeToChunk(b, off, len);
+         off += bytesWritten;
+         len -= bytesWritten;
       }
+   }
+
+   private int writeToChunk(byte[] b, int off, int len) throws IOException {
+      int remaining = getBytesRemainingInChunk();
+      if (remaining == 0) {
+         flush();
+         localIndex = 0;
+         remaining = getChunkSize();
+      }
+      int bytesToWrite = Math.min(remaining, len);
+      System.arraycopy(b, off, currentBuffer, localIndex, bytesToWrite);
+      localIndex += bytesToWrite;
+      index += bytesToWrite;
+      return bytesToWrite;
    }
 
    @Override
@@ -123,42 +127,34 @@ public class GridOutputStream extends OutputStream {
 
    private void removeExcessChunks() {
       for (int i = getLastChunkNumber()+1; i<numberOfChunksWhenOpened; i++) {
-         removeChunk(i);
+         fileChunkMapper.removeChunk(i);
       }
-   }
-
-   private void removeChunk(int chunkNumber) {
-      cache.remove(getChunkKey(chunkNumber));
    }
 
    @Override
    public void flush() throws IOException {
-      String key = getChunkKey(getChunkNumberOfPreviousByte());
-      byte[] val = new byte[localIndex];
-      System.arraycopy(currentBuffer, 0, val, 0, localIndex);
-      cache.put(key, val);
-      if (log.isTraceEnabled())
-         log.trace("put(): index=" + index + ", key=" + key + ": " + val.length + " bytes");
+      storeChunk();
       file.setLength(index);
    }
 
-   private String getChunkKey(int chunkNumber) {
-      return name + ".#" + chunkNumber;
+   private void storeChunk() {
+      fileChunkMapper.storeChunk(getChunkNumber(index - 1), currentBuffer, localIndex);
    }
 
    private int getBytesRemainingInChunk() {
-      return chunkSize - localIndex;
-   }
-
-   private int getChunkNumberOfPreviousByte() {
-      return getChunkNumber(index - 1);
+      return getChunkSize() - localIndex;
    }
 
    private int getChunkNumber(int position) {
-      return position / chunkSize;
+      return position / getChunkSize();
    }
 
    private void reset() {
       index = localIndex = 0;
    }
+
+   private int getChunkSize() {
+      return fileChunkMapper.getChunkSize();
+   }
+
 }
