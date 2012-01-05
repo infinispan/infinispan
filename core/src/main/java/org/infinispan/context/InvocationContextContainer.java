@@ -88,6 +88,12 @@ public interface InvocationContextContainer {
    NonTxInvocationContext createNonTxInvocationContext();
 
    /**
+    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
+    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
+    */
+   InvocationContext createSingleKeyNonTxInvocationContext();
+
+   /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
     */
    LocalTxInvocationContext createTxInvocationContext();
