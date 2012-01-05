@@ -149,7 +149,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
-         rpcManager.invokeRemotely(lockOwners, ftc, sync, sync);
+         rpcManager.invokeRemotely(lockOwners, ftc, sync, true);
       }
       removeRecoveryInformation(xid);
    }
@@ -158,7 +158,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
-         rpcManager.invokeRemotely(where, ftc, sync, sync);
+         rpcManager.invokeRemotely(where, ftc, sync, true);
       }
       removeRecoveryInformation(internalId);
    }
