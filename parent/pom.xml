@@ -446,7 +446,7 @@
                      <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
                      <arguments>
                         <argument>${project.build.outputDirectory}</argument>
-                        <argument>${basedir}/src/main/resources/${artifactId}-component-metadata.dat</argument>
+                        <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
                      </arguments>
                      <systemProperties>
                         <systemProperty><key>infinispan.isCoreModule</key><value>${module.metadata.isCoreModule}</value></systemProperty>
@@ -471,7 +471,7 @@
                   <configuration>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
                      <tasks>
-                        <copy file="${basedir}/src/main/resources/${artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"/>
+                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"/>
                      </tasks>
                   </configuration>
                </execution>
