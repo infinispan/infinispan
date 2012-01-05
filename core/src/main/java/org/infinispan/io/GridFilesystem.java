@@ -171,10 +171,18 @@ public class GridFilesystem {
     */
    public InputStream getInput(String pathname) throws FileNotFoundException {
       GridFile file = (GridFile) getFile(pathname);
-      if (!file.exists())
-         throw new FileNotFoundException(pathname);
-      checkIsNotDirectory(file);
+      checkFileIsReadable(file);
       return new GridInputStream(file, data);
+   }
+
+   private void checkFileIsReadable(GridFile file) throws FileNotFoundException {
+      checkFileExists(file);
+      checkIsNotDirectory(file);
+   }
+
+   private void checkFileExists(GridFile file) throws FileNotFoundException {
+      if (!file.exists())
+         throw new FileNotFoundException(file.getPath());
    }
 
    /**
@@ -185,6 +193,60 @@ public class GridFilesystem {
     */
    public InputStream getInput(File file) throws FileNotFoundException {
       return file != null ? getInput(file.getPath()) : null;
+   }
+
+   /**
+    * Opens a ReadableGridFileChannel for reading from the file denoted by the given file path. One of the benefits
+    * of using a channel over an InputStream is the possibility to randomly seek to any position in the file (see
+    * #ReadableGridChannel.position()).
+    * @param pathname path of the file to open for reading
+    * @return a ReadableGridFileChannel for reading from the file
+    * @throws FileNotFoundException if the file does not exist or is a directory
+    */
+   public ReadableGridFileChannel getReadableChannel(String pathname) throws FileNotFoundException {
+      GridFile file = (GridFile) getFile(pathname);
+      checkFileIsReadable(file);
+      return new ReadableGridFileChannel(file, data);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname. If a file at pathname already exists,
+    * writing to the returned channel will overwrite the contents of the file.
+    * @param pathname the path to write to
+    * @return a WritableGridFileChannel for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname) throws IOException {
+      return getWritableChannel(pathname, false);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname. The channel can either overwrite the
+    * existing file or append to it.
+    * @param pathname the path to write to
+    * @param append if true, the bytes written to the WritableGridFileChannel will be appended to the end of the file.
+    *               If false, the bytes will overwrite the original contents.
+    * @return a WritableGridFileChannel for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname, boolean append) throws IOException {
+      return getWritableChannel(pathname, append, defaultChunkSize);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname.
+    * @param pathname the file to write to
+    * @param append if true, the bytes written to the channel will be appended to the end of the file
+    * @param chunkSize the size of the file's chunks. This parameter is honored only when the file at pathname does
+    *        not yet exist. If the file already exists, the file's own chunkSize has precedence.
+    * @return a WritableGridFileChannel for writing to the file
+    * @throws IOException if the file is a directory, cannot be created or some other error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname, boolean append, int chunkSize) throws IOException {
+      GridFile file = (GridFile) getFile(pathname, chunkSize);
+      checkIsNotDirectory(file);
+      createIfNeeded(file);
+      return new WritableGridFileChannel(file, data, append);
    }
 
    /**
