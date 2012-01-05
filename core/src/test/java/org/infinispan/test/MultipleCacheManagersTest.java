@@ -278,7 +278,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void waitForClusterToForm() {
-      waitForClusterToForm(null);
+      waitForClusterToForm((String) null);
+   }
+
+   protected void waitForClusterToForm(String... names) {
+      for (String name : names) {
+         waitForClusterToForm(name);
+      }
    }
 
    protected TransactionManager tm(Cache<?, ?> c) {
