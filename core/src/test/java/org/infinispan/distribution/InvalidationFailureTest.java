@@ -51,8 +51,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       manager(1).defineConfiguration("second", config);
       manager(0).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
       manager(1).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
-      waitForClusterToForm();
-      waitForClusterToForm("second");
+      waitForClusterToForm(CacheContainer.DEFAULT_CACHE_NAME, "second");
       cache(0).put("k","v");
       cache(0,"second").put("k","v");
       assert cache(1).get("k").equals("v");
