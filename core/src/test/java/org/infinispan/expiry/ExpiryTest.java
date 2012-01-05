@@ -111,7 +111,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       while (true) {
          String v1 = cache.get("k1");
          String v2 = cache.get("k2");
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals("v", v1);
          assertEquals("v", v2);
@@ -193,7 +193,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert cache.get("k").equals("v");
       while (true) {
          String v = cache.get("k");
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals("v", v);
          Thread.sleep(100);
@@ -212,7 +212,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert cache.replace("k", "v", "v2", lifespan, MILLISECONDS);
       while (true) {
          String v = cache.get("k");
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals("v2", v);
          Thread.sleep(100);
@@ -279,7 +279,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       entries = Collections.emptySet();
       while (true) {
          entries = cache.entrySet();
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals(entriesIn, entries);
          Thread.sleep(100);
@@ -318,7 +318,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          entries = Collections.emptySet();
          while (true) {
             entries = cache.entrySet();
-            if (System.currentTimeMillis() > startTime + lifespan)
+            if (System.currentTimeMillis() >= startTime + lifespan)
                break;
             assertEquals(allEntriesIn.entrySet(), entries);
             Thread.sleep(100);
@@ -351,7 +351,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       keys = Collections.emptySet();
       while (true) {
          keys = cache.keySet();
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals(keysIn, keys);
          Thread.sleep(100);
@@ -399,7 +399,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          keys = Collections.emptySet();
          while (true) {
             keys = cache.keySet();
-            if (System.currentTimeMillis() > startTime + lifespan)
+            if (System.currentTimeMillis() >= startTime + lifespan)
                break;
             assertEquals(allEntriesIn.keySet(), keys);
             Thread.sleep(100);
@@ -437,7 +437,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       values = Collections.emptySet();
       while (true) {
          values = new HashSet(cache.values());
-         if (System.currentTimeMillis() > startTime + lifespan)
+         if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          assertEquals(valuesIn, values);
          Thread.sleep(100);
@@ -495,7 +495,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          values = Collections.emptySet();
          while (true) {
             values = new HashSet(cache.values());
-            if (System.currentTimeMillis() > startTime + lifespan)
+            if (System.currentTimeMillis() >= startTime + lifespan)
                break;
             assertEquals(allValuesIn, values);
             Thread.sleep(100);

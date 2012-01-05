@@ -653,10 +653,16 @@ class IntegrationTest {
       post.setRequestHeader("maxIdleTimeSeconds", "0")
       post.setRequestEntity(new StringRequestEntity("data2", "text/plain", "UTF-8"))
       Client.call(post)
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
-         assertEquals("data2", Client.call(new GetMethod(fullPathKey)).getResponseBodyAsString)
-         Thread.sleep(100)
+      while (System.currentTimeMillis < startTime + lifespan) {
+         val response = Client.call(new GetMethod(fullPathKey)).getResponseBodyAsString
+         // The entry could have expired before our request got to the server
+         // Scala doesn't support break, so we need to test the current time twice
+         if (System.currentTimeMillis < startTime + lifespan) {
+            assertEquals("data2", response)
+            Thread.sleep(100)
+         }
       }
+
       // Make sure that in the next 20 secs data is removed
       waitNotFound(startTime, lifespan, fullPathKey)
       assertEquals(SC_NOT_FOUND, Client.call(new GetMethod(fullPathKey)).getStatusCode)
