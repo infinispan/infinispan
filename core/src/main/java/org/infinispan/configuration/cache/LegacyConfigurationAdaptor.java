@@ -298,7 +298,7 @@ public class LegacyConfigurationAdaptor {
       
       if (legacy.isL1CacheEnabled()) {
          builder.clustering()
-            .l1()
+            .l1().enable()
                .invalidationThreshold(legacy.getL1InvalidationThreshold())
                .lifespan(legacy.getL1Lifespan())
                .onRehash(legacy.isL1OnRehash());
@@ -339,11 +339,10 @@ public class LegacyConfigurationAdaptor {
          .withProperties(legacy.getDataContainerProperties());
       
       if (legacy.isDeadlockDetectionEnabled()) {
-         builder.deadlockDetection()
+         builder.deadlockDetection().enable()
             .spinDuration(legacy.getDeadlockDetectionSpinDuration());
       } else {
-         builder.deadlockDetection()
-            .disable();
+         builder.deadlockDetection().disable();
       }
       
       builder.eviction()
@@ -358,17 +357,18 @@ public class LegacyConfigurationAdaptor {
          .wakeUpInterval(legacy.getExpirationWakeUpInterval());
          
       if (legacy.isIndexingEnabled())
-         builder.indexing()
+         builder.indexing().enable()
             .indexLocalOnly(legacy.isIndexLocalOnly());
       else
-         builder.indexing()
-            .disable();
+         builder.indexing().disable();
          
-      if (legacy.isInvocationBatchingEnabled())
-         builder.invocationBatching();
+      if (legacy.isInvocationBatchingEnabled()) {
+         builder.invocationBatching().enable();
+      } else {
+         builder.invocationBatching().disable();
+      }
 
-      if (legacy.isExposeJmxStatistics())
-         builder.jmxStatistics();
+      builder.jmxStatistics().enabled(legacy.isExposeJmxStatistics());
       
       // TODO lazy deserialization?
       
@@ -394,8 +394,8 @@ public class LegacyConfigurationAdaptor {
             loaderBuilder.async().threadPoolSize(csc.getAsyncStoreConfig().getThreadPoolSize());
             
             loaderBuilder.singletonStore().enabled(csc.getSingletonStoreConfig().isSingletonStoreEnabled());
-            loaderBuilder.singletonStore().pushStateTimeout(csc.singletonStore().getPushStateTimeout());
-            loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.singletonStore().isPushStateWhenCoordinator());
+            loaderBuilder.singletonStore().pushStateTimeout(csc.getSingletonStoreConfig().getPushStateTimeout());
+            loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.getSingletonStoreConfig().isPushStateWhenCoordinator());
          }
          if (clc instanceof AbstractCacheStoreConfig) {
             loaderBuilder.withProperties(((AbstractCacheLoaderConfig) clc).getProperties());
@@ -410,12 +410,11 @@ public class LegacyConfigurationAdaptor {
          .writeSkewCheck(legacy.isWriteSkewCheck());
       
       if (legacy.isStoreAsBinary()) 
-         builder.storeAsBinary()
+         builder.storeAsBinary().enable()
             .storeKeysAsBinary(legacy.isStoreKeysAsBinary())
             .storeValuesAsBinary(legacy.isStoreValuesAsBinary());
       else
-         builder.storeAsBinary()
-            .disable();
+         builder.storeAsBinary().disable();
    
       builder.transaction()
          .autoCommit(legacy.isTransactionAutoCommit())
@@ -429,9 +428,7 @@ public class LegacyConfigurationAdaptor {
          .useEagerLocking(legacy.isUseEagerLocking())
          .useSynchronization(legacy.isUseSynchronizationForTransactions());
       
-      if (legacy.isTransactionRecoveryEnabled()) {
-         builder.transaction().recovery();
-      }
+      builder.transaction().recovery().enabled(legacy.isTransactionRecoveryEnabled());
         
       builder.unsafe().unreliableReturnValues(legacy.isUnsafeUnreliableReturnValues());
       
