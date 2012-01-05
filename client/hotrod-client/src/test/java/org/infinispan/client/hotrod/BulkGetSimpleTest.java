@@ -98,10 +98,11 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
       remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       Map dataOut = new HashMap();
-      // Stop checking 10ms before expiration to prevent races
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+      while (true) {
          dataOut = remoteCache.getBulk();
-         dataOut.equals(dataIn);
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals(dataIn, dataOut);
          Thread.sleep(100);
       }
 
