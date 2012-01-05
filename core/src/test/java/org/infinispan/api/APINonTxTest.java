@@ -342,4 +342,9 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put(null, null);
    }
 
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testNullValueParameter() {
+      cache.put("hello", null);
+   }
+
 }
