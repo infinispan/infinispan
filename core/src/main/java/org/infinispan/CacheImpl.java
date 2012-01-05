@@ -364,13 +364,13 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final void evict(K key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = createNonTxInvocationContext(explicitFlags, explicitClassLoader);
+      InvocationContext ctx = createSingleKeyNonTxInvocationContext(explicitFlags, explicitClassLoader);
       EvictCommand command = commandsFactory.buildEvictCommand(key);
       invoker.invoke(ctx, command);
    }
 
-   private InvocationContext createNonTxInvocationContext(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = icc.createNonTxInvocationContext();
+   private InvocationContext createSingleKeyNonTxInvocationContext(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = icc.createSingleKeyNonTxInvocationContext();
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
@@ -396,9 +396,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return notifier.getListeners();
    }
 
-   private InvocationContext getInvocationContextForWrite(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRed) {
-      InvocationContext ctx = isPutForExternalRed ?
-            icc.createNonTxInvocationContext() : icc.createInvocationContext(true, keyCount);
+   private InvocationContext getInvocationContextForWrite(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRead) {
+      InvocationContext ctx = isPutForExternalRead ?
+            icc.createSingleKeyNonTxInvocationContext() : icc.createInvocationContext(true, keyCount);
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
@@ -423,8 +423,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private InvocationContext getInvocationContextWithImplicitTransaction(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount) {
       InvocationContext invocationContext;
       boolean txInjected = false;
-      final boolean isPutForExternalRed = isPutForExternalRed(explicitFlags);
-      if (config.isTransactionalCache() && !isPutForExternalRed) {
+      final boolean isPutForExternalRead = isPutForExternalRead(explicitFlags);
+      if (config.isTransactionalCache() && !isPutForExternalRead) {
          Transaction transaction = getOngoingTransaction();
          if (transaction == null && config.isTransactionAutoCommit()) {
             try {
@@ -438,7 +438,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          }
          invocationContext = getInvocationContext(transaction, explicitFlags, explicitClassLoader);
       } else {
-         invocationContext = getInvocationContextForWrite(explicitFlags, explicitClassLoader, keyCount, isPutForExternalRed);
+         invocationContext = getInvocationContextForWrite(explicitFlags, explicitClassLoader, keyCount, isPutForExternalRead);
       }
       if (txInjected) {
          ((TxInvocationContext) invocationContext).setImplicitTransaction(true);
@@ -447,7 +447,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return invocationContext;
    }
 
-   private boolean isPutForExternalRed(EnumSet<Flag> explicitFlags) {
+   private boolean isPutForExternalRead(EnumSet<Flag> explicitFlags) {
       return explicitFlags != null && explicitFlags.contains(PUT_FOR_EXTERNAL_READ);
    }
 
@@ -509,7 +509,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (log.isDebugEnabled()) log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
 
       // Create invocation context to pass flags
-      createNonTxInvocationContext(explicitFlags, explicitClassLoader);
+      createSingleKeyNonTxInvocationContext(explicitFlags, explicitClassLoader);
       componentRegistry.stop();
    }
 
