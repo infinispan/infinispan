@@ -44,20 +44,19 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
 public class GridFilesystem {
    protected final Cache<String, byte[]> data;
    protected final Cache<String, GridFile.Metadata> metadata;
-   protected final int default_chunk_size;
+   protected final int defaultChunkSize;
 
    /**
     * Creates an instance. The data and metadata caches should already have been setup and started
     *
     * @param data the cache where the actual file contents are stored
     * @param metadata the cache where file meta-data is stored
-    * @param default_chunk_size the default size of the file chunks
+    * @param defaultChunkSize the default size of the file chunks
     */
-   public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata,
-                         int default_chunk_size) {
+   public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata, int defaultChunkSize) {
       this.data = data;
       this.metadata = metadata;
-      this.default_chunk_size = default_chunk_size;
+      this.defaultChunkSize = defaultChunkSize;
    }
 
    public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata) {
@@ -70,35 +69,35 @@ public class GridFilesystem {
     * @return the File stored at pathname
     */
    public File getFile(String pathname) {
-      return getFile(pathname, default_chunk_size);
+      return getFile(pathname, defaultChunkSize);
    }
 
    /**
-    * Returns the file denoted by pathname. If the file does not yet exist, it is initialized with the given chunk_size.
-    * However, if the file at pathname already exists, the chunk_size parameter is ignored and the file's actual
-    * chunk_size is used.
+    * Returns the file denoted by pathname. If the file does not yet exist, it is initialized with the given chunkSize.
+    * However, if the file at pathname already exists, the chunkSize parameter is ignored and the file's actual
+    * chunkSize is used.
     * @param pathname the full path of the requested file
-    * @param chunk_size the size of the file's chunks. This parameter is only used for non-existing files.
+    * @param chunkSize the size of the file's chunks. This parameter is only used for non-existing files.
     * @return the File stored at pathname
     */
-   public File getFile(String pathname, int chunk_size) {
-      return new GridFile(pathname, metadata, chunk_size, this);
+   public File getFile(String pathname, int chunkSize) {
+      return new GridFile(pathname, metadata, chunkSize, this);
    }
 
    public File getFile(String parent, String child) {
-      return getFile(parent, child, default_chunk_size);
+      return getFile(parent, child, defaultChunkSize);
    }
 
-   public File getFile(String parent, String child, int chunk_size) {
-      return new GridFile(parent, child, metadata, chunk_size, this);
+   public File getFile(String parent, String child, int chunkSize) {
+      return new GridFile(parent, child, metadata, chunkSize, this);
    }
 
    public File getFile(File parent, String child) {
-      return getFile(parent, child, default_chunk_size);
+      return getFile(parent, child, defaultChunkSize);
    }
 
-   public File getFile(File parent, String child, int chunk_size) {
-      return new GridFile(parent, child, metadata, chunk_size, this);
+   public File getFile(File parent, String child, int chunkSize) {
+      return new GridFile(parent, child, metadata, chunkSize, this);
    }
 
    /**
@@ -109,7 +108,7 @@ public class GridFilesystem {
     * @throws IOException if an error occurs
     */
    public OutputStream getOutput(String pathname) throws IOException {
-      return getOutput(pathname, false, default_chunk_size);
+      return getOutput(pathname, false, defaultChunkSize);
    }
 
    /**
@@ -122,26 +121,22 @@ public class GridFilesystem {
     * @throws IOException if an error occurs
     */
    public OutputStream getOutput(String pathname, boolean append) throws IOException {
-      return getOutput(pathname, append, default_chunk_size);
+      return getOutput(pathname, append, defaultChunkSize);
    }
 
    /**
     * Opens an OutputStream for writing to the file denoted by pathname.
     * @param pathname the file to write to
     * @param append if true, the bytes written to the OutputStream will be appended to the end of the file
-    * @param chunk_size the size of the file's chunks. This parameter is honored only when the file at pathname does
+    * @param chunkSize the size of the file's chunks. This parameter is honored only when the file at pathname does
     *        not yet exist. If the file already exists, the file's own chunkSize has precedence.
     * @return the OutputStream for writing to the file
     * @throws IOException if the file is a directory, cannot be created or some other error occurs
     */
-   public OutputStream getOutput(String pathname, boolean append, int chunk_size) throws IOException {
-      GridFile file = (GridFile) getFile(pathname, chunk_size);
-      if (file.isDirectory()) {
-         throw new FileNotFoundException("Cannot write to directory (" + pathname + ")");
-      }
-      if (!file.exists() && !file.createNewFile())
-         throw new IOException("creation of " + pathname + " failed");
-
+   public OutputStream getOutput(String pathname, boolean append, int chunkSize) throws IOException {
+      GridFile file = (GridFile) getFile(pathname, chunkSize);
+      checkIsNotDirectory(file);
+      createIfNeeded(file);
       return new GridOutputStream(file, append, data);
    }
 
@@ -152,12 +147,20 @@ public class GridFilesystem {
     * @throws IOException if an error occurs
     */
    public OutputStream getOutput(GridFile file) throws IOException {
+      checkIsNotDirectory(file);
+      createIfNeeded(file);
+      return new GridOutputStream(file, false, data);
+   }
+
+   private void checkIsNotDirectory(GridFile file) throws FileNotFoundException {
       if (file.isDirectory()) {
-         throw new FileNotFoundException("Cannot write to directory (" + file + ")");
+         throw new FileNotFoundException(file + " is a directory.");
       }
+   }
+
+   private void createIfNeeded(GridFile file) throws IOException {
       if (!file.exists() && !file.createNewFile())
          throw new IOException("creation of " + file + " failed");
-      return new GridOutputStream(file, false, data);
    }
 
    /**
@@ -168,12 +171,18 @@ public class GridFilesystem {
     */
    public InputStream getInput(String pathname) throws FileNotFoundException {
       GridFile file = (GridFile) getFile(pathname);
-      if (!file.exists())
-         throw new FileNotFoundException(pathname);
-      if (file.isDirectory()) {
-         throw new FileNotFoundException("Cannot read from directory (" + file + ")");
-      }
+      checkFileIsReadable(file);
       return new GridInputStream(file, data);
+   }
+
+   private void checkFileIsReadable(GridFile file) throws FileNotFoundException {
+      checkFileExists(file);
+      checkIsNotDirectory(file);
+   }
+
+   private void checkFileExists(GridFile file) throws FileNotFoundException {
+      if (!file.exists())
+         throw new FileNotFoundException(file.getPath());
    }
 
    /**
@@ -184,6 +193,60 @@ public class GridFilesystem {
     */
    public InputStream getInput(File file) throws FileNotFoundException {
       return file != null ? getInput(file.getPath()) : null;
+   }
+
+   /**
+    * Opens a ReadableGridFileChannel for reading from the file denoted by the given file path. One of the benefits
+    * of using a channel over an InputStream is the possibility to randomly seek to any position in the file (see
+    * #ReadableGridChannel.position()).
+    * @param pathname path of the file to open for reading
+    * @return a ReadableGridFileChannel for reading from the file
+    * @throws FileNotFoundException if the file does not exist or is a directory
+    */
+   public ReadableGridFileChannel getReadableChannel(String pathname) throws FileNotFoundException {
+      GridFile file = (GridFile) getFile(pathname);
+      checkFileIsReadable(file);
+      return new ReadableGridFileChannel(file, data);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname. If a file at pathname already exists,
+    * writing to the returned channel will overwrite the contents of the file.
+    * @param pathname the path to write to
+    * @return a WritableGridFileChannel for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname) throws IOException {
+      return getWritableChannel(pathname, false);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname. The channel can either overwrite the
+    * existing file or append to it.
+    * @param pathname the path to write to
+    * @param append if true, the bytes written to the WritableGridFileChannel will be appended to the end of the file.
+    *               If false, the bytes will overwrite the original contents.
+    * @return a WritableGridFileChannel for writing to the file at pathname
+    * @throws IOException if an error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname, boolean append) throws IOException {
+      return getWritableChannel(pathname, append, defaultChunkSize);
+   }
+
+   /**
+    * Opens a WritableGridFileChannel for writing to the file denoted by pathname.
+    * @param pathname the file to write to
+    * @param append if true, the bytes written to the channel will be appended to the end of the file
+    * @param chunkSize the size of the file's chunks. This parameter is honored only when the file at pathname does
+    *        not yet exist. If the file already exists, the file's own chunkSize has precedence.
+    * @return a WritableGridFileChannel for writing to the file
+    * @throws IOException if the file is a directory, cannot be created or some other error occurs
+    */
+   public WritableGridFileChannel getWritableChannel(String pathname, boolean append, int chunkSize) throws IOException {
+      GridFile file = (GridFile) getFile(pathname, chunkSize);
+      checkIsNotDirectory(file);
+      createIfNeeded(file);
+      return new WritableGridFileChannel(file, data, append);
    }
 
    /**

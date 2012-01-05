@@ -33,6 +33,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -330,6 +332,81 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertNotNull(filenames);
       assertEquals(filenames.length, 1);
       assertEquals(filenames[0], "foo.txt");
+   }
+
+   public void testReadableChannel() throws Exception {
+      String content = "This is the content of channelTest.txt";
+      writeToFile("/channelTest.txt", content, 10);
+
+      ReadableGridFileChannel channel = fs.getReadableChannel("/channelTest.txt");
+      try {
+         assertTrue(channel.isOpen());
+         ByteBuffer buffer = ByteBuffer.allocate(1000);
+         channel.read(buffer);
+         assertEquals(getStringFrom(buffer), content);
+      } finally {
+         channel.close();
+      }
+
+      assertFalse(channel.isOpen());
+   }
+
+   public void testReadableChannelPosition() throws Exception {
+      writeToFile("/position.txt", "0123456789", 3);
+
+      ReadableGridFileChannel channel = fs.getReadableChannel("/position.txt");
+      try {
+         assertEquals(channel.position(), 0);
+
+         channel.position(5);
+         assertEquals(channel.position(), 5);
+         assertEquals(getStringFromChannel(channel, 3), "567");
+         assertEquals(channel.position(), 8);
+
+         channel.position(2);
+         assertEquals(channel.position(), 2);
+         assertEquals(getStringFromChannel(channel, 5), "23456");
+         assertEquals(channel.position(), 7);
+      } finally {
+         channel.close();
+      }
+   }
+
+   public void testWritableChannel() throws Exception {
+      WritableGridFileChannel channel = fs.getWritableChannel("/channelTest.txt", false, 10);
+      try {
+         assertTrue(channel.isOpen());
+         channel.write(ByteBuffer.wrap("This file spans multiple chunks.".getBytes()));
+      } finally {
+         channel.close();
+      }
+      assertFalse(channel.isOpen());
+      assertEquals(getContents("/channelTest.txt"), "This file spans multiple chunks.");
+   }
+
+   public void testWritableChannelAppend() throws Exception {
+      writeToFile("/append.txt", "Initial text.", 3);
+
+      WritableGridFileChannel channel = fs.getWritableChannel("/append.txt", true);
+      try {
+         channel.write(ByteBuffer.wrap("Appended text.".getBytes()));
+      } finally {
+         channel.close();
+      }
+      assertEquals(getContents("/append.txt"), "Initial text.Appended text.");
+   }
+
+   private String getStringFromChannel(ReadableByteChannel channel, int length) throws IOException {
+      ByteBuffer buffer = ByteBuffer.allocate(length);
+      channel.read(buffer);
+      return getStringFrom(buffer);
+   }
+
+   private String getStringFrom(ByteBuffer buffer) {
+      buffer.flip();
+      byte[] buf = new byte[buffer.remaining()];
+      buffer.get(buf);
+      return new String(buf);
    }
 
    private String[] getPaths(File[] files) {
