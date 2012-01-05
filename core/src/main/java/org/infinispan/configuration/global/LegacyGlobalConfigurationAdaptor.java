@@ -93,7 +93,7 @@ public class LegacyGlobalConfigurationAdaptor {
          .withProperties(legacy.getTransportProperties());
       
       if (legacy.isExposeGlobalJmxStatistics()) {
-         builder.globalJmxStatistics()
+         builder.globalJmxStatistics().enable()
             .jmxDomain(legacy.getJmxDomain())
             .mBeanServerLookup(legacy.getMBeanServerLookupInstance())
             .allowDuplicateDomains(legacy.isAllowDuplicateDomains())
