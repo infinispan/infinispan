@@ -1078,13 +1078,23 @@ public class TestingUtil {
       return discard;
    }
 
-   public static DELAY setDelayForCache(Cache<?, ?> c, int in_delay, int out_delay) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+   /**
+    * Inserts a DELAY protocol in the JGroups stack used by the cache, and returns it.
+    * The DELAY protocol can then be used to inject delays in milliseconds both at receiver
+    * and sending side.
+    * @param cache
+    * @param in_delay_millis
+    * @param out_delay_millis
+    * @return a reference to the DELAY instance being used by the JGroups stack
+    * @throws Exception
+    */
+   public static DELAY setDelayForCache(Cache<?, ?> cache, int in_delay_millis, int out_delay_millis) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DELAY delay = new DELAY();
-      delay.setInDelay(in_delay);
-      delay.setOutDelay(out_delay);
+      delay.setInDelay(in_delay_millis);
+      delay.setOutDelay(out_delay_millis);
       ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
       return delay;
    }

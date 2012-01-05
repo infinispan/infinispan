@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
-import org.infinispan.context.Flag;
 
 /**
  * SingleChunkIndexInput can be used instead of InfinispanIndexInput to read a segment
@@ -46,7 +45,7 @@ final public class SingleChunkIndexInput extends IndexInput {
 
    public SingleChunkIndexInput(final AdvancedCache chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata) {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
-      byte[] b = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
+      byte[] b = (byte[]) chunksCache.get(key);
       if (b == null) {
          buffer = new byte[0];
       }
