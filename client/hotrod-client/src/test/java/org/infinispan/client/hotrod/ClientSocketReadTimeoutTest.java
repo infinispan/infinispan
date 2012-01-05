@@ -29,6 +29,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -103,113 +104,12 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
 
    }
 
-   private static class HangingCacheManager implements EmbeddedCacheManager {
-      final EmbeddedCacheManager delegate;
+   private static class HangingCacheManager extends AbstractDelegatingEmbeddedCacheManager {
       final CountDownLatch latch;
 
       public HangingCacheManager(EmbeddedCacheManager delegate, CountDownLatch latch) {
-         this.delegate = delegate;
+         super(delegate);
          this.latch = latch;
-      }
-
-      @Override
-      public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
-         return delegate.defineConfiguration(cacheName, configurationOverride);
-      }
-
-      @Override
-      public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride) {
-         return delegate.defineConfiguration(cacheName, configurationOverride);
-      }
-
-      @Override
-      public Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride) {
-         return delegate.defineConfiguration(cacheName, templateCacheName, configurationOverride);
-      }
-
-      @Override
-      public String getClusterName() {
-         return delegate.getClusterName();
-      }
-
-      @Override
-      public List<Address> getMembers() {
-         return delegate.getMembers();
-      }
-
-      @Override
-      public Address getAddress() {
-         return delegate.getAddress();
-      }
-
-      @Override
-      public Address getCoordinator() {
-         return delegate.getCoordinator();
-      }
-
-      @Override
-      public boolean isCoordinator() {
-         return delegate.isCoordinator();
-      }
-
-      @Override
-      public ComponentStatus getStatus() {
-         return delegate.getStatus();
-      }
-
-      @Override
-      public GlobalConfiguration getGlobalConfiguration() {
-         return delegate.getGlobalConfiguration();
-      }
-
-      @Override
-      public Configuration getDefaultConfiguration() {
-         return delegate.getDefaultConfiguration();
-      }
-
-      @Override
-      public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
-         return delegate.getDefaultCacheConfiguration();
-      }
-
-      @Override
-      public Set<String> getCacheNames() {
-         return delegate.getCacheNames();
-      }
-
-      @Override
-      public boolean isRunning(String cacheName) {
-         return delegate.isRunning(cacheName);
-      }
-
-      @Override
-      public boolean isDefaultRunning() {
-         return delegate.isDefaultRunning();
-      }
-
-      @Override
-      public boolean cacheExists(String cacheName) {
-         return delegate.cacheExists(cacheName);
-      }
-
-      @Override
-      public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
-         return delegate.getCache(cacheName, createIfAbsent);
-      }
-
-      @Override
-      public EmbeddedCacheManager startCaches(String... cacheNames) {
-         return delegate.startCaches(cacheNames);
-      }
-
-      @Override
-      public void removeCache(String cacheName) {
-         delegate.removeCache(cacheName);
-      }
-
-      @Override
-      public Transport getTransport() {
-         return delegate.getTransport();
       }
 
       @Override
@@ -222,44 +122,15 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
             try {
                // Wait a max of 3 minutes, otherwise socket timeout's not working
                latch.await(180, TimeUnit.SECONDS);
-               return delegate.getCache();
+               return super.getCache();
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
                throw new CacheException(e);
             }
          }
-         return delegate.getCache();
+         return super.getCache();
       }
-
-      @Override
-      public <K, V> Cache<K, V> getCache(String cacheName) {
-         return delegate.getCache(cacheName);
-      }
-
-      @Override
-      public void start() {
-         delegate.start();
-      }
-
-      @Override
-      public void stop() {
-         delegate.stop();
-      }
-
-      @Override
-      public void addListener(Object listener) {
-         delegate.addListener(listener);
-      }
-
-      @Override
-      public void removeListener(Object listener) {
-         delegate.removeListener(listener);
-      }
-
-      @Override
-      public Set<Object> getListeners() {
-         return delegate.getListeners();
-      }
+      
    }
 
 }
