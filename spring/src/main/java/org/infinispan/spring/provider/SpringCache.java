@@ -24,7 +24,7 @@
 package org.infinispan.spring.provider;
 
 import org.springframework.cache.Cache;
-import org.springframework.cache.support.ValueWrapperImpl;
+import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
 /**
@@ -72,7 +72,7 @@ public class SpringCache implements Cache {
    @Override
    public ValueWrapper get(final Object key) {
       Object v = nativeCache.get(key);
-	  return (v != null ? new ValueWrapperImpl(v) : null);
+	  return (v != null ? new SimpleValueWrapper(v) : null);
    }
 
    /**
