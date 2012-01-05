@@ -394,8 +394,8 @@ public class LegacyConfigurationAdaptor {
             loaderBuilder.async().threadPoolSize(csc.getAsyncStoreConfig().getThreadPoolSize());
             
             loaderBuilder.singletonStore().enabled(csc.getSingletonStoreConfig().isSingletonStoreEnabled());
-            loaderBuilder.singletonStore().pushStateTimeout(csc.singletonStore().getPushStateTimeout());
-            loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.singletonStore().isPushStateWhenCoordinator());
+            loaderBuilder.singletonStore().pushStateTimeout(csc.getSingletonStoreConfig().getPushStateTimeout());
+            loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.getSingletonStoreConfig().isPushStateWhenCoordinator());
          }
          if (clc instanceof AbstractCacheStoreConfig) {
             loaderBuilder.withProperties(((AbstractCacheLoaderConfig) clc).getProperties());
