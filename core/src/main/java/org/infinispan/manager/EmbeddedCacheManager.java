@@ -167,6 +167,20 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return the global configuration object associated to this CacheManager
     */
    GlobalConfiguration getGlobalConfiguration();
+   
+   /**
+    * Returns global configuration for this CacheManager
+    *
+    * @return the global configuration object associated to this CacheManager
+    */
+   org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration();
+   
+   /**
+    * Returns the configuration for the given cache.
+    *
+    * @return the configuration for the given cache or null if no such cache is defined
+    */
+   org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name);
 
    /**
     * Returns default configuration for this CacheManager
