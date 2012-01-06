@@ -89,7 +89,28 @@ public class GridFile extends File {
    @Override
    public String getPath() {
       return formatPath(super.getPath());
+   }
 
+   @Override
+   public String getAbsolutePath() {
+      return convertToAbsolute(getPath());
+   }
+
+   @Override
+   public File getAbsoluteFile() {
+      return new GridFile(getAbsolutePath(), metadataCache, getChunkSize(), fs);
+   }
+
+   @Override
+   public boolean isAbsolute() {
+      return getPath().startsWith(SEPARATOR);
+   }
+
+   private String convertToAbsolute(String path) {
+      if (!path.startsWith(SEPARATOR))
+         return SEPARATOR + path;
+      else
+         return path;
    }
 
    private String formatPath(String path) {
@@ -119,21 +140,21 @@ public class GridFile extends File {
       if (isRootDir()) {
          return ROOT_DIR_METADATA;
       }
-      return metadataCache.get(getPath());
+      return metadataCache.get(getAbsolutePath());
    }
 
    private boolean isRootDir() {
-      return "".equals(getPath());
+      return "/".equals(getAbsolutePath());
    }
 
    void setLength(int newLength) {
       Metadata metadata = getMetadata();
       if (metadata == null)
-         throw new IllegalStateException("metadata for " + getPath() + " not found.");
+         throw new IllegalStateException("metadata for " + getAbsolutePath() + " not found.");
 
       metadata.setLength(newLength);
       metadata.setModificationTime(System.currentTimeMillis());
-      metadataCache.put(getPath(), metadata);
+      metadataCache.put(getAbsolutePath(), metadata);
    }
 
    public int getChunkSize() {
@@ -144,9 +165,9 @@ public class GridFile extends File {
    public boolean createNewFile() throws IOException {
       if (exists())
          return false;
-      if (!checkParentDirs(getPath(), false))
-         throw new IOException("Cannot create file " + getPath() + " (parent dir does not exist)");
-      metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(), new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.FILE));
+      if (!checkParentDirs(getAbsolutePath(), false))
+         throw new IOException("Cannot create file " + getAbsolutePath() + " (parent dir does not exist)");
+      metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getAbsolutePath(), new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.FILE));
       return true;
    }
 
@@ -162,11 +183,11 @@ public class GridFile extends File {
       if (isDirectory() && hasChildren())
          return false;
 
-      fs.remove(getPath(), synchronous);    // removes all the chunks belonging to the file
+      fs.remove(getAbsolutePath(), synchronous);    // removes all the chunks belonging to the file
       if (synchronous)
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getPath()); // removes the metadata information
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getAbsolutePath()); // removes the metadata information
       else
-         metadataCache.remove(getPath()); // removes the metadata information
+         metadataCache.remove(getAbsolutePath()); // removes the metadata information
       return true;
    }
 
@@ -187,10 +208,10 @@ public class GridFile extends File {
 
    private boolean mkdir(boolean alsoCreateParentDirs) {
       try {
-         boolean parentsExist = checkParentDirs(getPath(), alsoCreateParentDirs);
+         boolean parentsExist = checkParentDirs(getAbsolutePath(), alsoCreateParentDirs);
          if (!parentsExist)
             return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getPath(),new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
+         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getAbsolutePath(),new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
          return true;
       }
       catch (IOException e) {
@@ -283,7 +304,7 @@ public class GridFile extends File {
       Set<String> keys = metadataCache.keySet();
       Collection<String> list = new LinkedList<String>();
       for (String str : keys) {
-         if (isChildOf(getPath(), str)) {
+         if (isChildOf(getAbsolutePath(), str)) {
             if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(name), filename(str)))
                continue;
             else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(str)))

@@ -250,15 +250,15 @@ public class GridFilesystem {
    }
 
    /**
-    * Removes the file denoted by path. This operation can either be executed synchronously or asynchronously.
-    * @param path the file to remove
+    * Removes the file denoted by absolutePath. This operation can either be executed synchronously or asynchronously.
+    * @param absolutePath the absolute path of the file to remove
     * @param synchronous if true, the method will return only after the file has actually been removed;
     *                    if false, the method will return immediately and the file will be removed asynchronously.
     */
-   void remove(String path, boolean synchronous) {
-      if (path == null)
+   void remove(String absolutePath, boolean synchronous) {
+      if (absolutePath == null)
          return;
-      GridFile.Metadata md = metadata.get(path);
+      GridFile.Metadata md = metadata.get(absolutePath);
       if (md == null)
          return;
 
@@ -266,6 +266,6 @@ public class GridFilesystem {
       AdvancedCache<String,byte[]> advancedCache = data.getAdvancedCache().withFlags(flag);
       int numChunks = md.getLength() / md.getChunkSize() + 1;
       for (int i = 0; i < numChunks; i++)
-         advancedCache.remove(path + ".#" + i);
+         advancedCache.remove(FileChunkMapper.getChunkKey(absolutePath, i));
    }
 }
