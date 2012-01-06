@@ -396,6 +396,39 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(getContents("/append.txt"), "Initial text.Appended text.");
    }
 
+   public void testGetAbsolutePath() throws IOException {
+      assertEquals(fs.getFile("/file.txt").getAbsolutePath(), "/file.txt");
+      assertEquals(fs.getFile("file.txt").getAbsolutePath(), "/file.txt");
+      assertEquals(fs.getFile("dir/file.txt").getAbsolutePath(), "/dir/file.txt");
+   }
+
+   public void testGetAbsoluteFile() throws IOException {
+      assertTrue(fs.getFile("file.txt").getAbsoluteFile() instanceof GridFile);
+      assertEquals(fs.getFile("/file.txt").getAbsoluteFile().getPath(), "/file.txt");
+      assertEquals(fs.getFile("file.txt").getAbsoluteFile().getPath(), "/file.txt");
+      assertEquals(fs.getFile("dir/file.txt").getAbsoluteFile().getPath(), "/dir/file.txt");
+   }
+
+   public void testIsAbsolute() throws IOException {
+      assertTrue(fs.getFile("/file.txt").isAbsolute());
+      assertFalse(fs.getFile("file.txt").isAbsolute());
+   }
+
+   public void testLeadingSeparatorIsOptional() throws IOException {
+      File gridFile = fs.getFile("file.txt");
+      assert gridFile.createNewFile();
+
+      assertTrue(fs.getFile("file.txt").exists());
+      assertTrue(fs.getFile("/file.txt").exists());
+
+      File dir = fs.getFile("dir");
+      boolean dirCreated = dir.mkdir();
+      assertTrue(dirCreated);
+
+      assertTrue(fs.getFile("dir").exists());
+      assertTrue(fs.getFile("/dir").exists());
+   }
+
    private String getStringFromChannel(ReadableByteChannel channel, int length) throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(length);
       channel.read(buffer);

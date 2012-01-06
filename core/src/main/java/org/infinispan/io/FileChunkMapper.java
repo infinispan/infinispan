@@ -38,12 +38,10 @@ class FileChunkMapper {
    private static final Log log = LogFactory.getLog(FileChunkMapper.class);
 
    private final GridFile file;
-   private final String name;
    private final Cache<String, byte[]> cache;
 
    public FileChunkMapper(GridFile file, Cache<String, byte[]> cache) {
       this.file = file;
-      this.name = file.getPath();
       this.cache = cache;
    }
 
@@ -78,6 +76,10 @@ class FileChunkMapper {
    }
 
    private String getChunkKey(int chunkNumber) {
-      return name + ".#" + chunkNumber;
+      return getChunkKey(file.getAbsolutePath(), chunkNumber);
+   }
+
+   static String getChunkKey(String absoluteFilePath, int chunkNumber) {
+      return absoluteFilePath + ".#" + chunkNumber;
    }
 }
