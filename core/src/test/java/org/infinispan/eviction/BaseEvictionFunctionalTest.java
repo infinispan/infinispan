@@ -26,8 +26,8 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -49,20 +49,18 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    protected abstract EvictionStrategy getEvictionStrategy();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration().fluent()
-         .eviction().strategy(getEvictionStrategy()).maxEntries(128) // 128 max entries
-         .expiration().wakeUpInterval(100L)
-         .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
-         .invocationBatching()
-         .build();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      EmbeddedCacheManager cm = new DefaultCacheManager(builder.eviction().maxEntries(CACHE_SIZE)
+               .strategy(getEvictionStrategy()).expiration().wakeUpInterval(100L).locking()
+               .useLockStriping(false) // to minimize chances of deadlock in the unit test
+               .invocationBatching().build());
       cache = cm.getCache();
       cache.addListener(new EvictionListener());
       return cm;
    }
 
    public void testSimpleEvictionMaxEntries() throws Exception {
-      for (int i = 0; i < 512; i++) {
+      for (int i = 0; i < CACHE_SIZE*2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
@@ -71,7 +69,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    
    public void testSimpleExpirationMaxIdle() throws Exception {
 
-      for (int i = 0; i < 512; i++) {
+      for (int i = 0; i < CACHE_SIZE*2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MILLISECONDS);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up and purge all expired entries
