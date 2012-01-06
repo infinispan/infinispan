@@ -229,6 +229,7 @@ public class LegacyConfigurationAdaptor {
          .syncRollbackPhase(config.transaction().syncRollbackPhase())
          .transactionManagerLookup(config.transaction().transactionManagerLookup())
          .transactionMode(config.transaction().transactionMode())
+         .transactionSynchronizationRegistryLookup(config.transaction().transactionSynchronizationRegistryLookup())
          .useEagerLocking(config.transaction().useEagerLocking())
          .useSynchronization(config.transaction().useSynchronization());
       
@@ -425,6 +426,7 @@ public class LegacyConfigurationAdaptor {
          .syncRollbackPhase(legacy.isSyncRollbackPhase())
          .transactionManagerLookup(legacy.getTransactionManagerLookup())
          .transactionMode(legacy.getTransactionMode())
+         .transactionSynchronizationRegistryLookup(legacy.getTransactionSynchronizationRegistryLookup())
          .useEagerLocking(legacy.isUseEagerLocking())
          .useSynchronization(legacy.isUseSynchronizationForTransactions());
       
