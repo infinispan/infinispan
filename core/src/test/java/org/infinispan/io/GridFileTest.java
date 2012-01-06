@@ -429,6 +429,16 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertTrue(fs.getFile("/dir").exists());
    }
 
+   public void testGetName() throws IOException {
+      assertEquals(fs.getFile("").getName(), "");
+      assertEquals(fs.getFile("/").getName(), "");
+      assertEquals(fs.getFile("file.txt").getName(), "file.txt");
+      assertEquals(fs.getFile("/file.txt").getName(), "file.txt");
+      assertEquals(fs.getFile("/dir/file.txt").getName(), "file.txt");
+      assertEquals(fs.getFile("/dir/subdir/file.txt").getName(), "file.txt");
+      assertEquals(fs.getFile("dir/subdir/file.txt").getName(), "file.txt");
+   }
+
    private String getStringFromChannel(ReadableByteChannel channel, int length) throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(length);
       channel.read(buffer);
