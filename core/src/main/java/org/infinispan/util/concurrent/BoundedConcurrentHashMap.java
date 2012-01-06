@@ -275,12 +275,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
          }
       },
-      LRU_OLD {
-         @Override
-         public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
-            return new LRUOld<K, V>(s,capacity,lf,capacity*10,lf);
-         }
-      },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
@@ -415,100 +409,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public Eviction strategy() {
          return Eviction.NONE;
-      }
-      
-      @Override
-      public HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value) {
-         return new HashEntry<K, V>(key, hash, next, value);
-      }
-   }
-
-   static final class LRUOld<K, V> implements EvictionPolicy<K, V> {
-      private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
-      private final Segment<K,V> segment;
-      private final LinkedList<HashEntry<K, V>> lruQueue;
-      private final int maxBatchQueueSize;
-      private final int trimDownSize;
-      private final float batchThresholdFactor;
-
-      public LRUOld(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-         this.segment = s;
-         this.trimDownSize = capacity;
-         this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchThresholdFactor = batchThresholdFactor;
-         this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
-         this.lruQueue = new LinkedList<HashEntry<K, V>>();
-      }
-
-      @Override
-      public Set<HashEntry<K, V>> execute() {
-         Set<HashEntry<K, V>> evicted = Collections.emptySet();
-         if (isOverflow()) {
-            evicted = new HashSet<HashEntry<K, V>>();
-         }
-         try {
-            for (HashEntry<K, V> e : accessQueue) {
-               if (lruQueue.remove(e)) {
-                  lruQueue.addFirst(e);
-               }
-            }
-            while (isOverflow()) {
-               HashEntry<K, V> first = lruQueue.getLast();
-               segment.evictionListener.onEntryChosenForEviction(first.value);
-               segment.remove(first.key, first.hash, null);
-               evicted.add(first);
-            }
-         } finally {
-            accessQueue.clear();
-         }
-         return evicted;
-      }
-
-      private boolean isOverflow() {
-         return lruQueue.size() > trimDownSize;
-      }
-
-      @Override
-      public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
-         lruQueue.addFirst(e);
-         return Collections.emptySet();
-      }
-
-      /*
-       * Invoked without holding a lock on Segment
-       */
-      @Override
-      public boolean onEntryHit(HashEntry<K, V> e) {
-         accessQueue.add(e);
-         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
-      }
-
-      /*
-       * Invoked without holding a lock on Segment
-       */
-      @Override
-      public boolean thresholdExpired() {
-         return accessQueue.size() >= maxBatchQueueSize;
-      }
-
-      @Override
-      public void onEntryRemove(HashEntry<K, V> e) {
-         lruQueue.remove(e);
-         // we could have multiple instances of e in accessQueue; remove them all
-         while (accessQueue.remove(e)) {
-            continue;
-         }
-      }
-
-      @Override
-      public void clear() {
-         lruQueue.clear();
-         accessQueue.clear();
-      }
-
-      @Override
-      public Eviction strategy() {
-         return Eviction.LRU_OLD;
       }
       
       @Override
@@ -1758,11 +1658,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          capacity = MAXIMUM_CAPACITY;
       }
       int c = capacity / ssize;
-      if (c * ssize < capacity) {
-         ++c;
-      }
       int cap = 1;
-      while (cap < c / DEFAULT_LOAD_FACTOR) {
+      while (cap < c) {
          cap <<= 1;
       }
 
