@@ -54,13 +54,13 @@ public class GridFile extends File {
    private static final String SEPARATOR = "" + SEPARATOR_CHAR;
    private final AdvancedCache<String, Metadata> metadataCache;
    private final GridFilesystem fs;
-   private final String name;
+   private final String path;
    private int chunkSize;
 
    GridFile(String pathname, Cache<String, Metadata> metadataCache, int chunkSize, GridFilesystem fs) {
       super(pathname);
       this.fs = fs;
-      this.name = trim(pathname);
+      this.path = formatPath(pathname);
       this.metadataCache = metadataCache.getAdvancedCache();
       this.chunkSize = chunkSize;
       initChunkSizeFromMetadata();
@@ -76,7 +76,7 @@ public class GridFile extends File {
 
    @Override
    public String getName() {
-      return name;
+      return filename(getPath());
    }
 
    /**
@@ -88,7 +88,7 @@ public class GridFile extends File {
     */
    @Override
    public String getPath() {
-      return formatPath(super.getPath());
+      return path;
    }
 
    @Override
@@ -113,7 +113,7 @@ public class GridFile extends File {
          return path;
    }
 
-   private String formatPath(String path) {
+   private static String formatPath(String path) {
       if (path == null)
          return null;
 
@@ -301,15 +301,15 @@ public class GridFile extends File {
       if (!isDirectory())
          return null;
 
-      Set<String> keys = metadataCache.keySet();
+      Set<String> paths = metadataCache.keySet();
       Collection<String> list = new LinkedList<String>();
-      for (String str : keys) {
-         if (isChildOf(getAbsolutePath(), str)) {
-            if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(name), filename(str)))
+      for (String path : paths) {
+         if (isChildOf(getAbsolutePath(), path)) {
+            if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(getName()), filename(path)))
                continue;
-            else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(str)))
+            else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(path)))
                continue;
-            list.add(filename(str));
+            list.add(filename(path));
          }
       }
       return list.toArray(new String[list.size()]);
@@ -338,7 +338,7 @@ public class GridFile extends File {
 
    protected static String filename(String fullPath) {
       String[] comps = Util.components(fullPath, SEPARATOR);
-      return comps != null ? comps[comps.length - 1] : null;
+      return comps != null ? comps[comps.length - 1] : "";
    }
 
 
@@ -388,15 +388,6 @@ public class GridFile extends File {
       return true;
    }
 
-
-   protected static String trim(String str) {
-      if (str == null) return null;
-      str = str.trim();
-      if (str.equals(File.separator))
-         return str;
-      String[] comps = Util.components(str, File.separator);
-      return comps != null && comps.length > 0 ? comps[comps.length - 1] : null;
-   }
 
    private Metadata exists(String key) {
       return metadataCache.get(key);
