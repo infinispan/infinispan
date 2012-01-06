@@ -308,7 +308,9 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testListFilesWithFilenameFilter() throws Exception {
       File dir = createDirWithFiles();
-      File[] files = dir.listFiles(new FooFilenameFilter());
+      FooFilenameFilter filter = new FooFilenameFilter();
+      filter.expectDir(dir);
+      File[] files = dir.listFiles(filter);
       assertEquals(
             asSet(getPaths(files)),
             asSet("/myDir/foo1.txt", "/myDir/foo2.txt", "/myDir/fooDir"));
@@ -531,9 +533,17 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    private static class FooFilenameFilter implements FilenameFilter {
+      private File expectedDir;
+
       @Override
       public boolean accept(File dir, String name) {
+         if (expectedDir != null)
+            assertEquals(dir, expectedDir, "accept() invoked with unexpected dir");
          return name.startsWith("foo");
+      }
+
+      public void expectDir(File dir) {
+         expectedDir = dir;
       }
    }
 

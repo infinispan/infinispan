@@ -287,7 +287,11 @@ public class GridFile extends File {
    }
 
    protected File[] _listFiles(Object filter) {
-      String[] files = _list(filter);
+      String[] filenames = _list(filter);
+      return convertFilenamesToFiles(filenames);
+   }
+
+   private File[] convertFilenamesToFiles(String[] files) {
       if (files == null)
          return null;
       File[] retval = new File[files.length];
@@ -305,7 +309,7 @@ public class GridFile extends File {
       Collection<String> list = new LinkedList<String>();
       for (String path : paths) {
          if (isChildOf(getAbsolutePath(), path)) {
-            if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(new File(getName()), filename(path)))
+            if (filter instanceof FilenameFilter && !((FilenameFilter) filter).accept(this, filename(path)))
                continue;
             else if (filter instanceof FileFilter && !((FileFilter) filter).accept(new File(path)))
                continue;
