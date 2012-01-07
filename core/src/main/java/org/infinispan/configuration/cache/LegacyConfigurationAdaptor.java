@@ -231,7 +231,8 @@ public class LegacyConfigurationAdaptor {
          .transactionMode(config.transaction().transactionMode())
          .transactionSynchronizationRegistryLookup(config.transaction().transactionSynchronizationRegistryLookup())
          .useEagerLocking(config.transaction().useEagerLocking())
-         .useSynchronization(config.transaction().useSynchronization());
+         .useSynchronization(config.transaction().useSynchronization())
+         .use1PcForAutoCommitTransactions(config.transaction().use1PcForAutoCommitTransactions());
       
       if (config.transaction().recovery().enabled()) {
          legacy.transaction().recovery().recoveryInfoCacheName(config.transaction().recovery().recoveryInfoCacheName());
