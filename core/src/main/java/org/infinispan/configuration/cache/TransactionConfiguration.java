@@ -19,10 +19,12 @@ public class TransactionConfiguration {
    private boolean useEagerLocking;
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
+   private final boolean use1PcForAutoCommitTransactions;
    
    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
          boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup, TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup,
-         TransactionMode transactionMode, boolean useEagerLocking, boolean useSynchronization, RecoveryConfiguration recovery) {
+         TransactionMode transactionMode, boolean useEagerLocking, boolean useSynchronization,
+         boolean use1PcForAutoCommitTransactions, RecoveryConfiguration recovery) {
       this.autoCommit = autoCommit;
       this.cacheStopTimeout = cacheStopTimeout;
       this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -35,6 +37,7 @@ public class TransactionConfiguration {
       this.useEagerLocking = useEagerLocking;
       this.useSynchronization = useSynchronization;
       this.recovery = recovery;
+      this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
    }
 
    public boolean autoCommit() {
@@ -118,10 +121,13 @@ public class TransactionConfiguration {
     * </pre>
     * By default a cache is not transactional.
     *
-    * @see #isTransactionAutoCommit()
+    * @see #autoCommit()
     */
    public  boolean transactionalCache() {
       return transactionMode.equals(TransactionMode.TRANSACTIONAL);
    }
-   
+
+   public boolean use1PcForAutoCommitTransactions() {
+      return use1PcForAutoCommitTransactions;
+   }
 }

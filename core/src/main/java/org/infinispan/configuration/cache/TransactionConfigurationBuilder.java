@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
-
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
@@ -24,8 +22,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useEagerLocking = false;
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
-   
-   // TODO clean this up? It's not used
    private boolean use1PcForAutoCommitTransactions = false;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
@@ -106,8 +102,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
    }
 
    @Override
@@ -119,7 +113,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          transactionMode = TransactionMode.TRANSACTIONAL;
       else if (transactionMode == null)
          transactionMode = TransactionMode.NON_TRANSACTIONAL;
-      return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());
+      return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, recovery.create());
    }
    
    @Override
@@ -135,7 +129,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       this.transactionSynchronizationRegistryLookup = template.transactionSynchronizationRegistryLookup();
       this.useEagerLocking = template.useEagerLocking();
       this.useSynchronization = template.useSynchronization();
-      
+      this.use1PcForAutoCommitTransactions = template.use1PcForAutoCommitTransactions();
       this.recovery.read(template.recovery());
       
       return this;
