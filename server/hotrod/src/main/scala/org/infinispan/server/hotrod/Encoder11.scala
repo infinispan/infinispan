@@ -48,7 +48,7 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
-                  encoder10.writeTopologyHeader(t, buf, addressCache)
+                  encoder10.writeTopologyHeader(this, t, buf, addressCache)
                else
                   writeHashTopologyHeader(t, buf, addressCache)
             }
@@ -62,7 +62,7 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
    }
 
    override def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager) =
-      encoder10.writeResponse(r, buf, cacheManager)
+      encoder10.writeResponse(this, r, buf, cacheManager)
 
    def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress]): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information

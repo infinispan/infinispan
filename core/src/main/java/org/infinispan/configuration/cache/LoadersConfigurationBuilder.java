@@ -9,7 +9,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    private boolean passivation = false;
    private boolean preload = false;
    private boolean shared = false;
-   private List<LoaderConfigurationBuilder> cacheLoaders = new ArrayList<LoaderConfigurationBuilder>();
+   private List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders = new ArrayList<AbstractLoaderConfigurationBuilder<?>>();
    
 
    protected LoadersConfigurationBuilder(ConfigurationBuilder builder) {
@@ -45,23 +45,44 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return builder;
    }
    
-   List<LoaderConfigurationBuilder> cacheLoaders() {
+   public FileCacheStoreConfigurationBuilder addFileCacheStore() {
+      FileCacheStoreConfigurationBuilder builder = new FileCacheStoreConfigurationBuilder(this);
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+   
+   List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders() {
       return cacheLoaders;
    }
    
    @Override
    void validate() {
-      for (LoaderConfigurationBuilder b : cacheLoaders) {
+      for (AbstractLoaderConfigurationBuilder<?> b : cacheLoaders) {
          b.validate();
       }
    }
 
    @Override
    LoadersConfiguration create() {
-      List<LoaderConfiguration> loaders = new LinkedList<LoaderConfiguration>();
-      for (LoaderConfigurationBuilder loader : cacheLoaders)
+      List<AbstractLoaderConfiguration> loaders = new LinkedList<AbstractLoaderConfiguration>();
+      for (AbstractLoaderConfigurationBuilder<?> loader : cacheLoaders)
          loaders.add(loader.create());
       return new LoadersConfiguration(passivation, preload, shared, loaders);
+   }
+   
+   @Override
+   public LoadersConfigurationBuilder read(LoadersConfiguration template) {
+      for (AbstractLoaderConfiguration c : template.cacheLoaders()) {
+         if (c instanceof LoaderConfiguration)
+            this.addCacheLoader().read((LoaderConfiguration) c);
+         else if (c instanceof FileCacheStoreConfiguration)
+            this.addFileCacheStore().read((FileCacheStoreConfiguration) c);
+      }
+      this.passivation = template.passivation();
+      this.preload = template.preload();
+      this.shared = template.shared();
+      
+      return this;
    }
    
 }

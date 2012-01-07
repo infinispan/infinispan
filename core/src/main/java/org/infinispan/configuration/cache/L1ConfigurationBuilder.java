@@ -61,6 +61,14 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       this.onRehash = true;
       return this;
    }
+   
+   /**
+    * Entries removed due to a rehash will be moved to L1 rather than being removed altogether.
+    */
+   public L1ConfigurationBuilder onRehash(boolean enabled) {
+      this.onRehash = enabled;
+      return this;
+   }
 
    /**
     * Entries removed due to a rehash will be removed altogether rather than bring moved to L1.
@@ -103,6 +111,16 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
          onRehash = true;
       
       return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash.booleanValue());
+   }
+   
+   @Override
+   public L1ConfigurationBuilder read(L1Configuration template) {
+      enabled = template.enabled();
+      invalidationThreshold = template.invalidationThreshold();
+      lifespan = template.lifespan();
+      onRehash = template.onRehash();
+      
+      return this;
    }
 
 }

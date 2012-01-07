@@ -136,6 +136,21 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             cl
             );
    }
+   
+   public GlobalConfigurationBuilder read(GlobalConfiguration template) {
+      this.cl = template.classLoader();
+      
+      asyncListenerExecutor.read(template.asyncListenerExecutor());
+      asyncTransportExecutor.read(template.asyncTransportExecutor());
+      evictionScheduledExecutor.read(template.evictionScheduledExecutor());
+      globalJmxStatistics.read(template.globalJmxStatistics());
+      replicationQueueScheduledExecutor.read(template.replicationQueueScheduledExecutor());
+      serialization.read(template.serialization());
+      shutdown.read(template.shutdown());
+      transport.read(template.transport());
+      
+      return this;
+   }
 
    public static GlobalConfigurationBuilder defaultClusteredBuilder() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();

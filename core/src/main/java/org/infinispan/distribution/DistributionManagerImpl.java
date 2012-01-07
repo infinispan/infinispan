@@ -82,7 +82,6 @@ public class DistributionManagerImpl implements DistributionManager {
    private StateTransferManager stateTransferManager;
 
    private volatile ConsistentHash consistentHash;
-   private volatile Collection<Address> leavers;
 
    /**
     * Default constructor
@@ -137,19 +136,8 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   /**
-    * Modify the {@code nodes} list in-place to remove any invalid nodes.
-    * @return The input list
-    */
-   private List<Address> pruneLeavers(List<Address> nodes) {
-      if (leavers != null) {
-         nodes.removeAll(leavers);
-      }
-      return nodes;
-   }
-
    public List<Address> locate(Object key) {
-      return pruneLeavers(getConsistentHash().locate(key, getReplCount()));
+      return getConsistentHash().locate(key, getReplCount());
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
@@ -157,11 +145,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
-      Map<Object, List<Address>> owners = getConsistentHash().locateAll(keys, numOwners);
-      for (List<Address> keyOwners : owners.values()) {
-         pruneLeavers(keyOwners);
-      }
-      return owners;
+      return getConsistentHash().locateAll(keys, numOwners);
    }
 
    public void transformForL1(CacheEntry entry) {
@@ -250,11 +234,6 @@ public class DistributionManagerImpl implements DistributionManager {
       List<String> l = new LinkedList<String>();
       for (Address a : locate(key)) l.add(a.toString());
       return l;
-   }
-
-   @Override
-   public void setLeavers(Collection<Address> leavers) {
-      this.leavers = leavers;
    }
 
    @Override

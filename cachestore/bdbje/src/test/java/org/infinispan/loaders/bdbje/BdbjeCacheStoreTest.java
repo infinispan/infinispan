@@ -34,7 +34,7 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.util.RuntimeExceptionWrapper;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -311,7 +311,7 @@ public class BdbjeCacheStoreTest {
       replayAll();
       cs.start();
       try {
-         cs.applyModifications(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))));
+         cs.applyModifications(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))));
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -336,7 +336,7 @@ public class BdbjeCacheStoreTest {
       try {
          txn = currentTransaction.beginTransaction(null);
          GlobalTransaction t = gtf.newGlobalTransaction(null, false);
-         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), t, false);
+         cs.prepare(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))), t, false);
          cs.commit(t);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
@@ -357,7 +357,7 @@ public class BdbjeCacheStoreTest {
       cs.start();
       try {
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
-         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), tx, false);
+         cs.prepare(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))), tx, false);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -370,7 +370,7 @@ public class BdbjeCacheStoreTest {
 
    public void testClearOnAbortFromStream() throws Exception {
       start();
-      InternalCacheEntry entry = InternalEntryFactory.create("key", "value");
+      InternalCacheEntry entry = TestInternalCacheEntryFactory.create("key", "value");
       expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
       ObjectInput ois = createMock(ObjectInput.class);
       expect(ois.readLong()).andReturn((long) 1);

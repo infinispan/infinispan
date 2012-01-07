@@ -2,17 +2,15 @@ package org.infinispan.configuration.cache;
 
 import java.util.List;
 
-import org.infinispan.interceptors.base.CommandInterceptor;
-
 public class CustomInterceptorsConfiguration {
    
-   private final List<CommandInterceptor> interceptors;
+   private final List<InterceptorConfiguration> interceptors;
 
-   CustomInterceptorsConfiguration(List<CommandInterceptor> interceptors) {
+   CustomInterceptorsConfiguration(List<InterceptorConfiguration> interceptors) {
       this.interceptors = interceptors;
    }
    
-   public List<CommandInterceptor> interceptors() {
+   public List<InterceptorConfiguration> interceptors() {
       return interceptors;
    }
 

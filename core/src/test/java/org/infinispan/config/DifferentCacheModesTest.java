@@ -41,10 +41,10 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
       try {
          String xml = "<infinispan>" +
                  "<global><transport /></global>" +
-                 "<default><clustering mode=\"r\"><sync /></clustering></default>" +
+                 "<default><clustering mode=\"repl\"><sync /></clustering></default>" +
                  "<namedCache name=\"local\"><clustering mode=\"local\" /></namedCache>" +
-                 "<namedCache name=\"dist\"><clustering mode=\"d\"><sync /></clustering></namedCache>" +
-                 "<namedCache name=\"distasync\"><clustering mode=\"d\"><async /></clustering></namedCache>" +
+                 "<namedCache name=\"dist\"><clustering mode=\"dist\"><sync /></clustering></namedCache>" +
+                 "<namedCache name=\"distasync\"><clustering mode=\"distribution\"><async /></clustering></namedCache>" +
                  "<namedCache name=\"replicationasync\"><clustering mode=\"replication\"><async /></clustering></namedCache>" +
                  "</infinispan>";
 
@@ -80,21 +80,21 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
          String xml =
             "<infinispan>" +
                "<global><transport /></global>" +
-               "<default><clustering mode=\"r\"><sync /></clustering></default>" +
+               "<default><clustering mode=\"repl\"><sync /></clustering></default>" +
                "<namedCache name=\"explicit-state-disable\">" +
-                  "<clustering mode=\"r\">" +
+                  "<clustering mode=\"repl\">" +
                      "<sync />" +
                      "<stateRetrieval fetchInMemoryState=\"false\"/>" +
                   "</clustering>" +
                "</namedCache>" +
                "<namedCache name=\"explicit-state-enable\">" +
-                  "<clustering mode=\"r\">" +
+                  "<clustering mode=\"repl\">" +
                      "<sync />" +
                      "<stateRetrieval fetchInMemoryState=\"true\"/>" +
                   "</clustering>" +
                "</namedCache>" +
                "<namedCache name=\"explicit-state-enable-async\">" +
-                  "<clustering mode=\"r\">" +
+                  "<clustering mode=\"repl\">" +
                      "<async />" +
                      "<stateRetrieval fetchInMemoryState=\"true\"/>" +
                   "</clustering>" +

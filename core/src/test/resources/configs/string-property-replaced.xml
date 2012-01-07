@@ -62,7 +62,7 @@
             syncRollbackPhase="false"
             syncCommitPhase="${test.property.SyncCommitPhase:true}"/>
 
-      <clustering mode="R">
+      <clustering mode="REPL">
          <sync/>
       </clustering>
    </default>

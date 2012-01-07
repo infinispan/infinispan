@@ -23,13 +23,17 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,6 +77,15 @@ public class InterceptorChain {
       }
    }
 
+   private void validateCustomInterceptor(Class<? extends CommandInterceptor> i) {
+      if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
+            !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
+            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
+            ComponentMetadataRepo.findComponentMetadata(i.getName()) == null) {
+         log.customInterceptorExpectsInjection(i.getName());
+      }      
+   }
+   
    /**
     * Ensures that the interceptor of type passed in isn't already added
     *
@@ -97,7 +110,9 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         assertNotAdded(interceptor.getClass());
+         Class<? extends CommandInterceptor> interceptorClass = interceptor.getClass();
+         assertNotAdded(interceptorClass);
+         validateCustomInterceptor(interceptorClass);
          if (position == 0) {
             interceptor.setNext(firstInChain);
             firstInChain = interceptor;
@@ -219,6 +234,9 @@ public class InterceptorChain {
    public boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();
+      Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+      assertNotAdded(interceptorClass);
+      validateCustomInterceptor(interceptorClass);
       try {
          CommandInterceptor it = firstInChain;
          while (it != null) {
@@ -243,6 +261,10 @@ public class InterceptorChain {
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();
+      Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+      assertNotAdded(interceptorClass);
+      validateCustomInterceptor(interceptorClass);
+
       try {
          if (firstInChain.getClass().equals(beforeInterceptor)) {
             toAdd.setNext(firstInChain);
@@ -274,6 +296,10 @@ public class InterceptorChain {
    public boolean replaceInterceptor(CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
       final ReentrantLock lock = this.lock;
       lock.lock();
+      Class<? extends CommandInterceptor> interceptorClass = replacingInterceptor.getClass();
+      assertNotAdded(interceptorClass);
+      validateCustomInterceptor(interceptorClass);
+
       try {
          if (firstInChain.getClass().equals(toBeReplacedInterceptorType)) {
             replacingInterceptor.setNext(firstInChain.getNext());
@@ -301,7 +327,8 @@ public class InterceptorChain {
    /**
     * Appends at the end.
     */
-   public void appendInterceptor(CommandInterceptor ci) {
+   public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
+      if (isCustom) validateCustomInterceptor(ci.getClass());
       // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor it = firstInChain;
       while (it.hasNext()) it = it.getNext();

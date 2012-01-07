@@ -99,9 +99,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          dependencies, in turn.
          --------------------------------------------------------------------------------------------------------------
        */
-      componentRegistry.registerComponent(cache, Cache.class);
-      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
-      componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class);
+      componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
+      componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
    }
 
    /**

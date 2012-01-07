@@ -44,6 +44,15 @@ import java.util.List;
 public class ReflectionUtil {
    private static final Log log = LogFactory.getLog(ReflectionUtil.class);
 
+   private static final String[] EMPTY_STRING_ARRAY = {};
+
+   private static final Class<?>[] primitives = {int.class, byte.class, short.class, long.class,
+                                                 float.class, double.class, boolean.class, char.class};
+
+   private static final Class<?>[] primitiveArrays = {int[].class, byte[].class, short[].class, long[].class,
+                                                      float[].class, double[].class, boolean[].class, char[].class};
+
+
    /**
     * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
     * and private methods, as well as those of superclasses.  Note that this does *not* include overridden methods.
@@ -110,8 +119,29 @@ public class ReflectionUtil {
       return fields;
    }
 
+   public static Method findMethod(Class<?> type, String methodName) {
+      return findRecursively(type, methodName);
+   }
+
+   private static Method findRecursively(Class<?> type, String methodName) {
+      try {
+         return type.getDeclaredMethod(methodName);
+      } catch (NoSuchMethodException e) {
+         if (!type.equals(Object.class)) {
+            if (!type.isInterface()) {
+               return findRecursively(type.getSuperclass(), methodName);
+            }
+         }
+      }
+      return null;
+   }
+
    public static Method findMethod(Class<?> type, String methodName, Class[] parameters) {
       return findRecursively(type, methodName, parameters);
+   }
+
+   public static Method findMethod(Class<?> type, String methodName, String[] parameters) throws ClassNotFoundException {
+      return findRecursively(type, methodName, toClassArray(parameters));
    }
 
    private static Method findRecursively(Class<?> type, String methodName, Class[] parameters) {
@@ -207,7 +237,7 @@ public class ReflectionUtil {
       }
    }
 
-   public static Method findGetterForField(Class<?> c, String fieldName) throws NoSuchMethodException {
+   public static Method findGetterForField(Class<?> c, String fieldName) {
       for (Method m : c.getDeclaredMethods()) {
          String name = m.getName();
          String s = null;
@@ -221,8 +251,40 @@ public class ReflectionUtil {
             return m;
          }
       }
-      throw new NoSuchMethodException("Cannot find getter method  for field " + fieldName + " in " + c + " or superclasses");
+      return null;
    }
+
+   public static Method findSetterForField(Class<?> c, String fieldName) {
+      for (Method m : c.getDeclaredMethods()) {
+         String name = m.getName();
+         String s = null;
+         if (name.startsWith("set")) {
+            s = name.substring(3);
+         }
+
+         if (s != null && s.equalsIgnoreCase(fieldName)) {
+            return m;
+         }
+      }
+      return null;
+   }
+
+   public static String extractFieldName(String setterOrGetter) {
+      String field = null;
+      if (setterOrGetter.startsWith("set") || setterOrGetter.startsWith("get"))
+         field = setterOrGetter.substring(3);
+      else if (setterOrGetter.startsWith("is"))
+         field = setterOrGetter.substring(2);
+
+      if (field != null && field.length() > 1) {
+         StringBuilder sb = new StringBuilder();
+         sb.append(Character.toLowerCase(field.charAt(0)));
+         if (field.length() > 2) sb.append(field.substring(1));
+         return sb.toString();
+      }
+      return null;
+   }
+
 
    /**
     * Retrieves the value of a field of an object instance via reflection
@@ -285,5 +347,64 @@ public class ReflectionUtil {
     */
    public static boolean isAnnotationPresent(Class clazz, Class<? extends Annotation> annotation) {
       return getAnnotation(clazz, annotation) != null;
+   }
+
+   public static boolean isSetMethod(Method method) {
+      return (method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method
+            .getReturnType() == java.lang.Void.TYPE);
+   }
+
+   public static boolean isGetMethod(Method method) {
+      return (method.getParameterTypes().length == 0
+                    && method.getReturnType() != java.lang.Void.TYPE && method.getName().startsWith(
+            "get"));
+   }
+
+   public static boolean isIsMethod(Method method) {
+      return (method.getParameterTypes().length == 0
+                    && (method.getReturnType() == boolean.class || method.getReturnType() == Boolean.class) && method
+            .getName().startsWith("is"));
+   }
+
+   public static Class[] toClassArray(String[] typeList) throws ClassNotFoundException {
+      if (typeList == null) return new Class[0];
+      Class[] retval = new Class[typeList.length];
+      int i = 0;
+      ClassLoader classLoader = ReflectionUtil.class.getClassLoader();
+      for (String s : typeList) retval[i++] = getClassForName(s, classLoader);
+      return retval;
+   }
+
+   public static Class<?> getClassForName(String name, ClassLoader cl) throws ClassNotFoundException {
+      try {
+         return Util.loadClassStrict(name, cl);
+      } catch (ClassNotFoundException cnfe) {
+         // Could be a primitive - let's check
+         for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;
+         for (Class<?> primitive : primitiveArrays) if (name.equals(primitive.getName())) return primitive;
+      }
+      throw new ClassNotFoundException("Class " + name + " cannot be found");
+   }
+
+   public static String[] toStringArray(Class[] classes) {
+      if (classes == null)
+         return EMPTY_STRING_ARRAY;
+      else {
+         String[] classNames = new String[classes.length];
+         for (int i=0; i<classes.length; i++) classNames[i] = classes[i].getName();
+         return classNames;
+      }
+   }
+
+   public static Field getField(String fieldName, Class<?> objectClass) {
+      try {
+         return objectClass.getDeclaredField(fieldName);
+      } catch (NoSuchFieldException e) {
+         if (!objectClass.equals(Object.class)) {
+            return getField(fieldName, objectClass.getSuperclass());
+         } else {
+            return null;
+         }
+      }
    }
 }

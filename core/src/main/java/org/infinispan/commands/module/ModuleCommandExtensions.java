@@ -17,33 +17,18 @@
  * 02110-1301 USA
  */
 
-package org.infinispan.configuration.cache;
+package org.infinispan.commands.module;
 
 /**
- * // TODO: Document this
+ * Module command extensions
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.1
  */
-public abstract class AbstractLockSupportCacheStoreConfigurationBuilder<T>
-      extends AbstractLoaderConfigurationChildBuilder<T> {
+public interface ModuleCommandExtensions {
 
-   // TODO Add defaults
-   int lockConcurrencyLevel;
-   long lockAcquistionTimeout;
+   ExtendedModuleCommandFactory getModuleCommandFactory();
 
-   protected AbstractLockSupportCacheStoreConfigurationBuilder(LoaderConfigurationBuilder builder) {
-      super(builder);
-   }
-
-   public AbstractLockSupportCacheStoreConfigurationBuilder lockConcurrencyLevel(int lockConcurrencyLevel) {
-      this.lockConcurrencyLevel = lockConcurrencyLevel;
-      return this;
-   }
-
-   public AbstractLockSupportCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout) {
-      this.lockAcquistionTimeout = lockAcquistionTimeout;
-      return this;
-   }
+   ModuleCommandInitializer getModuleCommandInitializer();
 
 }

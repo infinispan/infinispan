@@ -51,6 +51,8 @@ import java.util.concurrent.TimeoutException;
 @Scope(Scopes.NAMED_CACHE)
 public interface StateTransferLock {
 
+   int NO_BLOCKING_CACHE_VIEW = -1;
+
    boolean acquireForCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException;
 
    boolean acquireForCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException;
@@ -75,6 +77,8 @@ public interface StateTransferLock {
    void blockNewTransactions(int cacheViewId) throws InterruptedException;
 
    void unblockNewTransactions(int cacheViewId) throws InterruptedException;
+
+   void blockNewTransactionsAsync();
 
    boolean areNewTransactionsBlocked();
 

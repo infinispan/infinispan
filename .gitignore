@@ -34,4 +34,6 @@ core/src/main/resources/schema
 *.pyc
 # Jandex generated indexes
 *.idx
+# Persisted metadata
+*.dat
 

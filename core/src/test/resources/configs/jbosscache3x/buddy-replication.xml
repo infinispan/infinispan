@@ -50,7 +50,7 @@
          <FD_SOCK/>
          <FD max_tries="5" shun="true" timeout="10000"/>
          <VERIFY_SUSPECT timeout="1500"/>
-         <pbcast.NAKACK discard_delivered_msgs="true" gc_lag="0" retransmit_timeout="300,600,1200,2400,4800"
+         <pbcast.NAKACK discard_delivered_msgs="true" retransmit_timeout="300,600,1200,2400,4800"
                         use_mcast_xmit="false"/>
          <pbcast.STABLE desired_avg_gossip="50000" max_bytes="400000" stability_delay="1000"/>
          <pbcast.GMS join_timeout="5000" print_local_addr="true" shun="false"

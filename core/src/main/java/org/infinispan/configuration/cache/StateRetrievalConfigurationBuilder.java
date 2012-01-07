@@ -19,7 +19,7 @@ public class StateRetrievalConfigurationBuilder extends
    private Boolean fetchInMemoryState = null;
    private long initialRetryWaitTime = 500L;
    private long logFlushTimeout = TimeUnit.MINUTES.toMillis(1);
-   private int maxNonPorgressingLogWrites = 100;
+   private int maxNonProgressingLogWrites = 100;
    private int numRetries = 5;
    private int retryWaitTimeIncreaseFactor = 2;
    private long timeout = TimeUnit.MINUTES.toMillis(4);
@@ -67,8 +67,8 @@ public class StateRetrievalConfigurationBuilder extends
     * This is the maximum number of non-progressing transaction log writes after which a brute-force
     * flush approach is resorted to, to synchronize transaction logs.
     */
-   public StateRetrievalConfigurationBuilder maxNonPorgressingLogWrites(int i) {
-      this.maxNonPorgressingLogWrites = i;
+   public StateRetrievalConfigurationBuilder maxNonProgressingLogWrites(int i) {
+      this.maxNonProgressingLogWrites = i;
       return this;
    }
 
@@ -102,7 +102,7 @@ public class StateRetrievalConfigurationBuilder extends
       // certain combinations are illegal, such as state transfer + DIST
       if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isDistributed())
          throw new ConfigurationException(
-               "Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
+               "Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true on cache named " + getBuilder().name + ".  Perhaps you meant to enable rehashing?");
    }
 
    @Override
@@ -110,14 +110,30 @@ public class StateRetrievalConfigurationBuilder extends
 
       // If replicated and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
-      if (getClusteringBuilder().cacheMode().isReplicated() && fetchInMemoryState == null) {
+      Boolean _fetchInMemoryState = fetchInMemoryState;
+      if (getClusteringBuilder().cacheMode().isReplicated() && _fetchInMemoryState == null) {
          log.debug("Cache is replicated but state transfer was not defined, so force enabling it");
-         fetchInMemoryState(true);
+         _fetchInMemoryState = true;
       }
-      if (fetchInMemoryState == null)
-         fetchInMemoryState = false;
-      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState.booleanValue(),
-            initialRetryWaitTime, logFlushTimeout, maxNonPorgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
+      
+      if (_fetchInMemoryState == null)
+         _fetchInMemoryState = false;
+      
+      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, _fetchInMemoryState.booleanValue(), fetchInMemoryState,
+            initialRetryWaitTime, logFlushTimeout, maxNonProgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
+   }
+   
+   public StateRetrievalConfigurationBuilder read(StateRetrievalConfiguration template) {
+      this.alwaysProvideInMemoryState = template.alwaysProvideInMemoryState();
+      this.fetchInMemoryState = template.originalFetchInMemoryState();
+      this.initialRetryWaitTime = template.initialRetryWaitTime();
+      this.logFlushTimeout = template.logFlushTimeout();
+      this.maxNonProgressingLogWrites = template.maxNonProgressingLogWrites();
+      this.numRetries = template.numRetries();
+      this.retryWaitTimeIncreaseFactor = template.retryWaitTimeIncreaseFactor();
+      this.timeout = template.timeout();
+      
+      return this;
    }
 
 }

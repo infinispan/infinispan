@@ -25,7 +25,7 @@ package org.infinispan.jmx;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -94,7 +94,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.put("key", "value2");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       cache.put("a", "c");
       assertStoreAccess(1, 0, 3);
       assert cacheStore.load("a").getValue().equals("c");
@@ -108,7 +108,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.get("key").equals("value");
       assertStoreAccess(0, 0, 1);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.get("a").equals("b");
       assertStoreAccess(1, 0, 1);
 
@@ -130,7 +130,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.remove("no_such_key");
       assertStoreAccess(0, 1, 1);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.remove("a").equals("b");
       assertStoreAccess(1, 1, 1);
    }
@@ -143,7 +143,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.replace("key", "value2").equals("value");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.replace("a", "c").equals("b");
       assertStoreAccess(1, 0, 3);
 

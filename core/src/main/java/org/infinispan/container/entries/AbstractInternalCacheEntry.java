@@ -33,12 +33,12 @@ import org.infinispan.container.versioning.EntryVersion;
  */
 public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
-   Object key;
+   protected Object key;
 
-   AbstractInternalCacheEntry() {
+   protected AbstractInternalCacheEntry() {
    }
 
-   AbstractInternalCacheEntry(Object key) {
+   protected AbstractInternalCacheEntry(Object key) {
       this.key = key;
    }
 
@@ -103,6 +103,16 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    public void setLifespan(long lifespan) {
+   }
+
+   @Override
+   public EntryVersion getVersion() {
+      return null;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+      // no-op
    }
 
    public final Object getKey() {

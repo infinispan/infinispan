@@ -24,7 +24,6 @@ package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
@@ -61,14 +60,13 @@ import java.util.concurrent.ConcurrentMap;
 public class DefaultDataContainer implements DataContainer {
 
    final ConcurrentMap<Object, InternalCacheEntry> entries;
-   final InternalEntryFactory entryFactory;
+   InternalEntryFactory entryFactory;
    final DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
 
-   protected DefaultDataContainer(int concurrencyLevel) {
+   public DefaultDataContainer(int concurrencyLevel) {
       entries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f,concurrencyLevel);
-      entryFactory = new InternalEntryFactory();
       evictionListener = null;
    }
 
@@ -101,13 +99,13 @@ public class DefaultDataContainer implements DataContainer {
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
       entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
-      entryFactory = new InternalEntryFactory();
    }
 
    @Inject
-   public void initialize(EvictionManager evictionManager, PassivationManager passivator) {
+   public void initialize(EvictionManager evictionManager, PassivationManager passivator, InternalEntryFactory entryFactory) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
+      this.entryFactory = entryFactory;
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
@@ -150,7 +148,7 @@ public class DefaultDataContainer implements DataContainer {
          }
       } else {
          // this is a brand-new entry
-         e = entryFactory.createNewEntry(k, v, version, lifespan, maxIdle);
+         e = entryFactory.create(k, v, version, lifespan, maxIdle);
       }
       entries.put(k, e);
    }

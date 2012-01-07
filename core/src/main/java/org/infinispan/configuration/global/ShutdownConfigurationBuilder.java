@@ -22,4 +22,11 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
    ShutdownConfiguration create() {
       return new ShutdownConfiguration(shutdownHookBehavior);
    }
+   
+   @Override
+   ShutdownConfigurationBuilder read(ShutdownConfiguration template) {
+      this.shutdownHookBehavior = template.hookBehavior();
+      
+      return this;
+   }
 }

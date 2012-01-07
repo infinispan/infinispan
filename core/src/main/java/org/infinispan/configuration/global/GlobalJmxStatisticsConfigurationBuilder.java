@@ -90,7 +90,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    public GlobalJmxStatisticsConfigurationBuilder enable() {
-      this.enabled = false;
+      this.enabled = true;
       return this;
    }
    
@@ -107,5 +107,17 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    @Override
    GlobalJmxStatisticsConfiguration create() {
       return new GlobalJmxStatisticsConfiguration(enabled, jmxDomain, mBeanServerLookupInstance, allowDuplicateDomains,  cacheManagerName, TypedProperties.toTypedProperties(properties));
+   }
+   
+   @Override
+   GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
+      this.allowDuplicateDomains = template.allowDuplicateDomains();
+      this.cacheManagerName = template.cacheManagerName();
+      this.enabled = template.enabled();
+      this.jmxDomain = template.domain();
+      this.mBeanServerLookupInstance = template.mbeanServerLookup();
+      this.properties = template.properties();
+      
+      return this;
    }
 }

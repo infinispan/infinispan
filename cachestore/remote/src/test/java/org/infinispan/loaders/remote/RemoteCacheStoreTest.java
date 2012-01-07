@@ -23,7 +23,7 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
@@ -103,12 +103,12 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
 
    @Override
    public void testReplaceExpiredEntry() throws Exception {
-      cs.store(InternalEntryFactory.create("k1", "v1", 100));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", 100));
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
       TestingUtil.sleepThread(1100);
       assert null == cs.load("k1");
-      cs.store(InternalEntryFactory.create("k1", "v2", 100));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v2", 100));
       assert cs.load("k1").getValue().equals("v2");
    }
 }

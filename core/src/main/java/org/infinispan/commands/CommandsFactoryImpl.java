@@ -49,6 +49,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
@@ -110,6 +111,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private RecoveryManager recoveryManager;
    private StateTransferManager stateTransferManager;
    private LockManager lockManager;
+   private InternalEntryFactory entryFactory;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -118,7 +120,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager) {
+                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager,
+                                 InternalEntryFactory entryFactory) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -131,6 +134,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.recoveryManager = recoveryManager;
       this.stateTransferManager = stateTransferManager;
       this.lockManager = lockManager;
+      this.entryFactory = entryFactory;
    }
 
    @Start(priority = 1)
@@ -190,7 +194,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public EntrySetCommand buildEntrySetCommand() {
       if (cachedEntrySetCommand == null) {
-         cachedEntrySetCommand = new EntrySetCommand(dataContainer);
+         cachedEntrySetCommand = new EntrySetCommand(dataContainer, entryFactory);
       }
       return cachedEntrySetCommand;
    }
@@ -215,8 +219,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
-   public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
-      return new VersionedPrepareCommand(cacheName, gtx, modifications);
+   public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
+      return new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
    }
 
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
@@ -314,7 +318,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(icc, this, interceptorChain, distributionManager, txTable);
+            clusteredGetCommand.initialize(icc, this, entryFactory, interceptorChain, distributionManager, txTable);
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;

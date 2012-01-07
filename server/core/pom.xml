@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>5.1.0.CR1</version>
+      <version>5.1.0.CR2</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -12,6 +12,11 @@
    <packaging>bundle</packaging>
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
+
+   
+   <properties>
+      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+   </properties>
 
    <dependencies>
       <dependency>

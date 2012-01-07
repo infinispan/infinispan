@@ -27,7 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -262,7 +262,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testLoading() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
-      for (int i = 1; i < 5; i++) store.store(InternalEntryFactory.create("k" + i, "v" + i));
+      for (int i = 1; i < 5; i++) store.store(TestInternalCacheEntryFactory.create("k" + i, "v" + i));
       for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
       // make sure we have no stale locks!!
       assertNoLocks(cache);
@@ -463,8 +463,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testLoadingToMemory() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2");
-      store.store(InternalEntryFactory.create("k1", "v1"));
-      store.store(InternalEntryFactory.create("k2", "v2"));
+      store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store.store(TestInternalCacheEntryFactory.create("k2", "v2"));
 
       assertInStoreNotInCache("k1", "k2");
 

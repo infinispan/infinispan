@@ -22,13 +22,10 @@
  */
 package org.infinispan.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-
 import org.infinispan.AdvancedCache;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -36,16 +33,18 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest {
 
    @Test
    public void testDefault() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-              "<infinispan\n" +
-              "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-              "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
-              "      xmlns=\"urn:infinispan:config:5.0\">" +
+              "<infinispan>" +
               "<default><dataContainer /></default>" + 
               "</infinispan>";
 
@@ -68,10 +67,7 @@ public class DataContainerTest {
    @Test
    public void testCustomDataContainerClass() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-              "<infinispan\n" +
-              "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-              "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
-              "      xmlns=\"urn:infinispan:config:5.0\">" +
+              "<infinispan>" +
               "<default><dataContainer class=\"" + QueryableDataContainer.class.getName() + "\">" +
               "<properties><property name=\"foo\" value=\"bar\" /></properties>" +
            	  "</dataContainer></default>" + 
@@ -81,17 +77,19 @@ public class DataContainerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(stream);
       try {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
-         
-         QueryableDataContainer.setDelegate(DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel()));
-         
+
+         DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         QueryableDataContainer.setDelegate(ddc);
+
          // Verify that the default is correctly established
-         Assert.assertEquals(cm.getDefaultConfiguration().getDataContainerClass(), QueryableDataContainer.class.getName());
+         Assert.assertEquals(cm.getDefaultConfiguration().getDataContainer().getClass().getName(), QueryableDataContainer.class.getName());
          
          Assert.assertEquals(cache.getDataContainer().getClass(), QueryableDataContainer.class);
          
          QueryableDataContainer dataContainer = QueryableDataContainer.class.cast(cache.getDataContainer());
          
-         Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "setFoo(bar)"));
+         Assert.assertFalse(checkLoggedOperations(dataContainer.getLoggedOperations(), "setFoo(bar)"));
          
          cache.put("name", "Pete");
          
@@ -112,9 +110,11 @@ public class DataContainerTest {
       
       try {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
-         
-         QueryableDataContainer.setDelegate(DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel()));
-         
+
+         DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         QueryableDataContainer.setDelegate(ddc);
+
          // Verify that the config is correct
          Assert.assertEquals(cm.getDefaultConfiguration().getDataContainer().getClass(), QueryableDataContainer.class);
          

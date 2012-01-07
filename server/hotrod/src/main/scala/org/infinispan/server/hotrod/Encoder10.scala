@@ -49,7 +49,7 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
-                  writeTopologyHeader(t, buf, addressCache)
+                  writeTopologyHeader(this, t, buf, addressCache)
                else
                   writeHashTopologyHeader(t, buf, addressCache)
             }
@@ -61,7 +61,11 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
       }
    }
 
-   override def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager) {
+   override def writeResponse(r: Response, buf: ChannelBuffer, cm: EmbeddedCacheManager) =
+      writeResponse(this, r, buf, cm)
+
+   def writeResponse(log: Log, r: Response, buf: ChannelBuffer,
+                              cacheManager: EmbeddedCacheManager) {
       r match {
          case r: ResponseWithPrevious => {
             if (r.previous == None)
@@ -83,13 +87,13 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
             }
          }
          case g: BulkGetResponse => {
-            trace("About to respond to bulk get request")
+            log.trace("About to respond to bulk get request")
             if (g.status == Success) {
                val cache: Cache[ByteArrayKey, CacheValue] =
                      getCacheInstance(g.cacheName, cacheManager)
                var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
-                  trace("About to write (max) %d messages to the client", g.count)
+                  log.trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
@@ -129,9 +133,9 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
       } else null
    }
 
-   def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer,
+   def writeTopologyHeader(log: Log, t: TopologyAwareResponse, buffer: ChannelBuffer,
                            addrCache: Cache[Address, ServerAddress]) {
-      trace("Write topology change response header %s", t)
+      log.trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(t.viewId, buffer)
       val serverAddresses = addrCache.values()

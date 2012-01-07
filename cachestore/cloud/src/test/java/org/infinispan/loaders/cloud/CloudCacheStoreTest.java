@@ -24,7 +24,7 @@ package org.infinispan.loaders.cloud;
 
 import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.BaseCacheStoreTest;
@@ -114,9 +114,9 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
    public void testStreamingAPI() throws CacheLoaderException, IOException {
-      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
-      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
-      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", -1, -1));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -149,7 +149,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
 
    public void testNegativeHashCodes() throws CacheLoaderException {
       ObjectWithNegativeHashcode objectWithNegativeHashcode = new ObjectWithNegativeHashcode();
-      cs.store(InternalEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
       InternalCacheEntry ice = cs.load(objectWithNegativeHashcode);
       assert ice.getKey().equals(objectWithNegativeHashcode);
       assert ice.getValue().equals("hello");
@@ -184,9 +184,9 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
    public void testStreamingAPIReusingStreams() throws CacheLoaderException, IOException {
-      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
-      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
-      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", -1, -1));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();

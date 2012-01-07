@@ -21,8 +21,6 @@
  */
 package org.infinispan.query.clustered;
 
-import java.util.UUID;
-
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -30,6 +28,8 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
+
+import java.util.UUID;
 
 /**
  * Encapsulates all rpc calls for distributed queries actions
@@ -187,4 +187,8 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return true;
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

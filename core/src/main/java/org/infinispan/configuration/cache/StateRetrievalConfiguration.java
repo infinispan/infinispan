@@ -7,21 +7,23 @@ package org.infinispan.configuration.cache;
 public class StateRetrievalConfiguration {
 
    private final boolean alwaysProvideInMemoryState;
-   private boolean fetchInMemoryState;
+   private Boolean fetchInMemoryState;
+   private final Boolean originalFetchInMemoryState;
    private final long initialRetryWaitTime;
    private final long logFlushTimeout;
-   private final int maxNonPorgressingLogWrites;
+   private final int maxNonProgressingLogWrites;
    private final int numRetries;
    private final int retryWaitTimeIncreaseFactor;
    private long timeout;
 
-   StateRetrievalConfiguration(boolean alwaysProvideInMemoryState, boolean fetchInMemoryState, long initialRetryWaitTime,
+   StateRetrievalConfiguration(boolean alwaysProvideInMemoryState, boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long initialRetryWaitTime,
          long logFlushTimeout, int maxNonPorgressingLogWrites, int numRetries, int retryWaitTimeIncreaseFactory, long timeout) {
       this.alwaysProvideInMemoryState = alwaysProvideInMemoryState;
       this.fetchInMemoryState = fetchInMemoryState;
+      this.originalFetchInMemoryState = originalFetchInMemoryState;
       this.initialRetryWaitTime = initialRetryWaitTime;
       this.logFlushTimeout = logFlushTimeout;
-      this.maxNonPorgressingLogWrites = maxNonPorgressingLogWrites;
+      this.maxNonProgressingLogWrites = maxNonPorgressingLogWrites;
       this.numRetries = numRetries;
       this.retryWaitTimeIncreaseFactor = retryWaitTimeIncreaseFactory;
       this.timeout = timeout;
@@ -51,6 +53,11 @@ public class StateRetrievalConfiguration {
       this.fetchInMemoryState = b;
       return this;
    }
+   
+   protected Boolean originalFetchInMemoryState() {
+      return originalFetchInMemoryState;
+   }
+   
 
    /**
     * Initial wait time when backing off before retrying state transfer retrieval
@@ -71,8 +78,8 @@ public class StateRetrievalConfiguration {
     * This is the maximum number of non-progressing transaction log writes after which a
     * brute-force flush approach is resorted to, to synchronize transaction logs.
     */
-   public int maxNonPorgressingLogWrites() {
-      return maxNonPorgressingLogWrites;
+   public int maxNonProgressingLogWrites() {
+      return maxNonProgressingLogWrites;
    }
 
    /**

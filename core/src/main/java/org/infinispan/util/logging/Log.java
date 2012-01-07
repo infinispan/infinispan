@@ -36,7 +36,6 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.TypedProperties;
@@ -803,4 +802,17 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to prepare view %s for cache  %s, rolling back to view %s", id = 172)
    void cacheViewPrepareFailure(@Cause Throwable e, CacheView newView, String cacheName, CacheView committedView);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
+   void customInterceptorExpectsInjection(String customInterceptorFQCN);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error reading configuration", id = 174)
+   void errorReadingConfiguration(@Cause Exception e);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error closing resource", id = 175)
+   void failedToCloseResource(@Cause Throwable e);
+   
 }

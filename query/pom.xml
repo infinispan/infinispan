@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.0.CR1</version>
+      <version>5.1.0.CR2</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -12,6 +12,12 @@
    <packaging>bundle</packaging>
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
+
+   
+   <properties>
+      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

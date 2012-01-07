@@ -103,6 +103,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    public Configuration getDefaultConfiguration() {
       return cm.getDefaultConfiguration();
    }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
+      return cm.getDefaultCacheConfiguration();
+   }
 
    @Override
    public Set<String> getCacheNames() {

@@ -76,6 +76,15 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.rehashEnabled = true;
       return this;
    }
+   
+   /**
+    * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
+    * node leaves
+    */
+   public HashConfigurationBuilder rehashEnabled(boolean enabled) {
+      this.rehashEnabled = enabled;
+      return this;
+   }
 
    /**
     * Disable rebalancing and rehashing, which would have taken place when a new node joins the
@@ -127,4 +136,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
             rehashWait, groupsConfigurationBuilder.create());
    }
 
+   @Override
+   public HashConfigurationBuilder read(HashConfiguration template) {
+      this.consistentHash = template.consistentHash();
+      this.hash = template.hash();
+      this.numOwners = template.numOwners();
+      this.numVirtualNodes = template.numVirtualNodes();
+      this.rehashEnabled = template.rehashEnabled();
+      this.rehashRpcTimeout = template.rehashRpcTimeout();
+      this.rehashWait = template.rehashWait();
+      
+      this.groupsConfigurationBuilder.read(template.groupsConfiguration());
+      
+      return this;
+   }
+   
 }

@@ -7,15 +7,16 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 
 public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder<CustomInterceptorsConfiguration> {
 
-   private List<CommandInterceptor> interceptors = new LinkedList<CommandInterceptor>();
+   private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();
    
    CustomInterceptorsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
    
-   public CustomInterceptorsConfigurationBuilder addInterceptor(CommandInterceptor interceptor) {
-      this.interceptors.add(interceptor);
-      return this;
+   public InterceptorConfigurationBuilder addInterceptor() {
+      InterceptorConfigurationBuilder builder = new InterceptorConfigurationBuilder(this);
+      this.interceptorBuilders.add(builder);
+      return builder;
    }
 
    @Override
@@ -26,7 +27,20 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    CustomInterceptorsConfiguration create() {
+      List<InterceptorConfiguration> interceptors = new LinkedList<InterceptorConfiguration>();
+      for (InterceptorConfigurationBuilder builder : interceptorBuilders) {
+         interceptors.add(builder.create());
+      }
       return new CustomInterceptorsConfiguration(interceptors);
+   }
+   
+   @Override
+   public CustomInterceptorsConfigurationBuilder read(CustomInterceptorsConfiguration template) {
+      this.interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();
+      for (InterceptorConfiguration c : template.interceptors()) {
+         this.interceptorBuilders.add(new InterceptorConfigurationBuilder(this).read(c));
+      }
+      return this;
    }
 
 }

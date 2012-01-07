@@ -58,10 +58,10 @@ public class ExternalCacheContainerTest extends Arquillian {
    private AdvancedCache<?, ?> quickCache;
 
    public void testLargeCache() {
-      assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 100);
+      assertEquals(largeCache.getCacheConfiguration().eviction().maxEntries(), 100);
    }
 
    public void testQuickCache() {
-      assertEquals(quickCache.getConfiguration().getExpirationWakeUpInterval(), 1);
+      assertEquals(quickCache.getCacheConfiguration().expiration().wakeUpInterval(), 1);
    }
 }

@@ -22,7 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
@@ -40,16 +39,14 @@ import java.util.Set;
  */
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
-   Object value;
-   volatile EntryVersion version;
+   public Object value;
 
-   ImmortalCacheValue(Object value, EntryVersion version) {
+   public ImmortalCacheValue(Object value) {
       this.value = value;
-      this.version = version;
    }
 
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new ImmortalCacheEntry(key, value, version);
+      return new ImmortalCacheEntry(key, value);
    }
 
    public final Object setValue(Object value) {
@@ -111,7 +108,6 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    public String toString() {
       return "ImmortalCacheValue{" +
             "value=" + value +
-            "version=" + version +
             '}';
    }
 
@@ -128,14 +124,12 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       @Override
       public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
-         output.writeObject(icv.version);
       }
 
       @Override
       public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
-         EntryVersion ver = (EntryVersion) input.readObject();
-         return new ImmortalCacheValue(v, ver);
+         return new ImmortalCacheValue(v);
       }
 
       @Override

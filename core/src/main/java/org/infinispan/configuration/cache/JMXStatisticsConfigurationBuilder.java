@@ -34,4 +34,11 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
       return new JMXStatisticsConfiguration(enabled);
    }
    
+   @Override
+   public JMXStatisticsConfigurationBuilder read(JMXStatisticsConfiguration template) {
+      this.enabled = template.enabled();
+      
+      return this;
+   }
+   
 }

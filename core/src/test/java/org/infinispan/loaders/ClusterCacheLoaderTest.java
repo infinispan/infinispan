@@ -25,7 +25,7 @@ package org.infinispan.loaders;
 import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -85,7 +85,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
-      cs2.store(InternalEntryFactory.create("key", "value"));
+      cs2.store(TestInternalCacheEntryFactory.create("key", "value"));
       assert cs2.load("key").getValue().equals("value");
       assert cache1.get("key").equals("value");
    }

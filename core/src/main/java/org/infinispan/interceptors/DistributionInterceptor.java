@@ -58,6 +58,8 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -98,6 +100,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
    };
    private boolean isPessimisticCache;
+
+   private static final Log log = LogFactory.getLog(DistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,
@@ -373,13 +383,16 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
          if (!resendTo.isEmpty()) {
             log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            // Make sure this is 1-Phase!!
-            PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
             rpcManager.invokeRemotely(resendTo, pc, true, true);
          }
       }
    }
-
+   
+   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
+      // Make sure this is 1-Phase!!
+      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+   }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

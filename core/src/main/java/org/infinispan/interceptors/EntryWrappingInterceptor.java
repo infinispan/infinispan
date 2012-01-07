@@ -1,9 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -12,13 +8,13 @@
  *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
 
 package org.infinispan.interceptors;
@@ -39,6 +35,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -55,7 +53,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private EntryFactory entryFactory;
    protected DataContainer dataContainer;
    protected ClusteringDependentLogic cll;
-   private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
+   protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
+
+   private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
@@ -162,6 +167,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected void commitContextEntries(InvocationContext ctx) {
       Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
+      Log log = getLog();
+      boolean trace = log.isTraceEnabled();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();

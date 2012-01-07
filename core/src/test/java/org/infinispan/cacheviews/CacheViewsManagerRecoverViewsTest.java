@@ -22,134 +22,63 @@
  */
 package org.infinispan.cacheviews;
 
-import org.easymock.EasyMock;
-import org.infinispan.commands.control.CacheViewControlCommand;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.util.Util;
+import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+@Test(groups = "stress", testName = "cacheviews.CacheViewsManagerRecoverViewsTest")
+@CleanupAfterMethod
+public class CacheViewsManagerRecoverViewsTest extends MultipleCacheManagersTest {
 
-import static org.easymock.EasyMock.*;
+   Cache c1, c2;
+   DISCARD d1, d2;
 
-@Test(groups = "unit", testName = "cacheviews.CacheViewsManagerRecoverViewsTest")
-public class CacheViewsManagerRecoverViewsTest extends AbstractInfinispanTest {
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      createClusteredCaches(2, "cache",
+            getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC),
+                  new TransportFlags().withFD(true).withMerge(true));
 
-   private Address a1 = new TestAddress(1, "CacheViewsManagerRecoverViewsTest");
-   private Address a2 = new TestAddress(2, "CacheViewsManagerRecoverViewsTest");
-   private Address a3 = new TestAddress(3, "CacheViewsManagerRecoverViewsTest");
-   private Address a4 = new TestAddress(4, "CacheViewsManagerRecoverViewsTest");
-
-   public void testRecover1() throws Exception {
-      Transport mockTransport = createStrictMock(Transport.class);
-      makeThreadSafe(mockTransport, true);
-      CacheViewListener mockListener = createStrictMock(CacheViewListener.class);
-      makeThreadSafe(mockListener, true);
-
-      List<Address> members1_1 = Arrays.asList(a1);
-      CacheView v1_1 = new CacheView(1, members1_1);
-      List<Address> members1_2 = Arrays.asList(a2, a3, a4);
-      CacheView v1_2 = new CacheView(3, members1_2);
-      List<Address> members2 = Arrays.asList(a1, a2, a3, a4);
-      CacheView v2 = new CacheView(4, members2);
-      Map<Address, Response> noResponse = new HashMap<Address, Response>();
-      Map<Address, Response> nullResponses = buildMap(Arrays.asList(a2, a3, a4), Arrays.<Response>asList(null, null, null));
-
-      // during start
-      expect(mockTransport.getAddress()).andReturn(a1);
-      expect(mockTransport.getMembers()).andReturn(members1_1);
-
-      expect(mockTransport.getCoordinator()).andReturn(a1);
-      expect(mockTransport.isCoordinator()).andReturn(true);
-
-      // after join, installing the first view
-      mockListener.prepareView(v1_1, CacheView.EMPTY_CACHE_VIEW);
-      expect(mockTransport.invokeRemotely(eq(members1_1),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(noResponse);
-      mockListener.updateLeavers(Collections.<Address>emptySet());
-      mockListener.commitView(v1_1.getViewId());
-      expect(mockTransport.invokeRemotely(eq(members1_1),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(noResponse);
-
-      // after the merge notification
-      expect(mockTransport.getCoordinator()).andReturn(a1);
-      expect(mockTransport.isCoordinator()).andReturn(true);
-
-      // recovering the views
-      Map<Address, Response> recoveredViews = buildMap(Arrays.asList(a2, a3, a4),
-            Arrays.<Response>asList(new SuccessfulResponse(Collections.singletonMap("cache", v1_2)),
-                  new SuccessfulResponse(Collections.singletonMap("cache", v1_2)),
-                  new SuccessfulResponse(Collections.singletonMap("cache", v1_2))));
-      expect(mockTransport.invokeRemotely(EasyMock.<Collection>isNull(),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(recoveredViews);
-
-      // roll back each partition to the recovered view
-      mockListener.rollbackView(v1_1.getViewId());
-      expect(mockTransport.invokeRemotely(eq(members1_2),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(nullResponses);
-
-      // installing the new merged view
-      mockListener.prepareView(v2, v1_1);
-      expect(mockTransport.invokeRemotely(eq(members1_2),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(nullResponses);
-      mockListener.updateLeavers(Collections.<Address>emptySet());
-      mockListener.commitView(v2.getViewId());
-      expect(mockTransport.invokeRemotely(eq(members1_2),
-            isA(CacheViewControlCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),
-            anyLong(), anyBoolean(), EasyMock.<ResponseFilter>isNull(), eq(false)))
-            .andReturn(nullResponses);
-
-      replay(mockTransport, mockListener);
-
-      CacheManagerNotifierImpl notifier = new CacheManagerNotifierImpl();
-      notifier.start();
-      ExecutorService asyncTransportExecutor = new WithinThreadExecutor();
-      GlobalConfiguration gc = new GlobalConfiguration();
-      CacheViewsManagerImpl cvm = new CacheViewsManagerImpl();
-      cvm.init(notifier, mockTransport, asyncTransportExecutor, gc);
-      cvm.start();
-      try {
-         cvm.join("cache", mockListener);
-         Thread.sleep(1000);
-         notifier.notifyMerge(members2, members1_1, a1, 3, Arrays.asList(members1_1, members1_2));
-         Thread.sleep(1000);
-         verify(mockTransport, mockListener);
-      } finally {
-         cvm.stop();
-      }
+      c1 = cache(0, "cache");
+      c2 = cache(1, "cache");
+      d1 = TestingUtil.getDiscardForCache(c1);
+      d1.setExcludeItself(true);
+      d2 = TestingUtil.getDiscardForCache(c2);
+      d2.setExcludeItself(true);
    }
 
-   private <K, V> Map<K, V> buildMap(List<? extends K> keys, List<? extends V> values) {
-      Map<K, V> map = new HashMap<K, V>();
-      for (int i = 0; i < keys.size(); i++) {
-         map.put(keys.get(i), values.get(i));
+   public void testRecoverLoop() throws Exception {
+      for (int i = 0; i < 3; i++) {
+         // create the partitions
+         log.debugf("Splitting the cluster in two");
+         d1.setDiscardAll(true);
+         d2.setDiscardAll(true);
+
+         // wait for the partitions to form
+         TestingUtil.blockUntilViewsReceived(60000, false, c1);
+         TestingUtil.waitForRehashToComplete(c1);
+         TestingUtil.blockUntilViewsReceived(60000, false, c2);
+         TestingUtil.waitForRehashToComplete(c2);
+
+         // merge the two partitions
+         log.debugf("Merging the cluster partitions");
+         d1.setDiscardAll(false);
+         d2.setDiscardAll(false);
+         // wait for the merged cluster to form
+         long startTime = System.currentTimeMillis();
+         TestingUtil.blockUntilViewsReceived(30000, c1, c2);
+         TestingUtil.waitForRehashToComplete(c1, c2);
+         long endTime = System.currentTimeMillis();
+
+         log.debugf("Merge took %s", Util.prettyPrintTime(endTime - startTime));
+         assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
       }
-      return map;
+      log.debugf("Test finished without any failure");
    }
 }

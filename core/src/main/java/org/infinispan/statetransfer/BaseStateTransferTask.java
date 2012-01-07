@@ -108,30 +108,34 @@ public abstract class BaseStateTransferTask {
       } catch (Exception e) {
          log.errorUnblockingTransactions(e);
       }
-      stateTransferManager.endStateTransfer();
       log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
             Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
-   public void cancelStateTransfer() {
+   public void cancelStateTransfer(boolean sync, boolean releaseStateTransferLock) {
       synchronized (lock) {
          cancelled = true;
-         while (running) {
-            try {
-               lock.wait();
-            } catch (InterruptedException e) {
-               // restore the interrupted flag
-               Thread.currentThread().interrupt();
-               break;
+         if (sync) {
+            while (running) {
+               try {
+                  lock.wait(configuration.getCacheStopTimeout());
+               } catch (InterruptedException e) {
+                  // restore the interrupted flag
+                  Thread.currentThread().interrupt();
+                  break;
+               }
             }
          }
       }
 
-      try {
-         stateTransferLock.unblockNewTransactions(newViewId);
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
+      if (releaseStateTransferLock) {
+         try {
+            stateTransferLock.unblockNewTransactions(newViewId);
+         } catch (Exception e) {
+            log.errorUnblockingTransactions(e);
+         }
       }
+
       log.debugf("Node %s cancelled state transfer for view %d after %s!", self, newViewId,
             Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }

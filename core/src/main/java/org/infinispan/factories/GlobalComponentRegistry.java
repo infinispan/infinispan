@@ -28,6 +28,7 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -83,8 +84,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private final ModuleProperties moduleProperties = new ModuleProperties();
    final List<ModuleLifecycle> moduleLifecycles;
-   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -97,8 +96,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       super(configuration.getClassLoader()); // registers the default classloader
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
+
+      // Load up the component metadata
+      ComponentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(defaultClassLoader), defaultClassLoader);
+
       try {
-         // this order is important ... 
+         // this order is important ...
          globalConfiguration = configuration;
 
          registerComponent(this, GlobalComponentRegistry.class);
@@ -107,7 +110,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
-         Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories(configuration.getClassLoader());
+         moduleProperties.loadModuleCommandHandlers(configuration.getClassLoader());
+         Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
@@ -118,6 +122,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   @Override
    protected Log getLog() {
       return log;
    }
@@ -175,9 +180,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public Map<Byte,ModuleCommandInitializer> getModuleCommandInitializers() {
-            return moduleProperties.moduleCommandInitializers(defaultClassLoader);
+      return moduleProperties.moduleCommandInitializers();
    }
-
 
    @Override
    public void start() {
@@ -214,6 +218,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   @Override
    public void stop() {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
@@ -222,11 +227,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          }
       }
 
-      // Grab the executor factory
-      NamedExecutorsFactory execFactory = getComponent(NamedExecutorsFactory.class);
       super.stop();
-      // Now that all components are stopped, shutdown their executors
-      execFactory.stop();
 
       if (state == ComponentStatus.TERMINATED && needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {

@@ -26,10 +26,10 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -70,6 +70,8 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
    private DistributionManager distributionManager;
    private TransactionTable txTable;
+   private InternalEntryFactory entryFactory;
+
 
    private ClusteredGetCommand() {
       super(null); // For command id uniqueness test
@@ -97,13 +99,14 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       this(key, cacheName, flags, false, null);
    }
 
-   public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory,
+   public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
                           InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable) {
       this.distributionManager = distributionManager;
       this.icc = icc;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.txTable = txTable;
+      this.entryFactory = entryFactory;
    }
 
    /**
@@ -131,7 +134,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (cacheEntry instanceof MVCCEntry) {
          if (trace) log.trace("Handling an internal cache entry...");
          MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
-         return InternalEntryFactory.createValue(mvccEntry.getValue(), mvccEntry.getVersion(), -1, mvccEntry.getLifespan(), -1, mvccEntry.getMaxIdle());
+         return entryFactory.createValue(mvccEntry);
       } else {
          InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
          return internalCacheEntry.toInternalCacheValue();
@@ -202,5 +205,10 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    @Override
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 }

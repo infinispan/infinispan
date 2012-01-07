@@ -24,6 +24,7 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -46,7 +47,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 5.1
  */
-public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
+public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
 
    protected TransactionTable txTable;
 
@@ -75,6 +76,17 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
          lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      try {
+         return super.visitGetKeyValueCommand(ctx, command);
+      } finally {
+         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+         //locks need to be released in this situation as they might have been acquired from L1.
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
@@ -152,7 +164,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          checkForPendingLocks = viewId > txTable.getMinViewId();
       }
 
-      log.tracef("Locking key %s, checking for pending locks? %s", key, checkForPendingLocks);
+      getLog().tracef("Locking key %s, checking for pending locks? %s", key, checkForPendingLocks);
       if (!checkForPendingLocks) {
          lockManager.acquireLock(ctx, key);
       } else {
@@ -169,10 +181,10 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
 
          //then try to acquire lock
          final long remaining = expectedEndTime - nowMillis();
-         if (remaining < 0) {
+         if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
          } else {
-            log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
+            getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
             lockManager.acquireLock(ctx, key, remaining);
          }
       }

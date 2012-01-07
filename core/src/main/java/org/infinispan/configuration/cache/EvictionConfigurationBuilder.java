@@ -67,5 +67,14 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    EvictionConfiguration create() {
       return new EvictionConfiguration(maxEntries, strategy, threadPolicy);
    }
+   
+   @Override
+   public EvictionConfigurationBuilder read(EvictionConfiguration template) {
+      this.maxEntries = template.maxEntries();
+      this.strategy = template.strategy();
+      this.threadPolicy = template.threadPolicy();
+      
+      return this;
+   }
 
 }

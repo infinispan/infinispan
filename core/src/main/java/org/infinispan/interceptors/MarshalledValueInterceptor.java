@@ -32,8 +32,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.ComponentName;
@@ -43,6 +43,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,10 +75,20 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    private StreamingMarshaller marshaller;
    private boolean wrapKeys = true;
    private boolean wrapValues = true;
+   private InternalEntryFactory entryFactory;
+
+   private static final Log log = LogFactory.getLog(MarshalledValueInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
-   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller, InternalEntryFactory entryFactory) {
       this.marshaller = marshaller;
+      this.entryFactory = entryFactory;
    }
 
    @Start
@@ -243,8 +255,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
          }
-         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value, entry.getVersion(),
-                                                                                                          entry.getCreated(), entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle()));
+         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(entryFactory.create(key, value, entry));
          copy.add(newEntry);
       }
       return Immutables.immutableSetWrap(copy);

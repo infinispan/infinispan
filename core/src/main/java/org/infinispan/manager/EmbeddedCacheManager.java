@@ -25,6 +25,7 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -88,11 +89,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    /**
     * Defines a named cache's configuration using the following algorithm:
     * <p/>
-    * If cache name hasn't been defined before, this method creates a clone of the default cache's configuration,
-    * applies a clone of the configuration overrides passed in and returns this configuration instance.
-    * <p/>
-    * If cache name has been previously defined, this method creates a clone of this cache's existing configuration,
-    * applies a clone of the configuration overrides passed in and returns the configuration instance.
+    * Unlike previous versions of Infinispan, this method does not build on an existing configuration (default or named).
+    * If you want this behavior, then use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
     * <p/>
     * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
     * manager.  This method enables you to override certain properties that have previously been defined via XML.
@@ -175,7 +173,15 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *
     * @return the default configuration associated with this CacheManager
     */
+   @Deprecated
    Configuration getDefaultConfiguration();
+   
+   /**
+    * Returns default configuration for this CacheManager
+    *
+    * @return the default configuration associated with this CacheManager
+    */
+   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
 
    /**
     * This method returns a collection of caches names which contains the

@@ -33,8 +33,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.StaleTransactionCleanupService;
-import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -80,33 +78,6 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
          TestingUtil.blockUntilViewsReceived(60000, cm1, cm2);
          verify(mockNotifier);
 
-      } finally {
-         TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
-      }
-   }
-
-   public void testMockCacheStartedAndStopped() {
-      cm1 = TestCacheManagerFactory.createLocalCacheManager(false);
-      cm1.getCache();
-      CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
-      CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
-      try {
-         cm1.defineConfiguration("testCache", new Configuration());
-         mockNotifier.notifyCacheStarted("testCache");
-         mockNotifier.addListener(isA(StaleTransactionCleanupService.class));
-         mockNotifier.addListener(isA(TransactionTable.class));
-         replay(mockNotifier);
-         // start a second cache.
-         Cache testCache = cm1.getCache("testCache");
-         verify(mockNotifier);
-
-         reset(mockNotifier);
-         mockNotifier.removeListener(isA(StaleTransactionCleanupService.class));
-         mockNotifier.removeListener(isA(TransactionTable.class));
-         mockNotifier.notifyCacheStopped("testCache");
-         replay(mockNotifier);
-         testCache.stop();
-         verify(mockNotifier);
       } finally {
          TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
       }

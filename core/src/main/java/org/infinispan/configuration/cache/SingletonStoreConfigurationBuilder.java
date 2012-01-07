@@ -8,12 +8,17 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private long pushStateTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean pushStateWhenCoordinator = true;
    
-   SingletonStoreConfigurationBuilder(LoaderConfigurationBuilder builder) {
+   SingletonStoreConfigurationBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
       super(builder);
    }
 
    public SingletonStoreConfigurationBuilder enable() {
       this.enabled = true;
+      return this;
+   }
+   
+   public SingletonStoreConfigurationBuilder enabled(boolean enabled) {
+      this.enabled = enabled;
       return this;
    }
    
@@ -41,6 +46,15 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    @Override
    SingletonStoreConfiguration create() {
       return new SingletonStoreConfiguration(enabled, pushStateTimeout, pushStateWhenCoordinator);
+   }
+   
+   @Override
+   public SingletonStoreConfigurationBuilder read(SingletonStoreConfiguration template) {
+      this.enabled = template.enabled();
+      this.pushStateTimeout = template.pushStateTimeout();
+      this.pushStateWhenCoordinator = template.pushStateWhenCoordinator();
+      
+      return this;
    }
    
 }

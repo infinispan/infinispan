@@ -166,7 +166,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
          log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
       }
@@ -176,6 +176,9 @@ public class TestingUtil {
       waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
    }
 
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
    public static void waitForInitRehashToComplete(Cache... caches) {
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
@@ -188,12 +191,15 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
          log.trace("Node " + rpcManager.getAddress() + " finished join task.");
       }
    }
 
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
    public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
       Set<Cache> cachesSet = new HashSet<Cache>();
       cachesSet.addAll(caches);

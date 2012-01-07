@@ -62,4 +62,12 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       return new ScheduledExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
    }
    
+   @Override
+   public ScheduledExecutorFactoryConfigurationBuilder read(ScheduledExecutorFactoryConfiguration template) {
+      this.factory = template.factory();
+      this.properties = template.properties();
+      
+      return this;
+   }
+   
 }

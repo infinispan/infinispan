@@ -46,4 +46,9 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    public Set<Object> getAffectedKeys() {
       return Collections.singleton(key);
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return flags == null || !flags.contains(Flag.SKIP_REMOTE_LOOKUP);
+   }
 }

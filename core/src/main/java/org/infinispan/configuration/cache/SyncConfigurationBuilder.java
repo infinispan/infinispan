@@ -33,5 +33,12 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
    SyncConfiguration create() {
       return new SyncConfiguration(replTimeout);
    }
+   
+   @Override
+   public SyncConfigurationBuilder read(SyncConfiguration template) {
+      this.replTimeout = template.replTimeout();
+      
+      return this;
+   }
 
 }

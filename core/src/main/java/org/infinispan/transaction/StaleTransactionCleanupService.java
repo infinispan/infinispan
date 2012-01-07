@@ -184,6 +184,7 @@ public class StaleTransactionCleanupService {
    }
 
    public void stop() {
-      lockBreakingService.shutdownNow();
+      if (lockBreakingService != null)
+         lockBreakingService.shutdownNow();
    }
 }

@@ -100,4 +100,9 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    public ReplicableCommand getCommand() {
       return command;
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 }

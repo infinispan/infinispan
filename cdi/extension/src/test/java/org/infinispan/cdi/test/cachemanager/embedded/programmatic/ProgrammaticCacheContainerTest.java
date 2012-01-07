@@ -57,7 +57,7 @@ public class ProgrammaticCacheContainerTest extends Arquillian {
    private SmallCacheObservers observers;
 
    public void testSmallCache() {
-      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
+      assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 7);
       assertEquals(observers.getCacheStartedEventCount(), 1);
    }
 }

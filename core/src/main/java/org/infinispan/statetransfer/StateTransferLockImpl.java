@@ -63,7 +63,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final int NO_BLOCKING_CACHE_VIEW = -1;
 
    // TODO Find a way to interrupt all transactions waiting for answers from remote nodes or waiting on key locks
    // TODO Reuse the ReentrantReadWriteLock's Sync and put all the state in one volatile
@@ -76,18 +75,17 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final Object lock = new Object();
 
    // stored configuration options
-   private boolean stateTransferEnabled;
    private boolean pessimisticLocking;
    private long lockTimeout;
+   private boolean isSync;
 
    public StateTransferLockImpl() {
    }
 
    @Inject
    public void injectDependencies(Configuration config) {
-      stateTransferEnabled = (config.getCacheMode().isDistributed() && config.isRehashEnabled())
-            || (config.getCacheMode().isReplicated() && config.isStateTransferEnabled());
       pessimisticLocking =  config.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
+      isSync = config.getCacheMode().isSynchronous();
       lockTimeout = config.getRehashWaitTime();
    }
 
@@ -207,7 +205,7 @@ public class StateTransferLockImpl implements StateTransferLock {
             long end = System.currentTimeMillis() + lockTimeout;
             long timeout = lockTimeout;
             synchronized (lock) {
-               while (timeout >= 0 && blockingCacheViewId < newCacheViewId) {
+               while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
                   if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
                   lock.wait(timeout);
                   timeout = end - System.currentTimeMillis();
@@ -225,8 +223,13 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       synchronized (lock) {
          writesShouldBlock = true;
-         if (writesBlocked == true)
-            throw new IllegalStateException("Trying to block write commands but they are already blocked");
+         if (writesBlocked == true) {
+            if (blockingCacheViewId < cacheViewId) {
+               log.tracef("Write commands were already blocked for cache view %d", blockingCacheViewId);
+            } else {
+               throw new IllegalStateException(String.format("Trying to block write commands but they are already blocked for view %d", blockingCacheViewId));
+            }
+         }
 
          // TODO Add a timeout parameter
          while (runningWritesCount.get() != 0) {
@@ -239,7 +242,16 @@ public class StateTransferLockImpl implements StateTransferLock {
    }
 
    @Override
+   public void blockNewTransactionsAsync() {
+      if (!writesShouldBlock) {
+         log.debugf("Blocking new write commands because we'll soon start a state transfer");
+         writesShouldBlock = true;
+      }
+   }
+
+   @Override
    public void unblockNewTransactions(int cacheViewId) {
+      log.debugf("Unblocking write commands for cache view %d", cacheViewId);
       synchronized (lock) {
          if (!writesBlocked)
             throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d but they were not blocked", cacheViewId));
@@ -253,7 +265,7 @@ public class StateTransferLockImpl implements StateTransferLock {
             throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d, but they were blocked with view id %d",
                   cacheViewId, blockingCacheViewId));
       }
-      log.debugf("Unblocked write commands for cache view %d", cacheViewId);
+      log.tracef("Unblocked write commands for cache view %d", cacheViewId);
    }
 
    @Override
@@ -274,8 +286,9 @@ public class StateTransferLockImpl implements StateTransferLock {
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
       // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command
-      if (!ctx.isOriginLocal())
+      // The originator should wait for the state transfer to end and retry the command,
+      // unless we are async, in which case we can't retry
+      if (!ctx.isOriginLocal() && isSync)
          return false;
 
       // A state transfer is in progress, wait for it to end
@@ -291,7 +304,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
             // retry, unless the timeout expired
             timeout = endTime - System.currentTimeMillis();
-            if (timeout < 0)
+            if (timeout <= 0)
                return false;
          }
       }
@@ -299,12 +312,13 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    private boolean acquireLockForWriteNoWait() {
       // Because we use multiple volatile variables for the state this involves a lot of volatile reads
-      // (at least 2 reads of writesShouldBlock, 1 read+write of runningWritesCount)
+      // (at least 1 read of writesShouldBlock, 1 read+write of runningWritesCount)
       // With one state variable the fast path should go down to 1 read + 1 cas
       if (!writesShouldBlock) {
          int previousWrites = runningWritesCount.getAndIncrement();
-         // someone could have blocked new writes, check again
-         if (!writesShouldBlock) {
+         // if there were no other write commands running someone could have blocked new writes
+         // check the local first to skip a volatile read on writesShouldBlock
+         if (previousWrites != 0 || !writesShouldBlock) {
             if (trace) {
                if (traceThreadWrites.get() == Boolean.TRUE)
                   log.error("Trying to acquire state transfer shared lock, but this thread already has it", new Exception());
@@ -329,8 +343,9 @@ public class StateTransferLockImpl implements StateTransferLock {
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
       // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command
-      if (!ctx.isOriginLocal())
+      // The originator should wait for the state transfer to end and retry the command,
+      // unless we are async, in which case we can't retry
+      if (!ctx.isOriginLocal() && isSync)
          return false;
 
       // A state transfer is in progress, wait for it to end

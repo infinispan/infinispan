@@ -41,6 +41,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -74,6 +76,13 @@ public class QueryInterceptor extends CommandInterceptor {
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ExecutorService asyncExecutor;
+
+   private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
@@ -114,12 +123,12 @@ public class QueryInterceptor extends CommandInterceptor {
 
          // New entry so we will add it to the indexes.
          if(entry.isCreated()) {
-            log.debug("Entry is created");
+            getLog().debug("Entry is created");
             addToIndexes(value, extractValue(key));
          }
          else{
             // This means that the entry is just modified so we need to update the indexes and not add to them.
-            log.debug("Entry is changed");
+            getLog().debug("Entry is changed");
             updateIndexes(value, extractValue(key));
          }
 
@@ -186,7 +195,7 @@ public class QueryInterceptor extends CommandInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {
-         if (trace) log.trace("shouldModifyIndexes() is true and we can clear the indexes");
+         if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
 
          for (Class c : this.knownClasses.keySet()) {
             EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
@@ -201,7 +210,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
    // Method that will be called when data needs to be added into Lucene.
    protected void addToIndexes(Object value, Object key) {
-      if (trace) log.tracef("Adding to indexes for key [%s] and value [%s]", key, value);
+      if (getLog().isTraceEnabled()) getLog().tracef("Adding to indexes for key [%s] and value [%s]", key, value);
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.

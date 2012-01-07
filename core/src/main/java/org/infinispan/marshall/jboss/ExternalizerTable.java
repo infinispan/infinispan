@@ -45,6 +45,14 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.entries.versioned.VersionedImmortalCacheEntry;
+import org.infinispan.container.entries.versioned.VersionedImmortalCacheValue;
+import org.infinispan.container.entries.versioned.VersionedMortalCacheEntry;
+import org.infinispan.container.entries.versioned.VersionedMortalCacheValue;
+import org.infinispan.container.entries.versioned.VersionedTransientCacheEntry;
+import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
+import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
+import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
@@ -170,6 +178,15 @@ public class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new MortalCacheValue.Externalizer());
       internalExternalizers.add(new TransientCacheValue.Externalizer());
       internalExternalizers.add(new TransientMortalCacheValue.Externalizer());
+
+      internalExternalizers.add(new VersionedImmortalCacheEntry.Externalizer());
+      internalExternalizers.add(new VersionedMortalCacheEntry.Externalizer());
+      internalExternalizers.add(new VersionedTransientCacheEntry.Externalizer());
+      internalExternalizers.add(new VersionedTransientMortalCacheEntry.Externalizer());
+      internalExternalizers.add(new VersionedImmortalCacheValue.Externalizer());
+      internalExternalizers.add(new VersionedMortalCacheValue.Externalizer());
+      internalExternalizers.add(new VersionedTransientCacheValue.Externalizer());
+      internalExternalizers.add(new VersionedTransientMortalCacheValue.Externalizer());
 
       internalExternalizers.add(new AtomicHashMap.Externalizer());
       internalExternalizers.add(new Bucket.Externalizer());

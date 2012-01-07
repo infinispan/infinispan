@@ -47,7 +47,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    @Override
    void validate() {
       if (writeSkewCheck) {
-         if (isolationLevel != IsolationLevel.REPEATABLE_READ) throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level");
+         if (isolationLevel != IsolationLevel.REPEATABLE_READ) throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache " + getBuilder().name);
          if (transaction().lockingMode != LockingMode.OPTIMISTIC) throw new ConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
          if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)
             throw new ConfigurationException("Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
@@ -60,5 +60,16 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    @Override
    LockingConfiguration create() {
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
+   }
+   
+   @Override
+   public LockingConfigurationBuilder read(LockingConfiguration template) {
+      concurrencyLevel = template.concurrencyLevel();
+      isolationLevel = template.isolationLevel();
+      lockAcquisitionTimeout = template.lockAcquisitionTimeout();
+      useLockStriping = template.useLockStriping();
+      writeSkewCheck = template.writeSkewCheck();
+      
+      return this;
    }
 }

@@ -22,13 +22,9 @@
  */
 package org.infinispan.eviction;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -39,6 +35,11 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.util.Util;
 import org.testng.annotations.Test;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest", enabled = false, description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container!")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
@@ -111,7 +112,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       boolean marshalledValueCreated;
       
       MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
-         injectMarshaller(marshaller);
+         injectMarshaller(marshaller, new InternalEntryFactoryImpl());
       }
 
       @Override

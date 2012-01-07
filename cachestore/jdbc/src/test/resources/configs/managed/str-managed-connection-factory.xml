@@ -21,10 +21,7 @@
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
-<infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
-      xmlns="urn:infinispan:config:4.0">
+<infinispan>
 
    <global>
 

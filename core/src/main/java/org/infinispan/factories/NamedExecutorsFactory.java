@@ -26,6 +26,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.Util;
 
 import java.util.Properties;
@@ -100,6 +101,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       }
    }
 
+   @Stop(priority = 999)
    public void stop() {
       if (notificationExecutor != null) notificationExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();

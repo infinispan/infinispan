@@ -23,6 +23,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry extends Map.Entry<Object, Object> {
+public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.
@@ -145,16 +146,4 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     * flag is set to false.
     */
    boolean undelete(boolean doUndelete);
-   // TODO- do we need an un-versioned CacheEntry as well?
-    /**
-    * @return the version of the entry.  May be null if versioning is not supported, and must never be null if versioning
-    * is supported.
-    */
-   EntryVersion getVersion();
-
-   /**
-    * Sets the version on this entry.
-    * @param version version to set
-    */
-   void setVersion(EntryVersion version);
 }

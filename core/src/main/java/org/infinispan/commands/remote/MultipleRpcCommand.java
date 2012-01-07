@@ -131,4 +131,9 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
             ", cacheName='" + cacheName + '\'' +
             '}';
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 }

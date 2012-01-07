@@ -19,24 +19,32 @@
 
 package org.infinispan.configuration.cache;
 
-import java.beans.PropertyEditorSupport;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.util.TypedProperties;
+
 /**
- * // TODO: Document this
- *
+ * File cache store configuration builder
+ * 
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.1
  */
-public class FileCacheStoreConfigurationBuilder
-      extends AbstractLockSupportCacheStoreConfigurationBuilder<FileCacheStoreConfiguration> {
+public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> {
 
    private String location = "Infinispan-FileCacheStore";
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
+   private boolean fetchPersistentState = false;
+   private boolean ignoreModifications = false;
+   private boolean purgeOnStartup = false;
+   private boolean purgeSynchronously = false;
+   private int lockConcurrencyLevel;
+   private long lockAcquistionTimeout;
+   private Properties properties = new Properties();
 
-   protected FileCacheStoreConfigurationBuilder(LoaderConfigurationBuilder builder) {
+   protected FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 
@@ -65,48 +73,41 @@ public class FileCacheStoreConfigurationBuilder
       // TODO: Customise this generated block
    }
 
-   @Override
-   FileCacheStoreConfiguration create() {
-      return new FileCacheStoreConfiguration(
-            lockAcquistionTimeout, lockConcurrencyLevel, location, fsyncInterval,
-            fsyncMode, streamBufferSize);
-   }
-
    // Shared with others cache stores...
 
-   @Override
    public FileCacheStoreConfigurationBuilder purgeOnStartup(boolean purgeOnStartup) {
-      super.purgeOnStartup(purgeOnStartup);
+      this.purgeOnStartup = purgeOnStartup;
       return this;
    }
 
-   @Override
    public FileCacheStoreConfigurationBuilder purgeSynchronously(boolean purgeSynchronously) {
-      super.purgeSynchronously(purgeSynchronously);
+      this.purgeSynchronously = purgeSynchronously;
       return this;
    }
 
-   @Override
    public FileCacheStoreConfigurationBuilder fetchPersistentState(boolean fetchPersistentState) {
-      super.fetchPersistentState(fetchPersistentState);
+      this.fetchPersistentState = fetchPersistentState;
       return this;
    }
 
-   @Override
    public FileCacheStoreConfigurationBuilder ignoreModifications(boolean ignoreModifications) {
-      super.ignoreModifications(ignoreModifications);
+      this.ignoreModifications = ignoreModifications;
       return this;
    }
 
-   @Override
    public FileCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout) {
-      super.lockAcquistionTimeout(lockAcquistionTimeout);
+      this.lockAcquistionTimeout = lockAcquistionTimeout;
       return this;
    }
 
-   @Override
    public FileCacheStoreConfigurationBuilder lockConcurrencyLevel(int lockConcurrencyLevel) {
-      super.lockConcurrencyLevel(lockConcurrencyLevel);
+      this.lockConcurrencyLevel = lockConcurrencyLevel;
+      return this;
+   }
+   
+   @Override
+   public AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> withProperties(Properties p) {
+      this.properties = p;
       return this;
    }
 
@@ -114,30 +115,33 @@ public class FileCacheStoreConfigurationBuilder
       DEFAULT, PER_WRITE, PERIODIC
    }
 
-   /**
-    * Property editor for fsync mode configuration. It's automatically
-    * registered the {@link java.beans.PropertyEditorManager} so that it can
-    * transform text based modes into its corresponding enum value.
-    */
-   public static class FsyncModeEditor extends PropertyEditorSupport {
-      private FsyncMode mode;
-
-      @Override
-      public void setAsText(String text) throws IllegalArgumentException {
-         if (text.equals("default"))
-            mode = FsyncMode.DEFAULT;
-         else if (text.equals("perWrite"))
-            mode = FsyncMode.PER_WRITE;
-         else if (text.equals("periodic"))
-            mode = FsyncMode.PERIODIC;
-         else
-            throw new IllegalArgumentException("Unknown fsyncMode value: " + text);
-      }
-
-      @Override
-      public Object getValue() {
-         return mode;
-      }
+   @Override
+   FileCacheStoreConfiguration create() {
+      return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
+            streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
+            purgeOnStartup, purgeSynchronously, fetchPersistentState,
+            ignoreModifications, TypedProperties.toTypedProperties(properties),
+            async.create(), singletonStore.create());
+   }
+   
+   @Override
+   public FileCacheStoreConfigurationBuilder read(FileCacheStoreConfiguration template) {
+      fetchPersistentState = template.fetchPersistentState();
+      fsyncInterval = template.fsyncInterval();
+      fsyncMode = template.fsyncMode();
+      ignoreModifications = template.ignoreModifications();
+      location = template.location();
+      lockAcquistionTimeout = template.lockAcquistionTimeout();
+      lockConcurrencyLevel = template.lockConcurrencyLevel();
+      properties = template.properties();
+      purgeOnStartup = template.purgeOnStartup();
+      purgeSynchronously = template.purgeSynchronously();
+      streamBufferSize = template.streamBufferSize();
+      
+      this.async.read(template.async());
+      this.singletonStore.read(template.singletonStore());
+      
+      return this;
    }
 
 }

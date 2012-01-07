@@ -25,7 +25,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    private String nodeName;
    private Properties properties = new Properties();
-   private Boolean strictPeerToPeer = true;
+   private boolean strictPeerToPeer = true;
    
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -157,10 +157,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    @Override
    TransportConfiguration create() {
-      Transport t = transport;
-      if (t == null)
+      if (transport == null)
          defaultTransport();
-      return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, t, nodeName, TypedProperties.toTypedProperties(properties));
+      return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
    }
    
    public TransportConfigurationBuilder defaultTransport() {
@@ -170,6 +169,21 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    public TransportConfigurationBuilder clearTransport() {
       transport(null);
+      return this;
+   }
+   
+   @Override
+   TransportConfigurationBuilder read(TransportConfiguration template) {
+      this.clusterName = template.clusterName();
+      this.distributedSyncTimeout = template.distributedSyncTimeout();
+      this.machineId = template.machineId();
+      this.nodeName = template.nodeName();
+      this.properties = template.properties();
+      this.rackId = template.rackId();
+      this.siteId = template.siteId();
+      this.strictPeerToPeer = template.strictPeerToPeer();
+      this.transport = template.transport();
+      
       return this;
    }
 }

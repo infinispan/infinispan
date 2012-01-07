@@ -1,16 +1,5 @@
 package org.infinispan.marshall.jboss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.concurrent.ConcurrentMap;
-
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
@@ -26,6 +15,17 @@ import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
  *
@@ -36,7 +36,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
    protected final MarshallingConfiguration baseCfg;
-   protected final MarshallerFactory factory;
+   protected static final MarshallerFactory factory = new JBossMarshallerFactory();
    /**
     * Cache of classes that are considered to be marshallable. Since checking
     * whether a type is marshallable requires attempting to marshalling them,
@@ -46,7 +46,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    private final ConcurrentMap<Class, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class, Boolean>();
 
    public AbstractJBossMarshaller() {
-      factory = new JBossMarshallerFactory();
       // Class resolver now set when marshaller/unmarshaller will be created
       baseCfg = new MarshallingConfiguration();
       baseCfg.setCreator(new SunReflectiveCreator());

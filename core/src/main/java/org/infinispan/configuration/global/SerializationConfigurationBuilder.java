@@ -44,6 +44,19 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       this.marshallVersion = marshallVersion;
       return this;
    }
+   
+   /**
+    * Largest allowable version to use when marshalling internal state. Set this to the lowest
+    * version cache instance in your cluster to ensure compatibility of communications. However,
+    * setting this too low will mean you lose out on the benefit of improvements in newer
+    * versions of the marshaller.
+    *
+    * @param marshallVersion
+    */
+   public SerializationConfigurationBuilder version(String marshallVersion) {
+      this.marshallVersion = Version.getVersionShort(marshallVersion);
+      return this;
+   }
 
    /**
     * Helper method that allows for quick registration of an {@link org.infinispan.marshall.AdvancedExternalizer} implementation
@@ -91,5 +104,14 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    SerializationConfiguration create() {
       return new SerializationConfiguration(marshallerClass, marshallVersion, advancedExternalizers);
+   }
+   
+   @Override
+   SerializationConfigurationBuilder read(SerializationConfiguration template) {
+      this.advancedExternalizers = template.advancedExternalizers();
+      this.marshallerClass = template.marshallerClass();
+      this.marshallVersion = template.version();
+      
+      return this;
    }
 }

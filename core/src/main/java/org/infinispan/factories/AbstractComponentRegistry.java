@@ -25,21 +25,21 @@ package org.infinispan.factories;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
-import org.infinispan.util.reflect.AnnotatedMethodCache;
-import org.infinispan.util.reflect.CachedMethod;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,7 +91,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    /**
     * Contains class definitions of component factories that can be used to construct certain components
     */
-   private Map<String, Class<? extends AbstractComponentFactory>> defaultFactories = null;
+//   private Map<String, Class<? extends AbstractComponentFactory>> defaultFactories = null;
 
    private static final Object NULL_COMPONENT = new Object();
 
@@ -100,6 +100,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
    protected final ClassLoader defaultClassLoader;
+
+   private static final PrioritizedMethod[] EMPTY_PRIO_METHODS = {};
 
    /**
     * Retrieves the state of the registry
@@ -127,12 +129,39 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    public void wireDependencies(Object target) throws ConfigurationException {
       try {
-         List<CachedMethod> methods = AnnotatedMethodCache.getInjectMethods(target.getClass(), getClass().getClassLoader());
+         Class targetClass = target.getClass();
+         ComponentMetadata metadata = ComponentMetadataRepo.findComponentMetadata(targetClass);
+         if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
+            // search for anything we need to inject
+            for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
+               Class[] methodParameters = injectMetadata.getParameterClasses();
+               if (methodParameters == null) {
+                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters());
+                  injectMetadata.setParameterClasses(methodParameters);
+               }
 
-         // search for anything we need to inject
-         for (CachedMethod method : methods) invokeInjectionMethod(target, method);
+               Method method = injectMetadata.getMethod();
+               if (method == null) {
+                  method = ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), methodParameters);
+                  injectMetadata.setMethod(method);
+               }
+               invokeInjectionMethod(target, injectMetadata);
+            }
+         }
       } catch (Exception e) {
          throw new ConfigurationException("Unable to configure component (type: " + target.getClass() + ", instance " + target + ")", e);
+      }
+   }
+
+   private ConcreteParameter[] toConcreteParameterArray(ComponentMetadata.InjectMetadata injectMetadata, Class[] parameterClasses) {
+      String[] injectMetadataParameters = injectMetadata.getParameters();
+      if (injectMetadataParameters == null || injectMetadataParameters.length == 0) {
+         return new ConcreteParameter[0];
+      } else {
+         ConcreteParameter[] c = new ConcreteParameter[injectMetadataParameters.length];
+         for (int i = 0; i < injectMetadataParameters.length; i++)
+            c[i] = new ConcreteParameter(injectMetadata.getParameterName(i), parameterClasses[i]);
+         return c;
       }
    }
 
@@ -144,27 +173,34 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param type      type of component
     */
    public final void registerComponent(Object component, Class type) {
-      registerComponent(component, type.getName());
+      registerComponent(component, type.getName(), type.equals(component.getClass()));
    }
 
    public final void registerComponent(Object component, String name) {
-      boolean survivesRestarts = ReflectionUtil.isAnnotationPresent(component.getClass(), SurvivesRestarts.class);
-      registerComponentInternal(component, name, survivesRestarts);
+      registerComponent(component, name, name.equals(component.getClass().getName()));
+   }
+
+   public final void registerComponent(Object component, String name, boolean nameIsFQCN) {
+      registerComponentInternal(component, name, nameIsFQCN);
    }
 
    protected final void registerNonVolatileComponent(Object component, String name) {
-      registerComponentInternal(component, name, true);
+      registerComponentInternal(component, name, false);
    }
 
    protected final void registerNonVolatileComponent(Object component, Class type) {
-      registerNonVolatileComponent(component, type.getName());
+      registerComponentInternal(component, type.getName(), true);
    }
 
-   protected void registerComponentInternal(Object component, String name, boolean survivesRestarts) {
+   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
 
+      if (component.getClass().getSimpleName().endsWith("SomeInterceptor")) {
+         System.out.println("Scoundrel");
+      }
+      
       if (old != null) {
          // if they are equal don't bother
          if (old.instance.equals(component)) {
@@ -185,9 +221,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          c.instance = component;
          componentLookup.put(name, c);
       }
-      c.survivesRestarts = survivesRestarts;
 
-      addComponentDependencies(c);
+      c.metadata = ComponentMetadataRepo.findComponentMetadata(component.getClass());
+      try {
+         c.buildInjectionMethodsList();
+      } catch (ClassNotFoundException cnfe) {
+         throw new CacheException(cnfe);
+      }
       // inject dependencies for this component
       // we inject dependencies only after the component is already in the map to support cyclical dependencies
       c.injectDependencies();
@@ -196,49 +236,20 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (state == ComponentStatus.RUNNING) populateLifeCycleMethods(c);
    }
 
-   /**
-    * Adds component dependencies for a given component, by populating {@link Component#injectionMethods}.
-    *
-    * @param c component to add dependencies to
-    */
-   protected void addComponentDependencies(Component c) {
-      Class type = c.instance.getClass();
-      c.injectionMethods = AnnotatedMethodCache.getInjectMethods(type, getClass().getClassLoader());
-   }
-
    @SuppressWarnings("unchecked")
-   protected void invokeInjectionMethod(Object o, CachedMethod cam) {
-      Class[] dependencies = cam.getParams();
+   private void invokeInjectionMethod(Object o, ComponentMetadata.InjectMetadata injectMetadata) {
+      Class[] dependencies = injectMetadata.getParameterClasses();
       if (dependencies.length > 0) {
-         Annotation[][] parameterAnnotations = cam.getParamAnnotations();
          Object[] params = new Object[dependencies.length];
          if (getLog().isTraceEnabled())
-            getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", cam.getReflectMethod(), o.getClass().getName());
+            getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata.getMethod(), o.getClass().getName());
          for (int i = 0; i < dependencies.length; i++) {
-            params[i] = getOrCreateComponent(dependencies[i], getComponentName(dependencies[i], parameterAnnotations, i));
+            String name = injectMetadata.getParameterName(i);
+            boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
+            params[i] = getOrCreateComponent(dependencies[i], name, nameIsFQCN);
          }
-         ReflectionUtil.invokeAccessibly(o, cam.getReflectMethod(), params);
+         ReflectionUtil.invokeAccessibly(o, injectMetadata.getMethod(), params);
       }
-   }
-
-   private String getComponentName(Class component, Annotation[][] annotations, int paramNumber) {
-      String name;
-      if (annotations == null ||
-            annotations.length <= paramNumber ||
-            (name = findComponentName(annotations[paramNumber])) == null) return component.getName();
-
-      return name;
-   }
-
-   private String findComponentName(Annotation[] annotations) {
-      if (annotations != null && annotations.length > 0) {
-         for (Annotation a : annotations) {
-            if (a instanceof ComponentName) {
-               return ((ComponentName) a).value();
-            }
-         }
-      }
-      return null;
    }
 
    /**
@@ -261,15 +272,15 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @throws ConfigurationException if there is a problem with constructing or wiring the instance.
     */
    protected <T> T getOrCreateComponent(Class<T> componentClass) {
-      return getOrCreateComponent(componentClass, componentClass.getName());
+      return getOrCreateComponent(componentClass, componentClass.getName(), true);
    }
 
    @SuppressWarnings("unchecked")
-   protected <T> T getOrCreateComponent(Class<T> componentClass, String name) {
+   protected <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
 
       Object component;
-      Component oldWrapper = lookupComponent(componentClass, name);
+      Component oldWrapper = lookupComponent(componentClass.getName(), name, nameIsFQCN);
       if (oldWrapper != null) {
          component = unwrapComponent(oldWrapper);
       } else {
@@ -280,7 +291,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
                : factory.construct(componentClass);
 
          if (component != null) {
-            registerComponent(component, name);
+            registerComponent(component, name, nameIsFQCN);
          } else {
             getLog().tracef("Registering a null for component %s", name);
             registerNullComponent(name);
@@ -299,8 +310,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return component factory capable of constructing such components
     */
    protected AbstractComponentFactory getFactory(Class componentClass) {
-      Map<String, Class<? extends AbstractComponentFactory>> defaultFactoryMap = getDefaultFactoryMap();
-      Class<? extends AbstractComponentFactory> cfClass = defaultFactoryMap.get(componentClass.getName());
+      String cfClass = ComponentMetadataRepo.findFactoryForComponent(componentClass);
       if (cfClass == null) {
          throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
       }
@@ -316,62 +326,63 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       // ensure the component factory is in the STARTED state!
-      Component c = lookupComponent(cfClass, cfClass.getName());
+      Component c = lookupComponent(cfClass, cfClass, true);
       if (c.instance != cf)
          throwStackAwareConfigurationException("Component factory " + cfClass + " incorrectly registered!");
       return cf;
    }
 
-   protected Component lookupComponent(Class type, String componentName) {
+   protected Component lookupComponent(String componentClassName, String componentName, boolean nameIsFQCN) {
       return componentLookup.get(componentName);
    }
 
-   protected Map<String, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
-      if (defaultFactories == null) scanDefaultFactories();
-      return defaultFactories;
-   }
+//   protected Map<String, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
+//      if (defaultFactories == null) scanDefaultFactories();
+//      return defaultFactories;
+//   }
 
    /**
     * Scans the class path for classes annotated with {@link DefaultFactoryFor}, and analyses which components can be
     * created by such factories.
     */
-   void scanDefaultFactories() {
-      Map<String, Class<? extends AbstractComponentFactory>> temp = new HashMap<String, Class<? extends AbstractComponentFactory>>();
-      Map<String, String[]> factories = AnnotatedMethodCache.getDefaultFactories();
-
-      for (Map.Entry<String, String[]> factoryEntry : factories.entrySet()) {
-         // check if this implements auto-instantiable.  If it doesn't have a no-arg constructor throw an exception
-         boolean factoryValid = true;
-         Class<? extends AbstractComponentFactory> factory = null;
-         try {
-            factory = (Class<? extends AbstractComponentFactory>) getClass().getClassLoader().loadClass(factoryEntry.getKey());
-            if (AutoInstantiableFactory.class.isAssignableFrom(factory) && factory.getConstructor() == null) {
-               factoryValid = false;
-            }
-         } catch (Exception e) {
-            factoryValid = false;
-         }
-
-         if (!factoryValid)
-            throw new RuntimeException("Factory class " + factory + " implements AutoInstantiableFactory but does not expose a public, no-arg constructor!  Debug stack: " + debugStack);
-
-         for (String buildableClass: factoryEntry.getValue()) temp.put(buildableClass, factory);
-      }
-
-      defaultFactories = temp;
-   }
+//   void scanDefaultFactories() {
+//      Map<String, Class<? extends AbstractComponentFactory>> temp = new HashMap<String, Class<? extends AbstractComponentFactory>>();
+//      Map<String, String[]> factories = ComponentMetadataRepo.
+//
+//      for (Map.Entry<String, String[]> factoryEntry : factories.entrySet()) {
+//         // check if this implements auto-instantiable.  If it doesn't have a no-arg constructor throw an exception
+//         boolean factoryValid = true;
+//         Class<? extends AbstractComponentFactory> factory = null;
+//         try {
+//            factory = (Class<? extends AbstractComponentFactory>) getClass().getClassLoader().loadClass(factoryEntry.getKey());
+//            if (AutoInstantiableFactory.class.isAssignableFrom(factory) && factory.getConstructor() == null) {
+//               factoryValid = false;
+//            }
+//         } catch (Exception e) {
+//            factoryValid = false;
+//         }
+//
+//         if (!factoryValid)
+//            throw new RuntimeException("Factory class " + factory + " implements AutoInstantiableFactory but does not expose a public, no-arg constructor!  Debug stack: " + debugStack);
+//
+//         for (String buildableClass: factoryEntry.getValue()) temp.put(buildableClass, factory);
+//      }
+//
+//      defaultFactories = temp;
+//   }
 
    /**
     * No such thing as a meta factory yet.  Factories are created using this method which attempts to use an empty
     * public constructor.
     *
-    * @param factory class of factory to be created
+    * @param factoryName classname of factory to be created
     * @return factory instance
     */
-   AbstractComponentFactory instantiateFactory(Class<? extends AbstractComponentFactory> factory) {
+   AbstractComponentFactory instantiateFactory(String factoryName) {
+      Class<?> factory = Util.loadClass(factoryName, getClass().getClassLoader());
       if (AutoInstantiableFactory.class.isAssignableFrom(factory)) {
          try {
-            return factory.newInstance();
+            return (AbstractComponentFactory) factory.newInstance();
          } catch (Exception e) {
             // unable to get a hold of an instance!!
             throw new ConfigurationException("Unable to instantiate factory " + factory + "  Debug stack: " + debugStack, e);
@@ -387,7 +398,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param name name of component to register as a null
     */
    protected final void registerNullComponent(String name) {
-      registerComponent(NULL_COMPONENT, name);
+      registerComponent(NULL_COMPONENT, name, false);
    }
 
    /**
@@ -406,13 +417,30 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param type type to find
     * @return component, or null
     */
+   @SuppressWarnings("unchecked")
    public <T> T getComponent(Class<T> type) {
-      return getComponent(type, type.getName());
+      String className = type.getName();
+      return (T) getComponent(className, className, true);
    }
 
    @SuppressWarnings("unchecked")
-   public <T> T getComponent(Class<T> type, String name) {
-      Component wrapper = lookupComponent(type, name);
+   public <T> T getComponent(String componentClassName) {
+      return (T) getComponent(componentClassName, componentClassName, true);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T getComponent(String componentClassName, String name) {
+      return (T) getComponent(componentClassName, name, false);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T getComponent(Class<T> componentClass, String name) {
+      return (T) getComponent(componentClass.getName(), name, false);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T getComponent(String componentClassName, String name, boolean nameIsFQCN) {
+      Component wrapper = lookupComponent(componentClassName, name, nameIsFQCN);
       if (wrapper == null) return null;
 
       return (T) unwrapComponent(wrapper);
@@ -437,7 +465,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
       registerComponent(loaderToUse, ClassLoader.class);
       // make sure the class loader is non-volatile, so it survives restarts.
-      componentLookup.get(ClassLoader.class.getName()).survivesRestarts = true;
+//      componentLookup.get(ClassLoader.class.getName()).survivesRestarts = true;
       return loaderToUse;
    }
 
@@ -463,27 +491,39 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       for (Component c : componentLookup.values()) populateLifeCycleMethods(c);
    }
 
+   private PrioritizedMethod[] processPrioritizedMethods(ComponentMetadata.PrioritizedMethodMetadata[] methodMetadata,
+                                                         Class<?> componentClass, Component c) {
+      PrioritizedMethod[] retval;
+      int numStartMethods = methodMetadata.length;
+      if (numStartMethods == 0) {
+         retval = EMPTY_PRIO_METHODS;
+      } else {
+         retval = new PrioritizedMethod[numStartMethods];
+         for (int i = 0; i < numStartMethods; i++) {
+            retval[i] = new PrioritizedMethod();
+            retval[i].component = c;
+            retval[i].metadata = methodMetadata[i];
+
+            if (methodMetadata[i].getMethod() == null) {
+               Method method = ReflectionUtil.findMethod(componentClass, methodMetadata[i].getMethodName());
+               methodMetadata[i].setMethod(method);
+            }
+         }
+      }
+      return retval;
+   }
+
+
    private void populateLifeCycleMethods(Component c) {
       if (!c.methodsScanned) {
          c.methodsScanned = true;
-         c.startMethods.clear();
-         c.stopMethods.clear();
          Class<?> componentClass = c.instance.getClass();
-         for (CachedMethod m : AnnotatedMethodCache.getStartMethods(componentClass, getClass().getClassLoader())) {
-            PrioritizedMethod em = new PrioritizedMethod();
-            em.component = c;
-            em.method = m;
-            em.priority = m.getAnnotationValueAsInt("priority");
-            c.startMethods.add(em);
-         }
 
-         for (CachedMethod m : AnnotatedMethodCache.getStopMethods(componentClass, getClass().getClassLoader())) {
-            PrioritizedMethod em = new PrioritizedMethod();
-            em.component = c;
-            em.method = m;
-            em.priority = m.getAnnotationValueAsInt("priority");
-            c.stopMethods.add(em);
-         }
+         // START methods first
+         c.startMethods = processPrioritizedMethods(c.metadata.getStartMethods(), componentClass, c);
+
+         // And now the STOP methods
+         c.stopMethods = processPrioritizedMethods(c.metadata.getStopMethods(), componentClass, c);
       }
    }
 
@@ -494,7 +534,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       // destroy all components to clean up resources
       for (Component c : new HashSet<Component>(componentLookup.values())) {
          // the component is volatile!!
-         if (!c.survivesRestarts) {
+         if (!c.metadata.isSurvivesRestarts()) {
             componentLookup.remove(c.name);
          }
       }
@@ -611,7 +651,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       populateLifecycleMethods();
 
       List<PrioritizedMethod> startMethods = new ArrayList<PrioritizedMethod>(componentLookup.size());
-      for (Component c : componentLookup.values()) startMethods.addAll(c.startMethods);
+      for (Component c : componentLookup.values()) {
+         Collections.addAll(startMethods, c.startMethods);
+      }
 
       // sort the start methods by priority
       Collections.sort(startMethods);
@@ -620,7 +662,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
-         if (traceEnabled) getLog().tracef("Invoking start method %s on component %s", em.method, em.component.getName());
+         if (traceEnabled)
+            getLog().tracef("Invoking start method %s on component %s", em.metadata.getMethod(), em.component.getName());
          em.invoke();
       }
 
@@ -645,7 +688,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       removeShutdownHook();
 
       List<PrioritizedMethod> stopMethods = new ArrayList<PrioritizedMethod>(componentLookup.size());
-      for (Component c : componentLookup.values()) stopMethods.addAll(c.stopMethods);
+      for (Component c : componentLookup.values()) {
+         // if one of the components threw an exception during startup
+         // the stop methods list may not have been initialized
+         if (c.stopMethods != null) {
+            Collections.addAll(stopMethods, c.stopMethods);
+         }
+      }
 
       Collections.sort(stopMethods);
 
@@ -653,7 +702,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : stopMethods) {
          if (traceEnabled)
-            getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+            getLog().tracef("Invoking stop method %s on component %s", em.metadata.getMethod(), em.component.getName());
          em.invoke();
       }
 
@@ -740,6 +789,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * A wrapper representing a component in the registry
     */
    public class Component {
+
       /**
        * A reference to the object instance for this component.
        */
@@ -752,20 +802,16 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       /**
        * List of injection methods used to inject dependencies into the component
        */
-      List<CachedMethod> injectionMethods;
-      List<PrioritizedMethod> startMethods = new ArrayList<PrioritizedMethod>(2);
-      List<PrioritizedMethod> stopMethods = new ArrayList<PrioritizedMethod>(2);
-      /**
-       * If true, then this component is not flushed before starting the ComponentRegistry.
-       */
-      boolean survivesRestarts;
+      ComponentMetadata.InjectMetadata[] injectionMethods;
+      PrioritizedMethod[] startMethods;
+      PrioritizedMethod[] stopMethods;
+      ComponentMetadata metadata;
 
       @Override
       public String toString() {
          return "Component{" +
                "instance=" + instance +
                ", name=" + name +
-               ", survivesRestarts=" + survivesRestarts +
                '}';
       }
 
@@ -773,7 +819,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
        * Injects dependencies into this component.
        */
       public void injectDependencies() {
-         for (CachedMethod m : injectionMethods) invokeInjectionMethod(instance, m);
+         if (injectionMethods != null && injectionMethods.length > 0) {
+            for (ComponentMetadata.InjectMetadata injectMetadata : injectionMethods) invokeInjectionMethod(instance, injectMetadata);
+         }
       }
 
       public Object getInstance() {
@@ -783,19 +831,63 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       public String getName() {
          return name;
       }
+
+      public ComponentMetadata getMetadata() {
+         return metadata;
+      }
+
+      public void buildInjectionMethodsList() throws ClassNotFoundException {
+         injectionMethods = metadata.getInjectMethods();
+         if (injectionMethods != null && injectionMethods.length > 0) {
+            Class<?> clazz = instance.getClass();
+            for (ComponentMetadata.InjectMetadata meta: injectionMethods) {
+               Class[] parameterClasses = meta.getParameterClasses();
+               if (parameterClasses == null) {
+                  parameterClasses = ReflectionUtil.toClassArray(meta.getParameters());
+                  meta.setParameterClasses(parameterClasses);
+               }
+               Method m = meta.getMethod();
+               if (m == null) {
+                  m = ReflectionUtil.findMethod(clazz, meta.getMethodName(), parameterClasses);
+                  meta.setMethod(m);
+               }
+            }
+         }
+      }
    }
 
+
+   static class InvokableInjectionMethod {
+      ComponentMetadata.InjectMetadata metadata;
+      ConcreteParameter[] parameters;
+
+      InvokableInjectionMethod(ComponentMetadata.InjectMetadata metadata, ConcreteParameter[] parameters) {
+         this.metadata = metadata;
+         this.parameters = parameters;
+      }
+   }
+
+   static class ConcreteParameter {
+      String name;
+      Class<?> type;
+
+      ConcreteParameter(String name, Class<?> type) {
+         this.name = name;
+         this.type = type;
+      }
+   }
 
    /**
     * Wrapper to encapsulate a method along with a priority
     */
    static class PrioritizedMethod implements Comparable<PrioritizedMethod> {
-      CachedMethod method;
+      ComponentMetadata.PrioritizedMethodMetadata metadata;
       Component component;
-      int priority;
 
       public int compareTo(PrioritizedMethod o) {
-         return (priority < o.priority ? -1 : (priority == o.priority ? 0 : 1));
+         int thisVal = metadata.getPriority();
+         int anotherVal = o.metadata.getPriority();
+         return (thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1));
       }
 
 
@@ -806,32 +898,31 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
          PrioritizedMethod that = (PrioritizedMethod) o;
 
-         if (priority != that.priority) return false;
          if (component != null ? !component.equals(that.component) : that.component != null) return false;
-         if (method != null ? !method.equals(that.method) : that.method != null) return false;
+         if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
 
          return true;
       }
 
       @Override
       public int hashCode() {
-         int result = method != null ? method.hashCode() : 0;
+         int result = metadata != null ? metadata.hashCode() : 0;
          result = 31 * result + (component != null ? component.hashCode() : 0);
-         result = 31 * result + priority;
          return result;
       }
 
       void invoke() {
-         ReflectionUtil.invokeAccessibly(component.instance, method.getReflectMethod(), null);
+         ReflectionUtil.invokeAccessibly(component.instance, metadata.getMethod(), null);
       }
 
       @Override
       public String toString() {
          return "PrioritizedMethod{" +
-               "method=" + method +
-               ", priority=" + priority +
+               "method=" + metadata.getMethod().getName() +
+               ", priority=" + metadata.getPriority() +
                '}';
       }
+
    }
 
    private void throwStackAwareConfigurationException(String message) {

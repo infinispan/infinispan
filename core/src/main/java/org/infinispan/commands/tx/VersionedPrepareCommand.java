@@ -40,9 +40,9 @@ public class VersionedPrepareCommand extends PrepareCommand {
       super("");
    }
 
-   public VersionedPrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> modifications) {
-      // VersionedPrepareCommands are *always* 2-phase.
-      super(cacheName, gtx, modifications, false);
+   public VersionedPrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
+      // VersionedPrepareCommands are *always* 2-phase, except when retrying a prepare.
+      super(cacheName, gtx, modifications, onePhase);
    }
 
    public VersionedPrepareCommand(String cacheName) {
@@ -66,9 +66,10 @@ public class VersionedPrepareCommand extends PrepareCommand {
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
       int i = 0;
-      final int params = 3;
+      final int params = 4;
       Object[] retval = new Object[numMods + params];
       retval[i++] = globalTx;
+      retval[i++] = onePhaseCommit;
       retval[i++] = versionsSeen;
       retval[i++] = numMods;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
@@ -80,7 +81,7 @@ public class VersionedPrepareCommand extends PrepareCommand {
    public void setParameters(int commandId, Object[] args) {
       int i = 0;
       globalTx = (GlobalTransaction) args[i++];
-      onePhaseCommit = false;
+      onePhaseCommit = (Boolean) args[i++];
       versionsSeen = (EntryVersionsMap) args[i++];
       int numMods = (Integer) args[i++];
       if (numMods > 0) {
@@ -89,4 +90,8 @@ public class VersionedPrepareCommand extends PrepareCommand {
       }
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

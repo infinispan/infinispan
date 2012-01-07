@@ -49,6 +49,16 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    }
    
    /**
+    * Enable the background reaper to test entries for expiration.
+    * Regardless of whether a reaper is used, entries are tested for expiration lazily when they are
+    * touched.
+    */
+   public ExpirationConfigurationBuilder reaperEnabled(boolean enabled) {
+      this.reaperEnabled = enabled;
+      return this;
+   }
+   
+   /**
     * Disable the background reaper to test entries for expiration. to test entries for expiration.
     * Regardless of whether a reaper is used, entries are tested for expiration lazily when they are
     * touched.
@@ -77,6 +87,16 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    @Override
    ExpirationConfiguration create() {
       return new ExpirationConfiguration(lifespan, maxIdle, reaperEnabled, wakeUpInterval);
+   }
+   
+   @Override
+   public ExpirationConfigurationBuilder read(ExpirationConfiguration template) {
+      this.lifespan = template.lifespan();
+      this.maxIdle = template.maxIdle();
+      this.reaperEnabled = template.reaperEnabled();
+      this.wakeUpInterval = template.wakeUpInterval();
+      
+      return this;
    }
 
 }

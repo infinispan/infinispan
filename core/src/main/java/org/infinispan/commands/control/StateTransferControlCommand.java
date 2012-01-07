@@ -149,4 +149,9 @@ public class StateTransferControlCommand extends BaseRpcCommand {
             ", state=" + (state == null ? "N/A" : state.size()) +
             '}';
    }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

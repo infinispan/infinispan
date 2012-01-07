@@ -32,6 +32,15 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
    }
    
    /**
+    * Enable grouping support so that {@link Group} annotations are honored and any configured
+    * groupers will be invoked
+    */
+   public GroupsConfigurationBuilder enabled(boolean enabled) {
+      this.enabled = enabled;
+      return this;
+   }
+   
+   /**
     * Disable grouping support so that {@link Group} annotations are not used and any configured
     * groupers will not be be invoked
     */
@@ -75,4 +84,12 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       return new GroupsConfiguration(enabled, groupers);
    }
 
+   @Override
+   public GroupsConfigurationBuilder read(GroupsConfiguration template) {
+      this.enabled = template.enabled();
+      this.groupers = template.groupers();
+      
+      return this;
+   }
+   
 }

@@ -54,7 +54,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    public static Archive<?> deployment() {
       return baseDeployment()
             .addClass(CacheRemoveEntryInterceptorTest.class)
-            .addPackage(CacheRemoveEntryService.class.getPackage())
+            .addClass(CacheRemoveEntryService.class)
             .addPackage(Config.class.getPackage());
    }
 

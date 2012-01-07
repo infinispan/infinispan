@@ -150,11 +150,11 @@
                         <xsl:value-of select="locking/@lockAcquisitionTimeout"/>
                      </xsl:attribute>
                   </xsl:if>
-                  <xsl:if test="locking[@writeSkewCheck]">
-                     <xsl:attribute name="writeSkewCheck">
-                        <xsl:value-of select="locking/@writeSkewCheck"/>
-                     </xsl:attribute>
-                  </xsl:if>
+<!--                   <xsl:if test="locking[@writeSkewCheck]"> -->
+<!--                      <xsl:attribute name="writeSkewCheck"> -->
+<!--                         <xsl:value-of select="locking/@writeSkewCheck"/> -->
+<!--                      </xsl:attribute> -->
+<!--                   </xsl:if> -->
                   <xsl:if test="locking[@concurrencyLevel]">
                      <xsl:attribute name="concurrencyLevel">
                         <xsl:value-of select="locking/@concurrencyLevel"/>

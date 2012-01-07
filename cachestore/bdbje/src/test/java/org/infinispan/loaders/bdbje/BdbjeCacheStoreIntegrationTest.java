@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.bdbje;
 
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -86,8 +86,8 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testTwoPhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       GlobalTransaction tx = gts.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
@@ -99,10 +99,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.commit(tx);
@@ -118,11 +118,11 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testRollback() throws CacheLoaderException {
 
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       GlobalTransaction tx = gts.newGlobalTransaction(null, false);
@@ -134,10 +134,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.rollback(tx);

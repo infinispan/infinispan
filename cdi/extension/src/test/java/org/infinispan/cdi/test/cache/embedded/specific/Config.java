@@ -23,7 +23,8 @@
 package org.infinispan.cdi.test.cache.embedded.specific;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -38,24 +39,32 @@ import static org.infinispan.eviction.EvictionStrategy.FIFO;
 public class Config {
    /**
     * Associates the "large" cache with the qualifier {@link Large}.
+    *
+    * @param cacheManager the specific cache manager associated to this cache. This cache manager is used to get the
+    *                     default cache configuration.
     */
    @Large
    @ConfigureCache("large")
    @Produces
-   public Configuration largeConfiguration() {
-      return new Configuration().fluent()
+   public Configuration largeConfiguration(@Large EmbeddedCacheManager cacheManager) {
+      return new ConfigurationBuilder()
+            .read(cacheManager.getDefaultCacheConfiguration())
             .eviction().maxEntries(2000)
             .build();
    }
 
    /**
     * Associates the "small" cache with the qualifier {@link Small}.
+    *
+    * @param cacheManager the specific cache manager associated to this cache. This cache manager is used to get the
+    *                     default cache configuration.
     */
    @Small
    @ConfigureCache("small")
    @Produces
-   public Configuration smallConfiguration() {
-      return new Configuration().fluent()
+   public Configuration smallConfiguration(@Small EmbeddedCacheManager cacheManager) {
+      return new ConfigurationBuilder()
+            .read(cacheManager.getDefaultCacheConfiguration())
             .eviction().maxEntries(20)
             .build();
    }
@@ -68,8 +77,8 @@ public class Config {
    @Produces
    @ApplicationScoped
    public EmbeddedCacheManager specificCacheManager() {
-      return new DefaultCacheManager(new Configuration().fluent()
-                                           .eviction().strategy(FIFO)
+      return new DefaultCacheManager(new ConfigurationBuilder()
+                                           .eviction().maxEntries(4000).strategy(FIFO)
                                            .build());
    }
 }

@@ -113,4 +113,8 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
          .toString();
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

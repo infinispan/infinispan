@@ -36,5 +36,4 @@ public interface EntryVersion {
     * @return a InequalVersionComparisonResult instance
     */
    InequalVersionComparisonResult compareTo(EntryVersion other);
-
 }

@@ -65,8 +65,8 @@
    <!--mcast_addr="230.8.8.8" mcast_port="17890" ip_ttl="2"-->
    <!--num_initial_members="3"/>-->
 
-   <MERGE2 max_interval="30000"
-           min_interval="10000"/>
+   <MERGE2 max_interval="10000"
+           min_interval="3000"/>
    <FD_SOCK/>
    <!--
        Note that this is an atypically short timeout and a small number of retries

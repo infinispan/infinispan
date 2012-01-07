@@ -63,7 +63,6 @@ public class TransactionSetup {
 
          //make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
          // so you need to set this before classloading the transaction system and can't change it within the same vm.
-         arjPropertyManager.getCoordinatorEnvironmentBean().setActionStore(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
          arjPropertyManager.getObjectStoreEnvironmentBean().setObjectStoreType(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
 
          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();

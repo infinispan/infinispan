@@ -71,13 +71,18 @@ import java.util.concurrent.ExecutorService;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
- * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually by
- * passing in one of the following properties: <ul> <li><tt>configurationString</tt> - a JGroups configuration
- * String</li> <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li> <li><tt>configurationFile</tt>
- * - String pointing to a JGroups XML configuration file</li> <li><tt>channelLookup</tt> - Fully qualified class name of
- * a {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li> </ul> These are normally
- * passed in as Properties in {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)}
- * or in the Infinispan XML configuration file.
+ * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
+ * methods, usually by passing in one of the following properties:
+ * <ul>
+ * <li><tt>configurationString</tt> - a JGroups configuration String</li>
+ * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
+ * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
+ * <li><tt>channelLookup</tt> - Fully qualified class name of a
+ * {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
+ * </ul>
+ * These are normally passed in as Properties in
+ * {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)} or
+ * in the Infinispan XML configuration file.
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
@@ -118,19 +123,24 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
 
    /**
-    * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
+    * This form is used when the transport is created by an external source and passed in to the
+    * GlobalConfiguration.
     *
-    * @param channel created and running channel to use
+    * @param channel
+    *           created and running channel to use
     */
    public JGroupsTransport(Channel channel) {
       this.channel = channel;
-      if (channel == null) throw new IllegalArgumentException("Cannot deal with a null channel!");
-      if (channel.isConnected()) throw new IllegalArgumentException("Channel passed in cannot already be connected!");
+      if (channel == null)
+         throw new IllegalArgumentException("Cannot deal with a null channel!");
+      if (channel.isConnected())
+         throw new IllegalArgumentException("Channel passed in cannot already be connected!");
    }
 
    public JGroupsTransport() {
    }
 
+   @Override
    public Log getLog() {
       return log;
    }
@@ -139,19 +149,21 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
-                          ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
-                          CacheManagerNotifier notifier) {
+   @Override
+   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller, ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
+            CacheManagerNotifier notifier) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.notifier = notifier;
    }
 
+   @Override
    public void start() {
       props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
 
-      if (log.isInfoEnabled()) log.startingJGroupsChannel();
+      if (log.isInfoEnabled())
+         log.startingJGroupsChannel();
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
@@ -192,6 +204,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
    }
 
+   @Override
    public int getViewId() {
       if (channel == null)
          throw new CacheException("The cache has been stopped and invocations are not allowed!");
@@ -201,6 +214,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return (int) view.getVid().getId();
    }
 
+   @Override
    public void stop() {
       try {
          if (stopChannel && channel != null && channel.isOpen()) {
@@ -209,8 +223,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             // Unregistering before disconnecting/closing because
             // after that the cluster name is null
             if (globalStatsEnabled) {
-               JmxConfigurator.unregisterChannel((JChannel) channel,
-                  mbeanServer, domain, channel.getClusterName());
+               JmxConfigurator.unregisterChannel((JChannel) channel, mbeanServer, domain, channel.getClusterName());
             }
 
             channel.disconnect();
@@ -232,7 +245,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       dispatcher = null;
    }
 
-
    protected void initChannel() {
       if (channel == null) {
          buildChannel();
@@ -245,27 +257,38 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          }
       }
 
-      // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
-      // remote instances will be received by self.
+      // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
+      // invalidations targeted at remote instances will be received by self.
       channel.setDiscardOwnMessages(true);
 
-      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
-      if(configuration.hasTopologyInfo()) {
-         ((JChannel)channel).setAddressGenerator(new AddressGenerator() {
+      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
+      // JGroups
+      if (configuration.hasTopologyInfo()) {
+         // We can do this only if the channel hasn't been started already
+         if (startChannel) {
+            ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
 
-            public org.jgroups.Address generateAddress() {
-               return TopologyUUID.randomUUID(channel.getName(),
-                     configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
-
+               @Override
+               public org.jgroups.Address generateAddress() {
+                  return TopologyUUID.randomUUID(channel.getName(), configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
+               }
+            });
+         } else {
+            if (channel.getAddress() instanceof TopologyUUID) {
+               TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
+               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+                  throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
+               }
+            } else {
+               throw new CacheException("JGroups address does not contain topology coordinates");
             }
-         });
+         }
       }
    }
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
-      dispatcher = new CommandAwareRpcDispatcher(channel, this,
-              asyncExecutor, inboundInvocationHandler);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -273,7 +296,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    // This is per CM, so the CL in use should be the CM CL
    private void buildChannel() {
-      // in order of preference - we first look for an external JGroups file, then a set of XML properties, and
+      // in order of preference - we first look for an external JGroups file, then a set of XML
+      // properties, and
       // finally the legacy JGroups String properties.
       String cfg;
       if (props != null) {
@@ -342,16 +366,19 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // querying cluster status
    // ------------------------------------------------------------------------------------------------------------------
 
+   @Override
    public boolean isCoordinator() {
       return isCoordinator;
    }
 
+   @Override
    public Address getCoordinator() {
       return coordinator;
    }
 
    public void waitForChannelToConnect() {
-      if (channel == null) return;
+      if (channel == null)
+         return;
       log.debug("Waiting on view being accepted");
       try {
          channelConnectedLatch.await();
@@ -360,8 +387,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
+   @Override
    public List<Address> getMembers() {
-      return members != null ? members : Collections.<Address>emptyList();
+      return members != null ? members : Collections.<Address> emptyList();
    }
 
    @Override
@@ -369,6 +397,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return channel.getProtocolStack().getTransport().supportsMulticasting();
    }
 
+   @Override
    public Address getAddress() {
       if (address == null && channel != null) {
          address = fromJGroupsAddress(channel.getAddress());
@@ -376,6 +405,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return address;
    }
 
+   @Override
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
@@ -388,9 +418,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // outbound RPC
    // ------------------------------------------------------------------------------------------------------------------
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                        boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
-           throws Exception {
+   @Override
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+            boolean supportReplay) throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
@@ -398,7 +428,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return Collections.emptyMap();
       }
 
-      if (trace) log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
+      if (trace)
+         log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
       if (mode == ResponseMode.SYNCHRONOUS && recipients != null && !getMembers().containsAll(recipients)) {
          throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
@@ -408,24 +439,26 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          usePriorityQueue = true;
 
       boolean broadcast = recipients == null || recipients.size() == members.size();
-      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
-              timeout, recipients != null, usePriorityQueue,
-              toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
+      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
+               toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
 
-      if (mode.isAsynchronous()) return Collections.emptyMap();// async case
+      if (mode.isAsynchronous())
+         return Collections.emptyMap();// async case
 
       // short-circuit no-return-value calls.
-      if (rsps == null) return Collections.emptyMap();
+      if (rsps == null)
+         return Collections.emptyMap();
       Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       boolean noValidResponses = true;
       for (Rsp<Object> rsp : rsps.values()) {
-         noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(),
-               rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null, ignoreLeavers);
+         noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),
+                  responseFilter != null, ignoreLeavers);
       }
 
-      if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
+      if (noValidResponses)
+         throw new TimeoutException("Timed out waiting for valid responses!");
       return retval;
    }
 
@@ -475,11 +508,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       private List<List<Address>> getSubgroups(List<View> subviews) {
          List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
-         for (View v: subviews) l.add(fromJGroupsAddressList(v.getMembers()));
-         return l;         
+         for (View v : subviews)
+            l.add(fromJGroupsAddressList(v.getMembers()));
+         return l;
       }
    }
 
+   @Override
    public void viewAccepted(View newView) {
       log.debugf("New view accepted: %s", newView);
       List<org.jgroups.Address> newMembers = newView.getMembers();
@@ -518,14 +553,17 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
+   @Override
    public void suspect(org.jgroups.Address suspected_mbr) {
       // no-op
    }
 
+   @Override
    public void block() {
       // no-op since ISPN-83 has been resolved
    }
 
+   @Override
    public void unblock() {
       // no-op since ISPN-83 has been resolved
    }
@@ -539,29 +577,32 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    static Address fromJGroupsAddress(org.jgroups.Address addr) {
-      if(addr instanceof TopologyUUID)
+      if (addr instanceof TopologyUUID)
          return new JGroupsTopologyAwareAddress(addr);
       else
          return new JGroupsAddress(addr);
    }
 
-
    private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
-      if (list == null) return null;
-      if (list.isEmpty()) return new Vector<org.jgroups.Address>();
+      if (list == null)
+         return null;
+      if (list.isEmpty())
+         return new Vector<org.jgroups.Address>();
 
       Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
-      for (Address a : list) retval.add(toJGroupsAddress(a));
+      for (Address a : list)
+         retval.add(toJGroupsAddress(a));
 
       return retval;
    }
 
-
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
-      if (list == null || list.isEmpty()) return Collections.emptyList();
+      if (list == null || list.isEmpty())
+         return Collections.emptyList();
 
       List<Address> retval = new ArrayList<Address>(list.size());
-      for (org.jgroups.Address a : list) retval.add(fromJGroupsAddress(a));
+      for (org.jgroups.Address a : list)
+         retval.add(fromJGroupsAddress(a));
       return Collections.unmodifiableList(retval);
    }
 

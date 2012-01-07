@@ -22,7 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -40,7 +39,12 @@ import java.util.Set;
  * @since 4.0
  */
 public class MortalCacheEntry extends AbstractInternalCacheEntry {
-   private MortalCacheValue cacheValue;
+   protected MortalCacheValue cacheValue;
+
+   protected MortalCacheEntry(Object key, MortalCacheValue cacheValue) {
+      super(key);
+      this.cacheValue = cacheValue;
+   }
 
    public Object getValue() {
       return cacheValue.value;
@@ -50,23 +54,13 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.setValue(value);
    }
 
-   @Override
-   public EntryVersion getVersion() {
-      return cacheValue.version;
+   public MortalCacheEntry(Object key, Object value, long lifespan) {
+      this(key, value, lifespan, System.currentTimeMillis());
    }
 
-   @Override
-   public void setVersion(EntryVersion version) {
-      this.cacheValue.version = version;
-   }
-
-   MortalCacheEntry(Object key, Object value, EntryVersion version, long lifespan) {
-      this(key, value, version, lifespan, System.currentTimeMillis());
-   }
-
-   MortalCacheEntry(Object key, Object value, EntryVersion version, long lifespan, long created) {
+   public MortalCacheEntry(Object key, Object value, long lifespan, long created) {
       super(key);
-      cacheValue = new MortalCacheValue(value, version, created, lifespan);
+      cacheValue = new MortalCacheValue(value, created, lifespan);
    }
 
    public final boolean isExpired(long now) {
@@ -152,7 +146,6 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
          output.writeObject(mce.key);
          output.writeObject(mce.cacheValue.value);
-         output.writeObject(mce.cacheValue.version);
          UnsignedNumeric.writeUnsignedLong(output, mce.cacheValue.created);
          output.writeLong(mce.cacheValue.lifespan); // could be negative so should not use unsigned longs
       }
@@ -161,10 +154,9 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       public MortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
-         EntryVersion version = (EntryVersion) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
-         return new MortalCacheEntry(k, v, version, lifespan, created);
+         return new MortalCacheEntry(k, v, lifespan, created);
       }
 
       @Override

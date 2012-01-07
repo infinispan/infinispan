@@ -25,7 +25,7 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -90,13 +90,13 @@ public class JdbcStringBasedCacheStoreTest2 {
     */
    public void persistUnsupportedObject() throws Exception {
       try {
-         cacheStore.store(InternalEntryFactory.create("key", "value"));
+         cacheStore.store(TestInternalCacheEntryFactory.create("key", "value"));
          assert false : "exception is expected as PersonKey2StringMapper does not support strings";
       } catch (UnsupportedKeyTypeException e) {
          assert true : "expected";
       }
       //just check that an person object will be persisted okay
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "Cluj Napoca"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "Cluj Napoca"));
    }
 
 
@@ -104,7 +104,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       assert rowCount() == 0;
       assert cacheStore.load(MIRCEA) == null : "should not be present in the store";
       String value = "adsdsadsa";
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, value));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, value));
       assert rowCount() == 1;
       assert cacheStore.load(MIRCEA).getValue().equals(value);
       assert !cacheStore.remove(MANIK);
@@ -116,13 +116,13 @@ public class JdbcStringBasedCacheStoreTest2 {
 
    public void testRemoveAll() throws Exception {
       assert rowCount() == 0;
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
-      cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
       cacheStore.removeAll(Collections.singleton((Object) MIRCEA));
       assert cacheStore.load(MANIK).getValue().equals("value");
       assert rowCount() == 1;
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value"));
       assert rowCount() == 2;
       Set<Object> toRemove = new HashSet<Object>();
       toRemove.add(MIRCEA);
@@ -133,16 +133,16 @@ public class JdbcStringBasedCacheStoreTest2 {
 
    public void testClear() throws Exception {
       assert rowCount() == 0;
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
-      cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
       cacheStore.clear();
       assert rowCount() == 0;
    }
 
    public void testPurgeExpired() throws Exception {
-      InternalCacheEntry first = InternalEntryFactory.create(MIRCEA, "val", 1000);
-      InternalCacheEntry second = InternalEntryFactory.create(MANIK, "val2");
+      InternalCacheEntry first = TestInternalCacheEntryFactory.create(MIRCEA, "val", 1000);
+      InternalCacheEntry second = TestInternalCacheEntryFactory.create(MANIK, "val2");
       cacheStore.store(first);
       cacheStore.store(second);
       assert rowCount() == 2;

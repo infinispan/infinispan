@@ -72,9 +72,8 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          GlobalConfiguration globalConfig = ecm.getGlobalConfiguration();
          assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
          assert defaultConfig.getLockAcquisitionTimeout() == 234000;
-         assert defaultConfig.isWriteSkewCheck();
          assert defaultConfig.getConcurrencyLevel() == 510;
-         assert defaultConfig.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
+         assert defaultConfig.getTransactionManagerLookup().getClass().getName().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
          assert !defaultConfig.isSyncCommitPhase();
          assert defaultConfig.isSyncRollbackPhase();
          assert defaultConfig.isExposeJmxStatistics();

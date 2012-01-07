@@ -1,7 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
+
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -15,12 +18,14 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup ;
+   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
+   TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
+   
+   // TODO clean this up? It's not used
    private boolean use1PcForAutoCommitTransactions = false;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
@@ -69,7 +74,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
    
-   public TransactionConfigurationBuilder transactionSyncrontizationRegisteryLookup(TransactionSynchronizationRegistryLookup lookup) {
+   public TransactionConfigurationBuilder transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup lookup) {
       this.transactionSynchronizationRegistryLookup = lookup;
       return this;
    }
@@ -90,6 +95,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
    
    public RecoveryConfigurationBuilder recovery() {
+      recovery.enable();
       return recovery;
    }
 
@@ -109,6 +115,29 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if (useEagerLocking) {
          lockingMode = LockingMode.PESSIMISTIC;
       }
+      if (transactionMode == null && getBuilder().invocationBatching().enabled)
+         transactionMode = TransactionMode.TRANSACTIONAL;
+      else if (transactionMode == null)
+         transactionMode = TransactionMode.NON_TRANSACTIONAL;
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());
+   }
+   
+   @Override
+   public TransactionConfigurationBuilder read(TransactionConfiguration template) {
+      this.autoCommit = template.autoCommit();
+      this.cacheStopTimeout = template.cacheStopTimeout();
+      this.eagerLockingSingleNode = template.eagerLockingSingleNode();
+      this.lockingMode = template.lockingMode();
+      this.syncCommitPhase = template.syncCommitPhase();
+      this.syncRollbackPhase = template.syncRollbackPhase();
+      this.transactionManagerLookup = template.transactionManagerLookup();
+      this.transactionMode = template.transactionMode();
+      this.transactionSynchronizationRegistryLookup = template.transactionSynchronizationRegistryLookup();
+      this.useEagerLocking = template.useEagerLocking();
+      this.useSynchronization = template.useSynchronization();
+      
+      this.recovery.read(template.recovery());
+      
+      return this;
    }
 }
