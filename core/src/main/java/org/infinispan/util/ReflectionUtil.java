@@ -238,6 +238,24 @@ public class ReflectionUtil {
    }
 
    public static Method findGetterForField(Class<?> c, String fieldName) {
+      Method retval = findGetterForFieldUsingReflection(c, fieldName);
+      if (retval == null) {
+         if (!c.equals(Object.class)) {
+            if (!c.isInterface()) {
+               retval = findGetterForField(c.getSuperclass(), fieldName);
+               if (retval == null) {
+                  for (Class ifc : c.getInterfaces()) {
+                     retval = findGetterForField(ifc, fieldName);
+                     if (retval != null) break;
+                  }
+               }
+            }
+         }
+      }
+      return retval;
+   }
+
+   private static Method findGetterForFieldUsingReflection(Class<?> c, String fieldName) {
       for (Method m : c.getDeclaredMethods()) {
          String name = m.getName();
          String s = null;

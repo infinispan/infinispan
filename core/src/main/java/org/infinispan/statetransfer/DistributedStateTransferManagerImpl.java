@@ -74,7 +74,7 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
       return ConsistentHashHelper.createConsistentHash(configuration, members);
    }
 
-   public void invalidateKeys(List<Object> keysToRemove, int viewId) {
+   public void invalidateKeys(List<Object> keysToRemove) {
       try {
          if (keysToRemove.size() > 0) {
             InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, keysToRemove);

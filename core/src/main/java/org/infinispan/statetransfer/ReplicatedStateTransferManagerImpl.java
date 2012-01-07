@@ -23,8 +23,6 @@ import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
@@ -34,10 +32,8 @@ import java.util.List;
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
  */
-@MBean(objectName = "DistributedStateTransferManager", description = "Component that handles state transfer in distributed mode")
+@MBean(objectName = "ReplicatedStateTransferManager", description = "Component that handles state transfer in replicated mode")
 public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManagerImpl {
-   private static final Log log = LogFactory.getLog(ReplicatedStateTransferManagerImpl.class);
-
    /**
     * Default constructor
     */
