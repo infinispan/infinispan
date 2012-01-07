@@ -40,7 +40,6 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
@@ -70,7 +69,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    protected CacheLoaderManager cacheLoaderManager;
    protected Configuration configuration;
    protected RpcManager rpcManager;
-   private CacheManagerNotifier notifier;
    protected CommandsFactory cf;
    protected DataContainer dataContainer;
    protected InterceptorChain interceptorChain;
@@ -95,14 +93,13 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
+   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
                     CacheViewsManager cacheViewsManager) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
-      this.notifier = notifier;
       this.cf = cf;
       this.stateTransferLock = stateTransferLock;
       this.dataContainer = dataContainer;

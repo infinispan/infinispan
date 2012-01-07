@@ -150,7 +150,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
       if (configuration.isRehashEnabled() && !initialView) {
          // now we can invalidate the keys
-         stateTransferManager.invalidateKeys(keysToRemove, newViewId);
+         stateTransferManager.invalidateKeys(keysToRemove);
 
          cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
       }
