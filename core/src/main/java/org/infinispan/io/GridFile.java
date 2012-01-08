@@ -392,6 +392,23 @@ public class GridFile extends File {
       return true;
    }
 
+   @Override
+   public boolean equals(Object obj) {
+      if ((obj != null) && (obj instanceof GridFile)) {
+          return compareTo((GridFile)obj) == 0;
+      }
+      return false;
+   }
+
+   @Override
+   public int compareTo(File file) {
+      return getAbsolutePath().compareTo(file.getAbsolutePath());
+   }
+
+   @Override
+   public int hashCode() {
+      return getAbsolutePath().hashCode();
+   }
 
    private Metadata exists(String key) {
       return metadataCache.get(key);
