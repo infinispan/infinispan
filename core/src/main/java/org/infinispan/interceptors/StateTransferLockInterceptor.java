@@ -104,7 +104,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       }
       try {
          // retry commit commands indefinitely
-         return handleWithRetries(ctx, command, Long.MAX_VALUE);
+         return handleWithRetries(ctx, command, -1);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -194,7 +194,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    }
 
    private Object handleWithRetries(InvocationContext ctx, VisitableCommand command, long timeoutMillis) throws Throwable {
-      long endNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
+      long endNanos = timeoutMillis > 0 ? (System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)) : Long.MAX_VALUE;
       while (true) {
          int newCacheViewId = -1;
          try {
