@@ -191,6 +191,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
       try {
          tableManipulation.stop();
       } catch (Throwable t) {
+         cause = t.getCause();
          if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
