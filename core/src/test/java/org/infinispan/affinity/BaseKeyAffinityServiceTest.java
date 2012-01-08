@@ -67,9 +67,9 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
       for (Address addr : addresses) {
          BlockingQueue queue = blockingQueueMap.get(addr);
          //the queue will eventually get filled
-         for (int i = 0; i < 30; i++) {
-            if (!(queue.size() == 100)) {
-               Thread.sleep(1000);
+         for (int i = 0; i < 10000; i++) {
+            if (queue.size() != 100) {
+               Thread.sleep(100);
             } else {
                break;
             }
