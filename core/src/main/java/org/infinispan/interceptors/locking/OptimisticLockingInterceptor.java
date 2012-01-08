@@ -57,7 +57,7 @@ import java.util.TreeSet;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
-   final LockAquisitionVisitor lockAquisitionVisitor = new LockAquisitionVisitor();
+   final LockAcquisitionVisitor lockAcquisitionVisitor = new LockAcquisitionVisitor();
 
    private final static Comparator<Object> keyComparator = new Comparator<Object>() {
 
@@ -172,7 +172,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       throw new CacheException("Explicit locking is not allowed with optimistic caches!");
    }
 
-   private final class LockAquisitionVisitor extends AbstractVisitor {
+   private final class LockAcquisitionVisitor extends AbstractVisitor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
@@ -295,7 +295,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       for (WriteCommand wc : command.getModifications()) {
-         wc.acceptVisitor(ctx, lockAquisitionVisitor);
+         wc.acceptVisitor(ctx, lockAcquisitionVisitor);
       }
    }
 }
