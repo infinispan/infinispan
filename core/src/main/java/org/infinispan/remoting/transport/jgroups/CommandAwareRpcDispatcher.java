@@ -198,7 +198,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          Message msg = new Message();
          msg.setBuffer(buf);
          if (oob) msg.setFlag(Message.OOB);
-         if (mode != ResponseMode.GET_NONE) {
+         if (oob || mode != ResponseMode.GET_NONE) {
             msg.setFlag(Message.DONT_BUNDLE);
             msg.setFlag(Message.NO_FC);
          }
