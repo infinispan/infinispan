@@ -125,7 +125,6 @@ public class MapStressTest {
 
    private Map<String, Map<String, Integer>> createMaps(int capacity, int numKeys, int concurrency) {
       Map<String, Map<String, Integer>> maps = new TreeMap<String, Map<String, Integer>>();
-      maps.put("BCHM:LRU_OLD", new BoundedConcurrentHashMap<String, Integer>(capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU_OLD));
       maps.put("BCHM:LRU", new BoundedConcurrentHashMap<String, Integer>(capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU));
       maps.put("BCHM:LIRS", new BoundedConcurrentHashMap<String, Integer>(capacity, concurrency, BoundedConcurrentHashMap.Eviction.LIRS));
       // CHM doesn't have eviction, so we size it to the total number of keys to avoid resizing
