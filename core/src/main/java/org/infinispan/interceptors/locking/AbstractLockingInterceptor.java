@@ -31,7 +31,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
@@ -49,15 +48,13 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    LockManager lockManager;
    DataContainer dataContainer;
    EntryFactory entryFactory;
-   Transport transport;
    ClusteringDependentLogic cdl;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, Transport transport, ClusteringDependentLogic cll) {
+   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, ClusteringDependentLogic cll) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
-      this.transport = transport;
       this.cdl = cll;
    }
 
@@ -84,7 +81,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
                try {
                   lockKey(ctx, key);
                } catch (TimeoutException te) {
-                  getLog().unableToLockToInvalidate(key, transport.getAddress());
+                  getLog().unableToLockToInvalidate(key, cdl.getAddress());
                   keysCopy.remove(key);
                   if (keysCopy.isEmpty())
                      return null;

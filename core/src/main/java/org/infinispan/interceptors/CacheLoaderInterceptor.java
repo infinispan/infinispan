@@ -28,14 +28,12 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -45,7 +43,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -63,10 +60,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheNotifier notifier;
    protected CacheLoader loader;
    private EntryFactory entryFactory;
-   private DistributionManager distributionManager;
-   private Transport transport;
-   private boolean remoteNodeMayNeedToLoad;
-   private Configuration.CacheMode cacheMode;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -76,23 +69,15 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier,
-                                     DistributionManager distributionManager, Transport transport) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
       this.clm = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
-      this.distributionManager = distributionManager;
-      this.transport = transport;
    }
 
    @Start(priority = 15)
    protected void startInterceptor() {
       loader = clm.getCacheLoader();
-      cacheMode = configuration.getCacheMode();
-      // For now the coordinator/primary data owner may need to load from the cache store, even if
-      // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
-      // happen if running in distributed mode and eviction is enabled.
-      remoteNodeMayNeedToLoad = configuration.isWriteSkewCheck() && cacheMode.isClustered();
    }
 
    @Override
@@ -143,9 +128,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private boolean isPrimaryOwner(Object key) {
-      return (cacheMode.isReplicated() && transport.isCoordinator()) ||
-            (cacheMode.isDistributed() && distributionManager.locate(key).get(0).equals(transport.getAddress()));
+   protected boolean isPrimaryOwner(Object key) {
+      return false;
    }
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
@@ -155,7 +139,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
       // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && !(remoteNodeMayNeedToLoad && isPrimaryOwner(key))) return false;
+      if (!isRetrieval && !ctx.isOriginLocal() && !isPrimaryOwner(key)) return false;
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
