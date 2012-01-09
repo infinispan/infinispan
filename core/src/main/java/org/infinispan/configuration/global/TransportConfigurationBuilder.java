@@ -83,6 +83,10 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * Class that represents a network transport. Must implement
     * org.infinispan.remoting.transport.Transport
     *
+    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
+    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
+    * constructor to any instance. This will be resolved in Infinispan 5.2.0
+    *
     * @param transportClass
     */
    public TransportConfigurationBuilder transport(Transport transport) {
