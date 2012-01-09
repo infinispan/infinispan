@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Grouper;
@@ -1108,7 +1109,7 @@ public class Parser {
    private void parseGlobal(XMLStreamReader reader, GlobalConfigurationBuilder builder) throws XMLStreamException {
 
       ParseUtils.requireNoAttributes(reader);
-
+      boolean transportParsed = false;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -1142,11 +1143,21 @@ public class Parser {
             }
             case TRANSPORT: {
                parseTransport(reader, builder);
+               transportParsed = true;
                break;
             }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
+         }
+      }
+      if (!transportParsed) {
+         // make sure there is no "default" transport
+         builder.transport().transport(null);
+      } else {
+         // The transport *has* been parsed.  If we don't have a transport set, make sure we set the default.
+         if (builder.transport().getTransport() == null) {
+            builder.transport().transport(Util.getInstance(TransportConfigurationBuilder.DEFAULT_TRANSPORT));
          }
       }
    }

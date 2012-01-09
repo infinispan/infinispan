@@ -1,12 +1,12 @@
 package org.infinispan.configuration.global;
 
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
+
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configures the transport used for network communications across the cluster.
@@ -14,7 +14,7 @@ import org.infinispan.util.Util;
 public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBuilder<TransportConfiguration> {
    
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
-   private static final Class<? extends Transport> DEFAULT_TRANSPORT = JGroupsTransport.class; 
+   public static final Class<? extends Transport> DEFAULT_TRANSPORT = JGroupsTransport.class;
    
    private String clusterName = "Infinispan-Cluster";
    private String machineId;
@@ -26,7 +26,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    private String nodeName;
    private Properties properties = new Properties();
    private boolean strictPeerToPeer = true;
-   
+
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
    }
@@ -87,7 +87,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
     *
-    * @param transportClass
+    * @param transport transport instance
     */
    public TransportConfigurationBuilder transport(Transport transport) {
       this.transport = transport;
@@ -120,7 +120,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    /**
     * Clears the transport properties
     *
-    * @param properties
     * @return this TransportConfig
     */
    public TransportConfigurationBuilder clearProperties() {
@@ -128,13 +127,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
    
-   /**
-    * TODO
-    *
-    * @param key
-    * @param value
-    * @return
-    */
    public TransportConfigurationBuilder addProperty(String key, String value) {
       this.properties.put(key, value);
       return this;
@@ -161,8 +153,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    @Override
    TransportConfiguration create() {
-      if (transport == null)
-         defaultTransport();
       return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
    }
    
@@ -170,12 +160,12 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       transport(Util.getInstance(DEFAULT_TRANSPORT));
       return this;
    }
-   
-   public TransportConfigurationBuilder clearTransport() {
-      transport(null);
+
+   public TransportConfigurationBuilder useDefaultIfTransportNotSpecified() {
+      if (transport == null) transport(Util.getInstance(DEFAULT_TRANSPORT));
       return this;
    }
-   
+
    @Override
    TransportConfigurationBuilder read(TransportConfiguration template) {
       this.clusterName = template.clusterName();
@@ -189,5 +179,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.transport = template.transport();
       
       return this;
+   }
+
+   public Transport getTransport() {
+      return transport;
    }
 }
