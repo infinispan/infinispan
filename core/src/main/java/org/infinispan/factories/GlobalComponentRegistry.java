@@ -38,6 +38,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -94,7 +95,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
       super(configuration.getClassLoader()); // registers the default classloader
-      if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
 
       // Load up the component metadata
@@ -117,6 +117,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          else
             registerNonVolatileComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
+
+         // This is necessary to make sure the transport has been started and is available to other components that
+         // may need it.  This is a messy approach though - a proper fix will be in ISPN-1698
+         getOrCreateComponent(Transport.class);
+
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
@@ -129,7 +134,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void removeShutdownHook() {
-      // if this is called from a source other than the shutdown hook, deregister the shutdown hook.
+      // if this is called from a source other than the shutdown hook, de-register the shutdown hook.
       if (!invokedFromShutdownHook && shutdownHook != null) Runtime.getRuntime().removeShutdownHook(shutdownHook);
    }
 

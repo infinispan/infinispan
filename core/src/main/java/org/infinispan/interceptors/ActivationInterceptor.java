@@ -61,7 +61,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    public void setCacheStore() {
       store = clm == null ? null : clm.getCacheStore();
       if (store == null) {
-         throw new ConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
+         throw new ConfigurationException("Passivation can only be used with a CacheLoader that implements CacheStore!");
       }
    }
 
