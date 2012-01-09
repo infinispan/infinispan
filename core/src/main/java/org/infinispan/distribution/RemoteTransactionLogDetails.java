@@ -85,10 +85,9 @@ public class RemoteTransactionLogDetails {
 
       @Override
       public void writeObject(ObjectOutput output, RemoteTransactionLogDetails object) throws IOException {
-         RemoteTransactionLogDetails d = object;
-         output.writeBoolean(d.isDrainNextCallWithoutLock());
-         output.writeObject(d.getModifications());
-         output.writeObject(d.getPendingPreparesMap());
+         output.writeBoolean(object.isDrainNextCallWithoutLock());
+         output.writeObject(object.getModifications());
+         output.writeObject(object.getPendingPreparesMap());
 
       }
 

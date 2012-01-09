@@ -275,10 +275,9 @@ public class XmlConfigHelper {
    public static Properties readPropertiesContents(Element element, String elementName) {
       String stringContents = readStringContents(element, elementName);
       if (stringContents == null) return new Properties();
-      // JBCACHE-531: escape all backslash characters
       stringContents = escapeBackslashes(stringContents);
-      ByteArrayInputStream is = null;
-      Properties properties = null;
+      ByteArrayInputStream is;
+      Properties properties;
       try {
          is = new ByteArrayInputStream(stringContents.trim().getBytes("ISO8859_1"));
          properties = new Properties();

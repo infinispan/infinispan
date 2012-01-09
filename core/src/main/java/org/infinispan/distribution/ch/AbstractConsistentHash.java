@@ -48,7 +48,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
 
    @Override
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount) {
-      Map<Object, List<Address>> locations = new HashMap<Object, List<Address>>();
+      Map<Object, List<Address>> locations = new HashMap<Object, List<Address>>(keys.size());
       for (Object k : keys) locations.put(k, locate(k, replCount));
       return locations;
    }

@@ -37,7 +37,7 @@ public class CacheConfigurationException extends CacheException {
   
    private static final long serialVersionUID = -1907871321266402356L;
    
-   private List<String> erroneousAttributes = new ArrayList<String>();
+   private List<String> erroneousAttributes = new ArrayList<String>(4);
 
    public CacheConfigurationException(Exception e) {
       super(e);

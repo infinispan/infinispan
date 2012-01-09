@@ -46,6 +46,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -219,7 +220,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       Set<Address> an = new HashSet<Address>();
       for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
-      return an;
+      return Immutables.immutableListConvert(an);
    }
 
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")

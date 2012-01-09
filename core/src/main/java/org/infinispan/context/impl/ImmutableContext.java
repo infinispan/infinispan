@@ -19,17 +19,16 @@
 
 package org.infinispan.context.impl;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This context is a non-context for operations such as eviction which are not related
@@ -156,7 +155,7 @@ public final class ImmutableContext implements InvocationContext {
    /**
     * @return an exception to state this context is read only
     */
-   private static final CacheException newUnsupportedMethod() {
+   private static CacheException newUnsupportedMethod() {
       return new CacheException("This context is immutable");
    }
 

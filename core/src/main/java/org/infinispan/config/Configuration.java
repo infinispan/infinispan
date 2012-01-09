@@ -62,8 +62,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -2452,7 +2452,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          dolly.stateRetrieval = (StateRetrievalType) stateRetrieval.clone();
          dolly.l1 = (L1Type) l1.clone();
          dolly.async = (AsyncType) async.clone();
-         dolly.hash = (HashType) hash.clone();
+         dolly.hash = hash.clone();
          return dolly;
       }
 
@@ -3662,7 +3662,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          dolly.rehashEnabled = rehashEnabled;
          dolly.rehashRpcTimeout = rehashRpcTimeout;
          dolly.rehashWait = rehashWait;
-         dolly.groups = (GroupsConfiguration) groups.clone();
+         dolly.groups = groups.clone();
          return dolly;
       }
    }
@@ -4343,7 +4343,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private static final long serialVersionUID = 7187545782011884661L;
 
       @XmlElement(name = "interceptor")
-      private List<CustomInterceptorConfig> customInterceptors = new ArrayList<CustomInterceptorConfig>();
+      private List<CustomInterceptorConfig> customInterceptors = new LinkedList<CustomInterceptorConfig>();
       
       public CustomInterceptorsType() {
          testImmutability("customInterceptors");
@@ -4353,7 +4353,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public CustomInterceptorsType clone() throws CloneNotSupportedException {
          CustomInterceptorsType dolly = (CustomInterceptorsType) super.clone();
          if (customInterceptors != null) {
-            dolly.customInterceptors = new ArrayList<CustomInterceptorConfig>();
+            dolly.customInterceptors = new LinkedList<CustomInterceptorConfig>();
             for (CustomInterceptorConfig config : customInterceptors) {
                CustomInterceptorConfig clone = config.clone();
                dolly.customInterceptors.add(clone);

@@ -84,7 +84,7 @@ public abstract class AbstractTransport implements Transport {
             responseListToAddTo.put(sender, response);
          } else if (responseObject != null) {
             // null responses should just be ignored, all other responses should trigger an exception
-            Class<? extends Object> responseClass = responseObject != null ? responseObject.getClass() : null;
+            Class<?> responseClass = responseObject.getClass();
             log.tracef("Unexpected response object type from %s: %s", sender, responseClass);
             throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
          }

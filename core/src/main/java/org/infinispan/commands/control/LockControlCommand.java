@@ -84,7 +84,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    public LockControlCommand(Object key, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
       this(cacheName);
-      this.keys = new ArrayList<Object>();
+      this.keys = new ArrayList<Object>(1);
       this.keys.add(key);
       this.flags = flags;
       this.globalTx = gtx;

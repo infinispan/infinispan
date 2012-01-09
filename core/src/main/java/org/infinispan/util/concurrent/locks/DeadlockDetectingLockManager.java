@@ -217,7 +217,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected")
    @Metric(displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
    @Deprecated
-   public long getLocallyInterruptedTransactions() {
+   public static long getLocallyInterruptedTransactions() {
       return -1;
    }
 

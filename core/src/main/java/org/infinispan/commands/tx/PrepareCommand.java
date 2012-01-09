@@ -63,6 +63,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    protected CacheNotifier notifier;
    protected RecoveryManager recoveryManager;
    private transient boolean replayEntryWrapping  = false;
+   
+   private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
@@ -130,7 +132,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public WriteCommand[] getModifications() {
-      return modifications == null ? new WriteCommand[]{} : modifications;
+      return modifications == null ? EMPTY_WRITE_COMMAND_ARRAY : modifications;
    }
 
    public boolean isOnePhaseCommit() {
@@ -208,7 +210,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public Set<Object> getAffectedKeys() {
       if (modifications == null || modifications.length == 0) return Collections.emptySet();
       if (modifications.length == 1) return modifications[0].getAffectedKeys();
-      Set<Object> keys = new HashSet<Object>();
+      Set<Object> keys = new HashSet<Object>(modifications.length);
       for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
       return keys;
    }

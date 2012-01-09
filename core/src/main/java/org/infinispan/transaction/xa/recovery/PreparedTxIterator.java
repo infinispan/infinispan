@@ -34,7 +34,7 @@ import java.util.List;
 */
 public class PreparedTxIterator implements RecoveryManager.RecoveryIterator {
 
-   private final HashSet<Xid> xids = new HashSet<Xid>();
+   private final HashSet<Xid> xids = new HashSet<Xid>(4);
 
    @Override
    public boolean hasNext() {

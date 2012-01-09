@@ -160,8 +160,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    private boolean isEmptyUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      boolean isEmpty = entry != null && entry.getUncommittedChages().isEmpty();
-      return isEmpty;
+      return entry != null && entry.getUncommittedChages().isEmpty();
    }
 
    public boolean containsKey(Object key) {

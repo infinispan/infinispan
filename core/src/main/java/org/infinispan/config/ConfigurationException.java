@@ -40,7 +40,7 @@ public class ConfigurationException extends CacheException {
 
    private static final long serialVersionUID = -5576382839360927955L;
 
-   private List<String> erroneousAttributes = new ArrayList<String>();
+   private List<String> erroneousAttributes = new ArrayList<String>(4);
 
    public ConfigurationException(Exception e) {
       super(e);

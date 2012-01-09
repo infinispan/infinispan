@@ -86,6 +86,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final ModuleProperties moduleProperties = new ModuleProperties();
    final List<ModuleLifecycle> moduleLifecycles;
 
+   Map<String, ComponentRegistry> namedComponents = new HashMap<String, ComponentRegistry>(4);
+
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
@@ -164,8 +166,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          log.tracef("Not registering a shutdown hook.  Configured behavior = %s", globalConfiguration.getShutdownHookBehavior());
       }
    }
-
-   Map<String, ComponentRegistry> namedComponents = new HashMap<String, ComponentRegistry>();
 
    public final ComponentRegistry getNamedComponentRegistry(String name) {
       return namedComponents.get(name);

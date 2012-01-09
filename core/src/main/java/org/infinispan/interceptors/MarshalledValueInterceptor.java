@@ -119,7 +119,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>();
+      Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>(command.getMap().size());
       Map map = wrapMap(command.getMap(), marshalledValues, ctx);
       command.setMap(map);
       Object retVal = invokeNextInterceptor(ctx, command);
@@ -336,7 +336,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          return Collections.emptyMap();
       }
       if (trace) log.tracef("Wrapping map contents of argument %s", m);
-      Map copy = new HashMap();
+      Map copy = new HashMap(m.size());
       for (Map.Entry me : m.entrySet()) {
          Object key = me.getKey();
          Object value = me.getValue();

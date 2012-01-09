@@ -1,7 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.util.Map.Entry;
-
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.FluentGlobalConfiguration;
 import org.infinispan.executors.ExecutorFactory;
@@ -11,9 +9,11 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;
 
+import java.util.Map.Entry;
+
 public class LegacyGlobalConfigurationAdaptor {
    
-   public org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
+   public static org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
       
       // Handle the case that null is passed in
       if (config == null)
@@ -73,7 +73,7 @@ public class LegacyGlobalConfigurationAdaptor {
       return legacy.build();
    }
    
-   public org.infinispan.configuration.global.GlobalConfiguration adapt(org.infinispan.config.GlobalConfiguration legacy) {
+   public static org.infinispan.configuration.global.GlobalConfiguration adapt(org.infinispan.config.GlobalConfiguration legacy) {
       
       // Handle the case that null is passed in
       if (legacy == null)

@@ -34,7 +34,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
@@ -63,7 +62,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -88,27 +86,23 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private volatile Address currentStateTransferSource;
    private boolean stateTransferEnabled;
    private Configuration configuration;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
-   private StreamingMarshaller marshaller;
    private CacheViewsManager cvm;
 
 
    @Inject
    public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                  @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                                   CacheViewsManager cvm) {
       this.t = t;
       this.configuration = configuration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
-      this.marshaller = marshaller;
       this.cvm = cvm;
    }
 

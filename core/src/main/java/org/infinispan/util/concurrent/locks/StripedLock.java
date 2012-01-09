@@ -22,15 +22,14 @@
  */
 package org.infinispan.util.concurrent.locks;
 
+import net.jcip.annotations.ThreadSafe;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import net.jcip.annotations.ThreadSafe;
-
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A simple implementation of lock striping, using cache entry keys to lock on, primarily used to help make {@link
@@ -154,7 +153,7 @@ public class StripedLock {
     * @param x the object serving as a key
     * @return the hash code
     */
-   final int hash(Object x) {
+   static final int hash(Object x) {
       int h = x.hashCode();
       h ^= h >>> 20 ^ h >>> 12;
       return h ^ h >>> 7 ^ h >>> 4;

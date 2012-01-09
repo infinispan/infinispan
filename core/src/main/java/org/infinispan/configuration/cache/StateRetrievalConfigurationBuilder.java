@@ -1,10 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configures how state is retrieved when a new cache joins the cluster. Used with invalidation and
@@ -119,7 +119,7 @@ public class StateRetrievalConfigurationBuilder extends
       if (_fetchInMemoryState == null)
          _fetchInMemoryState = false;
       
-      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, _fetchInMemoryState.booleanValue(), fetchInMemoryState,
+      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, _fetchInMemoryState, fetchInMemoryState,
             initialRetryWaitTime, logFlushTimeout, maxNonProgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
    }
    

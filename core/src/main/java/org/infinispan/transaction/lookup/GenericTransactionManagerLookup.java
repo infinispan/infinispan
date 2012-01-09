@@ -152,6 +152,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
                return;
             }
          }
+         lookupDone = true;
       } finally {
          Util.close(ctx);
       }

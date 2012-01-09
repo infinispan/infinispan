@@ -22,17 +22,18 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.lifecycle.ComponentStatus;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * DistributedExecuteCommand is used to migrate Callable and execute it in remote JVM.
@@ -47,16 +48,16 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    
    private static final long serialVersionUID = -7828117401763700385L;
 
-   protected Cache cache;
+   private Cache cache;
 
-   protected Set<Object> keys;
+   private Set<Object> keys;
 
-   protected Callable<V> callable;
+   private Callable<V> callable;
 
 
    public DistributedExecuteCommand(Collection<Object> inputKeys, Callable<V> callable) {
       if (inputKeys == null || inputKeys.isEmpty())
-         this.keys = new HashSet<Object>();
+         this.keys = Collections.emptySet();
       else
          this.keys = new HashSet<Object>(inputKeys);
       this.callable = callable;
@@ -132,10 +133,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
          return false;
       }
       DistributedExecuteCommand<?> that = (DistributedExecuteCommand) o;
-      if (keys.equals(that.keys)) {
-         return false;
-      }
-      return true;
+      return !keys.equals(that.keys);
    }
 
    @Override

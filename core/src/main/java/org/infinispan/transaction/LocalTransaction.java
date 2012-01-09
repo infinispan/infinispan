@@ -77,7 +77,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public void locksAcquired(Collection<Address> nodes) {
       log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
-      if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
+      if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>(nodes.size());
       remoteLockedNodes.addAll(nodes);
    }
 

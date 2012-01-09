@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.Properties;
-
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
@@ -23,9 +21,11 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.util.Util;
 
+import java.util.Properties;
+
 public class LegacyConfigurationAdaptor {
 
-   public org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
+   public static org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
       
       // Handle the case that null is passed in
       if (config == null)
@@ -249,7 +249,7 @@ public class LegacyConfigurationAdaptor {
       return legacy.build();
    }
    
-   public org.infinispan.configuration.cache.Configuration adapt(org.infinispan.config.Configuration legacy) {
+   public static org.infinispan.configuration.cache.Configuration adapt(org.infinispan.config.Configuration legacy) {
       
       // Handle the case that null is passed in
       if (legacy == null)
@@ -420,7 +420,7 @@ public class LegacyConfigurationAdaptor {
    
       builder.transaction()
          .autoCommit(legacy.isTransactionAutoCommit())
-         .cacheStopTimeout((int) legacy.getCacheStopTimeout())
+         .cacheStopTimeout(legacy.getCacheStopTimeout())
          .eagerLockingSingleNode(legacy.isEagerLockSingleNode())
          .lockingMode(legacy.getTransactionLockingMode())
          .syncCommitPhase(legacy.isSyncCommitPhase())

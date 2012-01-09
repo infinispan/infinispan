@@ -44,9 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 public final class Util {
 
    private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
+   public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
    /**
     * <p>
@@ -234,7 +233,7 @@ public final class Util {
       if (marshaller == null)
          throw new IllegalArgumentException("Cannot use null Marshaller for clone");
       
-      byte[] byteBuffer = null;
+      byte[] byteBuffer;
       try {
          byteBuffer = marshaller.objectToByteBuffer(x);
          return (T) marshaller.objectFromByteBuffer(byteBuffer);
@@ -262,46 +261,6 @@ public final class Util {
     */
    public static boolean safeEquals(Object a, Object b) {
       return (a == b) || (a != null && a.equals(b));
-   }
-
-   /**
-    * Static inner class that holds 3 maps - for data added, removed and modified.
-    */
-   public static class MapModifications {
-      public final Map<Object, Object> addedEntries = new HashMap<Object, Object>();
-      public final Map<Object, Object> removedEntries = new HashMap<Object, Object>();
-      public final Map<Object, Object> modifiedEntries = new HashMap<Object, Object>();
-
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         MapModifications that = (MapModifications) o;
-
-         if (addedEntries != null ? !addedEntries.equals(that.addedEntries) : that.addedEntries != null) return false;
-         if (modifiedEntries != null ? !modifiedEntries.equals(that.modifiedEntries) : that.modifiedEntries != null)
-            return false;
-         if (removedEntries != null ? !removedEntries.equals(that.removedEntries) : that.removedEntries != null)
-            return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         int result;
-         result = (addedEntries != null ? addedEntries.hashCode() : 0);
-         result = 31 * result + (removedEntries != null ? removedEntries.hashCode() : 0);
-         result = 31 * result + (modifiedEntries != null ? modifiedEntries.hashCode() : 0);
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return "Added Entries " + addedEntries + " Removed Entries " + removedEntries + " Modified Entries " + modifiedEntries;
-      }
    }
 
    public static String prettyPrintTime(long time, TimeUnit unit) {
@@ -421,11 +380,11 @@ public final class Util {
       return sb.toString();
    }
 
-   public static final String toHexString(byte input[]) {
+   public static String toHexString(byte input[]) {
       return toHexString(input, input.length);
    }
 
-   public static final String toHexString(byte input[], int limit) {
+   public static String toHexString(byte input[], int limit) {
       int i = 0;
       if (input == null || input.length <= 0)
          return null;
@@ -513,10 +472,9 @@ public final class Util {
    private static void printLockInfo(LockInfo[] locks, StringBuilder threadDump) {
       threadDump.append(INDENT + "Locked synchronizers: count = " + locks.length);
       threadDump.append("\n");
-      for (int i = 0; i < locks.length; i++) {
-          LockInfo li = locks[i];
-          threadDump.append(INDENT + "  - " + li);
-          threadDump.append("\n");
+      for (LockInfo li : locks) {
+         threadDump.append(INDENT + "  - " + li);
+         threadDump.append("\n");
       }
       threadDump.append("\n");
    }

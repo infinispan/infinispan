@@ -160,7 +160,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   protected final void safeClose(InputStream stream) throws CacheLoaderException {
+   protected static void safeClose(InputStream stream) throws CacheLoaderException {
       if (stream == null) return;
       try {
          stream.close();
@@ -169,7 +169,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   protected final void safeClose(OutputStream stream) throws CacheLoaderException {
+   protected static void safeClose(OutputStream stream) throws CacheLoaderException {
       if (stream == null) return;
       try {
          stream.close();

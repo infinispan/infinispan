@@ -50,7 +50,7 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
       return globalConfig.build();
    }
    
-   abstract void valididate();
+   abstract void validate();
    
    abstract T create();
    

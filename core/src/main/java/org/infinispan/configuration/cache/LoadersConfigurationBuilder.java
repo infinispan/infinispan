@@ -9,7 +9,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    private boolean passivation = false;
    private boolean preload = false;
    private boolean shared = false;
-   private List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders = new ArrayList<AbstractLoaderConfigurationBuilder<?>>();
+   private List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders = new ArrayList<AbstractLoaderConfigurationBuilder<?>>(2);
    
 
    protected LoadersConfigurationBuilder(ConfigurationBuilder builder) {

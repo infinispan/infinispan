@@ -1,6 +1,7 @@
 package org.infinispan.distribution.group;
 
-import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
+import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.Util;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -13,8 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
+import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
 
 public class GroupManagerImpl implements GroupManager {
     
@@ -33,10 +33,6 @@ public class GroupManagerImpl implements GroupManager {
     }
     
     private static class GroupMetadataImpl implements GroupMetadata {
-        
-        
-        private static Object[] EMPTY_ARGS = new Object[0];
-        
         private final Method method;
 
         public GroupMetadataImpl(Method method) {
@@ -48,7 +44,7 @@ public class GroupManagerImpl implements GroupManager {
         }
 
         public String getGroup(Object instance) {
-            return String.class.cast(invokeAccessibly(instance, method, EMPTY_ARGS));
+            return String.class.cast(invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
         }
         
     }

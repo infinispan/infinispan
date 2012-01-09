@@ -56,7 +56,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public RemoteTransaction(GlobalTransaction tx) {
       super(tx);
       this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = new HashMap<Object, CacheEntry>();
+      lookedUpEntries = new HashMap<Object, CacheEntry>(2);
    }
 
    public void invalidate() {

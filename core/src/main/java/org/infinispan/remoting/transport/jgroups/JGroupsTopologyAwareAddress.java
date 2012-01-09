@@ -91,8 +91,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
             Address jgroupsAddress = org.jgroups.util.Util.readAddress(unmarshaller);
-            JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress(jgroupsAddress);
-            return address;
+            return new JGroupsTopologyAwareAddress(jgroupsAddress);
          } catch (Exception e) {
             throw new IOException(e);
          }

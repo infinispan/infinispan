@@ -167,7 +167,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       throw te;
    }   
 
-   public boolean isValidRunningTx(Transaction tx) throws Exception {
+   private boolean isValidRunningTx(Transaction tx) throws Exception {
       int status;
       try {
          status = tx.getStatus();

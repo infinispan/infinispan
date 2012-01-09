@@ -145,7 +145,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    public Set<RecoveryAwareLocalTransaction> getLocalTxThatFailedToComplete() {
-      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>();
+      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>(4);
       for (LocalTransaction lTx : xid2LocalTx.values()) {
          RecoveryAwareLocalTransaction lTx1 = (RecoveryAwareLocalTransaction) lTx;
          if (lTx1.isCompletionFailed()) {
