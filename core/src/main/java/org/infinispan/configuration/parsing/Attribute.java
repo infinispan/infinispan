@@ -126,7 +126,8 @@ public enum Attribute {
     VERSION("version"),
     WAKE_UP_INTERVAL("wakeUpInterval"),
     WRITE_SKEW_CHECK("writeSkewCheck"),
-    USE_1PC_FOR_AUTOCOMMIT_TX("use1PcForAutoCommitTransactions")
+    USE_1PC_FOR_AUTOCOMMIT_TX("use1PcForAutoCommitTransactions"),
+    VERSIONING_SCHEME("versioningScheme")
     ;
 
     private final String name;
