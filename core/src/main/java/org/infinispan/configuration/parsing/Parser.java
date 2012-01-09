@@ -704,6 +704,11 @@ public class Parser {
             case THREAD_POLICY:
                builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
                break;
+            case WAKE_UP_INTERVAL:
+               final Long wakeUpInterval = Long.valueOf(value);
+               log.evictionWakeUpIntervalDeprecated(wakeUpInterval);
+               builder.expiration().wakeUpInterval(wakeUpInterval);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
