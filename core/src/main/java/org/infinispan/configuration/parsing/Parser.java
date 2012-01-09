@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.container.DataContainer;
@@ -212,12 +213,35 @@ public class Parser {
             case UNSAFE:
                parseUnsafe(reader, builder);
                break;
+            case VERSIONING:
+               parseVersioning(reader, builder);
+               break;
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
       }
    }
 
+   private void parseVersioning(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      builder.versioning().disable(); // Disabled by default.
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceSystemProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case VERSIONING_SCHEME:
+               builder.versioning().scheme(VersioningScheme.valueOf(value));
+               break;
+            case ENABLED:
+               builder.versioning().enable();
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      ParseUtils.requireNoContent(reader);
+   }
    private void parseTransaction(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
       boolean forceSetTransactional = false;
       boolean transactionModeSpecified = false;

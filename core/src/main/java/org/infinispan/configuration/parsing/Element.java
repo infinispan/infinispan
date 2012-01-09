@@ -76,7 +76,8 @@ public enum Element {
     SYNC("sync"),
     TRANSACTION("transaction"),
     TRANSPORT("transport"),
-    UNSAFE("unsafe")
+    UNSAFE("unsafe"),
+    VERSIONING("versioning")
     ;
 
     private final String name;
