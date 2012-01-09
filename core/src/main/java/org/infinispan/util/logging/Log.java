@@ -818,5 +818,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Eviction wakeUpInterval configuration is now deprecated. Passed value (%d) has been applied to Expiration wakeUpInterval", id = 176)
    void evictionWakeUpIntervalDeprecated(Long wakeUpInterval);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "%s has been deprecated as a synonym for %s. Use one of %s instead", id = 177)
+   void randomCacheModeSynonymsDeprecated(String candidate, String mode, List<String> synonyms);
 
 }
