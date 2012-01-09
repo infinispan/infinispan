@@ -125,7 +125,7 @@ public class SingleRpcOnPessimisticLockingTest extends MultipleCacheManagersTest
          @Override
          public boolean isSatisfied() throws Exception {
             return crm.lockCount == 0 && crm.clusterGet == 1 &&
-                  crm.otherCount == 2;//1-phase commit + async TxCompletionNotificationCommand
+                  crm.otherCount == 1;//1-phase commit
          }
       });
    }
