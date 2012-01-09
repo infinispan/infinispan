@@ -19,7 +19,7 @@ public class EvictionConfiguration {
    }
    
    /**
-    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
+    * Eviction strategy. Available options are 'UNORDERED', 'LRU', 'LIRS' and 'NONE' (to disable
     * eviction).
     *
     * @param strategy

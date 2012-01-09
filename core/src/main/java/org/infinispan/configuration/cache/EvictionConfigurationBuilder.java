@@ -23,7 +23,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
 
    
    /**
-    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
+    * Eviction strategy. Available options are 'UNORDERED', 'LRU', 'LIRS' and 'NONE' (to disable
     * eviction).
     *
     * @param strategy
@@ -59,6 +59,8 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    void validate() {
       if (!strategy.isEnabled() && getBuilder().loaders().passivation())
          log.passivationWithoutEviction();
+      if(strategy == EvictionStrategy.FIFO)
+         log.warn("FIFO strategy is deprecated, LRU will be used instead");
       if (strategy.isEnabled() && maxEntries <= 0)
          throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
    }
