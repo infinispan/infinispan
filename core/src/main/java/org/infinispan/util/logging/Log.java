@@ -816,7 +816,7 @@ public interface Log extends BasicLogger {
    void failedToCloseResource(@Cause Throwable e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Eviction wakeUpInterval configuration is now deprecated. Passed value (%d) has been applied to Expiration wakeUpInterval", id = 176)
+   @Message(value = "The 'wakeUpInterval' attribute of the 'eviction' configuration XML element is deprecated. Setting the 'wakeUpInterval' attribute of the 'expiration' configuration XML element to %d instead", id = 176)
    void evictionWakeUpIntervalDeprecated(Long wakeUpInterval);
 
 }
