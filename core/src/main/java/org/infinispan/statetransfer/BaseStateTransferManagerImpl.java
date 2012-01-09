@@ -189,8 +189,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public void waitForStateTransferToStart(int viewId) throws InterruptedException {
       // TODO Add another latch for this, or maybe use a lock with condition variables instead
-      while (newView == null || newView.getViewId() < viewId) {
-         Thread.sleep(1);
+      while ((newView == null || newView.getViewId() < viewId)
+            && (oldView == null || oldView.getViewId() < viewId)) {
+         Thread.sleep(10);
       }
    }
 
@@ -327,7 +328,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void rollbackView(int committedViewId) {
+   public void rollbackView(int newViewId, int committedViewId) {
       BaseStateTransferTask tempTask = stateTransferTask;
       if (tempTask == null) {
          if (committedViewId == oldView.getViewId()) {
@@ -344,7 +345,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       stateTransferTask = null;
 
       // TODO Use the new view id
-      newView = oldView;
+      newView = new CacheView(newViewId, oldView.getMembers());
+      oldView = newView;
       chNew = chOld;
 
       stateTransferInProgressLatch.open();

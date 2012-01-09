@@ -27,7 +27,7 @@ package org.infinispan.cacheviews;
  * to the new owners during the prepare phase.
  *
  * The view is installed in two phases, so every {@link #prepareView(CacheView,CacheView)}
- * call will be followed either by a {@link #commitView(int)} or a {@link #rollbackView(int)}.
+ * call will be followed either by a {@link #commitView(int)} or a {@link #rollbackView(int, int)}.
  *
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
@@ -35,6 +35,6 @@ package org.infinispan.cacheviews;
 public interface CacheViewListener {
    void prepareView(CacheView newView, CacheView oldView) throws Exception;
    void commitView(int viewId);
-   void rollbackView(int committedViewId);
+   void rollbackView(int newViewId, int committedViewId);
    void waitForPrepare();
 }

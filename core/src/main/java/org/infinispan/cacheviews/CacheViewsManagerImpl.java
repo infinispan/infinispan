@@ -285,8 +285,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       if (pendingView.containsAny(leavers))
          throw new IllegalStateException("Cannot prepare view " + pendingView + ", some nodes already left the cluster: " + leavers);
 
+
       // broadcast the command to the targets, which will skip the local node
-      Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
+      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
             Map<Address, Response> rspList = transport.invokeRemotely(pendingView.getMembers(), cmd,
@@ -296,13 +297,19 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       });
 
       // now invoke the command on the local node
-      try {
-         handlePrepareView(cacheName, pendingView, committedView);
-      } finally {
-         // wait for the remote commands to finish
-         Map<Address, Response> rspList = future.get(timeout, TimeUnit.MILLISECONDS);
-         checkRemoteResponse(cacheName, cmd, rspList);
-      }
+      Future<Object> localFuture = asyncTransportExecutor.submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            handlePrepareView(cacheName, pendingView, committedView);
+            return null;
+         }
+      });
+
+      // wait for the remote commands to finish
+      Map<Address, Response> rspList = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
+      checkRemoteResponse(cacheName, cmd, rspList);
+      // now wait for the local command
+      localFuture.get(timeout, TimeUnit.MILLISECONDS);
       return pendingView;
    }
 
@@ -515,7 +522,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          if (cacheViewListener != null) {
-            cacheViewListener.rollbackView(committedViewId);
+            cacheViewListener.rollbackView(newViewId, committedViewId);
          }
       } else {
          log.debugf("%s: We don't have a pending view, ignoring rollback", cacheName);
