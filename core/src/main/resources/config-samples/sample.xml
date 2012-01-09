@@ -209,9 +209,13 @@
             transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="false"
-            useEagerLocking="false"
-            eagerLockSingleNode="false"
-            cacheStopTimeout="30000" />
+            cacheStopTimeout="30000"
+            use1PcForAutoCommitTransactions="false"
+            autoCommit="true"
+            lockingMode="OPTIMISTIC"
+            useSynchronization="false"
+            transactionMode="TRANSACTIONAL"
+            />
       -->
       <!--
          Enables deadlock detection.  See:
@@ -553,6 +557,27 @@
             class="com.mycompany.CustomInterceptor1"
          />
       </customInterceptors>
+   </namedCache>
+   -->
+
+   <!--
+      A transactional cache configured to run in pessimistic mode.
+      See:
+         http://community.jboss.org/wiki/Infinispantransactions
+   -->
+   <!--
+   <namedCache name="pessimisticCache">
+
+      <transaction
+            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+            syncCommitPhase="false"
+            cacheStopTimeout="30000"
+            use1PcForAutoCommitTransactions="false"
+            autoCommit="true"
+            lockingMode="PESSIMISTIC"
+            useSynchronization="false"
+            transactionMode="TRANSACTIONAL"/>
+
    </namedCache>
    -->
 
