@@ -374,7 +374,7 @@ public class TransactionTable {
       return rpcManager == null;
    }
 
-   private int getCurrentViewId() {
+   private Integer getCurrentViewId() {
       return rpcManager.getTransport().getViewId();
    }
 
@@ -390,7 +390,10 @@ public class TransactionTable {
          throw new IllegalStateException("Cannot have a tx that has a viewId(" + removeTx.getViewId()
                                                + ") smaller than min view id (" + minTxViewId + ")");
 
-      if (removeTx.getViewId() != getCurrentViewId()) {
+      Integer currentViewId = getCurrentViewId();
+      if (currentViewId == null) //cache has stopped, just ignore this
+         return;
+      if (!removeTx.getViewId().equals(currentViewId)) {
          calculateMinViewId();
       }
    }
