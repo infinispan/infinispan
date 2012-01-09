@@ -247,6 +247,15 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       try {
          log.debugf("Installing new view %s for cache %s", newView, cacheName);
          clusterPrepareView(cacheName, newView);
+
+         Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
+         if (cacheViewInfo.getPendingView().containsAny(leavers)) {
+            log.debugf("Cannot commit cache view %s, some nodes already left the cluster: %s",
+                  cacheViewInfo.getPendingView(), leavers);
+            // will still run the rollback
+            return false;
+         }
+
          success = true;
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
@@ -283,7 +292,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
       if (pendingView.containsAny(leavers))
-         throw new IllegalStateException("Cannot prepare view " + pendingView + ", some nodes already left the cluster: " + leavers);
+         throw new IllegalStateException("Cannot prepare cache view " + pendingView + ", some nodes already left the cluster: " + leavers);
 
 
       // broadcast the command to the targets, which will skip the local node
@@ -446,7 +455,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // tell the upper layer to stop sending commands to the nodes that already left
       CacheViewListener cacheViewListener = cacheViewInfo.getListener();
       if (cacheViewListener != null) {
-         cacheViewListener.waitForPrepare();
+         cacheViewListener.preInstallView();
       }
    }
 
@@ -493,16 +502,22 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       }
 
       if (cacheViewInfo.hasPendingView()) {
-         log.debugf("%s: Committing cache view %d", cacheName, viewId);
          CacheView viewToCommit = cacheViewInfo.getPendingView();
+         log.debugf("%s: Committing cache view %s", cacheName, viewToCommit);
+
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          // we only prepared the view if it was local, so we can't commit it here
          boolean isLocal = viewToCommit.contains(self);
          if (isLocal && cacheViewListener != null) {
             cacheViewListener.commitView(viewId);
          }
+
          cacheViewInfo.commitView(viewId);
          cacheViewInfo.getPendingChanges().resetChanges(viewToCommit);
+
+         if (isLocal && cacheViewListener != null) {
+            cacheViewListener.postInstallView(viewId);
+         }
       } else {
          log.debugf("%s: We don't have a pending view, ignoring commit", cacheName);
       }
@@ -518,12 +533,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       if (cacheViewInfo.hasPendingView()) {
          log.debugf("%s: Rolling back to cache view %d, new view id is %d", cacheName, committedViewId, newViewId);
-         cacheViewInfo.rollbackView(newViewId, committedViewId);
-         cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          if (cacheViewListener != null) {
             cacheViewListener.rollbackView(newViewId, committedViewId);
          }
+
+         cacheViewInfo.rollbackView(newViewId, committedViewId);
+         cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
       } else {
          log.debugf("%s: We don't have a pending view, ignoring rollback", cacheName);
       }
