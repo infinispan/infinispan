@@ -76,7 +76,7 @@ public interface StateTransferLock {
 
    void blockNewTransactions(int cacheViewId) throws InterruptedException;
 
-   void unblockNewTransactions(int cacheViewId) throws InterruptedException;
+   void unblockNewTransactions(int cacheViewId);
 
    void blockNewTransactionsAsync();
 

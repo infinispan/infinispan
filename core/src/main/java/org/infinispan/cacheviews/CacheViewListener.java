@@ -33,8 +33,28 @@ package org.infinispan.cacheviews;
  * @since 5.1
  */
 public interface CacheViewListener {
+   /**
+    * Called after preparing a cache view.
+    */
    void prepareView(CacheView newView, CacheView oldView) throws Exception;
+
+   /**
+    * Called before committing a cache view.
+    */
    void commitView(int viewId);
+
+   /**
+    * Called before rolling back a cache view installation.
+    */
    void rollbackView(int newViewId, int committedViewId);
-   void waitForPrepare();
+
+   /**
+    * Called after a node left or after a merge, even if we're not preparing a new view yet we know we'll prepare one soon.
+    */
+   void preInstallView();
+
+   /**
+    * Called after the cache view was installed successfully.
+    */
+   void postInstallView(int viewId);
 }

@@ -154,7 +154,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       // cancel any pending state transfer before leaving
       BaseStateTransferTask tempTask = stateTransferTask;
       if (tempTask != null) {
-         tempTask.cancelStateTransfer(true, false);
+         tempTask.cancelStateTransfer(true);
          stateTransferTask = null;
       }
       cacheViewsManager.leave(configuration.getName());
@@ -271,15 +271,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       return true;
    }
 
-   public void endStateTransfer() {
-      // we can now use the new CH as the baseline for the next rehash
-      oldView = newView;
-      chOld = chNew;
-
-      stateTransferInProgressLatch.open();
-      joinCompletedLatch.countDown();
-   }
-
    public abstract CacheStore getCacheStoreForStateTransfer();
 
    public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Collection<Address> targets,
@@ -302,6 +293,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       joinStartedLatch.countDown();
 
+      // if this is the first view we're seeing, initialize the oldView as well
+      if (oldView == null) {
+         oldView = committedView;
+      }
       newView = pendingView;
       chNew = createConsistentHash(pendingView.getMembers());
 
@@ -324,7 +319,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       tempTask.commitStateTransfer();
       stateTransferTask = null;
-      endStateTransfer();
+
+      // we can now use the new CH as the baseline for the next rehash
+      oldView = newView;
+      chOld = chNew;
    }
 
    @Override
@@ -341,10 +339,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
       }
 
-      tempTask.cancelStateTransfer(true, false);
+      tempTask.cancelStateTransfer(true);
       stateTransferTask = null;
 
-      // TODO Use the new view id
       newView = new CacheView(newViewId, oldView.getMembers());
       oldView = newView;
       chNew = chOld;
@@ -354,8 +351,21 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void waitForPrepare() {
+   public void preInstallView() {
       stateTransferLock.blockNewTransactionsAsync();
+   }
+
+   @Override
+   public void postInstallView(int viewId) {
+      try {
+         stateTransferLock.unblockNewTransactions(viewId);
+      } catch (Exception e) {
+         log.errorUnblockingTransactions(e);
+      }
+
+      stateTransferInProgressLatch.open();
+      // getCache() will only return after joining has completed, so we need that to be last
+      joinCompletedLatch.countDown();
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);

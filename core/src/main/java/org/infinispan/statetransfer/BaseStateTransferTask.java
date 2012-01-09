@@ -103,16 +103,11 @@ public abstract class BaseStateTransferTask {
       if (running)
          throw new IllegalStateException("State transfer has not finished, cannot commit");
 
-      try {
-         stateTransferLock.unblockNewTransactions(newViewId);
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
-      }
       log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
             Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
-   public void cancelStateTransfer(boolean sync, boolean releaseStateTransferLock) {
+   public void cancelStateTransfer(boolean sync) {
       synchronized (lock) {
          cancelled = true;
          if (sync) {
@@ -125,14 +120,6 @@ public abstract class BaseStateTransferTask {
                   break;
                }
             }
-         }
-      }
-
-      if (releaseStateTransferLock) {
-         try {
-            stateTransferLock.unblockNewTransactions(newViewId);
-         } catch (Exception e) {
-            log.errorUnblockingTransactions(e);
          }
       }
 
