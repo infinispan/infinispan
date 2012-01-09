@@ -29,6 +29,7 @@
 
    <default>
       <lazyDeserialization enabled="true"/>
+      <eviction wakeUpInterval="12000"/>
    </default>
 
 </infinispan>
