@@ -29,7 +29,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -122,7 +121,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          commandBuilder = new CommandBuilder() {
             @Override
             public PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e) {
-               EntryVersion version = e.getVersion();
                return cf.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), ctx.getFlags());
             }
          };

@@ -24,8 +24,6 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 
 /**
@@ -36,12 +34,6 @@ import org.infinispan.factories.annotations.Start;
  * @since 5.1
  */
 public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
-   private VersionGenerator versionGenerator;
-
-   @Inject
-   public void injectVersionGenerator(VersionGenerator versionGenerator) {
-      this.versionGenerator = versionGenerator;
-   }
 
    @Start (priority = 9)
    public void setWriteSkewCheckFlag() {

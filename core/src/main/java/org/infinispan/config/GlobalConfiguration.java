@@ -24,6 +24,11 @@ package org.infinispan.config;
 
 import org.infinispan.CacheException;
 import org.infinispan.Version;
+import org.infinispan.config.FluentGlobalConfiguration.ExecutorFactoryConfig;
+import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
+import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
+import org.infinispan.config.FluentGlobalConfiguration.ShutdownConfig;
+import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.executors.ExecutorFactory;
@@ -45,15 +50,15 @@ import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
-import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
-import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
-import org.infinispan.config.FluentGlobalConfiguration.ExecutorFactoryConfig;
-import org.infinispan.config.FluentGlobalConfiguration.ShutdownConfig;
 
-import javax.xml.bind.annotation.*;
-
-import java.util.ArrayList;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -1463,13 +1468,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       private static final long serialVersionUID = -496116709223466807L;
 
       @XmlElement(name = "advancedExternalizer")
-      private List<AdvancedExternalizerConfig> advancedExternalizers = new ArrayList<AdvancedExternalizerConfig>();
+      private List<AdvancedExternalizerConfig> advancedExternalizers = new LinkedList<AdvancedExternalizerConfig>();
 
       @Override
       public AdvancedExternalizersType clone() throws CloneNotSupportedException {
          AdvancedExternalizersType dolly = (AdvancedExternalizersType) super.clone();
          if (advancedExternalizers != null) {
-            dolly.advancedExternalizers = new ArrayList<AdvancedExternalizerConfig>();
+            dolly.advancedExternalizers = new LinkedList<AdvancedExternalizerConfig>();
             for (AdvancedExternalizerConfig config : advancedExternalizers) {
                AdvancedExternalizerConfig clone = (AdvancedExternalizerConfig) config.clone();
                dolly.advancedExternalizers.add(clone);

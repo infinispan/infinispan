@@ -218,7 +218,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
       }
 
       @SuppressWarnings("unchecked")
-      static final <K, V> HashEntry<K, V>[] newArray(int i) {
+      static <K, V> HashEntry<K, V>[] newArray(int i) {
          return new HashEntry[i];
       }
    }
@@ -306,7 +306,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
       }
 
       @SuppressWarnings("unchecked")
-      static final <K, V> Segment<K, V>[] newArray(int i) {
+      static <K, V> Segment<K, V>[] newArray(int i) {
          return new Segment[i];
       }
 

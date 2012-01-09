@@ -58,8 +58,8 @@ import java.util.Set;
 public class ChainingCacheStore implements CacheStore {
 
    // linked hash sets used since it provides fast (O(1)) iteration, maintains order and provides O(1) lookups to values as well.
-   LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>();
-   LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>();
+   LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>(2);
+   LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>(2);
 
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.store(ed);

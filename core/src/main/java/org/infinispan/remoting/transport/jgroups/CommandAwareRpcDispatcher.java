@@ -51,9 +51,10 @@ import java.io.NotSerializableException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -70,8 +71,8 @@ import static org.infinispan.util.Util.*;
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
-   ExecutorService asyncExecutor;
-   InboundInvocationHandler inboundInvocationHandler;
+   private ExecutorService asyncExecutor;
+   private final InboundInvocationHandler inboundInvocationHandler;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
@@ -85,7 +86,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       this.inboundInvocationHandler = inboundInvocationHandler;
    }
 
-   protected final boolean isValid(Message req) {
+   private boolean isValid(Message req) {
       if (req == null || req.getLength() == 0) {
          log.msgOrMsgBufferEmpty();
          return false;
@@ -94,7 +95,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return true;
    }
 
-   public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, ResponseMode mode, long timeout,
+   public RspList invokeRemoteCommands(List<Address> dests, ReplicableCommand command, ResponseMode mode, long timeout,
                                        boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay, boolean asyncMarshalling,
                                        boolean broadcast) throws InterruptedException {
 
@@ -170,17 +171,17 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private class ReplicationTask implements Callable<RspList> {
 
-      private ReplicableCommand command;
-      private boolean oob;
-      private Vector<Address> dests;
-      private ResponseMode mode;
-      private long timeout;
-      private boolean anycasting;
-      private RspFilter filter;
-      boolean supportReplay = false;
-      boolean broadcast = false;
+      private final ReplicableCommand command;
+      private final boolean oob;
+      private final List<Address> dests;
+      private final ResponseMode mode;
+      private final long timeout;
+      private final boolean anycasting;
+      private final RspFilter filter;
+      private final boolean supportReplay;
+      private final boolean broadcast;
 
-      private ReplicationTask(ReplicableCommand command, boolean oob, Vector<Address> dests,
+      private ReplicationTask(ReplicableCommand command, boolean oob, List<Address> dests,
                               ResponseMode mode, long timeout,
                               boolean anycasting, RspFilter filter, boolean supportReplay, boolean broadcast) {
          this.command = command;
@@ -291,7 +292,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
             if (supportReplay) {
                boolean replay = false;
-               Vector<Address> ignorers = new Vector<Address>();
+               List<Address> ignorers = new LinkedList<Address>();
                for (Map.Entry<Address, Rsp<Object>> entry : retval.entrySet()) {
                   Object value = entry.getValue().getValue();
                   if (value instanceof RequestIgnoredResponse) {
@@ -344,7 +345,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   class FutureCollator implements FutureListener<Object> {
+   static class FutureCollator implements FutureListener<Object> {
       final RspFilter filter;
       volatile RspList retval;
       final Map<Future<Object>, SenderContainer> futures = new HashMap<Future<Object>, SenderContainer>(4);

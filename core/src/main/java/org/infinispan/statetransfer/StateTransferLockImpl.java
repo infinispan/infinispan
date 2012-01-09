@@ -223,7 +223,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       synchronized (lock) {
          writesShouldBlock = true;
-         if (writesBlocked == true) {
+         if (writesBlocked) {
             if (blockingCacheViewId < cacheViewId) {
                log.tracef("Write commands were already blocked for cache view %d", blockingCacheViewId);
             } else {

@@ -375,7 +375,7 @@ public class InterceptorChain {
     * Returns all interceptors which extend the given command interceptor.
     */
    public List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass) {
-      List<CommandInterceptor> result = new ArrayList<CommandInterceptor>();
+      List<CommandInterceptor> result = new LinkedList<CommandInterceptor>();
       for (CommandInterceptor interceptor : asList()) {
          boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
          if (isSubclass) {

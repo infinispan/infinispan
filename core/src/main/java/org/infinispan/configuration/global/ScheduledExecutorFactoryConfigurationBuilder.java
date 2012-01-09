@@ -57,7 +57,7 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       return this;
    }
    
-   void valididate() {
+   void validate() {
       // No-op, no validation required
    } 
    

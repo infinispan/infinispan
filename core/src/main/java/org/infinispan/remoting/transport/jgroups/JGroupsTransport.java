@@ -60,9 +60,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -444,7 +444,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          usePriorityQueue = true;
 
       boolean broadcast = recipients == null || recipients.size() == members.size();
-      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
+      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressList(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
                toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
 
       if (mode.isAsynchronous())
@@ -543,7 +543,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
       boolean hasNotifier = notifier != null;
       if (hasNotifier) {
-         Notify n = null;
+         Notify n;
          if (newView instanceof MergeView) {
             if (log.isInfoEnabled())
                log.receivedMergedView(newView);
@@ -588,13 +588,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return new JGroupsAddress(addr);
    }
 
-   private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
+   private static List<org.jgroups.Address> toJGroupsAddressList(Collection<Address> list) {
       if (list == null)
          return null;
       if (list.isEmpty())
-         return new Vector<org.jgroups.Address>();
+         return Collections.emptyList();
 
-      Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
+      List<org.jgroups.Address> retval = new LinkedList<org.jgroups.Address>();
       for (Address a : list)
          retval.add(toJGroupsAddress(a));
 

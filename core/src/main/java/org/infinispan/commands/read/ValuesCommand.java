@@ -22,19 +22,19 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Command implementation for {@link java.util.Map#values()} functionality.
@@ -107,11 +107,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       public boolean contains(Object o) {
          for (CacheEntry e: lookedUpEntries.values()) {
             if (o.equals(e.getValue())) {
-               if (e.isRemoved()) {
-                  return false;
-               } else {
-                  return true;
-               }
+               return !e.isRemoved();
             }
          }
 
@@ -134,7 +130,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       }
 
       @Override
-      public boolean addAll(Collection<? extends Object> c) {
+      public boolean addAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
@@ -201,9 +197,6 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
                      found = true;
                      break;
                   }
-                  if (e.isRemoved()) {
-                     continue;
-                  }
                }
 
                if (!found) {
@@ -265,7 +258,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       }
 
       @Override
-      public boolean addAll(Collection<? extends Object> c) {
+      public boolean addAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
@@ -309,9 +302,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
             long currentTimeMillis = System.currentTimeMillis();
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (e.isExpired(currentTimeMillis)) {
-                  continue;
-               } else {
+               if (!e.isExpired(currentTimeMillis)) {
                   next = e.getValue();
                   break;
                }

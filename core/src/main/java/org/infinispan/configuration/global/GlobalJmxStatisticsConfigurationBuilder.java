@@ -100,7 +100,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
    
    @Override
-   void valididate() {
+   void validate() {
       // No-op, no validation required
    }
    

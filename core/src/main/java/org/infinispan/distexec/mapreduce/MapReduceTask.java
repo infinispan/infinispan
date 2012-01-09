@@ -22,20 +22,6 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
@@ -61,7 +47,21 @@ import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import static org.infinispan.factories.KnownComponentNames.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * MapReduceTask is a distributed task allowing a large scale computation to be transparently
@@ -169,9 +169,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * @return this task
     */
    public MapReduceTask<KIn, VIn, KOut, VOut> onKeys(KIn... input) {
-      for (KIn key : input) {
-         keys.add(key);
-      }
+      Collections.addAll(keys, input);
       return this;
    }
 
@@ -394,7 +392,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    protected void groupKeys(Map<KOut, List<VOut>> finalReduced, Map<KOut, VOut> mapReceived) {
       for (Entry<KOut, VOut> entry : mapReceived.entrySet()) {
-         List<VOut> l = null;
+         List<VOut> l;
          if (!finalReduced.containsKey(entry.getKey())) {
             l = new LinkedList<VOut>();
             finalReduced.put(entry.getKey(), l);

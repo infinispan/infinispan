@@ -205,9 +205,6 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      found = true;
                      break;
                   }
-                  if (e.isRemoved() || ice.isExpired(currentTimeMillis)) {
-                     continue;
-                  }
                }
 
                if (!found) {

@@ -54,7 +54,7 @@ public class DummyTransaction implements Transaction {
    protected DummyXid xid = new DummyXid();
 
    protected Set<Synchronization> syncs;
-   private List<XAResource> enlistedResources = new ArrayList<XAResource>();
+   private List<XAResource> enlistedResources = new ArrayList<XAResource>(2);
    private int prepareStatus;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {

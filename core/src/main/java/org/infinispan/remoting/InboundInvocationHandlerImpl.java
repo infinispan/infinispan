@@ -31,16 +31,11 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -50,8 +45,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
@@ -64,7 +57,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private StreamingMarshaller marshaller;
    private EmbeddedCacheManager embeddedCacheManager;
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
@@ -72,8 +64,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
    // TODO this timeout needs to be configurable.  Should be shorter than your typical lockAcquisitionTimeout/SyncReplTimeout with some consideration for network latency bothfor req and response.
    private static final long timeBeforeWeEnqueueCallForRetry = 10000;
-
-   private volatile boolean stopping;
 
    /**
     * How to handle an invocation based on the join status of a given cache *
@@ -84,45 +74,18 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
    @Inject
    public void inject(GlobalComponentRegistry gcr,
-                      @ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                       EmbeddedCacheManager embeddedCacheManager, Transport transport,
                       GlobalConfiguration globalConfiguration, CacheViewsManager cacheViewsManager) {
       this.gcr = gcr;
-      this.marshaller = marshaller;
       this.embeddedCacheManager = embeddedCacheManager;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
       this.cacheViewsManager = cacheViewsManager;
    }
 
-   @Start
-   public void start() {
-      stopping = false;
-   }
-
-   @Stop
-   public void stop() {
-      stopping = true;
-   }
-
-   private boolean isDefined(String cacheName) {
-      return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
-   }
-
-   public void waitForStart(ComponentRegistry componentRegistry) throws InterruptedException {
+   private boolean hasJoinStarted(ComponentRegistry componentRegistry) throws InterruptedException {
       StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
-      if (stateTransferManager != null) {
-         stateTransferManager.waitForJoinToComplete();
-      }
-   }
-
-   public boolean hasJoinStarted(ComponentRegistry componentRegistry) throws InterruptedException {
-      StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
-      if (stateTransferManager != null) {
-         return stateTransferManager.hasJoinStarted();
-      } else {
-         return true;
-      }
+      return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
 
    @Override

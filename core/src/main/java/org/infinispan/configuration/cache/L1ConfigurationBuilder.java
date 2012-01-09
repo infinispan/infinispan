@@ -1,10 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configures the L1 cache behavior in 'distributed' caches instances. In any other cache modes,
@@ -110,7 +110,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       if (onRehash == null)
          onRehash = true;
       
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash.booleanValue());
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash);
    }
    
    @Override

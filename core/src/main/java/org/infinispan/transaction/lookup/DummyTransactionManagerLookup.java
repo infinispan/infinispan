@@ -41,11 +41,11 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
       return DummyTransactionManager.getInstance();
    }
 
-   public UserTransaction getUserTransaction() {
+   public static UserTransaction getUserTransaction() {
       return DummyTransactionManager.getUserTransaction();
    }
 
-   public void cleanup() {
+   public static void cleanup() {
       DummyTransactionManager.destroy();
    }
 }

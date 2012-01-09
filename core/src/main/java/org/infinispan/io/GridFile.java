@@ -415,7 +415,7 @@ public class GridFile extends File {
    }
 
    public static class Metadata implements Externalizable {
-      public static final byte FILE = 1 << 0;
+      public static final byte FILE = 1;
       public static final byte DIR = 1 << 1;
 
       private int length = 0;
@@ -467,7 +467,7 @@ public class GridFile extends File {
          sb.append(getType());
          if (isFile())
             sb.append(", len=" + Util.printBytes(length) + ", chunkSize=" + chunkSize);
-         sb.append(", modTime=" + new Date(modificationTime));
+         sb.append(", modTime=").append(new Date(modificationTime));
          return sb.toString();
       }
 

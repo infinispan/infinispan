@@ -22,9 +22,6 @@
  */
 package org.infinispan.commands.write;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
@@ -32,6 +29,8 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+
+import java.util.Set;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -119,13 +118,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
+   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
-      flags = (Set<Flag>) (parameters.length > 4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      flags = (Set<Flag>) parameters[4];
    }
 
    public boolean isPutIfAbsent() {

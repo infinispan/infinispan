@@ -110,7 +110,7 @@ public class SingletonStore extends AbstractDelegatingStore {
 
    public SingletonStore(CacheStore delegate, Cache cache, SingletonStoreConfig config) {
       super(delegate);
-      this.cacheManager = cache == null ? null : (EmbeddedCacheManager)cache.getCacheManager();
+      this.cacheManager = cache == null ? null : cache.getCacheManager();
       this.cache = cache;
       this.config = config;
 

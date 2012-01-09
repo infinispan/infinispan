@@ -97,7 +97,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
    
    @Override
-   protected void valididate() {
+   protected void validate() {
       // No-op, no validation required
    }
    

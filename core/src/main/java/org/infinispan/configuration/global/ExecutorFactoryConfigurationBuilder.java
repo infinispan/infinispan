@@ -57,7 +57,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
       return this;
    }
    
-   void valididate() {
+   void validate() {
       // No-op, no validation required
    } 
    

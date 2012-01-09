@@ -23,6 +23,7 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,7 +65,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[0];
+      return Util.EMPTY_OBJECT_ARRAY;
    }
 
    @Override

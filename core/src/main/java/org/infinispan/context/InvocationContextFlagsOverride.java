@@ -23,13 +23,13 @@
 
 package org.infinispan.context;
 
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.remoting.transport.Address;
 
 
 /**
