@@ -33,6 +33,7 @@ import org.infinispan.Cache;
 import org.jboss.logging.Logger;
 
 import org.hibernate.cache.spi.RegionFactory;
+<<<<<<< HEAD
 import org.hibernate.cache.infinispan.util.CacheHelper;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -40,6 +41,8 @@ import org.hibernate.cache.infinispan.util.CacheHelper;
 import org.hibernate.testing.junit.UnitTestCase;
 >>>>>>> HHH-5903 - Rename ServicesRegistry to ServiceRegistry
 =======
+=======
+>>>>>>> HHH-6955 Upgrade to Infinispan 5.1.0.CR3
 
 import org.junit.After;
 import org.junit.Before;
@@ -117,13 +120,7 @@ public abstract class AbstractNonFunctionalTestCase extends org.hibernate.testin
     }
 
     protected int getValidKeyCount(Set keys) {
-       int result = 0;
-       for (Object key : keys) {
-          if (!(CacheHelper.isEvictAllNotification(key))) {
-             result++;
-          }
-       }
-       return result;
+       return keys.size();
    }
 
 }

@@ -27,6 +27,7 @@ package org.hibernate.test.cache.infinispan.entity;
 =======
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 import static org.hibernate.TestLogger.LOG;
 import java.util.concurrent.CountDownLatch;
@@ -44,9 +45,13 @@ import org.infinispan.transaction.tm.BatchModeTransactionManager;
 
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 =======
+=======
+import java.util.concurrent.Callable;
+>>>>>>> HHH-6955 Upgrade to Infinispan 5.1.0.CR3
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.cache.infinispan.util.CacheHelper;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.jboss.logging.Logger;
 
@@ -1471,26 +1476,26 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 	}
 
 	@Test
-	public void testRemove() {
+	public void testRemove() throws Exception {
 		evictOrRemoveTest( false );
 	}
 
 	@Test
-	public void testRemoveAll() {
+	public void testRemoveAll() throws Exception {
 		evictOrRemoveAllTest( false );
 	}
 
 	@Test
-	public void testEvict() {
+	public void testEvict() throws Exception {
 		evictOrRemoveTest( true );
 	}
 
 	@Test
-	public void testEvictAll() {
+	public void testEvictAll() throws Exception {
 		evictOrRemoveAllTest( true );
 	}
 
-	private void evictOrRemoveTest(boolean evict) {
+	private void evictOrRemoveTest(final boolean evict) throws Exception {
 		final String KEY = KEY_BASE + testCount++;
 		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
@@ -1503,20 +1508,23 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		remoteAccessStrategy.putFromLoad( KEY, VALUE1, System.currentTimeMillis(), new Integer( 1 ) );
 		assertEquals( VALUE1, remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 
-		if ( evict ) {
-			localAccessStrategy.evict( KEY );
-		}
-		else {
-			localAccessStrategy.remove( KEY );
-		}
-
-		assertEquals( null, localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
+      CacheHelper.withinTx(localEntityRegion.getTransactionManager(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            if ( evict )
+               localAccessStrategy.evict( KEY );
+            else
+               localAccessStrategy.remove( KEY );
+            return null;
+         }
+      });
+		assertEquals(null, localAccessStrategy.get(KEY, System.currentTimeMillis()));
 		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 		assertEquals( null, remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 	}
 
-	private void evictOrRemoveAllTest(boolean evict) {
+	private void evictOrRemoveAllTest(final boolean evict) throws Exception {
 		final String KEY = KEY_BASE + testCount++;
 		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
@@ -1535,6 +1543,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		// Wait for async propagation
 		sleep( 250 );
 
+<<<<<<< HEAD
 		if ( evict ) {
 <<<<<<< HEAD
 			log.debug( "Call evict all locally" );
@@ -1546,9 +1555,23 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		else {
 			localAccessStrategy.removeAll();
 		}
+=======
+      CacheHelper.withinTx(localEntityRegion.getTransactionManager(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            if (evict) {
+               log.debug("Call evict all locally");
+               localAccessStrategy.evictAll();
+            } else {
+               localAccessStrategy.removeAll();
+            }
+            return null;
+         }
+      });
+>>>>>>> HHH-6955 Upgrade to Infinispan 5.1.0.CR3
 
 		// This should re-establish the region root node in the optimistic case
-		assertNull( localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
+		assertNull(localAccessStrategy.get(KEY, System.currentTimeMillis()));
 		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 
 		// Re-establishing the region root on the local node doesn't
