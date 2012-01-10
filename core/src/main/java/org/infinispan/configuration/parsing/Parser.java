@@ -285,6 +285,7 @@ public class Parser {
                break;
             case USE_1PC_FOR_AUTOCOMMIT_TX:
                builder.transaction().use1PcForAutoCommitTransactions(Boolean.valueOf(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
