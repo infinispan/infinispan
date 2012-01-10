@@ -201,21 +201,11 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    private boolean isLatchOpen(CountDownLatch latch) {
-      try {
-         return latch.await(0, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return true;
-      }
+         return latch.getCount() == 0;
    }
 
    private boolean isLatchOpen(ReclosableLatch latch) {
-      try {
-         return latch.await(0, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return true;
-      }
+        return latch.isOpened();
    }
 
    @Override

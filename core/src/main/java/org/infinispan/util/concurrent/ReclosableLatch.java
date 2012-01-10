@@ -72,6 +72,10 @@ public class ReclosableLatch extends AbstractQueuedSynchronizer {
       releaseShared(CLOSED_STATE);
    }
 
+   public boolean isOpened() {
+      return getState() == OPEN_STATE;
+   }
+
    public final void await() throws InterruptedException {
       acquireSharedInterruptibly(1); // the 1 is a dummy value that is not used.
    }
