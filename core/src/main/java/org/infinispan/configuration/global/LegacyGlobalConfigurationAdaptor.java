@@ -81,17 +81,19 @@ public class LegacyGlobalConfigurationAdaptor {
       
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
 
-      builder.transport()
-         .clusterName(legacy.getClusterName())
-         .machineId(legacy.getMachineId())
-         .rackId(legacy.getRackId())
-         .siteId(legacy.getSiteId())
-         .strictPeerToPeer(legacy.isStrictPeerToPeer())
-         .distributedSyncTimeout(legacy.getDistributedSyncTimeout())
-         .transport(Util.<Transport>getInstance(legacy.getTransportClass(), legacy.getClassLoader()))
-         .nodeName(legacy.getTransportNodeName())
-         .withProperties(legacy.getTransportProperties());
-      
+      if (legacy.getTransportClass() != null) {
+         builder.transport()
+            .clusterName(legacy.getClusterName())
+            .machineId(legacy.getMachineId())
+            .rackId(legacy.getRackId())
+            .siteId(legacy.getSiteId())
+            .strictPeerToPeer(legacy.isStrictPeerToPeer())
+            .distributedSyncTimeout(legacy.getDistributedSyncTimeout())
+            .transport(Util.<Transport>getInstance(legacy.getTransportClass(), legacy.getClassLoader()))
+            .nodeName(legacy.getTransportNodeName())
+            .withProperties(legacy.getTransportProperties());
+      }
+
       if (legacy.isExposeGlobalJmxStatistics()) {
          builder.globalJmxStatistics().enable()
             .jmxDomain(legacy.getJmxDomain())
