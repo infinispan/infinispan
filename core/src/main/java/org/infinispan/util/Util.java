@@ -188,7 +188,7 @@ public final class Util {
       if (instance == null) {
          instance = clazz.newInstance();
       }
-      return instance == null ? null : instance;
+      return instance;
    }
 
    /**
