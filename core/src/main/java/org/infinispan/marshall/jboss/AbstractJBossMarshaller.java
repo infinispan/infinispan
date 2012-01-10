@@ -4,8 +4,6 @@ import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.util.ConcurrentWeakKeyHashMap;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;

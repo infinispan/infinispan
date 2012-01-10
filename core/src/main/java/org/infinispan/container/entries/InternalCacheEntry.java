@@ -22,8 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
-
 /**
  * Interface for internal cache entries that expose whether an entry has expired.
  *

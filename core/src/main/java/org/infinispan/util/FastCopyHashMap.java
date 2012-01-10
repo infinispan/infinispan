@@ -32,7 +32,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
