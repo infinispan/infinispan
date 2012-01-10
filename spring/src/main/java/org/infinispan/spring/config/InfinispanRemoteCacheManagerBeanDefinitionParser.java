@@ -23,7 +23,6 @@
 
 package org.infinispan.spring.config;
 
-import org.infinispan.spring.provider.SpringRemoteCacheManager;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;

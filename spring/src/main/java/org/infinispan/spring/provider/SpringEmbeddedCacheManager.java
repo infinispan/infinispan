@@ -25,7 +25,6 @@ package org.infinispan.spring.provider;
 
 import java.util.Collection;
 
-import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.cache.CacheManager;
 import org.springframework.util.Assert;

@@ -35,7 +35,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.TransactionManager;
 import java.util.concurrent.TimeUnit;
 
 /**

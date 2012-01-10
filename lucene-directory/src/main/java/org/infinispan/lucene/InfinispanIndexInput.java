@@ -27,7 +27,6 @@ import java.io.IOException;
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.context.Flag;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
