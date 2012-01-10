@@ -71,7 +71,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          cacheAddresses.add(cacheManager.getAddress());
       }
 
-      waitForJoinTasksToComplete(60000, c1, c2);
+      waitForClusterToForm(cacheName);
    }
 
    public void testPutOnKeyOwner() {

@@ -64,7 +64,7 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
    int waitForJoinCompletion() {
       // need to block until this join has completed!
       TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(10), c1, c2, joiner);
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiner);
+      waitForClusterToForm(cacheName);
 
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
