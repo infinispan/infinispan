@@ -59,11 +59,11 @@ public class GroupManagerImpl implements GroupManager {
             throw new IllegalStateException(Util.formatString("Cannot define more that one @Group method for class hierarchy rooted at %s", clazz.getName()));
     }
 
-    private final ConcurrentMap<Class<?>, Future<GroupMetadata>> groupMetadataCache;
+    private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
     
     public GroupManagerImpl(List<Grouper<?>> groupers) {
-        this.groupMetadataCache = new ConcurrentHashMap<Class<?>, Future<GroupMetadata>>();
+        this.groupMetadataCache = new ConcurrentHashMap<Class<?>, GroupMetadata>();
         if (groupers != null)
             this.groupers = groupers;
         else
@@ -89,28 +89,14 @@ public class GroupManagerImpl implements GroupManager {
     
     private GroupMetadata getMetadata(Object key) {
         final Class<?> keyClass = key.getClass();
-        if (!groupMetadataCache.containsKey(keyClass)) {
-            Callable<GroupMetadata> c = new Callable<GroupMetadata>() {
-                
-                @Override
-                public GroupMetadata call() throws Exception {
-                    return createGroupMetadata(keyClass);
-                }
-                
-            };
-            FutureTask<GroupMetadata> ft = new FutureTask<GroupMetadata>(c);
-            if (groupMetadataCache.putIfAbsent(keyClass, ft) == null) {
-                ft.run();
-            }
-        }
-        try {
-            return groupMetadataCache.get(keyClass).get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (ExecutionException e) {
-            throw new IllegalStateException("Error extracting @Group from class hierarchy", e);
-        }
+       if (!groupMetadataCache.containsKey(keyClass)) {
+          //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
+          //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
+          // the long run
+          GroupMetadata gmd = createGroupMetadata(keyClass);
+          groupMetadataCache.putIfAbsent(keyClass, gmd);
+       }
+       return groupMetadataCache.get(keyClass);
     }
 
 }
