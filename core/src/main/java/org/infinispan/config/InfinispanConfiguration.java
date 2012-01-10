@@ -235,7 +235,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
             });
          }
 
-         SAXSource source = null;
+         SAXSource source;
          if (skipTokenReplacement()) {
             source = new SAXSource(nf, new InputSource(config));
          } else {
@@ -362,7 +362,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
 
       //1. resolve given path
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      InputStream is = null;
+      InputStream is;
       if (localPathToSchema != null) {
          // Schema's are always stored in Infinispan
          is = fileLookup.lookupFile(localPathToSchema, null);

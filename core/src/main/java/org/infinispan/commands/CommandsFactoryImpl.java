@@ -369,8 +369,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ccc.init(recoveryManager);
             break;
          case ApplyDeltaCommand.COMMAND_ID:
-            ApplyDeltaCommand deltaCommand = (ApplyDeltaCommand) c;
-            break;            
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {

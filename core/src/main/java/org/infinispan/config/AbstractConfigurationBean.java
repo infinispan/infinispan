@@ -49,7 +49,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    private static final long serialVersionUID = 4879873994727821938L;
    private static final Log log = LogFactory.getLog(AbstractConfigurationBean.class);
    private boolean accessible;
-   protected Set<String> overriddenConfigurationElements = new HashSet<String>();
+   protected Set<String> overriddenConfigurationElements = new HashSet<String>(4);
 
    protected AbstractConfigurationBean() {}
    
@@ -70,11 +70,11 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
     * @param p properties to convert
     * @return TypedProperties instance
     */
-   protected TypedProperties toTypedProperties(Properties p) {
+   protected static TypedProperties toTypedProperties(Properties p) {
       return TypedProperties.toTypedProperties(p);
    }
 
-   protected TypedProperties toTypedProperties(String s) {
+   protected static TypedProperties toTypedProperties(String s) {
       TypedProperties tp = new TypedProperties();
       if (s != null && s.trim().length() > 0) {
          InputStream stream = new ByteArrayInputStream(s.getBytes());

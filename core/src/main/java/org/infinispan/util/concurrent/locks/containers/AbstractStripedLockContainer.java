@@ -62,7 +62,7 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
     * @param object the object serving as a key
     * @return the hash code
     */
-   final int hash(Object object) {
+   static final int hash(Object object) {
       int h = object.hashCode();
       h += ~(h << 9);
       h ^= (h >>> 14);

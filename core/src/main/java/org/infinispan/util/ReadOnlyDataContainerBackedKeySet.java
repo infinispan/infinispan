@@ -98,7 +98,7 @@ public class ReadOnlyDataContainerBackedKeySet implements Set<Object> {
    }
 
    @Override
-   public boolean addAll(Collection<? extends Object> c) {
+   public boolean addAll(Collection<?> c) {
       throw new UnsupportedOperationException("Immutable");
    }
 

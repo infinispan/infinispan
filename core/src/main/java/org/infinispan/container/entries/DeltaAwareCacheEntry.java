@@ -31,7 +31,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
@@ -62,7 +62,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       this.value = value;
       this.wrappedEntry = wrappedEntry;
       this.uncommittedChanges = new AtomicHashMap();
-      this.deltas = new ArrayList<Delta>();
+      this.deltas = new LinkedList<Delta>();
    }
 
    public void appendDelta(Delta d) {

@@ -100,7 +100,7 @@ public abstract class AbstractListenerImpl {
    private void removeListenerInvocation(Class<? extends Annotation> annotation, Object listener) {
       if (listener == null) return;
       List<ListenerInvocation> l = getListenerCollectionForAnnotation(annotation);
-      Set<Object> markedForRemoval = new HashSet<Object>();
+      Set<Object> markedForRemoval = new HashSet<Object>(4);
       for (ListenerInvocation li : l) {
          if (listener.equals(li.target)) markedForRemoval.add(li);
       }
@@ -112,7 +112,7 @@ public abstract class AbstractListenerImpl {
    }
 
    public Set<Object> getListeners() {
-      Set<Object> result = new HashSet<Object>();
+      Set<Object> result = new HashSet<Object>(listenersMap.size());
       for (List<ListenerInvocation> list : listenersMap.values()) {
          for (ListenerInvocation li : list) result.add(li.target);
       }
@@ -160,7 +160,7 @@ public abstract class AbstractListenerImpl {
     * @param listenerClass class to inspect
     * @return true if callbacks on this class should use the syncProcessor; false if it should use the asyncProcessor.
     */
-   protected boolean testListenerClassValidity(Class<?> listenerClass) {
+   protected static boolean testListenerClassValidity(Class<?> listenerClass) {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
          throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
@@ -169,7 +169,7 @@ public abstract class AbstractListenerImpl {
       return l.sync();
    }
 
-   protected void testListenerMethodValidity(Method m, Class allowedParameter, String annotationName) {
+   protected static void testListenerMethodValidity(Method m, Class allowedParameter, String annotationName) {
       if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       if (!m.getReturnType().equals(void.class))

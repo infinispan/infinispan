@@ -155,18 +155,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
-   private ConcreteParameter[] toConcreteParameterArray(ComponentMetadata.InjectMetadata injectMetadata, Class[] parameterClasses) {
-      String[] injectMetadataParameters = injectMetadata.getParameters();
-      if (injectMetadataParameters == null || injectMetadataParameters.length == 0) {
-         return new ConcreteParameter[0];
-      } else {
-         ConcreteParameter[] c = new ConcreteParameter[injectMetadataParameters.length];
-         for (int i = 0; i < injectMetadataParameters.length; i++)
-            c[i] = new ConcreteParameter(injectMetadata.getParameterName(i), parameterClasses[i]);
-         return c;
-      }
-   }
-
    /**
     * Registers a component in the registry under the given type, and injects any dependencies needed.  If a component
     * of this type already exists, it is overwritten.

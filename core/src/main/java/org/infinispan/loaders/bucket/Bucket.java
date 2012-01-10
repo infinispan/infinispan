@@ -22,6 +22,12 @@
  */
 package org.infinispan.loaders.bucket;
 
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,17 +37,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
-
 /**
  * A bucket is where entries are stored.
  */
 public final class Bucket {
-   final Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>();
+   final Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>(32);
    private transient Integer bucketId;
    private transient String bucketIdStr;
 

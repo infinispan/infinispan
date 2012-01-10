@@ -147,7 +147,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    
    @Override
-   void valididate() {
+   void validate() {
       // No-op, no validation required
    }
    

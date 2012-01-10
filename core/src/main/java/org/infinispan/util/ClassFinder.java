@@ -47,7 +47,7 @@ public class ClassFinder {
             + System.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             clazzes.add(clazz);
@@ -57,7 +57,7 @@ public class ClassFinder {
    }
    
    public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             Annotation[] declaredAnnots = clazz.getDeclaredAnnotations();
@@ -72,7 +72,7 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> isAssignableFrom(List<Class<?>> classes, Class<?> clazz) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> c : classes) {
          if (clazz.isAssignableFrom(c)) {
             clazzes.add(c);
@@ -116,7 +116,7 @@ public class ClassFinder {
 
    private static List<Class<?>> findClassesOnPath(File path) {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      Class<?> claz = null;
+      Class<?> claz;
 
       if (path.isDirectory()) {
          List<File> classFiles = new ArrayList<File>();
@@ -137,7 +137,7 @@ public class ClassFinder {
          }
       } else {
          if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-            JarFile jar = null;
+            JarFile jar;
             try {
                jar = new JarFile(path);
             } catch (Exception ex) {

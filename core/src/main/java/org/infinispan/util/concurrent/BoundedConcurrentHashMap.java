@@ -1079,7 +1079,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          ((LIRSHashEntry<K,V>)e).remove();
          // we could have multiple instances of e in accessQueue; remove them all
          while (accessQueue.remove(e)) {
-            continue;
          }
       }
 
@@ -1219,7 +1218,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       @SuppressWarnings("unchecked")
-      static final <K,V> Segment<K,V>[] newArray(int i) {
+      static <K,V> Segment<K,V>[] newArray(int i) {
          return new Segment[i];
       }
 
@@ -1267,15 +1266,15 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          if (c != 0) { // read-volatile
             V result = null;
             HashEntry<K, V> e = getFirst(hash);
-            loop: while (e != null) {
+            while (e != null) {
                if (e.hash == hash && key.equals(e.key)) {
                   V v = e.value;
                   if (v != null) {
                      result = v;
-                     break loop;
+                     break;
                   } else {
                      result = readValueUnderLock(e); // recheck
-                     break loop;
+                     break;
                   }
                }
                e = e.next;
@@ -1558,7 +1557,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       private Set<HashEntry<K, V>> attemptEviction(boolean lockedAlready) {
          Set<HashEntry<K, V>> evicted = null;
-         boolean obtainedLock = !lockedAlready ? tryLock() : true;
+         boolean obtainedLock = lockedAlready || tryLock();
          if (!obtainedLock && eviction.thresholdExpired()) {
             lock();
             obtainedLock = true;

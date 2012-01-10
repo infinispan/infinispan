@@ -112,7 +112,7 @@ public class L1ManagerImpl implements L1Manager {
    }
    
    private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin) {
-   	Collection<Address> addresses = new HashSet<Address>();
+   	Collection<Address> addresses = new HashSet<Address>(2);
    	
    	for (Object key : keys) {
    	   Collection<Address> as = requestors.remove(key);

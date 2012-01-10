@@ -22,13 +22,12 @@
  */
 package org.infinispan.commands.write;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -102,6 +101,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
+   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
       key = parameters[0];
@@ -109,7 +109,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       newValue = parameters[2];
       lifespanMillis = (Long) parameters[3];
       maxIdleTimeMillis = (Long) parameters[4];
-      flags = (Set<Flag>) (parameters.length>5 ? parameters[5] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      flags = (Set<Flag>) parameters[5];
    }
 
    @Override

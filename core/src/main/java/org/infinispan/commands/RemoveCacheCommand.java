@@ -28,6 +28,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.Util;
 
 /**
  * Command to stop a cache and remove all its contents from both
@@ -67,7 +68,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[0];
+      return Util.EMPTY_OBJECT_ARRAY;
    }
 
    @Override

@@ -27,9 +27,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferException;
-
-import java.io.InputStream;
 
 /**
  * A globally scoped component, that is able to locate named caches and invoke remotely originating calls on the

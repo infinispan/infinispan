@@ -114,7 +114,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    private long timeout = 10 * 1000;
    // TODO Make the cooldown configurable, or change the view installation timing altogether
    private long viewChangeCooldown = 1 * 1000;
-   private ViewListener listener = new ViewListener();;
+   private ViewListener listener = new ViewListener();
 
    // A single thread examines the unprepared changes and decides whether to install a new view for all the caches
    private ViewTriggerThread viewTriggerThread;
@@ -524,7 +524,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
    @Override
    public Map<String, CacheView> handleRecoverViews() {
-      Map<String, CacheView> result = new HashMap<String, CacheView>();
+      Map<String, CacheView> result = new HashMap<String, CacheView>(viewsInfo.size());
       for (CacheViewInfo cacheViewInfo : viewsInfo.values()) {
          if (cacheViewInfo.getCommittedView().contains(self)) {
             result.put(cacheViewInfo.getCacheName(), cacheViewInfo.getCommittedView());
@@ -636,9 +636,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
                @Override
                public Map<Address, Response> call() throws Exception {
-                  Map<Address, Response> rspList = transport.invokeRemotely(Collections.singleton(member), cmd,
+                  return transport.invokeRemotely(Collections.singleton(member), cmd,
                         ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false);
-                  return rspList;
                }
             });
             futures.add(future);
@@ -750,7 +749,6 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          shouldRecoverViews = false;
       } catch (Exception e) {
          log.error("Error recovering views from the cluster members", e);
-         return;
       }
    }
 

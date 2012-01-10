@@ -115,8 +115,7 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public InternalCacheEntry peek(Object key) {
-      InternalCacheEntry e = entries.get(key);
-      return e;
+      return entries.get(key);
    }
 
    public InternalCacheEntry get(Object k) {

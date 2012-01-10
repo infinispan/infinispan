@@ -258,7 +258,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          return;
       }
       if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
-      StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled());
+      StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled(), modifications.size());
       for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
       int numMods = modsBuilder.modifications.size();
       if (getLog().isTraceEnabled()) getLog().tracef("Converted method calls to cache loader modifications.  List size: %s", numMods);
@@ -280,16 +280,16 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    public class StoreModificationsBuilder extends AbstractVisitor {
 
-      boolean generateStatistics;
-
+      private final boolean generateStatistics;
       int putCount;
+      private final Set<Object> affectedKeys;
+      private final List<Modification> modifications;
 
-      Set<Object> affectedKeys = new HashSet<Object>();
-
-      List<Modification> modifications = new ArrayList<Modification>();
-
-      public StoreModificationsBuilder(boolean generateStatistics) {
+      public StoreModificationsBuilder(boolean generateStatistics, int numMods) {
          this.generateStatistics = generateStatistics;
+         affectedKeys = new HashSet<Object>(numMods);
+         modifications = new ArrayList<Modification>(numMods);
+
       }
 
       @Override

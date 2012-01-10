@@ -107,12 +107,12 @@ public class ComponentsJmxRegistration {
    }
 
    private List<ResourceDMBean> getResourceDMBeansFromComponents() throws NoSuchFieldException, ClassNotFoundException {
-      List<ResourceDMBean> resourceDMBeans = new ArrayList<ResourceDMBean>();
+      List<ResourceDMBean> resourceDMBeans = new ArrayList<ResourceDMBean>(components.size());
       for (ComponentRegistry.Component component : components) {
          ComponentMetadata md = component.getMetadata();
          if (md.isManageable()) {
             ResourceDMBean resourceDMBean = new ResourceDMBean(component.getInstance(), md.toManageableComponentMetadata());
-               resourceDMBeans.add(resourceDMBean);
+            resourceDMBeans.add(resourceDMBean);
          }
       }
       return resourceDMBeans;

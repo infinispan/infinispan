@@ -38,7 +38,6 @@ public class TransactionSynchronizationRegistryFactory extends AbstractNamedCach
 
    public <T> T construct(Class<T> componentType) {
       // See if we had a TransactionSynchronizationRegistry injected into our config
-      TransactionSynchronizationRegistry transactionSynchronizationRegistry = null;
       TransactionSynchronizationRegistryLookup lookup = configuration.getTransactionSynchronizationRegistryLookup();
 
       try {

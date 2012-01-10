@@ -130,8 +130,8 @@ public class Streams {
    public static boolean close(final InputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (InputStream stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -148,8 +148,8 @@ public class Streams {
    public static boolean close(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -171,8 +171,8 @@ public class Streams {
    public static boolean close(final Object[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (Object stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -200,8 +200,8 @@ public class Streams {
    public static boolean fclose(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = fclose(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = fclose(stream);
          if (!rv) success = false;
       }
 
@@ -247,8 +247,8 @@ public class Streams {
    public static boolean flush(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = flush(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = flush(stream);
          if (!rv) success = false;
       }
 

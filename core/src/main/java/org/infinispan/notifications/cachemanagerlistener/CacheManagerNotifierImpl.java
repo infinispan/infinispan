@@ -55,7 +55,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
 
    private static final Log log = LogFactory.getLog(CacheManagerNotifierImpl.class);
 
-   private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>();
+   private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>(4);
 
    static {
       allowedListeners.put(CacheStarted.class, CacheStartedEvent.class);

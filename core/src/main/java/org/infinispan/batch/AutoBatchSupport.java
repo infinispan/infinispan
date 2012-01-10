@@ -36,7 +36,7 @@ import org.infinispan.config.ConfigurationException;
 public abstract class AutoBatchSupport {
    protected BatchContainer batchContainer;
 
-   protected void assertBatchingSupported(Configuration c) {
+   protected static void assertBatchingSupported(Configuration c) {
       if (!c.isInvocationBatchingEnabled())
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
    }

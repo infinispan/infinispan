@@ -28,11 +28,8 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
-import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author bela
@@ -43,11 +40,6 @@ import java.util.List;
 public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
    DummyTransactionManager tm;
    private static final long serialVersionUID = -6568400755677046127L;
-
-   /**
-    * List<Synchronization>
-    */
-   List<Synchronization> l = new ArrayList<Synchronization>();
 
    public DummyUserTransaction(DummyTransactionManager tm) {
       this.tm = tm;

@@ -1,10 +1,10 @@
 package org.infinispan.configuration.parsing;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConfigurationBuilderHolder {
 
@@ -15,7 +15,7 @@ public class ConfigurationBuilderHolder {
    public ConfigurationBuilderHolder() {
       this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
-      this.namedConfigurationBuilders = new HashSet<ConfigurationBuilder>();
+      this.namedConfigurationBuilders = new HashSet<ConfigurationBuilder>(2);
    }
    
    public GlobalConfigurationBuilder getGlobalConfigurationBuilder() {

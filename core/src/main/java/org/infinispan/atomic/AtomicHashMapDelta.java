@@ -89,7 +89,7 @@ public class AtomicHashMapDelta implements Delta {
 
    @Override
    public String toString() {
-      StringBuffer sb = new StringBuffer( "AtomicHashMapDelta{changeLog=");
+      StringBuilder sb = new StringBuilder( "AtomicHashMapDelta{changeLog=");
       sb.append(changeLog);
       sb.append( ",hasClear=");
       sb.append(hasClearOperation);

@@ -1,11 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Configuration for various grouper definitions. See the user guide for more information.
@@ -61,7 +60,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
     * Clear the groupers
     */
    public GroupsConfigurationBuilder clearGroupers() {
-      this.groupers = new ArrayList<Grouper<?>>();
+      this.groupers = new LinkedList<Grouper<?>>();
       return this;
    }
    

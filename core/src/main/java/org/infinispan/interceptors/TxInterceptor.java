@@ -251,7 +251,7 @@ public class TxInterceptor extends CommandInterceptor {
       return status != Status.STATUS_ACTIVE && status != Status.STATUS_PREPARING;
    }
 
-   private boolean shouldEnlist(InvocationContext ctx) {
+   private static boolean shouldEnlist(InvocationContext ctx) {
       return ctx.isInTxScope() && ctx.isOriginLocal();
    }
 

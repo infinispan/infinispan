@@ -212,7 +212,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     *
     * @param tx
     */
-   public void setTransaction(Transaction tx) {
+   public static void setTransaction(Transaction tx) {
       thread_local.set((DummyTransaction) tx);
    }
 

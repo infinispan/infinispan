@@ -61,7 +61,7 @@ public class ModuleProperties extends Properties {
    private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
-   public List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
+   public static List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
       ServiceLoader<ModuleLifecycle> moduleLifecycleLoader =
             ServiceLoader.load(ModuleLifecycle.class, cl);
 
@@ -83,7 +83,7 @@ public class ModuleProperties extends Properties {
     * @param cl class loader to use
     * @return an Iterable of ModuleMetadataFileFinders
     */
-   public Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
+   public static Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
       return ServiceLoader.load(ModuleMetadataFileFinder.class, cl);
    }
 
@@ -138,7 +138,7 @@ public class ModuleProperties extends Properties {
       if (cmds == null || cmds.isEmpty())
          return Collections.emptySet();
 
-      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>();
+      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
          if (CacheRpcCommand.class.isAssignableFrom(moduleCmdClass))
             cacheRpcCmds.add((Class<? extends CacheRpcCommand>) moduleCmdClass);
@@ -153,7 +153,7 @@ public class ModuleProperties extends Properties {
          return Collections.emptySet();
 
       Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
-            new HashSet<Class<? extends ReplicableCommand>>();
+            new HashSet<Class<? extends ReplicableCommand>>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
          if (!CacheRpcCommand.class.isAssignableFrom(moduleCmdClass)) {
             replicableOnlyCmds.add(moduleCmdClass);

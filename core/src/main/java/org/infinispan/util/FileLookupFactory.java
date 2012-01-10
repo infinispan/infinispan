@@ -74,7 +74,7 @@ public class FileLookupFactory {
       }
       
       protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {    
-         Collection<URL> urls = new HashSet<URL>();
+         Collection<URL> urls = new HashSet<URL>(4);
          for (ClassLoader cl : Util.getClassLoaders(userClassLoader))  {
             if (cl == null)
                continue;
@@ -86,8 +86,5 @@ public class FileLookupFactory {
          }
          return urls;
       }
-      
    }
-
-   
 }
