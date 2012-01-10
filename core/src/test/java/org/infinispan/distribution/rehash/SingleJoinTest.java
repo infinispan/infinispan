@@ -31,8 +31,6 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 @Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
 public class SingleJoinTest extends RehashTestBase {
    EmbeddedCacheManager joinerManager;
@@ -49,7 +47,7 @@ public class SingleJoinTest extends RehashTestBase {
       List<Cache> allCaches = new ArrayList(caches);
       allCaches.add(joiner);
       TestingUtil.blockUntilViewsReceived(60000, allCaches);
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiner);
+      waitForClusterToForm(cacheName);
 
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
