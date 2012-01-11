@@ -36,6 +36,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @author bela
@@ -46,6 +47,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    private static final long serialVersionUID = -6716097342564237376l;
    private static final Log log = LogFactory.getLog(DummyBaseTransactionManager.class);
    private static final boolean trace = log.isTraceEnabled();
+   final UUID transactionManagerId = UUID.randomUUID();
 
    /**
     * Starts a new transaction, and associate it with the calling thread.
