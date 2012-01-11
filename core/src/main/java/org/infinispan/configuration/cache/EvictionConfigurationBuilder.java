@@ -44,10 +44,10 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    }
    
    /**
-    * Maximum number of entries in a cache instance. If selected value is not a power of two the
-    * actual value will default to the least power of two larger than selected value. -1 means no
-    * limit.
-    *
+    * Maximum number of entries in a cache instance. Cache size is guaranteed not to exceed upper
+    * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
+    * be exactly maximum number of entries specified here.
+    * 
     * @param maxEntries
     */
    public EvictionConfigurationBuilder maxEntries(int maxEntries) {
