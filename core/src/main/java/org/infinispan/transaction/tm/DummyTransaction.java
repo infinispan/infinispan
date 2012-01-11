@@ -50,15 +50,16 @@ public class DummyTransaction implements Transaction {
    private static boolean trace = log.isTraceEnabled();
 
    private volatile int status = Status.STATUS_UNKNOWN;
-   protected DummyBaseTransactionManager tm_;
-   protected DummyXid xid = new DummyXid();
+   protected final DummyBaseTransactionManager tm_;
+   protected final DummyXid xid;
 
    protected Set<Synchronization> syncs;
-   private List<XAResource> enlistedResources = new ArrayList<XAResource>(2);
+   private final List<XAResource> enlistedResources = new ArrayList<XAResource>(2);
    private int prepareStatus;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {
       tm_ = tm;
+      xid = new DummyXid(tm.transactionManagerId);
       status = Status.STATUS_ACTIVE;
    }
 

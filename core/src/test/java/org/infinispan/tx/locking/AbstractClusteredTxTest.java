@@ -30,6 +30,7 @@ import org.infinispan.transaction.tm.DummyXid;
 import javax.transaction.xa.XAException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Mircea Markus
@@ -74,7 +75,7 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
    protected void commit() {
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
       try {
-         dtm.firstEnlistedResource().commit(new DummyXid(), true);
+         dtm.firstEnlistedResource().commit(new DummyXid(UUID.randomUUID()), true);
       } catch (XAException e) {
          throw new RuntimeException(e);
       }
@@ -83,7 +84,7 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
    protected void prepare() {
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
       try {
-         dtm.firstEnlistedResource().prepare(new DummyXid());
+         dtm.firstEnlistedResource().prepare(new DummyXid(UUID.randomUUID()));
       } catch (XAException e) {
          throw new RuntimeException(e);
       }
