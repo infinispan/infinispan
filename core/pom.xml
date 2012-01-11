@@ -156,32 +156,6 @@
 
    </dependencies>
    <build>
-      <plugins>
-         <!--
-        Generates XML schema for Infinispan configuration files
-        Run with mvn exec:java
-        For more details see:
-        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
-               <arguments>
-                  <argument>${basedir}/src/main/resources/schema</argument>
-               </arguments>
-            </configuration>
-         </plugin>
-      </plugins>
-
       <pluginManagement>
          <plugins>
             <plugin>
@@ -229,4 +203,76 @@
          </plugins>
       </pluginManagement>
    </build>
+   
+   <profiles>
+      <profile>
+         <id>generate-schema-doc</id>
+         <dependencies>
+            <dependency>
+               <groupId>xsddoc</groupId>
+               <artifactId>xsddoc</artifactId>
+               <version>1.0</version>
+            </dependency>
+            <dependency>
+               <groupId>xalan</groupId>
+               <artifactId>xalan</artifactId>
+               <version>2.7.0</version>
+            </dependency>
+            <dependency>
+               <groupId>xerces</groupId>
+               <artifactId>xercesImpl</artifactId>
+               <version>2.4.0</version>
+            </dependency>
+            
+         </dependencies>
+         <build>
+            <plugins>
+               <!--
+        Generates XML schema for Infinispan configuration files
+        Run with mvn exec:java
+        For more details see:
+        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>generate-sources</phase>
+                  <configuration>
+                     <tasks>
+                        <mkdir dir="${project.build.directory}/xsd_doc" />
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <mainClass>net.sf.xframe.xsddoc.Main</mainClass>
+               <arguments>
+                  <argument>-q</argument>
+                  <argument>-t</argument>
+                  <argument>"XML Schema for Infinispan"</argument>
+                  <argument>-o</argument>
+                  <argument>${project.build.directory}/xsd_doc</argument>
+                  <argument>${basedir}/src/main/resources/infinispan-5.1.xsd</argument>
+               </arguments>
+            </configuration>
+         </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
