@@ -43,15 +43,23 @@ import junit.framework.TestSuite;
 =======
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 
+<<<<<<< HEAD
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 =======
 =======
+=======
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+>>>>>>> ISPN-6955 Add guarantees that the cluster forms
 import java.util.concurrent.Callable;
 >>>>>>> HHH-6955 Upgrade to Infinispan 5.1.0.CR3
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.cache.infinispan.util.CacheHelper;
+import org.infinispan.Cache;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.jboss.logging.Logger;
 
@@ -1000,8 +1008,12 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 
 		remoteEntityRegion = remoteEnvironment.getEntityRegion( REGION_NAME, getCacheDataDescription() );
 		remoteAccessStrategy = remoteEntityRegion.buildAccessStrategy( getAccessType() );
+
+      waitForClusterToForm(localEntityRegion.getCacheAdapter().getCache(),
+                           remoteEntityRegion.getCacheAdapter().getCache());
 	}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	protected void tearDown() throws Exception {
 
@@ -1028,6 +1040,12 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		node2Failure = null;
 	}
 =======
+=======
+   protected void waitForClusterToForm(Cache... caches) {
+      TestingUtil.blockUntilViewsReceived(10000, Arrays.asList(caches));
+   }
+
+>>>>>>> ISPN-6955 Add guarantees that the cluster forms
 	protected abstract String getConfigurationName();
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 
