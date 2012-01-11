@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implements RemoteCache<K,V> {
 
-
    @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
       return replaceWithVersionAsync(key, newValue, version, 0);
@@ -46,15 +45,13 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
 
    @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
-      return replaceWithVersionAsync(key, newValue, version, 0, 0);
+      return replaceWithVersionAsync(key, newValue, version, lifespanSeconds, 0);
    }
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version) {
       return replaceWithVersion(key, newValue, version, 0);
    }
-
-   
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds) {
