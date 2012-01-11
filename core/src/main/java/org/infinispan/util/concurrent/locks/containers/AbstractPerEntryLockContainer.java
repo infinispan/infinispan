@@ -47,9 +47,11 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
       // this is an optimisation.  It is not foolproof as we may still be creating new locks unnecessarily (thrown away
       // when we do a putIfAbsent) but it minimises the chances somewhat, for the cost of an extra CHM get.
       L lock = locks.get(key);
-      if (lock == null) lock = newLock();
-      L existingLock = locks.putIfAbsent(key, lock);
-      if (existingLock != null) lock = existingLock;
+      if (lock == null) {
+         lock = newLock();
+         L existingLock = locks.putIfAbsent(key, lock);
+         if (existingLock != null) lock = existingLock;
+      }
       return lock;
    }
 
