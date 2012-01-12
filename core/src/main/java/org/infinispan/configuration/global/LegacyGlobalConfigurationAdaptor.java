@@ -45,7 +45,7 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       legacy.serialization()
-         .marshallerClass(config.serialization().marshallerClass())
+         .marshallerClass(config.serialization().marshaller().getClass())
          .version(config.serialization().version());
       
       for (Entry<Integer, AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
@@ -106,7 +106,7 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       builder.serialization()
-         .marshallerClass(Util.<Marshaller>loadClass(legacy.getMarshallerClass(), legacy.getClassLoader()))
+         .marshaller(Util.<Marshaller>getInstance(legacy.getMarshallerClass(), legacy.getClassLoader()))
          .version(legacy.getMarshallVersion());
       
       for (AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {

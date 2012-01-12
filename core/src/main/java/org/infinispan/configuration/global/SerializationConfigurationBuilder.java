@@ -13,7 +13,7 @@ import org.infinispan.marshall.VersionAwareMarshaller;
  */
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SerializationConfiguration> {
    
-   private Class<? extends Marshaller> marshallerClass = VersionAwareMarshaller.class;
+   private Marshaller marshaller = new VersionAwareMarshaller();
    private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR.replace(".", ""));
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
    
@@ -22,13 +22,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
    
    /**
-    * Fully qualified name of the marshaller to use. It must implement
-    * org.infinispan.marshall.StreamingMarshaller
+    * Set the marshaller instance that will marshall and unmarshall cache entries.
     *
-    * @param marshallerClass
+    * @param marshaller
     */
-   public SerializationConfigurationBuilder marshallerClass(Class<? extends Marshaller> marshallerClass) {
-      this.marshallerClass = marshallerClass;
+   public SerializationConfigurationBuilder marshaller(Marshaller marshaller) {
+      this.marshaller = marshaller;
       return this;
    }
 
@@ -76,7 +75,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * alongside its corresponding identifier. Remember that the identifier needs to a be positive
     * number, including 0, and cannot clash with other identifiers in the system.
     *
-    * @param id
     * @param advancedExternalizer
     */
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T> advancedExternalizer) {
@@ -103,13 +101,13 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    
    @Override
    SerializationConfiguration create() {
-      return new SerializationConfiguration(marshallerClass, marshallVersion, advancedExternalizers);
+      return new SerializationConfiguration(marshaller, marshallVersion, advancedExternalizers);
    }
    
    @Override
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.advancedExternalizers = template.advancedExternalizers();
-      this.marshallerClass = template.marshallerClass();
+      this.marshaller = template.marshaller();
       this.marshallVersion = template.version();
       
       return this;

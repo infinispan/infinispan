@@ -1250,7 +1250,7 @@ public class Parser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case MARSHALLER_CLASS: {
-               builder.serialization().marshallerClass(Util.<Marshaller> loadClass(value, cl));
+               builder.serialization().marshaller(Util.<Marshaller>getInstance(value, cl));
                break;
             }
             case VERSION: {
