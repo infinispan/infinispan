@@ -509,6 +509,11 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public void touch(long currentTimeMillis) {
+         throw new UnsupportedOperationException();
+      }
+
       public boolean undelete(boolean doUndelete) {
          throw new UnsupportedOperationException();
       }

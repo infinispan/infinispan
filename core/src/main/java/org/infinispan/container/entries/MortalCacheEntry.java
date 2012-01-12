@@ -103,6 +103,10 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       // no-op
    }
 
+   public final void touch(long currentTimeMillis) {
+      // no-op
+   }
+
    public final void reincarnate() {
       cacheValue.created = System.currentTimeMillis();
    }
