@@ -110,7 +110,7 @@ public class LegacyGlobalConfigurationAdaptor {
          .version(legacy.getMarshallVersion());
       
       for (AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {
-         builder.serialization().addAdvancedExternalizer(externalizerConfig.getAdvancedExternalizer());
+         builder.serialization().addAdvancedExternalizer(externalizerConfig.getId(), externalizerConfig.getAdvancedExternalizer());
       }
       
       builder.asyncTransportExecutor()
