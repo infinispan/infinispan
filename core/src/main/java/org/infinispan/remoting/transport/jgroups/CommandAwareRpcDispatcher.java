@@ -22,6 +22,8 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
+import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -350,7 +352,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       volatile RspList retval;
       final Map<Future<Object>, SenderContainer> futures = new HashMap<Future<Object>, SenderContainer>(4);
       volatile Exception exception;
-      volatile int expectedResponses;
+      @GuardedBy("this") private int expectedResponses;
       final long timeout;
 
       FutureCollator(RspFilter filter, int expectedResponses, long timeout) {

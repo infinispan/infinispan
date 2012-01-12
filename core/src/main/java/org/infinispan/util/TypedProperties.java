@@ -151,7 +151,7 @@ public class TypedProperties extends Properties {
     * @param   doStringReplace   boolean indicating whether to apply string property replacement
     * @return  the value in this property list with the specified key valu after optionally being inspected for String property replacement
     */
-   public String getProperty(String key, String defaultValue, boolean doStringReplace) {
+   public synchronized String getProperty(String key, String defaultValue, boolean doStringReplace) {
       if (doStringReplace)
          return StringPropertyReplacer.replaceProperties(getProperty(key, defaultValue));
       else
