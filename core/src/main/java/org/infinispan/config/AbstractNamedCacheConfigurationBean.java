@@ -61,7 +61,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
       return dolly;
    }
 
-   class InjectComponentRegistryVisitor extends AbstractConfigurationBeanVisitor {
+   static class InjectComponentRegistryVisitor extends AbstractConfigurationBeanVisitor {
 
       private final ComponentRegistry registry;
       
