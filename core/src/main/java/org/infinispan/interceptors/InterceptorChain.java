@@ -234,10 +234,10 @@ public class InterceptorChain {
    public boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();
-      Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
-      assertNotAdded(interceptorClass);
-      validateCustomInterceptor(interceptorClass);
       try {
+         Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+         assertNotAdded(interceptorClass);
+         validateCustomInterceptor(interceptorClass);
          CommandInterceptor it = firstInChain;
          while (it != null) {
             if (it.getClass().equals(afterInterceptor)) {
@@ -261,11 +261,11 @@ public class InterceptorChain {
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();
-      Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
-      assertNotAdded(interceptorClass);
-      validateCustomInterceptor(interceptorClass);
-
       try {
+         Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+         assertNotAdded(interceptorClass);
+         validateCustomInterceptor(interceptorClass);
+
          if (firstInChain.getClass().equals(beforeInterceptor)) {
             toAdd.setNext(firstInChain);
             firstInChain = toAdd;
@@ -296,11 +296,11 @@ public class InterceptorChain {
    public boolean replaceInterceptor(CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
       final ReentrantLock lock = this.lock;
       lock.lock();
-      Class<? extends CommandInterceptor> interceptorClass = replacingInterceptor.getClass();
-      assertNotAdded(interceptorClass);
-      validateCustomInterceptor(interceptorClass);
-
       try {
+         Class<? extends CommandInterceptor> interceptorClass = replacingInterceptor.getClass();
+         assertNotAdded(interceptorClass);
+         validateCustomInterceptor(interceptorClass);
+
          if (firstInChain.getClass().equals(toBeReplacedInterceptorType)) {
             replacingInterceptor.setNext(firstInChain.getNext());
             firstInChain = replacingInterceptor;
