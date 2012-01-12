@@ -24,6 +24,9 @@ package org.infinispan.transaction;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.UnsignedNumeric;
@@ -54,10 +57,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class TransactionLog {
-   private final Map<GlobalTransaction, PrepareCommand> pendingPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
+   private Map<GlobalTransaction, PrepareCommand> pendingPrepares;
    private final BlockingQueue<LogEntry> entries = new LinkedBlockingQueue<LogEntry>();
    private AtomicBoolean active = new AtomicBoolean();
+   private Configuration configuration;
 
+   @Inject
+   private void init(Configuration configuration) {
+      this.configuration = configuration;
+   }
+
+   @Start
+   private void start() {
+     pendingPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>(configuration.getConcurrencyLevel());
+   }
+   
+   
    public static class LogEntry {
       private final GlobalTransaction transaction;
       private final WriteCommand[] modifications;

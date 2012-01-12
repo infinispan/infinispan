@@ -173,17 +173,17 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    public RemoteTransaction removeRemoteTransaction(Xid xid) {
-      Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
-      while (it.hasNext()) {
-         RemoteTransaction next = it.next();
-         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
-         if (xid.equals(gtx.getXid())) {
-            it.remove();
-            if (clustered) {
+      if (clustered) {
+         Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
+         while (it.hasNext()) {
+            RemoteTransaction next = it.next();
+            RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
+            if (xid.equals(gtx.getXid())) {
+               it.remove();
                recalculateMinViewIdIfNeeded(next);
+               next.notifyOnTransactionFinished();
+               return next;
             }
-            next.notifyOnTransactionFinished();
-            return next;
          }
       }
       return null;
