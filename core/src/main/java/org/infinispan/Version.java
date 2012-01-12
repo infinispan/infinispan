@@ -41,10 +41,10 @@ public class Version {
    private static final String MODIFIER = "SNAPSHOT";
    private static final boolean SNAPSHOT = true;
 
-   public static String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static String CODENAME = "Brahma";
+   public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
+   public static final String CODENAME = "Brahma";
    public static final String PROJECT_NAME = "Infinispan";
-   public static byte[] VERSION_ID = readVersionBytes();
+   public static final byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
 
    private static final int MAJOR_SHIFT = 11;
