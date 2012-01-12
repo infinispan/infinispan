@@ -59,7 +59,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       TransactionFactory gtf = new TransactionFactory();
       gtf.init(false, false, true);
       globalTransaction = gtf.newGlobalTransaction(null, false);
-      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false);
+      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1);
       xid = new DummyXid(uuid);
       localTx.setXid(xid);
       txTable.addLocalTransactionMapping(localTx);      

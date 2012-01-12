@@ -61,9 +61,9 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    /**
-    * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form
-    * the "normal" transactions collection and moved into the cache that holds in-doubt transactions.
-    * See {@link #updateStateOnNodesLeaving(java.util.Collection)}
+    * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
+    * "normal" transactions collection and moved into the cache that holds in-doubt transactions. See {@link
+    * #updateStateOnNodesLeaving(java.util.Collection)}
     */
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
@@ -157,8 +157,8 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
 
    /**
-    * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with
-    * the supplied internal Id.
+    * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with the
+    * supplied internal Id.
     */
    public Xid getRemoteTransactionXid(Long internalId) {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
@@ -178,11 +178,11 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
          RemoteTransaction next = it.next();
          RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
          if (xid.equals(gtx.getXid())) {
-            synchronized (minViewIdInvariant) {
-               it.remove();
+            it.remove();
+            if (clustered) {
                recalculateMinViewIdIfNeeded(next);
-               next.notifyOnTransactionFinished();
             }
+            next.notifyOnTransactionFinished();
             return next;
          }
       }

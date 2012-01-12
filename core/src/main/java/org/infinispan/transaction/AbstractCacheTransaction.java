@@ -69,12 +69,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private final Condition condition = lock.newCondition();
 
    protected volatile boolean prepared;
-   protected Integer viewId;
+   final int viewId;
 
    private EntryVersionsMap updatedEntryVersions;
 
-   public AbstractCacheTransaction(GlobalTransaction tx) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int viewId) {
       this.tx = tx;
+      this.viewId = viewId;
    }
 
    public GlobalTransaction getGlobalTransaction() {
@@ -135,13 +136,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public Integer getViewId() {
+   public int getViewId() {
       return viewId;
-   }
-
-   @Override
-   public void setViewId(Integer viewId) {
-      this.viewId = viewId;
    }
 
    @Override
