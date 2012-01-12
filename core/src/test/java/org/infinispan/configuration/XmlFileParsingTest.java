@@ -31,6 +31,7 @@ import java.io.InputStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.executors.DefaultExecutorFactory;
+import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -90,15 +91,16 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       final GlobalConfiguration gc = cm.getCacheManagerConfiguration();
 
       assert gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory;
-//      assert ((GlobalConfiguration) gc).getAsyncListenerExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
+      assert gc.asyncListenerExecutor().properties().getProperty("maxThreads").equals("5");
+      assert gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix").equals("AsyncListenerThread");
 
-//      assert gc.getAsyncListenerExecutorProperties().getProperty("maxThreads").equals("5");
-//      assert gc.getAsyncListenerExecutorProperties().getProperty("threadNamePrefix").equals("AsyncListenerThread");
-//
-//      assert gc.getAsyncTransportExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
-//      assert gc.getAsyncTransportExecutorProperties().getProperty("maxThreads").equals("25");
-//      assert gc.getAsyncTransportExecutorProperties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
-//
+      assert gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory;
+      assert gc.asyncTransportExecutor().properties().getProperty("maxThreads").equals("25");
+      assert gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
+
+      assert gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;
+      assert gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix").equals("EvictionThread");
+
 //      assert gc.getEvictionScheduledExecutorFactoryClass().equals("org.infinispan.executors.DefaultScheduledExecutorFactory");
 //      assert gc.getEvictionScheduledExecutorProperties().getProperty("threadNamePrefix").equals("EvictionThread");
 //

@@ -62,7 +62,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       legacy.evictionScheduledExecutor()
          .factory(config.evictionScheduledExecutor().factory().getClass())
-         .withProperties(config.asyncListenerExecutor().properties());
+         .withProperties(config.evictionScheduledExecutor().properties());
       
       legacy.replicationQueueScheduledExecutor()
          .factory(config.replicationQueueScheduledExecutor().factory().getClass())
@@ -123,7 +123,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       builder.evictionScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getEvictionScheduledExecutorFactoryClass(), legacy.getClassLoader()))
-         .withProperties(legacy.getAsyncListenerExecutorProperties());
+         .withProperties(legacy.getEvictionScheduledExecutorProperties());
       
       builder.replicationQueueScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getReplicationQueueScheduledExecutorFactoryClass(), legacy.getClassLoader()))
