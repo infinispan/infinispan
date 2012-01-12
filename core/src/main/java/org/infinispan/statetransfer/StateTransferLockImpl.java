@@ -69,7 +69,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    private AtomicInteger runningWritesCount = new AtomicInteger(0);
    private volatile boolean writesShouldBlock;
    private volatile boolean writesBlocked;
-   private ThreadLocal<Boolean> traceThreadWrites = new ThreadLocal<Boolean>();
+   private final ThreadLocal<Boolean> traceThreadWrites = new ThreadLocal<Boolean>();
    private int blockingCacheViewId = NO_BLOCKING_CACHE_VIEW;
    // blockingCacheViewId, writesShouldBlock and writesBlocked should only be modified while holding lock and always in this order
    private final Object lock = new Object();
@@ -390,7 +390,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (trace) {
          if (traceThreadWrites.get() != Boolean.TRUE)
             log.error("Trying to release state transfer shared lock without acquiring it first", new Exception());
-         traceThreadWrites.set(null);
+         traceThreadWrites.remove();
       }
       int remainingWrites = runningWritesCount.decrementAndGet();
       if (remainingWrites < 0) {
