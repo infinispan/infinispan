@@ -24,8 +24,8 @@ package org.infinispan.atomic;
 
 import java.util.Collection;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.TransactionManager;
 
@@ -230,21 +230,21 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
          public void run() {
             try {
                FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-               for(int i = 0; i< 2000; i++){
+               for(int i = 0; i< 500; i++){
                   map.put("key-" + i, "value-" + i);
                }
             } catch (Exception e) {               
                log.error("Unexpected error performing transaction", e);
             }
          }
-      }, true);
+      }, false);
       
       fork(new Runnable() {
          @Override
          public void run() {
             FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
             try {               
-               for(int i = 0; i< 2000; i++){                  
+               for(int i = 0; i< 500; i++){                  
                   map.keySet();
                }
             } catch (Exception e) {
@@ -252,7 +252,7 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
                log.error("Unexpected error performing transaction", e);
             }
          }
-      }, true);
+      }, false);
       assert allOk.get() : "iteration raised an exception";
    }
 
