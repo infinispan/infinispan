@@ -296,11 +296,12 @@ public class StateTransferLockImpl implements StateTransferLock {
       long endTime = System.currentTimeMillis() + lockTimeout;
       synchronized (lock) {
          while (true) {
-            // wait for the unblocker thread to notify us
-            lock.wait(timeout);
-
+            //check first before waiting
             if (acquireLockForWriteNoWait())
                return true;
+
+            // wait for the unblocker thread to notify us
+            lock.wait(timeout);
 
             // retry, unless the timeout expired
             timeout = endTime - System.currentTimeMillis();
@@ -352,11 +353,12 @@ public class StateTransferLockImpl implements StateTransferLock {
       // A commit command should never fail on the originator, so wait forever
       synchronized (lock) {
          while (true) {
-            // wait for the unblocker thread to notify us
-            lock.wait();
-
+            //check before waiting on condition
             if (acquireLockForCommitNoWait())
                return true;
+
+            // wait for the unblocker thread to notify us
+            lock.wait();
          }
       }
    }
