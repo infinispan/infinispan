@@ -151,8 +151,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode) {
       if (masterCacheNode == null)
-         throw new NullPointerException("Can not use " + masterCacheNode
-                  + " cache for MapReduceTask");
+         throw new IllegalArgumentException("Can not use null cache for MapReduceTask");
 
       ensureProperCacheState(masterCacheNode.getAdvancedCache());      
       this.cache = masterCacheNode.getAdvancedCache();
@@ -186,7 +185,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     */
    public MapReduceTask<KIn, VIn, KOut, VOut> mappedWith(Mapper<KIn, VIn, KOut, VOut> mapper) {
       if (mapper == null)
-         throw new NullPointerException("A valid reference of Mapper is needed " + mapper);
+         throw new IllegalArgumentException("A valid reference of Mapper is needed");
       this.mapper = mapper;
       return this;
    }
@@ -205,7 +204,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     */
    public MapReduceTask<KIn, VIn, KOut, VOut> reducedWith(Reducer<KOut, VOut> reducer) {
       if (reducer == null)
-         throw new NullPointerException("A valid reference of Mapper is needed " + reducer);
+         throw new IllegalArgumentException("A valid reference of Mapper is needed");
       this.reducer = reducer;
       return this;
    }
