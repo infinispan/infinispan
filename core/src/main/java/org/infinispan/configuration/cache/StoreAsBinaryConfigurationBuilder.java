@@ -17,7 +17,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    }
    
    public StoreAsBinaryConfigurationBuilder disable() {
-      enabled = true;
+      enabled = false;
       return this;
    }
    
