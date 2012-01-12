@@ -120,7 +120,7 @@ public class DefaultDataContainer implements DataContainer {
 
    public InternalCacheEntry get(Object k) {
       InternalCacheEntry e = peek(k);
-      if (e != null) {
+      if (e != null && e.canExpire()) {
          long currentTimeMillis = System.currentTimeMillis();
          if (e.isExpired(currentTimeMillis)) {
             entries.remove(k);
