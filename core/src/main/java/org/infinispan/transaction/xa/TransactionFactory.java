@@ -66,8 +66,8 @@ public class TransactionFactory {
 
       DLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -83,20 +83,20 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RecoveryAwareRemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RecoveryAwareRemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RecoveryAwareRemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RecoveryAwareRemoteTransaction(tx, viewId);
          }
       },
 
       DLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new LocalXaTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -110,20 +110,20 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(tx, viewId);
          }
       },
 
       DLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new SyncLocalTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -137,19 +137,19 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(tx, viewId);
          }
       },
       NODLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -165,19 +165,19 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RecoveryAwareRemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RecoveryAwareRemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RecoveryAwareRemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RecoveryAwareRemoteTransaction(tx, viewId);
          }
       },
       NODLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new LocalXaTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -191,19 +191,19 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(tx, viewId);
          }
       },
       NODLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-            return new SyncLocalTransaction(tx, gtx, implicitTransaction);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction, viewId);
          }
 
          @Override
@@ -217,18 +217,18 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-            return new RemoteTransaction(modifications, tx);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(modifications, tx, viewId);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-            return new RemoteTransaction(tx);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+            return new RemoteTransaction(tx, viewId);
          }
       };
 
 
-      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction);
+      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId);
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
@@ -246,9 +246,9 @@ public class TransactionFactory {
        */
       private final Random rnd = new Random();
 
-      public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx);
+      public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId);
 
-      public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx);
+      public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId);
    }
 
 
@@ -260,16 +260,16 @@ public class TransactionFactory {
       return txFactoryEnum.newGlobalTransaction(addr, remote, this.clusterIdGenerator, isClustered);
    }
 
-   public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
-      return txFactoryEnum.newLocalTransaction(tx, gtx, implicitTransaction);
+   public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int viewId) {
+      return txFactoryEnum.newLocalTransaction(tx, gtx, implicitTransaction, viewId);
    }
 
-   public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-      return txFactoryEnum.newRemoteTransaction(modifications, tx);
+   public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+      return txFactoryEnum.newRemoteTransaction(modifications, tx, viewId);
    }
 
-   public RemoteTransaction newRemoteTransaction(GlobalTransaction tx) {
-      return txFactoryEnum.newRemoteTransaction(tx);
+   public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int viewId) {
+      return txFactoryEnum.newRemoteTransaction(tx, viewId);
    }
 
    @Inject

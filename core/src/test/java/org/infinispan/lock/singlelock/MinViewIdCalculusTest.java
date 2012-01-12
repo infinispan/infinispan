@@ -64,7 +64,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
-      final Integer viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+      final int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
       assertEquals(tt0.getMinViewId(), viewId);
       assertEquals(tt1.getMinViewId(), viewId);
 
@@ -72,8 +72,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
 
-      final Integer viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
-      assertEquals((Integer)(viewId + 1), viewId2);
+      final int viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
+      assertEquals(viewId + 1, viewId2);
 
       assertEquals(tt0.getMinViewId(), viewId2);
       assertEquals(tt1.getMinViewId(), viewId2);
@@ -88,7 +88,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
 
-      final Integer viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+      final int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
 
       tm(1).begin();
       cache(1).put(getKeyForCache(0),"v");
@@ -108,8 +108,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
 
-      final Integer viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
-      assertEquals((Integer)(viewId + 1), viewId2);
+      final int viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
+      assertEquals(viewId + 1, viewId2);
 
       assertEquals(tt0.getMinViewId(), viewId);
       assertEquals(tt1.getMinViewId(), viewId);
@@ -121,7 +121,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return tt0.getMinViewId().equals(viewId2) && tt1.getMinViewId().equals(viewId2);
+            return tt0.getMinViewId() == viewId2 && tt1.getMinViewId() == viewId2;
          }
       });
    }

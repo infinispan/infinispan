@@ -61,8 +61,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private final boolean implicitTransaction;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
-      super(tx);
+   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
+      super(tx, viewId);
       this.transaction = transaction;
       this.implicitTransaction = implicitTransaction;
    }
