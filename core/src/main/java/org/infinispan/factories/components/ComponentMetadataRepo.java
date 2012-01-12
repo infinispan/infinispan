@@ -26,6 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.HashMap;
@@ -47,11 +48,25 @@ public class ComponentMetadataRepo {
 
    @SuppressWarnings("unchecked")
    public synchronized static void readMetadata(URL metadataFile) throws IOException, ClassNotFoundException {
-      BufferedInputStream bis = new BufferedInputStream(metadataFile.openStream());
-      ObjectInputStream ois = new ObjectInputStream(bis);
-
-      Map<String, ComponentMetadata> comp = (Map<String, ComponentMetadata>) ois.readObject();
-      Map<String, String> fact = (Map<String, String>) ois.readObject();
+      Map<String, ComponentMetadata> comp;
+      Map<String, String> fact;
+      InputStream inputStream = metadataFile.openStream();
+      try {
+         BufferedInputStream bis = new BufferedInputStream(inputStream);
+         try {
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            try {
+               comp = (Map<String, ComponentMetadata>) ois.readObject();
+               fact = (Map<String, String>) ois.readObject();
+            } finally {
+               ois.close();
+            }
+         } finally {
+            bis.close();
+         }
+      } finally {
+         inputStream.close();
+      }
 
       COMPONENT_METADATA_MAP.putAll(comp);
       FACTORIES.putAll(fact);
