@@ -506,8 +506,7 @@ public interface Log extends BasicLogger {
    void unprocessedTxLogEntries(int size);
 
    @LogMessage(level = WARN)
-   @Message(value = "Stopping but there're transactions that did not finish in " +
-         "time: localTransactions=%s, remoteTransactions%s", id = 100)
+   @Message(value = "Stopping, but there are transactions that did not finish in time: localTransactions=%s, remoteTransactions%s", id = 100)
    void unfinishedTransactionsRemain(
          ConcurrentMap<Transaction, LocalTransaction> localTransactions,
          ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions);
