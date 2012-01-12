@@ -156,6 +156,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       cacheViewInstallerExecutor = Executors.newCachedThreadPool(tfViewInstaller);
 
       viewTriggerThread = new ViewTriggerThread();
+      viewTriggerThread.start();
 
       cacheManagerNotifier.addListener(listener);
       // The listener already missed the initial view
@@ -782,9 +783,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    /**
     * Executed on the coordinator to trigger the installation of new views.
     */
-   public class ViewTriggerThread extends Thread {
-      private Lock lock = new ReentrantLock();
-      private Condition condition = lock.newCondition();
+   public final class ViewTriggerThread extends Thread {
+      private final Lock lock = new ReentrantLock();
+      private final Condition condition = lock.newCondition();
 
       public ViewTriggerThread() {
          super("CacheViewTrigger," + self);
@@ -792,7 +793,6 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          // ViewTriggerThread could be created on a user thread, and we don't want to
          // hold a reference to that classloader
          setContextClassLoader(ViewTriggerThread.class.getClassLoader());
-         start();
       }
 
       public void wakeUp() {
