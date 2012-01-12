@@ -204,9 +204,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       try {
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
-         return deltaMapForWrite.put(key, value);
-      } finally {
+         V toReturn = deltaMapForWrite.put(key, value);
          invokeApplyDelta(deltaMapForWrite.getDelta());
+         return toReturn;
+      } finally {
          endAtomic();
       }
    }
@@ -216,9 +217,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       try {
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
-         return deltaMapForWrite.remove(key);
-      } finally {
+         V toReturn = deltaMapForWrite.remove(key);
          invokeApplyDelta(deltaMapForWrite.getDelta());
+         return toReturn;
+      } finally {
          endAtomic();
       }
    }
@@ -229,8 +231,8 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.putAll(m);
-      } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
+      } finally {
          endAtomic();
       }
    }
@@ -241,8 +243,8 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.clear();
-      } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
+      } finally {
          endAtomic();
       }
    }
