@@ -5,10 +5,15 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
+
+   private static Log log = LogFactory.getLog(TransactionConfigurationBuilder.class);
 
    private boolean autoCommit = true;
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
@@ -16,7 +21,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
+   private TransactionManagerLookup transactionManagerLookup;
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
@@ -102,6 +107,14 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    void validate() {
+      if (transactionManagerLookup == null) {
+         if (!getBuilder().invocationBatching().enabled) {
+            transactionManagerLookup = new GenericTransactionManagerLookup();
+         } else {
+            if (!useSynchronization) log.debug("Switching to Synchronization based enlistment.");
+            useSynchronization = true;
+         }
+      }
    }
 
    @Override
