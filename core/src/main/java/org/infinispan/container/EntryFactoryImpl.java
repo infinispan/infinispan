@@ -154,17 +154,18 @@ public class EntryFactoryImpl implements EntryFactory {
    
    @Override
    public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) throws InterruptedException {
-      CacheEntry cacheEntry = getFromContext(ctx, deltaKey);      
+      CacheEntry cacheEntry = getFromContext(ctx, deltaKey);
       DeltaAwareCacheEntry deltaAwareEntry = null;
       if (cacheEntry != null) {        
          deltaAwareEntry = wrapEntryForDelta(ctx, deltaKey, cacheEntry);
       } else {                     
          InternalCacheEntry ice = getFromContainer(deltaKey);
-         if(ice != null){
-            deltaAwareEntry = newDeltaAwareCacheEntry(ctx, deltaKey, (DeltaAware)ice.getValue());   
-         }                
-      } 
-      deltaAwareEntry.appendDelta(delta);      
+         if (ice != null){
+            deltaAwareEntry = newDeltaAwareCacheEntry(ctx, deltaKey, (DeltaAware)ice.getValue());
+         }
+      }
+      if (deltaAwareEntry != null)
+         deltaAwareEntry.appendDelta(delta);
       return deltaAwareEntry;
    }
    
