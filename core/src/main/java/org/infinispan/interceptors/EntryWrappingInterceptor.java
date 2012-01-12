@@ -31,6 +31,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -165,23 +166,26 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    protected void commitContextEntries(final InvocationContext ctx) {
-      Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
-      final Log log = getLog();
       final boolean trace = log.isTraceEnabled();
-      if (trace) log.tracef("Number of entries in context: %s", entries.size());
-      while (it.hasNext()) {
-         Map.Entry<Object, CacheEntry> e = it.next();
-         CacheEntry entry = e.getValue();
-         if (entry != null && entry.isChanged()) {
-            commitContextEntry(entry, ctx, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
-            if (trace) log.tracef("Committed entry %s", entry);
-         } else {
-            if (trace) {
-               if (entry==null)
-                  log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
-               else
-                  log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+      boolean skipOwnershipCheck = ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+
+      if (ctx instanceof SingleKeyNonTxInvocationContext) {
+         CacheEntry entry = ((SingleKeyNonTxInvocationContext)ctx).getCacheEntry();
+         commitEntryIfNeeded(ctx, skipOwnershipCheck, entry);
+      } else {
+         Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+         Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
+         final Log log = getLog();
+         while (it.hasNext()) {
+            Map.Entry<Object, CacheEntry> e = it.next();
+            CacheEntry entry = e.getValue();
+            if (!commitEntryIfNeeded(ctx, skipOwnershipCheck, entry)) {
+               if (trace) {
+                  if (entry==null)
+                     log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
+                  else
+                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+               }
             }
          }
       }
@@ -260,5 +264,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
          return null;
       }
+   }
+
+   private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, CacheEntry entry) {
+      if (entry != null && entry.isChanged()) {
+         commitContextEntry(entry, ctx, skipOwnershipCheck);
+         log.tracef("Committed entry %s", entry);
+         return true;
+      }
+      return false;
    }
 }

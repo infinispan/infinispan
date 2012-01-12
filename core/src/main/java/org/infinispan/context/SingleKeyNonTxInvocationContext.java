@@ -122,4 +122,8 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    public void clearLookedUpEntries() {
       clearLockedKeys();
    }
+
+   public CacheEntry getCacheEntry() {
+      return cacheEntry;
+   }
 }
