@@ -34,6 +34,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
+import javax.transaction.xa.Xid;
 
 import static junit.framework.Assert.assertEquals;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
@@ -74,7 +75,7 @@ public class ForgetTest extends AbstractRecoveryTest {
    }
 
    public void testInternalIdOnSameNode() throws Exception {
-      DummyXid xid = tx.getXid();
+      Xid xid = tx.getXid();
       String result = recoveryOps(0).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
       System.out.println("result = " + result);
       assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
@@ -113,7 +114,7 @@ public class ForgetTest extends AbstractRecoveryTest {
 
 
    private void forgetWithXid(int nodeIndex) {
-      DummyXid xid = tx.getXid();
+      Xid xid = tx.getXid();
       recoveryOps(nodeIndex).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
       assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
    }
