@@ -161,11 +161,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
-   public TransportConfigurationBuilder useDefaultIfTransportNotSpecified() {
-      if (transport == null) transport(Util.getInstance(DEFAULT_TRANSPORT));
-      return this;
-   }
-
    @Override
    TransportConfigurationBuilder read(TransportConfiguration template) {
       this.clusterName = template.clusterName();

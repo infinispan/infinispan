@@ -655,7 +655,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    public short getMarshallVersion() {
-      return Version.getVersionShort(serialization.version);
+      return serialization.versionShort;
    }
 
    public String getMarshallVersionString() {

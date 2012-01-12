@@ -42,7 +42,8 @@ public class LegacyConfigurationAdaptor {
                .asyncMarshalling(config.clustering().async().asyncMarshalling())
                .replQueueClass(config.clustering().async().replQueue().getClass())
                .replQueueInterval(config.clustering().async().replQueueInterval())
-               .replQueueMaxElements(config.clustering().async().replQueueMaxElements());
+               .replQueueMaxElements(config.clustering().async().replQueueMaxElements())
+               .useReplQueue(config.clustering().async().useReplQueue());
       }
       
       if (config.clustering().hash().consistentHash() != null) {
@@ -269,11 +270,13 @@ public class LegacyConfigurationAdaptor {
             builder.clustering()
             .async()
                .syncMarshalling();
+
          builder.clustering()
             .async()
                .replQueue(Util.<ReplicationQueue>getInstance(legacy.getReplQueueClass(), legacy.getClassLoader()))
                .replQueueInterval(legacy.getReplQueueInterval())
-               .replQueueMaxElements(legacy.getReplQueueMaxElements());
+               .replQueueMaxElements(legacy.getReplQueueMaxElements())
+               .useReplQueue(legacy.isUseReplQueue());
       }
       
       if (legacy.getConsistentHashClass() != null) {
