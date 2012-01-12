@@ -271,6 +271,6 @@ public final class ParseUtils {
     }
 
     public static String getWarningMessage(final String msg, final Location location) {
-        return String.format("Parsing problem at [row,col]:[%d ,%d]\nMessage: %s\n", location.getLineNumber(), location.getColumnNumber(), msg);
+        return String.format("Parsing problem at [row,col]:[%d ,%d]%nMessage: %s%n", location.getLineNumber(), location.getColumnNumber(), msg);
     }
 }

@@ -79,7 +79,7 @@ public class JaxbSchemaGenerator {
 
         public Result createOutput(String namespaceUri, String suggestedFileName) throws IOException {
             String fname = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
-            System.out.printf("Using file name %s for schema\n", fname);
+            System.out.printf("Using file name %s for schema%n", fname);
             return new StreamResult(new File(dir, fname));
         }
     }

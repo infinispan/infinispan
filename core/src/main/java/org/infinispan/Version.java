@@ -78,9 +78,10 @@ public class Version {
    public static void printFullVersionInformation() {
       System.out.println(PROJECT_NAME);
       System.out.println();
-      System.out.printf("Version: \t%s\n", VERSION);
-      System.out.printf("Codename: \t%s\n", CODENAME);
-      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)\n");
+      System.out.printf("Version: \t%s%n", VERSION);
+      System.out.printf("Codename: \t%s%n", CODENAME);
+      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
+      System.out.println();
    }
 
    /**
