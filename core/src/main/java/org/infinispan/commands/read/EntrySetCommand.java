@@ -190,7 +190,6 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
             if (!atIt1) {
                boolean found = false;
-               long currentTimeMillis = System.currentTimeMillis();
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
