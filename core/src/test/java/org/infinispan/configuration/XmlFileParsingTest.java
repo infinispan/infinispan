@@ -30,13 +30,20 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.infinispan.Version;
-import org.infinispan.configuration.cache.AbstractLoaderConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.LoaderConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.loaders.file.FileCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -195,63 +202,62 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert !c.loaders().shared();
       assert c.loaders().cacheLoaders().size() == 1;
 
-//      FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
-//      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
-//      assert csConf.isFetchPersistentState();
-//      assert csConf.isIgnoreModifications();
-//      assert csConf.isPurgeOnStartup();
-//      assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
-//      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.PERIODIC;
-//      assert csConf.getFsyncInterval() == 2000;
-//      assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
-//      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator();
-//      assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
-//      assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
-//      assert csConf.getAsyncStoreConfig().isEnabled();
-//      assert csConf.getAsyncStoreConfig().getModificationQueueSize() == 700;
-//
-//      c = cm.getCacheConfiguration("withLoaderDefaults", defaultCfg);
-//      csConf = (FileCacheStoreConfig) c.getCacheLoaders().get(0);
-//      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
-//      assert csConf.getLocation().equals("/tmp/Another-FileCacheStore-Location");
-//      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.DEFAULT;
-//
-//      c = cm.getCacheConfiguration("withouthJmxEnabled", defaultCfg);
-//      assert !c.isExposeJmxStatistics();
-//      assert !gc.isExposeGlobalJmxStatistics();
-//      assert gc.isAllowDuplicateDomains();
-//      assert gc.getJmxDomain().equals("funky_domain");
-//      assert gc.getMBeanServerLookup().equals("org.infinispan.jmx.PerThreadMBeanServerLookup");
-//
-//      c = cm.getCacheConfiguration("dist", defaultCfg);
-//      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
-//      assert c.getL1Lifespan() == 600000;
-//      assert c.getRehashWaitTime() == 120000;
-//      assert c.getConsistentHashClass().equals(TopologyAwareConsistentHash.class.getName());
-//      assert c.getNumOwners() == 3;
-//      assert c.isL1CacheEnabled();
-//
-//      c = cm.getCacheConfiguration("groups", defaultCfg);
-//      Assert.assertTrue(c.isGroupsEnabled());
-//      Assert.assertEquals(c.getGroupers().size(), 1);
-//      Assert.assertEquals(c.getGroupers().get(0).getKeyType(), String.class);
-//
-//      c = cm.getCacheConfiguration("cacheWithCustomInterceptors", defaultCfg);
-//      assert !c.getCustomInterceptors().isEmpty();
-//      assert c.getCustomInterceptors().size() == 5;
-//
-//      c = cm.getCacheConfiguration("evictionCache", defaultCfg);
-//      assert c.getEvictionMaxEntries() == 5000;
-//      assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
-//      assert c.getExpirationLifespan() == 60000;
-//      assert c.getExpirationMaxIdle() == 1000;
-//      assert c.getEvictionThreadPolicy() == EvictionThreadPolicy.PIGGYBACK;
-//      assert c.getExpirationWakeUpInterval() == 500;
-//
-//      c = cm.getCacheConfiguration("withDeadlockDetection", defaultCfg);
-//      assert c.isEnableDeadlockDetection();
-//      assert c.getDeadlockDetectionSpinDuration() == 1221;
-//      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      FileCacheStoreConfiguration loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);
+
+      assert loaderCfg.fetchPersistentState();
+      assert loaderCfg.ignoreModifications();
+      assert loaderCfg.purgeOnStartup();
+      assert loaderCfg.location().equals("/tmp/FileCacheStore-Location");
+      assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.PERIODIC;
+      assert loaderCfg.fsyncInterval() == 2000;
+      assert loaderCfg.singletonStore().pushStateTimeout() == 20000;
+      assert loaderCfg.singletonStore().pushStateWhenCoordinator();
+      assert loaderCfg.async().threadPoolSize() == 5;
+      assert loaderCfg.async().flushLockTimeout() == 15000;
+      assert loaderCfg.async().enabled();
+      assert loaderCfg.async().modificationQueueSize() == 700;
+
+      c = cm.getCacheConfiguration("withLoaderDefaults");
+      loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);
+      assert loaderCfg.location().equals("/tmp/Another-FileCacheStore-Location");
+      assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT;
+
+      c = cm.getCacheConfiguration("withouthJmxEnabled");
+      assert !c.jmxStatistics().enabled();
+      assert gc.globalJmxStatistics().enabled();
+      assert gc.globalJmxStatistics().allowDuplicateDomains();
+      assert gc.globalJmxStatistics().domain().equals("funky_domain");
+      assert gc.globalJmxStatistics().mbeanServerLookup() instanceof PerThreadMBeanServerLookup;
+
+      c = cm.getCacheConfiguration("dist");
+      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
+      assert c.clustering().l1().lifespan() == 600000;
+      assert c.clustering().hash().rehashWait() == 120000;
+      assert c.clustering().hash().consistentHash() instanceof TopologyAwareConsistentHash;
+      assert c.clustering().hash().numOwners() == 3;
+      assert c.clustering().l1().enabled();
+
+      c = cm.getCacheConfiguration("groups");
+      assert c.clustering().hash().groups().enabled();
+      assert c.clustering().hash().groups().groupers().size() == 1;
+      assert c.clustering().hash().groups().groupers().get(0).getKeyType().equals(String.class);
+
+      c = cm.getCacheConfiguration("cacheWithCustomInterceptors");
+      assert !c.customInterceptors().interceptors().isEmpty();
+      assert c.customInterceptors().interceptors().size() == 5;
+
+      c = cm.getCacheConfiguration("evictionCache");
+      assert c.eviction().maxEntries() == 5000;
+      assert c.eviction().strategy().equals(EvictionStrategy.FIFO);
+      assert c.expiration().lifespan() == 60000;
+      assert c.expiration().maxIdle() == 1000;
+      assert c.eviction().threadPolicy() == EvictionThreadPolicy.PIGGYBACK;
+      assert c.expiration().wakeUpInterval() == 500;
+
+      c = cm.getCacheConfiguration("withDeadlockDetection");
+      assert c.deadlockDetection().enabled();
+      assert c.deadlockDetection().spinDuration() == 1221;
+      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
    }
 
 }

@@ -36,9 +36,11 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
+   // TODO: Sort out this duplication with LoaderConfigurationBuilder
    private boolean fetchPersistentState = false;
    private boolean ignoreModifications = false;
    private boolean purgeOnStartup = false;
+   private int purgerThreads = 1;
    private boolean purgeSynchronously = false;
    private int lockConcurrencyLevel;
    private long lockAcquistionTimeout;
@@ -82,6 +84,11 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
 
    public FileCacheStoreConfigurationBuilder purgeSynchronously(boolean purgeSynchronously) {
       this.purgeSynchronously = purgeSynchronously;
+      return this;
+   }
+
+   public FileCacheStoreConfigurationBuilder purgerThreads(int i) {
+      this.purgerThreads = i;
       return this;
    }
 
