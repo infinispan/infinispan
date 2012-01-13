@@ -169,8 +169,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          return;
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
-      final int transactionViewId = txContext.getCacheTransaction().getViewId();
+      int transactionViewId = -1;
       if (clustered) {
+         transactionViewId = txContext.getCacheTransaction().getViewId();
          if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
             checkForPendingLocks = transactionViewId > txTable.getMinViewId();
          }

@@ -219,14 +219,12 @@ public class TransactionTable {
    public Set<CacheTransaction> getTransactionsStartedBefore(int viewId) {
       Set<CacheTransaction> result = new HashSet<CacheTransaction>();
       for (CacheTransaction ct : localTransactions.values()) {
-         if (ct.getViewId() != CACHE_STOPPED_VIEW_ID && ct.getViewId() < viewId) {
-            result.add(ct);
-         }
+         int id = ct.getViewId();
+         if (id != CACHE_STOPPED_VIEW_ID && id < viewId) result.add(ct);
       }
       for (CacheTransaction ct : remoteTransactions.values()) {
-         if (ct.getViewId() != CACHE_STOPPED_VIEW_ID && ct.getViewId() < viewId) {
-            result.add(ct);
-         }
+         int id = ct.getViewId();
+         if (id != CACHE_STOPPED_VIEW_ID && id < viewId) result.add(ct);
       }
       return result;
    }
@@ -384,7 +382,7 @@ public class TransactionTable {
    }
 
    protected final void recalculateMinViewIdIfNeeded(CacheTransaction removedTransaction) {
-      if (removedTransaction == null) throw new NullPointerException("Transaction cannot be null!");
+      if (removedTransaction == null) throw new IllegalArgumentException("Transaction cannot be null!");
       if (currentViewId != CACHE_STOPPED_VIEW_ID) {
 
          // Assume that we only get here if we are clustered.
