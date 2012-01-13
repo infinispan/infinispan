@@ -70,10 +70,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * Reefer to section 3.4.4 from JTA spec v.1.1
     */
    private final LocalXaTransaction localTransaction;
-
    private final RecoveryManager recoveryManager;
-
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
+   private boolean recoveryEnabled;
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
@@ -86,6 +85,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.configuration = configuration;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
+      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
    }
    public TransactionXaAdapter(TransactionTable txTable,
                                Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
@@ -97,6 +97,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.configuration = configuration;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
+      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
    }
 
    /**
@@ -248,7 +249,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * Only does the conversion if recovery is enabled.
     */
    private Xid convertXid(Xid externalXid) {
-      if (configuration.isTransactionRecoveryEnabled() && (!(externalXid instanceof SerializableXid))) {
+      if (recoveryEnabled && (!(externalXid instanceof SerializableXid))) {
          return new SerializableXid(externalXid);
       } else {
          return externalXid;

@@ -44,10 +44,9 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Base class for local and remote transaction.
- * Impl note: The aggregated modification list and lookedUpEntries are not instantiated here but in subclasses.
- * This is done in order to take advantage of the fact that, for remote transactions we already know the size of the
- * modifications list at creation time.
+ * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
+ * instantiated here but in subclasses. This is done in order to take advantage of the fact that, for remote
+ * transactions we already know the size of the modifications list at creation time.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -64,10 +63,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected Set<Object> affectedKeys = null;
    protected Set<Object> lockedKeys;
    protected Set<Object> backupKeyLocks = null;
-
-   private final ReentrantLock lock = new ReentrantLock();
-   private final Condition condition = lock.newCondition();
-
+   private boolean txComplete = false;
    protected volatile boolean prepared;
    final int viewId;
 
@@ -114,25 +110,24 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void notifyOnTransactionFinished() {
-      log.tracef("transaction %s finished, notifying listening threads.", tx);
-      lock.lock();
-      try {
-         condition.signalAll();
-      } finally {
-         lock.unlock();
+      log.tracef("Transaction %s has completed, notifying listening threads.", tx);
+      synchronized (this) {
+         txComplete = true;
+         this.notifyAll();
       }
    }
 
    @Override
    public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
-      lock.lock();
-      try {
-         final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
-         log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
-         return !potentiallyLocked || condition.await(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
-      } finally {
-         lock.unlock();
+      final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
+      log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
+      if (potentiallyLocked) {
+         synchronized (this) {
+            this.wait(lockAcquisitionTimeout);
+            return txComplete;
+         }
       }
+      return true;
    }
 
    @Override
@@ -162,8 +157,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private boolean hasLockOrIsLockBackup(Object key) {
-      return (backupKeyLocks != null && backupKeyLocks.contains(key))
-            || (lockedKeys != null && lockedKeys.contains(key));
+      return (lockedKeys != null && lockedKeys.contains(key)) || (backupKeyLocks != null && backupKeyLocks.contains(key));
    }
 
    public Set<Object> getAffectedKeys() {
