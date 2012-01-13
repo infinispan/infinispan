@@ -9,19 +9,19 @@ import org.infinispan.marshall.Marshaller;
 
 public class SerializationConfiguration {
 
-   private final Class<? extends Marshaller> marshallerClass;
+   private final Marshaller marshaller;
    private final short version;
    private final Map<Integer, AdvancedExternalizer<?>> advancedExternalizers;
    
-   SerializationConfiguration(Class<? extends Marshaller> marshallerClass, short version,
+   SerializationConfiguration(Marshaller marshaller, short version,
          Map<Integer, AdvancedExternalizer<?>> advancedExternalizers) {
-      this.marshallerClass = marshallerClass;
+      this.marshaller = marshaller;
       this.version = version;
       this.advancedExternalizers = Collections.unmodifiableMap(new HashMap<Integer, AdvancedExternalizer<?>>(advancedExternalizers));
    }
 
-   public Class<? extends Marshaller> marshallerClass() {
-      return marshallerClass;
+   public Marshaller marshaller() {
+      return marshaller;
    }
 
    public short version() {

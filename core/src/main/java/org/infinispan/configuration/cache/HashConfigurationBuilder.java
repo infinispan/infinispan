@@ -154,7 +154,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.rehashRpcTimeout = template.rehashRpcTimeout();
       this.rehashWait = template.rehashWait();
       
-      this.groupsConfigurationBuilder.read(template.groupsConfiguration());
+      this.groupsConfigurationBuilder.read(template.groups());
       
       return this;
    }

@@ -70,7 +70,7 @@
          </advancedExternalizers>
       </serialization>
 
-      <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
+      <globalJmxStatistics enabled="true" jmxDomain="funky_domain"
                            mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
                            allowDuplicateDomains="true"/>
                            
@@ -255,6 +255,10 @@
          <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
       </customInterceptors>
+   </namedCache>
+
+   <namedCache name="storeKeyValueBinary">
+      <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" />
    </namedCache>
 
 </infinispan>

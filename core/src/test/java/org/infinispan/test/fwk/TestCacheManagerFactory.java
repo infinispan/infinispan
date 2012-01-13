@@ -404,9 +404,13 @@ public class TestCacheManagerFactory {
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {
       if (MARSHALLER != null) {
          try {
-            Class<? extends Marshaller> mClass = Util.loadClassStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
-            builder.serialization().marshallerClass(mClass);
+            Marshaller marshaller = Util.getInstanceStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
+            builder.serialization().marshaller(marshaller);
          } catch (ClassNotFoundException e) {
+            // No-op, stick to GlobalConfiguration default.
+         } catch (InstantiationException e) {
+            // No-op, stick to GlobalConfiguration default.
+         } catch (IllegalAccessException e) {
             // No-op, stick to GlobalConfiguration default.
          }
       }

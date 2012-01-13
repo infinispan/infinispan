@@ -45,7 +45,7 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       legacy.serialization()
-         .marshallerClass(config.serialization().marshallerClass())
+         .marshallerClass(config.serialization().marshaller().getClass())
          .version(config.serialization().version());
       
       for (Entry<Integer, AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
@@ -62,7 +62,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       legacy.evictionScheduledExecutor()
          .factory(config.evictionScheduledExecutor().factory().getClass())
-         .withProperties(config.asyncListenerExecutor().properties());
+         .withProperties(config.evictionScheduledExecutor().properties());
       
       legacy.replicationQueueScheduledExecutor()
          .factory(config.replicationQueueScheduledExecutor().factory().getClass())
@@ -106,11 +106,11 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       builder.serialization()
-         .marshallerClass(Util.<Marshaller>loadClass(legacy.getMarshallerClass(), legacy.getClassLoader()))
+         .marshaller(Util.<Marshaller>getInstance(legacy.getMarshallerClass(), legacy.getClassLoader()))
          .version(legacy.getMarshallVersion());
       
       for (AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {
-         builder.serialization().addAdvancedExternalizer(externalizerConfig.getAdvancedExternalizer());
+         builder.serialization().addAdvancedExternalizer(externalizerConfig.getId(), externalizerConfig.getAdvancedExternalizer());
       }
       
       builder.asyncTransportExecutor()
@@ -123,7 +123,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       builder.evictionScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getEvictionScheduledExecutorFactoryClass(), legacy.getClassLoader()))
-         .withProperties(legacy.getAsyncListenerExecutorProperties());
+         .withProperties(legacy.getEvictionScheduledExecutorProperties());
       
       builder.replicationQueueScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getReplicationQueueScheduledExecutorFactoryClass(), legacy.getClassLoader()))
