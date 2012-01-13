@@ -34,6 +34,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
@@ -52,7 +53,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
+            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2)
             .clustering().l1().disable().stateRetrieval().fetchInMemoryState(false)

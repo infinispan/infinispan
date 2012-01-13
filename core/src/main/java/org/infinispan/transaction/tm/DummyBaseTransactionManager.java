@@ -48,6 +48,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    private static final Log log = LogFactory.getLog(DummyBaseTransactionManager.class);
    private static final boolean trace = log.isTraceEnabled();
    final UUID transactionManagerId = UUID.randomUUID();
+   private boolean useXaXid = false;
 
    /**
     * Starts a new transaction, and associate it with the calling thread.
@@ -218,4 +219,11 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
       thread_local.set((DummyTransaction) tx);
    }
 
+   public final boolean isUseXaXid() {
+      return useXaXid;
+   }
+
+   public final void setUseXaXid(boolean useXaXid) {
+      this.useXaXid = useXaXid;
+   }
 }

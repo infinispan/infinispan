@@ -66,7 +66,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       configuration.fluent().locking().useLockStriping(false);
       configuration.fluent().transaction()
-         .transactionManagerLookupClass(DummyTransactionManagerLookup.class)
+         .transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class)
          .recovery();
       configuration.fluent().clustering().hash().rehashEnabled(false);
       return configuration;

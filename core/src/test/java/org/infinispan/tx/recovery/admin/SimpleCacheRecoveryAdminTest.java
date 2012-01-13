@@ -34,6 +34,7 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
@@ -66,7 +67,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
             .jmxDomain(JMX_DOMAIN).allowDuplicateDomains(true);
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
+            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
             .jmxStatistics()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(3)
