@@ -25,7 +25,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    private String nodeName;
    private Properties properties = new Properties();
-   private boolean strictPeerToPeer = true;
+   private boolean strictPeerToPeer = false;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
