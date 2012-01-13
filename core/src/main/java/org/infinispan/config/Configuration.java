@@ -219,7 +219,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
      * Returns the name of the cache associated with this configuration.
    */
-   public String getName() {
+   public final String getName() {
       return name;
    }
 
