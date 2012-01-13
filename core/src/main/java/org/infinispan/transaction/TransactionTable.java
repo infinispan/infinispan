@@ -216,19 +216,6 @@ public class TransactionTable {
       return minTxViewId;
    }
 
-   public Set<CacheTransaction> getTransactionsStartedBefore(int viewId) {
-      Set<CacheTransaction> result = new HashSet<CacheTransaction>();
-      for (CacheTransaction ct : localTransactions.values()) {
-         int id = ct.getViewId();
-         if (id != CACHE_STOPPED_VIEW_ID && id < viewId) result.add(ct);
-      }
-      for (CacheTransaction ct : remoteTransactions.values()) {
-         int id = ct.getViewId();
-         if (id != CACHE_STOPPED_VIEW_ID && id < viewId) result.add(ct);
-      }
-      return result;
-   }
-
    protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
       Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
       for (GlobalTransaction gt : remoteTransactions.keySet()) {
