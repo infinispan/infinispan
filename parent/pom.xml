@@ -121,7 +121,7 @@
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
       <version.hibernate.search>4.1.0.Alpha1</version.hibernate.search>
-      <version.jackson>1.6.1</version.jackson>
+      <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
