@@ -313,14 +313,19 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          }
 
          private void fetchNext() {
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = -1; //lazily look at the wall clock: we want to look no more than once, but not at all if all entries are immortal.
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (e.isExpired(currentTimeMillis)) {
-                  continue;
-               } else {
+               if (e.canExpire()) {
+                  if (currentTimeMillis == -1) currentTimeMillis = System.currentTimeMillis();
+                  if (! e.isExpired(currentTimeMillis)) {
+                     next = e;
+                     return;
+                  }
+               }
+               else {
                   next = e;
-                  break;
+                  return;
                }
             }
          }
