@@ -127,7 +127,10 @@ public enum Attribute {
     WAKE_UP_INTERVAL("wakeUpInterval"),
     WRITE_SKEW_CHECK("writeSkewCheck"),
     USE_1PC_FOR_AUTOCOMMIT_TX("use1PcForAutoCommitTransactions"),
-    VERSIONING_SCHEME("versioningScheme")
+    VERSIONING_SCHEME("versioningScheme"),
+
+    //Pedro -- total order stuff
+    TRANSACTION_PROTOCOL("transactionProtocol")
     ;
 
     private final String name;
