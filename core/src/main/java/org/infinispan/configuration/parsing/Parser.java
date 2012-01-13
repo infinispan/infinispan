@@ -857,7 +857,7 @@ public class Parser {
                break;
             case SYNC:
                synchronous = true;
-               setMode(builder, clusteringMode, asynchronous, asynchronous, reader);
+               setMode(builder, clusteringMode, asynchronous, synchronous, reader);
                parseSync(reader, builder);
                break;
             default:
@@ -897,6 +897,12 @@ public class Parser {
          } else {
             throw new ConfigurationException("Invalid clustering mode " + clusteringMode + ", " + reader.getLocation());
          }
+      } else {
+         // If no cache mode is given but sync or async is specified, default to DIST
+         if (synchronous)
+            builder.clustering().cacheMode(DIST_SYNC);
+         else if (asynchronous)
+            builder.clustering().cacheMode(DIST_ASYNC);
       }
    }
 
