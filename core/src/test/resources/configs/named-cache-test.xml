@@ -257,4 +257,8 @@
       </customInterceptors>
    </namedCache>
 
+   <namedCache name="storeKeyValueBinary">
+      <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" />
+   </namedCache>
+
 </infinispan>
