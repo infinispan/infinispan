@@ -332,8 +332,10 @@ public class LegacyConfigurationAdaptor {
       
       for (CustomInterceptorConfig interceptor : legacy.getCustomInterceptors()) {
          InterceptorConfigurationBuilder interceptorConfigurationBuilder = builder.clustering().customInterceptors().addInterceptor();
-         interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
-         interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
+         if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())
+            interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
+         if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
+            interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
          interceptorConfigurationBuilder.index(interceptor.getIndex());
          interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
          interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
