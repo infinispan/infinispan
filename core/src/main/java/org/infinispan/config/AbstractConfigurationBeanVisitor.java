@@ -205,14 +205,6 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
 
    @Override
    public void visitTransactionType(TransactionType bean) {
-      if (bean.transactionManagerLookup == null && bean.transactionManagerLookupClass == null) {
-         if (bean.build().isInvocationBatchingEnabled()) {
-            bean.transactionManagerLookupClass = null;
-            if (!bean.useSynchronization) log.debug("Switching to Synchronization based enlistment.");
-            bean.useSynchronization = true;
-         }
-      }
-
       defaultVisit(bean);
    }
 
