@@ -23,10 +23,10 @@ import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.Fsy
 import org.infinispan.util.TypedProperties;
 
 /**
- * // TODO: Document this
+ * File cache store configuration.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.1
  */
 public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration {
 
@@ -34,13 +34,15 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
    private final long fsyncInterval;
    private final FsyncMode fsyncMode;
    private final int streamBufferSize;
-   
-   
 
-   FileCacheStoreConfiguration(String location, long fsyncInterval, FsyncMode fsyncMode, int streamBufferSize, long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup,
-         boolean purgeSynchronously, boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
-         AsyncLoaderConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, fetchPersistentState,
+   FileCacheStoreConfiguration(String location, long fsyncInterval,
+         FsyncMode fsyncMode, int streamBufferSize, long lockAcquistionTimeout,
+         int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
+         int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
+         TypedProperties properties, AsyncLoaderConfiguration async,
+         SingletonStoreConfiguration singletonStore) {
+      super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
+            purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, properties, async, singletonStore);
       this.location = location;
       this.fsyncInterval = fsyncInterval;

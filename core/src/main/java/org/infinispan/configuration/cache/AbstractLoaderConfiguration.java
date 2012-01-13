@@ -26,17 +26,20 @@ public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertie
 
    private final boolean purgeOnStartup;
    private final boolean purgeSynchronously;
+   private final int purgerThreads;
+
    private boolean fetchPersistentState;
    private boolean ignoreModifications;
    
    private final AsyncLoaderConfiguration async;
    private final SingletonStoreConfiguration singletonStore;
    
-   AbstractLoaderConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, boolean fetchPersistentState,
+   AbstractLoaderConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
          boolean ignoreModifications, TypedProperties properties, AsyncLoaderConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(properties);
       this.purgeOnStartup = purgeOnStartup;
       this.purgeSynchronously = purgeSynchronously;
+      this.purgerThreads = purgerThreads;
       this.fetchPersistentState = fetchPersistentState;
       this.ignoreModifications = ignoreModifications;
       this.async = async;
@@ -57,6 +60,10 @@ public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertie
 
    public boolean purgeSynchronously() {
       return purgeSynchronously;
+   }
+
+   public int purgerThreads() {
+      return purgerThreads;
    }
 
    public boolean fetchPersistentState() {

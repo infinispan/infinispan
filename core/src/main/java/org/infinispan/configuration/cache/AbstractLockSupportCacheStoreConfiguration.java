@@ -22,19 +22,23 @@ package org.infinispan.configuration.cache;
 import org.infinispan.util.TypedProperties;
 
 /**
- * // TODO: Document this
+ * Lock supporting cache store configuration.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.1
  */
 public abstract class AbstractLockSupportCacheStoreConfiguration extends AbstractLoaderConfiguration {
 
    private final int lockConcurrencyLevel;
    private final long lockAcquistionTimeout;
-   AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously, boolean fetchPersistentState,
-         boolean ignoreModifications, TypedProperties properties, AsyncLoaderConfiguration async,
+
+   AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout,
+         int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
+         int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
+         TypedProperties properties, AsyncLoaderConfiguration async,
          SingletonStoreConfiguration singletonStore) {
-      super(purgeOnStartup, purgeSynchronously, fetchPersistentState, ignoreModifications, properties, async, singletonStore);
+      super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
+            ignoreModifications, properties, async, singletonStore);
       this.lockAcquistionTimeout = lockAcquistionTimeout;
       this.lockConcurrencyLevel = lockConcurrencyLevel;
    }

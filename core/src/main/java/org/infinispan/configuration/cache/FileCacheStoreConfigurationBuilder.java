@@ -126,7 +126,7 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    FileCacheStoreConfiguration create() {
       return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
             streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
-            purgeOnStartup, purgeSynchronously, fetchPersistentState,
+            purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties),
             async.create(), singletonStore.create());
    }
