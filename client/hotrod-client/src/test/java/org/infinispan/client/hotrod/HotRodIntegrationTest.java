@@ -184,9 +184,12 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       String newValue = v(m, 2);
       assert remoteCache.replaceWithVersion(key, newValue, valueBinary.getVersion(), lifespanSecs);
 
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
-         assertEquals(v(m, 2), remoteCache.get(key));
-         Thread.sleep(50);
+      while (true) {
+         Object value = remoteCache.get(key);
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals(v(m, 2), value);
+         Thread.sleep(100);
       }
 
       while (System.currentTimeMillis() < startTime + lifespan + 2000) {

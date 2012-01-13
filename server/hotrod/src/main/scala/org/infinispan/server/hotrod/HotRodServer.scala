@@ -110,7 +110,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       addressCache = cacheManager.getCache(ADDRESS_CACHE_NAME)
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(host, port)
-      cacheManager.addListener(new CrashedMemberDetectorListener)
+      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       addressCache.put(clusterAddress, address)
@@ -152,35 +152,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private[hotrod] def getAddressCache = addressCache
-
-   @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
-   class CrashedMemberDetectorListener {
-
-      @ViewChanged
-      def handleViewChange(e: ViewChangedEvent) {
-         val cacheManager = e.getCacheManager
-         // Only the coordinator can potentially make modifications related to crashed members.
-         // This is to avoid all nodes trying to make the same modification which would be wasteful and lead to deadlocks.
-         if (cacheManager.isCoordinator) {
-            trace("View change received on coordinator: %s", e)
-            try {
-               val newMembers = asScalaIterator(e.getNewMembers.iterator())
-               val oldMembers = asScalaIterator(e.getOldMembers.iterator())
-               val goneMembers = oldMembers.filterNot(newMembers contains)
-               if (goneMembers.hasNext) {
-                  trace("Somone left the cluster, oldMembers=%s newMembers=%s", oldMembers, newMembers)
-                  goneMembers.foreach { addr =>
-                     trace("Remove %s from address cache", addr)
-                     addressCache.remove(addr)
-                  }
-               }
-            } catch {
-               case t: Throwable => logErrorDetectingCrashedMember(t)
-            }
-         }
-      }
-
-   }
 
 }
 

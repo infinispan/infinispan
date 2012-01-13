@@ -26,9 +26,9 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -62,7 +62,26 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    protected Configuration getConfiguration() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      c.setExposeJmxStatistics(true);
+      return c;
+   }
+
+   public void testReadOnlyTransaction() throws Exception {
+      Cache<String, String> c1 = cm1.getCache();
+      Cache<String, String> c2 = cm2.getCache();
+      RpcManagerImpl ri = (RpcManagerImpl) c1.getAdvancedCache().getRpcManager();
+
+      c1.put("k", "v");
+
+      assert "v".equals(c1.get("k"));
+      assert "v".equals(c2.get("k"));
+      long oldRC = ri.getReplicationCount();
+      c1.getAdvancedCache().getTransactionManager().begin();
+      assert "v".equals(c1.get("k"));
+      c1.getAdvancedCache().getTransactionManager().commit();
+
+      assert ri.getReplicationCount() == oldRC;
    }
 
    public void testCommitSpanningCaches() throws Exception {

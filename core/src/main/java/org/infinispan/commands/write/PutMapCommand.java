@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -37,14 +38,13 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PutMapCommand implements WriteCommand {
+public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand {
    public static final byte COMMAND_ID = 9;
 
    Map<Object, Object> map;
    CacheNotifier notifier;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
-   Set<Flag> flags;
 
    public PutMapCommand() {
    }
@@ -61,6 +61,7 @@ public class PutMapCommand implements WriteCommand {
       this.notifier = notifier;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitPutMapCommand(ctx, this);
    }
@@ -69,6 +70,7 @@ public class PutMapCommand implements WriteCommand {
       return (MVCCEntry) ctx.lookupEntry(key);
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
@@ -90,14 +92,17 @@ public class PutMapCommand implements WriteCommand {
       this.map = map;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
+   @Override
    public void setParameters(int commandId, Object[] parameters) {
       map = (Map) parameters[0];
       lifespanMillis = (Long) parameters[1];
@@ -141,18 +146,22 @@ public class PutMapCommand implements WriteCommand {
          .toString();
    }
 
+   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
-   }   
+   }
 
+   @Override
    public boolean isSuccessful() {
       return true;
    }
 
+   @Override
    public boolean isConditional() {
       return false;
    }
 
+   @Override
    public Set<Object> getAffectedKeys() {
       return map.keySet();
    }
@@ -171,17 +180,8 @@ public class PutMapCommand implements WriteCommand {
    }
 
    @Override
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
 }

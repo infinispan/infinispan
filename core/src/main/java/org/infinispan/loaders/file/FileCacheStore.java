@@ -200,62 +200,68 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected void purgeInternal() throws CacheLoaderException {
       if (trace) log.trace("purgeInternal()");
 
-      try {
-         File[] files = root.listFiles(new NumericNamedFilesFilter());
-         if (files == null)
-            throw new CacheLoaderException("Root not directory or IO error occurred");
+      File[] files = root.listFiles(new NumericNamedFilesFilter());
+      if (files == null)
+         throw new CacheLoaderException("Root not directory or IO error occurred");
 
-         for (final File bucketFile : files) {
-            if (multiThreadedPurge) {
-               purgerService.execute(new Runnable() {
-                  @Override
-                  public void run() {
-                     Integer bucketKey = Integer.valueOf(bucketFile.getName());
-                     boolean lockAcquired = false;
-                     try {
-                        Bucket bucket = loadBucket(bucketFile);
-
-                        if (bucket != null) {
-                           if (bucket.removeExpiredEntries()) {
-                              lockForWriting(bucketKey);
-                              lockAcquired = true;
-                           }
-                           updateBucket(bucket);
-                        }
-                     } catch (InterruptedException ie) {
-                        log.debug("Interrupted, so finish work.");
-                     } catch (CacheLoaderException e) {
-                        log.problemsPurgingFile(bucketFile, e);
-                     } finally {
-                        if (lockAcquired)
-                           unlock(bucketKey);
-                     }
-                  }
-               });
-            } else {
-               Integer bucketKey = Integer.valueOf(bucketFile.getName());
-               boolean lockAcquired = false;
-               try {
-                  Bucket bucket = loadBucket(bucketFile);
-
-                  if (bucket != null) {
-                     if (bucket.removeExpiredEntries()) {
-                        lockForWriting(bucketKey);
-                        lockAcquired = true;
-                     }
-                     updateBucket(bucket);
-                  }
-               } finally {
-                  if (lockAcquired) {
-                     unlock(bucketKey);
-                  }
+      for (final File bucketFile : files) {
+         if (multiThreadedPurge) {
+            purgerService.execute(new Runnable() {
+               @Override
+               public void run() {
+                  boolean interrupted = !doPurge(bucketFile);
+                  if (interrupted) log.debug("Interrupted, so finish work.");
                }
+            });
+         } else {
+            boolean interrupted = !doPurge(bucketFile);
+            if (interrupted) {
+               log.debug("Interrupted, so stop loading and finish with purging.");
+               Thread.currentThread().interrupt();
+            }
+         }
+      }
+   }
+
+   /**
+    * Performs a purge on a given bucket file, and returns true if the process was <i>not</i> interrupted, false
+    * otherwise.
+    *
+    * @param bucketFile bucket file to purge
+    * @return true if the process was not interrupted, false otherwise.
+    */
+   private boolean doPurge(File bucketFile) {
+      Integer bucketKey = Integer.valueOf(bucketFile.getName());
+      boolean lockAcquired = false;
+      boolean interrupted = false;
+      try {
+         Bucket bucket = loadBucket(bucketFile);
+
+         if (bucket != null) {
+            if (bucket.removeExpiredEntries()) {
+               lockForWriting(bucketKey);
+               lockAcquired = true;
+            }
+            updateBucket(bucket);
+         } else {
+            // Bucket may be an empty 0-length file
+            if (bucketFile.exists() && bucketFile.length() == 0) {
+               lockForWriting(bucketKey);
+               lockAcquired = true;
+               if (!bucketFile.delete())
+                  log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
             }
          }
       } catch (InterruptedException ie) {
-         log.debug("Interrupted, so stop loading and finish with purging.");
-         Thread.currentThread().interrupt();
+         interrupted = true;
+      } catch (CacheLoaderException e) {
+         log.problemsPurgingFile(bucketFile, e);
+      } finally {
+         if (lockAcquired) {
+            unlock(bucketKey);
+         }
       }
+      return !interrupted;
    }
 
    @Override
@@ -633,8 +639,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          try {
             Integer.parseInt(name);
             return true;
-         }
-         catch (NumberFormatException nfe) {
+         } catch (NumberFormatException nfe) {
             log.chacheLoaderIgnoringUnexpectedFile(dir.getAbsolutePath(), name);
             return false;
          }

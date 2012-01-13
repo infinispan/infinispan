@@ -39,7 +39,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -67,7 +66,6 @@ import java.util.Set;
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
-   private RpcManager rpcManager;
 
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
 
@@ -77,8 +75,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Inject
-   public void init(CommandsFactory factory, RpcManager rpcManager) {
-      this.rpcManager = rpcManager;
+   public void init(CommandsFactory factory) {
       this.cf = factory;
    }
 
@@ -278,7 +275,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true);
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true, true);
       }
    }
 

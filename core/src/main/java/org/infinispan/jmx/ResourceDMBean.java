@@ -72,6 +72,7 @@ public class ResourceDMBean implements DynamicMBean {
    private final Object obj;
    private final Class<?> objectClass;
    private final MBeanOperationInfo[] opInfos;
+   private final MBeanAttributeInfo[] attInfos;
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
    private final ManageableComponentMetadata mBeanMetadata;
 
@@ -92,18 +93,22 @@ public class ResourceDMBean implements DynamicMBean {
 
       // Load up all fields.
       InvokableMBeanAttributeInfo info;
+      int i = 0;
+      attInfos = new MBeanAttributeInfo[mBeanMetadata.getAttributeMetadata().size()];
       for (JmxAttributeMetadata attributeMetadata : mBeanMetadata.getAttributeMetadata()) {
          info = toJmxInfo(attributeMetadata);
-         atts.put(info.getName(), info);
+         atts.put(info.getMBeanAttributeInfo().getName(), info);
+         attInfos[i++] = info.getMBeanAttributeInfo();
          if (trace)
-            log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", info.getName(), info.isReadable(), info.isWritable(), info.isIs(), info.getType());
+            log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", info.getMBeanAttributeInfo().getName(),
+                       info.getMBeanAttributeInfo().isReadable(), info.getMBeanAttributeInfo().isWritable(),
+                       info.getMBeanAttributeInfo().isIs(), info.getMBeanAttributeInfo().getType());
       }
 
       // And operations
       MBeanOperationInfo op;
       opInfos = new MBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];
-      int i = 0;
-
+      i = 0;
       for (JmxOperationMetadata operation : mBeanMetadata.getOperationMetadata()) {
          op = toJmxInfo(operation);
          opInfos[i++] = op;
@@ -159,7 +164,7 @@ public class ResourceDMBean implements DynamicMBean {
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                                                              attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                             attributeMetadata.isIs(), field);
+                                                             attributeMetadata.isIs(), field, this);
          }
       }
 
@@ -167,7 +172,7 @@ public class ResourceDMBean implements DynamicMBean {
       Method getter = findGetter(objectClass, attributeMetadata.getName());
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                                                         attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                        attributeMetadata.isIs(), getter, setter);
+                                                        attributeMetadata.isIs(), getter, setter, this);
    }
 
    private MBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
@@ -182,10 +187,9 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    public synchronized MBeanInfo getMBeanInfo() {
-      return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(),
-                           atts.values().toArray(new MBeanAttributeInfo[atts.size()]), null, opInfos, null);
+      return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(), attInfos, null, opInfos, null);
    }
-
+   
    public synchronized Object getAttribute(String name) throws AttributeNotFoundException {
       if (name == null || name.length() == 0)
          throw new NullPointerException("Invalid attribute requested " + name);
@@ -282,7 +286,7 @@ public class ResourceDMBean implements DynamicMBean {
                result = new Attribute(name, i.invoke(null));
                if (log.isDebugEnabled())
                   log.debugf("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                             name, i.isReadable(), i.isWritable(), i.isIs(), result.getValue());
+                             name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
             } catch (Exception e) {
                log.debugf("Exception while reading value of attribute %s: %s", name, e);
             }
@@ -323,52 +327,63 @@ public class ResourceDMBean implements DynamicMBean {
       return result;
    }
 
-   private abstract class InvokableMBeanAttributeInfo extends MBeanAttributeInfo {
+   private static abstract class InvokableMBeanAttributeInfo {
+
+      private final MBeanAttributeInfo attributeInfo;
+
       public InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs) {
-         super(name, type, description, isReadable, isWritable, isIs);
+         attributeInfo = new MBeanAttributeInfo(name, type, description, isReadable, isWritable, isIs);
       }
 
       public abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
+
+      public MBeanAttributeInfo getMBeanAttributeInfo() {
+         return attributeInfo;
+      }
    }
 
-   private class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
-      private final Field field;
+   private static class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+      private transient final Field field;
+      private transient final ResourceDMBean resource;
 
-      public InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field) {
+      public InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field, ResourceDMBean resource) {
          super(name, type, description, isReadable, isWritable, isIs);
          this.field = field;
+         this.resource = resource;
       }
 
       @Override
       public Object invoke(Attribute a) throws IllegalAccessException {
          if (!Modifier.isPublic(field.getModifiers())) field.setAccessible(true);
          if (a == null) {
-            return field.get(getObject());
+            return field.get(resource.getObject());
          } else {
-            field.set(getObject(), a.getValue());
+            field.set(resource.getObject(), a.getValue());
             return null;
          }
       }
    }
 
-   private class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
-      private final Method setter;
-      private final Method getter;
+   private static class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+      private transient final Method setter;
+      private transient final Method getter;
+      private transient final ResourceDMBean resource;
 
-      public InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter) {
+      public InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter, ResourceDMBean resource) {
          super(name, type, description, isReadable, isWritable, isIs);
          this.setter = setter;
          this.getter = getter;
+         this.resource = resource;
       }
 
       @Override
       public Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException {
          if (a == null) {
             if (!Modifier.isPublic(getter.getModifiers())) getter.setAccessible(true);
-            return getter.invoke(getObject(), null);
+            return getter.invoke(resource.getObject(), null);
          } else {
             if (!Modifier.isPublic(setter.getModifiers())) setter.setAccessible(true);
-            return setter.invoke(getObject(), a.getValue());
+            return setter.invoke(resource.getObject(), a.getValue());
          }
       }
    }

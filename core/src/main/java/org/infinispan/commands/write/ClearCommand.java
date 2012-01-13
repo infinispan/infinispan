@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -37,11 +38,10 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClearCommand implements WriteCommand {
+public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
    
    public static final byte COMMAND_ID = 5;
    CacheNotifier notifier;
-   private Set<Flag> flags;
 
    public ClearCommand() {
    }
@@ -116,16 +116,6 @@ public class ClearCommand implements WriteCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
    }
 
    @Override

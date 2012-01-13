@@ -108,10 +108,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       m.put("k1", "v");
       m.put("k2", "v");
       cache.putAll(m, lifespan, MILLISECONDS);
-      //stop checking 10ms before expiration to prevent races
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
-         assert cache.get("k1").equals("v");
-         assert cache.get("k2").equals("v");
+      while (true) {
+         String v1 = cache.get("k1");
+         String v2 = cache.get("k2");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals("v", v1);
+         assertEquals("v", v2);
          Thread.sleep(100);
       }
 
@@ -188,15 +191,18 @@ public class ExpiryTest extends AbstractInfinispanTest {
       long startTime = System.currentTimeMillis();
       assert cache.replace("k", "v", lifespan, MILLISECONDS) != null;
       assert cache.get("k").equals("v");
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
-         assert cache.get("k").equals("v");
-         Thread.sleep(50);
+      while (true) {
+         String v = cache.get("k");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals("v", v);
+         Thread.sleep(100);
       }
 
       //make sure that in the next 2 secs data is removed
       while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          if (cache.get("k") == null) break;
-         Thread.sleep(50);
+         Thread.sleep(100);
       }
       assert cache.get("k") == null;
 
@@ -204,13 +210,12 @@ public class ExpiryTest extends AbstractInfinispanTest {
       startTime = System.currentTimeMillis();
       cache.put("k", "v");
       assert cache.replace("k", "v", "v2", lifespan, MILLISECONDS);
-      while (System.currentTimeMillis() < startTime + lifespan) {
-         Object val = cache.get("k");
-         //only run the assertion if the time condition still stands
-         if (System.currentTimeMillis() < startTime + lifespan - 10) {
-            assert val.equals("v2");
-         }
-         Thread.sleep(50);
+      while (true) {
+         String v = cache.get("k");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals("v2", v);
+         Thread.sleep(100);
       }
 
       //make sure that in the next 2 secs data is removed
@@ -272,9 +277,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       entries = Collections.emptySet();
-      // Stop checking 10ms before expiration to prevent races
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+      while (true) {
          entries = cache.entrySet();
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
          assertEquals(entriesIn, entries);
          Thread.sleep(100);
       }
@@ -310,9 +316,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
          cache.putAll(txDataIn);
 
          entries = Collections.emptySet();
-         // Stop checking 10ms before expiration to prevent races
-         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         while (true) {
             entries = cache.entrySet();
+            if (System.currentTimeMillis() >= startTime + lifespan)
+               break;
             assertEquals(allEntriesIn.entrySet(), entries);
             Thread.sleep(100);
          }
@@ -342,9 +349,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       keys = Collections.emptySet();
-      // Stop checking 10ms before expiration to prevent races
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+      while (true) {
          keys = cache.keySet();
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
          assertEquals(keysIn, keys);
          Thread.sleep(100);
       }
@@ -389,9 +397,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
          cache.putAll(txDataIn);
 
          keys = Collections.emptySet();
-         // Stop checking 10ms before expiration to prevent races
-         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         while (true) {
             keys = cache.keySet();
+            if (System.currentTimeMillis() >= startTime + lifespan)
+               break;
             assertEquals(allEntriesIn.keySet(), keys);
             Thread.sleep(100);
          }
@@ -426,9 +435,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       values = Collections.emptySet();
-      // Stop checking 10ms before expiration to prevent races
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+      while (true) {
          values = new HashSet(cache.values());
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
          assertEquals(valuesIn, values);
          Thread.sleep(100);
       }
@@ -449,6 +459,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       } finally {
          cc.stop();
       }
+   }
+
+   public void testTransientEntrypUpdates() {
+      Cache<Integer, String> cache = cm.getCache();
+      cache.put(1, "boo", -1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
+      cache.put(1, "boo2");
+      cache.put(1, "boo3");
    }
 
    private void doValuesAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
@@ -476,9 +493,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
          cache.putAll(txDataIn);
 
          values = Collections.emptySet();
-         // Stop checking 10ms before expiration to prevent races
-         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         while (true) {
             values = new HashSet(cache.values());
+            if (System.currentTimeMillis() >= startTime + lifespan)
+               break;
             assertEquals(allValuesIn, values);
             Thread.sleep(100);
          }

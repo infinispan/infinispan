@@ -41,6 +41,8 @@ import org.infinispan.util.logging.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -197,10 +199,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
 
-      if (component.getClass().getSimpleName().endsWith("SomeInterceptor")) {
-         System.out.println("Scoundrel");
-      }
-      
       if (old != null) {
          // if they are equal don't bother
          if (old.instance.equals(component)) {
@@ -233,7 +231,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       c.injectDependencies();
 
       if (old == null) getLog().tracef("Registering component %s under name %s", c, name);
-      if (state == ComponentStatus.RUNNING) populateLifeCycleMethods(c);
+      if (state == ComponentStatus.RUNNING) {
+         populateLifeCycleMethods(c);
+         invokeStartMethods(Arrays.asList(c.startMethods));
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -335,41 +336,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    protected Component lookupComponent(String componentClassName, String componentName, boolean nameIsFQCN) {
       return componentLookup.get(componentName);
    }
-
-//   protected Map<String, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
-//      if (defaultFactories == null) scanDefaultFactories();
-//      return defaultFactories;
-//   }
-
-   /**
-    * Scans the class path for classes annotated with {@link DefaultFactoryFor}, and analyses which components can be
-    * created by such factories.
-    */
-//   void scanDefaultFactories() {
-//      Map<String, Class<? extends AbstractComponentFactory>> temp = new HashMap<String, Class<? extends AbstractComponentFactory>>();
-//      Map<String, String[]> factories = ComponentMetadataRepo.
-//
-//      for (Map.Entry<String, String[]> factoryEntry : factories.entrySet()) {
-//         // check if this implements auto-instantiable.  If it doesn't have a no-arg constructor throw an exception
-//         boolean factoryValid = true;
-//         Class<? extends AbstractComponentFactory> factory = null;
-//         try {
-//            factory = (Class<? extends AbstractComponentFactory>) getClass().getClassLoader().loadClass(factoryEntry.getKey());
-//            if (AutoInstantiableFactory.class.isAssignableFrom(factory) && factory.getConstructor() == null) {
-//               factoryValid = false;
-//            }
-//         } catch (Exception e) {
-//            factoryValid = false;
-//         }
-//
-//         if (!factoryValid)
-//            throw new RuntimeException("Factory class " + factory + " implements AutoInstantiableFactory but does not expose a public, no-arg constructor!  Debug stack: " + debugStack);
-//
-//         for (String buildableClass: factoryEntry.getValue()) temp.put(buildableClass, factory);
-//      }
-//
-//      defaultFactories = temp;
-//   }
 
    /**
     * No such thing as a meta factory yet.  Factories are created using this method which attempts to use an empty
@@ -509,6 +475,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
                methodMetadata[i].setMethod(method);
             }
          }
+         if (retval.length > 1) Arrays.sort(retval);
       }
       return retval;
    }
@@ -660,16 +627,19 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       // fire all START methods according to priority
 
+      invokeStartMethods(startMethods);
+      addShutdownHook();
+
+      state = ComponentStatus.RUNNING;
+   }
+   
+   private void invokeStartMethods(Collection<PrioritizedMethod> startMethods) {
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
          if (traceEnabled)
             getLog().tracef("Invoking start method %s on component %s", em.metadata.getMethod(), em.component.getName());
          em.invoke();
       }
-
-      addShutdownHook();
-
-      state = ComponentStatus.RUNNING;
    }
 
    protected void addShutdownHook() {

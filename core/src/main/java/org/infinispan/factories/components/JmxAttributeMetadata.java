@@ -53,18 +53,14 @@ public class JmxAttributeMetadata implements Serializable {
 
    public JmxAttributeMetadata(Method method) {
       this(method.getAnnotation(ManagedAttribute.class));
+      useSetter = true;
       String methodName = method.getName();
       name = ReflectionUtil.extractFieldName(methodName);
       is = methodName.startsWith("is");
       if (methodName.startsWith("set")) {
-         useSetter = true;
          type = method.getParameterTypes()[0].getName();
       } else if (methodName.startsWith("get") || is) {
-         // How do we read from/write to this field using reflection?
-         Class clazz = method.getDeclaringClass();
-         Method setterMethod = ReflectionUtil.findSetterForField(clazz, name);
          type = method.getReturnType().getName();
-         useSetter = setterMethod != null || !writable;
       }
    }
 

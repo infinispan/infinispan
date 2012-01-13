@@ -89,9 +89,6 @@ public class DefaultDataContainer implements DataContainer {
          case LRU:
             eviction = Eviction.LRU;
             break;
-         case LRU_OLD:
-            eviction = Eviction.LRU_OLD;
-            break;
          case LIRS:
             eviction = Eviction.LIRS;
             break;

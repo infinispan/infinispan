@@ -30,6 +30,7 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.RemoteTransaction;
 
 import javax.transaction.Transaction;
 
@@ -87,6 +88,12 @@ public interface InvocationContextContainer {
    NonTxInvocationContext createNonTxInvocationContext();
 
    /**
+    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
+    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
+    */
+   InvocationContext createSingleKeyNonTxInvocationContext();
+
+   /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
     */
    LocalTxInvocationContext createTxInvocationContext();
@@ -94,9 +101,10 @@ public interface InvocationContextContainer {
    /**
     * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}.
     *
+    * @param tx remote transaction
     * @param origin the origin of the command, or null if local
     */
-   RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin);
+   RemoteTxInvocationContext createRemoteTxInvocationContext(RemoteTransaction tx, Address origin);
 
    /**
     * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose {@link

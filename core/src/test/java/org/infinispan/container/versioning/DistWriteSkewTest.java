@@ -67,6 +67,7 @@ public class DistWriteSkewTest extends MultipleCacheManagersTest {
       decorate(builder);
 
       createCluster(builder, 4);
+      waitForClusterToForm();
    }
 
    protected void decorate(ConfigurationBuilder builder) {

@@ -141,9 +141,7 @@ public interface Transport extends Lifecycle {
    void stop();
 
    /**
-    * TODO: Document
-    *
-    * @return
+    * @throws org.infinispan.CacheException if the transport has been stopped.
     */
    int getViewId();
 

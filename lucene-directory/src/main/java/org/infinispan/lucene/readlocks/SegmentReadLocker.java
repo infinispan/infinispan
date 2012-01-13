@@ -64,7 +64,4 @@ public interface SegmentReadLocker {
     */
    boolean acquireReadLock(String filename);
 
-   @Deprecated
-   boolean aquireReadLock(String filename);
-
 }

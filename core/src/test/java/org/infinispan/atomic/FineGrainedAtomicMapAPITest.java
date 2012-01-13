@@ -217,6 +217,45 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       tm(0, "atomic").commit();
       assert allok.get();
    }
+   
+   @Test(enabled=true)
+   public void testConcurrentWritesAndIteration() throws Exception {
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      assert cache1.size() == 0;
+      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+      assert map.size() == 0;
+      final AtomicBoolean allOk = new AtomicBoolean(true);
+      fork(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+               for(int i = 0; i< 2000; i++){
+                  map.put("key-" + i, "value-" + i);
+               }
+            } catch (Exception e) {               
+               log.error("Unexpected error performing transaction", e);
+            }
+         }
+      }, true);
+      
+      fork(new Runnable() {
+         @Override
+         public void run() {
+            FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+            try {               
+               for(int i = 0; i< 2000; i++){                  
+                  map.keySet();
+               }
+            } catch (Exception e) {
+               allOk.set(false);
+               log.error("Unexpected error performing transaction", e);
+            }
+         }
+      }, true);
+      assert allOk.get() : "iteration raised an exception";
+   }
+
 
    @Test(enabled=true)
    public void testRollback() throws Exception {

@@ -25,6 +25,10 @@ package org.infinispan.loaders;
 import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
@@ -46,6 +50,7 @@ import java.io.*;
 import java.util.*;
 
 import static java.util.Collections.emptySet;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -687,10 +692,12 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       final long startTime = System.currentTimeMillis();
       final long lifespan = 3000;
       cs.store(TestInternalCacheEntryFactory.create("k1", "v1", lifespan));
-      // Cache stores could be slow to access, to back off with time in hand
-      while (System.currentTimeMillis() < startTime + lifespan - 100) {
-         assert cs.load("k1").getValue().equals("v1");
-         Thread.sleep(200);
+      while (true) {
+         InternalCacheEntry entry = cs.load("k1");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assert entry.getValue().equals("v1");
+         Thread.sleep(100);
       }
 
       // Make sure that in the next 20 secs data is removed
@@ -701,10 +708,12 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert null == cs.load("k1");
 
       cs.store(TestInternalCacheEntryFactory.create("k1", "v2", lifespan));
-      // Cache stores could be slow to access, to back off with time in hand
-      while (System.currentTimeMillis() < startTime + lifespan - 100) {
-         assert cs.load("k1").getValue().equals("v2");
-         Thread.sleep(200);
+      while (true) {
+         InternalCacheEntry entry = cs.load("k1");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assert entry.getValue().equals("v2");
+         Thread.sleep(100);
       }
 
       // Make sure that in the next 20 secs data is removed
@@ -714,4 +723,52 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       assert null == cs.load("k1");
    }
+
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), true, getMarshaller());
+      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), true, getMarshaller());
+      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), true, getMarshaller());
+
+      assert !cs.containsKey(key);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create(key, value);
+      cs.store(se);
+
+      assert cs.load(key).getValue().equals(value);
+      assert cs.load(key).getLifespan() == -1;
+      assert cs.load(key).getMaxIdle() == -1;
+      assert !cs.load(key).isExpired(System.currentTimeMillis());
+      assert cs.containsKey(key);
+
+      boolean removed = cs.remove(key2);
+      assert !removed;
+   }
+
+   public static class Pojo implements Serializable {
+
+      private String role;
+
+      public Pojo role(String role) {
+         this.role = role;
+         return this;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Pojo pojo = (Pojo) o;
+
+         if (role != null ? !role.equals(pojo.role) : pojo.role != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return role != null ? role.hashCode() : 0;
+      }
+   }
+
 }

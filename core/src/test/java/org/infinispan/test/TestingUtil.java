@@ -63,6 +63,7 @@ import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
 import javax.management.ObjectName;
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -75,6 +76,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -1076,13 +1078,23 @@ public class TestingUtil {
       return discard;
    }
 
-   public static DELAY setDelayForCache(Cache<?, ?> c, int in_delay, int out_delay) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+   /**
+    * Inserts a DELAY protocol in the JGroups stack used by the cache, and returns it.
+    * The DELAY protocol can then be used to inject delays in milliseconds both at receiver
+    * and sending side.
+    * @param cache
+    * @param in_delay_millis
+    * @param out_delay_millis
+    * @return a reference to the DELAY instance being used by the JGroups stack
+    * @throws Exception
+    */
+   public static DELAY setDelayForCache(Cache<?, ?> cache, int in_delay_millis, int out_delay_millis) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DELAY delay = new DELAY();
-      delay.setInDelay(in_delay);
-      delay.setOutDelay(out_delay);
+      delay.setInDelay(in_delay_millis);
+      delay.setOutDelay(out_delay_millis);
       ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
       return delay;
    }
@@ -1173,6 +1185,30 @@ public class TestingUtil {
    public static void assertNoLocks(Cache<?,?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
       for (Object key : cache.keySet()) assert !lm.isLocked(key);
+   }
+
+   /**
+    * Call an operation within a transaction. This method guarantees that the
+    * right pattern is used to make sure that the transaction is always either
+    * committed or rollbacked.
+    *
+    * @param tm transaction manager
+    * @param c callable instance to run within a transaction
+    * @param <T> type of callable return
+    * @return returns whatever the callable returns
+    * @throws Exception
+    */
+   public static <T> T withTx(TransactionManager tm, Callable<T> c) throws Exception {
+      tm.begin();
+      try {
+         return c.call();
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+         else tm.rollback();
+      }
    }
 
 }

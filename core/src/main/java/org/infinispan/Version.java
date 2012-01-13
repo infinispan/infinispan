@@ -38,7 +38,7 @@ public class Version {
    private static final String MAJOR = "5";
    private static final String MINOR = "1";
    private static final String MICRO = "0";
-   private static final String MODIFIER = "CR2-total-order";
+   private static final String MODIFIER = "CR3-total-order";
 
    private static final boolean SNAPSHOT = false;
 

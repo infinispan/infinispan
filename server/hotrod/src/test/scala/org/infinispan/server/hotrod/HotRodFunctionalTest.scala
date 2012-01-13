@@ -258,9 +258,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       val resp2 = client.replaceIfUnmodified(k(m), lifespanSecs, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
 
-      while (System.currentTimeMillis() < startTime + lifespan - 10) {
-         assertSuccess(client.assertGet(m), v(m, "v1-"))
-         Thread.sleep(50)
+      while (System.currentTimeMillis < startTime + lifespan) {
+         val getResponse = client.assertGet(m)
+         // The entry could have expired before our request got to the server
+         // Scala doesn't support break, so we need to test the current time twice
+         if (System.currentTimeMillis < startTime + lifespan) {
+            assertSuccess(getResponse, v(m, "v1-"))
+            Thread.sleep(100)
+         }
       }
 
       waitNotFound(startTime, lifespan, m)

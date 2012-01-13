@@ -60,7 +60,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Transport;
 
 import java.util.Map;
 
@@ -79,15 +78,13 @@ import java.util.Map;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
-   Transport transport;
    EmbeddedCacheManager cacheManager;
    GlobalComponentRegistry registry;
    Map<Byte,ModuleCommandFactory> commandFactories;
 
    @Inject
-   public void inject(Transport transport, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry,
+   public void inject(EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry,
                       @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES) Map<Byte, ModuleCommandFactory> commandFactories) {
-      this.transport = transport;
       this.cacheManager = cacheManager;
       this.registry = registry;
       this.commandFactories = commandFactories;

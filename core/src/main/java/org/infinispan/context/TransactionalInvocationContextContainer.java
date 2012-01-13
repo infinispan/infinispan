@@ -1,9 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -12,13 +8,13 @@
  *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
 
 package org.infinispan.context;
@@ -30,6 +26,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 
 import javax.transaction.SystemException;
@@ -58,6 +55,14 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return newNonTxInvocationContext(true);
    }
 
+   @Override
+   public InvocationContext createSingleKeyNonTxInvocationContext() {
+      InvocationContext ctx = new SingleKeyNonTxInvocationContext(true);
+      ctxHolder.set(ctx);
+      return ctx;
+
+   }
+
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       final Transaction runningTx = getRunningTx();
       if (runningTx == null && !isWrite) {
@@ -77,15 +82,19 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return localContext;
    }
 
+   @Override
    public LocalTxInvocationContext createTxInvocationContext() {
       LocalTxInvocationContext ctx = new LocalTxInvocationContext();
       ctxHolder.set(ctx);
       return ctx;
    }
 
-   public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
+   @Override
+   public RemoteTxInvocationContext createRemoteTxInvocationContext(
+         RemoteTransaction tx, Address origin) {
       RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
       ctx.setOrigin(origin);
+      ctx.setRemoteTransaction(tx);
       ctxHolder.set(ctx);
       return ctx;
    }

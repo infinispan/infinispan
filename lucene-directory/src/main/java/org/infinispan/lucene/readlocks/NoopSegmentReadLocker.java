@@ -40,11 +40,6 @@ public class NoopSegmentReadLocker implements SegmentReadLocker {
       return true;
    }
 
-   @Override @Deprecated
-   public boolean aquireReadLock(String filename) {
-      return true;
-   }
-
    /**
     * doesn't do anything
     */

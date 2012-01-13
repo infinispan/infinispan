@@ -71,7 +71,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     */
    public GlobalConfigurationBuilder nonClusteredDefault() {
       transport()
-         .clearTransport()
+         .transport(null)
          .clearProperties();
       return this;
    }

@@ -34,6 +34,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -50,10 +51,12 @@ import java.util.Set;
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
 
    protected TransactionTable txTable;
+   protected RpcManager rpcManager;
 
    @Inject
-   public void setDependencies(TransactionTable txTable) {
+   public void setDependencies(TransactionTable txTable, RpcManager rpcManager) {
       this.txTable = txTable;
+      this.rpcManager = rpcManager;
    }
 
 
@@ -103,7 +106,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       // this check fixes ISPN-777
       if (!ctx.isOriginLocal()) {
          Address origin = c.getGlobalTransaction().getAddress();
-         if (!transport.getMembers().contains(origin))
+         if (!rpcManager.getTransport().getMembers().contains(origin))
             throw new CacheException("Member " + origin + " no longer in cluster. Forcing tx rollback for " + c.getGlobalTransaction());
       }
    }

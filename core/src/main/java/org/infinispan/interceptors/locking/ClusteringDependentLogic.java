@@ -70,6 +70,8 @@ public interface ClusteringDependentLogic {
    Collection<Address> getOwners(Collection<Object> keys);
 
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
+   
+   Address getAddress();
 
 
    /**
@@ -106,6 +108,11 @@ public interface ClusteringDependentLogic {
       @Override
       public Collection<Address> getOwners(Collection<Object> keys) {
          return null;
+      }
+      
+      @Override
+      public Address getAddress() {
+         return rpcManager.getAddress();
       }
 
       @Override
@@ -151,6 +158,11 @@ public interface ClusteringDependentLogic {
       @Override
       public boolean localNodeIsOwner(Object key) {
          return dm.getLocality(key).isLocal();
+      }
+
+      @Override
+      public Address getAddress() {
+         return rpcManager.getAddress();
       }
 
       @Override

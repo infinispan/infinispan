@@ -769,6 +769,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
       return new LegacyConfigurationAdaptor().adapt(defaultConfiguration);
    }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name) {
+      Configuration c = configurationOverrides.get(name);
+      if (c == null)
+         return null;
+      else
+         return new LegacyConfigurationAdaptor().adapt(c);
+   }
 
    public Set<String> getCacheNames() {
       // Get the XML/programmatically defined caches

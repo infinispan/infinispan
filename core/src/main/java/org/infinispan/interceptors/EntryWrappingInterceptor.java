@@ -164,11 +164,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitRemoveCommand(ctx, command);
    }
 
-   protected void commitContextEntries(InvocationContext ctx) {
+   protected void commitContextEntries(final InvocationContext ctx) {
       Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
-      Log log = getLog();
-      boolean trace = log.isTraceEnabled();
+      final Log log = getLog();
+      final boolean trace = log.isTraceEnabled();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();
@@ -177,7 +177,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             commitContextEntry(entry, ctx, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
             if (trace) log.tracef("Committed entry %s", entry);
          } else {
-            if (trace) log.tracef("Entry for key %s is null or not changed(%s), not calling commitUpdate", e.getKey(), entry);
+            if (trace) {
+               if (entry==null)
+                  log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
+               else
+                  log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+            }
          }
       }
    }

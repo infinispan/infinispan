@@ -123,17 +123,7 @@ public class InfinispanDirectory extends Directory {
       this.fileOps = new FileListOperations(this.metadataCache, indexName);
       this.readLocks = readLocker;
    }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      this(cache, cache, indexName, lf, chunkSize, readLocker);
-   }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
-      this(cache, indexName, lf, chunkSize, makeDefaultSegmentReadLocker(cache, cache, cache, indexName));
-   }
-   
+
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
       this(cache, cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
    }
@@ -151,16 +141,6 @@ public class InfinispanDirectory extends Directory {
    public InfinispanDirectory(Cache metadataCache, Cache chunksCache, Cache distLocksCache, String indexName, int chunkSize) {
       this(metadataCache, chunksCache, indexName, makeDefaultLockFactory(distLocksCache, indexName),
                chunkSize, makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName));
-   }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf) {
-      this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
-   }
-
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, int chunkSize) {
-      this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize);
    }
 
    /**
@@ -257,7 +237,7 @@ public class InfinispanDirectory extends Directory {
       // rename metadata first
       boolean batching = metadataCache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
+      FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
       if (batching) metadataCache.endBatch(true);
@@ -297,7 +277,7 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+      FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }

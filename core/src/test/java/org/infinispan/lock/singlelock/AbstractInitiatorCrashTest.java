@@ -25,6 +25,7 @@ package org.infinispan.lock.singlelock;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -71,17 +72,13 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
 
-      TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      txControlInterceptor.prepareProgress.countDown();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
-
       Object k = getKeyForCache(2);
-      beginAndCommitTx(k, 1);
-      if (lockingMode.equals(LockingMode.PESSIMISTIC)) {
-         txControlInterceptor.preparedReceived.await();
-      } else {
-         txControlInterceptor.commitReceived.await();
-      }
+      
+      tm(1).begin();
+      cache(1).put(k,"v");
+      final DummyTransaction transaction = (DummyTransaction) tm(1).getTransaction();
+      transaction.runPrepare();
+      tm(1).suspend();
 
       assertNotLocked(cache(0), k);
       assertNotLocked(cache(1), k);

@@ -113,8 +113,8 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
          return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
-      ctxt.setRemoteTransaction(transaction);
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(
+            transaction, getOrigin());
 
       if (trace) log.tracef("About to execute tx command %s", this);
       return invoker.invoke(ctxt, this);

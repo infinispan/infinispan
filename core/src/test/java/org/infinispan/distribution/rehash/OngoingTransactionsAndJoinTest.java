@@ -29,8 +29,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.DistTxInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.InboundInvocationHandler;
@@ -110,8 +110,8 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       CommitDuringRehashTask ct = new CommitDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
 
       InterceptorChain ic = TestingUtil.extractComponent(firstNode, InterceptorChain.class);
-      ic.addInterceptorAfter(pt, DistTxInterceptor.class);
-      ic.addInterceptorAfter(ct, DistTxInterceptor.class);
+      ic.addInterceptorAfter(pt, TxInterceptor.class);
+      ic.addInterceptorAfter(ct, TxInterceptor.class);
 
 
       Set<Thread> threads = new HashSet<Thread>();

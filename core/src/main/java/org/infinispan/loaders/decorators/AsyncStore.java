@@ -275,7 +275,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       try {
          checkNotStopped();
          if (trace) log.tracef("Enqueuing modification %s", mod);
-         changesDeque.add(mod);
+         changesDeque.put(mod);
       } catch (Exception e) {
          throw new CacheException("Unable to enqueue asynchronous task", e);
       }

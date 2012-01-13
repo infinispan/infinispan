@@ -28,7 +28,7 @@ def main():
 
    # 2011-06-22 17:49:44,732 DEBUG
    # 2011-07-27 11:46:45,282 35195 TRACE
-   messageStartFilter = re.compile('\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (FATAL|ERROR|WARN|INFO|DEBUG|TRACE)')
+   messageStartFilter = re.compile('\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}( \d+)? (FATAL|ERROR|WARN|INFO|DEBUG|TRACE)')
    messageFilter = re.compile(pattern, re.MULTILINE | re.DOTALL)
 
    f = fileinput.input(files)

@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.0.CR2</version>
+      <version>5.1.0.CR3</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 

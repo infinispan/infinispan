@@ -31,6 +31,10 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    /**
     * The consistent hash in use.
+    * 
+    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
+    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
+    * constructor to any instance. This will be resolved in Infinispan 5.2.0
     */
    public HashConfigurationBuilder consistentHash(ConsistentHash consistentHash) {
       this.consistentHash = consistentHash;
@@ -115,6 +119,10 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * The hash function in use. Used as a bit spreader and a general hash code generator. Typically
     * used in conjunction with the many default
     * {@link org.infinispan.distribution.ch.ConsistentHash} implementations shipped.
+    * 
+    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
+    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
+    * constructor to any instance. This will be resolved in Infinispan 5.2.0
     */
    public HashConfigurationBuilder hash(Hash hash) {
       this.hash = hash;

@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.1.0.CR2</version>
+   <version>5.1.0.CR3</version>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
@@ -97,7 +97,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
-      <version.hibernate.search>4.0.0.CR2</version.hibernate.search>
+      <version.hibernate.search>4.1.0.Alpha1</version.hibernate.search>
       <version.jackson>1.6.1</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
@@ -113,15 +113,15 @@
       <version.jclouds>1.1.0</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.0.1.Final</version.jgroups>
+      <version.jgroups>3.0.2.Final</version.jgroups>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.junit>4.8.2</version.junit>
       <version.log4j>1.2.16</version.log4j>
-      <version.lucene>3.4.0</version.lucene>
+      <version.lucene>3.5.0</version.lucene>
       <version.mysql.driver>5.1.9</version.mysql.driver>
-      <version.netty>3.2.5.Final</version.netty>
+      <version.netty>3.2.6.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.2.1.GA</version.resteasy>
       <version.rhq.pluginAnnotations>3.0.4</version.rhq.pluginAnnotations>
@@ -140,6 +140,8 @@
       <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
       <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
       <version.org.jboss.staxmapper>1.0.0.Final</version.org.jboss.staxmapper>
+      
+      
       <version.maven.bundle>2.3.4</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
    </properties>
@@ -410,7 +412,7 @@
                      <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
                      <arguments>
                         <argument>${project.build.outputDirectory}</argument>
-                        <argument>${basedir}/src/main/resources/${artifactId}-component-metadata.dat</argument>
+                        <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
                      </arguments>
                      <systemProperties>
                         <systemProperty><key>infinispan.isCoreModule</key><value>${module.metadata.isCoreModule}</value></systemProperty>
@@ -435,7 +437,7 @@
                   <configuration>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
                      <tasks>
-                        <copy file="${basedir}/src/main/resources/${artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
+                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
                      </tasks>
                   </configuration>
                </execution>
