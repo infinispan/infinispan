@@ -99,7 +99,7 @@ public class HashConfiguration {
    /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */
-   public GroupsConfiguration groupsConfiguration() {
+   public GroupsConfiguration groups() {
       return groupsConfiguration;
    }
 
