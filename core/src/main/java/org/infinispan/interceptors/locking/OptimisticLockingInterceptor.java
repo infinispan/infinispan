@@ -23,10 +23,13 @@
 
 package org.infinispan.interceptors.locking;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -45,16 +48,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TimSort;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
