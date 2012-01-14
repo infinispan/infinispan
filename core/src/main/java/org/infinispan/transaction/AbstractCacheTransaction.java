@@ -62,6 +62,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected Set<Object> backupKeyLocks = null;
    private boolean txComplete = false;
    protected volatile boolean prepared;
+   private volatile boolean needToNotifyWaiters = false;
    final int viewId;
 
    private EntryVersionsMap updatedEntryVersions;
@@ -108,9 +109,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void notifyOnTransactionFinished() {
       log.tracef("Transaction %s has completed, notifying listening threads.", tx);
-      synchronized (this) {
-         txComplete = true;
-         this.notifyAll();
+      txComplete = true;
+      if (needToNotifyWaiters) {
+         synchronized (this) {
+            this.notifyAll();
+         }
       }
    }
 
@@ -123,6 +126,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
             // Check again after acquiring a lock on the monitor that the transaction has completed.
             // If it has completed, all of its locks would have been released.
             if (txComplete) return true;
+            if (!needToNotifyWaiters) needToNotifyWaiters = true;
             this.wait(lockAcquisitionTimeout);
 
             // Check again in case of spurious thread signalling
