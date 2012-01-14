@@ -119,11 +119,16 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
-      final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
+      final boolean potentiallyLocked = txComplete || hasLockOrIsLockBackup(key);
       log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
       if (potentiallyLocked) {
          synchronized (this) {
+            // Check again after acquiring a lock on the monitor that the transaction has completed.
+            // If it has completed, all of its locks would have been released.
+            if (txComplete) return true;
             this.wait(lockAcquisitionTimeout);
+
+            // Check again in case of spurious thread signalling
             return txComplete;
          }
       }
