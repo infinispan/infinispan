@@ -23,14 +23,6 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,9 +31,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
