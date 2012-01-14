@@ -275,7 +275,7 @@ public class TransactionTable {
          throw new IllegalStateException("A remote transaction with the given id was already registered!!!");
       }
 
-      log.trace("Created and registered remote transaction " + rtx);
+      log.tracef("Created and registered remote transaction %s", rtx);
    }
 
    /**
