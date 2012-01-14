@@ -350,4 +350,18 @@ public class DummyTransaction implements Transaction {
    public Collection<Synchronization> getEnlistedSynchronization() {
       return syncs;
    }
+
+   /**
+    * Must be defined for increased performance
+    */
+   @Override
+   public final int hashCode() {
+      return xid.hashCode();
+   }
+
+   @Override
+   public final boolean equals(Object obj) {
+      return this == obj;
+   }
+
 }

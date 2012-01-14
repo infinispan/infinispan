@@ -28,7 +28,6 @@ import org.infinispan.util.Util;
 import javax.transaction.xa.Xid;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
