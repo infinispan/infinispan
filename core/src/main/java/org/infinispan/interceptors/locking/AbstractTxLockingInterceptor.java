@@ -179,18 +179,26 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
       if (checkForPendingLocks) {
          getLog().tracef("Checking for pending locks and then locking key %s", key);
-         Set<CacheTransaction> tx = txTable.getTransactionsStartedBefore(transactionViewId);
 
          long expectedEndTime = nowMillis() + configuration.getLockAcquisitionTimeout();
 
-         //first wait for all potential lock owners
-         for (CacheTransaction ct : tx) {
-            long remaining = expectedEndTime - nowMillis();
-            if (remaining < 0 || !ct.waitForLockRelease(key, remaining))
-               throw newTimeoutException(key, txContext);
+         // Check local transactions first
+         for (CacheTransaction ct: txTable.getLocalTransactions()) {
+            if (ct.getViewId() < transactionViewId) {
+               long remaining = expectedEndTime - nowMillis();
+               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
+            }
          }
 
-         //then try to acquire lock
+         // ... then remote ones
+         for (CacheTransaction ct: txTable.getRemoteTransactions()) {
+            if (ct.getViewId() < transactionViewId) {
+               long remaining = expectedEndTime - nowMillis();
+               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
+            }
+         }
+
+         // Then try to acquire a lock
          final long remaining = expectedEndTime - nowMillis();
          if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
