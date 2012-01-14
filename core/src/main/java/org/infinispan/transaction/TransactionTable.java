@@ -128,11 +128,12 @@ public class TransactionTable {
 
    @Start
    private void start() {
-      localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>(64, 0.75f, configuration.getConcurrencyLevel());
+      final int concurrencyLevel = configuration.getConcurrencyLevel();
+      localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
       if (configuration.getCacheMode().isClustered()) {
          minViewRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
-         remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>(64, 0.75f, configuration.getConcurrencyLevel());
+         remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
          cleanupService.start(configuration, rpcManager, invoker);
          cm.addListener(cleanupService);
          cm.addListener(this);

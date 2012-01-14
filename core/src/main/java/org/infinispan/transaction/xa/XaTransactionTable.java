@@ -57,7 +57,8 @@ public class XaTransactionTable extends TransactionTable {
 
    @Start
    private void startXidMapping() {
-      xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>(64, 0.75f, configuration.getConcurrencyLevel());
+      final int concurrencyLevel = configuration.getConcurrencyLevel();
+      xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
    }
 
    @Override
