@@ -36,38 +36,31 @@ import javax.transaction.xa.XAResource;
  * @since 4.0
  */
 public class DummyTransactionManager extends DummyBaseTransactionManager {
-   private static DummyTransactionManager instance = null;
-   private static DummyUserTransaction utx = null;
 
    protected static final Log log = LogFactory.getLog(DummyTransactionManager.class);
 
    private static final long serialVersionUID = 4396695354693176535L;
 
+   private static final LazyInitializeHolder holder = new LazyInitializeHolder();
+
    public static DummyTransactionManager getInstance() {
-      if (instance == null) {
-         synchronized (DummyTransactionManager.class) {
-            if (instance == null) {
-               instance = new DummyTransactionManager();
-               utx = new DummyUserTransaction(instance);
-            }
-         }
-      }
-      return instance;
+      return holder.dummyTMInstance;
    }
 
    public static DummyUserTransaction getUserTransaction() {
-      getInstance();
-      return utx;
+      return holder.utx;
    }
 
    public static void destroy() {
-      if (instance == null)
-         return;
-      instance.setTransaction(null);
-      instance = null;
+      getInstance().setTransaction(null);
    }
 
    public XAResource firstEnlistedResource() {
       return getTransaction().firstEnlistedResource();
+   }
+
+   private static class LazyInitializeHolder {
+      static final DummyTransactionManager dummyTMInstance = new DummyTransactionManager();
+      static final DummyUserTransaction utx = new DummyUserTransaction(dummyTMInstance);
    }
 }
