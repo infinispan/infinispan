@@ -33,4 +33,18 @@ public class DummyNoXaXid implements Xid {
             "id=" + id +
             '}';
    }
+
+   /**
+    * Implementing an efficient hashCode is critical for performance:
+    */
+   @Override
+   public final int hashCode() {
+      return id;
+   }
+
+   @Override
+   public final boolean equals(Object obj) {
+      return this == obj;
+   }
+
 }
