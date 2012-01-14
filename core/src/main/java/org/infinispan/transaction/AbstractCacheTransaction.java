@@ -109,9 +109,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void notifyOnTransactionFinished() {
       log.tracef("Transaction %s has completed, notifying listening threads.", tx);
-      txComplete = true;
+      txComplete = true; //this one is cheap but does not guarantee visibility
       if (needToNotifyWaiters) {
          synchronized (this) {
+            txComplete = true; //in this case we want to guarantee visibility to other threads
             this.notifyAll();
          }
       }
@@ -119,14 +120,19 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
-      final boolean potentiallyLocked = txComplete || hasLockOrIsLockBackup(key);
+      if (txComplete) return true; //using an unsafe optimisation: if it's true, we for sure have the latest read of the value without needing memory barriers
+      final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
       log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
       if (potentiallyLocked) {
          synchronized (this) {
             // Check again after acquiring a lock on the monitor that the transaction has completed.
             // If it has completed, all of its locks would have been released.
-            if (txComplete) return true;
-            if (!needToNotifyWaiters) needToNotifyWaiters = true;
+            needToNotifyWaiters = true;
+            //The order in which these booleans are verified is critical as we take advantage of it to avoid otherwise needed locking
+            if (txComplete) {
+               needToNotifyWaiters = false;
+               return true;
+            }
             this.wait(lockAcquisitionTimeout);
 
             // Check again in case of spurious thread signalling
