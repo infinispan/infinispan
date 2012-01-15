@@ -431,7 +431,9 @@ public class LegacyConfigurationAdaptor {
                 .transactionMode(legacy.getTransactionMode())
                 .transactionSynchronizationRegistryLookup(legacy.getTransactionSynchronizationRegistryLookup())
                 .useEagerLocking(legacy.isUseEagerLocking())
-                .useSynchronization(legacy.isUseSynchronizationForTransactions());
+                .useSynchronization(legacy.isUseSynchronizationForTransactions())
+                        //Pedro -- total orde stuff
+                .transactionProtocol(legacy.getTransactionProtocol());
 
         builder.transaction().recovery().enabled(legacy.isTransactionRecoveryEnabled());
 

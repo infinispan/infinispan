@@ -1697,6 +1697,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return expiration.reaperEnabled;
     }
 
+    public TransactionProtocol getTransactionProtocol() {
+        return transaction.transactionProtocol;
+    }
+
     /**
      * Defines transactional (JTA) characteristics of the cache.
      *

@@ -1,11 +1,13 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +108,36 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
     @Override
     void validate() {
+        //Pedro -- validate total order stuff
+        if(transactionProtocol != TransactionProtocol.TOTAL_ORDER) {
+            //no total order or not => no validation needed
+            return;
+        }
 
+        //in the future we can allow this??
+        if(transactionMode == TransactionMode.NON_TRANSACTIONAL) {
+            throw new ConfigurationException("Non transactional cache can't be used with total order protocol");
+        }
+
+        boolean isRepeatableReadEnabled = locking().isolationLevel == IsolationLevel.REPEATABLE_READ;
+        boolean isWriteSkewEnabled = locking().writeSkewCheck;
+
+        //in the future it will be allowed with versioning...
+        if(isRepeatableReadEnabled && isWriteSkewEnabled) {
+            throw new ConfigurationException("Repeatable Read isolation level with write skew check not " +
+                    "allowed with total order protocol");
+        }
+
+        //for now, only supports full replication
+        if(!clustering().cacheMode().isReplicated()) {
+            throw new ConfigurationException("the cache mode [" + clustering().cacheMode() + "] is not supported " +
+                    "with total order protocol");
+        }
+
+        //eager locking no longer needed
+        if(useEagerLocking) {
+            throw new ConfigurationException("Eager locking not allowed in total order protocol");
+        }
     }
 
     @Override

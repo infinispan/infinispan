@@ -49,6 +49,7 @@ import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.SEQUENCER;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
@@ -89,535 +90,543 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
  * @since 4.0
  */
 public class JGroupsTransport extends AbstractTransport implements MembershipListener {
-   public static final String CONFIGURATION_STRING = "configurationString";
-   public static final String CONFIGURATION_XML = "configurationXml";
-   public static final String CONFIGURATION_FILE = "configurationFile";
-   public static final String CHANNEL_LOOKUP = "channelLookup";
-   protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "jgroups-udp.xml";
+    public static final String CONFIGURATION_STRING = "configurationString";
+    public static final String CONFIGURATION_XML = "configurationXml";
+    public static final String CONFIGURATION_FILE = "configurationFile";
+    public static final String CHANNEL_LOOKUP = "channelLookup";
+    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "jgroups-udp.xml";
 
-   static final Log log = LogFactory.getLog(JGroupsTransport.class);
-   static final boolean trace = log.isTraceEnabled();
-   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
+    static final Log log = LogFactory.getLog(JGroupsTransport.class);
+    static final boolean trace = log.isTraceEnabled();
+    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
 
-   protected boolean startChannel = true, stopChannel = true;
-   private CommandAwareRpcDispatcher dispatcher;
-   protected TypedProperties props;
-   protected InboundInvocationHandler inboundInvocationHandler;
-   protected StreamingMarshaller marshaller;
-   protected ExecutorService asyncExecutor;
-   protected CacheManagerNotifier notifier;
+    protected boolean startChannel = true, stopChannel = true;
+    private CommandAwareRpcDispatcher dispatcher;
+    protected TypedProperties props;
+    protected InboundInvocationHandler inboundInvocationHandler;
+    protected StreamingMarshaller marshaller;
+    protected ExecutorService asyncExecutor;
+    protected CacheManagerNotifier notifier;
 
-   private boolean globalStatsEnabled;
-   private MBeanServer mbeanServer;
-   private String domain;
+    private boolean globalStatsEnabled;
+    private MBeanServer mbeanServer;
+    private String domain;
 
-   protected Channel channel;
-   protected Address address;
-   protected Address physicalAddress;
+    protected Channel channel;
+    protected Address address;
+    protected Address physicalAddress;
 
-   // these members are not valid until we have received the first view on a second thread
-   // and channelConnectedLatch is signaled
-   protected volatile List<Address> members = null;
-   protected volatile Address coordinator = null;
-   protected volatile boolean isCoordinator = false;
-   protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
+    // these members are not valid until we have received the first view on a second thread
+    // and channelConnectedLatch is signaled
+    protected volatile List<Address> members = null;
+    protected volatile Address coordinator = null;
+    protected volatile boolean isCoordinator = false;
+    protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
 
-   /**
-    * This form is used when the transport is created by an external source and passed in to the
-    * GlobalConfiguration.
-    *
-    * @param channel
-    *           created and running channel to use
-    */
-   public JGroupsTransport(Channel channel) {
-      this.channel = channel;
-      if (channel == null)
-         throw new IllegalArgumentException("Cannot deal with a null channel!");
-      if (channel.isConnected())
-         throw new IllegalArgumentException("Channel passed in cannot already be connected!");
-   }
+    /**
+     * This form is used when the transport is created by an external source and passed in to the
+     * GlobalConfiguration.
+     *
+     * @param channel
+     *           created and running channel to use
+     */
+    public JGroupsTransport(Channel channel) {
+        this.channel = channel;
+        if (channel == null)
+            throw new IllegalArgumentException("Cannot deal with a null channel!");
+        if (channel.isConnected())
+            throw new IllegalArgumentException("Channel passed in cannot already be connected!");
+    }
 
-   public JGroupsTransport() {
-   }
+    public JGroupsTransport() {
+    }
 
-   @Override
-   public Log getLog() {
-      return log;
-   }
+    @Override
+    public Log getLog() {
+        return log;
+    }
 
-   // ------------------------------------------------------------------------------------------------------------------
-   // Lifecycle and setup stuff
-   // ------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------
+    // Lifecycle and setup stuff
+    // ------------------------------------------------------------------------------------------------------------------
 
-   @Override
-   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller, ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
-            CacheManagerNotifier notifier) {
-      this.marshaller = marshaller;
-      this.asyncExecutor = asyncExecutor;
-      this.inboundInvocationHandler = inboundInvocationHandler;
-      this.notifier = notifier;
-   }
+    @Override
+    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller, ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
+                           CacheManagerNotifier notifier) {
+        this.marshaller = marshaller;
+        this.asyncExecutor = asyncExecutor;
+        this.inboundInvocationHandler = inboundInvocationHandler;
+        this.notifier = notifier;
+    }
 
-   @Override
-   public void start() {
-      props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
+    @Override
+    public void start() {
+        props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
 
-      if (log.isInfoEnabled())
-         log.startingJGroupsChannel();
+        if (log.isInfoEnabled())
+            log.startingJGroupsChannel();
 
-      initChannelAndRPCDispatcher();
-      startJGroupsChannelIfNeeded();
+        initChannelAndRPCDispatcher();
+        startJGroupsChannelIfNeeded();
 
-      waitForChannelToConnect();
-   }
+        waitForChannelToConnect();
+    }
 
-   protected void startJGroupsChannelIfNeeded() {
-      if (startChannel) {
-         String clusterName = configuration.getClusterName();
-         try {
-            channel.connect(clusterName);
-         } catch (Exception e) {
-            throw new CacheException("Unable to start JGroups Channel", e);
-         }
-
-         try {
-            // Normally this would be done by CacheManagerJmxRegistration but
-            // the channel is not started when the cache manager starts but
-            // when first cache starts, so it's safer to do it here.
-            globalStatsEnabled = configuration.isExposeGlobalJmxStatistics();
-            if (globalStatsEnabled) {
-               String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
-               mbeanServer = JmxUtil.lookupMBeanServer(configuration);
-               domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
-               JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);
-            }
-         } catch (Exception e) {
-            throw new CacheException("Channel connected, but unable to register MBeans", e);
-         }
-      }
-      address = fromJGroupsAddress(channel.getAddress());
-      if (!startChannel) {
-         // the channel was already started externally, we need to initialize our member list
-         viewAccepted(channel.getView());
-      }
-      if (log.isInfoEnabled())
-         log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
-   }
-
-   @Override
-   public int getViewId() {
-      if (channel == null)
-         throw new CacheException("The cache has been stopped and invocations are not allowed!");
-      View view = channel.getView();
-      if (view == null)
-         return -1;
-      return (int) view.getVid().getId();
-   }
-
-   @Override
-   public void stop() {
-      try {
-         if (stopChannel && channel != null && channel.isOpen()) {
-            log.disconnectAndCloseJGroups();
-
-            // Unregistering before disconnecting/closing because
-            // after that the cluster name is null
-            if (globalStatsEnabled) {
-               JmxConfigurator.unregisterChannel((JChannel) channel, mbeanServer, domain, channel.getClusterName());
+    protected void startJGroupsChannelIfNeeded() {
+        if (startChannel) {
+            String clusterName = configuration.getClusterName();
+            try {
+                channel.connect(clusterName);
+            } catch (Exception e) {
+                throw new CacheException("Unable to start JGroups Channel", e);
             }
 
-            channel.disconnect();
-            channel.close();
-         }
-      } catch (Exception toLog) {
-         log.problemClosingChannel(toLog);
-      }
+            try {
+                // Normally this would be done by CacheManagerJmxRegistration but
+                // the channel is not started when the cache manager starts but
+                // when first cache starts, so it's safer to do it here.
+                globalStatsEnabled = configuration.isExposeGlobalJmxStatistics();
+                if (globalStatsEnabled) {
+                    String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
+                    mbeanServer = JmxUtil.lookupMBeanServer(configuration);
+                    domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
+                    JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);
+                }
+            } catch (Exception e) {
+                throw new CacheException("Channel connected, but unable to register MBeans", e);
+            }
+        }
+        address = fromJGroupsAddress(channel.getAddress());
+        if (!startChannel) {
+            // the channel was already started externally, we need to initialize our member list
+            viewAccepted(channel.getView());
+        }
+        if (log.isInfoEnabled())
+            log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
+    }
 
-      channel = null;
-      if (dispatcher != null) {
-         log.stoppingRpcDispatcher();
-         dispatcher.stop();
-      }
+    @Override
+    public int getViewId() {
+        if (channel == null)
+            throw new CacheException("The cache has been stopped and invocations are not allowed!");
+        View view = channel.getView();
+        if (view == null)
+            return -1;
+        return (int) view.getVid().getId();
+    }
 
-      members = Collections.emptyList();
-      coordinator = null;
-      isCoordinator = false;
-      dispatcher = null;
-   }
+    @Override
+    public void stop() {
+        try {
+            if (stopChannel && channel != null && channel.isOpen()) {
+                log.disconnectAndCloseJGroups();
 
-   protected void initChannel() {
-      if (channel == null) {
-         buildChannel();
-         String transportNodeName = configuration.getTransportNodeName();
-         if (transportNodeName != null && transportNodeName.length() > 0) {
-            long range = Short.MAX_VALUE * 2;
-            long randomInRange = (long) ((Math.random() * range) % range) + 1;
-            transportNodeName = transportNodeName + "-" + randomInRange;
-            channel.setName(transportNodeName);
-         }
-      }
+                // Unregistering before disconnecting/closing because
+                // after that the cluster name is null
+                if (globalStatsEnabled) {
+                    JmxConfigurator.unregisterChannel((JChannel) channel, mbeanServer, domain, channel.getClusterName());
+                }
 
-      // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
-      // invalidations targeted at remote instances will be received by self.
-      channel.setDiscardOwnMessages(true);
+                channel.disconnect();
+                channel.close();
+            }
+        } catch (Exception toLog) {
+            log.problemClosingChannel(toLog);
+        }
 
-      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
-      // JGroups
-      if (configuration.hasTopologyInfo()) {
-         // We can do this only if the channel hasn't been started already
-         if (startChannel) {
-            ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
+        channel = null;
+        if (dispatcher != null) {
+            log.stoppingRpcDispatcher();
+            dispatcher.stop();
+        }
 
-               @Override
-               public org.jgroups.Address generateAddress() {
-                  return TopologyUUID.randomUUID(channel.getName(), configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
-               }
-            });
-         } else {
-            if (channel.getAddress() instanceof TopologyUUID) {
-               TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
-               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
-                  throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
-               }
+        members = Collections.emptyList();
+        coordinator = null;
+        isCoordinator = false;
+        dispatcher = null;
+    }
+
+    protected void initChannel() {
+        if (channel == null) {
+            buildChannel();
+            String transportNodeName = configuration.getTransportNodeName();
+            if (transportNodeName != null && transportNodeName.length() > 0) {
+                long range = Short.MAX_VALUE * 2;
+                long randomInRange = (long) ((Math.random() * range) % range) + 1;
+                transportNodeName = transportNodeName + "-" + randomInRange;
+                channel.setName(transportNodeName);
+            }
+        }
+
+        // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
+        // invalidations targeted at remote instances will be received by self.
+        //Pedro -- total order needs to deliver own messages
+        boolean needsTotalOrder = configuration.needsTotalOrderProtocol();
+        channel.setDiscardOwnMessages(!needsTotalOrder);
+
+        if(needsTotalOrder) {
+            if(channel.getProtocolStack().findProtocol(SEQUENCER.class) == null) {
+                throw new CacheException("Total Order protocol needs the sequencer enabled in JGroups");
+            }
+        }
+
+        // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
+        // JGroups
+        if (configuration.hasTopologyInfo()) {
+            // We can do this only if the channel hasn't been started already
+            if (startChannel) {
+                ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
+
+                    @Override
+                    public org.jgroups.Address generateAddress() {
+                        return TopologyUUID.randomUUID(channel.getName(), configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
+                    }
+                });
             } else {
-               throw new CacheException("JGroups address does not contain topology coordinates");
+                if (channel.getAddress() instanceof TopologyUUID) {
+                    TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
+                    if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+                        throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
+                    }
+                } else {
+                    throw new CacheException("JGroups address does not contain topology coordinates");
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   private void initChannelAndRPCDispatcher() throws CacheException {
-      initChannel();
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler);
-      MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
-      dispatcher.setRequestMarshaller(adapter);
-      dispatcher.setResponseMarshaller(adapter);
-   }
+    private void initChannelAndRPCDispatcher() throws CacheException {
+        initChannel();
+        dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler);
+        MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
+        dispatcher.setRequestMarshaller(adapter);
+        dispatcher.setResponseMarshaller(adapter);
+    }
 
-   // This is per CM, so the CL in use should be the CM CL
-   private void buildChannel() {
-      // in order of preference - we first look for an external JGroups file, then a set of XML
-      // properties, and
-      // finally the legacy JGroups String properties.
-      String cfg;
-      if (props != null) {
-         if (props.containsKey(CHANNEL_LOOKUP)) {
-            String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
+    // This is per CM, so the CL in use should be the CM CL
+    private void buildChannel() {
+        // in order of preference - we first look for an external JGroups file, then a set of XML
+        // properties, and
+        // finally the legacy JGroups String properties.
+        String cfg;
+        if (props != null) {
+            if (props.containsKey(CHANNEL_LOOKUP)) {
+                String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
 
+                try {
+                    JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.getClassLoader());
+                    channel = lookup.getJGroupsChannel(props);
+                    startChannel = lookup.shouldStartAndConnect();
+                    stopChannel = lookup.shouldStopAndDisconnect();
+                } catch (ClassCastException e) {
+                    log.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
+                    throw new CacheException(e);
+                } catch (Exception e) {
+                    log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
+                    throw new CacheException(e);
+                }
+                if (configuration.isStrictPeerToPeer() && !startChannel) {
+                    log.warnStrictPeerToPeerWithInjectedChannel();
+                }
+            }
+
+            if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
+                cfg = props.getProperty(CONFIGURATION_FILE);
+                try {
+                    channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader()));
+                } catch (Exception e) {
+                    log.errorCreatingChannelFromConfigFile(cfg);
+                    throw new CacheException(e);
+                }
+            }
+
+            if (channel == null && props.containsKey(CONFIGURATION_XML)) {
+                cfg = props.getProperty(CONFIGURATION_XML);
+                try {
+                    channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
+                } catch (Exception e) {
+                    log.errorCreatingChannelFromXML(cfg);
+                    throw new CacheException(e);
+                }
+            }
+
+            if (channel == null && props.containsKey(CONFIGURATION_STRING)) {
+                cfg = props.getProperty(CONFIGURATION_STRING);
+                try {
+                    channel = new JChannel(cfg);
+                } catch (Exception e) {
+                    log.errorCreatingChannelFromConfigString(cfg);
+                    throw new CacheException(e);
+                }
+            }
+        }
+
+        if (channel == null) {
+            log.unableToUseJGroupsPropertiesProvided(props);
             try {
-               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.getClassLoader());
-               channel = lookup.getJGroupsChannel(props);
-               startChannel = lookup.shouldStartAndConnect();
-               stopChannel = lookup.shouldStopAndDisconnect();
-            } catch (ClassCastException e) {
-               log.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
-               throw new CacheException(e);
+                channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
             } catch (Exception e) {
-               log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
-               throw new CacheException(e);
+                throw new CacheException("Unable to start JGroups channel", e);
             }
-            if (configuration.isStrictPeerToPeer() && !startChannel) {
-               log.warnStrictPeerToPeerWithInjectedChannel();
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // querying cluster status
+    // ------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public boolean isCoordinator() {
+        return isCoordinator;
+    }
+
+    @Override
+    public Address getCoordinator() {
+        return coordinator;
+    }
+
+    public void waitForChannelToConnect() {
+        if (channel == null)
+            return;
+        log.debug("Waiting on view being accepted");
+        try {
+            channelConnectedLatch.await();
+        } catch (InterruptedException e) {
+            log.interruptedWaitingForCoordinator(e);
+        }
+    }
+
+    @Override
+    public List<Address> getMembers() {
+        return members != null ? members : Collections.<Address> emptyList();
+    }
+
+    @Override
+    public boolean isMulticastCapable() {
+        return channel.getProtocolStack().getTransport().supportsMulticasting();
+    }
+
+    @Override
+    public Address getAddress() {
+        if (address == null && channel != null) {
+            address = fromJGroupsAddress(channel.getAddress());
+        }
+        return address;
+    }
+
+    @Override
+    public List<Address> getPhysicalAddresses() {
+        if (physicalAddress == null && channel != null) {
+            org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+            physicalAddress = new JGroupsAddress(addr);
+        }
+        return Collections.singletonList(physicalAddress);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // outbound RPC
+    // ------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+                                                 boolean supportReplay) throws Exception {
+
+        if (recipients != null && recipients.isEmpty()) {
+            // don't send if dest list is empty
+            log.trace("Destination list is empty: no need to send message");
+            return Collections.emptyMap();
+        }
+
+        if (trace)
+            log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
+
+        if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
+            if (mode == ResponseMode.SYNCHRONOUS)
+                throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
+            else { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
+                recipients = new ArrayList<Address>(recipients);
+                recipients.retainAll(getMembers());
             }
-         }
+        }
+        boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
+        if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
+            usePriorityQueue = true;
 
-         if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
-            cfg = props.getProperty(CONFIGURATION_FILE);
-            try {
-               channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader()));
-            } catch (Exception e) {
-               log.errorCreatingChannelFromConfigFile(cfg);
-               throw new CacheException(e);
+        boolean broadcast = recipients == null || recipients.size() == members.size();
+        RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
+                toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
+
+        if (mode.isAsynchronous())
+            return Collections.emptyMap();// async case
+
+        // short-circuit no-return-value calls.
+        if (rsps == null)
+            return Collections.emptyMap();
+        Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
+
+        boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
+        boolean noValidResponses = true;
+        for (Rsp<Object> rsp : rsps.values()) {
+            noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),
+                    responseFilter != null, ignoreLeavers);
+        }
+
+        if (noValidResponses)
+            throw new TimeoutException("Timed out waiting for valid responses!");
+        return retval;
+    }
+
+    private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
+        switch (mode) {
+            case ASYNCHRONOUS:
+            case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
+                return org.jgroups.blocks.ResponseMode.GET_NONE;
+            case SYNCHRONOUS:
+            case SYNCHRONOUS_IGNORE_LEAVERS:
+                return org.jgroups.blocks.ResponseMode.GET_ALL;
+            case WAIT_FOR_VALID_RESPONSE:
+                return org.jgroups.blocks.ResponseMode.GET_FIRST;
+        }
+        throw new CacheException("Unknown response mode " + mode);
+    }
+
+    private RspFilter toJGroupsFilter(ResponseFilter responseFilter) {
+        return responseFilter == null ? null : new JGroupsResponseFilterAdapter(responseFilter);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // Implementations of JGroups interfaces
+    // ------------------------------------------------------------------------------------------------------------------
+
+    private interface Notify {
+        void emitNotification(List<Address> oldMembers, View newView);
+    }
+
+    private class NotifyViewChange implements Notify {
+        @Override
+        public void emitNotification(List<Address> oldMembers, View newView) {
+            notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId());
+        }
+    }
+
+    private class NotifyMerge implements Notify {
+
+        @Override
+        public void emitNotification(List<Address> oldMembers, View newView) {
+            MergeView mv = (MergeView) newView;
+
+            final Address address = getAddress();
+            final int viewId = (int) newView.getVid().getId();
+            notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
+        }
+
+        private List<List<Address>> getSubgroups(List<View> subviews) {
+            List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
+            for (View v : subviews)
+                l.add(fromJGroupsAddressList(v.getMembers()));
+            return l;
+        }
+    }
+
+    @Override
+    public void viewAccepted(View newView) {
+        log.debugf("New view accepted: %s", newView);
+        List<org.jgroups.Address> newMembers = newView.getMembers();
+        if (newMembers == null || newMembers.isEmpty()) {
+            log.debugf("Received null or empty member list from JGroups channel: " + newView);
+            return;
+        }
+
+        List<Address> oldMembers = members;
+        // we need a defensive copy anyway
+        members = fromJGroupsAddressList(newMembers);
+
+        // Now that we have a view, figure out if we are the isCoordinator
+        coordinator = fromJGroupsAddress(newView.getCreator());
+        isCoordinator = coordinator != null && coordinator.equals(getAddress());
+
+        // Wake up any threads that are waiting to know about who the isCoordinator is
+        // do it before the notifications, so if a listener throws an exception we can still start
+        channelConnectedLatch.countDown();
+
+        // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
+        boolean hasNotifier = notifier != null;
+        if (hasNotifier) {
+            Notify n = null;
+            if (newView instanceof MergeView) {
+                if (log.isInfoEnabled())
+                    log.receivedMergedView(newView);
+                n = new NotifyMerge();
+            } else {
+                if (log.isInfoEnabled())
+                    log.receivedClusterView(newView);
+                n = new NotifyViewChange();
             }
-         }
 
-         if (channel == null && props.containsKey(CONFIGURATION_XML)) {
-            cfg = props.getProperty(CONFIGURATION_XML);
-            try {
-               channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
-            } catch (Exception e) {
-               log.errorCreatingChannelFromXML(cfg);
-               throw new CacheException(e);
-            }
-         }
+            n.emitNotification(oldMembers, newView);
+        }
+    }
 
-         if (channel == null && props.containsKey(CONFIGURATION_STRING)) {
-            cfg = props.getProperty(CONFIGURATION_STRING);
-            try {
-               channel = new JChannel(cfg);
-            } catch (Exception e) {
-               log.errorCreatingChannelFromConfigString(cfg);
-               throw new CacheException(e);
-            }
-         }
-      }
+    @Override
+    public void suspect(org.jgroups.Address suspected_mbr) {
+        // no-op
+    }
 
-      if (channel == null) {
-         log.unableToUseJGroupsPropertiesProvided(props);
-         try {
-            channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
-         } catch (Exception e) {
-            throw new CacheException("Unable to start JGroups channel", e);
-         }
-      }
-   }
+    @Override
+    public void block() {
+        // no-op since ISPN-83 has been resolved
+    }
 
-   // ------------------------------------------------------------------------------------------------------------------
-   // querying cluster status
-   // ------------------------------------------------------------------------------------------------------------------
+    @Override
+    public void unblock() {
+        // no-op since ISPN-83 has been resolved
+    }
 
-   @Override
-   public boolean isCoordinator() {
-      return isCoordinator;
-   }
+    // ------------------------------------------------------------------------------------------------------------------
+    // Helpers to convert between Address types
+    // ------------------------------------------------------------------------------------------------------------------
 
-   @Override
-   public Address getCoordinator() {
-      return coordinator;
-   }
+    protected static org.jgroups.Address toJGroupsAddress(Address a) {
+        return ((JGroupsAddress) a).address;
+    }
 
-   public void waitForChannelToConnect() {
-      if (channel == null)
-         return;
-      log.debug("Waiting on view being accepted");
-      try {
-         channelConnectedLatch.await();
-      } catch (InterruptedException e) {
-         log.interruptedWaitingForCoordinator(e);
-      }
-   }
+    static Address fromJGroupsAddress(org.jgroups.Address addr) {
+        if (addr instanceof TopologyUUID)
+            return new JGroupsTopologyAwareAddress(addr);
+        else
+            return new JGroupsAddress(addr);
+    }
 
-   @Override
-   public List<Address> getMembers() {
-      return members != null ? members : Collections.<Address> emptyList();
-   }
+    private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
+        if (list == null)
+            return null;
+        if (list.isEmpty())
+            return new Vector<org.jgroups.Address>();
 
-   @Override
-   public boolean isMulticastCapable() {
-      return channel.getProtocolStack().getTransport().supportsMulticasting();
-   }
+        Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
+        for (Address a : list)
+            retval.add(toJGroupsAddress(a));
 
-   @Override
-   public Address getAddress() {
-      if (address == null && channel != null) {
-         address = fromJGroupsAddress(channel.getAddress());
-      }
-      return address;
-   }
+        return retval;
+    }
 
-   @Override
-   public List<Address> getPhysicalAddresses() {
-      if (physicalAddress == null && channel != null) {
-         org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
-         physicalAddress = new JGroupsAddress(addr);
-      }
-      return Collections.singletonList(physicalAddress);
-   }
+    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
+        if (list == null || list.isEmpty())
+            return Collections.emptyList();
 
-   // ------------------------------------------------------------------------------------------------------------------
-   // outbound RPC
-   // ------------------------------------------------------------------------------------------------------------------
+        List<Address> retval = new ArrayList<Address>(list.size());
+        for (org.jgroups.Address a : list)
+            retval.add(fromJGroupsAddress(a));
+        return Collections.unmodifiableList(retval);
+    }
 
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
-            boolean supportReplay) throws Exception {
+    // mainly for unit testing
 
-      if (recipients != null && recipients.isEmpty()) {
-         // don't send if dest list is empty
-         log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyMap();
-      }
+    public CommandAwareRpcDispatcher getCommandAwareRpcDispatcher() {
+        return dispatcher;
+    }
 
-      if (trace)
-         log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
-
-      if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
-         if (mode == ResponseMode.SYNCHRONOUS)
-            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
-         else { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
-            recipients = new ArrayList<Address>(recipients);
-            recipients.retainAll(getMembers());
-         }
-      }
-      boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
-      if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
-         usePriorityQueue = true;
-
-      boolean broadcast = recipients == null || recipients.size() == members.size();
-      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
-               toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
-
-      if (mode.isAsynchronous())
-         return Collections.emptyMap();// async case
-
-      // short-circuit no-return-value calls.
-      if (rsps == null)
-         return Collections.emptyMap();
-      Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
-
-      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-      boolean noValidResponses = true;
-      for (Rsp<Object> rsp : rsps.values()) {
-         noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),
-                  responseFilter != null, ignoreLeavers);
-      }
-
-      if (noValidResponses)
-         throw new TimeoutException("Timed out waiting for valid responses!");
-      return retval;
-   }
-
-   private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
-      switch (mode) {
-         case ASYNCHRONOUS:
-         case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
-            return org.jgroups.blocks.ResponseMode.GET_NONE;
-         case SYNCHRONOUS:
-         case SYNCHRONOUS_IGNORE_LEAVERS:
-            return org.jgroups.blocks.ResponseMode.GET_ALL;
-         case WAIT_FOR_VALID_RESPONSE:
-            return org.jgroups.blocks.ResponseMode.GET_FIRST;
-      }
-      throw new CacheException("Unknown response mode " + mode);
-   }
-
-   private RspFilter toJGroupsFilter(ResponseFilter responseFilter) {
-      return responseFilter == null ? null : new JGroupsResponseFilterAdapter(responseFilter);
-   }
-
-   // ------------------------------------------------------------------------------------------------------------------
-   // Implementations of JGroups interfaces
-   // ------------------------------------------------------------------------------------------------------------------
-
-   private interface Notify {
-      void emitNotification(List<Address> oldMembers, View newView);
-   }
-
-   private class NotifyViewChange implements Notify {
-      @Override
-      public void emitNotification(List<Address> oldMembers, View newView) {
-         notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId());
-      }
-   }
-
-   private class NotifyMerge implements Notify {
-
-      @Override
-      public void emitNotification(List<Address> oldMembers, View newView) {
-         MergeView mv = (MergeView) newView;
-
-         final Address address = getAddress();
-         final int viewId = (int) newView.getVid().getId();
-         notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
-      }
-
-      private List<List<Address>> getSubgroups(List<View> subviews) {
-         List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
-         for (View v : subviews)
-            l.add(fromJGroupsAddressList(v.getMembers()));
-         return l;
-      }
-   }
-
-   @Override
-   public void viewAccepted(View newView) {
-      log.debugf("New view accepted: %s", newView);
-      List<org.jgroups.Address> newMembers = newView.getMembers();
-      if (newMembers == null || newMembers.isEmpty()) {
-         log.debugf("Received null or empty member list from JGroups channel: " + newView);
-         return;
-      }
-
-      List<Address> oldMembers = members;
-      // we need a defensive copy anyway
-      members = fromJGroupsAddressList(newMembers);
-
-      // Now that we have a view, figure out if we are the isCoordinator
-      coordinator = fromJGroupsAddress(newView.getCreator());
-      isCoordinator = coordinator != null && coordinator.equals(getAddress());
-
-      // Wake up any threads that are waiting to know about who the isCoordinator is
-      // do it before the notifications, so if a listener throws an exception we can still start
-      channelConnectedLatch.countDown();
-
-      // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
-      boolean hasNotifier = notifier != null;
-      if (hasNotifier) {
-         Notify n = null;
-         if (newView instanceof MergeView) {
-            if (log.isInfoEnabled())
-               log.receivedMergedView(newView);
-            n = new NotifyMerge();
-         } else {
-            if (log.isInfoEnabled())
-               log.receivedClusterView(newView);
-            n = new NotifyViewChange();
-         }
-
-         n.emitNotification(oldMembers, newView);
-      }
-   }
-
-   @Override
-   public void suspect(org.jgroups.Address suspected_mbr) {
-      // no-op
-   }
-
-   @Override
-   public void block() {
-      // no-op since ISPN-83 has been resolved
-   }
-
-   @Override
-   public void unblock() {
-      // no-op since ISPN-83 has been resolved
-   }
-
-   // ------------------------------------------------------------------------------------------------------------------
-   // Helpers to convert between Address types
-   // ------------------------------------------------------------------------------------------------------------------
-
-   protected static org.jgroups.Address toJGroupsAddress(Address a) {
-      return ((JGroupsAddress) a).address;
-   }
-
-   static Address fromJGroupsAddress(org.jgroups.Address addr) {
-      if (addr instanceof TopologyUUID)
-         return new JGroupsTopologyAwareAddress(addr);
-      else
-         return new JGroupsAddress(addr);
-   }
-
-   private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
-      if (list == null)
-         return null;
-      if (list.isEmpty())
-         return new Vector<org.jgroups.Address>();
-
-      Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
-      for (Address a : list)
-         retval.add(toJGroupsAddress(a));
-
-      return retval;
-   }
-
-   private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
-      if (list == null || list.isEmpty())
-         return Collections.emptyList();
-
-      List<Address> retval = new ArrayList<Address>(list.size());
-      for (org.jgroups.Address a : list)
-         retval.add(fromJGroupsAddress(a));
-      return Collections.unmodifiableList(retval);
-   }
-
-   // mainly for unit testing
-
-   public CommandAwareRpcDispatcher getCommandAwareRpcDispatcher() {
-      return dispatcher;
-   }
-
-   public Channel getChannel() {
-      return channel;
-   }
+    public Channel getChannel() {
+        return channel;
+    }
 }

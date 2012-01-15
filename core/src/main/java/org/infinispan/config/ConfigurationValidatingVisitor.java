@@ -185,6 +185,14 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
             return;
         }
 
+        //for now, only supports full replication
+        if(!cfg.getCacheMode().isReplicated()) {
+            log.warnf("the cache mode [%s] is not supported with total order shceme", cfg.getCacheMode());
+            bean.transactionProtocol(TransactionProtocol.NORMAL);
+            super.visitTransactionType(bean);
+            return;
+        }
+
         //eager locking no longer needed
         if(bean.isUseEagerLocking()) {
             log.warnf("Eager locking not allowed in total order scheme... it will be disable");
