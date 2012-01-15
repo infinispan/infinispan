@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class DummyXid implements Xid {
+public final class DummyXid implements Xid {
 
    private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);
    private static final AtomicLong BRANCH_QUALIFIER_GENERATOR = new AtomicLong(1);
@@ -94,7 +94,7 @@ public class DummyXid implements Xid {
 
       Xid other = (Xid) o;
 
-      if (((Xid) o).getFormatId() != getFormatId()) return false;
+      if (other.getFormatId() != 1) return false;
       if (!Arrays.equals(branchQualifier, other.getBranchQualifier())) return false;
       if (!Arrays.equals(globalTransactionId, other.getGlobalTransactionId())) return false;
 
