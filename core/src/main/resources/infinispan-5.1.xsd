@@ -981,9 +981,26 @@
         </xs:complexType>
       </xs:element>
       <xs:element name="storeAsBinary" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Controls whether when stored in memory, keys and values are stored as references to their original objects, or in a serialized, binary format.  There are benefits to both approaches, but often if used in a clustered mode, storing objects as binary means that the cost of serialization happens early on, and can be amortized.  Further, deserialization costs are incurred lazily which improves throughput. It is possible to control this on a fine-grained basis: you can choose to just store keys or values as binary, or both.
+          </xs:documentation>
+        </xs:annotation>
         <xs:complexType>
-          <xs:attribute name="storeKeysAsBinary" type="xs:boolean"/>
-          <xs:attribute name="storeValuesAsBinary" type="xs:boolean"/>
+          <xs:attribute name="storeKeysAsBinary" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Specify whether keys are stored as binary or not.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="storeValuesAsBinary" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Specify whether values are stored as binary or not.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="lazyDeserialization" minOccurs="0">
