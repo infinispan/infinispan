@@ -48,7 +48,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
-import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -76,7 +75,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
 public class TxInterceptor extends CommandInterceptor {
 
-   private TransactionLog transactionLog;
    private TransactionTable txTable;
 
    private final AtomicLong prepares = new AtomicLong(0);
@@ -94,9 +92,8 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(TransactionTable txTable, TransactionLog transactionLog, Configuration c, TransactionCoordinator txCoordinator) {
+   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator) {
       this.configuration = c;
-      this.transactionLog = transactionLog;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
@@ -105,14 +102,8 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if it is remote and 2PC then first log the tx only after replying mods
-      if (!command.isOnePhaseCommit()) {
-         transactionLog.logPrepare(command);
-      }
       if (this.statisticsEnabled) prepares.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
-      if (command.isOnePhaseCommit()) {
-         transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), command.getModifications());
-      }
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
             txTable.remoteTransactionCommitted(command.getGlobalTransaction());
@@ -130,14 +121,12 @@ public class TxInterceptor extends CommandInterceptor {
       if (!ctx.isOriginLocal()) {
          txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
       }
-      transactionLog.logCommit(command.getGlobalTransaction());
       return result;
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      transactionLog.rollback(command.getGlobalTransaction());
       if (!ctx.isOriginLocal()) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
@@ -230,8 +219,6 @@ public class TxInterceptor extends CommandInterceptor {
          }
          throw throwable;
       }
-      if (!ctx.isInTxScope())
-         transactionLog.logNoTxWrite(command);
       if (command.isSuccessful() && shouldAddMod) localTransaction.addModification(command);
       return rv;
    }

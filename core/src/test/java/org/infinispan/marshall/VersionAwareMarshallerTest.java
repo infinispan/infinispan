@@ -45,7 +45,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
@@ -69,7 +68,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionLog;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteArrayKey;
@@ -217,18 +216,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       List l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
-   }
-
-   public void testTransactionLogMarshalling() throws Exception {
-      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
-      PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
-      TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
-      byte[] bytes = marshaller.objectToByteBuffer(entry);
-      TransactionLog.LogEntry readObj = (TransactionLog.LogEntry) marshaller.objectFromByteBuffer(bytes);
-      assert Arrays.equals(readObj.getModifications(), entry.getModifications()) :
-            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
-      assert readObj.getTransaction().equals(entry.getTransaction()) :
-            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
    }
 
    public void testImmutableResponseMarshalling() throws Exception {

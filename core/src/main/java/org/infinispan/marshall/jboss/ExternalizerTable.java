@@ -83,7 +83,6 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
-import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -159,7 +158,6 @@ public class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new Immutables.ImmutableMapWrapperExternalizer());
       internalExternalizers.add(new MarshalledValue.Externalizer());
 
-      internalExternalizers.add(new TransactionLog.LogEntry.Externalizer());
       internalExternalizers.add(new ExtendedResponse.Externalizer());
       internalExternalizers.add(new SuccessfulResponse.Externalizer());
       internalExternalizers.add(new ExceptionResponse.Externalizer());
