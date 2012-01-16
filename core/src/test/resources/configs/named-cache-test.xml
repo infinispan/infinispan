@@ -173,7 +173,7 @@
    <namedCache name="dist">
       <clustering mode="distribution">
          <sync/>
-         <hash numOwners="3" rehashWait="120000"/>
+         <hash numOwners="3" rehashRpcTimeout="120000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
@@ -187,8 +187,17 @@
          </hash>
       </clustering>
    </namedCache>
-   
-   <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
+
+    <namedCache name="chunkSize">
+        <clustering mode="distribution">
+            <sync/>
+            <hash numOwners="3"/>
+            <l1 enabled="true" lifespan="600000"/>
+            <stateTransfer fetchInMemoryState="true" timeout="120000" chunkSize="1000"/>
+        </clustering>
+    </namedCache>
+
+    <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
    <namedCache name="evictionCache">
 
       <!--

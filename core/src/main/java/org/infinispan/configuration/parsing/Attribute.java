@@ -42,6 +42,7 @@ public enum Attribute {
     BEFORE("before"),
     CACHE_MANAGER_NAME("cacheManagerName"),
     CACHE_STOP_TIMEOUT("cacheStopTimeout"),
+    CHUNK_SIZE("chunkSize"),
     CLASS("class"),
     CLUSTER_NAME("clusterName"),
     CONCURRENCY_LEVEL("concurrencyLevel"),
