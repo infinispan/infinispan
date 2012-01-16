@@ -23,12 +23,8 @@
 
 package org.infinispan.spring.support.embedded;
 
-import java.util.List;
-
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.CustomInterceptorConfig;
+import org.infinispan.config.*;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -37,11 +33,10 @@ import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.*;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * <p>
@@ -653,9 +648,19 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalMaxNonProgressingLogWrites(java.lang.Integer)
     */
    public void setStateRetrievalMaxNonProgressingLogWrites(
-            final Integer stateRetrievalMaxNonProgressingLogWrites) {
+         final Integer stateRetrievalMaxNonProgressingLogWrites) {
       this.configurationOverrides
-               .setStateRetrievalMaxNonProgressingLogWrites(stateRetrievalMaxNonProgressingLogWrites);
+            .setStateRetrievalMaxNonProgressingLogWrites(stateRetrievalMaxNonProgressingLogWrites);
+   }
+
+   /**
+    * @param stateRetrievalChunkSize
+    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalMaxNonProgressingLogWrites(java.lang.Integer)
+    */
+   public void setStateRetrievalChunkSize(
+         final Integer stateRetrievalChunkSize) {
+      this.configurationOverrides
+            .setStateRetrievalMaxNonProgressingLogWrites(stateRetrievalChunkSize);
    }
 
    /**

@@ -902,6 +902,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
+    * The size of a state transfer "chunk", in cache entries.
+    *
+    * @param chunkSize
+    * @deprecated Use {@link FluentConfiguration.StateRetrievalConfig#chunkSize(Integer)} instead
+    */
+   @Deprecated
+   public void setStateRetrievalChunkSize(int chunkSize) {
+      this.clustering.stateRetrieval.setChunkSize(chunkSize);
+   }
+
+   /**
     * Initial wait time when backing off before retrying state transfer retrieval
     *
     * @param initialRetryWaitTime
@@ -1353,6 +1364,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public int getStateRetrievalMaxNonProgressingLogWrites() {
       return clustering.stateRetrieval.maxNonProgressingLogWrites;
+   }
+
+   public int getStateRetrievalChunkSize() {
+      return clustering.stateRetrieval.chunkSize;
    }
 
    public long getStateRetrievalLogFlushTimeout() {
@@ -3144,6 +3159,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setStateRetrievalMaxNonProgressingLogWrites")
       protected Integer maxNonProgressingLogWrites = 100;
 
+      protected Integer chunkSize = 10000;
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitStateRetrievalType(this);
       }
@@ -3312,6 +3329,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public StateRetrievalConfig maxNonProgressingLogWrites(Integer maxNonProgressingLogWrites) {
          setMaxNonProgressingLogWrites(maxNonProgressingLogWrites);
+         return this;
+      }
+
+      public Integer getChunkSize() {
+         return chunkSize;
+      }
+
+      /**
+       * @deprecated
+       */
+      @Deprecated
+      public void setChunkSize(Integer chunkSize) {
+         testImmutability("chunkSize");
+         this.chunkSize = chunkSize;
+      }
+
+      @Override
+      public StateRetrievalConfig chunkSize(Integer chunkSize) {
+         setChunkSize(chunkSize);
          return this;
       }
 

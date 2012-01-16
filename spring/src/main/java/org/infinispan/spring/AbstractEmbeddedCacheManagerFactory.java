@@ -23,20 +23,7 @@
 
 package org.infinispan.spring;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.CustomInterceptorConfig;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.config.*;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -47,6 +34,10 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * <p>
@@ -701,6 +692,16 @@ public class AbstractEmbeddedCacheManagerFactory {
             final Integer stateRetrievalRetryWaitTimeIncreaseFactor) {
       this.configurationOverrides
                .setStateRetrievalRetryWaitTimeIncreaseFactor(stateRetrievalRetryWaitTimeIncreaseFactor);
+   }
+
+   /**
+    * @param stateRetrievalChunkSize
+    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalRetryWaitTimeIncreaseFactor(java.lang.Integer)
+    */
+   public void setStateRetrievalChunkSize(
+         final Integer stateRetrievalChunkSize) {
+      this.configurationOverrides
+            .setStateRetrievalChunkSize(stateRetrievalChunkSize);
    }
 
    /**

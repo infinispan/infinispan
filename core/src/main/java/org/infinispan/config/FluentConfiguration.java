@@ -597,6 +597,11 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param maxNonProgressingLogWrites
        */
       StateRetrievalConfig maxNonProgressingLogWrites(Integer maxNonProgressingLogWrites);
+
+      /**
+       * Size of a state transfer chunk, in cache entries.
+       */
+      StateRetrievalConfig chunkSize(Integer chunkSize);
    }
 
    /**
@@ -701,7 +706,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       HashConfig numVirtualNodes(Integer numVirtualNodes);
       
       GroupsConfig groups();
-    
 
       @Override // Override definition so that Scala classes can see it.
       Configuration build();

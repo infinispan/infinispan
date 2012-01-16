@@ -61,7 +61,7 @@ public abstract class BaseStateTransferTask {
    private boolean running;
    private boolean cancelled;
    private final Object lock = new Object();
-   protected int stateTransferChunkSize = 10000;
+   protected int stateTransferChunkSize;
 
    public BaseStateTransferTask(BaseStateTransferManagerImpl stateTransferManager, RpcManager rpcManager,
                                 StateTransferLock stateTransferLock, CacheNotifier cacheNotifier,
@@ -79,6 +79,8 @@ public abstract class BaseStateTransferTask {
       this.chNew = chNew;
       this.chOld = chOld;
       this.statePushFuture = new AggregatingNotifyingFutureBuilder(null, members.size());
+      // Ignore chunk sizes <= 0
+      this.stateTransferChunkSize = configuration.getStateRetrievalChunkSize() > 0 ? configuration.getStateRetrievalChunkSize() : Integer.MAX_VALUE;
    }
 
    public void performStateTransfer() throws Exception {
