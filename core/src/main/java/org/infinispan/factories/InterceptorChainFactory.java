@@ -33,6 +33,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.interceptors.totalorder.TOReplicationInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.transaction.LockingMode;
@@ -119,6 +121,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
         if (configuration.getCacheMode().isDistributed() || configuration.getCacheMode().isReplicated())
             interceptorChain.appendInterceptor(createInterceptor(new StateTransferLockInterceptor(), StateTransferLockInterceptor.class), false);
 
+        //Pedro -- load total order interceptor
+        if(configuration.isTotalOrder()) {
+            interceptorChain.appendInterceptor(createInterceptor(new TotalOrderInterceptor(), TotalOrderInterceptor.class), false);
+        }
+
         // load the tx interceptor
         if (configuration.isTransactionalCache())
             interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
@@ -186,7 +193,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                     break;
                 }
             case REPL_ASYNC:
-                interceptorChain.appendInterceptor(createInterceptor(new ReplicationInterceptor(), ReplicationInterceptor.class), false);
+                if(configuration.isTotalOrder()) {
+                    interceptorChain.appendInterceptor(createInterceptor(new TOReplicationInterceptor(), TOReplicationInterceptor.class), false);
+                } else {
+                    interceptorChain.appendInterceptor(createInterceptor(new ReplicationInterceptor(), ReplicationInterceptor.class), false);
+                }
                 break;
             case INVALIDATION_SYNC:
             case INVALIDATION_ASYNC:

@@ -28,6 +28,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -49,111 +50,149 @@ import java.util.Set;
  */
 public abstract class LocalTransaction extends AbstractCacheTransaction {
 
-   private static final Log log = LogFactory.getLog(LocalTransaction.class);
-   private static final boolean trace = log.isTraceEnabled();
+    private static final Log log = LogFactory.getLog(LocalTransaction.class);
+    private static final boolean trace = log.isTraceEnabled();
 
-   private Set<Address> remoteLockedNodes;
+    private Set<Address> remoteLockedNodes;
 
-   /** mark as volatile as this might be set from the tx thread code on view change*/
-   private volatile boolean isMarkedForRollback;
+    /** mark as volatile as this might be set from the tx thread code on view change*/
+    private volatile boolean isMarkedForRollback;
 
-   private final Transaction transaction;
+    private final Transaction transaction;
 
-   private final boolean implicitTransaction;
+    private final boolean implicitTransaction;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
-      super(tx);
-      this.transaction = transaction;
-      this.implicitTransaction = implicitTransaction;
-   }
+    //Pedro -- total order result
+    private final PrepareResult prepareResult = new PrepareResult();
 
-   public void addModification(WriteCommand mod) {
-      if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
-      if (modifications == null) {
-         modifications = new LinkedList<WriteCommand>();
-      }
-      modifications.add(mod);
-   }
+    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
+        super(tx);
+        this.transaction = transaction;
+        this.implicitTransaction = implicitTransaction;
+    }
 
-   public void locksAcquired(Collection<Address> nodes) {
-      log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
-      if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
-      remoteLockedNodes.addAll(nodes);
-   }
+    public void addModification(WriteCommand mod) {
+        if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
+        if (modifications == null) {
+            modifications = new LinkedList<WriteCommand>();
+        }
+        modifications.add(mod);
+    }
 
-   public Collection<Address> getRemoteLocksAcquired(){
-	   if (remoteLockedNodes == null) return Collections.emptySet();
-	   return remoteLockedNodes;
-   }
+    public void locksAcquired(Collection<Address> nodes) {
+        log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
+        if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
+        remoteLockedNodes.addAll(nodes);
+    }
 
-   public void clearRemoteLocksAcquired() {
-      if (remoteLockedNodes != null) remoteLockedNodes.clear();
-   }
+    public Collection<Address> getRemoteLocksAcquired(){
+        if (remoteLockedNodes == null) return Collections.emptySet();
+        return remoteLockedNodes;
+    }
 
-   public void markForRollback(boolean markForRollback) {
-      isMarkedForRollback = markForRollback;
-   }
+    public void clearRemoteLocksAcquired() {
+        if (remoteLockedNodes != null) remoteLockedNodes.clear();
+    }
 
-   public final boolean isMarkedForRollback() {
-      return isMarkedForRollback;
-   }
+    public void markForRollback(boolean markForRollback) {
+        isMarkedForRollback = markForRollback;
+    }
 
-   public Transaction getTransaction() {
-      return transaction;
-   }
+    public final boolean isMarkedForRollback() {
+        return isMarkedForRollback;
+    }
 
-   public Map<Object, CacheEntry> getLookedUpEntries() {
-      return (Map<Object, CacheEntry>)
-            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
-   }
+    public Transaction getTransaction() {
+        return transaction;
+    }
 
-   public boolean isImplicitTransaction() {
-      return implicitTransaction;
-   }
+    public Map<Object, CacheEntry> getLookedUpEntries() {
+        return (Map<Object, CacheEntry>)
+                (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
+    }
 
-   public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (isMarkedForRollback()) {
-         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
-      }
-      if (lookedUpEntries == null) lookedUpEntries = new HashMap<Object, CacheEntry>(4);
-      lookedUpEntries.put(key, e);
-   }
+    public boolean isImplicitTransaction() {
+        return implicitTransaction;
+    }
 
-   public boolean isReadOnly() {
-      return (modifications == null || modifications.isEmpty()) && (lookedUpEntries == null || lookedUpEntries.isEmpty());
-   }
+    public void putLookedUpEntry(Object key, CacheEntry e) {
+        if (isMarkedForRollback()) {
+            throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
+        }
+        if (lookedUpEntries == null) lookedUpEntries = new HashMap<Object, CacheEntry>(4);
+        lookedUpEntries.put(key, e);
+    }
 
-   public abstract boolean isEnlisted();
+    public boolean isReadOnly() {
+        return (modifications == null || modifications.isEmpty()) && (lookedUpEntries == null || lookedUpEntries.isEmpty());
+    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    public abstract boolean isEnlisted();
 
-      LocalTransaction that = (LocalTransaction) o;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-      return tx.getId() == that.tx.getId();
-   }
+        LocalTransaction that = (LocalTransaction) o;
 
-   @Override
-   public int hashCode() {
-      long id = tx.getId();
-      return (int)(id ^ (id >>> 32));
-   }
+        return tx.getId() == that.tx.getId();
+    }
 
-   @Override
-   public String toString() {
-      return "LocalTransaction{" +
-            "remoteLockedNodes=" + remoteLockedNodes +
-            ", isMarkedForRollback=" + isMarkedForRollback +
-            ", transaction=" + transaction +
-            ", lockedKeys=" + lockedKeys +
-            ", backupKeyLocks=" + backupKeyLocks +
-            ", viewId=" + viewId +
-            "} " + super.toString();
-   }
+    @Override
+    public int hashCode() {
+        long id = tx.getId();
+        return (int)(id ^ (id >>> 32));
+    }
 
-   public void setModifications(List<WriteCommand> modifications) {
-      this.modifications = modifications;
-   }
+    @Override
+    public String toString() {
+        return "LocalTransaction{" +
+                "remoteLockedNodes=" + remoteLockedNodes +
+                ", isMarkedForRollback=" + isMarkedForRollback +
+                ", transaction=" + transaction +
+                ", lockedKeys=" + lockedKeys +
+                ", backupKeyLocks=" + backupKeyLocks +
+                ", viewId=" + viewId +
+                "} " + super.toString();
+    }
+
+    public void setModifications(List<WriteCommand> modifications) {
+        this.modifications = modifications;
+    }
+
+    //Pedro -- total order result
+    private class PrepareResult {
+        private boolean modificationsApplied;
+        private boolean exception;
+        private Object result;
+    }
+
+    //timeout in milliseconds
+    public Object awaitUntilModificationsApplied(long timeout) throws Throwable {
+        synchronized (prepareResult) {
+            if(!prepareResult.modificationsApplied) {
+                try {
+                    prepareResult.wait(timeout);
+                } catch (InterruptedException e) {
+                    //do nothing
+                }
+            }
+            if(!prepareResult.modificationsApplied) {
+                throw new TimeoutException("Unable to wait until modifications are applied");
+            }
+            if(prepareResult.exception) {
+                throw (Throwable) prepareResult.result;
+            }
+            return prepareResult.result;
+        }
+    }
+
+    public void addPrepareResult(Object object, boolean exception) {
+        synchronized (prepareResult) {
+            prepareResult.result = object;
+            prepareResult.exception = exception;
+            prepareResult.modificationsApplied = true;
+        }
+    }
 }

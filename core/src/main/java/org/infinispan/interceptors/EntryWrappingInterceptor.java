@@ -50,215 +50,223 @@ import java.util.Set;
  */
 public class EntryWrappingInterceptor extends CommandInterceptor {
 
-   private EntryFactory entryFactory;
-   protected DataContainer dataContainer;
-   protected ClusteringDependentLogic cll;
-   protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
+    private EntryFactory entryFactory;
+    protected DataContainer dataContainer;
+    protected ClusteringDependentLogic cll;
+    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
-   private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
+    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
+    @Override
+    protected Log getLog() {
+        return log;
+    }
 
-   @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
-      this.entryFactory =  entryFactory;
-      this.dataContainer = dataContainer;
-      this.cll = cll;
-   }
+    @Inject
+    public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
+        this.entryFactory =  entryFactory;
+        this.dataContainer = dataContainer;
+        this.cll = cll;
+    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
-         for (WriteCommand c : command.getModifications()) {
-            c.acceptVisitor(ctx, entryWrappingVisitor);
-         }
-      }
-      Object result = invokeNextInterceptor(ctx, command);
-      if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx);
-      }
-      return result;
-   }
+    @Override
+    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+        if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
+            for (WriteCommand c : command.getModifications()) {
+                c.acceptVisitor(ctx, entryWrappingVisitor);
+            }
+        }
+        Object result = invokeNextInterceptor(ctx, command);
+        //Pedro -- new commit conditions for total order
+        if (shouldCommitEntries(command, ctx)) {
+            commitContextEntries(ctx);
+        }
+        return result;
+    }
 
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         commitContextEntries(ctx);
-      }
-   }
+    @Override
+    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+        try {
+            return invokeNextInterceptor(ctx, command);
+        } finally {
+            commitContextEntries(ctx);
+        }
+    }
 
-   @Override
-   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         entryFactory.wrapEntryForReading(ctx, command.getKey());
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         //needed because entries might be added in L1
-         if (!ctx.isInTxScope()) commitContextEntries(ctx);
-      }
-   }
+    @Override
+    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+        try {
+            entryFactory.wrapEntryForReading(ctx, command.getKey());
+            return invokeNextInterceptor(ctx, command);
+        } finally {
+            //needed because entries might be added in L1
+            if (!ctx.isInTxScope()) commitContextEntries(ctx);
+        }
+    }
 
-   @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      if (command.getKeys() != null) {
-         for (Object key : command.getKeys())
+    @Override
+    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+        if (command.getKeys() != null) {
+            for (Object key : command.getKeys())
+                entryFactory.wrapEntryForReplace(ctx, key);
+        }
+        return invokeNextAndApplyChanges(ctx, command);
+    }
+
+    @Override
+    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+        for (InternalCacheEntry entry : dataContainer.entrySet())
+            entryFactory.wrapEntryForClear(ctx, entry.getKey());
+        return invokeNextAndApplyChanges(ctx, command);
+    }
+
+    @Override
+    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+        for (Object key : command.getKeys()) {
             entryFactory.wrapEntryForReplace(ctx, key);
-      }
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+        }
+        return invokeNextAndApplyChanges(ctx, command);
+    }
 
-   @Override
-   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      for (InternalCacheEntry entry : dataContainer.entrySet())
-         entryFactory.wrapEntryForClear(ctx, entry.getKey());
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+    @Override
+    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+        entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+        return invokeNextAndApplyChanges(ctx, command);
+    }
 
-   @Override
-   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
-      for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReplace(ctx, key);
-      }
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+    @Override
+    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+        entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   @Override
-   public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
-      return invokeNextAndApplyChanges(ctx, command);
-   }
-   
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {      
-      entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());  
-      return invokeNextInterceptor(ctx, command);
-   }
+    @Override
+    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+        entryFactory.wrapEntryForRemove(ctx, command.getKey());
+        return invokeNextAndApplyChanges(ctx, command);
+    }
 
-   @Override
-   public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      entryFactory.wrapEntryForRemove(ctx, command.getKey());
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+    @Override
+    public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+        entryFactory.wrapEntryForReplace(ctx, command.getKey());
+        return invokeNextAndApplyChanges(ctx, command);
+    }
 
-   @Override
-   public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      entryFactory.wrapEntryForReplace(ctx, command.getKey());
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+    @Override
+    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+        for (Object key : command.getMap().keySet()) {
+            entryFactory.wrapEntryForPut(ctx, key, null, true);
+        }
+        return invokeNextAndApplyChanges(ctx, command);
+    }
 
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      for (Object key : command.getMap().keySet()) {
-         entryFactory.wrapEntryForPut(ctx, key, null, true);
-      }
-      return invokeNextAndApplyChanges(ctx, command);
-   }
+    @Override
+    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+        return visitRemoveCommand(ctx, command);
+    }
 
-   @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      return visitRemoveCommand(ctx, command);
-   }
-
-   protected void commitContextEntries(final InvocationContext ctx) {
-      Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
-      final Log log = getLog();
-      final boolean trace = log.isTraceEnabled();
-      if (trace) log.tracef("Number of entries in context: %s", entries.size());
-      while (it.hasNext()) {
-         Map.Entry<Object, CacheEntry> e = it.next();
-         CacheEntry entry = e.getValue();
-         if (entry != null && entry.isChanged()) {
-            commitContextEntry(entry, ctx, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
-            if (trace) log.tracef("Committed entry %s", entry);
-         } else {
-            if (trace) {
-               if (entry==null)
-                  log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
-               else
-                  log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+    protected void commitContextEntries(final InvocationContext ctx) {
+        Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+        Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
+        final Log log = getLog();
+        final boolean trace = log.isTraceEnabled();
+        if (trace) log.tracef("Number of entries in context: %s", entries.size());
+        while (it.hasNext()) {
+            Map.Entry<Object, CacheEntry> e = it.next();
+            CacheEntry entry = e.getValue();
+            if (entry != null && entry.isChanged()) {
+                commitContextEntry(entry, ctx, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
+                if (trace) log.tracef("Committed entry %s", entry);
+            } else {
+                if (trace) {
+                    if (entry==null)
+                        log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
+                    else
+                        log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
-      cll.commitEntry(entry, null, skipOwnershipCheck);
-   }
+    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
+        cll.commitEntry(entry, null, skipOwnershipCheck);
+    }
 
-   private Object invokeNextAndApplyChanges(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      final Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isInTxScope()) commitContextEntries(ctx);
-      return result;
-   }
+    private Object invokeNextAndApplyChanges(InvocationContext ctx, VisitableCommand command) throws Throwable {
+        final Object result = invokeNextInterceptor(ctx, command);
+        if (!ctx.isInTxScope()) commitContextEntries(ctx);
+        return result;
+    }
 
-   private final class EntryWrappingVisitor extends AbstractVisitor {
+    private final class EntryWrappingVisitor extends AbstractVisitor {
 
-      @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         boolean notWrapped = false;
-         for (Object key : dataContainer.keySet()) {
-            entryFactory.wrapEntryForClear(ctx, key);
-            notWrapped = true;
-         }
-         if (notWrapped)
-            invokeNextInterceptor(ctx, command);
-         return null;
-      }
-
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         boolean notWrapped = false;
-         for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForPut(ctx, key, null, true);
-               notWrapped = true;
+        @Override
+        public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+            boolean notWrapped = false;
+            for (Object key : dataContainer.keySet()) {
+                entryFactory.wrapEntryForClear(ctx, key);
+                notWrapped = true;
             }
-         }
-         if (notWrapped)
-            invokeNextInterceptor(ctx, command);
-         return null;
-      }
+            if (notWrapped)
+                invokeNextInterceptor(ctx, command);
+            return null;
+        }
 
-      @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
+        @Override
+        public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+            boolean notWrapped = false;
+            for (Object key : command.getMap().keySet()) {
+                if (cll.localNodeIsOwner(key)) {
+                    entryFactory.wrapEntryForPut(ctx, key, null, true);
+                    notWrapped = true;
+                }
+            }
+            if (notWrapped)
+                invokeNextInterceptor(ctx, command);
+            return null;
+        }
 
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
-      
-      @Override
-      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {              
-            entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
+        @Override
+        public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            if (cll.localNodeIsOwner(command.getKey())) {
+                entryFactory.wrapEntryForRemove(ctx, command.getKey());
+                invokeNextInterceptor(ctx, command);
+            }
+            return null;
+        }
 
-      @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForReplace(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
-   }
+        @Override
+        public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+            if (cll.localNodeIsOwner(command.getKey())) {
+                entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+                invokeNextInterceptor(ctx, command);
+            }
+            return null;
+        }
+
+        @Override
+        public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+            if (cll.localNodeIsOwner(command.getKey())) {
+                entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
+                invokeNextInterceptor(ctx, command);
+            }
+            return null;
+        }
+
+        @Override
+        public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+            if (cll.localNodeIsOwner(command.getKey())) {
+                entryFactory.wrapEntryForReplace(ctx, command.getKey());
+                invokeNextInterceptor(ctx, command);
+            }
+            return null;
+        }
+    }
+
+    //Pedro -- total order stuff
+    protected boolean shouldCommitEntries(PrepareCommand command, TxInvocationContext ctx) {
+        //total order condition: only commits in remote context
+        return (configuration.isTotalOrder() && command.isOnePhaseCommit() && !ctx.isOriginLocal()) ||
+                (!configuration.isTotalOrder() && command.isOnePhaseCommit());
+    }
 }
