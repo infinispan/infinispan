@@ -30,11 +30,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-<<<<<<< HEAD
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-=======
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
->>>>>>> ISPN-1706, make L1 onRehash auto-enablement correct
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
