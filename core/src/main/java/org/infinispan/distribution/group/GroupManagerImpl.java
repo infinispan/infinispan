@@ -1,20 +1,16 @@
 package org.infinispan.distribution.group;
 
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
+import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
-import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
+import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.Util;
 
 public class GroupManagerImpl implements GroupManager {
     
@@ -87,16 +83,21 @@ public class GroupManagerImpl implements GroupManager {
         return group;
     }
     
-    private GroupMetadata getMetadata(Object key) {
+    private GroupMetadata getMetadata(final Object key) {
         final Class<?> keyClass = key.getClass();
-       if (!groupMetadataCache.containsKey(keyClass)) {
+        GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);
+        if (groupMetadata == null) {
           //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
           //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
           // the long run
-          GroupMetadata gmd = createGroupMetadata(keyClass);
-          groupMetadataCache.putIfAbsent(keyClass, gmd);
+           groupMetadata = createGroupMetadata(keyClass);
+           GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
+           if (previous != null) {
+               // in case another thread added a metadata already, discard what we created and reuse the existing.
+               return previous;
+           }
        }
-       return groupMetadataCache.get(keyClass);
+       return groupMetadata;
     }
 
 }
