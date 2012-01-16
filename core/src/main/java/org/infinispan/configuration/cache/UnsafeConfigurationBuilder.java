@@ -1,14 +1,11 @@
 package org.infinispan.configuration.cache;
 
 /**
- * Allows you to tune various unsafe or non-standard characteristics. Certain operations such as
- * Cache.put() that are supposed to return the previous value associated with the specified key
- * according to the java.util.Map contract will not fulfill this contract if unsafe toggle is turned
- * on. Use with care. See details at <a
- * href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a>
- * 
- * @author pmuir
- * 
+ * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better
+ * performance in some cases.
+ * <p />
+ * Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
+ * <p />
  */
 public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder<UnsafeConfiguration> {
 
@@ -18,15 +15,24 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
       super(builder);
    }
 
-   public UnsafeConfigurationBuilder unreliableReturnValues(boolean b) {
-      this.unreliableReturnValues = b;
+   /**
+    * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for 
+    * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
+    * <p />
+    * Providing return values can be expensive as they may entail a read from disk or across a network, and if the usage
+    * of these methods never make use of these return values, allowing unreliable return values helps Infinispan
+    * optimize away these remote calls or disk reads.
+    * <p />
+    * @param allowUnreliableReturnValues if true, return values for the methods described above should not be relied on.
+    */
+   public UnsafeConfigurationBuilder unreliableReturnValues(boolean allowUnreliableReturnValues) {
+      this.unreliableReturnValues = allowUnreliableReturnValues;
       return this;
    }
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
+      // Nothing to validate
    }
 
    @Override
