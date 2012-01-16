@@ -395,7 +395,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       int remainingWrites = runningWritesCount.decrementAndGet();
       if (remainingWrites < 0) {
          throw new IllegalStateException("Trying to release state transfer shared lock without acquiring it first");
-      } else if (remainingWrites == 0) {
+      } else if (remainingWrites == 0 && writesShouldBlock) {
          synchronized (lock) {
             lock.notifyAll();
          }
