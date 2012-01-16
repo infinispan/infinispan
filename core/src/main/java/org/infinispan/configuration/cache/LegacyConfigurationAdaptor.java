@@ -83,14 +83,9 @@ public class LegacyConfigurationAdaptor {
       
       legacy.clustering()
          .stateRetrieval()
-            .alwaysProvideInMemoryState(config.clustering().stateRetrieval().alwaysProvideInMemoryState())
-            .fetchInMemoryState(config.clustering().stateRetrieval().fetchInMemoryState())
-            .initialRetryWaitTime(config.clustering().stateRetrieval().initialRetryWaitTime())
-            .logFlushTimeout(config.clustering().stateRetrieval().logFlushTimeout())
-            .maxNonProgressingLogWrites(config.clustering().stateRetrieval().maxNonProgressingLogWrites())
-            .numRetries(config.clustering().stateRetrieval().numRetries())
-            .retryWaitTimeIncreaseFactor(config.clustering().stateRetrieval().retryWaitTimeIncreaseFactor())
-            .timeout(config.clustering().stateRetrieval().timeout());
+            .fetchInMemoryState(config.clustering().stateTransfer().fetchInMemoryState())
+            .timeout(config.clustering().stateTransfer().timeout())
+            .chunkSize(config.clustering().stateTransfer().chunkSize());
       
       if (config.clustering().cacheMode().isSynchronous()) {
          legacy.clustering()
@@ -315,16 +310,11 @@ public class LegacyConfigurationAdaptor {
       }
       
       builder.clustering()
-         .stateRetrieval()
-            .alwaysProvideInMemoryState(legacy.isAlwaysProvideInMemoryState())
+         .stateTransfer()
             .fetchInMemoryState(legacy.isFetchInMemoryState())
-            .initialRetryWaitTime(legacy.getStateRetrievalInitialRetryWaitTime())
-            .logFlushTimeout(legacy.getStateRetrievalLogFlushTimeout())
-            .maxNonProgressingLogWrites(legacy.getStateRetrievalMaxNonProgressingLogWrites())
-            .numRetries(legacy.getStateRetrievalNumRetries())
-            .retryWaitTimeIncreaseFactor(legacy.getStateRetrievalRetryWaitTimeIncreaseFactor())
-            .timeout(legacy.getStateRetrievalTimeout());
-      
+            .timeout(legacy.getStateRetrievalTimeout())
+            .chunkSize(legacy.getStateRetrievalChunkSize());
+
       if (legacy.getCacheMode().isSynchronous()) {
          builder.clustering()
             .sync()

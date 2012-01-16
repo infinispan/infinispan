@@ -828,20 +828,43 @@ public class ConfigurationOverridesTest {
     */
    @Test
    public final void configurationOverridesShouldOverrideStateRetrievalMaxNonProgressingLogWritesPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final int expectedStateRetrievalMaxNonProgressingLogWrites = 123456;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest
-               .setStateRetrievalMaxNonProgressingLogWrites(expectedStateRetrievalMaxNonProgressingLogWrites);
+            .setStateRetrievalMaxNonProgressingLogWrites(expectedStateRetrievalMaxNonProgressingLogWrites);
       final Configuration defaultConfiguration = new Configuration();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalMaxNonProgressingLogWrites property. However, it didn't.",
-                        expectedStateRetrievalMaxNonProgressingLogWrites,
-                        defaultConfiguration.getStateRetrievalMaxNonProgressingLogWrites());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalMaxNonProgressingLogWrites property. However, it didn't.",
+                  expectedStateRetrievalMaxNonProgressingLogWrites,
+                  defaultConfiguration.getStateRetrievalMaxNonProgressingLogWrites());
+   }
+
+   /**
+    * Test method for
+    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
+    * .
+    */
+   @Test
+   public final void configurationOverridesShouldOverrideStateRetrievalChunkSizePropIfExplicitlySet()
+         throws Exception {
+      final int expectedStateRetrievalChunkSize = 123456;
+
+      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
+      objectUnderTest
+            .setStateRetrievalChunkSize(expectedStateRetrievalChunkSize);
+      final Configuration defaultConfiguration = new Configuration();
+      objectUnderTest.applyOverridesTo(defaultConfiguration);
+
+      AssertJUnit
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalChunkSize property. However, it didn't.",
+                  expectedStateRetrievalChunkSize,
+                  defaultConfiguration.getStateRetrievalChunkSize());
    }
 
    /**

@@ -22,9 +22,6 @@
  */
 package org.infinispan.config;
 
-import java.util.List;
-import java.util.Properties;
-
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.container.DefaultDataContainer;
@@ -48,6 +45,9 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Properties;
 
 import static org.testng.Assert.assertEquals;
 
@@ -206,7 +206,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
                .alwaysProvideInMemoryState(false).fetchInMemoryState(true)
                .initialRetryWaitTime(8989L).retryWaitTimeIncreaseFactor(4)
                .numRetries(8).logFlushTimeout(533L).maxNonProgressingLogWrites(434)
-               .timeout(7383L)
+               .timeout(7383L).chunkSize(1234)
             .hash()
                .hashFunctionClass(MurmurHash3.class)
                .consistentHashClass(DefaultConsistentHash.class)
@@ -247,6 +247,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert 533L == c.getStateRetrievalLogFlushTimeout();
       assert 434 == c.getStateRetrievalMaxNonProgressingLogWrites();
       assert 7383L == c.getStateRetrievalTimeout();
+      assert 1234 == c.getStateRetrievalChunkSize();
       assertEquals(MurmurHash3.class.getName(), c.getHashFunctionClass());
       assertEquals(DefaultConsistentHash.class.getName(), c.getConsistentHashClass());
       assert 200 == c.getNumOwners();
