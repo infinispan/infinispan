@@ -22,11 +22,6 @@
  */
 package org.infinispan.configuration;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
 import org.infinispan.Version;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -55,6 +50,11 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.something.Lookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
 import static org.infinispan.test.TestingUtil.*;
 
@@ -287,7 +287,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("dist");
       assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
       assert c.clustering().l1().lifespan() == 600000;
-      assert c.clustering().hash().rehashWait() == 120000;
+      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert c.clustering().stateTransfer().timeout() == 120000;
       assert c.clustering().hash().consistentHash() instanceof TopologyAwareConsistentHash;
       assert c.clustering().hash().numOwners() == 3;
       assert c.clustering().l1().enabled();
@@ -296,6 +297,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().hash().groups().enabled();
       assert c.clustering().hash().groups().groupers().size() == 1;
       assert c.clustering().hash().groups().groupers().get(0).getKeyType().equals(String.class);
+
+      c = cm.getCacheConfiguration("chunkSize");
+      assert c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().timeout() == 120000;
+      assert c.clustering().stateTransfer().chunkSize() == 1000;
 
       c = cm.getCacheConfiguration("cacheWithCustomInterceptors");
       assert !c.customInterceptors().interceptors().isEmpty();

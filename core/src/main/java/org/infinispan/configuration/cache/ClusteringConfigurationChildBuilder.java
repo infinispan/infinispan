@@ -23,8 +23,15 @@ public interface ClusteringConfigurationChildBuilder extends ConfigurationChildB
    /**
     * Configures how state is retrieved when a new cache joins the cluster. Used with invalidation
     * and replication clustered modes.
+    * @deprecated Use {@link #stateTransfer()} instead.
     */
    StateRetrievalConfigurationBuilder stateRetrieval();
+
+   /**
+    * Configures how state is transferred when a new cache joins the cluster.
+    * Used with distribution and replication clustered modes.
+    */
+   StateTransferConfigurationBuilder stateTransfer();
 
    /**
     * If configured all communications are synchronous, in that whenever a thread sends a message

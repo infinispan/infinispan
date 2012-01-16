@@ -855,6 +855,9 @@ public class Parser {
             case STATE_RETRIEVAL:
                parseStateRetrieval(reader, builder);
                break;
+            case STATE_TRANSFER:
+               parseStateTransfer(reader, builder);
+               break;
             case SYNC:
                synchronous = true;
                setMode(builder, clusteringMode, asynchronous, synchronous, reader);
@@ -962,6 +965,31 @@ public class Parser {
          }
       }
       
+      ParseUtils.requireNoContent(reader);
+
+   }
+
+   private void parseStateTransfer(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException{
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceSystemProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case FETCH_IN_MEMORY_STATE:
+               builder.clustering().stateTransfer().fetchInMemoryState(Boolean.valueOf(value).booleanValue());
+               break;
+            case TIMEOUT:
+               builder.clustering().stateTransfer().timeout(Long.valueOf(value).longValue());
+               break;
+            case CHUNK_SIZE:
+               builder.clustering().stateTransfer().chunkSize(Integer.valueOf(value).intValue());
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
       ParseUtils.requireNoContent(reader);
 
    }
