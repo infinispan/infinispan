@@ -43,7 +43,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.transaction.TransactionCoordinator;
-import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
 import static org.infinispan.util.Util.getInstance;
@@ -56,7 +55,7 @@ import static org.infinispan.util.Util.getInstance;
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
                               CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
-                              BatchContainer.class, TransactionLog.class, EvictionManager.class,
+                              BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -84,8 +83,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return (T) new PassivationManagerImpl();
       } else if (componentType.equals(BatchContainer.class)) {
          return (T) new BatchContainer();
-      } else if (componentType.equals(TransactionLog.class)) {
-         return (T) new TransactionLog();
       } else if (componentType.equals(TransactionCoordinator.class)) {
          return (T) new TransactionCoordinator();
       } else if (componentType.equals(RecoveryAdminOperations.class)) {
