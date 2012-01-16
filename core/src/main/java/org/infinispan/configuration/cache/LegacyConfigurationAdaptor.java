@@ -77,7 +77,8 @@ public class LegacyConfigurationAdaptor {
       } else {
          legacy.clustering()
             .l1()
-               .disable();
+               .disable()
+               .onRehash(false);
       }
       
       legacy.clustering()
