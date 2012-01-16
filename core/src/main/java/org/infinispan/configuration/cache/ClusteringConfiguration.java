@@ -6,16 +6,16 @@ public class ClusteringConfiguration {
    private final AsyncConfiguration asyncConfiguration;
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
-   private final StateRetrievalConfiguration stateRetrievalConfiguration;
+   private final StateTransferConfiguration stateTransferConfiguration;
    private final SyncConfiguration syncConfiguration;
    
    ClusteringConfiguration(CacheMode cacheMode, AsyncConfiguration asyncConfiguration, HashConfiguration hashConfiguration,
-         L1Configuration l1Configuration, StateRetrievalConfiguration stateRetrievalConfiguration, SyncConfiguration syncConfiguration) {
+         L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration, SyncConfiguration syncConfiguration) {
       this.cacheMode = cacheMode;
       this.asyncConfiguration = asyncConfiguration;
       this.hashConfiguration = hashConfiguration;
       this.l1Configuration = l1Configuration;
-      this.stateRetrievalConfiguration = stateRetrievalConfiguration;
+      this.stateTransferConfiguration = stateTransferConfiguration;
       this.syncConfiguration = syncConfiguration;
    }
 
@@ -44,7 +44,10 @@ public class ClusteringConfiguration {
    }
    
    public StateRetrievalConfiguration stateRetrieval() {
-      return stateRetrievalConfiguration;
+      return new StateRetrievalConfiguration(stateTransferConfiguration);
    }
 
+   public StateTransferConfiguration stateTransfer() {
+      return stateTransferConfiguration;
+   }
 }

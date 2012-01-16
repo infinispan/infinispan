@@ -72,6 +72,7 @@ public enum Element {
     SHUTDOWN("shutdown"),
     SINGLETON_STORE("singletonStore"),
     STATE_RETRIEVAL("stateRetrieval"),
+    STATE_TRANSFER("stateTransfer"),
     STORE_AS_BINARY("storeAsBinary"),
     SYNC("sync"),
     TRANSACTION("transaction"),

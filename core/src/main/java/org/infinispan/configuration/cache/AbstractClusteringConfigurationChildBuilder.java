@@ -29,6 +29,11 @@ abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractCo
    }
    
    @Override
+   public StateTransferConfigurationBuilder stateTransfer() {
+      return clusteringBuilder.stateTransfer();
+   }
+
+   @Override
    public SyncConfigurationBuilder sync() {
       return clusteringBuilder.sync();
    }

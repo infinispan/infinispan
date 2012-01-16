@@ -7,6 +7,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateRetrievalConfigurationBuilder stateRetrievalConfigurationBuilder;
+   private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
    private final SyncConfigurationBuilder syncConfigurationBuilder;
 
    ClusteringConfigurationBuilder(ConfigurationBuilder builder) {
@@ -15,6 +16,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.hashConfigurationBuilder = new HashConfigurationBuilder(this);
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
       this.stateRetrievalConfigurationBuilder = new StateRetrievalConfigurationBuilder(this);
+      this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
       this.syncConfigurationBuilder = new SyncConfigurationBuilder(this);
    }
 
@@ -46,12 +48,20 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    public L1ConfigurationBuilder l1() {
       return l1ConfigurationBuilder;
    }
-   
+
+   /**
+    * @deprecated Use {@link #stateTransfer()} instead.
+    */
    @Override
    public StateRetrievalConfigurationBuilder stateRetrieval() {
       return stateRetrievalConfigurationBuilder;
    }
    
+   @Override
+   public StateTransferConfigurationBuilder stateTransfer() {
+      return stateTransferConfigurationBuilder;
+   }
+
    @Override
    public SyncConfigurationBuilder sync() {
       if (!cacheMode.isSynchronous())
@@ -72,7 +82,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    ClusteringConfiguration create() {
-      return new ClusteringConfiguration(cacheMode, asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(), l1ConfigurationBuilder.create(), stateRetrievalConfigurationBuilder.create(), syncConfigurationBuilder.create());
+      return new ClusteringConfiguration(cacheMode, asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(),
+            l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create());
    }
    
    @Override
@@ -81,7 +92,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       asyncConfigurationBuilder.read(template.async());
       hashConfigurationBuilder.read(template.hash());
       l1ConfigurationBuilder.read(template.l1());
-      stateRetrievalConfigurationBuilder.read(template.stateRetrieval());
+      stateTransferConfigurationBuilder.read(template.stateTransfer());
       syncConfigurationBuilder.read(template.sync());
       
       return this;
