@@ -46,23 +46,24 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    /**
     * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at
-    * TODO
+    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
+    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
     * </p>
-    * 
+    *
     * <p>
     * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
     * must be used if you wish to take advnatage of virtual nodes.
     * </p>
-    * 
+    *
     * <p>
     * A default of 1 is used.
     * </p>
-    * 
-    * @param numVirtualNodes the number of virtual nodes. Must be >0.
-    * @throws IllegalArgumentException if numVirtualNodes <0
+    *
+    * @param numVirtualNodes the number of virtual nodes. Must be &gt; 0.
+    * @throws IllegalArgumentException if numVirtualNodes &lt; 1
     */
    public HashConfigurationBuilder numVirtualNodes(int numVirtualNodes) {
+      if (numVirtualNodes < 1) throw new IllegalArgumentException("numVirtualNodes cannot be less than 1");
       this.numVirtualNodes = numVirtualNodes;
       return this;
    }
