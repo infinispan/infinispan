@@ -3,6 +3,11 @@ package org.infinispan.configuration.cache;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.util.TypedProperties;
 
+/**
+ * Configuration a specific cache loader or cache store
+ * @author pmuir
+ *
+ */
 public class LoaderConfiguration extends AbstractLoaderConfiguration {
 
    private final CacheLoader cacheLoader;
