@@ -19,6 +19,10 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       this.dataContainer = dataContainer;
    }
    
+   /**
+    * Data container implementation in use
+    * @return
+    */
    public DataContainer dataContainer() {
       return dataContainer;
    }

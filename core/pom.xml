@@ -263,6 +263,7 @@
                <mainClass>net.sf.xframe.xsddoc.Main</mainClass>
                <arguments>
                   <argument>-q</argument>
+                  <argument>-s</argument>
                   <argument>-t</argument>
                   <argument>"XML Schema for Infinispan"</argument>
                   <argument>-o</argument>

@@ -21,6 +21,9 @@ public class DeadlockDetectionConfiguration {
       return spinDuration;
    }
    
+   /**
+    * Whether deadlock detection is enabled or disabled
+    */
    public boolean enabled() {
       return enabled;
    }

@@ -3,6 +3,12 @@ package org.infinispan.configuration.cache;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Configures custom interceptors to be added to the cache.
+ * 
+ * @author pmuir
+ *
+ */
 public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();
