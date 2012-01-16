@@ -30,9 +30,12 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+<<<<<<< HEAD
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+=======
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+>>>>>>> ISPN-1706, make L1 onRehash auto-enablement correct
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -137,6 +140,17 @@ public class ConfigurationUnitTest {
    public void testConsistentHash() {
       Configuration config = new LegacyConfigurationAdaptor().adapt(new org.infinispan.config.Configuration());
       Assert.assertNull(config.clustering().hash().consistentHash());
+   }
+
+   @Test
+   public void testDisableL1() {
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      DefaultCacheManager manager = new DefaultCacheManager(gcb.build(), cb.build());
+      cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
+      manager.defineConfiguration("testConfigCache", cb.build());
+      manager.getCache("testConfigCache");
    }
    
 }
