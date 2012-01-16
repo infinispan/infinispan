@@ -48,7 +48,6 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -321,7 +320,7 @@ public class TransactionTable {
             recalculateMinViewIdIfNeeded(cacheTransaction);
          }
          log.tracef("Removed %s from transaction table.", cacheTransaction);
-         cacheTransaction.notifyOnTransactionFinished();
+         cacheTransaction.notifyOnTransactionFinished(currentViewId);
       }
    }
 
@@ -465,5 +464,9 @@ public class TransactionTable {
       } else {
          log.trace("All transactions terminated");
       }
+   }
+
+   public final int getCurrentViewId() {
+      return currentViewId;
    }
 }

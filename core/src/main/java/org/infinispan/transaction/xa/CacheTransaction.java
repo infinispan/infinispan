@@ -69,7 +69,7 @@ public interface CacheTransaction {
    /**
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
     */
-   void notifyOnTransactionFinished();
+   void notifyOnTransactionFinished(int currentViewId);
 
    /**
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)

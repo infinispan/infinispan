@@ -107,13 +107,15 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public void notifyOnTransactionFinished() {
-      log.tracef("Transaction %s has completed, notifying listening threads.", tx);
-      txComplete = true; //this one is cheap but does not guarantee visibility
-      if (needToNotifyWaiters) {
-         synchronized (this) {
-            txComplete = true; //in this case we want to guarantee visibility to other threads
-            this.notifyAll();
+   public void notifyOnTransactionFinished(int currentViewId) {
+      if (getViewId() != currentViewId) {
+         log.tracef("Transaction %s has completed, notifying listening threads.", tx);
+         txComplete = true; //this one is cheap but does not guarantee visibility
+         if (needToNotifyWaiters) {
+            synchronized (this) {
+               txComplete = true; //in this case we want to guarantee visibility to other threads
+               this.notifyAll();
+            }
          }
       }
    }

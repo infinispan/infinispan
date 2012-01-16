@@ -181,7 +181,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
             if (xid.equals(gtx.getXid())) {
                it.remove();
                recalculateMinViewIdIfNeeded(next);
-               next.notifyOnTransactionFinished();
+               next.notifyOnTransactionFinished(getCurrentViewId());
                return next;
             }
          }
