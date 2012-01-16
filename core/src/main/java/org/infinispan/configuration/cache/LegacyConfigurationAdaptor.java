@@ -279,7 +279,7 @@ public class LegacyConfigurationAdaptor {
                .useReplQueue(legacy.isUseReplQueue());
       }
       
-      if (legacy.getConsistentHashClass() != null) {
+      if (legacy.hasConsistentHashClass()) {
          builder.clustering()
             .hash()
                .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));

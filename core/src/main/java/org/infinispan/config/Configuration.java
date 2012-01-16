@@ -1392,6 +1392,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
       return clustering.hash.consistentHashClass;
    }
+   
+   public boolean hasConsistentHashClass() {
+      return clustering.hash.consistentHashClass != null;
+   }
 
    public String getHashFunctionClass() {
       return clustering.hash.hashFunctionClass;
