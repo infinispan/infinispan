@@ -576,7 +576,7 @@
      </xs:attribute>
   </xs:complexType>
 
-  
+
   <xs:complexType name="asyncType">
      <xs:annotation>
       <xs:documentation>
@@ -690,8 +690,20 @@
   </xs:complexType>
 
   <xs:complexType name="storeAsBinary">
-     <xs:attribute name="storeKeysAsBinary" type="xs:boolean"/>
-     <xs:attribute name="storeValuesAsBinary" type="xs:boolean"/>
+     <xs:attribute name="storeKeysAsBinary" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>
+              Specifies whether keys are stored as binary or not.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="storeValuesAsBinary" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>
+              Specifies whether values are stored as binary or not.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="lazyDeserialization">
