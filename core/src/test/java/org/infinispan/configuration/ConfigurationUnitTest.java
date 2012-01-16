@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -130,6 +131,12 @@ public class ConfigurationUnitTest {
             .enable()
          .build();
       new DefaultCacheManager(c);
+   }
+   
+   @Test
+   public void testConsistentHash() {
+      Configuration config = new LegacyConfigurationAdaptor().adapt(new org.infinispan.config.Configuration());
+      Assert.assertNull(config.clustering().hash().consistentHash());
    }
    
 }
