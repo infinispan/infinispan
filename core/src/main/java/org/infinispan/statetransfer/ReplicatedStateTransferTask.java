@@ -61,7 +61,6 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
    private static final Log log = LogFactory.getLog(ReplicatedStateTransferTask.class);
 
    private final ReplicatedStateTransferManagerImpl stateTransferManager;
-   private long stateTransferStartMillis;
 
    public ReplicatedStateTransferTask(RpcManager rpcManager, Configuration configuration, DataContainer dataContainer,
                                       ReplicatedStateTransferManagerImpl stateTransferManager, StateTransferLock stateTransferLock,
