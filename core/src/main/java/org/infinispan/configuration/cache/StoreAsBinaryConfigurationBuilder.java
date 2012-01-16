@@ -1,12 +1,15 @@
 package org.infinispan.configuration.cache;
 
 /**
- * A mechanism by which data is stored as a binary byte array. This allows
- * serialization and deserialization of objects is deferred till the point
- * in time in which they are used and needed. This typically means that any
- * deserialization happens using the thread context class loader of the
- * invocation that requires deserialization, and is an effective mechanism
- * to provide classloader isolation.
+ * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
+ * a serialized, binary format.  There are benefits to both approaches, but often if used in a clustered mode,
+ * storing objects as binary means that the cost of serialization happens early on, and can be amortized.  Further,
+ * deserialization costs are incurred lazily which improves throughput.
+ * <p />
+ * It is possible to control this on a fine-grained basis: you can choose to just store keys or values as binary, or
+ * both.
+ * <p />
+ * @see StoreAsBinaryConfiguration
  */
 public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder<StoreAsBinaryConfiguration> {
 
@@ -18,35 +21,51 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       super(builder);
    }
 
+   /**
+    * Enables storing both keys and values as binary.
+    */
    public StoreAsBinaryConfigurationBuilder enable() {
       enabled = true;
       return this;
    }
-   
+
+   /**
+    * Disables storing both keys and values as binary.
+    */
    public StoreAsBinaryConfigurationBuilder disable() {
       enabled = false;
       return this;
    }
-   
+
+   /**
+    * Sets whether this feature is enabled or disabled.
+    * @param enabled if true, this feature is enabled.  If false, it is disabled.
+    */
    public StoreAsBinaryConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
       return this;
    }
 
-   public StoreAsBinaryConfigurationBuilder storeKeysAsBinary(boolean b) {
-      this.storeKeysAsBinary = b;
+   /**
+    * Specify whether keys are stored as binary or not.
+    * @param storeKeysAsBinary if true, keys are stored as binary.  If false, keys are stored as object references.
+    */
+   public StoreAsBinaryConfigurationBuilder storeKeysAsBinary(boolean storeKeysAsBinary) {
+      this.storeKeysAsBinary = storeKeysAsBinary;
       return this;
    }
-
-   public StoreAsBinaryConfigurationBuilder storeValuesAsBinary(boolean b) {
-      this.storeValuesAsBinary = b;
+   /**
+    * Specify whether values are stored as binary or not.
+    * @param storeValuesAsBinary if true, values are stored as binary.  If false, values are stored as object references.
+    */
+   public StoreAsBinaryConfigurationBuilder storeValuesAsBinary(boolean storeValuesAsBinary) {
+      this.storeValuesAsBinary = storeValuesAsBinary;
       return this;
    }
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      // Nothing to validate.
    }
 
    @Override
