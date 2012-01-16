@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
+  ~ as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a
+  ~ full listing of individual contributors.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use,
+  ~ modify, copy, or redistribute it subject to the terms and conditions
+  ~ of the GNU Lesser General Public License, v. 2.1.
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT A
+  ~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+  ~ PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+  ~ You should have received a copy of the GNU Lesser General Public License,
+  ~ v.2.1 along with this distribution; if not, write to the Free Software
+  ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+  ~ MA  02110-1301, USA.
+  -->
+
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:5.1" xmlns:tns="urn:infinispan:config:5.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <xs:element name="globalConfiguration" type="tns:globalConfiguration"/>
@@ -435,7 +454,11 @@
   <xs:complexType name="clusteringType">
      <xs:all>
        <xs:element name="sync" type="tns:syncType" minOccurs="0"/>
-       <xs:element name="stateRetrieval" type="tns:stateRetrievalType" minOccurs="0"/>
+       <xs:element name="stateRetrieval" type="tns:stateRetrievalType" minOccurs="0">
+          <xs:annotation>
+             <xs:documentation>Deprecated. Use stateTransfer instead.</xs:documentation>
+          </xs:annotation>
+       </xs:element>
        <xs:element name="l1" type="tns:l1Type" minOccurs="0">
          <xs:annotation>
             <xs:documentation>
@@ -450,7 +473,21 @@
             </xs:documentation>
          </xs:annotation>
        </xs:element>
-       <xs:element name="hash" type="tns:hashType" minOccurs="0"/>
+       <xs:element name="hash" type="tns:hashType" minOccurs="0">
+          <xs:annotation>
+             <xs:documentation>
+                Configures distribution of keys between nodes in 'distributed' mode. In any other cache modes, this element is ignored.
+             </xs:documentation>
+          </xs:annotation>
+       </xs:element>
+       <xs:element name="stateTransfer" type="tns:stateTransferType" minOccurs="0">
+          <xs:annotation>
+             <xs:documentation>
+                Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and
+                replication clustered modes.
+             </xs:documentation>
+          </xs:annotation>
+       </xs:element>
      </xs:all>
      <xs:attribute name="mode" type="xs:string">
       <xs:annotation>
@@ -466,14 +503,46 @@
   </xs:complexType>
 
   <xs:complexType name="stateRetrievalType">
-     <xs:attribute name="alwaysProvideInMemoryState" type="xs:boolean"/>
-     <xs:attribute name="fetchInMemoryState" type="xs:boolean"/>
-     <xs:attribute name="initialRetryWaitTime" type="xs:long"/>
-     <xs:attribute name="logFlushTimeout" type="xs:long"/>
-     <xs:attribute name="maxNonProgressingLogWrites" type="xs:int"/>
-     <xs:attribute name="numRetries" type="xs:int"/>
-     <xs:attribute name="retryWaitTimeIncreaseFactor" type="xs:int"/>
-     <xs:attribute name="timeout" type="xs:long"/>
+     <xs:attribute name="alwaysProvideInMemoryState" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="fetchInMemoryState" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>Deprecated. Use stateTransfer.fetchInMemoryState instead.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="initialRetryWaitTime" type="xs:long">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="logFlushTimeout" type="xs:long">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="maxNonProgressingLogWrites" type="xs:int">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="numRetries" type="xs:int">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="retryWaitTimeIncreaseFactor" type="xs:int">
+        <xs:annotation>
+           <xs:documentation>Deprecated. No longer used.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="timeout" type="xs:long">
+        <xs:annotation>
+           <xs:documentation>Deprecated. Use stateTransfer.timeout instead.</xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="l1Type">
@@ -559,9 +628,50 @@
         <xs:attribute name="hashFunctionClass" type="xs:string"/>
         <xs:attribute name="numOwners" type="xs:int"/>
         <xs:attribute name="numVirtualNodes" type="xs:int"/>
-        <xs:attribute name="rehashEnabled" type="xs:boolean"/>
-        <xs:attribute name="rehashRpcTimeout" type="xs:long"/>
-        <xs:attribute name="rehashWait" type="xs:long"/>
+        <xs:attribute name="rehashEnabled" type="xs:boolean">
+           <xs:annotation>
+              <xs:documentation>Deprecated. Use stateTransfer.fetchInMemoryState instead.</xs:documentation>
+           </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="rehashRpcTimeout" type="xs:long">
+           <xs:annotation>
+              <xs:documentation>Deprecated. Use stateTransfer.timeout instead.</xs:documentation>
+           </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="rehashWait" type="xs:long">
+           <xs:annotation>
+              <xs:documentation>Deprecated. No longer used.</xs:documentation>
+           </xs:annotation>
+        </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="stateTransferType">
+     <xs:attribute name="fetchInMemoryState" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>
+              In replicated mode, it controls whether a new node joining the cache cluster receives existing data from
+              the previous nodes.
+              In distributed mode, it controls whether nodes transfer the keys that they no longer own to their new
+              owners after a topology change.
+              Ignored in invalidation mode.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="chunkSize" type="xs:int">
+        <xs:annotation>
+           <xs:documentation>
+              If set to a value &gt; 0, the state transferred to other nodes is split in "chunks" of at most chunkSize
+              cache entries.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="timeout" type="xs:long">
+        <xs:annotation>
+           <xs:documentation>
+              The maximum allowed duration for state transfers, in milliseconds.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="groupsConfiguration">

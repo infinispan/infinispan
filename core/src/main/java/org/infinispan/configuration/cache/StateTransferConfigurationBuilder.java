@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Configures how state is retrieved when a new cache joins the cluster. Used with distributed and
+ * Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and
  * replication clustered modes.
  *
  * @since 5.1
