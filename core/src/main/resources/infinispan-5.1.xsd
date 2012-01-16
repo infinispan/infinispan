@@ -700,11 +700,17 @@
       <xs:element name="unsafe" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Allows you to tune various unsafe or non-standard characteristics. Certain operations such as Cache.put() that are supposed to return the previous value associated with the specified key according to the java.util.Map contract will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at https://docs.jboss.org/author/display/ISPN/Technical+FAQs .
+            Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better performance in some cases. Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
-           <xs:attribute name="unreliableReturnValues" type="xs:boolean"/>
+           <xs:attribute name="unreliableReturnValues" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Specifies whether Infinispan is allowed to disregard the Map contract when providing return values for org.infinispan.Cache#put(Object, Object) and org.infinispan.Cache#remove(Object) methods.
+              </xs:documentation>
+            </xs:annotation>
+           </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="clustering" minOccurs="0">

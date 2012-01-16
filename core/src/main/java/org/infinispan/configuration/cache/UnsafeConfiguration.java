@@ -1,14 +1,13 @@
 package org.infinispan.configuration.cache;
 
 /**
- * Allows you to tune various unsafe or non-standard characteristics. Certain operations such as
- * Cache.put() that are supposed to return the previous value associated with the specified key
- * according to the java.util.Map contract will not fulfill this contract if unsafe toggle is turned
- * on. Use with care. See details at <a
- * href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a>
- * 
- * @author pmuir
- * 
+
+ * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better
+ * performance in some cases.
+ * <p />
+ * Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
+ * <p />
+ * @see UnsafeConfigurationBuilder
  */
 public class UnsafeConfiguration {
 
@@ -18,8 +17,11 @@ public class UnsafeConfiguration {
       this.unreliableReturnValues = unreliableReturnValues;
    }
 
+   /**
+    * Specifies whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
+    * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
+    */
    public boolean unreliableReturnValues() {
       return unreliableReturnValues;
    }
-
 }
