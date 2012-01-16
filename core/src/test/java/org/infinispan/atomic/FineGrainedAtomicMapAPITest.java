@@ -25,6 +25,7 @@ package org.infinispan.atomic;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.TransactionManager;
@@ -225,11 +226,13 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
       assert map.size() == 0;
       final AtomicBoolean allOk = new AtomicBoolean(true);
-      fork(new Runnable() {
+      final CountDownLatch latch = new CountDownLatch(1);
+      Thread t1 = fork(new Runnable() {
          @Override
          public void run() {
             try {
                FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+               latch.await();
                for(int i = 0; i< 500; i++){
                   map.put("key-" + i, "value-" + i);
                }
@@ -239,11 +242,12 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
          }
       }, false);
       
-      fork(new Runnable() {
+      Thread t2 = fork(new Runnable() {
          @Override
          public void run() {
             FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
             try {               
+               latch.await();               
                for(int i = 0; i< 500; i++){                  
                   map.keySet();
                }
@@ -253,6 +257,9 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
             }
          }
       }, false);
+      latch.countDown();
+      t1.join();
+      t2.join();
       assert allOk.get() : "iteration raised an exception";
    }
 
