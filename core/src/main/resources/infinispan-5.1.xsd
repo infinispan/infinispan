@@ -448,7 +448,17 @@
   </xs:complexType>
 
   <xs:complexType name="unsafeType">
-     <xs:attribute name="unreliableReturnValues" type="xs:boolean"/>
+     <xs:attribute name="unreliableReturnValues" type="xs:boolean">
+        <xs:annotation>
+           <xs:documentation>
+              Specifies whether Infinispan is allowed to disregard the Map contract when providing return values for
+              org.infinispan.Cache#put(Object, Object) and org.infinispan.Cache#remove(Object) methods. Providing return
+              values can be expensive as they may entail a read from disk or across a network, and if the usage
+              of these methods never make use of these return values, allowing unreliable return values helps Infinispan
+              optimize away these remote calls or disk reads.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="clusteringType">
