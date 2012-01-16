@@ -7,7 +7,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  * 
  * @author pmuir
- * 
  */
 public class HashConfiguration {
 
@@ -53,8 +52,8 @@ public class HashConfiguration {
 
    /**
     * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at
-    * TODO
+    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
+    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
     * </p>
     * 
     * <p>
