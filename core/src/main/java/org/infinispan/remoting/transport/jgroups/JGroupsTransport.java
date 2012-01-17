@@ -276,7 +276,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          } else {
             if (channel.getAddress() instanceof TopologyUUID) {
                TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
-               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getRackId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
                   throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
                }
             } else {
