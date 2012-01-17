@@ -123,7 +123,7 @@ public class RpcManagerImpl implements RpcManager {
 
       List<Address> clusterMembers = t.getMembers();
       if (clusterMembers.size() < 2) {
-         log.debug("We're the only member in the cluster; Don't invoke remotely.");
+         log.tracef("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
          long startTimeNanos = 0;
@@ -136,7 +136,7 @@ public class RpcManagerImpl implements RpcManager {
                List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
                // the filter won't work if there is no other member in the cache, so we have to 
                if (cacheMembers.size() < 2) {
-                  log.debugf("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
+                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
                   return Collections.emptyMap();
                }
                // if there is already a response filter attached it means it must have its own way of dealing with non-members

@@ -159,10 +159,9 @@ public class DistributionManagerImpl implements DistributionManager {
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
 
       List<Address> targets = locate(key);
-      targets.remove(getAddress());
       // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
       targets.retainAll(rpcManager.getTransport().getMembers());
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets);
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, getAddress());
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
                                                                    configuration.getSyncReplTimeout(), true, filter);
 

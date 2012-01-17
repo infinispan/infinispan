@@ -109,7 +109,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
                cache(cacheIndex).put(k, "v");
                tm(cacheIndex).commit();
             } catch (Throwable e) {
-               e.printStackTrace();
+               log.errorf(e, "Error committing transaction for key %s on cache %s", k, cache(cacheIndex));
             }
          }
       }, false);
