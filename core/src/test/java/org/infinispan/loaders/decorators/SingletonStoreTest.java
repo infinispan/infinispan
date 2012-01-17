@@ -285,7 +285,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       return new ActiveStatusModifier(mscl);
    }
 
-   class TestingSingletonStore extends SingletonStore {
+   static class TestingSingletonStore extends SingletonStore {
       private int numberCreatedTasks = 0;
       private CountDownLatch pushStateCanFinish;
       private CountDownLatch secondActiveStatusChangerCanStart;
@@ -331,7 +331,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ActiveStatusModifier implements Callable {
+   static class ActiveStatusModifier implements Callable {
       private SingletonStore scl;
 
       public ActiveStatusModifier(SingletonStore singleton) {

@@ -244,7 +244,7 @@ public class TEST_PING extends Discovery {
       return String.format(format, args);
    }
 
-   private class DiscoveryKey {
+   static private class DiscoveryKey {
       final String testName;
       final String clusterName;
 

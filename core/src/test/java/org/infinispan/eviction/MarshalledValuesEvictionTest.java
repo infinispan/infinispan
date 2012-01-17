@@ -129,7 +129,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
    }
 
-   class EvictionPojo implements Externalizable {
+   static class EvictionPojo implements Externalizable {
       int i;
 
       public boolean equals(Object o) {
