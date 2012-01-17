@@ -38,9 +38,9 @@ import java.util.Set;
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
  */
-public class IgnoreExtraResponsesValidityFilter implements ResponseFilter {
+public final class IgnoreExtraResponsesValidityFilter implements ResponseFilter {
 
-   private Set<Address> expectedResponses;
+   private final Set<Address> expectedResponses;
 
    public IgnoreExtraResponsesValidityFilter(Collection<Address> cacheMembers, Address self) {
       this.expectedResponses = new HashSet<Address>(cacheMembers);
