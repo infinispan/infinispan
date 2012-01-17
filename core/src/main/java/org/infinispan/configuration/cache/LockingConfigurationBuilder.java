@@ -79,8 +79,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    void validate() {
       if (writeSkewCheck) {
          if (isolationLevel != IsolationLevel.REPEATABLE_READ)
-            throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache "
-                  + getBuilder().name);
+            throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
          if (transaction().lockingMode != LockingMode.OPTIMISTIC)
             throw new ConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
          if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)

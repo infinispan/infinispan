@@ -128,7 +128,7 @@ public class Parser {
                break;
             }
             case NAMED_CACHE: {
-               parseNamedCache(reader, holder.newConfigurationBuilder());
+               parseNamedCache(reader, holder);
                break;
             }
             default: {
@@ -139,7 +139,7 @@ public class Parser {
       return holder;
    }
 
-   private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+   private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       
       ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       
@@ -157,7 +157,7 @@ public class Parser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      builder.name(name);
+      ConfigurationBuilder builder = holder.newConfigurationBuilder(name);
       parseCache(reader, builder);
       
    }
