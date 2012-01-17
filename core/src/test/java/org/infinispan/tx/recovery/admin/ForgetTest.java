@@ -24,11 +24,15 @@
 package org.infinispan.tx.recovery.admin;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.transaction.ClusteredTransactionCoordinator;
 import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyXid;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.PostCommitRecoveryStateTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,9 +59,10 @@ public class ForgetTest extends AbstractRecoveryTest {
       createCluster(configuration, 2);
       waitForClusterToForm();
 
-      XaTransactionTable txTable = tt(0);
-      recoveryManager = new PostCommitRecoveryStateTest.RecoveryManagerDelegate(txTable.getRecoveryManager());
-      txTable.setRecoveryManager(recoveryManager);
+      ComponentRegistry cr = advancedCache(0).getComponentRegistry();
+      recoveryManager = new PostCommitRecoveryStateTest.RecoveryManagerDelegate(cr.getComponent(RecoveryManager.class));
+      ClusteredTransactionCoordinator component = (ClusteredTransactionCoordinator) cr.getComponent(TransactionCoordinator.class);
+      component.setRecoveryManager(recoveryManager);
    }
 
    @BeforeMethod
@@ -111,7 +116,6 @@ public class ForgetTest extends AbstractRecoveryTest {
       assertEquals(tt(0).getRemoteTxCount(), 0);
       assertEquals(tt(1).getRemoteTxCount(), 0);
    }
-
 
    private void forgetWithXid(int nodeIndex) {
       Xid xid = tx.getXid();

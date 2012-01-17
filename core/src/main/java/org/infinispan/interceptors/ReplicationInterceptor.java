@@ -98,7 +98,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          throws TimeoutException, InterruptedException {
       // may need to resend, so make the commit command synchronous
       // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, true, true);
       if (!responses.isEmpty()) {
          List<Address> resendTo = new LinkedList<Address>();
          for (Map.Entry<Address, Response> r : responses.entrySet()) {

@@ -48,7 +48,6 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -174,8 +173,8 @@ public class TransactionTable {
 
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator, commandsFactory,
-                                                                  rpcManager, this, clusteringLogic, configuration);
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator
+         );
          if (transactionSynchronizationRegistry != null) {
             try {
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);

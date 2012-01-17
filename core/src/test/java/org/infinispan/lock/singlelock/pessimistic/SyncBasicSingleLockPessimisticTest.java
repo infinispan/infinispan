@@ -23,6 +23,7 @@
 
 package org.infinispan.lock.singlelock.pessimistic;
 
+import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.testng.annotations.Test;
 
 /**

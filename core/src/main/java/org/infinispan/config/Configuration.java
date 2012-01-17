@@ -1322,7 +1322,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * Returns true if the 2nd phase of the 2PC (i.e. either commit or rollback) is sent asynchronously.
     */
    public boolean isSecondPhaseAsync() {
-      return !isSyncCommitPhase() || isUseReplQueue() || !getCacheMode().isSynchronous();
+      return isUseReplQueue() || !getCacheMode().isSynchronous();
    }
 
    /**
@@ -1736,7 +1736,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncCommitPhase")
-      protected Boolean syncCommitPhase = true;
+      protected Boolean syncCommitPhase = false;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncRollbackPhase")
       @Dynamic

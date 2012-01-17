@@ -360,20 +360,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn)
          throws TimeoutException, InterruptedException {
-      // we only send the commit command to the nodes that
-      Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
-      // By default, use the configured commit sync settings
-      boolean syncCommitPhase = configuration.isSyncCommitPhase();
-      for (Address a : preparedOn) {
-         if (!recipients.contains(a)) {
-            // However if we have prepared on some nodes and are now committing on different nodes, make sure we
-            // force sync commit so we can respond to prepare resend requests.
-            syncCommitPhase = true;
-         }
-      }
-
-      Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, true, true);
       if (!responses.isEmpty()) {
          List<Address> resendTo = new LinkedList<Address>();
          for (Map.Entry<Address, Response> r : responses.entrySet()) {

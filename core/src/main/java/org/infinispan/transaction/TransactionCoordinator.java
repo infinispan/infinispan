@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
-
 import java.util.List;
 
 import static javax.transaction.xa.XAResource.XA_OK;
@@ -56,18 +55,18 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
 public class TransactionCoordinator {
 
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
-   private CommandsFactory commandsFactory;
    private InvocationContextContainer icc;
-   private InterceptorChain invoker;
-   private TransactionTable txTable;
-   private Configuration configuration;
+   protected InterceptorChain invoker;
    private CommandCreator commandCreator;
+   protected TransactionTable txTable;
+   protected CommandsFactory commandsFactory;
+   protected Configuration configuration;
 
    boolean trace;
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
-                    TransactionTable txTable, Configuration configuration) {
+                    TransactionTable txTable, Configuration configuration ) {
       this.commandsFactory = commandsFactory;
       this.icc = icc;
       this.invoker = invoker;
@@ -146,46 +145,29 @@ public class TransactionCoordinator {
       }
    }
 
-   public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
+   public final void commit(final LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      final LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction)) {
+      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction) || isOnePhase) {
          validateNotMarkedForRollback(localTransaction);
-
-         if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
-         try {
-            invoker.invoke(ctx, command);
-         } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction);
-         }
+         completeTransactionInOnePhase(localTransaction, ctx);
       } else {
-         CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
-         try {
-            invoker.invoke(ctx, commitCommand);
-            txTable.removeLocalTransaction(localTransaction);
-         } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction);
-         }
+         runSecondPhase(localTransaction, ctx);
       }
    }
 
-   public void rollback(LocalTransaction localTransaction) throws XAException {
+   protected final void runCommit(LocalTransaction localTransaction, LocalTxInvocationContext ctx) throws XAException {
+      CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
       try {
-         rollbackInternal(localTransaction);
+         invoker.invoke(ctx, commitCommand);
+         txTable.removeLocalTransaction(localTransaction);
       } catch (Throwable e) {
-         log.errorRollingBack(e);
-         final Transaction transaction = localTransaction.getTransaction();
-         //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
-         if (transaction != null) {
-            txTable.failureCompletingTransaction(transaction);
-         }
-         throw new XAException(XAException.XAER_RMERR);
+         handleCommitFailure(e, localTransaction);
       }
    }
 
-   private void handleCommitFailure(Throwable e, LocalTransaction localTransaction) throws XAException {
+   protected final void handleCommitFailure(Throwable e, LocalTransaction localTransaction) throws XAException {
       log.errorProcessing1pcPrepareCommand(e);
       if (trace) log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.", localTransaction);
       try {
@@ -198,6 +180,35 @@ public class TransactionCoordinator {
          txTable.failureCompletingTransaction(localTransaction.getTransaction());
       }
       throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
+   }
+
+   protected void runSecondPhase(final LocalTransaction localTransaction, final LocalTxInvocationContext ctx) throws XAException {
+      runCommit(localTransaction, ctx);
+   }
+
+   protected void completeTransactionInOnePhase(LocalTransaction localTransaction, LocalTxInvocationContext ctx) throws XAException {
+      if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
+      PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+      try {
+         invoker.invoke(ctx, command);
+         txTable.removeLocalTransaction(localTransaction);
+      } catch (Throwable e) {
+         handleCommitFailure(e, localTransaction);
+      }
+   }
+
+   public final void rollback(LocalTransaction localTransaction) throws XAException {
+      try {
+         rollbackInternal(localTransaction);
+      } catch (Throwable e) {
+         log.errorRollingBack(e);
+         final Transaction transaction = localTransaction.getTransaction();
+         //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
+         if (transaction != null) {
+            txTable.failureCompletingTransaction(transaction);
+         }
+         throw new XAException(XAException.XAER_RMERR);
+      }
    }
 
    private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {

@@ -40,51 +40,14 @@ import java.util.Collection;
  */
 public abstract class AbstractEnlistmentAdapter {
 
-   private static Log log = LogFactory.getLog(AbstractEnlistmentAdapter.class);
-
-   private final CommandsFactory commandsFactory;
-   private final RpcManager rpcManager;
-   private final TransactionTable txTable;
-   private final ClusteringDependentLogic clusteringLogic;
    private final int hashCode;
-   private final Configuration config;
 
-   public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction, CommandsFactory commandsFactory, RpcManager rpcManager, TransactionTable txTable, ClusteringDependentLogic clusteringLogic, Configuration configuration) {
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.txTable = txTable;
-      this.clusteringLogic = clusteringLogic;
-      this.config = configuration;
+   public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction) {
       hashCode = preComputeHashCode(cacheTransaction);
    }
 
-   public AbstractEnlistmentAdapter(CommandsFactory commandsFactory, RpcManager rpcManager, TransactionTable txTable, ClusteringDependentLogic clusteringLogic, Configuration configuration) {
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.txTable = txTable;
-      this.clusteringLogic = clusteringLogic;
-      this.config = configuration;
+   public AbstractEnlistmentAdapter() {
       hashCode = 31;
-   }
-
-   protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction) {
-      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
-      txTable.removeLocalTransaction(localTransaction);
-      removeTransactionInfoRemotely(localTransaction, gtx);
-   }
-
-   private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
-      if (mayHaveRemoteLocks(localTransaction) && isClustered() && !config.isSecondPhaseAsync()) {
-         final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
-         final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
-         log.tracef("About to invoke tx completion notification on nodes %s", owners);
-         rpcManager.invokeRemotely(owners, command, false, true);
-      }
-   }
-
-   private boolean mayHaveRemoteLocks(LocalTransaction lt) {
-      return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty()) ||
-            (lt.getModifications() != null && !lt.getModifications().isEmpty());
    }
 
    /**
@@ -98,9 +61,5 @@ public abstract class AbstractEnlistmentAdapter {
 
    private static int preComputeHashCode(final CacheTransaction cacheTx) {
       return 31 + cacheTx.hashCode();
-   }
-
-   private boolean isClustered() {
-      return rpcManager != null;
    }
 }
