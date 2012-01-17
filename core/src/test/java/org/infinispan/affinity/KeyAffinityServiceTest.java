@@ -90,7 +90,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
          assertEquals(null, kc.exception);
       }
 
-      assertEventualFullCapacity();
+      assertCorrectCapacity();
    }
 
    @Test (dependsOnMethods = "testConcurrentConsumptionOfKeys")
@@ -113,7 +113,6 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Test(dependsOnMethods = "testServerAdded")
    public void testServersDropped() throws InterruptedException {
-      log.info("*** Here it is");
       caches.get(2).getCacheManager().stop();
       caches.remove(2);
       waitForClusterToResize();

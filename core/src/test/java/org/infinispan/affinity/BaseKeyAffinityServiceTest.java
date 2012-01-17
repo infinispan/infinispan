@@ -62,6 +62,10 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
       assertEventualFullCapacity(addresses);
    }
 
+   protected void assertCorrectCapacity() throws InterruptedException {
+      assertCorrectCapacity(topology());
+   }
+
    protected void assertEventualFullCapacity(List<Address> addresses) throws InterruptedException {
       Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       long maxWaitTime = 20 * 60 * 1000; // No more than 20 minutes per address since any more is ridiculous!
@@ -75,6 +79,17 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
       assertEquals(keyAffinityService.getMaxNumberOfKeys(), keyAffinityService.getExitingNumberOfKeys());
       assertEquals(addresses.size() * 100, keyAffinityService.getExitingNumberOfKeys());
       assertEquals(false, keyAffinityService.isKeyGeneratorThreadActive());
+   }
+
+   protected void assertCorrectCapacity(List<Address> addresses) throws InterruptedException {
+      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      long maxWaitTime = 5 * 60 * 1000;
+      for (Address addr : addresses) {
+         BlockingQueue queue = blockingQueueMap.get(addr);
+         long giveupTime = System.currentTimeMillis() + maxWaitTime;
+         while (queue.size() < KeyAffinityServiceImpl.THRESHOLD * 100 && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
+         assert queue.size() >= KeyAffinityServiceImpl.THRESHOLD * 100 : "Obtained " + queue.size();
+      }
    }
 
    protected void assertKeyAffinityCorrectness() {
