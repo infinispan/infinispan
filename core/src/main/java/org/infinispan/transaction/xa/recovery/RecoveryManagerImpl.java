@@ -217,16 +217,10 @@ public class RecoveryManagerImpl implements RecoveryManager {
          result.add(new InDoubtTxInfoImpl(r.getXid(), internalId));
       }
       for (Xid xid : txs) {
-         RecoveryAwareTransaction pTx = getPreparedTransaction(xid);
+         RecoveryAwareRemoteTransaction pTx = getPreparedTransaction(xid);
          if (pTx == null) continue; //might be removed concurrently, 2check for null
          RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) pTx.getGlobalTransaction();
-         int status;
-         if (pTx instanceof RecoveryAwareRemoteTransaction) {
-            status = ((RecoveryAwareRemoteTransaction)pTx).getStatus();
-         } else { //if it is local transaction then it can only be prepared
-            status = Status.STATUS_PREPARED;
-         }
-         InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), status);
+         InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), pTx.getStatus());
          result.add(infoInDoubt);
       }
       if (log.isTraceEnabled()) log.tracef("The set of in-doubt txs from this node is %s", result);
@@ -296,24 +290,17 @@ public class RecoveryManagerImpl implements RecoveryManager {
          localTransaction.clearRemoteLocksAcquired();
          return completeTransaction(localTransaction, commit, xid);
       } else {
-         RecoveryAwareTransaction tx = getPreparedTransaction(xid);
-         if (tx instanceof LocalTransaction) {
-            LocalTransaction ltx = (LocalTransaction) tx;
-            ltx.markForRollback(false);
-            if (log.isTraceEnabled()) log.tracef("About to complete local transaction %s", xid);
-            return completeTransaction(ltx, commit, xid);
-         } else {
-            if (tx == null) return "Could not find transaction " + xid;
-            GlobalTransaction globalTransaction = tx.getGlobalTransaction();
-            globalTransaction.setAddress(rpcManager.getAddress());
-            globalTransaction.setRemote(false);
-            RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getViewId());
-            localTx.setModifications(tx.getModifications());
-            localTx.setXid(xid);
-            localTx.addAllAffectedKeys(((RecoveryAwareRemoteTransaction) tx).getAffectedKeys());
-            for (Object lk : ((RecoveryAwareRemoteTransaction) tx).getLockedKeys()) localTx.registerLockedKey(lk);
-            return completeTransaction(localTx, commit, xid);
-         }
+         RecoveryAwareRemoteTransaction tx = getPreparedTransaction(xid);
+         if (tx == null) return "Could not find transaction " + xid;
+         GlobalTransaction globalTransaction = tx.getGlobalTransaction();
+         globalTransaction.setAddress(rpcManager.getAddress());
+         globalTransaction.setRemote(false);
+         RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getViewId());
+         localTx.setModifications(tx.getModifications());
+         localTx.setXid(xid);
+         localTx.addAllAffectedKeys(tx.getAffectedKeys());
+         for (Object lk : tx.getLockedKeys()) localTx.registerLockedKey(lk);
+         return completeTransaction(localTx, commit, xid);
       }
    }
 
