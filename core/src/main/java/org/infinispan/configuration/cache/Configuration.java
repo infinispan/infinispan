@@ -1,8 +1,25 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
 
 public class Configuration {
    
-   private final String name;
    private final ClassLoader classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
@@ -20,7 +37,7 @@ public class Configuration {
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
 
-   Configuration(String name, ClusteringConfiguration clusteringConfiguration,
+   Configuration(ClusteringConfiguration clusteringConfiguration,
          CustomInterceptorsConfiguration customInterceptorsConfiguration,
          DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
          EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
@@ -30,7 +47,6 @@ public class Configuration {
          LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
          TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
          VersioningConfiguration versioningConfiguration, ClassLoader cl) {
-      this.name = name;
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -47,10 +63,6 @@ public class Configuration {
       this.unsafeConfiguration = unsafeConfiguration;
       this.versioningConfiguration = versioningConfiguration;
       this.classLoader = cl;
-   }
-
-   public String name() {
-      return name;
    }
    
    /**
@@ -122,12 +134,4 @@ public class Configuration {
       return versioningConfiguration;
    }
 
-   public boolean stateTransferEnabled() {
-      return clustering().stateRetrieval().fetchInMemoryState() || loaders().fetchPersistentState();
-   }
-
-   @Deprecated
-   public boolean onePhaseCommit() {
-      return clusteringConfiguration.cacheMode().isSynchronous();
-   }
 }

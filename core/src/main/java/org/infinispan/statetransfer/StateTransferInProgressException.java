@@ -17,14 +17,14 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.distribution;
+package org.infinispan.statetransfer;
 
 import org.infinispan.util.concurrent.TimeoutException;
 
 /**
- * This exception is thrown when an operation cannot complete because a rehash is in progress.
+ * This exception is thrown when an operation cannot complete because a state transfer is in progress.
  * Most of the time the operation will just wait for the rehash to complete and continue,
- * but if the rehash is taking too long this exception will be thrown.
+ * but if the state transfer is taking too long this exception will be thrown.
  *
  * @author Dan Berindei <dan@infinispan.org>
  */

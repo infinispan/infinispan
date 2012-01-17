@@ -26,9 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -149,21 +147,6 @@ public class CacheViewControlCommand implements CacheRpcCommand {
    @Override
    public String getCacheName() {
       return cacheName;
-   }
-
-   @Override
-   public void injectComponents(Configuration cfg, ComponentRegistry cr) {
-      // This command doesn't need any cache scoped components
-   }
-
-   @Override
-   public Configuration getConfiguration() {
-      return null;
-   }
-
-   @Override
-   public ComponentRegistry getComponentRegistry() {
-      return null;
    }
 
    @Override

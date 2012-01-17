@@ -20,10 +20,8 @@
 package org.infinispan.marshall.jboss;
 
 import org.jboss.marshalling.AbstractMarshallerFactory;
-import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
-import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
 
@@ -60,12 +58,12 @@ public class JBossMarshallerFactory extends AbstractMarshallerFactory {
    }
 
    @Override
-   public Unmarshaller createUnmarshaller(MarshallingConfiguration configuration) throws IOException {
+   public ExtendedRiverUnmarshaller createUnmarshaller(MarshallingConfiguration configuration) throws IOException {
       return new ExtendedRiverUnmarshaller(factory, registry, configuration);
    }
 
    @Override
-   public Marshaller createMarshaller(MarshallingConfiguration configuration) throws IOException {
+   public ExtendedRiverMarshaller createMarshaller(MarshallingConfiguration configuration) throws IOException {
       return new ExtendedRiverMarshaller(factory, registry, configuration);
    }
 

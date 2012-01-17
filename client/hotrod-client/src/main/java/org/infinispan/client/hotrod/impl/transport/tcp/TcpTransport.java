@@ -76,10 +76,9 @@ public class TcpTransport extends AbstractTransport {
       try {
          socketChannel = SocketChannel.open();
          socket = socketChannel.socket();
-         // TODO: Change to connection timeout
-         socket.connect(serverAddress, transportFactory.getSoTimeout());
+         socket.connect(serverAddress, transportFactory.getConnectTimeout());
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
-         socket.setSoTimeout(transportFactory.getConnectTimeout());
+         socket.setSoTimeout(transportFactory.getSoTimeout());
          socketInputStream = new BufferedInputStream(socket.getInputStream(), socket.getReceiveBufferSize());
          // ensure we don't send a packet for every output byte
          socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());

@@ -123,7 +123,7 @@ public class RpcManagerImpl implements RpcManager {
 
       List<Address> clusterMembers = t.getMembers();
       if (clusterMembers.size() < 2) {
-         log.debug("We're the only member in the cluster; Don't invoke remotely.");
+         log.tracef("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
          long startTimeNanos = 0;
@@ -136,7 +136,7 @@ public class RpcManagerImpl implements RpcManager {
                List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
                // the filter won't work if there is no other member in the cache, so we have to 
                if (cacheMembers.size() < 2) {
-                  log.debugf("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
+                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
                   return Collections.emptyMap();
                }
                // if there is already a response filter attached it means it must have its own way of dealing with non-members
@@ -146,15 +146,15 @@ public class RpcManagerImpl implements RpcManager {
                }
             }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
-            if (isStatisticsEnabled()) replicationCount.incrementAndGet();
+            if (statisticsEnabled) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
             log.trace("replication exception: ", e);
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
             log.unexpectedErrorReplicating(th);
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw new CacheException(th);
          } finally {
             if (statisticsEnabled) {
@@ -202,6 +202,11 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws RpcException {
+      ResponseMode responseMode = getResponseMode(sync);
+      return invokeRemotely(recipients, rpc, sync, usePriorityQueue, timeout, responseMode);
+   }
+
+   private Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout, ResponseMode responseMode) {
       if (trace) log.tracef("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
@@ -211,7 +216,7 @@ public class RpcManagerImpl implements RpcManager {
          if (!(rpc instanceof CacheRpcCommand)) {
             rpc = cf.buildSingleRpcCommand(rpc);
          }
-         Map<Address, Response> rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
+         Map<Address, Response> rsps = invokeRemotely(recipients, rpc, responseMode, timeout, usePriorityQueue);
          if (trace) log.tracef("Response(s) to %s is %s", rpc, rsps);
          if (sync) checkResponses(rsps);
          return rsps;
@@ -227,13 +232,21 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
+      invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, timeout, false);
+   }
+
+   @Override
+   public void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc,
+                                      final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l,
+                                      final long timeout, final boolean ignoreLeavers) {
       if (trace) log.tracef("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      final ResponseMode responseMode = ignoreLeavers ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.SYNCHRONOUS;
       final CountDownLatch futureSet = new CountDownLatch(1);
       Callable<Object> c = new Callable<Object>() {
          public Object call() throws Exception {
             Object result = null;
             try {
-               result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
+               result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout, responseMode);
             } finally {
                try {
                   futureSet.await();
@@ -247,7 +260,7 @@ public class RpcManagerImpl implements RpcManager {
          }
       };
       l.setNetworkFuture(asyncExecutor.submit(c));
-      futureSet.countDown();      
+      futureSet.countDown();
    }
 
    public Transport getTransport() {

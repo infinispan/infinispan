@@ -58,14 +58,14 @@ import org.infinispan.util.logging.LogFactory;
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    final LockAcquisitionVisitor lockAcquisitionVisitor = new LockAcquisitionVisitor();
-
+   private static final MurmurHash3 HASH = new MurmurHash3();
    private final static Comparator<Object> keyComparator = new Comparator<Object>() {
-
-      private final MurmurHash3 hash = new MurmurHash3();
 
       @Override
       public int compare(Object o1, Object o2) {
-         return hash.hash(o1) - hash.hash(o2);
+         int thisVal = HASH.hash(o1);
+         int anotherVal = HASH.hash(o2);
+         return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
       }
    };
 

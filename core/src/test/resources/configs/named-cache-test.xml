@@ -23,8 +23,8 @@
   -->
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
-      xmlns="urn:infinispan:config:5.1">
+      xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+      xmlns="urn:infinispan:config:5.2">
 
    <global>
 
@@ -89,7 +89,7 @@
    </namedCache>
 
    <namedCache name="transactional2">
-      <transaction transactionManagerLookupClass="org.something.Lookup"
+      <transaction transactionManagerLookupClass="org.infinispan.test.tx.TestLookup"
                    cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
                    autoCommit="false" />
    </namedCache>
@@ -177,7 +177,15 @@
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
-   
+
+   <namedCache name="dist_with_vnodes">
+      <clustering mode="distribution">
+         <sync/>
+         <hash numOwners="3" rehashRpcTimeout="120000" numVirtualNodes="1000"/>
+         <l1 enabled="true" lifespan="600000"/>
+      </clustering>
+   </namedCache>
+
    <namedCache name="groups">
       <clustering mode="distribution">
          <hash>

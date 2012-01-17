@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
   ~ contributors as indicated by the @author tags. All rights reserved.
   ~ See the copyright.txt in the distribution for a full listing of
   ~ individual contributors.
@@ -28,7 +28,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.0-SNAPSHOT</version>
+      <version>5.2.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -41,14 +41,12 @@
       <dependency>
          <groupId>c3p0</groupId>
          <artifactId>c3p0</artifactId>
-         <version>${version.c3p0}</version>
          <optional>true</optional>
       </dependency>
 
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
-         <version>${version.h2.driver}</version>
          <scope>test</scope>
       </dependency>
 
@@ -56,7 +54,6 @@
       <dependency>
          <groupId>mysql</groupId>
          <artifactId>mysql-connector-java</artifactId>
-         <version>${version.mysql.driver}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -66,7 +63,6 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
-            <version>${version.maven.bundle}</version>
             <configuration>
                <instructions>
                   <Export-Package>

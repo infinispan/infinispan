@@ -17,7 +17,7 @@
  * 02110-1301 USA
  */
 
-package org.jboss.netty.handler.codec.replay;
+package org.infinispan.server.core.transport;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferFactory;
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *    <li>Adding a new instance variable for the maximum buffer capacity</li>
  *    <li>Removing unused constructors by Infinispan servers and add the
  *    maximum capacity as constructor parameter</li>
- *    <li>Addition of the {@link org.jboss.netty.handler.codec.replay.CustomReplayingDecoder#slimDownBuffer()}
+ *    <li>Addition of the {@link org.infinispan.server.core.transport.CustomReplayingDecoder#slimDownBuffer()}
  *    method that slims down the buffers if they go above the maximum capacity</li>
  * </ul>
  *
@@ -332,8 +332,8 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
             if (partiallyDecoded != null) {
                 unfoldAndfireMessageReceived(ctx, partiallyDecoded, null);
             }
-        } catch (ReplayError replay) {
-            // Ignore
+        } catch (Error replay) {
+           if (!replayErrorClass.isInstance(replay)) throw replay;
         } finally {
             ctx.sendUpstream(e);
         }

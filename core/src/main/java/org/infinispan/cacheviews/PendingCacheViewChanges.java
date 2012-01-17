@@ -204,6 +204,17 @@ public class PendingCacheViewChanges {
    }
 
    /**
+    * @return The nodes that are in the {@code joiners} collection but not in the {@code newMembers} collection.
+    */
+   public Set<Address> computeMissingJoiners(Collection<Address> newMembers) {
+      synchronized (lock) {
+         Set<Address> missingJoiners = new HashSet<Address>(joiners);
+         missingJoiners.removeAll(newMembers);
+         return missingJoiners;
+      }
+   }
+
+   /**
     * @return true if {@code createPendingView} has been called without a pair {@code resetChanges}
     */
    public boolean isViewInstallationInProgress() {

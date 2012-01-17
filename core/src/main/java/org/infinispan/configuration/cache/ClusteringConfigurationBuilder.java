@@ -1,3 +1,21 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
 
 /**
@@ -13,7 +31,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    private final AsyncConfigurationBuilder asyncConfigurationBuilder;
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
-   private final StateRetrievalConfigurationBuilder stateRetrievalConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
    private final SyncConfigurationBuilder syncConfigurationBuilder;
 
@@ -22,7 +39,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.asyncConfigurationBuilder = new AsyncConfigurationBuilder(this);
       this.hashConfigurationBuilder = new HashConfigurationBuilder(this);
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
-      this.stateRetrievalConfigurationBuilder = new StateRetrievalConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
       this.syncConfigurationBuilder = new SyncConfigurationBuilder(this);
    }
@@ -70,16 +86,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * @deprecated Use {@link #stateTransfer()} instead.
-    */
-   @Override
-   public StateRetrievalConfigurationBuilder stateRetrieval() {
-      return stateRetrievalConfigurationBuilder;
-   }
-
-   /**
-    * Configure sync sub element. Once this method is invoked users cannot subsequently invoke
-    * <code>configureAsync()</code> as two are mutually exclusive
+    * Configure the {@code stateTransfer} sub element for distributed and replicated caches.
+    * It doesn't have any effect on LOCAL or INVALIDATION-mode caches.
     */
    @Override
    public StateTransferConfigurationBuilder stateTransfer() {
@@ -98,7 +106,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       asyncConfigurationBuilder.validate();
       hashConfigurationBuilder.validate();
       l1ConfigurationBuilder.validate();
-      stateRetrievalConfigurationBuilder.validate();
       syncConfigurationBuilder.validate();
 
    }

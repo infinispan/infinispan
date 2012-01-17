@@ -36,7 +36,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -138,8 +137,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
                           CacheStore cacheStore, ByRef<Collection<InternalCacheEntry>> stateRef) throws StateTransferCancelledException {
       // 1. Get the old primary owner for key K
       // That node will be the "pushing owner" for key K
-      List<Address> oldOwners = chOld.locate(key, 1);
-      Address pushingOwner = oldOwners.size() > 0 ? oldOwners.get(0) : null;
+      final Address pushingOwner = chOld.primaryLocation(key);
 
       if (trace) log.tracef("Replicating key %s, pushing owner is %s",
             key, pushingOwner);

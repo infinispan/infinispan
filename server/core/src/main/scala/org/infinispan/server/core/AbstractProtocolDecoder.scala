@@ -33,7 +33,7 @@ import org.jboss.netty.channel._
 import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
 import logging.Log
-import org.jboss.netty.handler.codec.replay.CustomReplayingDecoder
+import org.infinispan.server.core.transport.CustomReplayingDecoder
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -235,7 +235,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
                createNotExecutedResponse(prev)
          } else {
             createNotExecutedResponse(prev)
-         }            
+         }
       } else createNotExistResponse
    }
 
@@ -302,7 +302,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    protected def createGetResponse(k: K, v: V): AnyRef
 
    protected def createMultiGetResponse(pairs: Map[K, V]): AnyRef
-   
+
    protected def createErrorResponse(t: Throwable): AnyRef
 
    protected def createStatsResponse: AnyRef

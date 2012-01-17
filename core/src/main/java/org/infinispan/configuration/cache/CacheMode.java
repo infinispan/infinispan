@@ -1,3 +1,21 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
 
 /**
@@ -86,5 +104,22 @@ public enum CacheMode {
          default:
             return this;
       }
+   }
+   
+   public String friendlyCacheModeString() {
+      switch (this) {
+         case REPL_SYNC:
+         case REPL_ASYNC:
+            return "REPLICATED";
+         case INVALIDATION_SYNC:
+         case INVALIDATION_ASYNC:
+            return "INVALIDATED";
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            return "DISTRIBUTED";
+         case LOCAL:
+            return "LOCAL";
+      }
+      throw new IllegalArgumentException("Unknown cache mode " + this);
    }
 }

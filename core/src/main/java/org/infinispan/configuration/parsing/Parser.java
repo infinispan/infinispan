@@ -1,3 +1,21 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.config.ConfigurationException;
@@ -45,7 +63,9 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import static org.infinispan.configuration.cache.CacheMode.*;
@@ -80,66 +100,134 @@ public class Parser {
    public Parser(ClassLoader cl) {
       this.cl = cl;
    }
-
-   public ConfigurationBuilderHolder parse(String filename) {
-      FileLookup fileLookup = FileLookupFactory.newInstance();
-      return parse(fileLookup.lookupFile(filename, cl));
+   
+   public ConfigurationBuilderHolder parseFile(String filename) {
+      return parseFiles(Collections.singletonList(filename));
+   }
+   
+   /**
+    * This will parse all the filenames in order overriding at each the global
+    * and default cache settings.  Once all the default cache settings are
+    * read, then the named caches for each file will be applied as a named cache
+    * with the default cache settings as a base going through each file.
+    * 
+    * @param filenames The file names, each might be the name of the file (too 
+    *        look it up in the class path) or an url to a file.
+    * @return ConfigurationBuilderHolder with all the values applied and 
+    *         overridden according to ordering of files
+    */
+   public ConfigurationBuilderHolder parseFiles(List<String> filenames) {
+       FileLookup fileLookup = FileLookupFactory.newInstance();
+       List<InputStream> streams = new ArrayList<InputStream>(filenames.size());
+       for (String filename : filenames) {
+           streams.add(fileLookup.lookupFile(filename, cl));
+       }
+       return parse(streams);
    }
    
    public ConfigurationBuilderHolder parse(InputStream is) {
-      try {
-         try {
-             BufferedInputStream input = new BufferedInputStream(is);
-             XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-             ConfigurationBuilderHolder holder = doParse(streamReader);
-             streamReader.close();
-             input.close();
-             is.close();
-             return holder;
-         } finally {
-             safeClose(is);
-         }
-      } catch (ConfigurationException e) {
-         throw e;
-      } catch (Exception e) {
-            throw new ConfigurationException(e);
-      }
+      return parse(Collections.singletonList(is));
    }
    
-   private ConfigurationBuilderHolder doParse(XMLStreamReader reader) throws XMLStreamException {
-
-      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
-      
-      Element root = ParseUtils.nextElement(reader);
-      
-      if (!root.getLocalName().equals(Element.ROOT.getLocalName())) {
-         throw ParseUtils.missingRequiredElement(reader, Collections.singleton(Element.ROOT));
-      }
-
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case DEFAULT: {
-               parseDefaultCache(reader, holder.getDefaultConfigurationBuilder());
-               break;
-            }
-            case GLOBAL: {
-               parseGlobal(reader, holder.getGlobalConfigurationBuilder());
-               break;
-            }
-            case NAMED_CACHE: {
-               parseNamedCache(reader, holder.newConfigurationBuilder());
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
-      return holder;
+   /**
+    * This will parse all the streams in order overriding at each the global
+    * and default cache settings.  Once all the default cache settings are
+    * read, then the named caches for each stream will be applied as a named cache
+    * in order with the default cache settings as a base going through each file.
+    * 
+    * @param streams The streams each containing data pertaining to an infinispan
+    *        configuration xml file
+    * @return ConfigurationBuilderHolder with all the values applied and 
+    *         overridden according to ordering of streams
+    */
+   public ConfigurationBuilderHolder parse(List<? extends InputStream> streams) {
+       try {
+           List<XMLStreamReader> streamReaders = new ArrayList<XMLStreamReader>(
+                 streams.size());
+           try {
+               for (InputStream is : streams) {
+                   BufferedInputStream input = new BufferedInputStream(is);
+                   XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
+                   streamReaders.add(streamReader);
+               }
+               ConfigurationBuilderHolder holder = doParse(streamReaders);
+               for (XMLStreamReader reader : streamReaders) {
+                   reader.close();
+               }
+               return holder;
+           }
+           finally {
+               for (InputStream is : streams) {
+                   safeClose(is);
+               }
+           }
+        } catch (ConfigurationException e) {
+           throw e;
+        } catch (Exception e) {
+           throw new ConfigurationException(e);
+        }
+   }
+   
+   private ConfigurationBuilderHolder doParse(Iterable<? extends XMLStreamReader> readers) throws XMLStreamException {
+       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+       
+       for (XMLStreamReader reader : readers) {
+           Element root = ParseUtils.nextElement(reader);
+           
+           if (!root.getLocalName().equals(Element.ROOT.getLocalName())) {
+              throw ParseUtils.missingRequiredElement(reader, Collections.singleton(Element.ROOT));
+           }
+           
+           boolean onNamedCaches = false;
+           while (!onNamedCaches && reader.hasNext() && 
+                   (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+              Element element = Element.forName(reader.getLocalName());
+              switch (element) {
+                 case DEFAULT: {
+                    parseDefaultCache(reader, holder.getDefaultConfigurationBuilder());
+                    break;
+                 }
+                 case GLOBAL: {
+                    parseGlobal(reader, holder.getGlobalConfigurationBuilder());
+                    break;
+                 }
+                 case NAMED_CACHE: {
+                    onNamedCaches = true;
+                    break;
+                 }
+                 default: {
+                    throw ParseUtils.unexpectedElement(reader);
+                 }
+              }
+           }
+       }
+       
+       for (XMLStreamReader reader : readers) {
+           // If this reader was previously on a named cache now apply them
+           // all after the default was parsed
+           if (Element.forName(reader.getLocalName()) == Element.NAMED_CACHE) {
+               // Parse the previously found named cache
+               parseNamedCache(reader, holder);
+               
+               while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+                   Element element = Element.forName(reader.getLocalName());
+                   switch (element) {
+                   // We should only have named caches now
+                   case NAMED_CACHE: {
+                       parseNamedCache(reader, holder);
+                       break;
+                    }
+                    default: {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                   }
+               }
+           }
+       }
+       return holder;
    }
 
-   private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+   private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       
       ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       
@@ -157,7 +245,11 @@ public class Parser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      builder.name(name);
+      // Reuse the builder if it was made before
+      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
+      if (builder == null) {
+          builder = holder.newConfigurationBuilder(name);
+      }
       parseCache(reader, builder);
       
    }
@@ -549,7 +641,7 @@ public class Parser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAsyncLoader(XMLStreamReader reader, AbstractLoaderConfigurationBuilder loaderBuilder) throws XMLStreamException {
+   private void parseAsyncLoader(XMLStreamReader reader, AbstractLoaderConfigurationBuilder<?> loaderBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceSystemProperties(reader.getAttributeValue(i));
@@ -937,28 +1029,30 @@ public class Parser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ALWAYS_PROVIDE_IN_MEMORY_STATE:
-               builder.clustering().stateRetrieval().alwaysProvideInMemoryState(Boolean.valueOf(value));
+               log.alwaysProvideInMemoryStateDeprecated();
                break;
             case FETCH_IN_MEMORY_STATE:
-               builder.clustering().stateRetrieval().fetchInMemoryState(Boolean.valueOf(value));
+               log.stateRetrievalConfigurationDeprecaced();
+               builder.clustering().stateTransfer().fetchInMemoryState(Boolean.valueOf(value));
                break;
             case INITIAL_RETRY_WAIT_TIME:
-               builder.clustering().stateRetrieval().initialRetryWaitTime(Long.valueOf(value));
+               log.initialRetryWaitTimeDeprecated();
                break;
             case LOG_FLUSH_TIMEOUT:
-               builder.clustering().stateRetrieval().logFlushTimeout(Long.valueOf(value));
+               log.logFlushTimeoutDeprecated();
                break;
             case MAX_NON_PROGRESSING_LOG_WRITES:
-               builder.clustering().stateRetrieval().maxNonProgressingLogWrites(Integer.valueOf(value));
+               log.maxProgressingLogWritesDeprecated();
                break;
             case NUM_RETRIES:
-               builder.clustering().stateRetrieval().numRetries(Integer.valueOf(value));
+               log.numRetriesDeprecated();
                break;
             case RETRY_WAIT_TIME_INCREASE_FACTOR:
-               builder.clustering().stateRetrieval().retryWaitTimeIncreaseFactor(Integer.valueOf(value));
+               log.retryWaitTimeIncreaseFactorDeprecated();
                break;
             case TIMEOUT:
-               builder.clustering().stateRetrieval().timeout(Long.valueOf(value));
+               log.stateRetrievalConfigurationDeprecaced();
+               builder.clustering().stateTransfer().timeout(Long.valueOf(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

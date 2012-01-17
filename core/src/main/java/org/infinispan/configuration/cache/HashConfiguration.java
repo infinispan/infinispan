@@ -1,3 +1,21 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
@@ -16,15 +34,18 @@ public class HashConfiguration {
    private final int numVirtualNodes;
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
+   // For use by the LegacyConfigurationAdapter
+   final boolean activated;
 
    HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
-         GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
+                     GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration, boolean activated) {
       this.consistentHash = consistentHash;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numVirtualNodes = numVirtualNodes;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
+      this.activated = activated;
    }
 
    /**
@@ -82,6 +103,7 @@ public class HashConfiguration {
     * Rehashing timeout
     * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
+   @Deprecated
    public long rehashRpcTimeout() {
       return stateTransferConfiguration.timeout();
    }
@@ -89,10 +111,11 @@ public class HashConfiguration {
    /**
     * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
+   @Deprecated
    public long rehashWait() {
       return stateTransferConfiguration.timeout();
    }
-   
+
    /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */

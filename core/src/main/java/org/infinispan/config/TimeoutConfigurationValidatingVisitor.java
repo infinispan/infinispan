@@ -76,10 +76,10 @@ public class TimeoutConfigurationValidatingVisitor extends AbstractConfiguration
    
          if (asyncType != null && bean.getSyncReplTimeout() > global.getDistributedSyncTimeout())
             log.invalidTimeoutValue("<sync>:replTimeout", bean.getSyncReplTimeout(),
-                     "<transport>: distributedSyncTimout", global.getDistributedSyncTimeout());
+                     "<transport>: distributedSyncTimeout", global.getDistributedSyncTimeout());
    
          if (global.getDistributedSyncTimeout() > bean.getStateRetrievalTimeout())
-            log.invalidTimeoutValue("<transport>: distributedSyncTimout", global.getDistributedSyncTimeout(),
+            log.invalidTimeoutValue("<transport>: distributedSyncTimeout", global.getDistributedSyncTimeout(),
                      "<stateRetrieval>:timeout", bean.getStateRetrievalTimeout());
       }
 

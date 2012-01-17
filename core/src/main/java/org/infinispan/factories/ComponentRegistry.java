@@ -24,6 +24,7 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -32,7 +33,10 @@ import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,11 +51,24 @@ import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIA
  * @author Manik Surtani
  * @since 4.0
  */
-public class ComponentRegistry extends AbstractComponentRegistry {
+public final class ComponentRegistry extends AbstractComponentRegistry {
+
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
    private CacheManagerNotifier cacheManagerNotifier;
+
+   //Cached fields:
+   private StreamingMarshaller cacheMarshaler;
+   private StateTransferManager stateTransferManager;
+   private ResponseGenerator responseGenerator;
+   private CommandsFactory commandsFactory;
+
+   //Cached fields:
+   private StreamingMarshaller cacheMarshaler;
+   private StateTransferManager stateTransferManager;
+   private ResponseGenerator responseGenerator;
+   private CommandsFactory commandsFactory;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -195,6 +212,44 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+    */
+   public StreamingMarshaller getCacheMarshaller() {
+      return cacheMarshaler;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public StateTransferManager getStateTransferManager() {
+      return stateTransferManager;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public ResponseGenerator getResponseGenerator() {
+      return responseGenerator;
+   }
+
+   /**
+    * Caching shortcut for #getLocalComponent(CommandsFactory.class);
+    */
+   public CommandsFactory getCommandsFactory() {
+      return commandsFactory;
+   }
+
+   /**
+    * Invoked last after all services are wired
+    */
+   public void prepareWiringCache() {
+      cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      stateTransferManager = getComponent(StateTransferManager.class);
+      responseGenerator = getComponent(ResponseGenerator.class);
+      commandsFactory = getLocalComponent(CommandsFactory.class);
    }
 
 }

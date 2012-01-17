@@ -22,17 +22,25 @@
  */
 package org.infinispan.distribution.ch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
 
 import static java.lang.String.format;
 
@@ -60,7 +68,7 @@ import static java.lang.String.format;
  */
 public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash {
 
-   protected final Log log;
+   private static final Log LOG = LogFactory.getLog(AbstractWheelConsistentHash.class);
    protected final boolean trace;
 
    protected Hash hashFunction;
@@ -74,8 +82,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    protected Address[] positionValues;
 
    protected AbstractWheelConsistentHash() {
-      log = LogFactory.getLog(getClass());
-      trace = log.isTraceEnabled();
+      trace = getLog().isTraceEnabled();
    }
 
    public void setHashFunction(Hash h) {
@@ -122,7 +129,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
       }
 
-      log.tracef("Positions are: %s", positions);
+      getLog().debugf("Using %d virtualNodes to initialize consistent hash wheel ", numVirtualNodes);
+      getLog().tracef("Positions are: %s", positions);
 
       // then populate caches, positionKeys and positionValues with the correct values (and in the correct order)
       caches = new LinkedHashSet<Address>(newCaches.size());
@@ -135,7 +143,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          positionValues[i] = position.getValue();
          i++;
       }
-      log.tracef("Consistent hash initialized: %s", this);
+      getLog().tracef("Consistent hash initialized: %s", this);
    }
 
    private void addNode(TreeMap<Integer, Address> positions, Address a, int positionIndex) {
@@ -150,11 +158,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    @Override
-   public Set<Address> getCaches() {
+   public final Set<Address> getCaches() {
       return caches;
    }
 
-   protected int getPositionIndex(int normalizedHash) {
+   protected final int getPositionIndex(int normalizedHash) {
       int index = Arrays.binarySearch(positionKeys, normalizedHash);
       // Arrays.binarySearch returns (-(insertion point) - 1) when the value is not found
       // we need (insertion point) instead
@@ -170,9 +178,9 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    /**
     * Creates an iterator over the positions "map" starting at the index specified by the <code>normalizedHash</code>.
     */
-   protected Iterator<Map.Entry<Integer, Address>> getPositionsIterator(final int normalizedHash) {
+   protected final Iterator<Address> getPositionsIterator(final int normalizedHash) {
       final int startIndex = getPositionIndex(normalizedHash);
-      return new Iterator<Map.Entry<Integer, Address>>() {
+      return new Iterator<Address>() {
          int i = startIndex;
 
          @Override
@@ -181,9 +189,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
 
          @Override
-         public Map.Entry<Integer, Address> next() {
-            Map.Entry<Integer, Address> value = new AbstractMap.SimpleImmutableEntry(
-                  positionKeys[i], positionValues[i]);
+         public Address next() {
+            Address value = positionValues[i];
             i++;
             // go back to the start
             if (i == positionKeys.length)
@@ -202,7 +209,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    @Override
-   public List<Integer> getHashIds(Address a) {
+   public final List<Integer> getHashIds(Address a) {
       // Not the most efficient way of doing this but it's usage it's so far
       // limited to the HotRod server and it does it only on once on startup,
       // so there's no urgency in finding a better way to implement this.
@@ -230,11 +237,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          return hashIds;
    }
 
-   public int getNormalizedHash(Object key) {
+   public final int getNormalizedHash(final Object key) {
       return Util.getNormalizedHash(key, hashFunction);
    }
 
-   protected boolean isVirtualNodesEnabled() {
+   public final boolean isVirtualNodesEnabled() {
       return numVirtualNodes > 1;
    }
 
@@ -253,6 +260,15 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       return sb.toString();
    }
 
+   @Override
+   public final Address primaryLocation(final Object key) {
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      return positionValues[getPositionIndex(normalizedHash)];
+   }
+
+   protected Log getLog() {
+      return LOG;
+   }
 
    public static abstract class Externalizer<T extends AbstractWheelConsistentHash> extends AbstractExternalizer<T> {
 

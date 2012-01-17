@@ -72,6 +72,12 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+
+      if (command.isCausedByALocalWrite(cdl.getAddress())) {
+         getLog().trace("Skipping invalidation as the write operation originated here.");
+         return null;
+      }
+
       Object keys [] = command.getKeys();
       try {
          if (keys != null && keys.length >= 1) {

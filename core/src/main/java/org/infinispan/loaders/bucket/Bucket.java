@@ -85,13 +85,18 @@ public final class Bucket {
 
    public boolean removeExpiredEntries() {
       boolean result = false;
-      long currentTimeMillis = System.currentTimeMillis();
+      long currentTimeMillis = 0;
       Iterator<Map.Entry<Object, InternalCacheEntry>> entryIterator = entries.entrySet().iterator();
       while (entryIterator.hasNext()) {
          Map.Entry<Object, InternalCacheEntry> entry = entryIterator.next();
-         if (entry.getValue().isExpired(currentTimeMillis)) {
-            entryIterator.remove();
-            result = true;
+         final InternalCacheEntry value = entry.getValue();
+         if (value.canExpire()) {
+            if (currentTimeMillis == 0)
+               currentTimeMillis = System.currentTimeMillis();
+            if (entry.getValue().isExpired(currentTimeMillis)) {
+               entryIterator.remove();
+               result = true;
+            }
          }
       }
       return result;

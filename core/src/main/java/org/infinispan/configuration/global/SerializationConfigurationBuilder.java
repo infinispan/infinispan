@@ -1,13 +1,27 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.global;
 
 import org.infinispan.Version;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,11 +30,7 @@ import java.util.Map;
  */
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SerializationConfiguration> {
 
-   private static final Log log = LogFactory.getLog(SerializationConfigurationBuilder.class);
-   
    private Marshaller marshaller = new VersionAwareMarshaller();
-   @Deprecated
-   private Class<? extends Marshaller> marshallerClass;
    private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR.replace(".", ""));
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
 
@@ -38,19 +48,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
-
-   /**
-    * Fully qualified name of the marshaller to use. It must implement org.infinispan.marshall.StreamingMarshaller Set the
-    * marshaller instance that will marshall and unmarshall cache entries.
-    *
-    * @param marshallerClass
-    * @deprecated Use {@link #marshaller(org.infinispan.marshall.Marshaller)} instead.
-    */
-   @Deprecated
-   public SerializationConfigurationBuilder marshallerClass(Class<? extends Marshaller> marshallerClass) {
-      this.marshallerClass = marshallerClass;
-      return this;
-   }
 
    /**
     * Largest allowable version to use when marshalling internal state. Set this to the lowest version cache instance in
@@ -121,10 +118,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
    @Override
    SerializationConfiguration create() {
-      if (marshallerClass != null && marshaller instanceof VersionAwareMarshaller) {
-         log.info("Creating marshaller from specified marshallerClass instead of the default. Please note that setting a marshaller using marshallerClass() is deprecated. Use marshaller() instead.");
-         marshaller = Util.getInstance(marshallerClass);
-      }
       return new SerializationConfiguration(marshaller, marshallVersion, advancedExternalizers);
    }
 

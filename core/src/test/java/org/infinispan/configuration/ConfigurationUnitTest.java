@@ -24,18 +24,30 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.testng.Assert.assertEquals;
+
+import java.net.URL;
+
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.Cache;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -60,7 +72,7 @@ public class ConfigurationUnitTest {
    public void testAdapt() {
       // Simple test to ensure we can actually adapt a config to the old config
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      new LegacyConfigurationAdaptor().adapt(cb.build());
+      LegacyConfigurationAdaptor.adapt(cb.build());
    }
    
    @Test
@@ -68,7 +80,7 @@ public class ConfigurationUnitTest {
       Configuration configuration = new ConfigurationBuilder()
          .eviction().maxEntries(20)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
       Assert.assertEquals(legacy.getEvictionMaxEntries(), 20);
    }
    
@@ -78,7 +90,7 @@ public class ConfigurationUnitTest {
          .clustering().cacheMode(CacheMode.DIST_SYNC)
          .transaction().autoCommit(true)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
       Assert.assertTrue(legacy.isTransactionAutoCommit());
       Assert.assertEquals(legacy.getCacheMode().name(), CacheMode.DIST_SYNC.name());
    }
@@ -139,7 +151,7 @@ public class ConfigurationUnitTest {
          .clustering().cacheMode(CacheMode.REPL_ASYNC)
          .async().useReplQueue(true).replQueueInterval(1222)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
    }
    
    @Test(expectedExceptions=IllegalStateException.class)
@@ -156,7 +168,7 @@ public class ConfigurationUnitTest {
    
    @Test
    public void testConsistentHash() {
-      Configuration config = new LegacyConfigurationAdaptor().adapt(new org.infinispan.config.Configuration());
+      Configuration config = LegacyConfigurationAdaptor.adapt(new org.infinispan.config.Configuration());
       Assert.assertNull(config.clustering().hash().consistentHash());
    }
 
@@ -168,10 +180,37 @@ public class ConfigurationUnitTest {
          ConfigurationBuilder cb = new ConfigurationBuilder();
          cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
          manager.defineConfiguration("testConfigCache", cb.build());
-         manager.getCache("testConfigCache");
+         Cache<Object, Object> cache = manager.getCache("testConfigCache");
+         assert !cache.getCacheConfiguration().clustering().l1().enabled();
+         assert !cache.getCacheConfiguration().clustering().l1().onRehash();
       } finally {
          TestingUtil.killCacheManagers(manager);
       }
    }
    
+   @Test
+   public void testClearCacheLoaders() {
+      Configuration c = new ConfigurationBuilder()
+            .loaders()
+               .addCacheLoader()
+            .loaders()
+               .clearCacheLoaders()
+         .build();
+      assertEquals(c.loaders().cacheLoaders().size(), 0);
+   }
+
+    @Test(expectedExceptions = ConfigurationException.class)
+    public void testClusterNameNull(){
+        GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
+        gc.transport().clusterName(null).build();
+    }
+
+   @Test
+   public void testSchema() throws Exception {
+      FileLookup lookup = FileLookupFactory.newInstance();
+      URL schemaFile = lookup.lookupFileLocation("schema/infinispan-config-5.2.xsd", Thread.currentThread().getContextClassLoader());
+      Source xmlFile = new StreamSource(lookup.lookupFile("configs/all.xml", Thread.currentThread().getContextClassLoader()));
+      SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
+   }
+
 }

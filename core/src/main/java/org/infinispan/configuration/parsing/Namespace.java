@@ -42,12 +42,21 @@ public enum Namespace {
 
     // configuration versions, oldest to newest
     INFINISPAN_5_0("urn:infinispan:config:5.0"),
-    INFINISPAN_5_1("urn:infinispan:config:5.1");
+    INFINISPAN_5_1("urn:infinispan:config:5.1"),
+    INFINISPAN_5_2("urn:infinispan:config:5.2");
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_5_1;
+    public static final Namespace CURRENT = INFINISPAN_5_2;
+
+    private static final Namespace[] SUPPORTED_NAMESPACES = new Namespace[] {
+          INFINISPAN_5_2, INFINISPAN_5_1, INFINISPAN_5_0, NONE};
+
+    public boolean isSupported() {
+       for (Namespace ns : SUPPORTED_NAMESPACES) if (this == ns) return true;
+       return false;
+    }
 
     private final String name;
 

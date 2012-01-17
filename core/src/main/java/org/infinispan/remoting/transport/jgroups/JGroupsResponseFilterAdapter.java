@@ -35,9 +35,9 @@ import org.jgroups.blocks.RspFilter;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JGroupsResponseFilterAdapter implements RspFilter {
+public final class JGroupsResponseFilterAdapter implements RspFilter {
 
-   ResponseFilter r;
+   final ResponseFilter r;
 
    /**
     * Creates an instance of the adapter

@@ -321,7 +321,7 @@ public class RhqPluginXmlGenerator {
 
    private static void debug(Object o) {
 //      if (log.isDebugEnabled()) log.debug(o);
-//      System.out.println(o);
+      System.out.println(o);
    }
 
 }

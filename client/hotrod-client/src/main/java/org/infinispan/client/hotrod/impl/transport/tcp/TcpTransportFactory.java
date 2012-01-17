@@ -205,7 +205,7 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          //1. first add new servers. For servers that went down, the returned transport will fail for now
-         for (SocketAddress server : newServers) {
+         for (SocketAddress server : addedServers) {
             log.newServerAdded(server);
             try {
                connectionPool.addObject(server);

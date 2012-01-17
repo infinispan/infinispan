@@ -381,7 +381,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    
    public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
       // TODO Once we switch to the new configuration as the canonical configuration, we can remove the adaptor
-      return new LegacyConfigurationAdaptor().adapt(config);
+      return LegacyConfigurationAdaptor.adapt(config);
    }
 
    public void addListener(Object listener) {

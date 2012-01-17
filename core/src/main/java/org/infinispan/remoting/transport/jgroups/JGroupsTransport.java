@@ -276,7 +276,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          } else {
             if (channel.getAddress() instanceof TopologyUUID) {
                TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
-               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getRackId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
                   throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
                }
             } else {
@@ -409,6 +409,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         if (addr == null) {
+            return Collections.emptyList();
+         }
          physicalAddress = new JGroupsAddress(addr);
       }
       return Collections.singletonList(physicalAddress);
@@ -583,7 +586,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    static Address fromJGroupsAddress(org.jgroups.Address addr) {
       if (addr instanceof TopologyUUID)
-         return new JGroupsTopologyAwareAddress(addr);
+         return new JGroupsTopologyAwareAddress((TopologyUUID)addr);
       else
          return new JGroupsAddress(addr);
    }

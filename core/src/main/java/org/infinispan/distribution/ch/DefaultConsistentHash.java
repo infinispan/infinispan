@@ -22,18 +22,21 @@
  */
 package org.infinispan.distribution.ch;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
+
+   private static final Log LOG = LogFactory.getLog(DefaultConsistentHash.class);
 
    public DefaultConsistentHash() {
    }
@@ -42,33 +45,18 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       setHashFunction(hash);
    }
 
-   public List<Address> locate(Object key, int replCount) {
-      return locateInternal(key, replCount, null);
-   }
-
    @Override
-   public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
-      return locateInternal(key, replCount, target) == null;
-   }
+   public List<Address> locate(final Object key, final int replCount) {
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      final int actualReplCount = Math.min(replCount, caches.size());
+      final List<Address> owners = new ArrayList<Address>(actualReplCount);
+      final boolean virtualNodesEnabled = isVirtualNodesEnabled();
 
-   /**
-    * Locate <code>replCount</code> owners for key <code>key</code> and return the list.
-    * If one of the owners is identical to <code>target</code>, return <code>null</code> instead.
-    */
-   private List<Address> locateInternal(Object key, int replCount, Address target) {
-      int actualReplCount = Math.min(replCount, caches.size());
-      int normalizedHash;
-      normalizedHash = getNormalizedHash(getGrouping(key));
-
-      List<Address> owners = new ArrayList<Address>(replCount);
-
-      for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(normalizedHash); it.hasNext();) {
-         Address a = it.next().getValue();
+      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
+         Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
-         if (!(isVirtualNodesEnabled() && owners.contains(a))) {
-            if (target != null && target.equals(a))
-               return null;
-
+         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
+         if (!isDuplicate) {
             owners.add(a);
             if (owners.size() >= actualReplCount)
                return owners;
@@ -77,6 +65,35 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       // might return < replCount owners if there aren't enough nodes in the list
       return owners;
+   }
+
+   @Override
+   public boolean isKeyLocalToAddress(final Address target, final Object key, final int replCount) {
+      final int actualReplCount = Math.min(replCount, caches.size());
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      final List<Address> owners = new ArrayList<Address>(actualReplCount);
+      final boolean virtualNodesEnabled = isVirtualNodesEnabled();
+
+      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
+         Address a = it.next();
+         // if virtual nodes are enabled we have to avoid duplicate addresses
+         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
+         if (!isDuplicate) {
+            if (target.equals(a))
+               return true;
+
+            owners.add(a);
+            if (owners.size() >= actualReplCount)
+               return false;
+         }
+      }
+
+      return false;
+   }
+
+   @Override
+   protected Log getLog() {
+      return LOG;
    }
 
    @Override

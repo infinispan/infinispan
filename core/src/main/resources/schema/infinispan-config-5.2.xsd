@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:5.1" xmlns:tns="urn:infinispan:config:5.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:5.2" xmlns:tns="urn:infinispan:config:5.2" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <xs:element name="infinispan">
     <xs:annotation>
@@ -546,7 +546,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="useSynchronization" type="xs:boolean"/>
+          <xs:attribute name="useSynchronization" type="xs:boolean">
+           <xs:annotation>
+              <xs:documentation>
+                 Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery as well, and registering a synchronization is significantly more efficient.
+              </xs:documentation>
+           </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="lockingMode" type="tns:lockingMode">
             <xs:annotation>
               <xs:documentation>
@@ -571,7 +577,7 @@
           <xs:attribute name="use1PcForAutoCommitTransactions" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
-                This configuration option was added for the following situation: - pre 5.1 code is using the cache
+                Before Infinispan 5.1 you could access the cache both transactionally and non-transactionally. Naturally the non-transactional access is faster and offers less consistency guarantees. From Infinispan 5.1 onwards, mixed access is no longer supported, so if you wanna speed up transactional caches and you're ready to trade some consistency guarantees, you can enable use1PcForAutoCommitTransactions. What this configuration option does is force an induced transaction, that has been started by Infinispan as a result of enabling autoCommit, to commit in a single phase. So only 1 RPC instead of 2RPCs as in the case of a full 2 Phase Commit (2PC).
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -590,11 +596,21 @@
                 <xs:sequence>
                   <xs:element name="properties" type="tns:properties" minOccurs="0"/>
                 </xs:sequence>
-                <xs:attribute name="after" type="xs:string"/>
-                <xs:attribute name="before" type="xs:string"/>
-                <xs:attribute name="class" type="xs:string"/>
-                <xs:attribute name="index" type="xs:int"/>
-                <xs:attribute name="position" type="xs:string"/>
+                <xs:attribute name="after" type="xs:string">
+                   <xs:annotation><xs:documentation>Dictates that the custom interceptor appears immediately after the specified interceptor. If the specified interceptor is not found in the interceptor chain, a ConfigurationException will be thrown when the cache starts.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="before" type="xs:string">
+                   <xs:annotation><xs:documentation>Dictates that the custom interceptor appears immediately before the specified interceptor. If the specified interceptor is not found in the interceptor chain, a ConfigurationException will be thrown when the cache starts.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="class" type="xs:string">
+                   <xs:annotation><xs:documentation>A fully qualified class name of the new custom interceptor to add to the configuration.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="index" type="xs:int">
+                   <xs:annotation><xs:documentation>Specifies a position in the interceptor chain to place the new interceptor. The index starts at 0 and goes up to the number of interceptors in a given configuration. A ConfigurationException is thrown if the index is less than 0 or greater than the maximum number of interceptors in the chain.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="position" type="xs:string">
+                   <xs:annotation><xs:documentation>Specifies a position where to place the new interceptor. Allowed values are FIRST, LAST, and OTHER_THAN_FIRST_OR_LAST</xs:documentation></xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
           </xs:sequence>
@@ -802,6 +818,36 @@
                 </xs:attribute>
               </xs:complexType>
             </xs:element>
+            <xs:element name="stateTransfer" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and replication clustered modes.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="chunkSize" type="xs:int">
+                  <xs:annotation>
+                    <xs:documentation>
+                       If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries. If &lt;= 0, the state will be transferred in all at once. Not recommended.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="fetchInMemoryState" type="xs:boolean">
+                  <xs:annotation>
+                    <xs:documentation>
+                      If true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="timeout" type="xs:long">
+                  <xs:annotation>
+                    <xs:documentation>
+                      This is the maximum amount of time - in milliseconds - to wait for state from neighboring caches, before throwing an exception and aborting startup.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+              </xs:complexType>
+            </xs:element>
             <xs:element name="l1" minOccurs="0">
               <xs:annotation>
                 <xs:documentation>
@@ -993,6 +1039,13 @@
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Enables storing both keys and values as binary.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="storeKeysAsBinary" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>

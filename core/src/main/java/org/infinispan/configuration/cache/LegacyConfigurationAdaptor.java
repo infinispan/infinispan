@@ -1,4 +1,24 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
+
+import java.util.Properties;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
@@ -21,9 +41,11 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.util.Util;
 
-import java.util.Properties;
-
+@SuppressWarnings("deprecation")
 public class LegacyConfigurationAdaptor {
+   private LegacyConfigurationAdaptor() {
+      // Hide constructor
+   }
 
    public static org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
       
@@ -52,23 +74,26 @@ public class LegacyConfigurationAdaptor {
                .consistentHashClass(config.clustering().hash().consistentHash().getClass());
       
       }
-      if (config.clustering().hash().hash() != null) {
+      if (config.clustering().hash().activated) {
+         if (config.clustering().hash().hash() != null) {
+            legacy.clustering()
+               .hash()
+                  .hashFunctionClass(config.clustering().hash().hash().getClass());
+         }
+
          legacy.clustering()
             .hash()
-               .hashFunctionClass(config.clustering().hash().hash().getClass());
+               .numOwners(config.clustering().hash().numOwners())
+               .numVirtualNodes(config.clustering().hash().numVirtualNodes())
+               .rehashEnabled(config.clustering().hash().rehashEnabled())
+               .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
+               .rehashWait(config.clustering().hash().rehashWait())
+               .groups()
+                  .enabled(config.clustering().hash().groups().enabled())
+                  .groupers(config.clustering().hash().groups().groupers());
       }
-      legacy.clustering()
-      .hash()
-            .numOwners(config.clustering().hash().numOwners())
-            .numVirtualNodes(config.clustering().hash().numVirtualNodes())
-            .rehashEnabled(config.clustering().hash().rehashEnabled())
-            .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
-            .rehashWait(config.clustering().hash().rehashWait())
-            .groups()
-               .enabled(config.clustering().hash().groups().enabled())
-               .groupers(config.clustering().hash().groups().groupers());
-      
-      if (config.clustering().l1().enabled()) {
+
+      if (config.clustering().l1().activated && config.clustering().l1().enabled()) {
          legacy.clustering()
             .l1()
                .invalidationThreshold(config.clustering().l1().invalidationThreshold())
@@ -94,13 +119,11 @@ public class LegacyConfigurationAdaptor {
       }
       
       for (InterceptorConfiguration interceptor : config.customInterceptors().interceptors()) {
-         CustomInterceptorPosition position = legacy.clustering()
-         .customInterceptors()
-            // TODO This seems to miss most of the parameters like after and before out?!?
+         CustomInterceptorPosition position = legacy.customInterceptors()
             .add(interceptor.interceptor());
          if (interceptor.after() != null)
             position.after(interceptor.after());
-         if (interceptor.index() != -1)
+         if (interceptor.index() > -1)
          position.atIndex(interceptor.index());
          if (interceptor.before() != null)
             position.before(interceptor.before());
@@ -170,9 +193,15 @@ public class LegacyConfigurationAdaptor {
          } else if (loader instanceof FileCacheStoreConfiguration) {
             FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
             clc = fcsc;
-            String location = loader.properties().getProperty("location");
-            if (location != null)
-               fcsc.location(location);
+            FileCacheStoreConfiguration store = (FileCacheStoreConfiguration) loader;
+            if (store.location() != null) {
+               fcsc.location(store.location());
+            }
+            if (store.fsyncMode() != null) {
+               fcsc.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(store.fsyncMode().name()));
+            }
+            fcsc.fsyncInterval(store.fsyncInterval());
+            fcsc.streamBufferSize(store.streamBufferSize());
          }
          if (clc instanceof CacheStoreConfig) {
             CacheStoreConfig csc = (CacheStoreConfig) clc;
@@ -275,29 +304,31 @@ public class LegacyConfigurationAdaptor {
                .useReplQueue(legacy.isUseReplQueue());
       }
       
-      if (legacy.hasConsistentHashClass()) {
+      if (legacy.isCustomConsistentHashClass()) {
          builder.clustering()
             .hash()
                .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));
       
       }
-      if (legacy.getHashFunctionClass() != null) {
+      if (legacy.isCustomHashFunctionClass()) {
          builder.clustering()
             .hash()
                .hash(Util.<Hash>getInstance(legacy.getHashFunctionClass(), legacy.getClassLoader()));
       }
-      builder.clustering()
-      .hash()
-            .numOwners(legacy.getNumOwners())
-            .numVirtualNodes(legacy.getNumVirtualNodes())
-            .rehashEnabled(legacy.isRehashEnabled())
-            .rehashRpcTimeout(legacy.getRehashRpcTimeout())
-            .rehashWait(legacy.getRehashWaitTime())
-            .groups()
-               .enabled(legacy.isGroupsEnabled())
-               .withGroupers(legacy.getGroupers());
+      if (legacy.isHashActivated()) {
+         builder.clustering()
+            .hash()
+               .numOwners(legacy.getNumOwners())
+               .numVirtualNodes(legacy.getNumVirtualNodes())
+               .rehashEnabled(legacy.isRehashEnabled())
+               .rehashRpcTimeout(legacy.getRehashRpcTimeout())
+               .rehashWait(legacy.getRehashWaitTime())
+               .groups()
+                  .enabled(legacy.isGroupsEnabled())
+                  .withGroupers(legacy.getGroupers());
+      }
       
-      if (legacy.isL1CacheEnabled()) {
+      if (legacy.isL1CacheActivated()) {
          builder.clustering()
             .l1().enable()
                .invalidationThreshold(legacy.getL1InvalidationThreshold())
@@ -325,11 +356,12 @@ public class LegacyConfigurationAdaptor {
          InterceptorConfigurationBuilder interceptorConfigurationBuilder = builder.clustering().customInterceptors().addInterceptor();
          if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())
             interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
-         if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
+         else if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
             interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
-         interceptorConfigurationBuilder.index(interceptor.getIndex());
-         interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
-         interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+         else if (!interceptor.getPositionAsString().equals(Position.OTHER_THAN_FIRST_OR_LAST.toString()))
+            interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+         else 
+            interceptorConfigurationBuilder.index(interceptor.getIndex());
       }
       
       builder.dataContainer()
@@ -387,7 +419,8 @@ public class LegacyConfigurationAdaptor {
             fcsBuilder.purgeSynchronously(csc.isPurgeSynchronously());
             fcsBuilder.location(csc.getLocation());
             fcsBuilder.fsyncInterval(csc.getFsyncInterval());
-            fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().toString()));
+            fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().name()));
+            fcsBuilder.streamBufferSize(csc.getStreamBufferSize());
             loaderBuilder = fcsBuilder;
          } else {
             LoaderConfigurationBuilder tmpLoaderBuilder = builder.loaders().addCacheLoader();

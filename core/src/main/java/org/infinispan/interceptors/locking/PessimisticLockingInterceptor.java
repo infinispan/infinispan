@@ -96,13 +96,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      try {
-         abortIfRemoteTransactionInvalid(ctx, command);
-         return invokeNextAndCommitIf1Pc(ctx, command);
-      } catch (Throwable t) {
-         // don't remove the locks here, the rollback command will clear them
-         throw t;
-      }
+      abortIfRemoteTransactionInvalid(ctx, command);
+      return invokeNextAndCommitIf1Pc(ctx, command);
+      // don't remove the locks here, the rollback command will clear them
    }
 
    @Override
@@ -271,7 +267,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
       lockManager.unlockAll(ctx);
-      if (ctx.isOriginLocal() && rpcManager != null) {
+      if (ctx.isOriginLocal() && ctx.isInTxScope() && rpcManager != null) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();

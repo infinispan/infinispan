@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
   ~ contributors as indicated by the @author tags. All rights reserved.
   ~ See the copyright.txt in the distribution for a full listing of
   ~ individual contributors.
@@ -28,7 +28,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.0-SNAPSHOT</version>
+      <version>5.2.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -40,7 +40,6 @@
       <dependency>
          <groupId>com.sleepycat</groupId>
          <artifactId>je</artifactId>
-         <version>${version.bdbje}</version>
       </dependency>
    </dependencies>
 
@@ -49,7 +48,6 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
-            <version>${version.maven.bundle}</version>
             <configuration>
                <instructions>
                   <Export-Package>

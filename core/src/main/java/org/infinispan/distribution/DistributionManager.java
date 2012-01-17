@@ -76,6 +76,13 @@ public interface DistributionManager {
    List<Address> locate(Object key);
 
    /**
+    * Returns the first Address containing the key.  Equivalent to returning the first element of {@link #locate(Object)}
+    * @param key key to test
+    * @return the first address on which the key may reside
+    */
+   Address getPrimaryLocation(Object key);
+
+   /**
     * Locates a list of keys in a cluster.  Like {@link #locate(Object)} the returned addresses <i>may not</i> be owners
     * of the keys if a rehash happens to be in progress or is pending, so when querying these servers, invalid responses
     * should be checked for and the next address checked accordingly.

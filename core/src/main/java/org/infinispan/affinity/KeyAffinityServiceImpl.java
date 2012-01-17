@@ -58,7 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class KeyAffinityServiceImpl implements KeyAffinityService {
 
-   private final float THRESHOLD = 0.5f;
+   public final static float THRESHOLD = 0.5f;
    
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
 
@@ -361,11 +361,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private Address getAddressForKey(Object key) {
       DistributionManager distributionManager = getDistributionManager();
       ConsistentHash hash = distributionManager.getConsistentHash();
-      List<Address> addressList = hash.locate(key, 1);
-      if (addressList.size() == 0) {
-         throw new IllegalStateException("Empty address list returned by consistent hash " + hash + " for key " + key);
-      }
-      return addressList.get(0);
+      return hash.primaryLocation(key);
    }
 
    private boolean isNodeInConsistentHash(Address address) {

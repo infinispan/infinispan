@@ -1,3 +1,21 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
 package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
@@ -8,13 +26,15 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
  * 
  * @author pmuir
- * 
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
@@ -40,30 +60,13 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and
-    * transactionAutoCommit is enabled then for single operation transactions the user doesn't need
-    * to manually start a transaction, but a transactions is injected by the system. Defaults to
-    * true.
+    * If the cache is transactional (i.e. {@link #transactionMode(org.infinispan.transaction.TransactionMode)} == TransactionMode.TRANSACTIONAL)
+    * and transactionAutoCommit is enabled then for single operation transactions
+    * the user doesn't need to manually start a transaction, but a transactions
+    * is injected by the system. Defaults to true.
     */
    public TransactionConfigurationBuilder autoCommit(boolean b) {
       this.autoCommit = b;
-      return this;
-   }
-
-   /**
-    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
-    * remote and local transactions to finish. The amount of time to wait for is defined by the
-    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
-    * because even if a new transaction was started just before the cache was stopped, this could
-    * only last as long as the transaction timeout allows it.
-    * <p/>
-    * This configuration property may be adjusted at runtime
-    * 
-    * @deprecated use {@link #cacheStopTimeout(long)} instead
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder cacheStopTimeout(int i) {
-      this.cacheStopTimeout = i;
       return this;
    }
 
@@ -88,7 +91,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * that gets locked is the main data owner, i.e. the node where data would reside if
     * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
     * rollback - data is in a consistent state, no fault tolerance.
-    * 
+    *
     * @deprecated starting with Infinispan 5.1 single node locking is used by default
     */
    @Deprecated
@@ -183,6 +186,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   /**
+    * Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an
+    * XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery
+    * as well, and registering a synchronization is significantly more efficient.
+    * @param b if true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a {@link TransactionManager}.
+    */
    public TransactionConfigurationBuilder useSynchronization(boolean b) {
       this.useSynchronization = b;
       return this;
@@ -199,8 +208,17 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
    
    /**
-    * This configuration option was added for the following situation:
-       * - pre 5.1 code is using the cache
+    * Before Infinispan 5.1 you could access the cache both transactionally and
+    * non-transactionally. Naturally the non-transactional access is faster and
+    * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
+    * access is no longer supported, so if you wanna speed up transactional
+    * caches and you're ready to trade some consistency guarantees, you can
+    * enable use1PcForAutoCommitTransactions. <p/>
+    *
+    * What this configuration option does is force an induced transaction,
+    * that has been started by Infinispan as a result of enabling autoCommit,
+    * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the
+    * case of a full 2 Phase Commit (2PC).
     */
    public TransactionConfigurationBuilder use1PcForAutoCommitTransactions(boolean b) {
       this.use1PcForAutoCommitTransactions = b;

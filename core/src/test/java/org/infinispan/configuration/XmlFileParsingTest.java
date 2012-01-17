@@ -30,7 +30,6 @@ import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
@@ -44,10 +43,10 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.something.Lookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -208,7 +207,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert !c.transaction().syncRollbackPhase();
 
       c = cm.getCacheConfiguration("transactional2");
-      assert c.transaction().transactionManagerLookup() instanceof Lookup;
+      assert c.transaction().transactionManagerLookup() instanceof TestLookup;
       assert c.transaction().cacheStopTimeout() == 10000;
       assert c.transaction().lockingMode().equals(LockingMode.PESSIMISTIC);
       assert !c.transaction().autoCommit();
@@ -216,7 +215,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("syncRepl");
 
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("asyncRepl");
@@ -224,20 +223,20 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
       assert !c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
 
       c = cm.getCacheConfiguration("asyncReplQueue");
 
       assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
       assert c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
 
       c = cm.getCacheConfiguration("txSyncRepl");
 
       assert c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup;
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("overriding");
@@ -289,9 +288,19 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().l1().lifespan() == 600000;
       assert c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
-      assert c.clustering().hash().consistentHash() instanceof TopologyAwareConsistentHash;
+      assert c.clustering().hash().consistentHash() == null; // this is just an override.
       assert c.clustering().hash().numOwners() == 3;
       assert c.clustering().l1().enabled();
+
+      c = cm.getCacheConfiguration("dist_with_vnodes");
+      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
+      assert c.clustering().l1().lifespan() == 600000;
+      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert c.clustering().stateTransfer().timeout() == 120000;
+      assert c.clustering().hash().consistentHash() == null; // this is just an override.
+      assert c.clustering().hash().numOwners() == 3;
+      assert c.clustering().l1().enabled();
+      assert c.clustering().hash().numVirtualNodes() == 1000;
 
       c = cm.getCacheConfiguration("groups");
       assert c.clustering().hash().groups().enabled();
