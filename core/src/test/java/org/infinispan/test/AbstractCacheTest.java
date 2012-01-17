@@ -141,7 +141,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    protected void assertLocked(Cache cache, Object key) {
-      assert checkLocked(cache, key) : "expected key '" + key + "' to be locked, but it is not";
+      assert checkLocked(cache, key) : "expected key '" + key + "' to be locked on cache " + cache + ", but it is not";
    }
 
    protected boolean checkLocked(Cache cache, Object key) {

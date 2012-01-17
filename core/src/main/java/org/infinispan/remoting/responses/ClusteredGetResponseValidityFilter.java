@@ -31,30 +31,38 @@ import java.util.HashSet;
 /**
  * A filter that tests the validity of {@link org.infinispan.commands.remote.ClusteredGetCommand}s.
  *
+ * JGroups calls our handler while holding a lock, so we don't need any synchronization.
+ *
  * @author Manik Surtani
  * @since 4.0
  */
 public class ClusteredGetResponseValidityFilter implements ResponseFilter {
 
-   private int numValidResponses = 0;
+   private Collection<Address> targets;
+   private int validResponses;
+   private int missingResponses;
 
-   private Collection<Address> pendingResponders;
-
-   public ClusteredGetResponseValidityFilter(Collection<Address> pendingResponders) {
-      this.pendingResponders = new HashSet<Address>(pendingResponders);
+   public ClusteredGetResponseValidityFilter(Collection<Address> targets, Address self) {
+      this.targets = new HashSet<Address>(targets);
+      this.validResponses = 0;
+      this.missingResponses = targets.size();
+      if (this.targets.contains(self)) {
+         this.missingResponses--;
+      }
    }
 
    public boolean isAcceptable(Response response, Address address) {
-      pendingResponders.remove(address);
-
-      if (response instanceof SuccessfulResponse) numValidResponses++;
+      if (targets.contains(address)) {
+         missingResponses--;
+         if (response instanceof SuccessfulResponse) validResponses++;
+      }
 
       // always return true to make sure a response is logged by the JGroups RpcDispatcher.
       return true;
    }
 
    public boolean needMoreResponses() {
-      return numValidResponses < 1 && !pendingResponders.isEmpty();
+      return validResponses < 1 && missingResponses > 0;
    }
 
 }
