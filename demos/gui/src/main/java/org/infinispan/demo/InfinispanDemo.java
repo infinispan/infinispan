@@ -173,8 +173,8 @@ public class InfinispanDemo {
                   processAction(goButton, false);
 
                   // reset these values
-                  lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
-                  maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+                  lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
+                  maxIdleSpinner.setValue(cache.getCacheConfiguration().expiration().maxIdle());
                   // now switch to the data pane
                   mainPane.setSelectedIndex(1);
                }
@@ -184,7 +184,7 @@ public class InfinispanDemo {
                      String s = lifespanSpinner.getValue().toString();
                      return Long.parseLong(s);
                   } catch (Exception e) {
-                     return cache.getConfiguration().getExpirationLifespan();
+                     return cache.getCacheConfiguration().expiration().lifespan();
                   }
                }
 
@@ -193,7 +193,7 @@ public class InfinispanDemo {
                      String s = maxIdleSpinner.getValue().toString();
                      return Long.parseLong(s);
                   } catch (Exception e) {
-                     return cache.getConfiguration().getExpirationMaxIdle();
+                     return cache.getCacheConfiguration().expiration().maxIdle();
                   }
                }
             });
@@ -381,8 +381,8 @@ public class InfinispanDemo {
                cacheManager.addListener(cl);
                updateClusterTable(cacheManager.getMembers());
 
-               lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
-               maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+               lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
+               maxIdleSpinner.setValue(cache.getCacheConfiguration().expiration().maxIdle());
                cacheContentsSizeLabel.setText("Cache contains " + cache.size() + " entries");
 
                moveCacheToState(ComponentStatus.RUNNING);
