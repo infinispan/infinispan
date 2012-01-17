@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -367,10 +368,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          globalConfiguration.accept(configurationValidator);
          defaultConfiguration = new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
          
-         for (ConfigurationBuilder b : holder.getConfigurationBuilders()) {
-            org.infinispan.configuration.cache.Configuration c = b.build();
+         for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+            org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
             Configuration legacy = new LegacyConfigurationAdaptor().adapt(c);
-            configurationOverrides.put(c.name(), legacy);
+            configurationOverrides.put(entry.getKey(), legacy);
          }
          
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
@@ -411,8 +412,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       
       if (namedCacheFile != null) {
          ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parse(namedCacheFile);
-         org.infinispan.configuration.cache.Configuration c = namedConfigurationBuilderHolder.getConfigurationBuilders().iterator().next().build();
-         defineConfiguration(c.name(), new LegacyConfigurationAdaptor().adapt(c));
+         Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
+         defineConfiguration(entry.getKey(), new LegacyConfigurationAdaptor().adapt(entry.getValue().build()));
       }
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());

@@ -4,7 +4,6 @@ import static java.util.Arrays.asList;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
-   protected String name;
    private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
@@ -38,11 +37,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.transaction = new TransactionConfigurationBuilder(this);
       this.versioning = new VersioningConfigurationBuilder(this);
       this.unsafe = new UnsafeConfigurationBuilder(this);
-   }
-   
-   public ConfigurationBuilder name(String name) {
-      this.name = name;
-      return this;
    }
    
    public ConfigurationBuilder classLoader(ClassLoader cl) {
@@ -144,8 +138,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public Configuration build() {
       validate();
-      return new Configuration(name,
-            clustering.create(),
+      return new Configuration(clustering.create(),
             customInterceptors.create(),
             dataContainer.create(),
             deadlockDetection.create(),
@@ -165,8 +158,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    public ConfigurationBuilder read(Configuration template) {
       this.classLoader = template.classLoader();
-      this.name = template.name();
-      
       this.clustering.read(template.clustering());
       this.customInterceptors.read(template.customInterceptors());
       this.dataContainer.read(template.dataContainer());
