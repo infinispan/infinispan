@@ -461,7 +461,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
    }
 
-   class MockAsyncStore extends AsyncStore {
+   static class MockAsyncStore extends AsyncStore {
       volatile boolean block = true;
       final CountDownLatch v1Latch;
       final CountDownLatch v2Latch;
