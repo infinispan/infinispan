@@ -291,6 +291,7 @@
             <include>org.infinispan:infinispan-cachestore-bdbje</include>
             <include>org.infinispan:infinispan-cachestore-cassandra</include>
             <include>org.infinispan:infinispan-cachestore-cloud</include>
+            <include>org.infinispan:infinispan-cachestore-hbase</include>
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
             <include>org.infinispan:infinispan-cachestore-jdbm</include>
             <include>org.infinispan:infinispan-cachestore-remote</include>
