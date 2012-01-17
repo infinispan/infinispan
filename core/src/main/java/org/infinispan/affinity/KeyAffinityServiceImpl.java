@@ -58,7 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class KeyAffinityServiceImpl implements KeyAffinityService {
 
-   private final float THRESHOLD = 0.5f;
+   public final static float THRESHOLD = 0.5f;
    
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
 
