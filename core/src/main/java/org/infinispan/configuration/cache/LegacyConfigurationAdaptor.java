@@ -234,7 +234,15 @@ public class LegacyConfigurationAdaptor {
                 .useSynchronization(config.transaction().useSynchronization())
                 .use1PcForAutoCommitTransactions(config.transaction().use1PcForAutoCommitTransactions())
                         //Pedro -- total order stuff
-                .transactionProtocol(config.transaction().transactionProtocol());
+                .transactionProtocol(config.transaction().transactionProtocol())
+                .transaction().totalOrderThreading().corePoolSize(config.transaction().totalOrderThreading()
+                .getCorePoolSize())
+                .transaction().totalOrderThreading().maximumPoolSize(config.transaction().totalOrderThreading()
+                .getMaximumPoolSize())
+                .transaction().totalOrderThreading().keepAliveTime(config.transaction().totalOrderThreading()
+                .getKeepAliveTime())
+                .transaction().totalOrderThreading().queueSize(config.transaction().totalOrderThreading()
+                .getQueueSize());
 
         if (config.transaction().recovery().enabled()) {
             legacy.transaction().recovery().recoveryInfoCacheName(config.transaction().recovery().recoveryInfoCacheName());
@@ -433,7 +441,11 @@ public class LegacyConfigurationAdaptor {
                 .useEagerLocking(legacy.isUseEagerLocking())
                 .useSynchronization(legacy.isUseSynchronizationForTransactions())
                         //Pedro -- total orde stuff
-                .transactionProtocol(legacy.getTransactionProtocol());
+                .transactionProtocol(legacy.getTransactionProtocol())
+                .totalOrderThreading().corePoolSize(legacy.getTOCorePoolSize())
+                .totalOrderThreading().maximumPoolSize(legacy.getTOMaximumPoolSize())
+                .totalOrderThreading().keepAliveTime(legacy.getTOKeepAliveTime())
+                .totalOrderThreading().queueSize(legacy.getTOQueueSize());
 
         builder.transaction().recovery().enabled(legacy.isTransactionRecoveryEnabled());
 

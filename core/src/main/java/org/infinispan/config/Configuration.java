@@ -1452,6 +1452,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return transaction.transactionProtocol.isTotalOrder();
     }
 
+    public int getTOCorePoolSize() {
+        return transaction.totalOrderThreading.corePoolSize;
+    }
+
+    public int getTOMaximumPoolSize() {
+        return transaction.totalOrderThreading.maximumPoolSize;
+    }
+
+    public long getTOKeepAliveTime() {
+        return transaction.totalOrderThreading.keepAliveTime;
+    }
+
+    public int getTOQueueSize() {
+        return transaction.totalOrderThreading.queueSize;
+    }
+
     // ------------------------------------------------------------------------------------------------------------
     //   HELPERS
     // ------------------------------------------------------------------------------------------------------------
@@ -1766,6 +1782,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         //Pedro -- activate total order
         @XmlAttribute
         protected TransactionProtocol transactionProtocol = TransactionProtocol.NORMAL;
+
+        @XmlElement
+        protected TotalOrderThreadingType totalOrderThreading = new TotalOrderThreadingType();
 
         public TransactionType(String transactionManagerLookupClass) {
             this.transactionManagerLookupClass = transactionManagerLookupClass;
@@ -2100,6 +2119,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             if (recovery != null)
                 dolly.recovery = (RecoveryType) recovery.clone();
             return dolly;
+        }
+
+        //Pedro -- total order
+
+        @Override
+        public TotalOrderThreadingType totalOrderThreading() {
+            totalOrderThreading.setConfiguration(config);
+            return totalOrderThreading;
         }
     }
 
@@ -4726,6 +4753,101 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
                 default:
                     return this;
             }
+        }
+    }
+
+    //Pedro -- thread pool configuration
+    @XmlAccessorType(XmlAccessType.PROPERTY)
+    @ConfigurationDoc(name = "totalOrderThreading", parentName = "transaction")
+    @Deprecated public static class TotalOrderThreadingType extends AbstractFluentConfigurationBean implements
+            TotalOrderThreadingConfig {
+
+        /** The serialVersionUID */
+        private static final long serialVersionUID = 7724325977464324904L;
+
+        @XmlAttribute (required = false)
+        protected int corePoolSize = 1;
+
+        @XmlAttribute (required = false)
+        protected int maximumPoolSize = 8;
+
+        @XmlAttribute (required = false)
+        protected long keepAliveTime = 1000; //milliseconds
+
+        @XmlAttribute (required = false)
+        protected int queueSize = 16;
+
+        public void accept(ConfigurationBeanVisitor v) {
+            v.visitTotalOrderThreadingType(this);
+        }
+
+        @Override
+        public TotalOrderThreadingConfig corePoolSize(int corePoolSize) {
+            setCorePoolSize(corePoolSize);
+            return this;
+        }
+
+        @Override
+        public TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize) {
+            setMaximumPoolSize(maxPoolSize);
+            return this;
+        }
+
+        @Override
+        public TotalOrderThreadingConfig keepAliveTime(long keepAliveTime) {
+            setKeepAliveTime(keepAliveTime);
+            return this;
+        }
+
+        @Override
+        public TotalOrderThreadingConfig queueSize(int size) {
+            setQueueSize(size);
+            return this;
+        }
+
+        @Override
+        public TransactionConfig lockingMode(LockingMode lockingMode) {
+            return transaction().lockingMode(lockingMode);
+        }
+
+        @Override
+        public TransactionConfig transactionMode(TransactionMode transactionMode) {
+            return transaction().transactionMode(transactionMode);
+        }
+
+        @Override
+        public TransactionConfig autoCommit(boolean enabled) {
+            return transaction().autoCommit(enabled);
+        }
+
+        @Override
+        public TransactionType use1PcForAutoCommitTransactions(boolean b) {
+            return transaction().use1PcForAutoCommitTransactions(b);
+        }
+
+        @Override
+        public TransactionType transactionProtocol(TransactionProtocol transactionProtocol) {
+            return transaction().transactionProtocol(transactionProtocol);
+        }
+
+        public void setCorePoolSize(int corePoolSize) {
+            testImmutability("corePoolSize");
+            this.corePoolSize = corePoolSize;
+        }
+
+        public void setMaximumPoolSize(int maximumPoolSize) {
+            testImmutability("maximumPoolSize");
+            this.maximumPoolSize = maximumPoolSize;
+        }
+
+        public void setKeepAliveTime(long keepAliveTime) {
+            testImmutability("keepAliveTime");
+            this.keepAliveTime = keepAliveTime;
+        }
+
+        public void setQueueSize(int queueSize) {
+            testImmutability("queueSize");
+            this.queueSize = queueSize;
         }
     }
 }

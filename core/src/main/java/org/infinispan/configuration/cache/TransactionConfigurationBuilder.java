@@ -29,10 +29,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
     //Pedro -- total order stuff
     private TransactionProtocol transactionProtocol;
+    private final TotalOrderThreadingConfigurationBuilder totalOrderThreading;
 
     TransactionConfigurationBuilder(ConfigurationBuilder builder) {
         super(builder);
         this.recovery = new RecoveryConfigurationBuilder(this);
+        this.totalOrderThreading = new TotalOrderThreadingConfigurationBuilder(this);
     }
 
     public TransactionConfigurationBuilder autoCommit(boolean b) {
@@ -154,7 +156,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
         return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode,
                 syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup,
                 transactionMode, useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions,
-                recovery.create(), transactionProtocol);
+                recovery.create(), transactionProtocol, totalOrderThreading.create());
     }
 
     @Override
@@ -175,6 +177,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
         //Pedro -- total order stuff
         this.transactionProtocol = template.transactionProtocol();
+        this.totalOrderThreading.read(template.totalOrderThreading());
 
         return this;
     }
@@ -187,5 +190,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
         this.transactionProtocol = transactionProtocol;
         return this;
+    }
+
+    public TotalOrderThreadingConfigurationBuilder totalOrderThreading() {
+        return totalOrderThreading;
     }
 }

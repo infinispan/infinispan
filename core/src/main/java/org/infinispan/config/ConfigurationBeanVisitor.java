@@ -37,86 +37,89 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  * ConfigurationBeanVisitor implementations are passed through InfinispanConfiguration object tree
  * visiting each configuration element of InfinispanConfiguration instance.
  * <p>
- * 
+ *
  * AbstractConfigurationBeanVisitor is a convenience super class for all implementations of
  * ConfigurationBeanVisitor. Most of the time, custom visitors should extend
  * AbstractConfigurationBeanVisitor rather than implement ConfigurationBeanVisitor
- * 
- * 
- * 
+ *
+ *
+ *
  * @author Vladimir Blagojevic
  * @see AbstractConfigurationBeanVisitor
  * @since 4.0
  */
-public interface ConfigurationBeanVisitor { 
-   
-   void visitInfinispanConfiguration(InfinispanConfiguration bean);
-   
-   void visitGlobalConfiguration(GlobalConfiguration bean);
-   
-   void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean);
-   
-   void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean);
-   
-   void visitSerializationType(SerializationType bean);
-   
-   void visitShutdownType(ShutdownType bean);
-   
-   void visitTransportType(TransportType bean);
-   
-   void visitConfiguration(Configuration bean);
-   
-   void visitAsyncType(AsyncType bean);
-   
-   void visitBooleanAttributeType(BooleanAttributeType bean);
-   
-   void visitClusteringType(ClusteringType bean);
-   
-   void visitCustomInterceptorsType(CustomInterceptorsType bean);
-   
-   void visitDataContainerType(DataContainerType bean);
-   
-   void visitDeadlockDetectionType(DeadlockDetectionType bean);
-   
-   void visitEvictionType(EvictionType bean);
-   
-   void visitExpirationType(ExpirationType bean);
-   
-   void visitGroupConfig(GroupsConfiguration bean);
-   
-   void visitHashType(HashType bean);
-   
-   void visitL1Type(L1Type bean);
-   
-   void visitQueryConfigurationBean(QueryConfigurationBean bean);
-   
-   void visitLockingType(LockingType bean);
-      
-   void visitStateRetrievalType(StateRetrievalType bean);
-   
-   void visitSyncType(SyncType bean);
-   
-   void visitTransactionType(TransactionType bean);
-   
-   void visitUnsafeType(UnsafeType bean);
-   
-   void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean);
-   
-   void visitCacheLoaderConfig(CacheLoaderConfig bean);
-   
-   void visitSingletonStoreConfig(SingletonStoreConfig bean);
-   
-   void visitAsyncStoreConfig(AsyncStoreConfig bean);
+public interface ConfigurationBeanVisitor {
 
-   void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);  
-   
-   void visitAdvancedExternalizersType(AdvancedExternalizersType bean);
-   
-   void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig config);
+    void visitInfinispanConfiguration(InfinispanConfiguration bean);
 
-   void visitRecoveryType(Configuration.RecoveryType config);
+    void visitGlobalConfiguration(GlobalConfiguration bean);
 
-   void visitStoreAsBinaryType(Configuration.StoreAsBinary config);
+    void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean);
 
-   void visitVersioningConfigurationBean(VersioningConfigurationBean config);
+    void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean);
+
+    void visitSerializationType(SerializationType bean);
+
+    void visitShutdownType(ShutdownType bean);
+
+    void visitTransportType(TransportType bean);
+
+    void visitConfiguration(Configuration bean);
+
+    void visitAsyncType(AsyncType bean);
+
+    void visitBooleanAttributeType(BooleanAttributeType bean);
+
+    void visitClusteringType(ClusteringType bean);
+
+    void visitCustomInterceptorsType(CustomInterceptorsType bean);
+
+    void visitDataContainerType(DataContainerType bean);
+
+    void visitDeadlockDetectionType(DeadlockDetectionType bean);
+
+    void visitEvictionType(EvictionType bean);
+
+    void visitExpirationType(ExpirationType bean);
+
+    void visitGroupConfig(GroupsConfiguration bean);
+
+    void visitHashType(HashType bean);
+
+    void visitL1Type(L1Type bean);
+
+    void visitQueryConfigurationBean(QueryConfigurationBean bean);
+
+    void visitLockingType(LockingType bean);
+
+    void visitStateRetrievalType(StateRetrievalType bean);
+
+    void visitSyncType(SyncType bean);
+
+    void visitTransactionType(TransactionType bean);
+
+    void visitUnsafeType(UnsafeType bean);
+
+    void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean);
+
+    void visitCacheLoaderConfig(CacheLoaderConfig bean);
+
+    void visitSingletonStoreConfig(SingletonStoreConfig bean);
+
+    void visitAsyncStoreConfig(AsyncStoreConfig bean);
+
+    void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);
+
+    void visitAdvancedExternalizersType(AdvancedExternalizersType bean);
+
+    void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig config);
+
+    void visitRecoveryType(Configuration.RecoveryType config);
+
+    void visitStoreAsBinaryType(Configuration.StoreAsBinary config);
+
+    void visitVersioningConfigurationBean(VersioningConfigurationBean config);
+
+    //Pedro -- total order threading configuration
+    void visitTotalOrderThreadingType(TotalOrderThreadingType config);
 }

@@ -46,85 +46,88 @@ import javax.transaction.Transaction;
 @Scope(Scopes.NAMED_CACHE)
 public interface InvocationContextContainer {
 
-   /**
-    * To be used when building InvocationContext with {@link #createInvocationContext(boolean, int)} as an indicator
-    * of the fact that the size of the keys to be accessed in the context is not known.
-    */
-   public static final int UNBOUNDED = -1;
+    /**
+     * To be used when building InvocationContext with {@link #createInvocationContext(boolean, int)} as an indicator
+     * of the fact that the size of the keys to be accessed in the context is not known.
+     */
+    public static final int UNBOUNDED = -1;
 
-   /**
-    * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:
-    * implementations of this method are most likely expensive, involving thread locals. It is recommended to cache
-    * the result of this method rather than repeating the call.
-    *
-    * @throws IllegalStateException if there is no context associated with the current thread.
-    *
-    * @deprecated see implementation for notes
-    * @param quiet
-    */
-   @Deprecated
-   InvocationContext getInvocationContext(boolean quiet);
+    /**
+     * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:
+     * implementations of this method are most likely expensive, involving thread locals. It is recommended to cache
+     * the result of this method rather than repeating the call.
+     *
+     * @throws IllegalStateException if there is no context associated with the current thread.
+     *
+     * @deprecated see implementation for notes
+     * @param quiet
+     */
+    @Deprecated
+    InvocationContext getInvocationContext(boolean quiet);
 
 
-   /**
-    * If we are in a tx scope this will return an {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it
-    * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
-    * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true.
-    */
-   InvocationContext createInvocationContext(boolean isWrite, int keyCount);
+    /**
+     * If we are in a tx scope this will return an {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it
+     * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
+     * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true.
+     */
+    InvocationContext createInvocationContext(boolean isWrite, int keyCount);
 
-   /**
-    * Creates an invocation context
-    *
-    * @param tx
-    * @return
-    */
-   InvocationContext createInvocationContext(Transaction tx);
+    /**
+     * Creates an invocation context
+     *
+     * @param tx
+     * @return
+     */
+    InvocationContext createInvocationContext(Transaction tx);
 
-   /**
-    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
-    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
-    */
-   NonTxInvocationContext createNonTxInvocationContext();
+    /**
+     * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
+     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
+     */
+    NonTxInvocationContext createNonTxInvocationContext();
 
-   /**
-    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
-    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
-    */
-   InvocationContext createSingleKeyNonTxInvocationContext();
+    /**
+     * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
+     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
+     */
+    InvocationContext createSingleKeyNonTxInvocationContext();
 
-   /**
-    * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
-    */
-   LocalTxInvocationContext createTxInvocationContext();
+    /**
+     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
+     */
+    LocalTxInvocationContext createTxInvocationContext();
 
-   /**
-    * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}.
-    *
-    * @param tx remote transaction
-    * @param origin the origin of the command, or null if local
-    */
-   RemoteTxInvocationContext createRemoteTxInvocationContext(RemoteTransaction tx, Address origin);
+    /**
+     * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}.
+     *
+     * @param tx remote transaction
+     * @param origin the origin of the command, or null if local
+     */
+    RemoteTxInvocationContext createRemoteTxInvocationContext(RemoteTransaction tx, Address origin);
 
-   /**
-    * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose {@link
-    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true.
-    *
-    * @param origin the origin of the command, or null if local
-    */
-   InvocationContext createRemoteInvocationContext(Address origin);
+    /**
+     * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose {@link
+     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true.
+     *
+     * @param origin the origin of the command, or null if local
+     */
+    InvocationContext createRemoteInvocationContext(Address origin);
 
-   /**
-    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)}, but returning the flags to
-    * the context from the Command if any Flag was set.
-    *
-    * @param cacheCommand
-    * @param origin       the origin of the command, or null if local
-    */
-   InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);
+    /**
+     * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)}, but returning the flags to
+     * the context from the Command if any Flag was set.
+     *
+     * @param cacheCommand
+     * @param origin       the origin of the command, or null if local
+     */
+    InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);
 
-   /**
-    * Must be called as each thread exists the interceptor chain.
-    */
-   void clearThreadLocal();
+    /**
+     * Must be called as each thread exists the interceptor chain.
+     */
+    void clearThreadLocal();
+
+    //Pedro -- is it really needed?
+    void setContext(InvocationContext ctx);
 }

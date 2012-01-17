@@ -290,6 +290,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
         //Pedro -- total order stuff
         Configuration.TransactionType transactionProtocol(TransactionProtocol transactionProtocol);
+
+        TotalOrderThreadingConfig totalOrderThreading();
     }
 
     /**
@@ -304,6 +306,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
          * a cache named {@link Configuration.RecoveryType#DEFAULT_RECOVERY_INFO_CACHE}
          */
         RecoveryConfig recoveryInfoCacheName(String cacheName);
+    }
+
+    //Pedro -- total order multithread configuration
+    @Deprecated public static interface TotalOrderThreadingConfig extends TransactionConfig {
+        TotalOrderThreadingConfig corePoolSize(int corePoolSize);
+        TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize);
+        TotalOrderThreadingConfig keepAliveTime(long keepAliveTime);
+        TotalOrderThreadingConfig queueSize(int size);
     }
 
     /**
@@ -1028,6 +1038,11 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
 
     public FluentConfiguration.RecoveryConfig recovery() {
         return transaction().recovery();
+    }
+
+    //Pedro -- total order
+    public FluentConfiguration.TotalOrderThreadingConfig totalOrderThreading() {
+        return transaction().totalOrderThreading();
     }
 
     @Override

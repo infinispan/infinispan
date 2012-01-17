@@ -23,13 +23,18 @@ public class TransactionConfiguration {
     private final RecoveryConfiguration recovery;
     private final boolean use1PcForAutoCommitTransactions;
     //Pedro -- total order stuff
-    private TransactionProtocol transactionProtocol;
+    private final TransactionProtocol transactionProtocol;
+    private final TotalOrderThreadingConfiguration totalOrderThreading;
 
     //Pedro -- added total order parameter
-    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
-                             boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup, TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup,
+    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode,
+                             LockingMode lockingMode, boolean syncCommitPhase, boolean syncRollbackPhase,
+                             TransactionManagerLookup transactionManagerLookup,
+                             TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup,
                              TransactionMode transactionMode, boolean useEagerLocking, boolean useSynchronization,
-                             boolean use1PcForAutoCommitTransactions, RecoveryConfiguration recovery, TransactionProtocol transactionProtocol) {
+                             boolean use1PcForAutoCommitTransactions, RecoveryConfiguration recovery,
+                             TransactionProtocol transactionProtocol,
+                             TotalOrderThreadingConfiguration totalOrderThreading) {
         this.autoCommit = autoCommit;
         this.cacheStopTimeout = cacheStopTimeout;
         this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -45,6 +50,7 @@ public class TransactionConfiguration {
         this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
         //Pedro -- total order stuff
         this.transactionProtocol = transactionProtocol;
+        this.totalOrderThreading = totalOrderThreading;
     }
 
     public boolean autoCommit() {
@@ -143,8 +149,7 @@ public class TransactionConfiguration {
         return transactionProtocol;
     }
 
-    public TransactionConfiguration transactionProtocol(TransactionProtocol t) {
-        this.transactionProtocol = t;
-        return this;
+    public TotalOrderThreadingConfiguration totalOrderThreading() {
+        return totalOrderThreading;
     }
 }

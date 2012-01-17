@@ -3,15 +3,12 @@ package org.infinispan.interceptors.totalorder;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.totalorder.TotalOrderValidator;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,33 +19,25 @@ import java.util.Map;
  */
 public class TotalOrderInterceptor extends CommandInterceptor {
 
-    protected Map<GlobalTransaction, LocalTransaction> localTransactionMap = new HashMap<GlobalTransaction, LocalTransaction>();
-
     private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
+
+    private TotalOrderValidator totalOrderValidator;
+
+    @Inject
+    public void inject(TotalOrderValidator totalOrderValidator) {
+        this.totalOrderValidator = totalOrderValidator;
+    }
 
     @Override
     public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
         if(ctx.isOriginLocal()) {
-            localTransactionMap.put(command.getGlobalTransaction(), (LocalTransaction) ctx.getCacheTransaction());
+            totalOrderValidator.addLocalTransaction(command, ctx);
             return invokeNextInterceptor(ctx, command);
         } else {
             log.tracef("Received prepare command in total order with transaction %s",
                     Util.printPrettyGlobalTransaction(command.getGlobalTransaction()));
-            LocalTransaction localTransaction = localTransactionMap.remove(command.getGlobalTransaction());
-            Object retVal = null;
-            boolean exception = false;
-            try {
-                retVal = invokeNextInterceptor(ctx, command);
-            } catch(Throwable t) {
-                retVal = t;
-                exception = true;
-                throw t;
-            } finally {
-                if(localTransaction != null) {
-                    localTransaction.addPrepareResult(retVal, exception);
-                }
-            }
-            return retVal;
+            totalOrderValidator.validateTransaction(command, ctx, getNext());
+            return null;
         }
     }
 

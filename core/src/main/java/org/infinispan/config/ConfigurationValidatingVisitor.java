@@ -201,4 +201,17 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
         }
 
     }
+
+    @Override
+    public void visitTotalOrderThreadingType(Configuration.TotalOrderThreadingType config) {
+        // if corePoolSize greater than maximumPoolSize.
+        if(config.corePoolSize <= 0 || config.keepAliveTime <= 0 || config.maximumPoolSize <= 0 ||
+                config.queueSize <= 0) {
+            throw new ConfigurationException("All the configuration values (corePoolSize, keepAliveTime, " +
+                    "maximumPoolSize, queueSize) must be greater than zero");
+        } else if(config.corePoolSize > config.maximumPoolSize) {
+            throw new ConfigurationException("Core pool size value is greater than the maximum pool size");
+        }
+
+    }
 }
