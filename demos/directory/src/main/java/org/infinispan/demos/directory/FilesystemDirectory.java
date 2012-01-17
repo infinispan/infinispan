@@ -22,19 +22,20 @@
  */
 package org.infinispan.demos.directory;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.jgroups.util.Util;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.jgroups.util.Util;
 
 /**
  * @author Bela Ban
@@ -46,23 +47,11 @@ public class FilesystemDirectory {
 
 
     public void start() throws Exception {
-        GlobalConfiguration cfg=GlobalConfiguration.getClusteredDefault();
-        manager=new DefaultCacheManager(cfg);
-
-        Configuration config=new Configuration();
-
-        // config.setCacheMode(Configuration.CacheMode.REPL_ASYNC);
-        config.setCacheMode(Configuration.CacheMode.DIST_ASYNC);
-        // config.setStateRetrievalTimeout(10000);
-        config.setNumOwners(1); // no redundancy
-        // config.setNumOwners(2);
-
-
-        config.setL1CacheEnabled(true);
-
-        manager.defineConfiguration("bela", config);
-        cache=manager.getCache("bela");
-
+      manager = new DefaultCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder().build());      
+      manager.defineConfiguration("dirCache",
+               new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC).clustering()
+                        .hash().numOwners(1).clustering().l1().enable().build());
+      cache = manager.getCache("dirCache");
 
         boolean looping=true;
         while(looping) {

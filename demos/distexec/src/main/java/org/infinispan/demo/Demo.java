@@ -23,7 +23,9 @@ import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.SimpleJSAP;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 
@@ -59,8 +61,11 @@ public abstract class Demo {
    protected Cache<String, String> startCache() throws IOException {
       CacheBuilder cb = new CacheBuilder(cfgFile);
       EmbeddedCacheManager cacheManager = cb.getCacheManager();
-      Configuration cacheCfg = cacheManager.getDefaultConfiguration().clone().fluent().clustering().l1().disable().mode(Configuration.CacheMode.DIST_SYNC).hash().numOwners(1).build();
-      cacheManager.defineConfiguration("wordcount", cacheCfg);
+      Configuration dcc = cacheManager.getDefaultCacheConfiguration();
+
+      cacheManager.defineConfiguration("wordcount", new ConfigurationBuilder().read(dcc)
+               .clustering().l1().disable().clustering().cacheMode(CacheMode.DIST_SYNC).hash()
+               .numOwners(1).build());
       Cache<String, String> cache = cacheManager.getCache();
 
       Transport transport = cache.getAdvancedCache().getRpcManager().getTransport();
