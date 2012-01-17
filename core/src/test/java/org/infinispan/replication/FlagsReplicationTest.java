@@ -133,7 +133,7 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest {
       }
    }
    
-   private class CommitThread implements Runnable {
+   static private class CommitThread implements Runnable {
       
       private final AdvancedCache cache;
       private final AtomicBoolean allok;

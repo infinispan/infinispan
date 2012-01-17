@@ -73,7 +73,7 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
    }
 
 
-   class CheckInterceptor extends CommandInterceptor {
+   static class CheckInterceptor extends CommandInterceptor {
 
       private boolean putOkay;
       private boolean removeOkay;

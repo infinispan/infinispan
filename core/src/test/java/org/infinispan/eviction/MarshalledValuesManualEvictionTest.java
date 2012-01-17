@@ -85,7 +85,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       assert !interceptor.marshalledValueCreated;
    }
 
-   class ManualEvictionPojo implements Externalizable {
+   static class ManualEvictionPojo implements Externalizable {
       int i;
 
       public boolean equals(Object o) {

@@ -93,7 +93,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
    }
 
 
-   public class DelayInterceptor extends CommandInterceptor {
+   static public class DelayInterceptor extends CommandInterceptor {
 
       volatile boolean receivedReplRequest = false;
 

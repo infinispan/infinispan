@@ -583,7 +583,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    static Address fromJGroupsAddress(org.jgroups.Address addr) {
       if (addr instanceof TopologyUUID)
-         return new JGroupsTopologyAwareAddress(addr);
+         return new JGroupsTopologyAwareAddress((TopologyUUID)addr);
       else
          return new JGroupsAddress(addr);
    }

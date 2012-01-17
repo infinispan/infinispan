@@ -21,7 +21,6 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.jgroups.Address;
 import org.jgroups.util.TopologyUUID;
 
 import java.io.IOException;
@@ -36,26 +35,29 @@ import java.util.Set;
  * @author Bela Ban
  * @since 5.0
  */
-public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
+public final class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
 
-   public JGroupsTopologyAwareAddress(org.jgroups.Address address) {
+   private final TopologyUUID topologyAddress;
+
+   public JGroupsTopologyAwareAddress(TopologyUUID address) {
       super(address);
+      topologyAddress = address;
    }
 
 
    @Override
    public String getSiteId() {
-      return ((TopologyUUID)getJGroupsAddress()).getSiteId();
+      return topologyAddress.getSiteId();
    }
 
    @Override
    public String getRackId() {
-      return ((TopologyUUID)getJGroupsAddress()).getRackId();
+      return topologyAddress.getRackId();
    }
 
    @Override
    public String getMachineId() {
-      return ((TopologyUUID)getJGroupsAddress()).getMachineId();
+      return topologyAddress.getMachineId();
    }
 
 
@@ -73,12 +75,12 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
 
    @Override
    public boolean isSameMachine(TopologyAwareAddress addr) {
-      if (!isSameSite(addr) || !isSameRack(addr))
+      if (!isSameRack(addr))
          return false;
       return getMachineId() == null ? addr.getMachineId() == null : getMachineId().equals(addr.getMachineId());
    }
 
-   public static class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
+   public static final class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {
@@ -90,7 +92,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
 
       public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
-            Address jgroupsAddress = org.jgroups.util.Util.readAddress(unmarshaller);
+            TopologyUUID jgroupsAddress = (TopologyUUID) org.jgroups.util.Util.readAddress(unmarshaller);
             return new JGroupsTopologyAwareAddress(jgroupsAddress);
          } catch (Exception e) {
             throw new IOException(e);

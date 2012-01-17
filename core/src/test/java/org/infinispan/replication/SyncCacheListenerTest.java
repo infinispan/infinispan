@@ -207,7 +207,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   public class RemoteListener {
+   static public class RemoteListener {
 
       @CacheEntryRemoved
       @CacheEntryModified
