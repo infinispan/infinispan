@@ -661,6 +661,11 @@
          <outputDirectory>doc/apidocs</outputDirectory>
       </fileSet>
 
+      <fileSet>
+         <directory>core/target/xsd_doc</directory>
+         <outputDirectory>doc/configdocs</outputDirectory>
+      </fileSet>
+
    </fileSets>
 
 </assembly>
