@@ -546,7 +546,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="useSynchronization" type="xs:boolean"/>
+          <xs:attribute name="useSynchronization" type="xs:boolean">
+           <xs:annotation>
+              <xs:documentation>
+                 Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery as well, and registering a synchronization is significantly more efficient.
+              </xs:documentation>
+           </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="lockingMode" type="tns:lockingMode">
             <xs:annotation>
               <xs:documentation>
