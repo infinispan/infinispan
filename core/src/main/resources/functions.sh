@@ -151,13 +151,15 @@ function start() {
   	START_ARGS=( "${START_ARGS[@]}" "${JVM_ARGS[@]}" )
   fi
 
-  # Log4J config path needs path conversion in Cygwin
-  if $CYGWIN; then
-    LOG4J_CONFIG=`cygpath -w "${ISPN_HOME}/etc/log4j.xml"`
-  else
-    LOG4J_CONFIG=${ISPN_HOME}/etc/log4j.xml
-  fi 
-  START_ARGS=( "${START_ARGS[@]}" "-Dlog4j.configuration=file:///$LOG4J_CONFIG" )
+  if [ "x$LOG4J_CONFIG" = "x" ]; then
+    # Log4J config path needs path conversion in Cygwin
+    if $CYGWIN; then
+      LOG4J_CONFIG=`cygpath -w "${ISPN_HOME}/etc/log4j.xml"`
+    else
+      LOG4J_CONFIG=${ISPN_HOME}/etc/log4j.xml
+    fi 
+    START_ARGS=( "${START_ARGS[@]}" "-Dlog4j.configuration=file:///$LOG4J_CONFIG" )
+  fi
 
   # Main class and its arguments
   START_ARGS=( "${START_ARGS[@]}" "$MAIN_CLASS" )
