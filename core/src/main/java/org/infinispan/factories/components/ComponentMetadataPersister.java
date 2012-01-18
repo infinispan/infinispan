@@ -176,12 +176,12 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       DefaultFactoryFor dff = ReflectionUtil.getAnnotation(clazz, DefaultFactoryFor.class);
 
       if (dff != null) {
-         for (Class target : dff.classes()) FACTORIES.put(target.getName(), className);
+         for (Class<?> target : dff.classes()) FACTORIES.put(target.getName(), className);
       }
    }
 
    private static String extractFqcn(String path, File f) {
-      return f.getAbsolutePath().replace(path, "").replace(File.separator, ".").replace(".class", "").replaceFirst(".", "");
+      return f.getAbsolutePath().replace(path, "").replace(File.separator, ".").replace(".class", "").replaceFirst("\\.+", "");
    }
 
    private static void writeMetadata(String metadataFile) throws IOException {
