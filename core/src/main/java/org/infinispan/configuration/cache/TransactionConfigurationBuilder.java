@@ -8,6 +8,9 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -183,6 +186,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   /**
+    * Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an
+    * XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery
+    * as well, and registering a synchronization is significantly more efficient.
+    * @param b if true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a {@link TransactionManager}.
+    */
    public TransactionConfigurationBuilder useSynchronization(boolean b) {
       this.useSynchronization = b;
       return this;
