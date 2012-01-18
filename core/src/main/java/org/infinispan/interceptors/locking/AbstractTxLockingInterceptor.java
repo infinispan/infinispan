@@ -34,6 +34,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.TransactionTable;
@@ -52,11 +53,17 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    protected TransactionTable txTable;
    protected RpcManager rpcManager;
+   private boolean clustered;
 
    @Inject
    public void setDependencies(TransactionTable txTable, RpcManager rpcManager) {
       this.txTable = txTable;
       this.rpcManager = rpcManager;
+   }
+
+   @Start
+   private void setClustered() {
+      clustered = rpcManager != null;
    }
 
 
@@ -162,27 +169,36 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          return;
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
-      final Integer viewId = txContext.getCacheTransaction().getViewId();
-      if (viewId != null) {
-         checkForPendingLocks = viewId > txTable.getMinViewId();
+      int transactionViewId = -1;
+      if (clustered) {
+         transactionViewId = txContext.getCacheTransaction().getViewId();
+         if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
+            checkForPendingLocks = transactionViewId > txTable.getMinViewId();
+         }
       }
 
-      getLog().tracef("Locking key %s, checking for pending locks? %s", key, checkForPendingLocks);
-      if (!checkForPendingLocks) {
-         lockManager.acquireLock(ctx, key);
-      } else {
-         Set<CacheTransaction> tx = txTable.getTransactionsStartedBefore(viewId);
+      if (checkForPendingLocks) {
+         getLog().tracef("Checking for pending locks and then locking key %s", key);
 
          long expectedEndTime = nowMillis() + configuration.getLockAcquisitionTimeout();
 
-         //first wait for all potential lock owners
-         for (CacheTransaction ct : tx) {
-            long remaining = expectedEndTime - nowMillis();
-            if (remaining < 0 || !ct.waitForLockRelease(key, remaining))
-               throw newTimeoutException(key, txContext);
+         // Check local transactions first
+         for (CacheTransaction ct: txTable.getLocalTransactions()) {
+            if (ct.getViewId() < transactionViewId) {
+               long remaining = expectedEndTime - nowMillis();
+               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
+            }
          }
 
-         //then try to acquire lock
+         // ... then remote ones
+         for (CacheTransaction ct: txTable.getRemoteTransactions()) {
+            if (ct.getViewId() < transactionViewId) {
+               long remaining = expectedEndTime - nowMillis();
+               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
+            }
+         }
+
+         // Then try to acquire a lock
          final long remaining = expectedEndTime - nowMillis();
          if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
@@ -190,6 +206,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
             getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
             lockManager.acquireLock(ctx, key, remaining);
          }
+      } else {
+         getLog().tracef("Locking key %s, no need to check for pending locks.", key);
+         lockManager.acquireLock(ctx, key);
       }
    }
 

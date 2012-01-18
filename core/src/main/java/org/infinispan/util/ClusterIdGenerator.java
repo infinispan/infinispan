@@ -51,11 +51,9 @@ public class ClusterIdGenerator {
    private final AtomicInteger versionCounter = new AtomicInteger();
 
    private final AtomicLong versionPrefix = new AtomicLong();
-   private RankCalculator rankCalculator = new RankCalculator();
 
    public ClusterIdGenerator(EmbeddedCacheManager cm, Transport transport) {
-      if (cm != null)
-         cm.addListener(rankCalculator);
+      if (cm != null) cm.addListener(new RankCalculator());
 
       if (transport != null) {
          calculateRank(transport.getAddress(), transport.getMembers(), transport.getViewId());

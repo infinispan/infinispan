@@ -34,8 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", description = "See ISPN-1123")
 public class ConcurrentJoinTest extends RehashTestBase {
 
@@ -84,7 +82,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
       List<CacheContainer> allCacheManagers = new ArrayList<CacheContainer>(cacheManagers);
       // Collection already contains all cache managers, no need to add more
       TestingUtil.blockUntilViewsReceived(60000, false, allCacheManagers);
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[NUM_JOINERS]));
+      waitForClusterToForm(cacheName);
       int[] joinersPos = new int[NUM_JOINERS];
       for (int i = 0; i < NUM_JOINERS; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
 

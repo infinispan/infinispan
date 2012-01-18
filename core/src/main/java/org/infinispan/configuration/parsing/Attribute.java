@@ -42,6 +42,7 @@ public enum Attribute {
     BEFORE("before"),
     CACHE_MANAGER_NAME("cacheManagerName"),
     CACHE_STOP_TIMEOUT("cacheStopTimeout"),
+    CHUNK_SIZE("chunkSize"),
     CLASS("class"),
     CLUSTER_NAME("clusterName"),
     CONCURRENCY_LEVEL("concurrencyLevel"),
@@ -151,7 +152,7 @@ public enum Attribute {
     private static final Map<String, Attribute> attributes;
 
     static {
-        final Map<String, Attribute> map = new HashMap<String, Attribute>();
+        final Map<String, Attribute> map = new HashMap<String, Attribute>(64);
         for (Attribute attribute : values()) {
             final String name = attribute.getLocalName();
             if (name != null) map.put(name, attribute);

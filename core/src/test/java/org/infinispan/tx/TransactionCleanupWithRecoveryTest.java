@@ -9,6 +9,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -30,7 +31,7 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
             .transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
             .recovery()
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
             .build();
 
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(cfg),

@@ -190,7 +190,6 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
             if (!atIt1) {
                boolean found = false;
-               long currentTimeMillis = System.currentTimeMillis();
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
@@ -204,9 +203,6 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      next = immutableInternalCacheEntry(entryFactory.create(key, e.getValue(), e.getVersion()));
                      found = true;
                      break;
-                  }
-                  if (e.isRemoved() || ice.isExpired(currentTimeMillis)) {
-                     continue;
                   }
                }
 
@@ -317,14 +313,19 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          }
 
          private void fetchNext() {
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = -1; //lazily look at the wall clock: we want to look no more than once, but not at all if all entries are immortal.
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (e.isExpired(currentTimeMillis)) {
-                  continue;
-               } else {
+               if (e.canExpire()) {
+                  if (currentTimeMillis == -1) currentTimeMillis = System.currentTimeMillis();
+                  if (! e.isExpired(currentTimeMillis)) {
+                     next = e;
+                     return;
+                  }
+               }
+               else {
                   next = e;
-                  break;
+                  return;
                }
             }
          }

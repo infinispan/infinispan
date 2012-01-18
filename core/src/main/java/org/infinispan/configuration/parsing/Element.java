@@ -72,6 +72,7 @@ public enum Element {
     SHUTDOWN("shutdown"),
     SINGLETON_STORE("singletonStore"),
     STATE_RETRIEVAL("stateRetrieval"),
+    STATE_TRANSFER("stateTransfer"),
     STORE_AS_BINARY("storeAsBinary"),
     SYNC("sync"),
     TRANSACTION("transaction"),
@@ -98,7 +99,7 @@ public enum Element {
     private static final Map<String, Element> MAP;
 
     static {
-        final Map<String, Element> map = new HashMap<String, Element>();
+        final Map<String, Element> map = new HashMap<String, Element>(8);
         for (Element element : values()) {
             final String name = element.getLocalName();
             if (name != null) map.put(name, element);

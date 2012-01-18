@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -18,9 +16,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    private Hash hash = new MurmurHash3();
    private int numOwners = 2;
    private int numVirtualNodes = 1;
-   private boolean rehashEnabled = true;
-   private long rehashRpcTimeout = MINUTES.toMillis(10);
-   private long rehashWait = MINUTES.toMillis(1);
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
 
@@ -51,23 +46,24 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    /**
     * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at
-    * TODO
+    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
+    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
     * </p>
-    * 
+    *
     * <p>
     * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
     * must be used if you wish to take advnatage of virtual nodes.
     * </p>
-    * 
+    *
     * <p>
     * A default of 1 is used.
     * </p>
-    * 
-    * @param numVirtualNodes the number of virtual nodes. Must be >0.
-    * @throws IllegalArgumentException if numVirtualNodes <0
+    *
+    * @param numVirtualNodes the number of virtual nodes. Must be &gt; 0.
+    * @throws IllegalArgumentException if numVirtualNodes &lt; 1
     */
    public HashConfigurationBuilder numVirtualNodes(int numVirtualNodes) {
+      if (numVirtualNodes < 1) throw new IllegalArgumentException("numVirtualNodes cannot be less than 1");
       this.numVirtualNodes = numVirtualNodes;
       return this;
    }
@@ -75,43 +71,46 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    /**
     * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
     * node leaves
+    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
    public HashConfigurationBuilder rehashEnabled() {
-      this.rehashEnabled = true;
+      stateTransfer().fetchInMemoryState(true);
       return this;
    }
    
    /**
     * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
     * node leaves
+    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
    public HashConfigurationBuilder rehashEnabled(boolean enabled) {
-      this.rehashEnabled = enabled;
+      stateTransfer().fetchInMemoryState(enabled);
       return this;
    }
 
    /**
     * Disable rebalancing and rehashing, which would have taken place when a new node joins the
     * cluster or a node leaves
+    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
    public HashConfigurationBuilder rehashDisabled() {
-      this.rehashEnabled = false;
+      stateTransfer().fetchInMemoryState(false);
       return this;
    }
 
    /**
     * Rehashing timeout
+    * @deprecated Use {@link StateTransferConfigurationBuilder#timeout(long)} instead.
     */
    public HashConfigurationBuilder rehashRpcTimeout(long rehashRpcTimeout) {
-      this.rehashRpcTimeout = rehashRpcTimeout;
+      stateTransfer().timeout(rehashRpcTimeout);
       return this;
    }
 
    /**
-    * 
+    * @deprecated No longer used.
     */
    public HashConfigurationBuilder rehashWait(long rehashWait) {
-      this.rehashWait = rehashWait;
       return this;
    }
 
@@ -140,8 +139,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    HashConfiguration create() {
-      return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes, rehashEnabled, rehashRpcTimeout,
-            rehashWait, groupsConfigurationBuilder.create());
+      // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance
+      return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes,
+            groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 
    @Override
@@ -150,12 +150,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.hash = template.hash();
       this.numOwners = template.numOwners();
       this.numVirtualNodes = template.numVirtualNodes();
-      this.rehashEnabled = template.rehashEnabled();
-      this.rehashRpcTimeout = template.rehashRpcTimeout();
-      this.rehashWait = template.rehashWait();
-      
-      this.groupsConfigurationBuilder.read(template.groupsConfiguration());
-      
+      this.groupsConfigurationBuilder.read(template.groups());
+
       return this;
    }
    

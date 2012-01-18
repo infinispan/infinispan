@@ -70,9 +70,9 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
         Configuration.CacheMode mode = clusteringType.mode;
         Configuration.AsyncType async = clusteringType.async;
         Configuration.StateRetrievalType state = clusteringType.stateRetrieval;
-        // certain combinations are illegal, such as state transfer + DIST
-        if (mode.isDistributed() && state.fetchInMemoryState)
-            throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
+        // certain combinations are illegal, such as state transfer + invalidation
+        if (mode.isInvalidation() && state.fetchInMemoryState)
+            throw new ConfigurationException("Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
 
         if (mode.isDistributed() && async.useReplQueue)
             throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
@@ -156,9 +156,17 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
         }
     }
 
-    //Pedro -- validate total order
     @Override
     public void visitTransactionType(Configuration.TransactionType bean) {
+        if (bean.transactionManagerLookup == null && bean.transactionManagerLookupClass == null) {
+            if (bean.build().isInvocationBatchingEnabled()) {
+                bean.transactionManagerLookupClass = null;
+                if (!bean.useSynchronization) log.debug("Switching to Synchronization-based enlistment.");
+                bean.useSynchronization = true;
+            }
+        }
+
+        //Pedro -- validate total order
         if(!bean.transactionProtocol.isTotalOrder()) {
             //no total order or not => no validation needed
             super.visitTransactionType(bean);

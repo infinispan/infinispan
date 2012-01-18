@@ -30,13 +30,14 @@ import org.infinispan.transaction.tm.DummyXid;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.XaTransactionTable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import java.util.UUID;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,6 +51,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    private LocalXaTransaction localTx;
    private TransactionXaAdapter xaAdapter;
    private DummyXid xid;
+   private UUID uuid = UUID.randomUUID();
 
    @BeforeMethod
    public void setUp() {
@@ -57,8 +59,8 @@ public class TransactionXaAdapterTmIntegrationTest {
       TransactionFactory gtf = new TransactionFactory();
       gtf.init(false, false, true);
       globalTransaction = gtf.newGlobalTransaction(null, false);
-      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false);
-      xid = new DummyXid();
+      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1);
+      xid = new DummyXid(uuid);
       localTx.setXid(xid);
       txTable.addLocalTransactionMapping(localTx);      
 
@@ -70,7 +72,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testPrepareOnNonexistentXid() {
-      DummyXid xid = new DummyXid();
+      DummyXid xid = new DummyXid(uuid);
       try {
          xaAdapter.prepare(xid);
          assert false;
@@ -80,7 +82,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testCommitOnNonexistentXid() {
-      DummyXid xid = new DummyXid();
+      DummyXid xid = new DummyXid(uuid);
       try {
          xaAdapter.commit(xid, false);
          assert false;
@@ -90,7 +92,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testRollabckOnNonexistentXid() {
-      DummyXid xid = new DummyXid();
+      DummyXid xid = new DummyXid(uuid);
       try {
          xaAdapter.rollback(xid);
          assert false;
@@ -117,7 +119,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    public void test1PcAndNonExistentXid() {
       configuration.setCacheMode(Configuration.CacheMode.INVALIDATION_ASYNC);
       try {
-         DummyXid doesNotExists = new DummyXid();
+         DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, false);
          assert false;
       } catch (XAException e) {
@@ -128,7 +130,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    public void test1PcAndNonExistentXid2() {
       configuration.setCacheMode(Configuration.CacheMode.DIST_SYNC);
       try {
-         DummyXid doesNotExists = new DummyXid();
+         DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, true);
          assert false;
       } catch (XAException e) {

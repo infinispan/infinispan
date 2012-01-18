@@ -32,6 +32,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
+import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
    protected Configuration defaultRecoveryConfig() {
       return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
+            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2).rehashEnabled(false)
             .clustering().l1().disable().stateRetrieval().fetchInMemoryState(false)

@@ -506,8 +506,7 @@ public interface Log extends BasicLogger {
    void unprocessedTxLogEntries(int size);
 
    @LogMessage(level = WARN)
-   @Message(value = "Stopping but there're transactions that did not finish in " +
-         "time: localTransactions=%s, remoteTransactions%s", id = 100)
+   @Message(value = "Stopping, but there are transactions that did not finish in time: localTransactions=%s, remoteTransactions%s", id = 100)
    void unfinishedTransactionsRemain(
          ConcurrentMap<Transaction, LocalTransaction> localTransactions,
          ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions);
@@ -818,5 +817,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The 'wakeUpInterval' attribute of the 'eviction' configuration XML element is deprecated. Setting the 'wakeUpInterval' attribute of the 'expiration' configuration XML element to %d instead", id = 176)
    void evictionWakeUpIntervalDeprecated(Long wakeUpInterval);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "%s has been deprecated as a synonym for %s. Use one of %s instead", id = 177)
+   void randomCacheModeSynonymsDeprecated(String candidate, String mode, List<String> synonyms);
 
 }

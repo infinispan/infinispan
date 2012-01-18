@@ -22,8 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.EntryVersion;
-
 /**
  * Interface for internal cache entries that expose whether an entry has expired.
  *
@@ -85,6 +83,12 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
     * Updates access timestamps on this instance
     */
    void touch();
+
+   /**
+    * Updates access timestamps on this instance to a specified time
+    * @param currentTimeMillis
+    */
+   void touch(long currentTimeMillis);
 
    /**
     * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.

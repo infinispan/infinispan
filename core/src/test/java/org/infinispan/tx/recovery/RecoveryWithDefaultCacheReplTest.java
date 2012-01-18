@@ -36,7 +36,7 @@ public class RecoveryWithDefaultCacheReplTest extends RecoveryWithDefaultCacheDi
    @Override
    protected Configuration configure() {
       return super.configure().fluent()
-            .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class)
+            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class)
             .clustering().mode(Configuration.CacheMode.REPL_SYNC).build();
    }
 }

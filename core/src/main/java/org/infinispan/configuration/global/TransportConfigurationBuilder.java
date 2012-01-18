@@ -25,7 +25,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    private String nodeName;
    private Properties properties = new Properties();
-   private boolean strictPeerToPeer = true;
+   private boolean strictPeerToPeer = false;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -147,7 +147,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    
    @Override
-   void valididate() {
+   void validate() {
       // No-op, no validation required
    }
    
@@ -158,11 +158,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    public TransportConfigurationBuilder defaultTransport() {
       transport(Util.getInstance(DEFAULT_TRANSPORT));
-      return this;
-   }
-
-   public TransportConfigurationBuilder useDefaultIfTransportNotSpecified() {
-      if (transport == null) transport(Util.getInstance(DEFAULT_TRANSPORT));
       return this;
    }
 

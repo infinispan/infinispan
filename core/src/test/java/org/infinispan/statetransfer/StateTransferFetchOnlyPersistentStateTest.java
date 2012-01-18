@@ -22,8 +22,6 @@
  */
 package org.infinispan.statetransfer;
 
-import java.lang.reflect.Method;
-
 import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
@@ -32,6 +30,8 @@ import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+
+import java.lang.reflect.Method;
 
 /**
  * StateTransferFetchOnlyPersistentStateTest.
@@ -51,6 +51,7 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
 
    private Configuration createConfiguration(int id) {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      cfg.fluent().clustering().stateRetrieval().fetchInMemoryState(false);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store id: " + id);
       clmc.addCacheLoaderConfig(clc);

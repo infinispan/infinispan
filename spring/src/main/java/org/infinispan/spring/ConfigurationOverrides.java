@@ -23,18 +23,15 @@
 
 package org.infinispan.spring;
 
-import java.util.List;
-
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.CustomInterceptorConfig;
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.config.*;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.List;
 
 /**
  * <p>
@@ -122,6 +119,8 @@ public final class ConfigurationOverrides {
    private Long stateRetrievalLogFlushTimeout;
 
    private Integer stateRetrievalMaxNonProgressingLogWrites;
+
+   private Integer stateRetrievalChunkSize;
 
    private Long stateRetrievalInitialRetryWaitTime;
 
@@ -453,6 +452,15 @@ public final class ConfigurationOverrides {
    }
 
    /**
+    * @param stateRetrievalChunkSize
+    *           the stateRetrievalChunkSize to set
+    */
+   public void setStateRetrievalChunkSize(
+         final Integer stateRetrievalChunkSize) {
+      this.stateRetrievalChunkSize = stateRetrievalChunkSize;
+   }
+
+   /**
     * @param stateRetrievalInitialRetryWaitTime
     *           the stateRetrievalInitialRetryWaitTime to set
     */
@@ -770,10 +778,17 @@ public final class ConfigurationOverrides {
       }
       if (this.stateRetrievalMaxNonProgressingLogWrites != null) {
          this.logger
-                  .debug("Overriding property [stateRetrievalMaxNonProgressingLogWrites] with value ["
-                           + this.stateRetrievalMaxNonProgressingLogWrites + "]");
+               .debug("Overriding property [stateRetrievalMaxNonProgressingLogWrites] with value ["
+                     + this.stateRetrievalMaxNonProgressingLogWrites + "]");
          configurationToOverride
-                  .setStateRetrievalMaxNonProgressingLogWrites(this.stateRetrievalMaxNonProgressingLogWrites);
+               .setStateRetrievalMaxNonProgressingLogWrites(this.stateRetrievalMaxNonProgressingLogWrites);
+      }
+      if (this.stateRetrievalChunkSize != null) {
+         this.logger
+               .debug("Overriding property [stateRetrievalChunkSize] with value ["
+                     + this.stateRetrievalChunkSize + "]");
+         configurationToOverride
+               .setStateRetrievalChunkSize(this.stateRetrievalChunkSize);
       }
       if (this.stateRetrievalInitialRetryWaitTime != null) {
          this.logger.debug("Overriding property [stateRetrievalInitialRetryWaitTime] with value ["

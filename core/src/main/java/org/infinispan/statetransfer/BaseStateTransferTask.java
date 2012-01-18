@@ -61,7 +61,7 @@ public abstract class BaseStateTransferTask {
    private boolean running;
    private boolean cancelled;
    private final Object lock = new Object();
-   protected int stateTransferChunkSize = 10000;
+   protected int stateTransferChunkSize;
 
    public BaseStateTransferTask(BaseStateTransferManagerImpl stateTransferManager, RpcManager rpcManager,
                                 StateTransferLock stateTransferLock, CacheNotifier cacheNotifier,
@@ -79,6 +79,8 @@ public abstract class BaseStateTransferTask {
       this.chNew = chNew;
       this.chOld = chOld;
       this.statePushFuture = new AggregatingNotifyingFutureBuilder(null, members.size());
+      // Ignore chunk sizes <= 0
+      this.stateTransferChunkSize = configuration.getStateRetrievalChunkSize() > 0 ? configuration.getStateRetrievalChunkSize() : Integer.MAX_VALUE;
    }
 
    public void performStateTransfer() throws Exception {
@@ -103,16 +105,11 @@ public abstract class BaseStateTransferTask {
       if (running)
          throw new IllegalStateException("State transfer has not finished, cannot commit");
 
-      try {
-         stateTransferLock.unblockNewTransactions(newViewId);
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
-      }
       log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
             Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
-   public void cancelStateTransfer(boolean sync, boolean releaseStateTransferLock) {
+   public void cancelStateTransfer(boolean sync) {
       synchronized (lock) {
          cancelled = true;
          if (sync) {
@@ -125,14 +122,6 @@ public abstract class BaseStateTransferTask {
                   break;
                }
             }
-         }
-      }
-
-      if (releaseStateTransferLock) {
-         try {
-            stateTransferLock.unblockNewTransactions(newViewId);
-         } catch (Exception e) {
-            log.errorUnblockingTransactions(e);
          }
       }
 

@@ -15,5 +15,5 @@ public enum ShutdownHookBehavior {
    /**
     * Forces the cache NOT to register a shutdown hook, even if no MBean server is detected.
     */
-   DONT_REGISTER;
+   DONT_REGISTER
 }

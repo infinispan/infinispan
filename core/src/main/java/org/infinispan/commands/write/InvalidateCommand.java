@@ -26,6 +26,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -55,7 +56,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    public InvalidateCommand(CacheNotifier notifier, Collection<Object> keys) {
       if (keys == null || keys.isEmpty())
-         this.keys = new Object[]{};
+         this.keys = Util.EMPTY_OBJECT_ARRAY;
       else
          this.keys = keys.toArray(new Object[keys.size()]);
       this.notifier = notifier;

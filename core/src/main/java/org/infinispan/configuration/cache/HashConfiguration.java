@@ -7,7 +7,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  * 
  * @author pmuir
- * 
  */
 public class HashConfiguration {
 
@@ -15,21 +14,17 @@ public class HashConfiguration {
    private final Hash hash;
    private final int numOwners;
    private final int numVirtualNodes;
-   private final boolean rehashEnabled;
-   private final long rehashRpcTimeout;
-   private final long rehashWait;
    private final GroupsConfiguration groupsConfiguration;
+   private final StateTransferConfiguration stateTransferConfiguration;
 
    HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
-         boolean rehashEnabled, long rehashRpcTimeout, long rehashWait, GroupsConfiguration groupsConfiguration) {
+         GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
       this.consistentHash = consistentHash;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numVirtualNodes = numVirtualNodes;
-      this.rehashEnabled = rehashEnabled;
-      this.rehashRpcTimeout = rehashRpcTimeout;
-      this.rehashWait = rehashWait;
       this.groupsConfiguration = groupsConfiguration;
+      this.stateTransferConfiguration = stateTransferConfiguration;
    }
 
    /**
@@ -57,8 +52,8 @@ public class HashConfiguration {
 
    /**
     * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at
-    * TODO
+    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
+    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
     * </p>
     * 
     * <p>
@@ -77,29 +72,31 @@ public class HashConfiguration {
    /**
     * If false, no rebalancing or rehashing will take place when a new node joins the cluster or a
     * node leaves
+    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#fetchInMemoryState()} instead.
     */
    public boolean rehashEnabled() {
-      return rehashEnabled;
+      return stateTransferConfiguration.fetchInMemoryState();
    }
 
    /**
     * Rehashing timeout
+    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
    public long rehashRpcTimeout() {
-      return rehashRpcTimeout;
+      return stateTransferConfiguration.timeout();
    }
 
    /**
-    * 
+    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
    public long rehashWait() {
-      return rehashWait;
+      return stateTransferConfiguration.timeout();
    }
    
    /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */
-   public GroupsConfiguration groupsConfiguration() {
+   public GroupsConfiguration groups() {
       return groupsConfiguration;
    }
 

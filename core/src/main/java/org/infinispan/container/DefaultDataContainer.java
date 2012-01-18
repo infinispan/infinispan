@@ -115,18 +115,18 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public InternalCacheEntry peek(Object key) {
-      InternalCacheEntry e = entries.get(key);
-      return e;
+      return entries.get(key);
    }
 
    public InternalCacheEntry get(Object k) {
       InternalCacheEntry e = peek(k);
-      if (e != null) {
-         if (e.isExpired(System.currentTimeMillis())) {
+      if (e != null && e.canExpire()) {
+         long currentTimeMillis = System.currentTimeMillis();
+         if (e.isExpired(currentTimeMillis)) {
             entries.remove(k);
             e = null;
          } else {
-            e.touch();
+            e.touch(currentTimeMillis);
          }
       }
       return e;
@@ -152,7 +152,7 @@ public class DefaultDataContainer implements DataContainer {
 
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
-      if (ice != null && ice.isExpired(System.currentTimeMillis())) {
+      if (ice != null && ice.canExpire() && ice.isExpired(System.currentTimeMillis())) {
          entries.remove(k);
          ice = null;
       }
@@ -161,7 +161,7 @@ public class DefaultDataContainer implements DataContainer {
 
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = entries.remove(k);
-      return e == null || e.isExpired(System.currentTimeMillis()) ? null : e;
+      return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
    }
 
    public int size() {

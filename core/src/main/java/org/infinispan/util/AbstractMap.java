@@ -51,7 +51,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       return o1 == o2 || (o1 != null && o1.equals(o2));
    }
 
-   protected final void assertKeyNotNull(Object key) {
+   protected static void assertKeyNotNull(Object key) {
       if (key == null) throw new NullPointerException("Null keys are not supported!");
    }
 

@@ -14,9 +14,9 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
    }
    
    @Override
-   void valididate() {
+   void validate() {
       // No-op, no validation required
-   };
+   }
    
    @Override
    ShutdownConfiguration create() {

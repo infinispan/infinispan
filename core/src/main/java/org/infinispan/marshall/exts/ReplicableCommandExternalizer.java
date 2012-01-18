@@ -69,7 +69,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       writeCommandParameters(output, command);
    }
 
-   protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
+   protected static void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
 
@@ -107,7 +107,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       return cmdFactory.fromStream((byte) methodId, args, type);
    }
 
-   protected Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
+   protected static Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
       if (numArgs > 0) {

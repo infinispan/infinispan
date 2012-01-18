@@ -36,9 +36,11 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
+   // TODO: Sort out this duplication with LoaderConfigurationBuilder
    private boolean fetchPersistentState = false;
    private boolean ignoreModifications = false;
    private boolean purgeOnStartup = false;
+   private int purgerThreads = 1;
    private boolean purgeSynchronously = false;
    private int lockConcurrencyLevel;
    private long lockAcquistionTimeout;
@@ -85,6 +87,11 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       return this;
    }
 
+   public FileCacheStoreConfigurationBuilder purgerThreads(int i) {
+      this.purgerThreads = i;
+      return this;
+   }
+
    public FileCacheStoreConfigurationBuilder fetchPersistentState(boolean fetchPersistentState) {
       this.fetchPersistentState = fetchPersistentState;
       return this;
@@ -119,7 +126,7 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    FileCacheStoreConfiguration create() {
       return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
             streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
-            purgeOnStartup, purgeSynchronously, fetchPersistentState,
+            purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties),
             async.create(), singletonStore.create());
    }

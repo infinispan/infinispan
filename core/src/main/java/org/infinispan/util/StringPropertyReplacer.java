@@ -113,7 +113,7 @@ public class StringPropertyReplacer {
     */
    public static String replaceProperties(final String string, final Properties props) {
       final char[] chars = string.toCharArray();
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       boolean properties = false;
       int state = NORMAL;
       int start = 0;
@@ -142,7 +142,7 @@ public class StringPropertyReplacer {
                buffer.append("${}"); // REVIEW: Correct?
             } else // Collect the system property
             {
-               String value = null;
+               String value;
 
                String key = string.substring(start + 2, i);
 
@@ -199,7 +199,7 @@ public class StringPropertyReplacer {
       }
 
       // No properties
-      if (properties == false)
+      if (!properties)
          return string;
 
       // Collect the trailing characters

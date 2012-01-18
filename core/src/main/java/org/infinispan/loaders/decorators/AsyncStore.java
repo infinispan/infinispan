@@ -377,7 +377,6 @@ public class AsyncStore extends AbstractDelegatingStore {
                if (lastAsyncProcessorShutsDownExecutor && !runAgainAfterWaiting) {
                   executor.shutdown();
                }
-               return;
             } else {
                if (trace)
                   log.tracef("Apply %s modifications", swap.size());

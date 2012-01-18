@@ -859,9 +859,12 @@ public class Parser {
                 case STATE_RETRIEVAL:
                     parseStateRetrieval(reader, builder);
                     break;
+                case STATE_TRANSFER:
+                    parseStateTransfer(reader, builder);
+                    break;
                 case SYNC:
                     synchronous = true;
-                    setMode(builder, clusteringMode, asynchronous, asynchronous, reader);
+                    setMode(builder, clusteringMode, asynchronous, synchronous, reader);
                     parseSync(reader, builder);
                     break;
                 default:
@@ -881,26 +884,32 @@ public class Parser {
 
         if (clusteringMode != null) {
             String mode = clusteringMode.toUpperCase();
-            if (mode.startsWith("R")) {
+            if (ParsedCacheMode.REPL.matches(mode)) {
                 if (!asynchronous)
                     builder.clustering().cacheMode(REPL_SYNC);
                 else
                     builder.clustering().cacheMode(REPL_ASYNC);
-            } else if (mode.startsWith("I")) {
+            } else if (ParsedCacheMode.INVALIDATION.matches(mode)) {
                 if (!asynchronous)
                     builder.clustering().cacheMode(INVALIDATION_SYNC);
                 else
                     builder.clustering().cacheMode(INVALIDATION_ASYNC);
-            } else if (mode.startsWith("D")) {
+            } else if (ParsedCacheMode.DIST.matches(mode)) {
                 if (!asynchronous)
                     builder.clustering().cacheMode(DIST_SYNC);
                 else
                     builder.clustering().cacheMode(DIST_ASYNC);
-            } else if (mode.startsWith("L")) {
+            } else if (ParsedCacheMode.LOCAL.matches(mode)) {
                 builder.clustering().cacheMode(LOCAL);
             } else {
                 throw new ConfigurationException("Invalid clustering mode " + clusteringMode + ", " + reader.getLocation());
             }
+        } else {
+            // If no cache mode is given but sync or async is specified, default to DIST
+            if (synchronous)
+                builder.clustering().cacheMode(DIST_SYNC);
+            else if (asynchronous)
+                builder.clustering().cacheMode(DIST_ASYNC);
         }
     }
 
@@ -954,6 +963,31 @@ public class Parser {
                     break;
                 case TIMEOUT:
                     builder.clustering().stateRetrieval().timeout(Long.valueOf(value));
+                    break;
+                default:
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+        }
+
+        ParseUtils.requireNoContent(reader);
+
+    }
+
+    private void parseStateTransfer(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException{
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            String value = replaceSystemProperties(reader.getAttributeValue(i));
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case FETCH_IN_MEMORY_STATE:
+                    builder.clustering().stateTransfer().fetchInMemoryState(Boolean.valueOf(value).booleanValue());
+                    break;
+                case TIMEOUT:
+                    builder.clustering().stateTransfer().timeout(Long.valueOf(value).longValue());
+                    break;
+                case CHUNK_SIZE:
+                    builder.clustering().stateTransfer().chunkSize(Integer.valueOf(value).intValue());
                     break;
                 default:
                     throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1254,7 +1288,7 @@ public class Parser {
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case MARSHALLER_CLASS: {
-                    builder.serialization().marshallerClass(Util.<Marshaller> loadClass(value, cl));
+                    builder.serialization().marshaller(Util.<Marshaller>getInstance(value, cl));
                     break;
                 }
                 case VERSION: {

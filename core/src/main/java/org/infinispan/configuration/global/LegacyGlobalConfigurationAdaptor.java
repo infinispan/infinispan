@@ -1,7 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.util.Map.Entry;
-
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.FluentGlobalConfiguration;
 import org.infinispan.executors.ExecutorFactory;
@@ -11,9 +9,11 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;
 
+import java.util.Map.Entry;
+
 public class LegacyGlobalConfigurationAdaptor {
    
-   public org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
+   public static org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
       
       // Handle the case that null is passed in
       if (config == null)
@@ -45,7 +45,7 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       legacy.serialization()
-         .marshallerClass(config.serialization().marshallerClass())
+         .marshallerClass(config.serialization().marshaller().getClass())
          .version(config.serialization().version());
       
       for (Entry<Integer, AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
@@ -62,7 +62,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       legacy.evictionScheduledExecutor()
          .factory(config.evictionScheduledExecutor().factory().getClass())
-         .withProperties(config.asyncListenerExecutor().properties());
+         .withProperties(config.evictionScheduledExecutor().properties());
       
       legacy.replicationQueueScheduledExecutor()
          .factory(config.replicationQueueScheduledExecutor().factory().getClass())
@@ -73,7 +73,7 @@ public class LegacyGlobalConfigurationAdaptor {
       return legacy.build();
    }
    
-   public org.infinispan.configuration.global.GlobalConfiguration adapt(org.infinispan.config.GlobalConfiguration legacy) {
+   public static org.infinispan.configuration.global.GlobalConfiguration adapt(org.infinispan.config.GlobalConfiguration legacy) {
       
       // Handle the case that null is passed in
       if (legacy == null)
@@ -81,17 +81,19 @@ public class LegacyGlobalConfigurationAdaptor {
       
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
 
-      builder.transport()
-         .clusterName(legacy.getClusterName())
-         .machineId(legacy.getMachineId())
-         .rackId(legacy.getRackId())
-         .siteId(legacy.getSiteId())
-         .strictPeerToPeer(legacy.isStrictPeerToPeer())
-         .distributedSyncTimeout(legacy.getDistributedSyncTimeout())
-         .transport(Util.<Transport>getInstance(legacy.getTransportClass(), legacy.getClassLoader()))
-         .nodeName(legacy.getTransportNodeName())
-         .withProperties(legacy.getTransportProperties());
-      
+      if (legacy.getTransportClass() != null) {
+         builder.transport()
+            .clusterName(legacy.getClusterName())
+            .machineId(legacy.getMachineId())
+            .rackId(legacy.getRackId())
+            .siteId(legacy.getSiteId())
+            .strictPeerToPeer(legacy.isStrictPeerToPeer())
+            .distributedSyncTimeout(legacy.getDistributedSyncTimeout())
+            .transport(Util.<Transport>getInstance(legacy.getTransportClass(), legacy.getClassLoader()))
+            .nodeName(legacy.getTransportNodeName())
+            .withProperties(legacy.getTransportProperties());
+      }
+
       if (legacy.isExposeGlobalJmxStatistics()) {
          builder.globalJmxStatistics().enable()
             .jmxDomain(legacy.getJmxDomain())
@@ -104,11 +106,11 @@ public class LegacyGlobalConfigurationAdaptor {
          
       
       builder.serialization()
-         .marshallerClass(Util.<Marshaller>loadClass(legacy.getMarshallerClass(), legacy.getClassLoader()))
+         .marshaller(Util.<Marshaller>getInstance(legacy.getMarshallerClass(), legacy.getClassLoader()))
          .version(legacy.getMarshallVersion());
       
       for (AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {
-         builder.serialization().addAdvancedExternalizer(externalizerConfig.getAdvancedExternalizer());
+         builder.serialization().addAdvancedExternalizer(externalizerConfig.getId(), externalizerConfig.getAdvancedExternalizer());
       }
       
       builder.asyncTransportExecutor()
@@ -121,7 +123,7 @@ public class LegacyGlobalConfigurationAdaptor {
       
       builder.evictionScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getEvictionScheduledExecutorFactoryClass(), legacy.getClassLoader()))
-         .withProperties(legacy.getAsyncListenerExecutorProperties());
+         .withProperties(legacy.getEvictionScheduledExecutorProperties());
       
       builder.replicationQueueScheduledExecutor()
          .factory(Util.<ScheduledExecutorFactory>getInstance(legacy.getReplicationQueueScheduledExecutorFactoryClass(), legacy.getClassLoader()))

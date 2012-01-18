@@ -26,6 +26,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +48,7 @@ public class ClassFinder {
             + System.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             clazzes.add(clazz);
@@ -57,7 +58,7 @@ public class ClassFinder {
    }
    
    public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             Annotation[] declaredAnnots = clazz.getDeclaredAnnotations();
@@ -72,7 +73,7 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> isAssignableFrom(List<Class<?>> classes, Class<?> clazz) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> c : classes) {
          if (clazz.isAssignableFrom(c)) {
             clazzes.add(c);
@@ -116,7 +117,7 @@ public class ClassFinder {
 
    private static List<Class<?>> findClassesOnPath(File path) {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      Class<?> claz = null;
+      Class<?> claz;
 
       if (path.isDirectory()) {
          List<File> classFiles = new ArrayList<File>();
@@ -137,29 +138,38 @@ public class ClassFinder {
          }
       } else {
          if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-            JarFile jar = null;
+            JarFile jar;
             try {
                jar = new JarFile(path);
             } catch (Exception ex) {
                log.warnf("Could not create jar file on path %s", path);
                return classes;
             }
-            Enumeration<JarEntry> en = jar.entries();
-            while (en.hasMoreElements()) {
-               JarEntry entry = en.nextElement();
-               if (entry.getName().endsWith("class")) {
-                  String clazz = null;
-                  try {
-                     clazz = toClassName(entry.getName());
-                     claz = Util.loadClassStrict(clazz, null);
-                     classes.add(claz);
-                  } catch (NoClassDefFoundError ncdfe) {
-                     log.warnf("%s has reference to a class %s that could not be loaded from classpath",
-                               entry.getName(), ncdfe.getMessage());
-                  } catch (Throwable e) {
-                     // Catch all since we do not want skip iteration
-                     log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
+            try {
+               Enumeration<JarEntry> en = jar.entries();
+               while (en.hasMoreElements()) {
+                  JarEntry entry = en.nextElement();
+                  if (entry.getName().endsWith("class")) {
+                     String clazz = null;
+                     try {
+                        clazz = toClassName(entry.getName());
+                        claz = Util.loadClassStrict(clazz, null);
+                        classes.add(claz);
+                     } catch (NoClassDefFoundError ncdfe) {
+                        log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                                  entry.getName(), ncdfe.getMessage());
+                     } catch (Throwable e) {
+                        // Catch all since we do not want skip iteration
+                        log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
+                     }
                   }
+               }
+            }
+            finally {
+               try {
+                  jar.close();
+               } catch (IOException e) {
+                  log.debugf(e, "error closing jar file %s", jar);
                }
             }
          }

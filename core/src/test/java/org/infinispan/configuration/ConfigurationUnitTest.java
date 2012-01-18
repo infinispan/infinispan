@@ -31,7 +31,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -49,7 +52,8 @@ public class ConfigurationUnitTest {
    
    @Test
    public void testCreateCache() {
-      new DefaultCacheManager(new ConfigurationBuilder().build());
+      DefaultCacheManager cm = new DefaultCacheManager(new ConfigurationBuilder().build());
+      TestingUtil.killCacheManagers(cm);
    }
    
    @Test
@@ -85,18 +89,31 @@ public class ConfigurationUnitTest {
      cb.transaction().use1PcForAutoCommitTransactions(true)
         .transactionManagerLookup(new DummyTransactionManagerLookup());
      DefaultCacheManager cm = new DefaultCacheManager(cb.build());
-     cm.getCache();
+     try {
+        cm.getCache();
+     } finally {
+        TestingUtil.killCacheManagers(cm);
+     }
   }
    
    @Test
    public void testGetCache() {
-      new DefaultCacheManager(new ConfigurationBuilder().build()).getCache();
+      DefaultCacheManager cm = new DefaultCacheManager(new ConfigurationBuilder().build());
+      try {
+         cm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
    
    @Test
    public void testDefineNamedCache() {
       DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
-      cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
+      try {
+         cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
    }
    
    @Test
@@ -104,12 +121,16 @@ public class ConfigurationUnitTest {
    // new configuration
       DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
 
-      Cache<String, String> cache = cacheManager.getCache();
-      cache.put("Foo", "2");
-      cache.put("Bar", "4");
+      try {
+         Cache<String, String> cache = cacheManager.getCache();
+         cache.put("Foo", "2");
+         cache.put("Bar", "4");
 
-      Assert.assertEquals(cache.get("Foo"), "2");
-      Assert.assertEquals(cache.get("Bar"), "4");
+         Assert.assertEquals(cache.get("Foo"), "2");
+         Assert.assertEquals(cache.get("Bar"), "4");
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
    }
    
    @Test
@@ -129,7 +150,28 @@ public class ConfigurationUnitTest {
          .invocationBatching()
             .enable()
          .build();
-      new DefaultCacheManager(c);
+      DefaultCacheManager cm = new DefaultCacheManager(c);
+      TestingUtil.killCacheManagers(cm);
+   }
+   
+   @Test
+   public void testConsistentHash() {
+      Configuration config = new LegacyConfigurationAdaptor().adapt(new org.infinispan.config.Configuration());
+      Assert.assertNull(config.clustering().hash().consistentHash());
+   }
+
+   @Test
+   public void testDisableL1() {
+      EmbeddedCacheManager manager = TestCacheManagerFactory
+            .createClusteredCacheManager(new ConfigurationBuilder(), new TransportFlags());
+      try {
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
+         manager.defineConfiguration("testConfigCache", cb.build());
+         manager.getCache("testConfigCache");
+      } finally {
+         TestingUtil.killCacheManagers(manager);
+      }
    }
    
 }

@@ -48,7 +48,7 @@ import java.util.Set;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   public static final Map<Object,CacheEntry> EMPTY_ENTRY_MAP = new HashMap<Object, CacheEntry>();
+   public static final Map<Object,CacheEntry> EMPTY_ENTRY_MAP = new HashMap<Object, CacheEntry>(0);
 
    private LocalTransaction localTransaction;
 

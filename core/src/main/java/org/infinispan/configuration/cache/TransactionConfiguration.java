@@ -7,6 +7,12 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
+/**
+ * Defines transactional (JTA) characteristics of the cache.
+ *
+ * @author pmuir
+ *
+ */
 public class TransactionConfiguration {
 
     private final boolean autoCommit;
@@ -26,13 +32,11 @@ public class TransactionConfiguration {
     private final TransactionProtocol transactionProtocol;
     private final TotalOrderThreadingConfiguration totalOrderThreading;
 
-    //Pedro -- added total order parameter
-    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode,
-                             LockingMode lockingMode, boolean syncCommitPhase, boolean syncRollbackPhase,
-                             TransactionManagerLookup transactionManagerLookup,
-                             TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup,
-                             TransactionMode transactionMode, boolean useEagerLocking, boolean useSynchronization,
-                             boolean use1PcForAutoCommitTransactions, RecoveryConfiguration recovery,
+    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
+                             boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
+                             TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
+                             boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
+                             RecoveryConfiguration recovery,
                              TransactionProtocol transactionProtocol,
                              TotalOrderThreadingConfiguration totalOrderThreading) {
         this.autoCommit = autoCommit;
@@ -53,23 +57,59 @@ public class TransactionConfiguration {
         this.totalOrderThreading = totalOrderThreading;
     }
 
+    /**
+     * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and transactionAutoCommit is enabled
+     * then for single operation transactions the user doesn't need to manually start a transaction, but a transactions
+     * is injected by the system. Defaults to true.
+     */
     public boolean autoCommit() {
         return autoCommit;
     }
 
+    /**
+     * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+     * remote and local transactions to finish. The amount of time to wait for is defined by the
+     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+     * because even if a new transaction was started just before the cache was stopped, this could
+     * only last as long as the transaction timeout allows it.
+     */
     public long cacheStopTimeout() {
         return cacheStopTimeout;
     }
 
+    /**
+     * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+     * remote and local transactions to finish. The amount of time to wait for is defined by the
+     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+     * because even if a new transaction was started just before the cache was stopped, this could
+     * only last as long as the transaction timeout allows it.
+     */
     public TransactionConfiguration cacheStopTimeout(long l) {
         this.cacheStopTimeout = l;
         return this;
     }
 
+    /**
+     * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
+     * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
+     * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node
+     * that gets locked is the main data owner, i.e. the node where data would reside if
+     * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
+     * rollback - data is in a consistent state, no fault tolerance.
+     *
+     * @deprecated starting with Infinispan 5.1 single node locking is used by default
+     */
+    @Deprecated
     public boolean eagerLockingSingleNode() {
         return eagerLockingSingleNode;
     }
 
+    /**
+     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
+     * transactional then the locking mode is ignored.
+     *
+     * @see org.infinispan.config.Configuration#isTransactionalCache()
+     */
     public LockingMode lockingMode() {
         return lockingMode;
     }
@@ -78,24 +118,56 @@ public class TransactionConfiguration {
         return syncCommitPhase;
     }
 
+    /**
+     * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
+     * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
+     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
+     * performance of 2PC transactions, since any remote failures are trapped during the prepare
+     * phase anyway and appropriate rollbacks are issued.
+     */
     public TransactionConfiguration syncCommitPhase(boolean b) {
         this.syncCommitPhase = b;
         return this;
     }
 
+    /**
+     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
+     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
+     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
+     * performance of 2PC transactions.
+     *
+     * @return
+     */
     public boolean syncRollbackPhase() {
         return syncRollbackPhase;
     }
 
+    /**
+     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
+     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
+     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
+     * performance of 2PC transactions.
+     *
+     * @param b
+     * @return
+     */
     public TransactionConfiguration syncRollbackPhase(boolean b) {
         this.syncRollbackPhase = b;
         return this;
     }
 
+    /**
+     * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup.
+     * Calling this method marks the cache as transactional.
+     */
     public TransactionManagerLookup transactionManagerLookup() {
         return transactionManagerLookup;
     }
 
+    /**
+     * Configure Transaction Synchronization Registry lookup directly using an instance of
+     * TransactionManagerLookup. Calling this method marks the cache as transactional.
+     */
     public TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup() {
         return transactionSynchronizationRegistryLookup;
     }
@@ -104,6 +176,17 @@ public class TransactionConfiguration {
         return transactionMode;
     }
 
+    /**
+     * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
+     * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
+     * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node
+     * that gets locked is the main data owner, i.e. the node where data would reside if
+     * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
+     * rollback - data is in a consistent state, no fault tolerance.
+     * <p/>
+     * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
+     * be enforced by setting transaction's locking mode to PESSIMISTIC.
+     */
     public boolean useEagerLocking() {
         return useEagerLocking;
     }
@@ -117,29 +200,39 @@ public class TransactionConfiguration {
         return useSynchronization;
     }
 
+    /**
+     * This method allows configuration of the transaction recovery cache. When this method is
+     * called, it automatically enables recovery. So, if you want it to be disabled, make sure you
+     * call {@link org.infinispan.config.FluentConfiguration.RecoveryConfig#disable()}
+     */
     public RecoveryConfiguration recovery() {
         return recovery;
     }
 
     /**
-     * Returns true if the cache is configured to run in transactional mode, false otherwise. Starting with Infinispan
-     * version 5.1 a cache doesn't support mixed access: i.e.won't support transactional and non-transactional
-     * operations.
-     * A cache is transactional if one the following:
+     * Returns true if the cache is configured to run in transactional mode, false otherwise.
+     * Starting with Infinispan version 5.1 a cache doesn't support mixed access: i.e.won't support
+     * transactional and non-transactional operations. A cache is transactional if one the following:
+     *
      * <pre>
      * - a transactionManagerLookup is configured for the cache
      * - batching is enabled
      * - it is explicitly marked as transactional: config.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL).
      *   In this last case a transactionManagerLookup needs to be explicitly set
      * </pre>
+     *
      * By default a cache is not transactional.
      *
      * @see #autoCommit()
      */
-    public  boolean transactionalCache() {
+    public boolean transactionalCache() {
         return transactionMode.equals(TransactionMode.TRANSACTIONAL);
     }
 
+    /**
+     * This configuration option was added for the following situation:
+     * - pre 5.1 code is using the cache
+     */
     public boolean use1PcForAutoCommitTransactions() {
         return use1PcForAutoCommitTransactions;
     }

@@ -75,10 +75,10 @@ public class Immutables {
     * @param list the list to copy
     * @return the immutable copy
     */
-   public static <T> List<T> immutableListCopy(List<? extends T> list) {
+   public static <T> List<T> immutableListCopy(List<T> list) {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
-      if (list.size() == 1) return Collections.<T>singletonList(list.get(0));
+      if (list.size() == 1) return Collections.singletonList(list.get(0));
       return new ImmutableListCopy<T>(list);
    }
 
@@ -141,10 +141,10 @@ public class Immutables {
     * @param set the set to copy from
     * @return an immutable set copy
     */
-   public static <T> Set<T> immutableSetCopy(Set<? extends T> set) {
+   public static <T> Set<T> immutableSetCopy(Set<T> set) {
       if (set == null) return null;
       if (set.isEmpty()) return Collections.emptySet();
-      if (set.size() == 1) return Collections.<T>singleton(set.iterator().next());
+      if (set.size() == 1) return Collections.singleton(set.iterator().next());
       Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
       if (copy == null)
          // Set uses Collection copy-ctor
@@ -172,12 +172,12 @@ public class Immutables {
     * @param map the map to copy from
     * @return an immutable map copy
     */
-   public static <K, V> Map<K, V> immutableMapCopy(Map<? extends K, ? extends V> map) {
+   public static <K, V> Map<K, V> immutableMapCopy(Map<K, V> map) {
       if (map == null) return null;
       if (map.isEmpty()) return Collections.emptyMap();
       if (map.size() == 1) {
-         Map.Entry<? extends K, ? extends V> me = map.entrySet().iterator().next();
-         return Collections.<K,V>singletonMap(me.getKey(), me.getValue());
+         Map.Entry<K, V> me = map.entrySet().iterator().next();
+         return Collections.singletonMap(me.getKey(), me.getValue());
       }
 
       Map<? extends K, ? extends V> copy = ObjectDuplicator.duplicateMap(map);
@@ -196,10 +196,10 @@ public class Immutables {
     * @param collection the collection to copy
     * @return an immutable copy
     */
-   public static <T> Collection<T> immutableCollectionCopy(Collection<? extends T> collection) {
+   public static <T> Collection<T> immutableCollectionCopy(Collection<T> collection) {
       if (collection == null) return null;
       if (collection.isEmpty()) return Collections.emptySet();
-      if (collection.size() == 1) return Collections.<T>singleton(collection.iterator().next());
+      if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
 
       Collection<? extends T> copy = ObjectDuplicator.duplicateCollection(collection);
       if (copy == null)
@@ -509,6 +509,11 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public void touch(long currentTimeMillis) {
+         throw new UnsupportedOperationException();
+      }
+
       public boolean undelete(boolean doUndelete) {
          throw new UnsupportedOperationException();
       }
@@ -809,7 +814,7 @@ public class Immutables {
       }
       
       @Override
-      public synchronized void putAll(Map<? extends Object, ? extends Object> t) {
+      public synchronized void putAll(Map<?, ?> t) {
          throw new UnsupportedOperationException();
       }
       

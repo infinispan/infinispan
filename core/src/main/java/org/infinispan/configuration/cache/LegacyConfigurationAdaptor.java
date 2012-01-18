@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.Properties;
-
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
@@ -23,9 +21,11 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.util.Util;
 
+import java.util.Properties;
+
 public class LegacyConfigurationAdaptor {
 
-    public org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
+    public static org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
 
         // Handle the case that null is passed in
         if (config == null)
@@ -42,7 +42,8 @@ public class LegacyConfigurationAdaptor {
                     .asyncMarshalling(config.clustering().async().asyncMarshalling())
                     .replQueueClass(config.clustering().async().replQueue().getClass())
                     .replQueueInterval(config.clustering().async().replQueueInterval())
-                    .replQueueMaxElements(config.clustering().async().replQueueMaxElements());
+                    .replQueueMaxElements(config.clustering().async().replQueueMaxElements())
+                    .useReplQueue(config.clustering().async().useReplQueue());
         }
 
         if (config.clustering().hash().consistentHash() != null) {
@@ -64,8 +65,8 @@ public class LegacyConfigurationAdaptor {
                 .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
                 .rehashWait(config.clustering().hash().rehashWait())
                 .groups()
-                .enabled(config.clustering().hash().groupsConfiguration().enabled())
-                .groupers(config.clustering().hash().groupsConfiguration().groupers());
+                .enabled(config.clustering().hash().groups().enabled())
+                .groupers(config.clustering().hash().groups().groupers());
 
         if (config.clustering().l1().enabled()) {
             legacy.clustering()
@@ -76,19 +77,15 @@ public class LegacyConfigurationAdaptor {
         } else {
             legacy.clustering()
                     .l1()
-                    .disable();
+                    .disable()
+                    .onRehash(false);
         }
 
         legacy.clustering()
                 .stateRetrieval()
-                .alwaysProvideInMemoryState(config.clustering().stateRetrieval().alwaysProvideInMemoryState())
-                .fetchInMemoryState(config.clustering().stateRetrieval().fetchInMemoryState())
-                .initialRetryWaitTime(config.clustering().stateRetrieval().initialRetryWaitTime())
-                .logFlushTimeout(config.clustering().stateRetrieval().logFlushTimeout())
-                .maxNonProgressingLogWrites(config.clustering().stateRetrieval().maxNonProgressingLogWrites())
-                .numRetries(config.clustering().stateRetrieval().numRetries())
-                .retryWaitTimeIncreaseFactor(config.clustering().stateRetrieval().retryWaitTimeIncreaseFactor())
-                .timeout(config.clustering().stateRetrieval().timeout());
+                .fetchInMemoryState(config.clustering().stateTransfer().fetchInMemoryState())
+                .timeout(config.clustering().stateTransfer().timeout())
+                .chunkSize(config.clustering().stateTransfer().chunkSize());
 
         if (config.clustering().cacheMode().isSynchronous()) {
             legacy.clustering()
@@ -233,16 +230,16 @@ public class LegacyConfigurationAdaptor {
                 .useEagerLocking(config.transaction().useEagerLocking())
                 .useSynchronization(config.transaction().useSynchronization())
                 .use1PcForAutoCommitTransactions(config.transaction().use1PcForAutoCommitTransactions())
-                        //Pedro -- total order stuff
-                .transactionProtocol(config.transaction().transactionProtocol())
+        //Pedro -- total order stuff
+        .transactionProtocol(config.transaction().transactionProtocol())
                 .transaction().totalOrderThreading().corePoolSize(config.transaction().totalOrderThreading()
-                .getCorePoolSize())
+                        .getCorePoolSize())
                 .transaction().totalOrderThreading().maximumPoolSize(config.transaction().totalOrderThreading()
-                .getMaximumPoolSize())
+                        .getMaximumPoolSize())
                 .transaction().totalOrderThreading().keepAliveTime(config.transaction().totalOrderThreading()
-                .getKeepAliveTime())
+                        .getKeepAliveTime())
                 .transaction().totalOrderThreading().queueSize(config.transaction().totalOrderThreading()
-                .getQueueSize());
+                        .getQueueSize());
 
         if (config.transaction().recovery().enabled()) {
             legacy.transaction().recovery().recoveryInfoCacheName(config.transaction().recovery().recoveryInfoCacheName());
@@ -259,7 +256,7 @@ public class LegacyConfigurationAdaptor {
         return legacy.build();
     }
 
-    public org.infinispan.configuration.cache.Configuration adapt(org.infinispan.config.Configuration legacy) {
+    public static org.infinispan.configuration.cache.Configuration adapt(org.infinispan.config.Configuration legacy) {
 
         // Handle the case that null is passed in
         if (legacy == null)
@@ -274,19 +271,47 @@ public class LegacyConfigurationAdaptor {
             if (legacy.isUseAsyncMarshalling())
                 builder.clustering()
                         .async()
-                        .asyncMarshalling();
-            else
-                builder.clustering()
-                        .async()
-                        .syncMarshalling();
+                        .replQueue(Util.<ReplicationQueue>getInstance(legacy.getReplQueueClass(), legacy.getClassLoader()))
+                        .replQueueInterval(legacy.getReplQueueInterval())
+                        .replQueueMaxElements(legacy.getReplQueueMaxElements());
+        }
+
+        if (legacy.getConsistentHashClass() != null) {
+            builder.clustering()
+                    .hash()
+                    .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));
+
+        }
+        if (legacy.getHashFunctionClass() != null) {
+            builder.clustering()
+                    .hash()
+                    .hash(Util.<Hash>getInstance(legacy.getHashFunctionClass(), legacy.getClassLoader()));
+        }
+        builder.clustering()
+                .hash()
+                .numOwners(legacy.getNumOwners())
+                .numVirtualNodes(legacy.getNumVirtualNodes())
+                .rehashEnabled(legacy.isRehashEnabled())
+                .rehashRpcTimeout(legacy.getRehashRpcTimeout())
+                .rehashWait(legacy.getRehashWaitTime())
+                .groups()
+                .enabled(legacy.isGroupsEnabled())
+                .withGroupers(legacy.getGroupers());
+
+        if (legacy.isL1CacheEnabled()) {
+            builder.clustering()
+                    .async()
+                    .syncMarshalling();
+
             builder.clustering()
                     .async()
                     .replQueue(Util.<ReplicationQueue>getInstance(legacy.getReplQueueClass(), legacy.getClassLoader()))
                     .replQueueInterval(legacy.getReplQueueInterval())
-                    .replQueueMaxElements(legacy.getReplQueueMaxElements());
+                    .replQueueMaxElements(legacy.getReplQueueMaxElements())
+                    .useReplQueue(legacy.isUseReplQueue());
         }
 
-        if (legacy.getConsistentHashClass() != null) {
+        if (legacy.hasConsistentHashClass()) {
             builder.clustering()
                     .hash()
                     .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));
@@ -321,15 +346,10 @@ public class LegacyConfigurationAdaptor {
         }
 
         builder.clustering()
-                .stateRetrieval()
-                .alwaysProvideInMemoryState(legacy.isAlwaysProvideInMemoryState())
+                .stateTransfer()
                 .fetchInMemoryState(legacy.isFetchInMemoryState())
-                .initialRetryWaitTime(legacy.getStateRetrievalInitialRetryWaitTime())
-                .logFlushTimeout(legacy.getStateRetrievalLogFlushTimeout())
-                .maxNonProgressingLogWrites(legacy.getStateRetrievalMaxNonProgressingLogWrites())
-                .numRetries(legacy.getStateRetrievalNumRetries())
-                .retryWaitTimeIncreaseFactor(legacy.getStateRetrievalRetryWaitTimeIncreaseFactor())
-                .timeout(legacy.getStateRetrievalTimeout());
+                .timeout(legacy.getStateRetrievalTimeout())
+                .chunkSize(legacy.getStateRetrievalChunkSize());
 
         if (legacy.getCacheMode().isSynchronous()) {
             builder.clustering()
@@ -339,8 +359,10 @@ public class LegacyConfigurationAdaptor {
 
         for (CustomInterceptorConfig interceptor : legacy.getCustomInterceptors()) {
             InterceptorConfigurationBuilder interceptorConfigurationBuilder = builder.clustering().customInterceptors().addInterceptor();
-            interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
-            interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
+            if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())
+                interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
+            if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
+                interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
             interceptorConfigurationBuilder.index(interceptor.getIndex());
             interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
             interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
@@ -390,27 +412,45 @@ public class LegacyConfigurationAdaptor {
                 .shared(legacy.isCacheLoaderShared());
 
         for (CacheLoaderConfig clc : legacy.getCacheLoaders()) {
-            LoaderConfigurationBuilder loaderBuilder = builder.loaders().addCacheLoader();
-            loaderBuilder.cacheLoader(Util.<CacheLoader>getInstance(clc.getCacheLoaderClassName(), legacy.getClassLoader()));
+            AbstractLoaderConfigurationBuilder loaderBuilder = null;
+            if (clc instanceof FileCacheStoreConfig) {
+                FileCacheStoreConfig csc = (FileCacheStoreConfig) clc;
+                FileCacheStoreConfigurationBuilder fcsBuilder = builder.loaders().addFileCacheStore();
+                fcsBuilder.fetchPersistentState(csc.isFetchPersistentState());
+                fcsBuilder.ignoreModifications(csc.isIgnoreModifications());
+                fcsBuilder.purgeOnStartup(csc.isPurgeOnStartup());
+                fcsBuilder.purgerThreads(csc.getPurgerThreads());
+                fcsBuilder.purgeSynchronously(csc.isPurgeSynchronously());
+                fcsBuilder.location(csc.getLocation());
+                fcsBuilder.fsyncInterval(csc.getFsyncInterval());
+                fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().toString()));
+                loaderBuilder = fcsBuilder;
+            } else {
+                LoaderConfigurationBuilder tmpLoaderBuilder = builder.loaders().addCacheLoader();
+                tmpLoaderBuilder.cacheLoader(Util.<CacheLoader>getInstance(clc.getCacheLoaderClassName(), legacy.getClassLoader()));
+                if (clc instanceof CacheStoreConfig) {
+                    CacheStoreConfig csc = (CacheStoreConfig) clc;
+                    tmpLoaderBuilder.fetchPersistentState(csc.isFetchPersistentState());
+                    tmpLoaderBuilder.ignoreModifications(csc.isIgnoreModifications());
+                    tmpLoaderBuilder.purgeOnStartup(csc.isPurgeOnStartup());
+                    tmpLoaderBuilder.purgerThreads(csc.getPurgerThreads());
+                    tmpLoaderBuilder.purgeSynchronously(csc.isPurgeSynchronously());
+                    loaderBuilder = tmpLoaderBuilder;
+                }
+                if (clc instanceof AbstractCacheStoreConfig) {
+                    tmpLoaderBuilder.withProperties(((AbstractCacheLoaderConfig) clc).getProperties());
+                }
+            }
             if (clc instanceof CacheStoreConfig) {
                 CacheStoreConfig csc = (CacheStoreConfig) clc;
-                loaderBuilder.fetchPersistentState(csc.isFetchPersistentState());
-                loaderBuilder.ignoreModifications(csc.isIgnoreModifications());
-                loaderBuilder.purgeOnStartup(csc.isPurgeOnStartup());
-                loaderBuilder.purgerThreads(csc.getPurgerThreads());
-                loaderBuilder.purgeSynchronously(csc.isPurgeSynchronously());
                 loaderBuilder.async().enabled(csc.getAsyncStoreConfig().isEnabled());
                 loaderBuilder.async().flushLockTimeout(csc.getAsyncStoreConfig().getFlushLockTimeout());
                 loaderBuilder.async().modificationQueueSize(csc.getAsyncStoreConfig().getModificationQueueSize());
                 loaderBuilder.async().shutdownTimeout(csc.getAsyncStoreConfig().getShutdownTimeout());
                 loaderBuilder.async().threadPoolSize(csc.getAsyncStoreConfig().getThreadPoolSize());
-
                 loaderBuilder.singletonStore().enabled(csc.getSingletonStoreConfig().isSingletonStoreEnabled());
                 loaderBuilder.singletonStore().pushStateTimeout(csc.getSingletonStoreConfig().getPushStateTimeout());
                 loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.getSingletonStoreConfig().isPushStateWhenCoordinator());
-            }
-            if (clc instanceof AbstractCacheStoreConfig) {
-                loaderBuilder.withProperties(((AbstractCacheLoaderConfig) clc).getProperties());
             }
         }
 
@@ -430,7 +470,7 @@ public class LegacyConfigurationAdaptor {
 
         builder.transaction()
                 .autoCommit(legacy.isTransactionAutoCommit())
-                .cacheStopTimeout((int) legacy.getCacheStopTimeout())
+                .cacheStopTimeout(legacy.getCacheStopTimeout())
                 .eagerLockingSingleNode(legacy.isEagerLockSingleNode())
                 .lockingMode(legacy.getTransactionLockingMode())
                 .syncCommitPhase(legacy.isSyncCommitPhase())
@@ -440,8 +480,8 @@ public class LegacyConfigurationAdaptor {
                 .transactionSynchronizationRegistryLookup(legacy.getTransactionSynchronizationRegistryLookup())
                 .useEagerLocking(legacy.isUseEagerLocking())
                 .useSynchronization(legacy.isUseSynchronizationForTransactions())
-                        //Pedro -- total orde stuff
-                .transactionProtocol(legacy.getTransactionProtocol())
+        //Pedro -- total orde stuff
+        .transactionProtocol(legacy.getTransactionProtocol())
                 .totalOrderThreading().corePoolSize(legacy.getTOCorePoolSize())
                 .totalOrderThreading().maximumPoolSize(legacy.getTOMaximumPoolSize())
                 .totalOrderThreading().keepAliveTime(legacy.getTOKeepAliveTime())

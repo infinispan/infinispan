@@ -51,6 +51,7 @@ public class ReflectionUtil {
 
    private static final Class<?>[] primitiveArrays = {int[].class, byte[].class, short[].class, long[].class,
                                                       float[].class, double[].class, boolean[].class, char[].class};
+   public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
 
 
    /**
@@ -95,7 +96,7 @@ public class ReflectionUtil {
    }
 
    public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Field> fields = new ArrayList<Field>();
+      List<Field> fields = new ArrayList<Field>(4);
       for (; !c.equals(Object.class); c = c.getSuperclass()) {
          getAnnotatedFieldHelper(fields, c, annotationType);
       }
@@ -112,7 +113,7 @@ public class ReflectionUtil {
    }
 
    public static List<Field> getFields(Class<?> c, Class<?> type) {
-      List<Field> fields = new ArrayList<Field>();
+      List<Field> fields = new ArrayList<Field>(4);
       for (; !c.equals(Object.class); c = c.getSuperclass()) {
          getFieldsHelper(fields, c, type);
       }
@@ -385,7 +386,7 @@ public class ReflectionUtil {
    }
 
    public static Class[] toClassArray(String[] typeList) throws ClassNotFoundException {
-      if (typeList == null) return new Class[0];
+      if (typeList == null) return EMPTY_CLASS_ARRAY;
       Class[] retval = new Class[typeList.length];
       int i = 0;
       ClassLoader classLoader = ReflectionUtil.class.getClassLoader();

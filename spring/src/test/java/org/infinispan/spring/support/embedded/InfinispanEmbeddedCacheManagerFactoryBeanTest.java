@@ -42,6 +42,7 @@ import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.mock.MockExecutorFatory;
+import org.infinispan.spring.mock.MockTransport;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -506,7 +507,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseTransportClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedTransportClass = "expected.transport.Class";
+      final String expectedTransportClass = MockTransport.class.getName();
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setTransportClass(expectedTransportClass);

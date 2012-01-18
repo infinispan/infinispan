@@ -19,8 +19,6 @@
 
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContext;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 

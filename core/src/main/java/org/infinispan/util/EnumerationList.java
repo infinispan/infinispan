@@ -16,8 +16,8 @@
  */
 package org.infinispan.util;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -29,7 +29,7 @@ import java.util.List;
 public class EnumerationList<T> extends ForwardingList<T>
 {
    // The enumeration as a list
-   private final List<T> list = new ArrayList<T>();
+   private final List<T> list = new LinkedList<T>();
    
    /**
     * Constructor

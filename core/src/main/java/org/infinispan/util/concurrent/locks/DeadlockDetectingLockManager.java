@@ -34,6 +34,7 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -80,12 +81,13 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
       if (ctx.isInTxScope()) {
          if (trace) log.trace("Using early dead lock detection");
-         final long start = System.currentTimeMillis();
+         final long startNanos = System.nanoTime();
+         final long timeoutNanoTime = TimeUnit.NANOSECONDS.convert(lockTimeout, MILLISECONDS) + startNanos;
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
          thisTx.setLockIntention(key);
          if (trace) log.tracef("Setting lock intention to %s for %s (%s)", key, thisTx, System.identityHashCode(thisTx));
 
-         while (System.currentTimeMillis() < (start + lockTimeout)) {
+         while (System.nanoTime() < timeoutNanoTime) {
             if (lockContainer.acquireLock(ctx.getLockOwner(), key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
                if (trace) log.tracef("successfully acquired lock on %s on behalf of %s, returning ...", key, ctx.getLockOwner());
@@ -217,7 +219,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected")
    @Metric(displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
    @Deprecated
-   public long getLocallyInterruptedTransactions() {
+   public static long getLocallyInterruptedTransactions() {
       return -1;
    }
 

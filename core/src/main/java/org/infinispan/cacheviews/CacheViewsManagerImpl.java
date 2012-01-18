@@ -114,7 +114,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    private long timeout = 10 * 1000;
    // TODO Make the cooldown configurable, or change the view installation timing altogether
    private long viewChangeCooldown = 1 * 1000;
-   private ViewListener listener = new ViewListener();;
+   private ViewListener listener = new ViewListener();
 
    // A single thread examines the unprepared changes and decides whether to install a new view for all the caches
    private ViewTriggerThread viewTriggerThread;
@@ -156,6 +156,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       cacheViewInstallerExecutor = Executors.newCachedThreadPool(tfViewInstaller);
 
       viewTriggerThread = new ViewTriggerThread();
+      viewTriggerThread.start();
 
       cacheManagerNotifier.addListener(listener);
       // The listener already missed the initial view
@@ -247,6 +248,15 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       try {
          log.debugf("Installing new view %s for cache %s", newView, cacheName);
          clusterPrepareView(cacheName, newView);
+
+         Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
+         if (cacheViewInfo.getPendingView().containsAny(leavers)) {
+            log.debugf("Cannot commit cache view %s, some nodes already left the cluster: %s",
+                  cacheViewInfo.getPendingView(), leavers);
+            // will still run the rollback
+            return false;
+         }
+
          success = true;
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
@@ -283,10 +293,11 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
       if (pendingView.containsAny(leavers))
-         throw new IllegalStateException("Cannot prepare view " + pendingView + ", some nodes already left the cluster: " + leavers);
+         throw new IllegalStateException("Cannot prepare cache view " + pendingView + ", some nodes already left the cluster: " + leavers);
+
 
       // broadcast the command to the targets, which will skip the local node
-      Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
+      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
             Map<Address, Response> rspList = transport.invokeRemotely(pendingView.getMembers(), cmd,
@@ -296,13 +307,19 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       });
 
       // now invoke the command on the local node
-      try {
-         handlePrepareView(cacheName, pendingView, committedView);
-      } finally {
-         // wait for the remote commands to finish
-         Map<Address, Response> rspList = future.get(timeout, TimeUnit.MILLISECONDS);
-         checkRemoteResponse(cacheName, cmd, rspList);
-      }
+      Future<Object> localFuture = asyncTransportExecutor.submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            handlePrepareView(cacheName, pendingView, committedView);
+            return null;
+         }
+      });
+
+      // wait for the remote commands to finish
+      Map<Address, Response> rspList = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
+      checkRemoteResponse(cacheName, cmd, rspList);
+      // now wait for the local command
+      localFuture.get(timeout, TimeUnit.MILLISECONDS);
       return pendingView;
    }
 
@@ -439,7 +456,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // tell the upper layer to stop sending commands to the nodes that already left
       CacheViewListener cacheViewListener = cacheViewInfo.getListener();
       if (cacheViewListener != null) {
-         cacheViewListener.waitForPrepare();
+         cacheViewListener.preInstallView();
       }
    }
 
@@ -486,16 +503,22 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       }
 
       if (cacheViewInfo.hasPendingView()) {
-         log.debugf("%s: Committing cache view %d", cacheName, viewId);
          CacheView viewToCommit = cacheViewInfo.getPendingView();
+         log.debugf("%s: Committing cache view %s", cacheName, viewToCommit);
+
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          // we only prepared the view if it was local, so we can't commit it here
          boolean isLocal = viewToCommit.contains(self);
          if (isLocal && cacheViewListener != null) {
             cacheViewListener.commitView(viewId);
          }
+
          cacheViewInfo.commitView(viewId);
          cacheViewInfo.getPendingChanges().resetChanges(viewToCommit);
+
+         if (isLocal && cacheViewListener != null) {
+            cacheViewListener.postInstallView(viewId);
+         }
       } else {
          log.debugf("%s: We don't have a pending view, ignoring commit", cacheName);
       }
@@ -511,12 +534,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       if (cacheViewInfo.hasPendingView()) {
          log.debugf("%s: Rolling back to cache view %d, new view id is %d", cacheName, committedViewId, newViewId);
-         cacheViewInfo.rollbackView(newViewId, committedViewId);
-         cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
          if (cacheViewListener != null) {
-            cacheViewListener.rollbackView(committedViewId);
+            cacheViewListener.rollbackView(newViewId, committedViewId);
          }
+
+         cacheViewInfo.rollbackView(newViewId, committedViewId);
+         cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
       } else {
          log.debugf("%s: We don't have a pending view, ignoring rollback", cacheName);
       }
@@ -524,7 +548,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
    @Override
    public Map<String, CacheView> handleRecoverViews() {
-      Map<String, CacheView> result = new HashMap<String, CacheView>();
+      Map<String, CacheView> result = new HashMap<String, CacheView>(viewsInfo.size());
       for (CacheViewInfo cacheViewInfo : viewsInfo.values()) {
          if (cacheViewInfo.getCommittedView().contains(self)) {
             result.put(cacheViewInfo.getCacheName(), cacheViewInfo.getCommittedView());
@@ -636,9 +660,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
                @Override
                public Map<Address, Response> call() throws Exception {
-                  Map<Address, Response> rspList = transport.invokeRemotely(Collections.singleton(member), cmd,
+                  return transport.invokeRemotely(Collections.singleton(member), cmd,
                         ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false);
-                  return rspList;
                }
             });
             futures.add(future);
@@ -750,7 +773,6 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          shouldRecoverViews = false;
       } catch (Exception e) {
          log.error("Error recovering views from the cluster members", e);
-         return;
       }
    }
 
@@ -761,9 +783,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    /**
     * Executed on the coordinator to trigger the installation of new views.
     */
-   public class ViewTriggerThread extends Thread {
-      private Lock lock = new ReentrantLock();
-      private Condition condition = lock.newCondition();
+   public final class ViewTriggerThread extends Thread {
+      private final Lock lock = new ReentrantLock();
+      private final Condition condition = lock.newCondition();
 
       public ViewTriggerThread() {
          super("CacheViewTrigger," + self);
@@ -771,7 +793,6 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          // ViewTriggerThread could be created on a user thread, and we don't want to
          // hold a reference to that classloader
          setContextClassLoader(ViewTriggerThread.class.getClassLoader());
-         start();
       }
 
       public void wakeUp() {

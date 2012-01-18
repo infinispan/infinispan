@@ -23,14 +23,6 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,15 +31,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * Base class for local and remote transaction.
- * Impl note: The aggregated modification list and lookedUpEntries are not instantiated here but in subclasses.
- * This is done in order to take advantage of the fact that, for remote transactions we already know the size of the
- * modifications list at creation time.
+ * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
+ * instantiated here but in subclasses. This is done in order to take advantage of the fact that, for remote
+ * transactions we already know the size of the modifications list at creation time.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -64,17 +60,16 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected Set<Object> affectedKeys = null;
    protected Set<Object> lockedKeys;
    protected Set<Object> backupKeyLocks = null;
-
-   private final ReentrantLock lock = new ReentrantLock();
-   private final Condition condition = lock.newCondition();
-
+   private boolean txComplete = false;
    protected volatile boolean prepared;
-   protected Integer viewId;
+   private volatile boolean needToNotifyWaiters = false;
+   final int viewId;
 
    private EntryVersionsMap updatedEntryVersions;
 
-   public AbstractCacheTransaction(GlobalTransaction tx) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int viewId) {
       this.tx = tx;
+      this.viewId = viewId;
    }
 
    public GlobalTransaction getGlobalTransaction() {
@@ -113,35 +108,43 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void notifyOnTransactionFinished() {
-      log.tracef("transaction %s finished, notifying listening threads.", tx);
-      lock.lock();
-      try {
-         condition.signalAll();
-      } finally {
-         lock.unlock();
+      log.tracef("Transaction %s has completed, notifying listening threads.", tx);
+      txComplete = true; //this one is cheap but does not guarantee visibility
+      if (needToNotifyWaiters) {
+         synchronized (this) {
+            txComplete = true; //in this case we want to guarantee visibility to other threads
+            this.notifyAll();
+         }
       }
    }
 
    @Override
    public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
-      lock.lock();
-      try {
-         final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
-         log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
-         return !potentiallyLocked || condition.await(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
-      } finally {
-         lock.unlock();
+      if (txComplete) return true; //using an unsafe optimisation: if it's true, we for sure have the latest read of the value without needing memory barriers
+      final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
+      log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
+      if (potentiallyLocked) {
+         synchronized (this) {
+            // Check again after acquiring a lock on the monitor that the transaction has completed.
+            // If it has completed, all of its locks would have been released.
+            needToNotifyWaiters = true;
+            //The order in which these booleans are verified is critical as we take advantage of it to avoid otherwise needed locking
+            if (txComplete) {
+               needToNotifyWaiters = false;
+               return true;
+            }
+            this.wait(lockAcquisitionTimeout);
+
+            // Check again in case of spurious thread signalling
+            return txComplete;
+         }
       }
+      return true;
    }
 
    @Override
-   public Integer getViewId() {
+   public int getViewId() {
       return viewId;
-   }
-
-   @Override
-   public void setViewId(Integer viewId) {
-      this.viewId = viewId;
    }
 
    @Override
@@ -166,8 +169,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private boolean hasLockOrIsLockBackup(Object key) {
-      return (backupKeyLocks != null && backupKeyLocks.contains(key))
-            || (lockedKeys != null && lockedKeys.contains(key));
+      return (lockedKeys != null && lockedKeys.contains(key)) || (backupKeyLocks != null && backupKeyLocks.contains(key));
    }
 
    public Set<Object> getAffectedKeys() {

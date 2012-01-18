@@ -22,8 +22,6 @@
  */
 package org.infinispan.loaders.keymappers;
 
-import java.nio.charset.Charset;
-
 import org.infinispan.util.Base64;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;

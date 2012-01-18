@@ -35,7 +35,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
@@ -61,10 +60,10 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -89,27 +88,23 @@ public class RpcManagerImpl implements RpcManager {
 
     @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
     boolean statisticsEnabled = false; // by default, don't gather statistics.
-    private volatile Address currentStateTransferSource;
     private boolean stateTransferEnabled;
     private Configuration configuration;
     private ReplicationQueue replicationQueue;
     private ExecutorService asyncExecutor;
     private CommandsFactory cf;
-    private StreamingMarshaller marshaller;
     private CacheViewsManager cvm;
 
 
     @Inject
     public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
                                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                   @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                                    CacheViewsManager cvm) {
         this.t = t;
         this.configuration = configuration;
         this.replicationQueue = replicationQueue;
         this.asyncExecutor = e;
         this.cf = cf;
-        this.marshaller = marshaller;
         this.cvm = cvm;
     }
 
@@ -138,8 +133,8 @@ public class RpcManagerImpl implements RpcManager {
             log.debug("We're the only member in the cluster; Don't invoke remotely.");
             return Collections.emptyMap();
         } else {
-            long startTime = 0;
-            if (statisticsEnabled) startTime = System.currentTimeMillis();
+            long startTimeNanos = 0;
+            if (statisticsEnabled) startTimeNanos = System.nanoTime();
             try {
                 // add a response filter that will ensure we don't wait for replies from non-members
                 // but only if the target is the whole cluster and the call is synchronous
@@ -161,10 +156,7 @@ public class RpcManagerImpl implements RpcManager {
                 if (isStatisticsEnabled()) replicationCount.incrementAndGet();
                 return result;
             } catch (CacheException e) {
-                if (log.isTraceEnabled()) {
-                    log.trace("replication exception: ", e);
-                }
-
+                log.trace("replication exception: ", e);
                 if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
                 throw e;
             } catch (Throwable th) {
@@ -173,7 +165,7 @@ public class RpcManagerImpl implements RpcManager {
                 throw new CacheException(th);
             } finally {
                 if (statisticsEnabled) {
-                    long timeTaken = System.currentTimeMillis() - startTime;
+                    long timeTaken = TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos, TimeUnit.NANOSECONDS);
                     totalReplicationTime.getAndAdd(timeTaken);
                 }
             }

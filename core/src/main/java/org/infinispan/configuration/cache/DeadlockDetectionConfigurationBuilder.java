@@ -23,16 +23,25 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
       return this;
    }
    
+   /**
+    * Enable deadlock detection
+    */
    public DeadlockDetectionConfigurationBuilder enable() {
       this.enabled = true;
       return this;
    }
-   
+
+   /**
+    * Disable deadlock detection
+    */
    public DeadlockDetectionConfigurationBuilder disable() {
       this.enabled = false;
       return this;
    }
    
+   /**
+    * Enable or disable deadlock detection
+    */
    public DeadlockDetectionConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
       return this;

@@ -6,12 +6,8 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
@@ -33,10 +29,6 @@ public class GroupManagerImpl implements GroupManager {
     }
     
     private static class GroupMetadataImpl implements GroupMetadata {
-        
-        
-        private static Object[] EMPTY_ARGS = new Object[0];
-        
         private final Method method;
 
         public GroupMetadataImpl(Method method) {
@@ -48,7 +40,7 @@ public class GroupManagerImpl implements GroupManager {
         }
 
         public String getGroup(Object instance) {
-            return String.class.cast(invokeAccessibly(instance, method, EMPTY_ARGS));
+            return String.class.cast(invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
         }
         
     }
@@ -63,11 +55,11 @@ public class GroupManagerImpl implements GroupManager {
             throw new IllegalStateException(Util.formatString("Cannot define more that one @Group method for class hierarchy rooted at %s", clazz.getName()));
     }
 
-    private final ConcurrentMap<Class<?>, Future<GroupMetadata>> groupMetadataCache;
+    private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
     
     public GroupManagerImpl(List<Grouper<?>> groupers) {
-        this.groupMetadataCache = new ConcurrentHashMap<Class<?>, Future<GroupMetadata>>();
+        this.groupMetadataCache = new ConcurrentHashMap<Class<?>, GroupMetadata>();
         if (groupers != null)
             this.groupers = groupers;
         else
@@ -91,30 +83,21 @@ public class GroupManagerImpl implements GroupManager {
         return group;
     }
     
-    private GroupMetadata getMetadata(Object key) {
+    private GroupMetadata getMetadata(final Object key) {
         final Class<?> keyClass = key.getClass();
-        if (!groupMetadataCache.containsKey(keyClass)) {
-            Callable<GroupMetadata> c = new Callable<GroupMetadata>() {
-                
-                @Override
-                public GroupMetadata call() throws Exception {
-                    return createGroupMetadata(keyClass);
-                }
-                
-            };
-            FutureTask<GroupMetadata> ft = new FutureTask<GroupMetadata>(c);
-            if (groupMetadataCache.putIfAbsent(keyClass, ft) == null) {
-                ft.run();
-            }
-        }
-        try {
-            return groupMetadataCache.get(keyClass).get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (ExecutionException e) {
-            throw new IllegalStateException("Error extracting @Group from class hierarchy", e);
-        }
+        GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);
+        if (groupMetadata == null) {
+          //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
+          //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
+          // the long run
+           groupMetadata = createGroupMetadata(keyClass);
+           GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
+           if (previous != null) {
+               // in case another thread added a metadata already, discard what we created and reuse the existing.
+               return previous;
+           }
+       }
+       return groupMetadata;
     }
 
 }

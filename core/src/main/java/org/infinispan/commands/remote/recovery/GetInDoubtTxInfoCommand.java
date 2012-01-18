@@ -24,6 +24,7 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.Util;
 
 /**
  * Command used by the recovery tooling for obtaining the list of in-doubt transactions from a node.
@@ -55,7 +56,7 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[0];
+      return Util.EMPTY_OBJECT_ARRAY;
    }
 
    @Override

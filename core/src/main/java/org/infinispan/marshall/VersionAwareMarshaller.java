@@ -52,14 +52,9 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
-//   private static final int VERSION_400 = 400;
-//   private static final int VERSION_410 = 410;
-//   private static final int VERSION_500 = 500;
    private static final int VERSION_510 = 510;
 
    private final JBossMarshaller defaultMarshaller;
-   private ClassLoader loader;
-   private InvocationContextContainer icc;
    private String cacheName;
 
    public VersionAwareMarshaller() {
@@ -67,16 +62,16 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    }
 
    public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc, ExternalizerTable extTable) {
+      ClassLoader myClassLoader;
       if (cfg == null) {
-         this.loader = loader;
+         myClassLoader = loader;
          this.cacheName = null;
       } else {
-         this.loader = cfg.getClassLoader();
+         myClassLoader = cfg.getClassLoader();
          this.cacheName = cfg.getName();
       }
 
-      this.icc = icc;
-      this.defaultMarshaller.inject(extTable, this.loader, this.icc);
+      this.defaultMarshaller.inject(extTable, myClassLoader, icc);
    }
 
    public void stop() {

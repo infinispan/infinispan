@@ -28,7 +28,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
-import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;

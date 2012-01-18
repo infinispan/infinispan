@@ -26,6 +26,9 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.infinispan.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
+import static org.infinispan.util.Util.EMPTY_OBJECT_ARRAY;
+
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
  *
@@ -163,8 +166,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected static class DebuggingExceptionListener implements ExceptionListener {
       private static final URL[] EMPTY_URLS = {};
-      private static final Class[] EMPTY_CLASSES = {};
-      private static final Object[] EMPTY_OBJECTS = {};
 
       @Override
       public void handleMarshallingException(Throwable problem, Object subject) {
@@ -207,10 +208,10 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
          URL[] urls = EMPTY_URLS;
          try {
             Class returnType = urls.getClass();
-            Class[] parameterTypes = EMPTY_CLASSES;
+            Class[] parameterTypes = EMPTY_CLASS_ARRAY;
             Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
             if (returnType.isAssignableFrom(getURLs.getReturnType())) {
-               Object[] args = EMPTY_OBJECTS;
+               Object[] args = EMPTY_OBJECT_ARRAY;
                urls = (URL[]) getURLs.invoke(cl, args);
             }
          } catch (Exception ignore) {

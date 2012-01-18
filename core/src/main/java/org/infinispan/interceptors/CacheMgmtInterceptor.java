@@ -69,7 +69,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private DataContainer dataContainer;
 
    private static final Log log = LogFactory.getLog(CacheMgmtInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -252,7 +251,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
     * @param nanoEnd
     * @return the interval rounded in milliseconds
     */
-   private final long nanosecondsIntervalToMilliseconds(final long nanoStart, final long nanoEnd) {
+   private long nanosecondsIntervalToMilliseconds(final long nanoStart, final long nanoEnd) {
       return TimeUnit.MILLISECONDS.convert(nanoEnd - nanoStart, TimeUnit.NANOSECONDS);
    }
 }

@@ -1,17 +1,16 @@
 package org.infinispan.config;
 
-import java.util.AbstractList;
-import java.util.LinkedList;
-import java.util.List;
+import org.infinispan.config.FluentConfiguration.GroupsConfig;
+import org.infinispan.distribution.group.Grouper;
+import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-
-import org.infinispan.config.FluentConfiguration.GroupsConfig;
-import org.infinispan.distribution.group.Grouper;
-import org.infinispan.util.Util;
+import java.util.AbstractList;
+import java.util.LinkedList;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @ConfigurationDoc(name="groups",desc="Configuration for various grouper definitions. See the user guide for more information")
@@ -71,7 +70,7 @@ public class GroupsConfiguration extends AbstractFluentConfigurationBean impleme
       
       private Grouper<T> delegate() {
          if (delegate == null)
-            delegate = Util.<Grouper<T>>getInstance(className, config.getClassLoader());
+            delegate = Util.getInstance(className, config.getClassLoader());
          return delegate;
       }
       

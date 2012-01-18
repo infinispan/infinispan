@@ -94,6 +94,11 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public void touch(long currentTimeMillis) {
+      // no-op
+   }
+
+   @Override
    public final void reincarnate() {
       // no-op
    }

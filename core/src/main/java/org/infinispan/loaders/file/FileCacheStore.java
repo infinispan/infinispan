@@ -465,7 +465,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    }
 
-   private class BufferedFileSync implements FileSync {
+   private static class BufferedFileSync implements FileSync {
       protected final ConcurrentMap<String, FileChannel> streams =
             new ConcurrentHashMap<String, FileChannel>();
 
@@ -595,7 +595,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   private class PerWriteFileSync implements FileSync {
+   private static class PerWriteFileSync implements FileSync {
       @Override
       public void write(byte[] bytes, File f) throws IOException {
          FileOutputStream fos = null;

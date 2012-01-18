@@ -559,10 +559,10 @@ public class Base64 {
 
             return 3;
          } catch (Exception e) {
-            log.error("" + source[srcOffset] + ": " + (DECODABET[source[srcOffset]]));
-            log.error("" + source[srcOffset + 1] + ": " + (DECODABET[source[srcOffset + 1]]));
-            log.error("" + source[srcOffset + 2] + ": " + (DECODABET[source[srcOffset + 2]]));
-            log.error("" + source[srcOffset + 3] + ": " + (DECODABET[source[srcOffset + 3]]));
+            log.error(String.valueOf(source[srcOffset]) + ": " + DECODABET[source[srcOffset]]);
+            log.error(String.valueOf(source[srcOffset + 1]) + ": " + DECODABET[source[srcOffset + 1]]);
+            log.error(String.valueOf(source[srcOffset + 2]) + ": " + DECODABET[source[srcOffset + 2]]);
+            log.error(String.valueOf(source[srcOffset + 3]) + ": " + DECODABET[source[srcOffset + 3]]);
             return -1;
          } //end catch
       }
@@ -586,9 +586,9 @@ public class Base64 {
 
       byte[] b4 = new byte[4];
       int b4Posn = 0;
-      int i = 0;
-      byte sbiCrop = 0;
-      byte sbiDecode = 0;
+      int i;
+      byte sbiCrop;
+      byte sbiDecode;
       for (i = off; i < off + len; i++) {
          sbiCrop = (byte) (source[i] & 0x7f); // Only the low seven bits
          sbiDecode = DECODABET[sbiCrop];
@@ -650,7 +650,7 @@ public class Base64 {
             java.util.zip.GZIPInputStream gzis = null;
             java.io.ByteArrayOutputStream baos = null;
             byte[] buffer = new byte[2048];
-            int length = 0;
+            int length;
 
             try {
                baos = new java.io.ByteArrayOutputStream();
@@ -795,9 +795,9 @@ public class Base64 {
       try {
          // Set up some useful variables
          java.io.File file = new java.io.File(filename);
-         byte[] buffer = null;
+         byte[] buffer;
          int length = 0;
-         int numBytes = 0;
+         int numBytes;
 
          // Check for size of file
          if (file.length() > Integer.MAX_VALUE) {
@@ -844,7 +844,7 @@ public class Base64 {
          java.io.File file = new java.io.File(filename);
          byte[] buffer = new byte[(int) (file.length() * 1.4)];
          int length = 0;
-         int numBytes = 0;
+         int numBytes;
 
          // Open a stream
          bis = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(file)), Base64.ENCODE);
@@ -972,10 +972,10 @@ public class Base64 {
             // Else decoding
             else {
                byte[] b4 = new byte[4];
-               int i = 0;
+               int i;
                for (i = 0; i < 4; i++) {
                   // Read four "meaningful" bytes:
-                  int b = 0;
+                  int b;
                   do {
                      b = in.read();
                   }

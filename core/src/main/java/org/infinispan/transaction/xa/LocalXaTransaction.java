@@ -38,8 +38,8 @@ public class LocalXaTransaction extends LocalTransaction {
 
    private Xid xid;
 
-   public LocalXaTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
-      super(transaction, tx, implicitTransaction);
+   public LocalXaTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
+      super(transaction, tx, implicitTransaction, viewId);
    }
 
    public void setXid(Xid xid) {

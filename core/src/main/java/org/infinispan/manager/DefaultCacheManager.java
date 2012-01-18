@@ -55,7 +55,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReflectionUtil;
@@ -166,7 +165,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      */
     @Deprecated
     public DefaultCacheManager(Configuration defaultConfiguration) {
-        this((GlobalConfiguration) null, defaultConfiguration, true);
+        this(null, defaultConfiguration, true);
     }
 
     /**
@@ -176,7 +175,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @param defaultConfiguration configuration to use as a template for all caches created
      */
     public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration) {
-        this((org.infinispan.configuration.global.GlobalConfiguration) null, defaultConfiguration, true);
+        this(null, defaultConfiguration, true);
     }
 
     /**
@@ -190,7 +189,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      */
     @Deprecated
     public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
-        this((GlobalConfiguration) null, defaultConfiguration, start);
+        this(null, defaultConfiguration, start);
     }
 
     /**
@@ -202,7 +201,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @param start                if true, the cache manager is started
      */
     public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration, boolean start) {
-        this((org.infinispan.configuration.global.GlobalConfiguration) null, defaultConfiguration, start);
+        this(null, defaultConfiguration, start);
     }
 
     /**

@@ -22,18 +22,18 @@
  */
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContext;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -130,7 +130,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       }
 
       @Override
-      public boolean addAll(Collection<? extends Object> c) {
+      public boolean addAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
@@ -186,11 +186,6 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
                      next = k;
                      found = true;
                      break;
-                  }
-
-                  // Skip keys that would have been expired
-                  if (!container.containsKey(k)) {
-                     continue;
                   }
                }
 
@@ -250,7 +245,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       }
 
       @Override
-      public boolean addAll(Collection<? extends Object> c) {
+      public boolean addAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
@@ -299,9 +294,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
          private void fetchNext() {
             while (it.hasNext()) {
                Object k = it.next();
-               if (!container.containsKey(k)) {
-                  continue;
-               } else {
+               if (container.containsKey(k)) {
                   next = k;
                   break;
                }

@@ -69,7 +69,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    private AtomicInteger runningWritesCount = new AtomicInteger(0);
    private volatile boolean writesShouldBlock;
    private volatile boolean writesBlocked;
-   private ThreadLocal<Boolean> traceThreadWrites = new ThreadLocal<Boolean>();
+   private final ThreadLocal<Boolean> traceThreadWrites = new ThreadLocal<Boolean>();
    private int blockingCacheViewId = NO_BLOCKING_CACHE_VIEW;
    // blockingCacheViewId, writesShouldBlock and writesBlocked should only be modified while holding lock and always in this order
    private final Object lock = new Object();
@@ -223,7 +223,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       synchronized (lock) {
          writesShouldBlock = true;
-         if (writesBlocked == true) {
+         if (writesBlocked) {
             if (blockingCacheViewId < cacheViewId) {
                log.tracef("Write commands were already blocked for cache view %d", blockingCacheViewId);
             } else {
@@ -296,11 +296,12 @@ public class StateTransferLockImpl implements StateTransferLock {
       long endTime = System.currentTimeMillis() + lockTimeout;
       synchronized (lock) {
          while (true) {
-            // wait for the unblocker thread to notify us
-            lock.wait(timeout);
-
+            //check first before waiting
             if (acquireLockForWriteNoWait())
                return true;
+
+            // wait for the unblocker thread to notify us
+            lock.wait(timeout);
 
             // retry, unless the timeout expired
             timeout = endTime - System.currentTimeMillis();
@@ -352,11 +353,12 @@ public class StateTransferLockImpl implements StateTransferLock {
       // A commit command should never fail on the originator, so wait forever
       synchronized (lock) {
          while (true) {
-            // wait for the unblocker thread to notify us
-            lock.wait();
-
+            //check before waiting on condition
             if (acquireLockForCommitNoWait())
                return true;
+
+            // wait for the unblocker thread to notify us
+            lock.wait();
          }
       }
    }
@@ -388,7 +390,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (trace) {
          if (traceThreadWrites.get() != Boolean.TRUE)
             log.error("Trying to release state transfer shared lock without acquiring it first", new Exception());
-         traceThreadWrites.set(null);
+         traceThreadWrites.remove();
       }
       int remainingWrites = runningWritesCount.decrementAndGet();
       if (remainingWrites < 0) {

@@ -28,23 +28,28 @@ import org.infinispan.util.Util;
 import javax.transaction.xa.Xid;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of Xid.
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class DummyXid implements Xid {
+public final class DummyXid implements Xid {
+
+   private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);
+   private static final AtomicLong BRANCH_QUALIFIER_GENERATOR = new AtomicLong(1);
 
    private byte[] globalTransactionId = new byte[64];
    private byte[] branchQualifier = new byte[64];
+   private final int cachedHashcode;
 
    public int getFormatId() {
       return 1;
    }
 
-   public DummyXid() {
-      initialize();
+   public DummyXid(UUID transactionManagerId) {
+      cachedHashcode = initializeAndCalculateHash(transactionManagerId);
    }
 
    public byte[] getGlobalTransactionId() {
@@ -55,18 +60,23 @@ public class DummyXid implements Xid {
       return branchQualifier;
    }
 
-   private void initialize() {
-      initialize(globalTransactionId);
-      initialize(branchQualifier);
+   private int initializeAndCalculateHash(UUID transactionManagerId) {
+      int hc1 = initialize(transactionManagerId, GLOBAL_ID_GENERATOR, globalTransactionId);
+      return 37 * hc1 + initialize(transactionManagerId, BRANCH_QUALIFIER_GENERATOR, branchQualifier);
    }
 
-   private void initialize(byte[] field) {
-      UUID uuid = UUID.randomUUID();
-      long lsb = uuid.getLeastSignificantBits();
-      long msb = uuid.getMostSignificantBits();
+   private int initialize(UUID transactionManagerId, AtomicLong generator, byte[] field) {
+      long lsb = transactionManagerId.getLeastSignificantBits();
+      long msb = transactionManagerId.getMostSignificantBits();
+      long id = generator.getAndIncrement();
       Arrays.fill(field, (byte) 0);
       UnsignedNumeric.writeUnsignedLong(field, 0, lsb);
       UnsignedNumeric.writeUnsignedLong(field, 10, msb);
+      UnsignedNumeric.writeUnsignedLong(field, 20, id);
+      int hash = (int) (lsb ^ lsb >>> 32);
+      hash = 37 * hash + (int) (msb ^ msb >>> 32);
+      hash = 37 * hash + (int) (id ^ id >>> 32);
+      return hash;
    }
 
    @Override
@@ -84,7 +94,7 @@ public class DummyXid implements Xid {
 
       Xid other = (Xid) o;
 
-      if (((Xid) o).getFormatId() != getFormatId()) return false;
+      if (other.getFormatId() != 1) return false;
       if (!Arrays.equals(branchQualifier, other.getBranchQualifier())) return false;
       if (!Arrays.equals(globalTransactionId, other.getGlobalTransactionId())) return false;
 
@@ -93,8 +103,6 @@ public class DummyXid implements Xid {
 
    @Override
    public int hashCode() {
-      int result = globalTransactionId != null ? Arrays.hashCode(globalTransactionId) : 0;
-      result = 31 * result + (branchQualifier != null ? Arrays.hashCode(branchQualifier) : 0);
-      return result;
+      return cachedHashcode;
    }
 }

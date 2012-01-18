@@ -23,13 +23,18 @@
 
 package org.infinispan.interceptors.locking;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -40,14 +45,9 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.TimSort;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
@@ -85,30 +85,24 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      try {
-         abortIfRemoteTransactionInvalid(ctx, command);
-
-         if (command.writesToASingleKey()) {
-            //optimisation: don't create another LockReorderingVisitor here as it is not needed.
-            log.trace("Not using lock reordering as we have a single key.");
+      abortIfRemoteTransactionInvalid(ctx, command);
+      if (!command.hasModifications() || command.writesToASingleKey()) {
+         //optimisation: don't create another LockReorderingVisitor here as it is not needed.
+         log.trace("Not using lock reordering as we have a single key.");
+         acquireLocksVisitingCommands(ctx, command);
+      } else {
+         Object[] orderedKeys = sort(command.getModifications());
+         boolean hasClear = orderedKeys == null;
+         if (hasClear) {
+            log.trace("Not using lock reordering as the prepare contains a clear command.");
             acquireLocksVisitingCommands(ctx, command);
          } else {
-            LockReorderingVisitor lre = new LockReorderingVisitor(command.getModifications());
-            if (!lre.hasClear) {
-               log.tracef("Using lock reordering, order is: %s", lre.orderedKeys);
-               acquireAllLocks(ctx, lre.orderedKeys.iterator());
-               ctx.addAllAffectedKeys(lre.orderedKeys);
-            } else {
-               log.trace("Not using lock reordering as the prepare contains a clear command.");
-               acquireLocksVisitingCommands(ctx, command);
-            }
+            log.tracef("Using lock reordering, order is: %s", orderedKeys);
+            acquireAllLocks(ctx, orderedKeys);
+            ctx.addAllAffectedKeys(Arrays.asList(orderedKeys));
          }
-
-         return invokeNextAndCommitIf1Pc(ctx, command);
-      } catch (Throwable te) {
-         // don't remove the locks here, the rollback command will clear them
-         throw te;
       }
+      return invokeNextAndCommitIf1Pc(ctx, command);
    }
 
    @Override
@@ -229,68 +223,38 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          return null;
       }
    }
-
-   /**
-    * This visitor doesn't handle all the possible {@link WriteCommand}s, but only the ones that can be aggregated
-    * within the {@link PrepareCommand}.
-    */
-   private final class LockReorderingVisitor extends AbstractVisitor {
-
-      private boolean hasClear;
-
-      private final SortedSet<Object> orderedKeys = new TreeSet<Object>(keyComparator);
-
-      public LockReorderingVisitor(WriteCommand[] modifications) throws Throwable {
-         for (WriteCommand wc : modifications) {
-            wc.acceptVisitor(null, this);
+   
+   private Object[] sort(WriteCommand[] writes) {
+      Set<Object> set = new HashSet<Object>();
+      for (WriteCommand wc: writes) {
+         switch (wc.getCommandId()) {
+            case ClearCommand.COMMAND_ID:
+               return null;
+            case PutKeyValueCommand.COMMAND_ID:
+            case RemoveCommand.COMMAND_ID:
+            case ReplaceCommand.COMMAND_ID:
+               set.add(((DataWriteCommand) wc).getKey());
+               break;
+            case PutMapCommand.COMMAND_ID:
+               set.addAll(wc.getAffectedKeys());
+               break;
+            case ApplyDeltaCommand.COMMAND_ID:
+               ApplyDeltaCommand command = (ApplyDeltaCommand) wc;
+               if (cdl.localNodeIsOwner(command.getKey())) {
+                  Object[] compositeKeys = command.getCompositeKeys();
+                  set.addAll(Arrays.asList(compositeKeys));
+               }
+               break;
          }
       }
 
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return orderedKeys.add(command.getKey());
-      }
-
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         return orderedKeys.addAll(command.getAffectedKeys());
-      }
-
-      @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         return orderedKeys.add(command.getKey());
-      }
-
-      @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         return orderedKeys.add(command.getKey());
-      }
-
-      @Override
-      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
-            Object[] compositeKeys = command.getCompositeKeys();
-            orderedKeys.addAll(Arrays.asList(compositeKeys));
-         }
-         return null;
-      }
-
-      @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         hasClear = true;
-         return null;
-      }
-
-      @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         throw new IllegalStateException("Visitable command which require lock acquisition is ignored! " + command);
-      }
+      Object[] sorted = set.toArray(new Object[set.size()]);
+      TimSort.sort(sorted, keyComparator);
+      return sorted;
    }
 
-   private void acquireAllLocks(TxInvocationContext ctx, Iterator<Object> orderedKeys) throws InterruptedException {
-      while (orderedKeys.hasNext()) {
-         lockAndRegisterBackupLock(ctx, orderedKeys.next());
-      }
+   private void acquireAllLocks(TxInvocationContext ctx, Object[] orderedKeys) throws InterruptedException {
+      for (Object key: orderedKeys) lockAndRegisterBackupLock(ctx, key);
    }
 
    private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -46,12 +47,18 @@ public class XaTransactionTable extends TransactionTable {
 
    private static final Log log = LogFactory.getLog(XaTransactionTable.class);
 
-   protected final ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>();
+   protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
    private RecoveryManager recoveryManager;
 
    @Inject
    public void init(RecoveryManager recoveryManager) {
       this.recoveryManager = recoveryManager;
+   }
+
+   @Start
+   private void startXidMapping() {
+      final int concurrencyLevel = configuration.getConcurrencyLevel();
+      xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
    }
 
    @Override

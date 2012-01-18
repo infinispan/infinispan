@@ -165,7 +165,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    }
 
    protected Set<Component> getNonCacheComponents(Set<Component> components) {
-      Set<Component> componentsExceptCache = new HashSet<AbstractComponentRegistry.Component>();
+      Set<Component> componentsExceptCache = new HashSet<AbstractComponentRegistry.Component>(64);
       for (AbstractComponentRegistry.Component component : components) {
          String name = component.getName();
          if (!name.equals(Cache.class.getName()) && !name.equals(AdvancedCache.class.getName())) {

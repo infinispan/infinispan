@@ -61,9 +61,9 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    /**
-    * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form
-    * the "normal" transactions collection and moved into the cache that holds in-doubt transactions.
-    * See {@link #updateStateOnNodesLeaving(java.util.Collection)}
+    * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
+    * "normal" transactions collection and moved into the cache that holds in-doubt transactions. See {@link
+    * #updateStateOnNodesLeaving(java.util.Collection)}
     */
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
@@ -145,7 +145,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    public Set<RecoveryAwareLocalTransaction> getLocalTxThatFailedToComplete() {
-      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>();
+      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>(4);
       for (LocalTransaction lTx : xid2LocalTx.values()) {
          RecoveryAwareLocalTransaction lTx1 = (RecoveryAwareLocalTransaction) lTx;
          if (lTx1.isCompletionFailed()) {
@@ -157,8 +157,8 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
 
    /**
-    * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with
-    * the supplied internal Id.
+    * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with the
+    * supplied internal Id.
     */
    public Xid getRemoteTransactionXid(Long internalId) {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
@@ -173,17 +173,17 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    public RemoteTransaction removeRemoteTransaction(Xid xid) {
-      Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
-      while (it.hasNext()) {
-         RemoteTransaction next = it.next();
-         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
-         if (xid.equals(gtx.getXid())) {
-            synchronized (minViewIdInvariant) {
+      if (clustered) {
+         Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
+         while (it.hasNext()) {
+            RemoteTransaction next = it.next();
+            RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
+            if (xid.equals(gtx.getXid())) {
                it.remove();
                recalculateMinViewIdIfNeeded(next);
                next.notifyOnTransactionFinished();
+               return next;
             }
-            return next;
          }
       }
       return null;

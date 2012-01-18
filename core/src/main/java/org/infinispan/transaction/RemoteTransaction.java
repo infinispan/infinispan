@@ -47,16 +47,16 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    private volatile boolean valid = true;
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-      super(tx);
+   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
+      super(tx, viewId);
       this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
       lookedUpEntries = new HashMap<Object, CacheEntry>(this.modifications.size());
    }
 
-   public RemoteTransaction(GlobalTransaction tx) {
-      super(tx);
+   public RemoteTransaction(GlobalTransaction tx, int viewId) {
+      super(tx, viewId);
       this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = new HashMap<Object, CacheEntry>();
+      lookedUpEntries = new HashMap<Object, CacheEntry>(2);
    }
 
    public void invalidate() {

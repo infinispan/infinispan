@@ -63,8 +63,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -220,7 +220,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     /**
      * Returns the name of the cache associated with this configuration.
      */
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
@@ -903,6 +903,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     }
 
     /**
+     * The size of a state transfer "chunk", in cache entries.
+     *
+     * @param chunkSize
+     * @deprecated Use {@link FluentConfiguration.StateRetrievalConfig#chunkSize(Integer)} instead
+     */
+    @Deprecated
+    public void setStateRetrievalChunkSize(int chunkSize) {
+        this.clustering.stateRetrieval.setChunkSize(chunkSize);
+    }
+
+    /**
      * Initial wait time when backing off before retrying state transfer retrieval
      *
      * @param initialRetryWaitTime
@@ -1356,6 +1367,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return clustering.stateRetrieval.maxNonProgressingLogWrites;
     }
 
+    public int getStateRetrievalChunkSize() {
+        return clustering.stateRetrieval.chunkSize;
+    }
+
     public long getStateRetrievalLogFlushTimeout() {
         return clustering.stateRetrieval.logFlushTimeout;
     }
@@ -1392,6 +1407,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             clustering.hash.consistentHashClass = globalConfiguration == null || globalConfiguration.hasTopologyInfo() ? TopologyAwareConsistentHash.class.getName() : DefaultConsistentHash.class.getName();
         }
         return clustering.hash.consistentHashClass;
+    }
+
+    public boolean hasConsistentHashClass() {
+        return clustering.hash.consistentHashClass != null;
     }
 
     public String getHashFunctionClass() {
@@ -2517,7 +2536,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             dolly.stateRetrieval = (StateRetrievalType) stateRetrieval.clone();
             dolly.l1 = (L1Type) l1.clone();
             dolly.async = (AsyncType) async.clone();
-            dolly.hash = (HashType) hash.clone();
+            dolly.hash = hash.clone();
             return dolly;
         }
 
@@ -3205,6 +3224,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @ConfigurationDocRef(bean = Configuration.class, targetElement = "setStateRetrievalMaxNonProgressingLogWrites")
         protected Integer maxNonProgressingLogWrites = 100;
 
+        protected Integer chunkSize = 10000;
+
         public void accept(ConfigurationBeanVisitor v) {
             v.visitStateRetrievalType(this);
         }
@@ -3373,6 +3394,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @Override
         public StateRetrievalConfig maxNonProgressingLogWrites(Integer maxNonProgressingLogWrites) {
             setMaxNonProgressingLogWrites(maxNonProgressingLogWrites);
+            return this;
+        }
+
+        public Integer getChunkSize() {
+            return chunkSize;
+        }
+
+        /**
+         * @deprecated
+         */
+        @Deprecated
+        public void setChunkSize(Integer chunkSize) {
+            testImmutability("chunkSize");
+            this.chunkSize = chunkSize;
+        }
+
+        @Override
+        public StateRetrievalConfig chunkSize(Integer chunkSize) {
+            setChunkSize(chunkSize);
             return this;
         }
 
@@ -3727,7 +3767,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             dolly.rehashEnabled = rehashEnabled;
             dolly.rehashRpcTimeout = rehashRpcTimeout;
             dolly.rehashWait = rehashWait;
-            dolly.groups = (GroupsConfiguration) groups.clone();
+            dolly.groups = groups.clone();
             return dolly;
         }
     }
@@ -4408,7 +4448,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         private static final long serialVersionUID = 7187545782011884661L;
 
         @XmlElement(name = "interceptor")
-        private List<CustomInterceptorConfig> customInterceptors = new ArrayList<CustomInterceptorConfig>();
+        private List<CustomInterceptorConfig> customInterceptors = new LinkedList<CustomInterceptorConfig>();
 
         public CustomInterceptorsType() {
             testImmutability("customInterceptors");
@@ -4418,7 +4458,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         public CustomInterceptorsType clone() throws CloneNotSupportedException {
             CustomInterceptorsType dolly = (CustomInterceptorsType) super.clone();
             if (customInterceptors != null) {
-                dolly.customInterceptors = new ArrayList<CustomInterceptorConfig>();
+                dolly.customInterceptors = new LinkedList<CustomInterceptorConfig>();
                 for (CustomInterceptorConfig config : customInterceptors) {
                     CustomInterceptorConfig clone = config.clone();
                     dolly.customInterceptors.add(clone);

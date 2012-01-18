@@ -1,311 +1,311 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-parent</artifactId>
-        <version>5.1.0.CR3</version>
-        <relativePath>parent/pom.xml</relativePath>
-    </parent>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>5.1.0.CR4</version>
+      <relativePath>parent/pom.xml</relativePath>
+   </parent>
 
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan</artifactId>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan</artifactId>
 
-    <name>Infinispan Distribution</name>
-    <description>Builds the complete Infinispan distribution bundles</description>
-    <packaging>pom</packaging>
+   <name>Infinispan Distribution</name>
+   <description>Builds the complete Infinispan distribution bundles</description>
+   <packaging>pom</packaging>
 
-    <modules>
-        <module>parent</module>
-        <module>core</module>
-<!--        <module>tools</module>
-        <module>query</module>
-        <module>tree</module>
-        <module>lucene-directory</module>
-        <module>cachestore</module>
-        <module>cachestore/jdbc</module>
-        <module>cachestore/jdbm</module>
-        <module>cachestore/bdbje</module>
-        <module>cachestore/cloud</module>
-        <module>cachestore/remote</module>
-        <module>cachestore/cassandra</module>
-        <module>server</module>
-        <module>server/core</module>
-        <module>server/memcached</module>
-        <module>server/hotrod</module>
-        <module>server/websocket</module>
-        <module>server/rest</module>
-        <module>client/hotrod-client</module>
-        <module>rhq-plugin</module>
-        <module>spring</module>
-        <module>demos/gui</module>
-        <module>demos/ec2</module>
-        <module>demos/distexec</module>
-        <module>demos/ec2-ui</module>
-        <module>demos/directory</module>
-        <module>demos/lucene-directory-demo</module>
-        <module>demos/gridfs-webdav</module>
-        <module>demos/nearcache</module>
-        <module>demos/nearcache-client</module>
-        <module>cdi/extension</module>
-        <module>cdi/tck-runner</module>
--->    </modules>
+   <modules>
+      <module>parent</module>
+      <module>core</module>
+      <module>tools</module>
+      <module>query</module>
+      <module>tree</module>
+      <module>lucene-directory</module>
+      <module>cachestore</module>
+      <module>cachestore/jdbc</module>
+      <module>cachestore/jdbm</module>
+      <module>cachestore/bdbje</module>
+      <module>cachestore/cloud</module>
+      <module>cachestore/remote</module>
+      <module>cachestore/cassandra</module>
+      <module>server</module>
+      <module>server/core</module>
+      <module>server/memcached</module>
+      <module>server/hotrod</module>
+      <module>server/websocket</module>
+      <module>server/rest</module>
+      <module>client/hotrod-client</module>
+      <module>rhq-plugin</module>
+      <module>spring</module>
+      <module>demos/gui</module>
+      <module>demos/ec2</module>
+      <module>demos/distexec</module>
+      <module>demos/ec2-ui</module>
+      <module>demos/directory</module>
+      <module>demos/lucene-directory-demo</module>
+      <module>demos/gridfs-webdav</module>
+      <module>demos/nearcache</module>
+      <module>demos/nearcache-client</module>
+      <module>cdi/extension</module>
+      <module>cdi/tck-runner</module>
+   </modules>
 
-    <profiles>
-        <profile>
-            <id>distribution</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <maven.test.skip.exec>true</maven.test.skip.exec>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <executions>
-                            <execution>
-                                <id>javadoc</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <configuration>
-                                    <quiet>true</quiet>
-
-                                    <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
-                                    <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
-                                    <docfilessubdirs>true</docfilessubdirs>
-                                    <links>
-                                        <link>http://java.sun.com/javase/6/docs/api/</link>
-                                        <link>http://java.sun.com/javaee/5/docs/api/</link>
-                                    </links>
-                                    <footer>
-                                        --&gt;
-                                        &lt;!-- Google Analytics --&gt;
-                                        &lt;!--
-                                        &lt;script type='text/javascript'&gt;
-                                        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-                                        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-                                        &lt;/script&gt;
-                                        &lt;script type='text/javascript'&gt;
-                                        try {
-                                        var pageTracker = _gat._getTracker("UA-8601422-4");
-                                        pageTracker._trackPageview();
-                                        } catch(err) {}&lt;/script&gt;
-                                    </footer>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>build-test-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.2-beta-3</version>
-                        <executions>
-                            <execution>
-                                <id>assemble</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                            </execution>
-                        </executions>
+   <profiles>
+      <profile>
+         <id>distribution</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <version>2.6.1</version>
+                  <executions>
+                     <execution>
+                        <id>javadoc</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                           <goal>aggregate</goal>
+                        </goals>
                         <configuration>
-                            <descriptors>
-                                <descriptor>src/main/resources/assemblies/bin.xml</descriptor>
-                                <descriptor>src/main/resources/assemblies/all.xml</descriptor>
-                                <descriptor>src/main/resources/assemblies/src.xml</descriptor>
-                                <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
-                            </descriptors>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-                            <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+                           <quiet>true</quiet>
 
-
-                            <attach>false</attach>
+                           <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
+                           <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
+                           <docfilessubdirs>true</docfilessubdirs>
+                           <links>
+                              <link>http://java.sun.com/javase/6/docs/api/</link>
+                              <link>http://java.sun.com/javaee/5/docs/api/</link>
+                           </links>
+                           <footer>
+--&gt;
+                      &lt;!-- Google Analytics --&gt;
+&lt;!--
+&lt;script type='text/javascript'&gt;
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
+try {
+var pageTracker = _gat._getTracker("UA-8601422-4");
+pageTracker._trackPageview();
+} catch(err) {}&lt;/script&gt;
+                     </footer>
                         </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>build-test-jar</id>
+                        <phase>none</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <version>2.2-beta-3</version>
+                  <executions>
+                     <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>single</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/resources/assemblies/bin.xml</descriptor>
+                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
+                        <descriptor>src/main/resources/assemblies/src.xml</descriptor>
+                         <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
+                     </descriptors>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
 
-        <profile>
-            <id>minimal-distribution</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <maven.test.skip.exec>true</maven.test.skip.exec>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>build-test-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.2-beta-3</version>
-                        <executions>
-                            <execution>
-                                <id>assemble</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                            </execution>
-                        </executions>
+                     <attach>false</attach>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+
+      <profile>
+         <id>minimal-distribution</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>build-test-jar</id>
+                        <phase>none</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <version>2.2-beta-3</version>
+                  <executions>
+                     <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>single</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
+                     </descriptors>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+
+      <profile>
+         <id>jmxdoc</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                     <doclet>org.infinispan.tools.doclet.jmx.JmxDoclet</doclet>
+                     <docletArtifact>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-tools</artifactId>
+                        <version>${project.version}</version>
+                     </docletArtifact>
+                     <footer>
+                &lt;!-- Google Analytics --&gt;
+&lt;script type='text/javascript'&gt;
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
+try {
+var pageTracker = _gat._getTracker("UA-8601422-4");
+pageTracker._trackPageview();
+} catch(err) {}&lt;/script&gt;
+               </footer>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>aggregate</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+
+      <profile>
+         <id>configdoc</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                     <doclet>org.infinispan.tools.doclet.config.ConfigDoclet</doclet>
+
+                     <docletArtifact>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-tools</artifactId>
+                        <version>${project.version}</version>
+                     </docletArtifact>
+                     <footer>
+                &lt;!-- Google Analytics --&gt;
+&lt;script type='text/javascript'&gt;
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
+try {
+var pageTracker = _gat._getTracker("UA-8601422-4");
+pageTracker._trackPageview();
+} catch(err) {}&lt;/script&gt;
+               </footer>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>aggregate</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.7</version>
+                  <executions>
+                     <execution>
+                        <id>copy_css</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
                         <configuration>
-                            <descriptors>
-                                <descriptor>src/main/resources/assemblies/all.xml</descriptor>
-                            </descriptors>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-                            <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+                           <tasks>
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs" />
+                           </tasks>
                         </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
 
-
-        <profile>
-            <id>jmxdoc</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <maven.test.skip.exec>true</maven.test.skip.exec>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <doclet>org.infinispan.tools.doclet.jmx.JmxDoclet</doclet>
-                            <docletArtifact>
-                                <groupId>org.infinispan</groupId>
-                                <artifactId>infinispan-tools</artifactId>
-                                <version>${project.version}</version>
-                            </docletArtifact>
-                            <footer>
-                                &lt;!-- Google Analytics --&gt;
-                                &lt;script type='text/javascript'&gt;
-                                var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-                                document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-                                &lt;/script&gt;
-                                &lt;script type='text/javascript'&gt;
-                                try {
-                                var pageTracker = _gat._getTracker("UA-8601422-4");
-                                pageTracker._trackPageview();
-                                } catch(err) {}&lt;/script&gt;
-                            </footer>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>javadoc</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-
-        <profile>
-            <id>configdoc</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <maven.test.skip.exec>true</maven.test.skip.exec>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <doclet>org.infinispan.tools.doclet.config.ConfigDoclet</doclet>
-
-                            <docletArtifact>
-                                <groupId>org.infinispan</groupId>
-                                <artifactId>infinispan-tools</artifactId>
-                                <version>${project.version}</version>
-                            </docletArtifact>
-                            <footer>
-                                &lt;!-- Google Analytics --&gt;
-                                &lt;script type='text/javascript'&gt;
-                                var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-                                document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-                                &lt;/script&gt;
-                                &lt;script type='text/javascript'&gt;
-                                try {
-                                var pageTracker = _gat._getTracker("UA-8601422-4");
-                                pageTracker._trackPageview();
-                                } catch(err) {}&lt;/script&gt;
-                            </footer>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>javadoc</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.7</version>
-                        <executions>
-                            <execution>
-                                <id>copy_css</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <tasks>
-                                        <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs" />
-                                    </tasks>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
+   </profiles>
 </project>

@@ -29,7 +29,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -122,7 +121,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          commandBuilder = new CommandBuilder() {
             @Override
             public PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e) {
-               EntryVersion version = e.getVersion();
                return cf.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), ctx.getFlags());
             }
          };
@@ -156,7 +154,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       // cancel any pending state transfer before leaving
       BaseStateTransferTask tempTask = stateTransferTask;
       if (tempTask != null) {
-         tempTask.cancelStateTransfer(true, false);
+         tempTask.cancelStateTransfer(true);
          stateTransferTask = null;
       }
       cacheViewsManager.leave(configuration.getName());
@@ -191,8 +189,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public void waitForStateTransferToStart(int viewId) throws InterruptedException {
       // TODO Add another latch for this, or maybe use a lock with condition variables instead
-      while (newView == null || newView.getViewId() < viewId) {
-         Thread.sleep(1);
+      while ((newView == null || newView.getViewId() < viewId)
+            && (oldView == null || oldView.getViewId() < viewId)) {
+         Thread.sleep(10);
       }
    }
 
@@ -202,21 +201,11 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    private boolean isLatchOpen(CountDownLatch latch) {
-      try {
-         return latch.await(0, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return true;
-      }
+         return latch.getCount() == 0;
    }
 
    private boolean isLatchOpen(ReclosableLatch latch) {
-      try {
-         return latch.await(0, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return true;
-      }
+        return latch.isOpened();
    }
 
    @Override
@@ -272,15 +261,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       return true;
    }
 
-   public void endStateTransfer() {
-      // we can now use the new CH as the baseline for the next rehash
-      oldView = newView;
-      chOld = chNew;
-
-      stateTransferInProgressLatch.open();
-      joinCompletedLatch.countDown();
-   }
-
    public abstract CacheStore getCacheStoreForStateTransfer();
 
    public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Collection<Address> targets,
@@ -303,6 +283,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       joinStartedLatch.countDown();
 
+      // if this is the first view we're seeing, initialize the oldView as well
+      if (oldView == null) {
+         oldView = committedView;
+      }
       newView = pendingView;
       chNew = createConsistentHash(pendingView.getMembers());
 
@@ -325,11 +309,14 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       tempTask.commitStateTransfer();
       stateTransferTask = null;
-      endStateTransfer();
+
+      // we can now use the new CH as the baseline for the next rehash
+      oldView = newView;
+      chOld = chNew;
    }
 
    @Override
-   public void rollbackView(int committedViewId) {
+   public void rollbackView(int newViewId, int committedViewId) {
       BaseStateTransferTask tempTask = stateTransferTask;
       if (tempTask == null) {
          if (committedViewId == oldView.getViewId()) {
@@ -342,11 +329,11 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
       }
 
-      tempTask.cancelStateTransfer(true, false);
+      tempTask.cancelStateTransfer(true);
       stateTransferTask = null;
 
-      // TODO Use the new view id
-      newView = oldView;
+      newView = new CacheView(newViewId, oldView.getMembers());
+      oldView = newView;
       chNew = chOld;
 
       stateTransferInProgressLatch.open();
@@ -354,8 +341,21 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void waitForPrepare() {
+   public void preInstallView() {
       stateTransferLock.blockNewTransactionsAsync();
+   }
+
+   @Override
+   public void postInstallView(int viewId) {
+      try {
+         stateTransferLock.unblockNewTransactions(viewId);
+      } catch (Exception e) {
+         log.errorUnblockingTransactions(e);
+      }
+
+      stateTransferInProgressLatch.open();
+      // getCache() will only return after joining has completed, so we need that to be last
+      joinCompletedLatch.countDown();
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);

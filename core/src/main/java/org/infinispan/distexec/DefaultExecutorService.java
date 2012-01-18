@@ -22,37 +22,6 @@
  */
 package org.infinispan.distexec;
 
-import java.io.Externalizable;
-import java.io.NotSerializableException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
@@ -74,6 +43,38 @@ import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.Externalizable;
+import java.io.NotSerializableException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
@@ -129,12 +130,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    public DefaultExecutorService(Cache masterCacheNode, ExecutorService localExecutorService){
       super();
       if (masterCacheNode == null)
-         throw new NullPointerException("Can not use " + masterCacheNode
-                  + " cache for DefaultExecutorService");
-      
-      if (localExecutorService == null || localExecutorService.isShutdown())
-         throw new IllegalArgumentException("Can not use " + localExecutorService
-                  + " instance of ExecutorService");
+         throw new IllegalArgumentException("Can not use null cache for DefaultExecutorService");
+      else if (localExecutorService == null)
+         throw new IllegalArgumentException("Can not use null instance of ExecutorService");
+      else if (localExecutorService.isShutdown())
+         throw new IllegalArgumentException("Can not use an instance of ExecutorService which is shutdown");
 
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
 
@@ -292,7 +292,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public void execute(Runnable command) {
       if (!isShutdown.get()) {
-         DistributedRunnableFuture<Object> cmd = null;
+         DistributedRunnableFuture<Object> cmd;
          if (command instanceof DistributedRunnableFuture<?>) {
             cmd = (DistributedRunnableFuture<Object>) command;
          } else if (command instanceof Serializable) {
@@ -312,8 +312,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
                new RunnableAdapter<T>(runnable, value), rpc.getAddress(), null);
-      DistributedRunnableFuture<T> future = new DistributedRunnableFuture<T>(executeCommand);
-      return future;
+      return new DistributedRunnableFuture<T>(executeCommand);
    }
 
    @Override
@@ -322,8 +321,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
                callable, rpc.getAddress(), null);
-      DistributedRunnableFuture<T> future = new DistributedRunnableFuture<T>(executeCommand);
-      return future;
+      return new DistributedRunnableFuture<T>(executeCommand);
    }
 
    @Override
@@ -346,8 +344,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public <T> List<Future<T>> submitEverywhere(Callable<T> task) {
       if (task == null) throw new NullPointerException();
-      List<Future<T>> futures = new ArrayList<Future<T>>();
       List<Address> members = rpc.getTransport().getMembers();
+      List<Future<T>> futures = new ArrayList<Future<T>>(members.size() - 1);      
       Address me = rpc.getAddress();
       for (Address target : members) {
          DistributedExecuteCommand<T> c = null;
@@ -367,7 +365,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    public <T, K> List<Future<T>> submitEverywhere(Callable<T> task, K... input) {
       if (task == null) throw new NullPointerException();
       if(inputKeysSpecified(input)) {
-         List<Future<T>> futures = new ArrayList<Future<T>>();
+         List<Future<T>> futures = new ArrayList<Future<T>>(input.length * 2);
          Address me = rpc.getAddress();
          Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
          for (Entry<Address, List<K>> e : nodesKeysMap.entrySet()) {
@@ -417,19 +415,16 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
             @Override
             public Object call() throws Exception {
-               Map<Address,Response> rspMap = new HashMap<Address, Response>();
                Object result = null;
                future.getCommand().init(cache);
                try {
                   result = future.getCommand().perform(null);
-                  rspMap.put(rpc.getAddress(), new SuccessfulResponse(result));
-                  result = rspMap;
+                  return Collections.singletonMap(rpc.getAddress(), new SuccessfulResponse(result));
                } catch (Throwable e) {
-                  result = e;
+                  return e;
                } finally {
                   future.notifyDone();
                }
-               return result;
             }
          };
          final FutureTask<Object> task = new FutureTask<Object>(call);
@@ -442,13 +437,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    protected <K> Map<Address, List<K>> mapKeysToNodes(K... input) {
       DistributionManager dm = cache.getDistributionManager();
-      Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>();
+      Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>(input.length * 2);
       for (K key : input) {
          List<Address> nodesForKey = dm.locate(key);
          Address ownerOfKey = nodesForKey.get(0);
          List<K> keysAtNode = addressToKey.get(ownerOfKey);
          if (keysAtNode == null) {
-            keysAtNode = new ArrayList<K>();
+            keysAtNode = new LinkedList<K>();
             addressToKey.put(ownerOfKey, keysAtNode);
          }
          keysAtNode.add(key);
@@ -474,7 +469,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          numNeeded = members.size();
       }
       List<Address> membersCopy = new ArrayList<Address>(members);
-      List<Address> chosen = new ArrayList<Address>();
+      List<Address> chosen = new ArrayList<Address>(numNeeded);
       Random r = new Random();
       while (!membersCopy.isEmpty() && numNeeded >= chosen.size()) {
          int count = membersCopy.size();
