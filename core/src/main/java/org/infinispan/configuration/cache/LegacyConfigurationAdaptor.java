@@ -94,13 +94,11 @@ public class LegacyConfigurationAdaptor {
       }
       
       for (InterceptorConfiguration interceptor : config.customInterceptors().interceptors()) {
-         CustomInterceptorPosition position = legacy.clustering()
-         .customInterceptors()
-            // TODO This seems to miss most of the parameters like after and before out?!?
+         CustomInterceptorPosition position = legacy.customInterceptors()
             .add(interceptor.interceptor());
          if (interceptor.after() != null)
             position.after(interceptor.after());
-         if (interceptor.index() != -1)
+         if (interceptor.index() > -1)
          position.atIndex(interceptor.index());
          if (interceptor.before() != null)
             position.before(interceptor.before());

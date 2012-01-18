@@ -590,11 +590,21 @@
                 <xs:sequence>
                   <xs:element name="properties" type="tns:properties" minOccurs="0"/>
                 </xs:sequence>
-                <xs:attribute name="after" type="xs:string"/>
-                <xs:attribute name="before" type="xs:string"/>
-                <xs:attribute name="class" type="xs:string"/>
-                <xs:attribute name="index" type="xs:int"/>
-                <xs:attribute name="position" type="xs:string"/>
+                <xs:attribute name="after" type="xs:string">
+                   <xs:annotation><xs:documentation>Dictates that the custom interceptor appears immediately after the specified interceptor. If the specified interceptor is not found in the interceptor chain, a ConfigurationException will be thrown when the cache starts.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="before" type="xs:string">
+                   <xs:annotation><xs:documentation>Dictates that the custom interceptor appears immediately before the specified interceptor. If the specified interceptor is not found in the interceptor chain, a ConfigurationException will be thrown when the cache starts.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="class" type="xs:string">
+                   <xs:annotation><xs:documentation>A fully qualified class name of the new custom interceptor to add to the configuration.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="index" type="xs:int">
+                   <xs:annotation><xs:documentation>Specifies a position in the interceptor chain to place the new interceptor. The index starts at 0 and goes up to the number of interceptors in a given configuration. A ConfigurationException is thrown if the index is less than 0 or greater than the maximum number of interceptors in the chain.</xs:documentation></xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="position" type="xs:string">
+                   <xs:annotation><xs:documentation>Specifies a position where to place the new interceptor. Allowed values are FIRST, LAST, and OTHER_THAN_FIRST_OR_LAST</xs:documentation></xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
           </xs:sequence>
