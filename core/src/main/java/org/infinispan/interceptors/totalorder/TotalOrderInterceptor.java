@@ -34,8 +34,6 @@ public class TotalOrderInterceptor extends CommandInterceptor {
             totalOrderValidator.addLocalTransaction(command, ctx);
             return invokeNextInterceptor(ctx, command);
         } else {
-            log.tracef("Received prepare command in total order with transaction %s",
-                    Util.printPrettyGlobalTransaction(command.getGlobalTransaction()));
             totalOrderValidator.validateTransaction(command, ctx, getNext());
             return null;
         }

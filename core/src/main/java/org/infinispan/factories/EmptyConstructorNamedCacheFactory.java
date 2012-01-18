@@ -42,6 +42,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.totalorder.TotalOrderValidator;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
@@ -54,47 +55,50 @@ import static org.infinispan.util.Util.getInstance;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
-                              BatchContainer.class, EvictionManager.class,
-                              TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})
+        CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
+        BatchContainer.class, EvictionManager.class,
+        TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
+        ClusteringDependentLogic.class, TotalOrderValidator.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
-   @Override
-   @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
-      Class componentImpl;
-      if (componentType.equals(ClusteringDependentLogic.class)) {
-         if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
-            return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
-         } else {
-            return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
-         }
-      } else if (componentType.equals(InvocationContextContainer.class)) {
-         componentImpl = configuration.isTransactionalCache() ? TransactionalInvocationContextContainer.class
-               : NonTransactionalInvocationContextContainer.class;
-         return componentType.cast(getInstance(componentImpl));
-      } else if (componentType.equals(CacheNotifier.class)) {
-         return (T) new CacheNotifierImpl();
-      } else if (componentType.equals(CommandsFactory.class)) {
-         return (T) new CommandsFactoryImpl();
-      } else if (componentType.equals(CacheLoaderManager.class)) {
-         return (T) new CacheLoaderManagerImpl();
-      } else if (componentType.equals(PassivationManager.class)) {
-         return (T) new PassivationManagerImpl();
-      } else if (componentType.equals(BatchContainer.class)) {
-         return (T) new BatchContainer();
-      } else if (componentType.equals(TransactionCoordinator.class)) {
-         return (T) new TransactionCoordinator();
-      } else if (componentType.equals(RecoveryAdminOperations.class)) {
-         return (T) new RecoveryAdminOperations();
-      } else if (componentType.equals(StateTransferLock.class)) {
-         return (T) new StateTransferLockImpl();
-      } else if (componentType.equals(EvictionManager.class)) {
-         return (T) new EvictionManagerImpl();
-      }
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T construct(Class<T> componentType) {
+        Class componentImpl;
+        if (componentType.equals(ClusteringDependentLogic.class)) {
+            if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
+                return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+            } else {
+                return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+            }
+        } else if (componentType.equals(InvocationContextContainer.class)) {
+            componentImpl = configuration.isTransactionalCache() ? TransactionalInvocationContextContainer.class
+                    : NonTransactionalInvocationContextContainer.class;
+            return componentType.cast(getInstance(componentImpl));
+        } else if (componentType.equals(CacheNotifier.class)) {
+            return (T) new CacheNotifierImpl();
+        } else if (componentType.equals(CommandsFactory.class)) {
+            return (T) new CommandsFactoryImpl();
+        } else if (componentType.equals(CacheLoaderManager.class)) {
+            return (T) new CacheLoaderManagerImpl();
+        } else if (componentType.equals(PassivationManager.class)) {
+            return (T) new PassivationManagerImpl();
+        } else if (componentType.equals(BatchContainer.class)) {
+            return (T) new BatchContainer();
+        } else if (componentType.equals(TransactionCoordinator.class)) {
+            return (T) new TransactionCoordinator();
+        } else if (componentType.equals(RecoveryAdminOperations.class)) {
+            return (T) new RecoveryAdminOperations();
+        } else if (componentType.equals(StateTransferLock.class)) {
+            return (T) new StateTransferLockImpl();
+        } else if (componentType.equals(EvictionManager.class)) {
+            return (T) new EvictionManagerImpl();
+        } else if (componentType.equals(TotalOrderValidator.class)) {
+            return (T) new TotalOrderValidator();
+        }
 
 
-      throw new ConfigurationException("Don't know how to create a " + componentType.getName());
+        throw new ConfigurationException("Don't know how to create a " + componentType.getName());
 
-   }
+    }
 }

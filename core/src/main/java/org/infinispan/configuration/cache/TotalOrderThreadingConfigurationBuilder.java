@@ -17,17 +17,15 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     private long keepAliveTime = 1000; //milliseconds
 
-    private int queueSize = 16;
-
     protected TotalOrderThreadingConfigurationBuilder(TransactionConfigurationBuilder builder) {
         super(builder);
     }
 
     @Override
     void validate() {
-        if(corePoolSize <= 0 || keepAliveTime <= 0 || maximumPoolSize <= 0 || queueSize <= 0) {
+        if(corePoolSize <= 0 || keepAliveTime <= 0 || maximumPoolSize <= 0) {
             throw new ConfigurationException("All the configuration values (corePoolSize, keepAliveTime, " +
-                    "maximumPoolSize, queueSize) must be greater than zero");
+                    "maximumPoolSize) must be greater than zero");
         } else if(corePoolSize > maximumPoolSize) {
             throw new ConfigurationException("Core pool size value is greater than the maximum pool size");
         }
@@ -35,7 +33,7 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     @Override
     TotalOrderThreadingConfiguration create() {
-        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime, queueSize);
+        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime);
     }
 
     @Override
@@ -43,7 +41,6 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
         this.corePoolSize = template.getCorePoolSize();
         this.maximumPoolSize = template.getMaximumPoolSize();
         this.keepAliveTime = template.getKeepAliveTime();
-        this.queueSize = template.getQueueSize();
         return this;
     }
 
@@ -59,11 +56,6 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     public TotalOrderThreadingConfigurationBuilder keepAliveTime(long keepAliveTime) {
         this.keepAliveTime = keepAliveTime;
-        return this;
-    }
-
-    public TotalOrderThreadingConfigurationBuilder queueSize(int queueSize) {
-        this.queueSize = queueSize;
         return this;
     }
 }

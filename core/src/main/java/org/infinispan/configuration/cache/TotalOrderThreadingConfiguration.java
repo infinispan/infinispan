@@ -14,13 +14,10 @@ public class TotalOrderThreadingConfiguration {
 
     private final long keepAliveTime;// = 1000; //milliseconds
 
-    private final int queueSize;// = 16;
-
-    public TotalOrderThreadingConfiguration(int corePoolSize, int maximumPoolSize, long keepAliveTime, int queueSize) {
+    public TotalOrderThreadingConfiguration(int corePoolSize, int maximumPoolSize, long keepAliveTime) {
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.keepAliveTime = keepAliveTime;
-        this.queueSize = queueSize;
     }
 
     public int getCorePoolSize() {
@@ -33,9 +30,5 @@ public class TotalOrderThreadingConfiguration {
 
     public long getKeepAliveTime() {
         return keepAliveTime;
-    }
-
-    public int getQueueSize() {
-        return queueSize;
     }
 }

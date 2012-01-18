@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * Enumerates the attributes used in Infinispan
- * 
+ *
  * @author Pete Muir
  */
 public enum Attribute {
@@ -131,7 +131,10 @@ public enum Attribute {
     VERSIONING_SCHEME("versioningScheme"),
 
     //Pedro -- total order stuff
-    TRANSACTION_PROTOCOL("transactionProtocol")
+    TRANSACTION_PROTOCOL("transactionProtocol"),
+    CORE_POOL_SIZE("corePoolSize"),
+    MAXIMUM_POOL_SIZE("maximumPoolSize"),
+    KEEP_ALIVE_TIME("keepAliveTime")
     ;
 
     private final String name;

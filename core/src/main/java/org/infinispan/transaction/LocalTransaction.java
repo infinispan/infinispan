@@ -195,6 +195,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             prepareResult.result = object;
             prepareResult.exception = exception;
             prepareResult.modificationsApplied = true;
+            prepareResult.notifyAll();
         }
     }
 }

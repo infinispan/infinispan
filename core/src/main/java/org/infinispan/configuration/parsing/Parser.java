@@ -303,6 +303,10 @@ public class Parser {
                 case RECOVERY:
                     parseRecovery(reader, builder);
                     break;
+                //Pedro -- total order
+                case TOTAL_ORDER_THREADING:
+                    parseTotalOrderThreading(reader, builder);
+                    break;
                 default:
                     throw ParseUtils.unexpectedElement(reader);
             }
@@ -324,6 +328,30 @@ public class Parser {
                     break;
                 case RECOVERY_INFO_CACHE_NAME:
                     builder.transaction().recovery().recoveryInfoCacheName(value);
+                    break;
+                default:
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+        }
+
+        ParseUtils.requireNoContent(reader);
+    }
+
+    private void parseTotalOrderThreading(XMLStreamReader reader, ConfigurationBuilder builder)
+            throws XMLStreamException {
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            String value = replaceSystemProperties(reader.getAttributeValue(i));
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case CORE_POOL_SIZE:
+                    builder.transaction().totalOrderThreading().corePoolSize(Integer.valueOf(value));
+                    break;
+                case MAXIMUM_POOL_SIZE:
+                    builder.transaction().totalOrderThreading().maximumPoolSize(Integer.valueOf(value));
+                    break;
+                case KEEP_ALIVE_TIME:
+                    builder.transaction().totalOrderThreading().keepAliveTime(Long.valueOf(value));
                     break;
                 default:
                     throw ParseUtils.unexpectedAttribute(reader, i);

@@ -78,7 +78,9 @@ public enum Element {
     TRANSACTION("transaction"),
     TRANSPORT("transport"),
     UNSAFE("unsafe"),
-    VERSIONING("versioning")
+    VERSIONING("versioning"),
+    //total order thread pool configuration
+    TOTAL_ORDER_THREADING("totalOrderThreading")
     ;
 
     private final String name;

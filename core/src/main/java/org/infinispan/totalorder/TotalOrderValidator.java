@@ -13,7 +13,10 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
@@ -33,6 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(description = "Total order validator management")
 public class TotalOrderValidator {
 
+    private static final Log log = LogFactory.getLog(TotalOrderValidator.class);
+
     private final Map<GlobalTransaction, LocalTransaction> localTransactionMap = new HashMap<GlobalTransaction, LocalTransaction>();
     private final Map<GlobalTransaction, TxInfo> remoteTransactionMap = new HashMap<GlobalTransaction, TxInfo>();
     private final ConcurrentMap<Object, CountDownLatch> keysLocked = new ConcurrentHashMap<Object, CountDownLatch>();
@@ -41,6 +46,9 @@ public class TotalOrderValidator {
     private InvocationContextContainer invocationContextContainer;
     private volatile boolean needsMultiThreadValidation;
     private volatile ThreadPoolExecutor threadPoolExecutor;
+
+    private boolean trace;
+    private boolean info;
 
     private static ThreadFactory NAMED_THREAD_FACTORY = new ThreadFactory() {
 
@@ -64,8 +72,14 @@ public class TotalOrderValidator {
 
     @Start
     public void start() {
+        setLogLevel();
         needsMultiThreadValidation = configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ &&
                 configuration.isWriteSkewCheck();
+
+        if(info) {
+            log.infof("Starting Total Order Validator component. using thread pool for validation? %s",
+                    needsMultiThreadValidation);
+        }
 
         if(needsMultiThreadValidation) {
             threadPoolExecutor.setCorePoolSize(configuration.getTOCorePoolSize());
@@ -80,6 +94,9 @@ public class TotalOrderValidator {
 
     @Stop
     public void stop() {
+        if(info) {
+            log.infof("Stopping Total Order validator component");
+        }
         localTransactionMap.clear();
         remoteTransactionMap.clear();
         keysLocked.clear();
@@ -88,10 +105,18 @@ public class TotalOrderValidator {
     }
 
     public void addLocalTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx) {
+        if(trace) {
+            log.tracef("receiving local prepare command. Transaction is %s",
+                    Util.printPrettyGlobalTransaction(prepareCommand.getGlobalTransaction()));
+        }
         localTransactionMap.put(prepareCommand.getGlobalTransaction(), (LocalTransaction) ctx.getCacheTransaction());
     }
 
     public void validateTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx, CommandInterceptor invoker) {
+        if(trace) {
+            log.tracef("receiving remote prepare command. Transaction is %s",
+                    Util.printPrettyGlobalTransaction(prepareCommand.getGlobalTransaction()));
+        }
         Runnable r;
         if(needsMultiThreadValidation) {
             MultiThreadValidation mtv = new MultiThreadValidation(prepareCommand, ctx, invoker);
@@ -136,6 +161,11 @@ public class TotalOrderValidator {
         barrier.countDown();
     }
 
+    private void setLogLevel() {
+        trace = log.isTraceEnabled();
+        info = log.isInfoEnabled();
+    }
+
     private class SingleThreadValidation implements Runnable {
 
         protected final PrepareCommand prepareCommand;
@@ -169,12 +199,21 @@ public class TotalOrderValidator {
             Object result = null;
             boolean exception = false;
             try {
+                if(trace) {
+                    log.tracef("Thread %s is validating transaction %s", Thread.currentThread().getName(),
+                            Util.printPrettyGlobalTransaction(prepareCommand.getGlobalTransaction()));
+                }
                 initializeValidation();
                 result = prepareCommand.acceptVisitor(txInvocationContext, invoker);
             } catch (Throwable t) {
                 result = t;
                 exception = true;
             } finally {
+                if(trace) {
+                    log.tracef("Transaction %s finished validation (%s). Validation result is %s ",
+                            Util.printPrettyGlobalTransaction(prepareCommand.getGlobalTransaction()),
+                            (exception ? "failed" : "ok"), (exception ? ((Throwable)result).getMessage() : result));
+                }
                 finalizeValidation(result, exception);
             }
         }

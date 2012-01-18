@@ -214,6 +214,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                 msg.setFlag(Message.NO_FC);
             }
             if (recipient != null) msg.setDest(recipient);
+
+            if(trace) {
+                log.tracef("Creating message for command %s. Message is %s", command, msg);
+            }
+
             return msg;
         }
 
@@ -241,6 +246,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                 opts.setTimeout(timeout);
                 opts.setRspFilter(filter);
                 opts.setAnycasting(false);
+
+                //Pedro -- only the commands in total order must be received... otherwise add own address to exclusion list
+                if(!totalOrder) {
+                    opts.setExclusionList(channel.getAddress());
+                }
+
                 buf = marshallCall();
                 retval = castMessage(dests, constructMessage(buf, null), opts);
             } else {

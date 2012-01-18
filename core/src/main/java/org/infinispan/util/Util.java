@@ -561,7 +561,7 @@ public final class Util {
 
     //Pedro -- pretty print global transaction, ie, transaction ID
     public static String printPrettyGlobalTransaction(GlobalTransaction gtx) {
-        return gtx.getAddress() + ":" + gtx.getAddress();
+        return gtx.getAddress() + ":" + gtx.getId();
     }
 
 }

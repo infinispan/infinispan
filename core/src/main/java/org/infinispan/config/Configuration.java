@@ -1483,10 +1483,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return transaction.totalOrderThreading.keepAliveTime;
     }
 
-    public int getTOQueueSize() {
-        return transaction.totalOrderThreading.queueSize;
-    }
-
     // ------------------------------------------------------------------------------------------------------------
     //   HELPERS
     // ------------------------------------------------------------------------------------------------------------
@@ -2405,12 +2401,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @Override
         public TransactionType use1PcForAutoCommitTransactions(boolean b) {
             return transaction().use1PcForAutoCommitTransactions(b);
-        }
-
-        //Pedro -- total order stuff
-        @Override
-        public TransactionType transactionProtocol(TransactionProtocol transactionProtocol) {
-            return transaction().transactionProtocol(transactionProtocol);
         }
     }
 
@@ -4814,9 +4804,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @XmlAttribute (required = false)
         protected long keepAliveTime = 1000; //milliseconds
 
-        @XmlAttribute (required = false)
-        protected int queueSize = 16;
-
         public void accept(ConfigurationBeanVisitor v) {
             v.visitTotalOrderThreadingType(this);
         }
@@ -4840,12 +4827,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         }
 
         @Override
-        public TotalOrderThreadingConfig queueSize(int size) {
-            setQueueSize(size);
-            return this;
-        }
-
-        @Override
         public TransactionConfig lockingMode(LockingMode lockingMode) {
             return transaction().lockingMode(lockingMode);
         }
@@ -4865,11 +4846,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             return transaction().use1PcForAutoCommitTransactions(b);
         }
 
-        @Override
-        public TransactionType transactionProtocol(TransactionProtocol transactionProtocol) {
-            return transaction().transactionProtocol(transactionProtocol);
-        }
-
         public void setCorePoolSize(int corePoolSize) {
             testImmutability("corePoolSize");
             this.corePoolSize = corePoolSize;
@@ -4883,11 +4859,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         public void setKeepAliveTime(long keepAliveTime) {
             testImmutability("keepAliveTime");
             this.keepAliveTime = keepAliveTime;
-        }
-
-        public void setQueueSize(int queueSize) {
-            testImmutability("queueSize");
-            this.queueSize = queueSize;
         }
     }
 }

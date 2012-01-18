@@ -237,9 +237,7 @@ public class LegacyConfigurationAdaptor {
                 .transaction().totalOrderThreading().maximumPoolSize(config.transaction().totalOrderThreading()
                         .getMaximumPoolSize())
                 .transaction().totalOrderThreading().keepAliveTime(config.transaction().totalOrderThreading()
-                        .getKeepAliveTime())
-                .transaction().totalOrderThreading().queueSize(config.transaction().totalOrderThreading()
-                        .getQueueSize());
+                        .getKeepAliveTime());
 
         if (config.transaction().recovery().enabled()) {
             legacy.transaction().recovery().recoveryInfoCacheName(config.transaction().recovery().recoveryInfoCacheName());
@@ -484,8 +482,7 @@ public class LegacyConfigurationAdaptor {
         .transactionProtocol(legacy.getTransactionProtocol())
                 .totalOrderThreading().corePoolSize(legacy.getTOCorePoolSize())
                 .totalOrderThreading().maximumPoolSize(legacy.getTOMaximumPoolSize())
-                .totalOrderThreading().keepAliveTime(legacy.getTOKeepAliveTime())
-                .totalOrderThreading().queueSize(legacy.getTOQueueSize());
+                .totalOrderThreading().keepAliveTime(legacy.getTOKeepAliveTime());
 
         builder.transaction().recovery().enabled(legacy.isTransactionRecoveryEnabled());
 

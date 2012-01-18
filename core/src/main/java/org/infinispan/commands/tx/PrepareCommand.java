@@ -197,6 +197,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
                 "gtx=" + globalTx +
                 ", modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
                 ", onePhaseCommit=" + onePhaseCommit +
+                ", totalOrder=" + totalOrdered +
                 ", " + super.toString();
     }
 
