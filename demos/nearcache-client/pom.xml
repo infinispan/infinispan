@@ -150,10 +150,7 @@
          <plugin>
             <groupId>org.jboss.as.plugins</groupId>
             <artifactId>jboss-as-maven-plugin</artifactId>
-            <version>7.0.1.Final</version>
-            <configuration>
-               <hostname>${as.hostname}</hostname>
-            </configuration>
+            <version>7.1.0.Beta1b</version>
          </plugin>
 
          <!-- Compiler plugin enforces Java 1.6 compatibility and activates
