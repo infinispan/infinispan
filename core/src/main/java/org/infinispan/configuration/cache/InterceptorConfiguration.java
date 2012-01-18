@@ -3,10 +3,28 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.interceptors.base.CommandInterceptor;
 
+/**
+ * Describes a custom interceptor
+ */
 public class InterceptorConfiguration {
-   
+
+   /**
+    * Positional placing of a new custom interceptor
+    */
    public static enum Position {
-      FIRST,LAST, OTHER_THAN_FIRST_OR_LAST
+      /**
+       * Specifies that the new interceptor is placed first in the chain.
+       */
+      FIRST,
+      /**
+       * Specifies that the new interceptor is placed last in the chain.
+       */
+      LAST,
+      /**
+       * Specifies that the new interceptor can be placed anywhere, except first or last.  This is the default, if not
+       * explicitly specified.
+       */
+      OTHER_THAN_FIRST_OR_LAST
    }
    
    private final Class<? extends CommandInterceptor> after;

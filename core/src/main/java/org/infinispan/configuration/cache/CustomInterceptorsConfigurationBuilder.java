@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,7 +17,10 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
    CustomInterceptorsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
-   
+
+   /**
+    * Adds a new custom interceptor definition, to be added to the cache when the cache is started.
+    */
    public InterceptorConfigurationBuilder addInterceptor() {
       InterceptorConfigurationBuilder builder = new InterceptorConfigurationBuilder(this);
       this.interceptorBuilders.add(builder);
@@ -25,17 +29,18 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      // Nothing to validate
    }
 
    @Override
    CustomInterceptorsConfiguration create() {
-      List<InterceptorConfiguration> interceptors = new LinkedList<InterceptorConfiguration>();
-      for (InterceptorConfigurationBuilder builder : interceptorBuilders) {
-         interceptors.add(builder.create());
+      if (interceptorBuilders.isEmpty()) {
+         return new CustomInterceptorsConfiguration();
+      } else {
+         List<InterceptorConfiguration> interceptors = new ArrayList<InterceptorConfiguration>(interceptorBuilders.size());
+         for (InterceptorConfigurationBuilder builder : interceptorBuilders) interceptors.add(builder.create());
+         return new CustomInterceptorsConfiguration(interceptors);
       }
-      return new CustomInterceptorsConfiguration(interceptors);
    }
    
    @Override
@@ -46,5 +51,4 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
       }
       return this;
    }
-
 }
