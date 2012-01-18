@@ -54,6 +54,8 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.icc = icc;
       this.externalizerTable = externalizerTable;
+      baseCfg.setInstanceCount(16);
+      baseCfg.setClassCount(8);
       baseCfg.setObjectTable(externalizerTable);
       // Override the class resolver with one that can detect injected
       // classloaders via AdvancedCache.with(ClassLoader) calls.
