@@ -1808,6 +1808,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         public void accept(ConfigurationBeanVisitor v) {
             v.visitTransactionType(this);
             recovery.accept(v);
+            totalOrderThreading().accept(v);
         }
 
         public TransactionType() {

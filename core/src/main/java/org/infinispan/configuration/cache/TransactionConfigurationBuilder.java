@@ -38,7 +38,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     private boolean use1PcForAutoCommitTransactions = false;
 
     //Pedro -- total order stuff
-    private TransactionProtocol transactionProtocol;
+    private TransactionProtocol transactionProtocol = TransactionProtocol.NORMAL;
     private final TotalOrderThreadingConfigurationBuilder totalOrderThreading;
 
     TransactionConfigurationBuilder(ConfigurationBuilder builder) {

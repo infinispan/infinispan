@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author pruivo
  */
-@MBean(description = "Total order validator management")
+@MBean(objectName = "TotalOrderValidator", description = "Total order validator management")
 public class TotalOrderValidator {
 
     private static final Log log = LogFactory.getLog(TotalOrderValidator.class);
@@ -59,6 +60,11 @@ public class TotalOrderValidator {
             return new Thread(runnable, "Validation-Thread-" + id.getAndIncrement());
         }
     };
+
+    //some profilling information
+    private final AtomicLong waitTimeInQueue = new AtomicLong(0);
+    private final AtomicLong validationDuration = new AtomicLong(0);
+    private final AtomicInteger numberOfTxValidated = new AtomicInteger(0);
 
     public TotalOrderValidator() {
         threadPoolExecutor = createNewThreadPool();
@@ -172,6 +178,10 @@ public class TotalOrderValidator {
         private final TxInvocationContext txInvocationContext;
         private final CommandInterceptor invoker;
 
+        private long creationTime;
+        private long validationStartTime;
+        private long validatinEndTime;
+
         private SingleThreadValidation(PrepareCommand prepareCommand, TxInvocationContext txInvocationContext,
                                        CommandInterceptor invoker) {
             if(prepareCommand == null || txInvocationContext == null || invoker == null) {
@@ -180,6 +190,7 @@ public class TotalOrderValidator {
             this.prepareCommand = prepareCommand;
             this.txInvocationContext = txInvocationContext;
             this.invoker = invoker;
+            this.creationTime = System.nanoTime();
         }
 
         protected void initializeValidation() throws InterruptedException {
@@ -196,6 +207,7 @@ public class TotalOrderValidator {
 
         @Override
         public void run() {
+            validationStartTime = System.nanoTime();
             Object result = null;
             boolean exception = false;
             try {
@@ -215,7 +227,11 @@ public class TotalOrderValidator {
                             (exception ? "failed" : "ok"), (exception ? ((Throwable)result).getMessage() : result));
                 }
                 finalizeValidation(result, exception);
+                validatinEndTime = System.nanoTime();
             }
+            waitTimeInQueue.addAndGet(validationStartTime - creationTime);
+            validationDuration.addAndGet(validatinEndTime - validationStartTime);
+            numberOfTxValidated.incrementAndGet();
         }
     }
 
@@ -298,6 +314,28 @@ public class TotalOrderValidator {
         return threadPoolExecutor.getActiveCount();
     }
 
+    @ManagedAttribute
+    @Metric
+    public long getAverageWaitingTimeInQueue() {
+        long time = waitTimeInQueue.get();
+        int tx = numberOfTxValidated.get();
+        if(tx == 0) {
+            return 0;
+        }
+        return time/tx;
+    }
+
+    @ManagedAttribute
+    @Metric
+    public long getAverageValidationDuration() {
+        long time = validationDuration.get();
+        int tx = numberOfTxValidated.get();
+        if(tx == 0) {
+            return 0;
+        }
+        return time/tx;
+    }
+
     @ManagedOperation
     @Operation
     public void setThreadPoolCoreSize(int size) {
@@ -318,5 +356,13 @@ public class TotalOrderValidator {
     @Operation
     public void setThreadPoolKeepTime(long time) {
         threadPoolExecutor.setKeepAliveTime(time, TimeUnit.MILLISECONDS);
+    }
+
+    @ManagedOperation
+    @Operation
+    public void resetStatistics() {
+        waitTimeInQueue.set(0);
+        validationDuration.set(0);
+        numberOfTxValidated.set(0);
     }
 }
