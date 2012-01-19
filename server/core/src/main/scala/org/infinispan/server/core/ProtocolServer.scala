@@ -23,9 +23,10 @@
 package org.infinispan.server.core
 
 import org.infinispan.manager.{EmbeddedCacheManager}
+import org.infinispan.server.core.transport.CustomReplayingDecoder
 import java.util.Properties
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import org.jboss.netty.handler.codec.replay.{CustomReplayingDecoder, ReplayingDecoder}
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 
 /**
  * Represents a protocol compliant server.
