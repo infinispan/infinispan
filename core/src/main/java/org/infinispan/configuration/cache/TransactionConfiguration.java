@@ -64,6 +64,18 @@ public class TransactionConfiguration {
     * because even if a new transaction was started just before the cache was stopped, this could
     * only last as long as the transaction timeout allows it.
     */
+   public TransactionConfiguration cacheStopTimeout(long l) {
+      this.cacheStopTimeout = l;
+      return this;
+   }
+
+   /**
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+    * remote and local transactions to finish. The amount of time to wait for is defined by the
+    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+    * because even if a new transaction was started just before the cache was stopped, this could
+    * only last as long as the transaction timeout allows it.
+    */
    public long cacheStopTimeout() {
       return cacheStopTimeout;
    }
@@ -98,6 +110,18 @@ public class TransactionConfiguration {
    }
 
    /**
+    * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
+    * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
+    * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
+    * performance of 2PC transactions, since any remote failures are trapped during the prepare
+    * phase anyway and appropriate rollbacks are issued.
+    */
+   public TransactionConfiguration syncCommitPhase(boolean b) {
+      this.syncCommitPhase = b;
+      return this;
+   }
+
+   /**
     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
@@ -107,6 +131,20 @@ public class TransactionConfiguration {
     */
    public boolean syncRollbackPhase() {
       return syncRollbackPhase;
+   }
+
+   /**
+    * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
+    * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
+    * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
+    * performance of 2PC transactions.
+    *
+    * @param b
+    * @return
+    */
+   public TransactionConfiguration syncRollbackPhase(boolean b) {
+      this.syncRollbackPhase = b;
+      return this;
    }
 
    /**
