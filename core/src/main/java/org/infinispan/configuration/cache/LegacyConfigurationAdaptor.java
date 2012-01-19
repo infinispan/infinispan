@@ -74,7 +74,7 @@ public class LegacyConfigurationAdaptor {
                   .enabled(config.clustering().hash().groups().enabled())
                   .groupers(config.clustering().hash().groups().groupers());
       }
-      
+
       if (config.clustering().l1().activated) {
          legacy.clustering()
             .l1()
@@ -338,11 +338,12 @@ public class LegacyConfigurationAdaptor {
          InterceptorConfigurationBuilder interceptorConfigurationBuilder = builder.clustering().customInterceptors().addInterceptor();
          if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())
             interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
-         if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
+         else if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
             interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
-         if (interceptor.getIndex() > -1) interceptorConfigurationBuilder.index(interceptor.getIndex());
-         interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
-         interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+         else if (!interceptor.getPositionAsString().equals(Position.OTHER_THAN_FIRST_OR_LAST.toString()))
+            interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+         else 
+            interceptorConfigurationBuilder.index(interceptor.getIndex());
       }
       
       builder.dataContainer()

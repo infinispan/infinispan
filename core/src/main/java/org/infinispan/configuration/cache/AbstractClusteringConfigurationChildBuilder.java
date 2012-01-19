@@ -24,11 +24,6 @@ abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractCo
    }
    
    @Override
-   public StateRetrievalConfigurationBuilder stateRetrieval() {
-      return clusteringBuilder.stateRetrieval();
-   }
-   
-   @Override
    public StateTransferConfigurationBuilder stateTransfer() {
       return clusteringBuilder.stateTransfer();
    }
