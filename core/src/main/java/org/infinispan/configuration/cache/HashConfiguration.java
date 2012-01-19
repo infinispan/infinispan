@@ -85,6 +85,7 @@ public class HashConfiguration {
     * Rehashing timeout
     * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
+   @Deprecated
    public long rehashRpcTimeout() {
       return stateTransferConfiguration.timeout();
    }
@@ -92,10 +93,11 @@ public class HashConfiguration {
    /**
     * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
     */
+   @Deprecated
    public long rehashWait() {
       return stateTransferConfiguration.timeout();
    }
-   
+
    /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */

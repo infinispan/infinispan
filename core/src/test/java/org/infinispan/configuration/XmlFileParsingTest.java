@@ -215,7 +215,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("syncRepl");
 
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("asyncRepl");
@@ -223,20 +223,20 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
       assert !c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
 
       c = cm.getCacheConfiguration("asyncReplQueue");
 
       assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
       assert c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
 
       c = cm.getCacheConfiguration("txSyncRepl");
 
       assert c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup;
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateRetrieval().fetchInMemoryState();
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("overriding");

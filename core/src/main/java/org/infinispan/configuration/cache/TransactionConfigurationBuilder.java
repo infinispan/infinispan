@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * Defines transactional (JTA) characteristics of the cache.
  * 
  * @author pmuir
- * 
+ *
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
@@ -43,30 +43,13 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and
-    * transactionAutoCommit is enabled then for single operation transactions the user doesn't need
-    * to manually start a transaction, but a transactions is injected by the system. Defaults to
-    * true.
+    * If the cache is transactional (i.e. {@link #transactionMode(org.infinispan.transaction.TransactionMode)} == TransactionMode.TRANSACTIONAL)
+    * and transactionAutoCommit is enabled then for single operation transactions
+    * the user doesn't need to manually start a transaction, but a transactions
+    * is injected by the system. Defaults to true.
     */
    public TransactionConfigurationBuilder autoCommit(boolean b) {
       this.autoCommit = b;
-      return this;
-   }
-
-   /**
-    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
-    * remote and local transactions to finish. The amount of time to wait for is defined by the
-    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
-    * because even if a new transaction was started just before the cache was stopped, this could
-    * only last as long as the transaction timeout allows it.
-    * <p/>
-    * This configuration property may be adjusted at runtime
-    * 
-    * @deprecated use {@link #cacheStopTimeout(long)} instead
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder cacheStopTimeout(int i) {
-      this.cacheStopTimeout = i;
       return this;
    }
 
@@ -91,7 +74,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * that gets locked is the main data owner, i.e. the node where data would reside if
     * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
     * rollback - data is in a consistent state, no fault tolerance.
-    * 
+    *
     * @deprecated starting with Infinispan 5.1 single node locking is used by default
     */
    @Deprecated

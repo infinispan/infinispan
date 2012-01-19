@@ -114,6 +114,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * Rehashing timeout
     * @deprecated Use {@link StateTransferConfigurationBuilder#timeout(long)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashRpcTimeout(long rehashRpcTimeout) {
       stateTransfer().timeout(rehashRpcTimeout);
       activated = true;
@@ -123,6 +124,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    /**
     * @deprecated No longer used.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashWait(long rehashWait) {
       return this;
    }

@@ -116,12 +116,4 @@ public class Configuration {
       return versioningConfiguration;
    }
 
-   public boolean stateTransferEnabled() {
-      return clustering().stateRetrieval().fetchInMemoryState() || loaders().fetchPersistentState();
-   }
-
-   @Deprecated
-   public boolean onePhaseCommit() {
-      return clusteringConfiguration.cacheMode().isSynchronous();
-   }
 }
