@@ -38,6 +38,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.transport.CustomReplayingDecoder;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
@@ -53,7 +54,6 @@ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
-import org.jboss.netty.handler.codec.replay.CustomReplayingDecoder;
 
 /**
  * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
