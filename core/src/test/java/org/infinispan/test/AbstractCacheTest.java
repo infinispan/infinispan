@@ -115,7 +115,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
          clustering()
             .cacheMode(mode)
             .stateRetrieval().fetchInMemoryState(false)
-         .transaction().syncCommitPhase(false).syncRollbackPhase(false)
+         .transaction().syncCommitPhase(true).syncRollbackPhase(true)
          .cacheStopTimeout(0L);
 
       if (mode.isSynchronous())
