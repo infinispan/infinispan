@@ -87,6 +87,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private final ReclosableLatch stateTransferInProgressLatch = new ReclosableLatch(false);
    private volatile BaseStateTransferTask stateTransferTask;
    private CommandBuilder commandBuilder;
+   private volatile boolean shuttingDown = false;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -106,6 +107,16 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.icc = icc;
       this.cacheNotifier = cacheNotifier;
       this.cacheViewsManager = cacheViewsManager;
+   }
+
+   @Start(priority = 1)
+   private void setStartStatus() {
+      shuttingDown = false;
+   }
+
+   @Stop(priority = 1)
+   private void setStopStatus() {
+      shuttingDown = true;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -350,7 +361,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       try {
          stateTransferLock.unblockNewTransactions(viewId);
       } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
+         if (shuttingDown)
+            log.trace("Unable to release state transfer lock, possibly because we're shutting down.");
+         else
+            log.errorUnblockingTransactions(e);
       }
 
       stateTransferInProgressLatch.open();
