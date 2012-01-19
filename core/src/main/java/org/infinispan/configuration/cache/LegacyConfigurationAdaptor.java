@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
@@ -52,23 +53,26 @@ public class LegacyConfigurationAdaptor {
                .consistentHashClass(config.clustering().hash().consistentHash().getClass());
       
       }
-      if (config.clustering().hash().hash() != null) {
+      if (config.clustering().hash().activated) {
+         if (config.clustering().hash().hash() != null) {
+            legacy.clustering()
+               .hash()
+                  .hashFunctionClass(config.clustering().hash().hash().getClass());
+         }
+
          legacy.clustering()
             .hash()
-               .hashFunctionClass(config.clustering().hash().hash().getClass());
+               .numOwners(config.clustering().hash().numOwners())
+               .numVirtualNodes(config.clustering().hash().numVirtualNodes())
+               .rehashEnabled(config.clustering().hash().rehashEnabled())
+               .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
+               .rehashWait(config.clustering().hash().rehashWait())
+               .groups()
+                  .enabled(config.clustering().hash().groups().enabled())
+                  .groupers(config.clustering().hash().groups().groupers());
       }
-      legacy.clustering()
-      .hash()
-            .numOwners(config.clustering().hash().numOwners())
-            .numVirtualNodes(config.clustering().hash().numVirtualNodes())
-            .rehashEnabled(config.clustering().hash().rehashEnabled())
-            .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
-            .rehashWait(config.clustering().hash().rehashWait())
-            .groups()
-               .enabled(config.clustering().hash().groups().enabled())
-               .groupers(config.clustering().hash().groups().groupers());
       
-      if (config.clustering().l1().enabled()) {
+      if (config.clustering().l1().activated) {
          legacy.clustering()
             .l1()
                .invalidationThreshold(config.clustering().l1().invalidationThreshold())
@@ -273,29 +277,31 @@ public class LegacyConfigurationAdaptor {
                .useReplQueue(legacy.isUseReplQueue());
       }
       
-      if (legacy.hasConsistentHashClass()) {
+      if (legacy.isCustomConsistentHashClass()) {
          builder.clustering()
             .hash()
                .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));
       
       }
-      if (legacy.getHashFunctionClass() != null) {
+      if (legacy.isCustomHashFunctionClass()) {
          builder.clustering()
             .hash()
                .hash(Util.<Hash>getInstance(legacy.getHashFunctionClass(), legacy.getClassLoader()));
       }
-      builder.clustering()
-      .hash()
-            .numOwners(legacy.getNumOwners())
-            .numVirtualNodes(legacy.getNumVirtualNodes())
-            .rehashEnabled(legacy.isRehashEnabled())
-            .rehashRpcTimeout(legacy.getRehashRpcTimeout())
-            .rehashWait(legacy.getRehashWaitTime())
-            .groups()
-               .enabled(legacy.isGroupsEnabled())
-               .withGroupers(legacy.getGroupers());
+      if (legacy.isHashActivated()) {
+         builder.clustering()
+            .hash()
+               .numOwners(legacy.getNumOwners())
+               .numVirtualNodes(legacy.getNumVirtualNodes())
+               .rehashEnabled(legacy.isRehashEnabled())
+               .rehashRpcTimeout(legacy.getRehashRpcTimeout())
+               .rehashWait(legacy.getRehashWaitTime())
+               .groups()
+                  .enabled(legacy.isGroupsEnabled())
+                  .withGroupers(legacy.getGroupers());
+      }
       
-      if (legacy.isL1CacheEnabled()) {
+      if (legacy.isL1CacheActivated()) {
          builder.clustering()
             .l1().enable()
                .invalidationThreshold(legacy.getL1InvalidationThreshold())
@@ -325,7 +331,7 @@ public class LegacyConfigurationAdaptor {
             interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
          if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
             interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
-         interceptorConfigurationBuilder.index(interceptor.getIndex());
+         if (interceptor.getIndex() > -1) interceptorConfigurationBuilder.index(interceptor.getIndex());
          interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
          interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
       }

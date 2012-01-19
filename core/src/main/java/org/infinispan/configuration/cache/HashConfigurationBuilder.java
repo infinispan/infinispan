@@ -2,7 +2,11 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.distribution.ch.ConsistentHash;
+
+import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -16,6 +20,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    private Hash hash = new MurmurHash3();
    private int numOwners = 2;
    private int numVirtualNodes = 1;
+   private boolean activated = false;
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
 
@@ -33,6 +38,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder consistentHash(ConsistentHash consistentHash) {
       this.consistentHash = consistentHash;
+      activated = true;
       return this;
    }
 
@@ -40,7 +46,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * Number of cluster-wide replicas for each cache entry.
     */
    public HashConfigurationBuilder numOwners(int numOwners) {
+      if (numVirtualNodes < 1) throw new IllegalArgumentException("numOwners cannot be less than 1");
       this.numOwners = numOwners;
+      activated = true;
       return this;
    }
 
@@ -65,6 +73,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public HashConfigurationBuilder numVirtualNodes(int numVirtualNodes) {
       if (numVirtualNodes < 1) throw new IllegalArgumentException("numVirtualNodes cannot be less than 1");
       this.numVirtualNodes = numVirtualNodes;
+      activated = true;
       return this;
    }
 
@@ -75,6 +84,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder rehashEnabled() {
       stateTransfer().fetchInMemoryState(true);
+      activated = true;
       return this;
    }
    
@@ -85,6 +95,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder rehashEnabled(boolean enabled) {
       stateTransfer().fetchInMemoryState(enabled);
+      activated = true;
       return this;
    }
 
@@ -95,6 +106,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder rehashDisabled() {
       stateTransfer().fetchInMemoryState(false);
+      activated = true;
       return this;
    }
 
@@ -104,6 +116,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder rehashRpcTimeout(long rehashRpcTimeout) {
       stateTransfer().timeout(rehashRpcTimeout);
+      activated = true;
       return this;
    }
 
@@ -125,15 +138,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder hash(Hash hash) {
       this.hash = hash;
+      activated = true;
       return this;
    }
 
    public GroupsConfigurationBuilder groups() {
+      activated = true;
       return groupsConfigurationBuilder;
    }
 
    @Override
    void validate() {
+      if (activated && !clustering().cacheMode().isDistributed())
+         throw new ConfigurationException("Configuring the hashing behavior of entries is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
       groupsConfigurationBuilder.validate();
    }
 
@@ -141,7 +158,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance
       return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes,
-            groupsConfigurationBuilder.create(), stateTransfer().create());
+            groupsConfigurationBuilder.create(), stateTransfer().create(), activated);
    }
 
    @Override

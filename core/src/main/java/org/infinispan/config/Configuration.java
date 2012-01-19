@@ -1393,6 +1393,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.l1.enabled;
    }
 
+   public boolean isL1CacheActivated() {
+      return clustering.l1.activated && isL1CacheEnabled();
+   }
+
    public long getL1Lifespan() {
       return clustering.l1.lifespan;
    }
@@ -1410,6 +1414,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    public boolean hasConsistentHashClass() {
       return clustering.hash.consistentHashClass != null;
+   }
+
+   public boolean isCustomConsistentHashClass() {
+      return clustering.hash.consistentHashClass != null &&
+            !clustering.hash.consistentHashClass.equals(DefaultConsistentHash.class.getName()) &&
+            !clustering.hash.consistentHashClass.equals(TopologyAwareConsistentHash.class.getName());
+   }
+
+   public boolean isCustomHashFunctionClass() {
+      return clustering.hash.hashFunctionClass != null &&
+            !clustering.hash.hashFunctionClass.equals(MurmurHash3.class.getName());
    }
 
    public String getHashFunctionClass() {
@@ -1709,7 +1724,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isExpirationReaperEnabled() {
        return expiration.reaperEnabled;
     }
- 
+
+   public boolean isHashActivated() {
+      return clustering.hash.activated;
+   }
+
    /**
     * Defines transactional (JTA) characteristics of the cache.
     *
@@ -3491,6 +3510,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "groups")
       protected GroupsConfiguration groups = new GroupsConfiguration();
+      @XmlTransient
+      public boolean activated = false;
 
       public void accept(ConfigurationBeanVisitor v) {
          groups.accept(v);
@@ -3508,6 +3529,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setConsistentHashClass(String consistentHashClass) {
          testImmutability("consistentHashClass");
+         activated = true;
          this.consistentHashClass = consistentHashClass;
       }
 
@@ -3529,6 +3551,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setHashFunctionClass(String hashFunctionClass) {
          testImmutability("hashFunctionClass");
+         activated = true;
          this.hashFunctionClass = hashFunctionClass;
       }
 
@@ -3559,6 +3582,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setNumVirtualNodes(Integer numVirtualNodes) {
          testImmutability("numVirtualNodes");
+         activated = true;
          this.numVirtualNodes = numVirtualNodes;
       }
 
@@ -3569,6 +3593,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setNumOwners(Integer numOwners) {
          testImmutability("numOwners");
+         activated = true;
          this.numOwners = numOwners;
       }
 
@@ -3590,6 +3615,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashWait(Long rehashWaitTime) {
          testImmutability("rehashWait");
+         activated = true;
          this.rehashWait = rehashWaitTime;
       }
 
@@ -3611,6 +3637,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashRpcTimeout(Long rehashRpcTimeout) {
          testImmutability("rehashRpcTimeout");
+         activated = true;
          this.rehashRpcTimeout = rehashRpcTimeout;
       }
 
@@ -3632,6 +3659,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashEnabled(Boolean rehashEnabled) {
          testImmutability("rehashEnabled");
+         activated = true;
          this.rehashEnabled = rehashEnabled;
       }
 
@@ -3643,6 +3671,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       public GroupsConfiguration groups() {
          groups.setConfiguration(config);
+         activated = true;
          return groups;
       }
       
@@ -3733,7 +3762,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1InvalidationThreshold")
       protected Integer invalidationThreshold = 0;
-      
+      @XmlTransient
+      public boolean activated = false;
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitL1Type(this);
       }
@@ -3749,6 +3780,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setEnabled(Boolean enabled) {
          testImmutability("enabled");
+         activated = true;
          this.enabled = enabled;
          return this;
       }
@@ -3764,6 +3796,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setLifespan(Long lifespan) {
          testImmutability("lifespan");
+         activated = true;
          this.lifespan = lifespan;
          return this;
       }
@@ -3786,6 +3819,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setOnRehash(Boolean onRehash) {
          testImmutability("onRehash");
+         activated = true;
          this.onRehash = onRehash;
          return this;
       }
@@ -3805,6 +3839,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
      
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
+         activated = true;
          this.invalidationThreshold = threshold;
       }
       
