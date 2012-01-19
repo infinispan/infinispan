@@ -32,6 +32,8 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -57,10 +59,21 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private volatile boolean shuttingDown = false;
 
    @Override
    protected Log getLog() {
       return log;
+   }
+
+   @Start(priority = 1)
+   private void setStartStatus() {
+      shuttingDown = false;
+   }
+
+   @Stop(priority = 1)
+   private void setStopStatus() {
+      shuttingDown = true;
    }
 
    @Inject
@@ -85,55 +98,60 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
       boolean suppressExceptions = false;
       try {
-      ComponentStatus status = componentRegistry.getStatus();
-      if (command.ignoreCommandOnStatus(status)) {
-         log.debugf("Status: %s : Ignoring %s command", status, command);
-         return null;
-      }
-
-      if (status.isTerminated()) {
-         throw new IllegalStateException(String.format(
-               "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
-                     "Either restart it or recreate the cache container.",
-               getCacheNamePrefix()));
-      } else if (stoppingAndNotAllowed(status, ctx)) {
-         throw new IllegalStateException(String.format(
-               "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
-                     "Either restart it or recreate the cache container.",
-               getCacheNamePrefix()));
-      }
-
-      LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
-      try {
-         if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
-         if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
-
-         if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-            suppressExceptions = true;
+         ComponentStatus status = componentRegistry.getStatus();
+         if (command.ignoreCommandOnStatus(status)) {
+            log.debugf("Status: %s : Ignoring %s command", status, command);
+            return null;
          }
+
+         if (status.isTerminated()) {
+            throw new IllegalStateException(String.format(
+                  "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
+                        "Either restart it or recreate the cache container.",
+                  getCacheNamePrefix()));
+         } else if (stoppingAndNotAllowed(status, ctx)) {
+            throw new IllegalStateException(String.format(
+                  "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
+                        "Either restart it or recreate the cache container.",
+                  getCacheNamePrefix()));
+         }
+
+         LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
 
          try {
-            return invokeNextInterceptor(ctx, command);
-         }
-         catch (Throwable th) {
-            if (suppressExceptions) {
-               log.trace("Exception while executing code, failing silently...", th);
-               return null;
-            } else {
-               log.executionError(th);
-               if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-                  if (trace) log.trace("Transaction marked for rollback as exception was received.");
-                  markTxForRollbackAndRethrow(ctx, th);
-                  throw new IllegalStateException("This should not be reached");
+            if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
+            if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
+
+            if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+               suppressExceptions = true;
+            }
+
+            try {
+               return invokeNextInterceptor(ctx, command);
+            } catch (Throwable th) {
+               // If we are shutting down there is every possibility that the invocation fails.
+               suppressExceptions = suppressExceptions || shuttingDown;
+               if (suppressExceptions) {
+                  if (shuttingDown)
+                     log.trace("Exception while executing code, but we're shutting down so failing silently.");
+                  else
+                     log.trace("Exception while executing code, failing silently...", th);
+                  return null;
+               } else {
+                  log.executionError(th);
+                  if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+                     if (trace) log.trace("Transaction marked for rollback as exception was received.");
+                     markTxForRollbackAndRethrow(ctx, th);
+                     throw new IllegalStateException("This should not be reached");
+                  }
+                  throw th;
                }
-               throw th;
+            } finally {
+               ctx.reset();
             }
          } finally {
-            ctx.reset();
+            LogFactory.popNDC(trace);
          }
-      } finally {
-         LogFactory.popNDC(trace);
-      }
       } finally {
          invocationContextContainer.clearThreadLocal();
       }
@@ -148,10 +166,9 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    /**
-    * If the cache is STOPPING, non-transaction invocations, or transactional
-    * invocations for transaction others than the ongoing ones, are no allowed.
-    * This method returns true if under this circumstances meet.
-    * Otherwise, it returns false.
+    * If the cache is STOPPING, non-transaction invocations, or transactional invocations for transaction others than
+    * the ongoing ones, are no allowed. This method returns true if under this circumstances meet. Otherwise, it returns
+    * false.
     */
    private boolean stoppingAndNotAllowed(ComponentStatus status, InvocationContext ctx) throws Exception {
       return status.isStopping() && (!ctx.isInTxScope() || !isOngoingTransaction(ctx));
@@ -165,21 +182,20 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          }
       }
       throw te;
-   }   
+   }
 
    private boolean isValidRunningTx(Transaction tx) throws Exception {
       int status;
       try {
          status = tx.getStatus();
-      }
-      catch (SystemException e) {
+      } catch (SystemException e) {
          throw new CacheException("Unexpected!", e);
       }
       return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 
    private boolean isOngoingTransaction(InvocationContext ctx) throws SystemException {
-      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) || ( !ctx.isOriginLocal() &&
-                                         txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction())));
+      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) || (!ctx.isOriginLocal() &&
+                                                                                          txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction())));
    }
 }
