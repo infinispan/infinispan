@@ -87,4 +87,21 @@ public enum CacheMode {
             return this;
       }
    }
+   
+   public String friendlyCacheModeString() {
+      switch (this) {
+         case REPL_SYNC:
+         case REPL_ASYNC:
+            return "REPLICATED";
+         case INVALIDATION_SYNC:
+         case INVALIDATION_ASYNC:
+            return "INVALIDATED";
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            return "DISTRIBUTED";
+         case LOCAL:
+            return "LOCAL";
+      }
+      throw new IllegalArgumentException("Unknown cache mode " + this);
+   }
 }

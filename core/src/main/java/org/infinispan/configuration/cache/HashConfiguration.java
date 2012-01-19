@@ -16,15 +16,18 @@ public class HashConfiguration {
    private final int numVirtualNodes;
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
+   // For use by the LegacyConfigurationAdapter
+   final boolean activated;
 
    HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
-         GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
+                     GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration, boolean activated) {
       this.consistentHash = consistentHash;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numVirtualNodes = numVirtualNodes;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
+      this.activated = activated;
    }
 
    /**
