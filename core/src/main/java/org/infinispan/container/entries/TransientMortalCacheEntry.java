@@ -46,14 +46,16 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis(), lifespan, maxIdle);
-      touch();
+      final long currentTimeMillis = System.currentTimeMillis();
+      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis, lifespan, maxIdle);
+      touch(currentTimeMillis);
    }
 
    protected TransientMortalCacheEntry(Object key, Object value) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis());
-      touch();
+      final long currentTimeMillis = System.currentTimeMillis();
+      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis);
+      touch(currentTimeMillis);
    }
 
    protected TransientMortalCacheEntry(Object key, TransientMortalCacheValue value) {
