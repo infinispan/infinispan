@@ -40,9 +40,10 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.infinispan.util.Util.currentMillisFromNanotime;
 
 /**
  * This class implements a specialized lock that allows the state transfer process (which is not a single thread)
@@ -203,13 +204,13 @@ public class StateTransferLockImpl implements StateTransferLock {
          // we got a newer cache view id from a remote node, so we know it will be installed on this node as well
          // even if the cache view installation is cancelled, the rollback will advance the view id so we won't wait forever
          if (blockingCacheViewId < newCacheViewId) {
-            long end = currentTimeMillisFromNanotime() + lockTimeout;
+            long end = currentMillisFromNanotime() + lockTimeout;
             long timeout = lockTimeout;
             synchronized (lock) {
                while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
                   if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
                   lock.wait(timeout);
-                  timeout = end - currentTimeMillisFromNanotime();
+                  timeout = end - currentMillisFromNanotime();
                }
             }
          }
@@ -294,7 +295,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       // A state transfer is in progress, wait for it to end
       long timeout = lockTimeout;
-      long endTime = currentTimeMillisFromNanotime() + lockTimeout;
+      long endTime = currentMillisFromNanotime() + lockTimeout;
       synchronized (lock) {
          while (true) {
             //check first before waiting
@@ -305,15 +306,11 @@ public class StateTransferLockImpl implements StateTransferLock {
             lock.wait(timeout);
 
             // retry, unless the timeout expired
-            timeout = endTime - currentTimeMillisFromNanotime();
+            timeout = endTime - currentMillisFromNanotime();
             if (timeout <= 0)
                return false;
          }
       }
-   }
-
-   private static final long currentTimeMillisFromNanotime() {
-      return TimeUnit.MILLISECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
    }
 
    private boolean acquireLockForWriteNoWait() {
