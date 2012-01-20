@@ -26,6 +26,7 @@ package org.infinispan.transaction;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -157,5 +158,28 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public void setModifications(List<WriteCommand> modifications) {
       this.modifications = modifications;
+   }
+
+   public boolean isTopologyChanged(ClusteringDependentLogic clusteringLogic) {
+      Collection<Address> preparedOn = getRemoteLocksAcquired();
+
+      // we only send the commit command to the nodes that
+      Collection<Address> recipients = clusteringLogic.getOwners(getAffectedKeys());
+      if (recipients == null) return false;
+
+      // By default, use the configured commit sync settings
+      for (Address a : preparedOn) {
+         if (!recipients.contains(a)) {
+            // However if we have prepared on some nodes and are now committing on different nodes, make sure we
+            // force sync commit so we can respond to prepare resend requests.
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public boolean mightHaveRemoteLocks() {
+      return (remoteLockedNodes != null && !remoteLockedNodes.isEmpty())
+            || (modifications != null && !modifications.isEmpty());
    }
 }

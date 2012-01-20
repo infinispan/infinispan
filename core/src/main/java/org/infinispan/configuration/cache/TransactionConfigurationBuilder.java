@@ -27,7 +27,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
    private boolean eagerLockingSingleNode = false;
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
-   private boolean syncCommitPhase = true;
+   private boolean syncCommitPhase = false;
    private boolean syncRollbackPhase = false;
    private TransactionManagerLookup transactionManagerLookup;
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;

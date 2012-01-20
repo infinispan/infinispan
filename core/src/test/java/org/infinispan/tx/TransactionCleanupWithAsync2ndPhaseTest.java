@@ -3,6 +3,7 @@ package org.infinispan.tx;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.Test;
 
 /**
@@ -54,10 +55,14 @@ public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManage
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return (TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(0)).getLocalTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(1)).getLocalTxCount() == 0);
+            TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
+            TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
+            log.trace("tt0.getLocalTxCount() = " + tt0.getLocalTxCount());
+            log.trace("tt0.getRemoteTxCount() = " + tt0.getRemoteTxCount());
+            log.trace("tt1.getLocalTxCount() = " + tt1.getLocalTxCount());
+            log.trace("tt1.getRemoteTxCount() = " + tt1.getRemoteTxCount());
+            return (tt0.getRemoteTxCount() == 0) && (tt0.getLocalTxCount() == 0)
+                  && (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0);
          }
       });
    }

@@ -52,11 +52,8 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
    private final LocalTransaction localTransaction;
    private final TransactionCoordinator txCoordinator;
 
-   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator,
-                                 CommandsFactory commandsFactory, RpcManager rpcManager,
-                                 TransactionTable transactionTable, ClusteringDependentLogic clusteringLogic,
-                                 Configuration configuration) {
-      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration);
+   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator) {
+      super(localTransaction);
       this.localTransaction = localTransaction;
       this.txCoordinator = txCoordinator;
    }
@@ -93,7 +90,6 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
       } else {
          throw new IllegalArgumentException("Unknown status: " + status);
       }
-      releaseLocksForCompletedTransaction(localTransaction);
    }
 
    @Override

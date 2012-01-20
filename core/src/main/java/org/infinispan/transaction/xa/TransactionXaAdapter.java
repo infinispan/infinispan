@@ -22,10 +22,7 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
@@ -76,10 +73,8 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
-                               CommandsFactory commandsFactory, RpcManager rpcManager,
-                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
-      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
+      super(localTransaction);
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
@@ -87,11 +82,8 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.txCoordinator = txCoordinator;
       recoveryEnabled = configuration.isTransactionRecoveryEnabled();
    }
-   public TransactionXaAdapter(TransactionTable txTable,
-                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
-                               CommandsFactory commandsFactory, RpcManager rpcManager,
-                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
-      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
+   public TransactionXaAdapter(TransactionTable txTable, Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
+      super();
       localTransaction = null;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
@@ -124,7 +116,6 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       } else {
          txCoordinator.commit(localTransaction, false);
       }
-      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
 
    /**
@@ -135,7 +126,6 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
       localTransaction.markForRollback(true); //ISPN-879 : make sure that locks are no longer associated to this transactions
       txCoordinator.rollback(localTransaction1);
-      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction1);
    }
 
    public void start(Xid externalXid, int i) throws XAException {
@@ -216,16 +206,6 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       return "TransactionXaAdapter{" +
             "localTransaction=" + localTransaction +
             '}';
-   }
-
-   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
-      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
-      if (configuration.isTransactionRecoveryEnabled()) {
-         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
-         txTable.removeLocalTransaction(localTransaction);
-      } else {
-         releaseLocksForCompletedTransaction(localTransaction);
-      }
    }
 
    private LocalXaTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {

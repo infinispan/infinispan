@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test(groups = "functional", testName = "TransactionReleaseWithAsync2ndPhaseRecoveryTest")
+@Test(groups = "functional", testName = "TransactionReleaseWithAsync2ndPhaseRecoveryTest", invocationCount = 10)
 public class TransactionCleanupWithAsync2ndPhaseRecoveryTest extends TransactionCleanupWithAsync2ndPhaseTest {
 
    protected Configuration getConfiguration() {

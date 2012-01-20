@@ -29,14 +29,13 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.dld.ControlledRpcManager;
@@ -153,9 +152,9 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
          }
       };
 
-      //not too nice: replace the rpc manager in the class that builds the Sync objects
-      final TransactionTable transactionTable = TestingUtil.getTransactionTable(cache(1));
-      TestingUtil.replaceField(rpcManager, "rpcManager", transactionTable, TransactionTable.class);
+      ComponentRegistry registry = advancedCache(1).getComponentRegistry();
+      registry.registerComponent(rpcManager, RpcManager.class);
+      registry.rewire();
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       txControlInterceptor.prepareProgress.countDown();

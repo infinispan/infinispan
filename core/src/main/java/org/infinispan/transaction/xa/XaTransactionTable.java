@@ -98,8 +98,8 @@ public class XaTransactionTable extends TransactionTable {
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
             transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, configuration, recoveryManager,
-                                                                txCoordinator, commandsFactory, rpcManager,
-                                                                clusteringLogic, configuration));
+                                                                txCoordinator
+            ));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {
