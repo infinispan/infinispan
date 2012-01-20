@@ -9,7 +9,6 @@ add_classpath "${ISPN_HOME}/modules/hotrod"
 add_classpath "${ISPN_HOME}/modules/websocket"
 
 add_jvm_args $JVM_PARAMS
-add_jvm_args $LOG4J_CONFIG
 add_jvm_args '-Djava.net.preferIPv4Stack=true'
 
 # RHQ monitoring options
@@ -19,6 +18,9 @@ add_jvm_args '-Djava.net.preferIPv4Stack=true'
 
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
+
+# LOG4J configuration
+# LOG4J_CONFIG=file:///${ISPN_HOME}/etc/log4j.xml
 
 add_program_args "$@"
 
