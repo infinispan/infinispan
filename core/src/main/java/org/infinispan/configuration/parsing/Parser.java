@@ -937,25 +937,25 @@ public class Parser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ALWAYS_PROVIDE_IN_MEMORY_STATE:
-               // No-op
+               log.alwaysProvideInMemoryStateDeprecated();
                break;
             case FETCH_IN_MEMORY_STATE:
                builder.clustering().stateTransfer().fetchInMemoryState(Boolean.valueOf(value));
                break;
             case INITIAL_RETRY_WAIT_TIME:
-               // No-op
+               log.initialRetryWaitTimeDeprecated();
                break;
             case LOG_FLUSH_TIMEOUT:
-               // No-op
+               log.logFlushTimeoutDeprecated();
                break;
             case MAX_NON_PROGRESSING_LOG_WRITES:
-               // No-op
+               log.maxProgressingLogWritesDeprecated();
                break;
             case NUM_RETRIES:
-               // No-op
+               log.numRetriesDeprecated();
                break;
             case RETRY_WAIT_TIME_INCREASE_FACTOR:
-               // No-op
+               log.retryWaitTimeIncreaseFactorDeprecated();
                break;
             case TIMEOUT:
                builder.clustering().stateTransfer().timeout(Long.valueOf(value));
