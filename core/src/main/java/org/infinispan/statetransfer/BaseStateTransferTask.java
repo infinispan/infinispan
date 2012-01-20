@@ -55,7 +55,7 @@ public abstract class BaseStateTransferTask {
    protected final ConsistentHash chOld;
    protected final ConsistentHash chNew;
    protected final boolean initialView;
-   private long stateTransferStartMillis;
+   private long stateTransferStartNanos;
    private final AggregatingNotifyingFutureBuilder statePushFuture;
 
    private boolean running;
@@ -84,7 +84,7 @@ public abstract class BaseStateTransferTask {
    }
 
    public void performStateTransfer() throws Exception {
-      stateTransferStartMillis = System.currentTimeMillis();
+      stateTransferStartNanos = System.nanoTime();
       synchronized (lock) {
          running = true;
       }
@@ -105,8 +105,10 @@ public abstract class BaseStateTransferTask {
       if (running)
          throw new IllegalStateException("State transfer has not finished, cannot commit");
 
-      log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
+      if (log.isDebugEnabled()) {
+         log.debugf("Node %s completed state transfer for view %d in %s!", self, newViewId,
+               Util.prettyPrintTime(System.nanoTime() - stateTransferStartNanos, TimeUnit.NANOSECONDS));
+      }
    }
 
    public void cancelStateTransfer(boolean sync) {
@@ -125,8 +127,10 @@ public abstract class BaseStateTransferTask {
          }
       }
 
-      log.debugf("Node %s cancelled state transfer for view %d after %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
+      if (log.isDebugEnabled()) {
+         log.debugf("Node %s cancelled state transfer for view %d after %s!", self, newViewId,
+            Util.prettyPrintTime(System.nanoTime() - stateTransferStartNanos, TimeUnit.NANOSECONDS));
+      }
    }
 
 
