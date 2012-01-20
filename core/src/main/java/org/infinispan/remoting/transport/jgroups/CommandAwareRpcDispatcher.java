@@ -61,6 +61,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -367,11 +368,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public RspList getResponseList() throws Exception {
-         long giveupTime = System.currentTimeMillis() + timeout;
+         long giveupTimeNanos = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
          boolean notTimedOut = true;
          synchronized (this) {
             while (notTimedOut && expectedResponses > 0 && retval == null) {
-               notTimedOut = giveupTime > System.currentTimeMillis();
+               notTimedOut = giveupTimeNanos > System.nanoTime();
                this.wait(timeout);
             }
          }
