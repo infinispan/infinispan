@@ -104,12 +104,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
    @Override
    void validate() {
-      if (enabled && !clustering().cacheMode().isDistributed() && activated)
-         throw new ConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
+      if (enabled) {
+         if (!clustering().cacheMode().isDistributed() && activated)
+            throw new ConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
 
-      // If L1 is disabled, L1ForRehash should also be disabled
-      if (!enabled && onRehash != null && onRehash)
-         throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+         if (lifespan < 1)
+            throw new ConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+      } else {
+         // If L1 is disabled, L1ForRehash should also be disabled
+         if (onRehash != null && onRehash)
+            throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+      }
    }
 
    @Override
