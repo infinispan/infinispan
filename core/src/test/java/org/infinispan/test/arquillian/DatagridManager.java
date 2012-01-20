@@ -24,12 +24,14 @@ package org.infinispan.test.arquillian;
 
 import java.util.List;
 
+import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
@@ -107,6 +109,11 @@ public class DatagridManager extends MultipleCacheManagersTest
       assertLocked(cache, key);
    }
    
+   //name change
+   public boolean checkKeyLocked(Cache cache, Object key) {
+      return checkLocked(cache, key);
+   }
+   
    /* ===================== MultipleCacheManagersTest methods ==================== */
    
    public void assertSupportedConfig() {
@@ -129,11 +136,18 @@ public class DatagridManager extends MultipleCacheManagersTest
    public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
       return super.addClusterEnabledCacheManager(defaultConfig);
    }
+
+   public EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder defaultConfig) {
+      return super.addClusterEnabledCacheManager(defaultConfig);
+   }
    
    public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
       return super.addClusterEnabledCacheManager(defaultConfig, flags);
    }
-
+   
+   public EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
+      return super.addClusterEnabledCacheManager(builder, flags);
+   }
 
    public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
       return super.addClusterEnabledCacheManager(mode, transactional);
@@ -159,12 +173,20 @@ public class DatagridManager extends MultipleCacheManagersTest
       super.defineConfigurationOnAllManagers(cacheName, c);
    }
    
+   public void defineConfigurationOnAllManagers(String cacheName, ConfigurationBuilder b) {
+      super.defineConfigurationOnAllManagers(cacheName, b);
+   }
+   
    public void waitForClusterToForm(String cacheName) {
       super.waitForClusterToForm(cacheName);
    }
    
    public void waitForClusterToForm() {
       super.waitForClusterToForm();
+   }
+   
+   public void waitForClusterToForm(String... names) {
+      super.waitForClusterToForm(names); 
    }
    
    public TransactionManager tm(Cache<?, ?> c) {
@@ -189,8 +211,18 @@ public class DatagridManager extends MultipleCacheManagersTest
    }
    
    public <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
+      return super.createClusteredCaches(numMembersInCluster, cacheName, builder);
+   }
+   
+   public <K, V> List<Cache<K, V>> createClusteredCaches(
          int numMembersInCluster, String cacheName, Configuration c, TransportFlags flags) {
       return super.createClusteredCaches(numMembersInCluster, cacheName, c, flags);
+   }
+   
+   public <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, ConfigurationBuilder builder, TransportFlags flags) {
+      return super.createClusteredCaches(numMembersInCluster, cacheName, builder, flags);
    }
    
    public <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
@@ -265,6 +297,58 @@ public class DatagridManager extends MultipleCacheManagersTest
       return super.getKeyForCache(nodeIndex);
    }
    
+   public Object getKeyForCache(int nodeIndex, String cacheName) {
+      return super.getKeyForCache(nodeIndex, cacheName);
+   }
+   
+   public Object getKeyForCache(Cache cache) {
+      return super.getKeyForCache(cache);
+   }
+   
+   public void assertNotLocked(final String cacheName, final Object key) {
+      super.assertNotLocked(cacheName, key);
+   }
+   
+   public void assertNotLocked(final Object key) {
+      super.assertNotLocked(key); 
+   }
+   
+   public boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {
+      return super.checkTxCount(cacheIndex, localTx, remoteTx);
+   }
+   
+   public void assertNotLocked(int cacheIndex, Object key) {
+      super.assertNotLocked(cacheIndex, key); 
+   }
+   
+   public void assertLocked(int cacheIndex, Object key) {
+      super.assertLocked(cacheIndex, key);
+   }
+   
+   public boolean checkLocked(int index, Object key) {
+      return super.checkLocked(index, key);
+   }
+   
+   public Cache getLockOwner(Object key) {
+      return super.getLockOwner(key);
+   }
+   
+   public Cache getLockOwner(Object key, String cacheName) {
+      return super.getLockOwner(key, cacheName);
+   }
+   
+   public void assertKeyLockedCorrectly(Object key) {
+      super.assertKeyLockedCorrectly(key); 
+   }
+   
+   public void assertKeyLockedCorrectly(Object key, String cacheName) {
+      super.assertKeyLockedCorrectly(key, cacheName); 
+   }
+   
+   public void forceTwoPhase(int cacheIndex) throws SystemException, RollbackException {
+      super.forceTwoPhase(cacheIndex); 
+   }
+   
    /* ========== methods simulating those from SingleCacheManagerTest ========== */
    
    public EmbeddedCacheManager manager() {
@@ -289,5 +373,13 @@ public class DatagridManager extends MultipleCacheManagersTest
       } catch (SystemException e) {
          throw new RuntimeException(e);
       }
+   }
+   
+   public LockManager lockManager(String cacheName) {
+      return super.lockManager(0, cacheName);
+   }
+   
+   public LockManager lockManager() {
+      return super.lockManager(0);
    }
 }
