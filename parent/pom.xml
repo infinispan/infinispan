@@ -40,15 +40,15 @@
    <licenses>
       <license>
          <name>GNU Lesser General Public License</name>
-         <url>http://www.gnu.org/copyleft/lesser.html</url>
+         <url>http://repository.jboss.org/licenses/lgpl-2.1.txt</url>
          <distribution>repo</distribution>
       </license>
    </licenses>
 
    <scm>
-      <connection>scm:svn:http://anonsvn.jboss.org/repos/infinispan</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/infinispan</developerConnection>
-      <url>http://viewvc.jboss.org/cgi-bin/viewvc.cgi/infinispan/</url>
+      <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
+      <url>https://github.com/infinispan/infinispan</url>
    </scm>
 
    <issueManagement>
