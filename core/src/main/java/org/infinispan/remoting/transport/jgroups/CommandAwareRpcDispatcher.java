@@ -61,6 +61,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -347,7 +348,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   static class FutureCollator implements FutureListener<Object> {
+   final static class FutureCollator implements FutureListener<Object> {
       final RspFilter filter;
       volatile RspList retval;
       final Map<Future<Object>, SenderContainer> futures = new HashMap<Future<Object>, SenderContainer>(4);
@@ -367,12 +368,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public RspList getResponseList() throws Exception {
-         long giveupTime = System.currentTimeMillis() + timeout;
          boolean notTimedOut = true;
-         synchronized (this) {
-            while (notTimedOut && expectedResponses > 0 && retval == null) {
-               notTimedOut = giveupTime > System.currentTimeMillis();
-               this.wait(timeout);
+         if (retval == null) { //first, see if we need to synch at all
+            synchronized (this) {
+               if (expectedResponses > 0 && retval == null) { //since we checked before acquiring _this_ some time might have passed already, try avoid nanoTime()
+                  final long giveupTimeNanos = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
+                  boolean firstLoop = true; //we just invoked nanoTime(), avoid doing it right away again
+                  while (notTimedOut && expectedResponses > 0 && retval == null) {
+                     notTimedOut = firstLoop || giveupTimeNanos > System.nanoTime();
+                     firstLoop = false;
+                     this.wait(timeout);
+                  }
+               }
             }
          }
 
@@ -407,7 +414,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                      if (!filter.needMoreResponses())
                         retval = new RspList(Collections.singleton(new Rsp(sender, response)));
                   } else {
-                     if (log.isTraceEnabled())
+                     if (trace)
                         log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
                   }
                } catch (InterruptedException e) {

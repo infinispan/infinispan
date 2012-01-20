@@ -64,6 +64,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.Collections.emptySet;
+import static org.infinispan.util.Util.currentMillisFromNanotime;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -81,7 +82,6 @@ public class TransactionTable {
 
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
-
 
    private final StaleTransactionCleanupService cleanupService = new StaleTransactionCleanupService(this);
 
@@ -443,12 +443,13 @@ public class TransactionTable {
    }
 
    private void shutDownGracefully() {
-      log.debugf("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
-      long failTime = System.currentTimeMillis() + configuration.getCacheStopTimeout();
+      if (log.isDebugEnabled())
+         log.debugf("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
+      long failTime = currentMillisFromNanotime() + configuration.getCacheStopTimeout();
       boolean txsOnGoing = areTxsOnGoing();
-      while (txsOnGoing && System.currentTimeMillis() < failTime) {
+      while (txsOnGoing && currentMillisFromNanotime() < failTime) {
          try {
-            Thread.sleep(100);
+            Thread.sleep(30);
             txsOnGoing = areTxsOnGoing();
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -463,7 +464,8 @@ public class TransactionTable {
       if (txsOnGoing) {
          log.unfinishedTransactionsRemain(localTransactions, remoteTransactions);
       } else {
-         log.trace("All transactions terminated");
+         log.debug("All transactions terminated");
       }
    }
+
 }

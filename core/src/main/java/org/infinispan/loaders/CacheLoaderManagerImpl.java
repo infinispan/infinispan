@@ -47,6 +47,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
@@ -147,7 +148,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             long start = 0;
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
-               start = System.currentTimeMillis();
+               start = System.nanoTime();
                log.debugf("Preloading transient state from cache loader %s", loader);
             }
             Set<InternalCacheEntry> state;
@@ -170,8 +171,9 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             if (debugTiming) {
-               long stop = System.currentTimeMillis();
-               log.debugf("Preloaded %s keys in %s milliseconds", state.size(), stop - start);
+               final long stop = System.nanoTime();
+               final long elapsedMillis = TimeUnit.NANOSECONDS.convert(stop -start, TimeUnit.NANOSECONDS);
+               log.debugf("Preloaded %s keys in %s milliseconds", state.size(), elapsedMillis);
             }
          }
       }

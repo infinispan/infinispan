@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
@@ -712,11 +713,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @throws IllegalStateException if even after waiting the cache has not started.
     */
    private void blockUntilCacheStarts() throws InterruptedException, IllegalStateException {
-      int pollFrequencyMS = 100;
-      long startupWaitTime = getConfiguration().getStateRetrievalTimeout();
-      long giveUpTime = System.currentTimeMillis() + startupWaitTime;
+      int pollFrequencyMS = 20;
+      final long startupWaitTime = getConfiguration().getStateRetrievalTimeout();
+      final long startupWaitTimeNanos = TimeUnit.NANOSECONDS.convert(startupWaitTime, TimeUnit.MILLISECONDS);
+      final long giveUpTime = System.nanoTime() + startupWaitTimeNanos;
 
-      while (System.currentTimeMillis() < giveUpTime) {
+      while (System.nanoTime() < giveUpTime) {
          if (state.allowInvocations()) break;
          Thread.sleep(pollFrequencyMS);
       }

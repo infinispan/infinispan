@@ -85,12 +85,16 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
 
       @Override
       public int size() {
-         long currentTimeMillis = System.currentTimeMillis();
+         long currentTimeMillis = 0;
          int size = entrySet.size();
          // First, removed any expired ones
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired(currentTimeMillis))
-               size--;
+            if (e.canExpire()) {
+               if (currentTimeMillis == 0)
+                  currentTimeMillis = System.currentTimeMillis();
+               if (e.isExpired(currentTimeMillis))
+                  size--;
+            }
          }
          // Update according to entries added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
@@ -179,13 +183,17 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
 
             if (!atIt1) {
                boolean found = false;
-               long currentTimeMillis = System.currentTimeMillis();
+               long currentTimeMillis = 0;
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
                   CacheEntry e = lookedUpEntries.get(key);
-                  if (ice.isExpired(currentTimeMillis))
-                     continue;
+                  if (ice.canExpire()) {
+                     if (currentTimeMillis == 0)
+                        currentTimeMillis = System.currentTimeMillis();
+                     if (ice.isExpired(currentTimeMillis))
+                        continue;
+                  }
 
                   if (e == null) {
                      next = ice.getValue();
@@ -281,10 +289,14 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       public int size() {
          // Use entry set as a way to calculate the number of values.
          int s = entrySet.size();
-         long currentTimeMillis = System.currentTimeMillis();
+         long currentTimeMillis = 0;
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired(currentTimeMillis))
-               s--;
+            if (e.canExpire()) {
+               if (currentTimeMillis==0)
+                  currentTimeMillis = System.currentTimeMillis();
+               if (e.isExpired(currentTimeMillis))
+                  s--;
+            }
          }
          return s;
       }
@@ -299,10 +311,17 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
          }
 
          private void fetchNext() {
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = 0;
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (!e.isExpired(currentTimeMillis)) {
+               final boolean canExpire = e.canExpire();
+               if (canExpire && currentTimeMillis == 0) {
+                  currentTimeMillis = System.currentTimeMillis();
+               }
+               if (!canExpire) {
+                  next = e.getValue();
+                  break;
+               } else if (!e.isExpired(currentTimeMillis)) {
                   next = e.getValue();
                   break;
                }
