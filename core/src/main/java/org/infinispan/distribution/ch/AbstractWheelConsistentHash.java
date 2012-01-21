@@ -170,9 +170,9 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    /**
     * Creates an iterator over the positions "map" starting at the index specified by the <code>normalizedHash</code>.
     */
-   protected Iterator<Map.Entry<Integer, Address>> getPositionsIterator(final int normalizedHash) {
+   protected Iterator<Address> getPositionsIterator(final int normalizedHash) {
       final int startIndex = getPositionIndex(normalizedHash);
-      return new Iterator<Map.Entry<Integer, Address>>() {
+      return new Iterator<Address>() {
          int i = startIndex;
 
          @Override
@@ -181,9 +181,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
 
          @Override
-         public Map.Entry<Integer, Address> next() {
-            Map.Entry<Integer, Address> value = new AbstractMap.SimpleImmutableEntry(
-                  positionKeys[i], positionValues[i]);
+         public Address next() {
+            Address value = positionValues[i];
             i++;
             // go back to the start
             if (i == positionKeys.length)
