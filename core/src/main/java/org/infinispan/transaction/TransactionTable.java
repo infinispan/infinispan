@@ -444,7 +444,7 @@ public class TransactionTable {
 
    private void shutDownGracefully() {
       if (log.isDebugEnabled())
-         log.debugf("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
+         log.debugf("Wait for on-going transactions to finish for %s.", Util.prettyPrintTime(configuration.getCacheStopTimeout(), TimeUnit.MILLISECONDS));
       long failTime = currentMillisFromNanotime() + configuration.getCacheStopTimeout();
       boolean txsOnGoing = areTxsOnGoing();
       while (txsOnGoing && currentMillisFromNanotime() < failTime) {

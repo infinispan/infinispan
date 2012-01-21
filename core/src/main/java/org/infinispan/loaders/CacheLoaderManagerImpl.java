@@ -172,8 +172,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
             if (debugTiming) {
                final long stop = System.nanoTime();
-               final long elapsedMillis = TimeUnit.NANOSECONDS.convert(stop -start, TimeUnit.NANOSECONDS);
-               log.debugf("Preloaded %s keys in %s milliseconds", state.size(), elapsedMillis);
+               log.debugf("Preloaded %s keys in %s", state.size(), Util.prettyPrintTime(stop - start, TimeUnit.NANOSECONDS));
             }
          }
       }
