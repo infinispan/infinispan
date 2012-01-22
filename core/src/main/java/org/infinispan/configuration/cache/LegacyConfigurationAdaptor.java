@@ -1,7 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Properties;
+
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
@@ -22,8 +23,7 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.util.Util;
 
-import java.util.Properties;
-
+@SuppressWarnings("deprecation")
 public class LegacyConfigurationAdaptor {
 
    public static org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
@@ -172,9 +172,15 @@ public class LegacyConfigurationAdaptor {
          } else if (loader instanceof FileCacheStoreConfiguration) {
             FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
             clc = fcsc;
-            String location = loader.properties().getProperty("location");
-            if (location != null)
-               fcsc.location(location);
+            FileCacheStoreConfiguration store = (FileCacheStoreConfiguration) loader;
+            if (store.location() != null) {
+               fcsc.location(store.location());
+            }
+            if (store.fsyncMode() != null) {
+               fcsc.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(store.fsyncMode().name()));
+            }
+            fcsc.fsyncInterval(store.fsyncInterval());
+            fcsc.streamBufferSize(store.streamBufferSize());
          }
          if (clc instanceof CacheStoreConfig) {
             CacheStoreConfig csc = (CacheStoreConfig) clc;
@@ -391,7 +397,8 @@ public class LegacyConfigurationAdaptor {
             fcsBuilder.purgeSynchronously(csc.isPurgeSynchronously());
             fcsBuilder.location(csc.getLocation());
             fcsBuilder.fsyncInterval(csc.getFsyncInterval());
-            fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().toString()));
+            fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().name()));
+            fcsBuilder.streamBufferSize(csc.getStreamBufferSize());
             loaderBuilder = fcsBuilder;
          } else {
             LoaderConfigurationBuilder tmpLoaderBuilder = builder.loaders().addCacheLoader();
