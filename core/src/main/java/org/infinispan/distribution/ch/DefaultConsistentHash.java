@@ -62,8 +62,8 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       List<Address> owners = new ArrayList<Address>(replCount);
 
-      for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(normalizedHash); it.hasNext();) {
-         Address a = it.next().getValue();
+      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
+         Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
          if (!(isVirtualNodesEnabled() && owners.contains(a))) {
             if (target != null && target.equals(a))

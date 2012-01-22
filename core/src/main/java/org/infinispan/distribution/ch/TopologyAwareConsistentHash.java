@@ -132,8 +132,8 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          return owners;
 
       // we have exhausted all the levels, now check for duplicate nodes on the same machines
-      for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(keyNormalizedHash); it.hasNext();) {
-         TopologyAwareAddress address = (TopologyAwareAddress) it.next().getValue();
+      for (Iterator<Address> it = getPositionsIterator(keyNormalizedHash); it.hasNext();) {
+         TopologyAwareAddress address = (TopologyAwareAddress) it.next();
          if (addOwner(owners, address, replCount, target, Level.NONE))
             return owners;
       }
