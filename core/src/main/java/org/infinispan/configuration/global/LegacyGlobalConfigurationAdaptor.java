@@ -11,8 +11,12 @@ import org.infinispan.util.Util;
 
 import java.util.Map.Entry;
 
+@SuppressWarnings("deprecation")
 public class LegacyGlobalConfigurationAdaptor {
-   
+   private LegacyGlobalConfigurationAdaptor() {
+      // Hide constructor
+   }
+
    public static org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
       
       // Handle the case that null is passed in

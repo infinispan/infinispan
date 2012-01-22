@@ -25,6 +25,9 @@ import org.infinispan.util.Util;
 
 @SuppressWarnings("deprecation")
 public class LegacyConfigurationAdaptor {
+   private LegacyConfigurationAdaptor() {
+      // Hide constructor
+   }
 
    public static org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
       

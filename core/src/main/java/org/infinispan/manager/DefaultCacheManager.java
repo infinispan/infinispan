@@ -224,7 +224,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration) {
-      this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), null, true);
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, true);
    }
 
    /**
@@ -248,7 +248,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param start               if true, the cache manager is started.
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, boolean start) {
-      this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), null, start);
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, start);
    }
 
    /**
@@ -272,7 +272,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration) {
-      this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), new LegacyConfigurationAdaptor().adapt(defaultConfiguration), true);
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), true);
    }
 
    /**
@@ -307,7 +307,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration,
                               boolean start) {
-      this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), new LegacyConfigurationAdaptor().adapt(defaultConfiguration), start);
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), start);
    }
 
    /**
@@ -364,13 +364,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       try {
          ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
          
-         globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(holder.getGlobalConfigurationBuilder().build());
+         globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
          globalConfiguration.accept(configurationValidator);
-         defaultConfiguration = new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
+         defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
          
          for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
-            Configuration legacy = new LegacyConfigurationAdaptor().adapt(c);
+            Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
             configurationOverrides.put(entry.getKey(), legacy);
          }
          
@@ -407,13 +407,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       ConfigurationBuilderHolder globalConfigurationBuilderHolder = parser.parse(globalConfigurationFile);
       ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parser.parse(defaultConfigurationFile);
       
-      globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
-      defaultConfiguration = new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+      globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+      defaultConfiguration = LegacyConfigurationAdaptor.adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
       
       if (namedCacheFile != null) {
          ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parse(namedCacheFile);
          Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-         defineConfiguration(entry.getKey(), new LegacyConfigurationAdaptor().adapt(entry.getValue().build()));
+         defineConfiguration(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
       }
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
@@ -427,7 +427,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
          org.infinispan.configuration.cache.Configuration configuration) {
-      defineConfiguration(cacheName, new LegacyConfigurationAdaptor().adapt(configuration));
+      defineConfiguration(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
       return configuration;
    }
    
@@ -759,7 +759,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
    
    public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
-      return new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration);
+      return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
    }
 
    public Configuration getDefaultConfiguration() {
@@ -767,7 +767,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
    
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
-      return new LegacyConfigurationAdaptor().adapt(defaultConfiguration);
+      return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
    }
    
    @Override
@@ -776,7 +776,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       if (c == null)
          return null;
       else
-         return new LegacyConfigurationAdaptor().adapt(c);
+         return LegacyConfigurationAdaptor.adapt(c);
    }
 
    public Set<String> getCacheNames() {
