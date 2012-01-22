@@ -30,7 +30,6 @@ import org.infinispan.util.Util;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
@@ -62,8 +61,8 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       List<Address> owners = new ArrayList<Address>(replCount);
 
-      for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(normalizedHash); it.hasNext();) {
-         Address a = it.next().getValue();
+      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
+         Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
          if (!(isVirtualNodesEnabled() && owners.contains(a))) {
             if (target != null && target.equals(a))
