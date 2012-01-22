@@ -60,7 +60,7 @@ public class ConfigurationUnitTest {
    public void testAdapt() {
       // Simple test to ensure we can actually adapt a config to the old config
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      new LegacyConfigurationAdaptor().adapt(cb.build());
+      LegacyConfigurationAdaptor.adapt(cb.build());
    }
    
    @Test
@@ -68,7 +68,7 @@ public class ConfigurationUnitTest {
       Configuration configuration = new ConfigurationBuilder()
          .eviction().maxEntries(20)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
       Assert.assertEquals(legacy.getEvictionMaxEntries(), 20);
    }
    
@@ -78,7 +78,7 @@ public class ConfigurationUnitTest {
          .clustering().cacheMode(CacheMode.DIST_SYNC)
          .transaction().autoCommit(true)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
       Assert.assertTrue(legacy.isTransactionAutoCommit());
       Assert.assertEquals(legacy.getCacheMode().name(), CacheMode.DIST_SYNC.name());
    }
@@ -139,7 +139,7 @@ public class ConfigurationUnitTest {
          .clustering().cacheMode(CacheMode.REPL_ASYNC)
          .async().useReplQueue(true).replQueueInterval(1222)
          .build();
-      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+      org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
    }
    
    @Test(expectedExceptions=IllegalStateException.class)
@@ -156,7 +156,7 @@ public class ConfigurationUnitTest {
    
    @Test
    public void testConsistentHash() {
-      Configuration config = new LegacyConfigurationAdaptor().adapt(new org.infinispan.config.Configuration());
+      Configuration config = LegacyConfigurationAdaptor.adapt(new org.infinispan.config.Configuration());
       Assert.assertNull(config.clustering().hash().consistentHash());
    }
 
