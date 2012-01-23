@@ -128,6 +128,6 @@ public interface InvocationContextContainer {
      */
     void clearThreadLocal();
 
-    //Pedro -- is it really needed?
+    //Pedro -- is it really needed? in total order, we have a different thread validation, so the context must be set
     void setContext(InvocationContext ctx);
 }

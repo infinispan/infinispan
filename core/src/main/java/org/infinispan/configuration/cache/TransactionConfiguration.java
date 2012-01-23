@@ -29,7 +29,9 @@ public class TransactionConfiguration {
     private final RecoveryConfiguration recovery;
     private final boolean use1PcForAutoCommitTransactions;
     //Pedro -- total order stuff
+    //2PC or Total order protocol
     private final TransactionProtocol transactionProtocol;
+    //thread pool configuration for total order
     private final TotalOrderThreadingConfiguration totalOrderThreading;
 
     TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,

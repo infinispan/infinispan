@@ -62,7 +62,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
     private final boolean implicitTransaction;
 
-    //Pedro -- total order result
+    //Pedro -- total order result -- has the result and behaves like a synchronization point
     private final PrepareResult prepareResult = new PrepareResult();
 
     public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
@@ -163,14 +163,24 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
         this.modifications = modifications;
     }
 
-    //Pedro -- total order result
+    /**
+     * //Pedro -- total order result
+     */
     private class PrepareResult {
+        //modifications are applied?
         private boolean modificationsApplied;
+        //is the result an exception?
         private boolean exception;
+        //the validation result
         private Object result;
     }
 
-    //timeout in milliseconds
+    /**
+     * waits until the modification are applied
+     * @param timeout the time to wait in milliseconds
+     * @return the validation return value
+     * @throws Throwable throw the validation result if it is an exception
+     */
     public Object awaitUntilModificationsApplied(long timeout) throws Throwable {
         synchronized (prepareResult) {
             if(!prepareResult.modificationsApplied) {
@@ -190,6 +200,12 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
         }
     }
 
+
+    /**
+     * add the transaction result and notify
+     * @param object the validation result
+     * @param exception is it an exception?
+     */
     public void addPrepareResult(Object object, boolean exception) {
         synchronized (prepareResult) {
             prepareResult.result = object;

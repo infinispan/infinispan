@@ -291,7 +291,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
         this.globalConfiguration.accept(configurationValidator);
         this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
 
-        //Pedro -- set total order protocol
+        //Pedro -- set total order protocol in global configuration. The transport only has access to the global
+        //configuration, so we need to pass it. This way, it can check if the sequencer is in JGroups protocol stack
         this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
 
         this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
@@ -371,14 +372,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             globalConfiguration.accept(configurationValidator);
             defaultConfiguration = new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
 
-            //Pedro -- set total order protocol
+            //Pedro -- set total order protocol in global configuration. The transport only has access to the global
+            //configuration, so we need to pass it. This way, it can check if the sequencer is in JGroups protocol stack
             this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
 
             for (ConfigurationBuilder b : holder.getConfigurationBuilders()) {
                 org.infinispan.configuration.cache.Configuration c = b.build();
                 Configuration legacy = new LegacyConfigurationAdaptor().adapt(c);
                 configurationOverrides.put(c.name(), legacy);
-                //Pedro -- set total order protocol
+                //Pedro -- same as above
                 this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(legacy.isTotalOrder());
             }
 
@@ -418,14 +420,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
         globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
         defaultConfiguration = new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
 
-        //Pedro -- set total order protocol
+        //Pedro -- set total order protocol in global configuration. The transport only has access to the global
+        //configuration, so we need to pass it. This way, it can check if the sequencer is in JGroups protocol stack
         this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
 
         if (namedCacheFile != null) {
             ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parse(namedCacheFile);
             org.infinispan.configuration.cache.Configuration c = namedConfigurationBuilderHolder.getConfigurationBuilders().iterator().next().build();
 
-            //Pedro -- set total order protocol
+            //Pedro -- set total order protocol (same as above)
             boolean totalOrder = defineConfiguration(c.name(), new LegacyConfigurationAdaptor().adapt(c)).isTotalOrder();
             this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(totalOrder);
         }

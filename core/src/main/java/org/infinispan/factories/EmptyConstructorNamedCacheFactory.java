@@ -93,6 +93,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new StateTransferLockImpl();
         } else if (componentType.equals(EvictionManager.class)) {
             return (T) new EvictionManagerImpl();
+            //Pedro -- added the constructor for the total order validator
         } else if (componentType.equals(TotalOrderValidator.class)) {
             return (T) new TotalOrderValidator();
         }

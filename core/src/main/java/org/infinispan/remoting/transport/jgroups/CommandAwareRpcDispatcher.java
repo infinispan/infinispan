@@ -184,6 +184,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
         private final boolean supportReplay;
         private final boolean broadcast;
         //Pedro -- total order
+        //indicates if the command must be sent with total order properties or not
         private final boolean totalOrder;
 
         private ReplicationTask(ReplicableCommand command, boolean oob, List<Address> dests,
@@ -198,15 +199,20 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             this.filter = filter;
             this.supportReplay = supportReplay;
             this.broadcast = broadcast;
+
+            //Pedro -- only the prepare commands can be sent in total order
             this.totalOrder = (command instanceof PrepareCommand) && ((PrepareCommand) command).isTotalOrdered();
         }
 
         private Message constructMessage(Buffer buf, Address recipient) {
             Message msg = new Message();
             msg.setBuffer(buf);
-            //Pedro -- in total order protocol, the sequencer is in the protocol stack
+            //Pedro -- in total order protocol, the sequencer is in the protocol stack so we need to bypass the protocol
             if(!totalOrder) {
                 msg.setFlag(Message.NO_TOTAL_ORDER);
+            } else {
+                //disable flow control -- send immediately to avoid long commit phases
+                msg.setFlag(Message.Flag.NO_FC);
             }
             if (oob) msg.setFlag(Message.OOB);
             if (oob || mode != ResponseMode.GET_NONE) {
@@ -247,7 +253,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                 opts.setRspFilter(filter);
                 opts.setAnycasting(false);
 
-                //Pedro -- only the commands in total order must be received... otherwise add own address to exclusion list
+                //Pedro -- only the commands in total order must be received...
+                //For correctness, ispn doesn't need their own message, so add own address to exclusion list
                 if(!totalOrder) {
                     opts.setExclusionList(channel.getAddress());
                 }

@@ -283,6 +283,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
     //Pedro -- total order stuff
     protected boolean shouldCommitEntries(PrepareCommand command, TxInvocationContext ctx) {
         //total order condition: only commits in remote context
+        //if it is not total order, then use the original condition
         return (configuration.isTotalOrder() && command.isOnePhaseCommit() && !ctx.isOriginLocal()) ||
                 (!configuration.isTotalOrder() && command.isOnePhaseCommit());
     }

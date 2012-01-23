@@ -560,7 +560,8 @@ public final class Util {
     }
 
     //Pedro -- pretty print global transaction, ie, transaction ID
-    public static String printPrettyGlobalTransaction(GlobalTransaction gtx) {
+    //most of the time I only need information about address and ID and don't the keys and so one
+    public static String prettyPrintGlobalTransaction(GlobalTransaction gtx) {
         return gtx.getAddress() + ":" + gtx.getId();
     }
 

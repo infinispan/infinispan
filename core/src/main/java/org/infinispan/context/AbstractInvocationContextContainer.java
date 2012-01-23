@@ -74,7 +74,7 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
         ctxHolder.remove();
     }
 
-    //Pedro -- is it really needed? is it safe?
+    //Pedro -- is it really needed? is it safe? see comment in the interface
     @Override
     public void setContext(InvocationContext ctx) {
         ctxHolder.set(ctx);

@@ -265,6 +265,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
         channel.setDiscardOwnMessages(!needsTotalOrder);
 
         if(needsTotalOrder) {
+            //Pedro --  in total order, the Sequencer must be in the protocol stack
             if(channel.getProtocolStack().findProtocol(SEQUENCER.class) == null) {
                 throw new CacheException("Total Order protocol needs the sequencer enabled in JGroups");
             }

@@ -10,6 +10,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * knows how to broadcast the prepare command in total order
  * Date: 1/16/12
  * Time: 10:51 AM
  *
@@ -32,11 +33,12 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
             log.tracef("Broadcasting with Total Order the command %s", command);
         }
 
+        //broadcast the command
         boolean sync = configuration.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
         rpcManager.broadcastRpcCommand(command, false);
 
         if(sync) {
-
+            //in sync mode, blocks in the LocalTransaction
             if(trace) {
                 log.tracef("Command [%s] sent in synchronous mode. waiting until modification is applied",
                         command);

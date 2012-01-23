@@ -1,6 +1,8 @@
 package org.infinispan.configuration.cache;
 
 /**
+ * Thread pool configuration for total order protocol
+ *
  * Date: 1/17/12
  * Time: 11:43 AM
  *

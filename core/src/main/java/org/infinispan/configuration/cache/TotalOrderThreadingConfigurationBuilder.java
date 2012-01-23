@@ -4,6 +4,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.FluentConfiguration;
 
 /**
+ * Thread pool configuration for total order protocol
  * Date: 1/17/12
  * Time: 11:44 AM
  *

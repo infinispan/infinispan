@@ -168,8 +168,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
         //Pedro -- validate total order
         if(!bean.transactionProtocol.isTotalOrder()) {
-            //no total order or not => no validation needed
-            super.visitTransactionType(bean);
+            //no total order => no validation needed
             return;
         }
 
@@ -177,7 +176,6 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
         if(bean.transactionMode == TransactionMode.NON_TRANSACTIONAL) {
             log.warnf("Non transactional cache can't use total order protocol... changing to normal protocol");
             bean.transactionProtocol(TransactionProtocol.NORMAL);
-            super.visitTransactionType(bean);
             return;
         }
 
@@ -189,7 +187,6 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
             log.warnf("Repeatable Read isolation level and write skew check enabled not " +
                     "allowed in total order scheme... changing to normal protocol");
             bean.transactionProtocol(TransactionProtocol.NORMAL);
-            super.visitTransactionType(bean);
             return;
         }
 
@@ -197,19 +194,18 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
         if(!cfg.getCacheMode().isReplicated()) {
             log.warnf("the cache mode [%s] is not supported with total order shceme", cfg.getCacheMode());
             bean.transactionProtocol(TransactionProtocol.NORMAL);
-            super.visitTransactionType(bean);
             return;
         }
 
         //eager locking no longer needed
         if(bean.isUseEagerLocking()) {
             log.warnf("Eager locking not allowed in total order scheme... it will be disable");
-            super.visitTransactionType(bean);
             bean.useEagerLocking(false);
         }
 
     }
 
+    //Validates the parameter
     @Override
     public void visitTotalOrderThreadingType(Configuration.TotalOrderThreadingType config) {
         // if corePoolSize greater than maximumPoolSize.

@@ -123,6 +123,7 @@ public class RpcManagerImpl implements RpcManager {
             throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
         //Pedro -- in total order protocol, we should invoke remotely even if we are the only members in the cache
+        //the sequencer will order the local transactions.
         boolean forceInvokeRemotely = false;
         if (rpcCommand instanceof PrepareCommand) {
             forceInvokeRemotely = ((PrepareCommand) rpcCommand).isTotalOrdered();

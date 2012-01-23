@@ -1794,10 +1794,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @ConfigurationDocRef(bean = Configuration.class, targetElement = "isUse1PcForAutoCommitTransactions")
         private Boolean use1PcForAutoCommitTransactions = Boolean.FALSE;
 
-        //Pedro -- activate total order
+        //Pedro -- wich protocol to use? 2PC or total order based? by default, use the 2PC
         @XmlAttribute
         protected TransactionProtocol transactionProtocol = TransactionProtocol.NORMAL;
 
+        //the thread pool configuration
         @XmlElement
         protected TotalOrderThreadingType totalOrderThreading = new TotalOrderThreadingType();
 
@@ -4787,7 +4788,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         }
     }
 
-    //Pedro -- thread pool configuration
+    /**
+     * Total Order Thread Pool configuration parameters
+     */
     @XmlAccessorType(XmlAccessType.PROPERTY)
     @ConfigurationDoc(name = "totalOrderThreading", parentName = "transaction")
     @Deprecated public static class TotalOrderThreadingType extends AbstractFluentConfigurationBean implements

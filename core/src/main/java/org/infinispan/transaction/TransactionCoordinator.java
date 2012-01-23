@@ -228,7 +228,7 @@ public class TransactionCoordinator {
     }
 
     //Pedro -- one phase commit with total order protocol
-    //with write skew, it needs two phases to commit
+    //with write skew, it needs two phases to commit (write skew check is not supported yet!)
     private boolean isOnePhaseTotalOrder(LocalTransaction tx) {
         return configuration.isTotalOrder();
     }
