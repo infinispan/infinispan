@@ -145,7 +145,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (acquireRemoteLock) {
          LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, flags, gtx);
          lockControlCommand.init(invoker, icc, txTable);
-         lockControlCommand.injectComponents(configuration, componentRegistry);
+         lockControlCommand.injectComponents(configuration);
          lockControlCommand.perform(null);
       }
    }

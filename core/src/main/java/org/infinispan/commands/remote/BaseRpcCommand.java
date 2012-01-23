@@ -23,31 +23,25 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 
 public abstract class BaseRpcCommand implements CacheRpcCommand {
    protected final String cacheName;
 
    protected Configuration configuration;
-   protected ComponentRegistry componentRegistry;
    private Address origin;
 
    protected BaseRpcCommand(String cacheName) {
       this.cacheName = cacheName;
    }
 
-   public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
+   @Override
+   public void injectComponents(Configuration configuration) {
       this.configuration = configuration;
-      this.componentRegistry = componentRegistry;
    }
 
    public Configuration getConfiguration() {
       return configuration;
-   }
-
-   public ComponentRegistry getComponentRegistry() {
-      return componentRegistry;
    }
 
    public String getCacheName() {
