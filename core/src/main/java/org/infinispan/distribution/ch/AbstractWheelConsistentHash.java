@@ -229,7 +229,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          return hashIds;
    }
 
-   public int getNormalizedHash(Object key) {
+   public int getNormalizedHash(final Object key) {
       return Util.getNormalizedHash(key, hashFunction);
    }
 
