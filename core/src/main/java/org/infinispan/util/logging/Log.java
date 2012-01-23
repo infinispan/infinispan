@@ -847,4 +847,9 @@ public interface Log extends BasicLogger {
    @Message(value = "stateRetrieval's 'retryWaitTimeIncreaseFactor' attribute is no longer in use.", id = 183)
    void retryWaitTimeIncreaseFactorDeprecated();
 
+   @LogMessage(level = INFO)
+   @Message(value = "The stateRetrieval configuration element has been deprecated, " +
+         "we're assuming you meant stateTransfer. Please see XML schema for more information.", id = 184)
+   void stateRetrievalConfigurationDeprecaced();
+
 }
