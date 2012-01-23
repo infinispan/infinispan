@@ -940,6 +940,7 @@ public class Parser {
                log.alwaysProvideInMemoryStateDeprecated();
                break;
             case FETCH_IN_MEMORY_STATE:
+               log.stateRetrievalConfigurationDeprecaced();
                builder.clustering().stateTransfer().fetchInMemoryState(Boolean.valueOf(value));
                break;
             case INITIAL_RETRY_WAIT_TIME:
@@ -958,6 +959,7 @@ public class Parser {
                log.retryWaitTimeIncreaseFactorDeprecated();
                break;
             case TIMEOUT:
+               log.stateRetrievalConfigurationDeprecaced();
                builder.clustering().stateTransfer().timeout(Long.valueOf(value));
                break;
             default:
