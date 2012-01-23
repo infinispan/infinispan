@@ -23,7 +23,6 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -40,19 +39,6 @@ public interface CacheRpcCommand extends ReplicableCommand {
     *         intended for.
     */
    String getCacheName();
-
-   /**
-    * Sets up some more context for the invocation of this command, so that these components wouldn't need to be looked
-    * up again later.
-    * @param cfg configuration of the named cache associated with this command
-    */
-   void injectComponents(Configuration cfg);
-
-   /**
-    * Retrieves the configuration associated with this command
-    * @return a Configuration instance
-    */
-   Configuration getConfiguration();
 
    /**
     * Set the origin of the command

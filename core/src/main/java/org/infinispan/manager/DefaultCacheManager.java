@@ -557,7 +557,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public void removeCache(String cacheName) {
       RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry);
-      cmd.injectComponents(null);
       Transport transport = getTransport();
       try {
          if (transport != null) {

@@ -27,7 +27,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -62,9 +61,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private Transport transport;
    private CacheViewsManager cacheViewsManager;
 
-   // TODO this timeout needs to be configurable.  Should be shorter than your typical lockAcquisitionTimeout/SyncReplTimeout with some consideration for network latency bothfor req and response.
-   private static final long timeBeforeWeEnqueueCallForRetry = 10000;
-
    /**
     * How to handle an invocation based on the join status of a given cache *
     */
@@ -83,7 +79,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       this.cacheViewsManager = cacheViewsManager;
    }
 
-   private boolean hasJoinStarted(ComponentRegistry componentRegistry) throws InterruptedException {
+   private boolean hasJoinStarted(final ComponentRegistry componentRegistry) throws InterruptedException {
       StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
       return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
@@ -114,9 +110,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          log.namedCacheDoesNotExist(cacheName);
          return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
       }
-
-      final Configuration localConfig = cr.getComponent(Configuration.class);
-      cmd.injectComponents(localConfig);
 
       return handleWithRetry(cmd, cr);
    }
