@@ -28,14 +28,16 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.StateTransferInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.StateTransferInProgressException;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.statetransfer.StateTransferLockReacquisitionException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -77,10 +79,16 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
          signalStateTransferInProgress();
       }
+      boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
+      } catch (StateTransferLockReacquisitionException e) {
+         release = false;
+         return signalStateTransferInProgress();
       } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
+         if (release) {
+            stateTransferLock.releaseForCommand(ctx, command);
+         }
       }
    }
 
@@ -89,11 +97,16 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
          signalStateTransferInProgress();
       }
+      boolean release = true;
       try {
-         // technically rollback commands don't need retries, but we're doing it for consistency
          return handleWithRetries(ctx, command, rpcTimeout);
+      } catch (StateTransferLockReacquisitionException e) {
+         release = false;
+         return signalStateTransferInProgress();
       } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
+         if (release) {
+            stateTransferLock.releaseForCommand(ctx, command);
+         }
       }
    }
 
@@ -102,83 +115,76 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
          signalStateTransferInProgress();
       }
+      boolean release = true;
       try {
-         // retry commit commands indefinitely
          return handleWithRetries(ctx, command, -1);
+      } catch (StateTransferLockReacquisitionException e) {
+         release = false;
+         return signalStateTransferInProgress();
       } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
+         if (release) {
+            stateTransferLock.releaseForCommand(ctx, command);
+         }
       }
    }
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         return signalStateTransferInProgress();
+         signalStateTransferInProgress();
       }
+      boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
+      } catch (StateTransferLockReacquisitionException e) {
+         release = false;
+         return signalStateTransferInProgress();
       } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
+         if (release) {
+            stateTransferLock.releaseForCommand(ctx, command);
+         }
       }
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
-      }
-      try {
-         return handleWithRetries(ctx, command, rpcTimeout);
-      } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
-      }
+      return handleWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
-      }
-      try {
-         return handleWithRetries(ctx, command, rpcTimeout);
-      } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
-      }
+      return handleWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
-      }
-      try {
-         return handleWithRetries(ctx, command, rpcTimeout);
-      } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
-      }
+      return handleWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
-      }
-      try {
-         return handleWithRetries(ctx, command, rpcTimeout);
-      } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
-      }
+      return handleWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
          signalStateTransferInProgress();
       }
+      boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
+      } catch (StateTransferLockReacquisitionException e) {
+         release = false;
+         return signalStateTransferInProgress();
       } finally {
-         stateTransferLock.releaseForCommand(ctx, command);
+         if (release) {
+            stateTransferLock.releaseForCommand(ctx, command);
+         }
       }
    }
 

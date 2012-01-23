@@ -84,5 +84,12 @@ public interface StateTransferLock {
 
    int getBlockingCacheViewId();
 
-   void waitForStateTransferToEnd(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException;
+   /**
+    * Release the state lock temporarily in order to allow a pending state transfer to start.
+    * It doesn't have any effect if there is no pending state transfer.
+    * @throws StateTransferLockReacquisitionException Unlike the {@code acquireForCommand} methods, it throws a
+    *         {@code StateTransferLockReacquisitionException} if it can't acquire the state transfer lock back.
+    */
+   void waitForStateTransferToEnd(InvocationContext ctx, VisitableCommand command, int newCacheViewId)
+         throws TimeoutException, InterruptedException, StateTransferLockReacquisitionException;
 }
