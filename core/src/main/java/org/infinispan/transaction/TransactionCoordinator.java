@@ -32,7 +32,6 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -40,6 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
+
 import java.util.List;
 
 import static javax.transaction.xa.XAResource.XA_OK;
@@ -62,7 +62,6 @@ public class TransactionCoordinator {
    private TransactionTable txTable;
    private Configuration configuration;
    private CommandCreator commandCreator;
-   private volatile boolean shuttingDown = false;
 
    boolean trace;
 
@@ -75,16 +74,6 @@ public class TransactionCoordinator {
       this.txTable = txTable;
       this.configuration = configuration;
       trace = log.isTraceEnabled();
-   }
-
-   @Start(priority = 1)
-   private void setStartStatus() {
-      shuttingDown = false;
-   }
-
-   @Stop(priority = 1)
-   private void setStopStatus() {
-      shuttingDown = true;
    }
 
    @Start
@@ -148,11 +137,7 @@ public class TransactionCoordinator {
             return XA_OK;
          }
       } catch (Throwable e) {
-         if (shuttingDown)
-            log.trace("Exception while preparing back, probably because we're shutting down.");
-         else
-            log.error("Error while processing prepare", e);
-
+         log.error("Error while processing PrepareCommand", e);
          //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
          //after prepare failed.
          rollback(localTransaction);
@@ -190,11 +175,7 @@ public class TransactionCoordinator {
       try {
          rollbackInternal(localTransaction);
       } catch (Throwable e) {
-         if (shuttingDown)
-            log.trace("Exception while rolling back, probably because we're shutting down.");
-         else
-            log.errorRollingBack(e);
-
+         log.errorRollingBack(e);
          final Transaction transaction = localTransaction.getTransaction();
          //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
          if (transaction != null) {
