@@ -173,6 +173,24 @@ public class TestingUtil {
          log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
       }
    }
+   
+   public static void waitForRehashToComplete(Cache cache, int groupSize) {
+      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+      int gracetime = 30000; // 30 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), CacheViewsManager.class);
+      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      while (cacheViewsManager.getCommittedView(cache.getName()).getMembers().size() != groupSize) {
+         if (System.currentTimeMillis() > giveup) {
+            String message = String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",
+                  rpcManager.getAddress(), groupSize, cacheViewsManager.getCommittedView(cache.getName()));
+            log.error(message);
+            throw new RuntimeException(message);
+         }
+         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+      }
+      log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+   }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
       waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
