@@ -122,7 +122,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       commandsFactory.initializeReplicableCommand(cmd, true);
 
       try {
-         log.tracef("Calling perform() on %s", cmd);
+         if (trace) log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getComponent(ResponseGenerator.class);
          Object retval = cmd.perform(null);
          return respGen.getResponse(cmd, retval);
