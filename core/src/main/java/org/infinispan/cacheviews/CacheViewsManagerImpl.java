@@ -482,10 +482,10 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       cacheViewInfo.prepareView(pendingView);
       if (isLocal) {
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
-         if (cacheViewListener == null) {
-            log.debug(String.format("%s: Received cache view prepare request after the local node has already shut down", cacheName));
-         } else {
+         if (cacheViewListener != null) {
             cacheViewListener.prepareView(pendingView, lastCommittedView);
+         } else {
+            throw new IllegalStateException(String.format("%s: Received cache view prepare request after the local node has already shut down", cacheName));
          }
       }
       // any exception here will be propagated back to the coordinator, which will roll back the view installation
