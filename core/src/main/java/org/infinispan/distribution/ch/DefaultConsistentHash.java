@@ -41,6 +41,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       setHashFunction(hash);
    }
 
+   @Override
    public List<Address> locate(final Object key, final int replCount) {
       final int actualReplCount = Math.min(replCount, caches.size());
       final int normalizedHash = getNormalizedHash(getGrouping(key));
@@ -50,7 +51,8 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
          Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
-         if (!(virtualNodesEnabled && owners.contains(a))) {
+         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
+         if (!isDuplicate) {
             owners.add(a);
             if (owners.size() >= actualReplCount)
                return owners;
@@ -71,7 +73,8 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
          Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
-         if (!(virtualNodesEnabled && owners.contains(a))) {
+         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
+         if (!isDuplicate) {
             if (target.equals(a))
                return true;
 
@@ -81,7 +84,6 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
          }
       }
 
-      // might return < replCount owners if there aren't enough nodes in the list
       return false;
    }
 
