@@ -91,7 +91,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
     * @param key the key to get the grouping for
     * @return the group, or if no group is applicable, the key
     */
-   protected Object getGrouping(Object key) {
+   protected Object getGrouping(final Object key) {
        String group = groupManager != null ? groupManager.getGroup(key) : null;
        return group != null ? group : key;
    }

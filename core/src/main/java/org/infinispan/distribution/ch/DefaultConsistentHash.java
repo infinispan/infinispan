@@ -41,12 +41,12 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       setHashFunction(hash);
    }
 
-   public List<Address> locate(Object key, int replCount) {
+   public List<Address> locate(final Object key, final int replCount) {
       return locateInternal(key, replCount, null);
    }
 
    @Override
-   public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
+   public boolean isKeyLocalToAddress(final Address target, final Object key, final int replCount) {
       return locateInternal(key, replCount, target) == null;
    }
 
@@ -54,17 +54,16 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
     * Locate <code>replCount</code> owners for key <code>key</code> and return the list.
     * If one of the owners is identical to <code>target</code>, return <code>null</code> instead.
     */
-   private List<Address> locateInternal(Object key, int replCount, Address target) {
-      int actualReplCount = Math.min(replCount, caches.size());
-      int normalizedHash;
-      normalizedHash = getNormalizedHash(getGrouping(key));
-
-      List<Address> owners = new ArrayList<Address>(replCount);
+   private List<Address> locateInternal(final Object key,final int replCount, final Address target) {
+      final int actualReplCount = Math.min(replCount, caches.size());
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      final List<Address> owners = new ArrayList<Address>(actualReplCount);
+      final boolean virtualNodesEnabled = isVirtualNodesEnabled();
 
       for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
          Address a = it.next();
          // if virtual nodes are enabled we have to avoid duplicate addresses
-         if (!(isVirtualNodesEnabled() && owners.contains(a))) {
+         if (!(virtualNodesEnabled && owners.contains(a))) {
             if (target != null && target.equals(a))
                return null;
 
