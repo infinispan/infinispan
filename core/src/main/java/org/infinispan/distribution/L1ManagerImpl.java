@@ -127,12 +127,14 @@ public class L1ManagerImpl implements L1Manager {
    }
    
    private boolean isUseMulticast(int nodes) {
-   	// User has requested unicast or multicast only
-   	if (threshold == -1) return false;
-   	if (threshold == 0) return true;
-   	// Underlying transport is not multicast capable
-   	if (!rpcManager.getTransport().isMulticastCapable()) return false;
-   	return nodes > threshold;
+      // User has requested unicast only
+      if (threshold == -1) return false;
+      // Underlying transport is not multicast capable
+      if (!rpcManager.getTransport().isMulticastCapable()) return false;
+      // User has requested multicast only
+      if (threshold == 0) return true;
+      // we decide:
+      return nodes > threshold;
    }
 
 }
