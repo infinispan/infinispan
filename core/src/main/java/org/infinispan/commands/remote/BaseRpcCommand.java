@@ -22,26 +22,15 @@
  */
 package org.infinispan.commands.remote;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 
 public abstract class BaseRpcCommand implements CacheRpcCommand {
    protected final String cacheName;
 
-   protected Configuration configuration;
    private Address origin;
 
    protected BaseRpcCommand(String cacheName) {
       this.cacheName = cacheName;
-   }
-
-   @Override
-   public void injectComponents(Configuration configuration) {
-      this.configuration = configuration;
-   }
-
-   public Configuration getConfiguration() {
-      return configuration;
    }
 
    public String getCacheName() {
