@@ -168,7 +168,9 @@ public class ConfigurationUnitTest {
          ConfigurationBuilder cb = new ConfigurationBuilder();
          cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
          manager.defineConfiguration("testConfigCache", cb.build());
-         manager.getCache("testConfigCache");
+         Cache<Object, Object> cache = manager.getCache("testConfigCache");
+         assert !cache.getCacheConfiguration().clustering().l1().enabled();
+         assert !cache.getCacheConfiguration().clustering().l1().onRehash();
       } finally {
          TestingUtil.killCacheManagers(manager);
       }

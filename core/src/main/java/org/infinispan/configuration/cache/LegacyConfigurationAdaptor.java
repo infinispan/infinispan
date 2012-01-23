@@ -75,7 +75,7 @@ public class LegacyConfigurationAdaptor {
                   .groupers(config.clustering().hash().groups().groupers());
       }
 
-      if (config.clustering().l1().activated) {
+      if (config.clustering().l1().activated && config.clustering().l1().enabled()) {
          legacy.clustering()
             .l1()
                .invalidationThreshold(config.clustering().l1().invalidationThreshold())
