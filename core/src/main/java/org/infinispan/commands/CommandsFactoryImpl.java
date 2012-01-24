@@ -46,7 +46,17 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -165,6 +175,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys) {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   }
+
+   @Override
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys) {
+      return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {

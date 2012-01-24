@@ -96,10 +96,10 @@ public class L1ManagerImpl implements L1Manager {
          
          if (multicast) {
          	if (trace) log.tracef("Invalidating keys %s via multicast", keys);
-         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
+         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
       		rpcManager.broadcastRpcCommandInFuture(ic, future);
          } else {
-         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
+         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
          	
             // Ask the caches who have requested from us to remove
             if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
