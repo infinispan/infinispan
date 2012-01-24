@@ -439,8 +439,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       DistributionManager dm = cache.getDistributionManager();
       Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>(input.length * 2);
       for (K key : input) {
-         List<Address> nodesForKey = dm.locate(key);
-         Address ownerOfKey = nodesForKey.get(0);
+         Address ownerOfKey = dm.getPrimaryLocation(key);
          List<K> keysAtNode = addressToKey.get(ownerOfKey);
          if (keysAtNode == null) {
             keysAtNode = new LinkedList<K>();
