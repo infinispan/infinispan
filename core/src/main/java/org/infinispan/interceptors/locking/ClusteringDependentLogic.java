@@ -167,10 +167,9 @@ public interface ClusteringDependentLogic {
 
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
-         final List<Address> locate = dm.locate(key);
          final Address address = rpcManager.getAddress();
-         final boolean result = locate.get(0).equals(address);
-         log.tracef("Node owners are %s and my address is %s. Am I main owner? - %b", locate, address, result);
+         final boolean result = dm.getPrimaryLocation(key).equals(address);
+         log.tracef("My address is %s. Am I main owner? - %b", address, result);
          return result;
       }
 

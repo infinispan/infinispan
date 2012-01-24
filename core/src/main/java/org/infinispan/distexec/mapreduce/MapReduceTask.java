@@ -406,8 +406,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       DistributionManager dm = cache.getDistributionManager();
       Map<Address, List<KIn>> addressToKey = new HashMap<Address, List<KIn>>();
       for (KIn key : keys) {
-         List<Address> nodesForKey = dm.locate(key);
-         Address ownerOfKey = nodesForKey.get(0);
+         Address ownerOfKey = dm.getPrimaryLocation(key);
          List<KIn> keysAtNode = addressToKey.get(ownerOfKey);
          if (keysAtNode == null) {
             keysAtNode = new ArrayList<KIn>();

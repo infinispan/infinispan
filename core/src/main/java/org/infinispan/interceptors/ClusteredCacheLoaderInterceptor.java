@@ -58,6 +58,6 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    @Override
    protected boolean isPrimaryOwner(Object key) {
       return remoteNodeMayNeedToLoad && ((cacheMode.isReplicated() && transport.isCoordinator()) ||
-            (cacheMode.isDistributed() && distributionManager.locate(key).get(0).equals(transport.getAddress())));
+            (cacheMode.isDistributed() && distributionManager.getPrimaryLocation(key).equals(transport.getAddress())));
    }
 }
