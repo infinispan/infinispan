@@ -1,10 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.0-SNAPSHOT</version>
+      <version>5.1.0.FINAL</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -13,7 +14,7 @@
 
    <name>Infinispan Spring Integration</name>
    <description>
-        <![CDATA[
+        
                  The Infinispan Spring Integration project provides Spring 
                  integration for Infinispna, a high performance distributed cache.
                  Its primary features are
@@ -37,12 +38,12 @@
                  In addition, Infinispan Spring Integration offers various FactoryBeans
                  for facilitating creation of Infinispan core classes - Cache, CacheManager,
                  ... - within a Spring context.
-        ]]>
+        
     </description>
 
-	<!-- =================================================== -->
-	<!-- Developers section -->
-	<!-- =================================================== -->
+	
+	
+	
 
    <developers>
       <developer>
@@ -66,27 +67,27 @@
        </developer>
    </developers>
 
-	<!-- =================================================== -->
-	<!-- Global properties -->
-	<!-- =================================================== -->
+	
+	
+	
 
    <properties>
-		<!-- Make the build platform independent: http://maven.apache.org/general.html#encoding-warning -->
+		
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- ######################################################### -->
-		<!-- Dependency versions -->
-		<!-- ######################################################### -->
-		<!-- Spring -->
+		
+		
+		
+		
       <version.spring>3.1.0.RELEASE</version.spring>
       <version.commons.dbcp>1.4</version.commons.dbcp>
    </properties>
 
-	<!-- =================================================== -->
-	<!-- Project Dependencies -->
-	<!-- =================================================== -->
+	
+	
+	
 
    <dependencies>
-		<!--Compile time dependencies -->
+		
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
@@ -99,7 +100,7 @@
          <version>${project.version}</version>
          <scope>compile</scope>
       </dependency>
-      <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
+      
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
@@ -120,7 +121,7 @@
          </exclusions>
       </dependency>
 
-		<!--Runtime dependencies -->
+		
       <dependency>
          <groupId>commons-pool</groupId>
          <artifactId>commons-pool</artifactId>
@@ -177,7 +178,7 @@
          <scope>runtime</scope>
       </dependency>
 
-		<!--Test Dependencies -->
+		
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-test</artifactId>
@@ -231,9 +232,9 @@
       </dependency>
    </dependencies>
 
-	<!-- =================================================== -->
-	<!-- Project Plugins -->
-	<!-- =================================================== -->
+	
+	
+	
 
    <build>
       <plugins>
