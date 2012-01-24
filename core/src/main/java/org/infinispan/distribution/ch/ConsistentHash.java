@@ -122,4 +122,12 @@ public interface ConsistentHash {
     * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
    List<Address> getBackupsForNode(Address node, int replCount);
+
+   /**
+    * Should be equivalent to return the first element of {@link #locate(Object, int)}.
+    * Useful as a performance optimization, as this is a frequently needed information.
+    * @param key key to locate
+    * @return
+    */
+   Address primaryLocation(Object key);
 }

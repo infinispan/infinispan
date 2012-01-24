@@ -42,6 +42,12 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    }
 
    @Override
+   public Address primaryLocation(final Object key) {
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      return positionValues[getPositionIndex(normalizedHash)];
+   }
+
+   @Override
    public List<Address> locate(final Object key, final int replCount) {
       final int actualReplCount = Math.min(replCount, caches.size());
       final int normalizedHash = getNormalizedHash(getGrouping(key));

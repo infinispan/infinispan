@@ -142,7 +142,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Address getPrimaryLocation(Object key) {
-      return getConsistentHash().locate(key, 1).get(0);
+      return getConsistentHash().primaryLocation(key);
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
