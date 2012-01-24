@@ -127,6 +127,12 @@ public interface CommandsFactory {
     */
    InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
 
+
+   /**
+    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Collection)
+    */
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys);
+
    /**
     * Builds a ReplaceCommand
     * @param key key to replace
@@ -364,6 +370,4 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
-
-
 }
