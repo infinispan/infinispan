@@ -146,15 +146,15 @@ public class RpcManagerImpl implements RpcManager {
                }
             }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
-            if (isStatisticsEnabled()) replicationCount.incrementAndGet();
+            if (statisticsEnabled) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
             log.trace("replication exception: ", e);
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
             log.unexpectedErrorReplicating(th);
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw new CacheException(th);
          } finally {
             if (statisticsEnabled) {
