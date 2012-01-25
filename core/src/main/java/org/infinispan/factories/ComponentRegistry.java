@@ -24,6 +24,7 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -56,9 +57,12 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
    private CacheManagerNotifier cacheManagerNotifier;
+
+   //Cached fields:
    private StreamingMarshaller cacheMarshaler;
    private StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
+   private CommandsFactory commandsFactory;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -226,12 +230,20 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
+    * Caching shortcut for #getLocalComponent(CommandsFactory.class);
+    */
+   public CommandsFactory getCommandsFactory() {
+      return commandsFactory;
+   }
+
+   /**
     * Invoked last after all services are wired
     */
    public void prepareWiringCache() {
       cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
       stateTransferManager = getComponent(StateTransferManager.class);
       responseGenerator = getComponent(ResponseGenerator.class);
+      commandsFactory = getLocalComponent(CommandsFactory.class);
    }
 
 }
