@@ -38,6 +38,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
@@ -101,13 +102,13 @@ public class PassivationManagerImpl implements PassivationManager {
    @Stop(priority = 9)
    public void passivateAll() throws CacheLoaderException {
       if (enabled) {
-         long start = System.currentTimeMillis();
+         long start = System.nanoTime();
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
             cacheStore.store(e);
          }
-         log.passivatedEntries(container.size(), Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.passivatedEntries(container.size(), Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
       }
    }
 

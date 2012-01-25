@@ -13,7 +13,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    private final AsyncConfigurationBuilder asyncConfigurationBuilder;
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
-   private final StateRetrievalConfigurationBuilder stateRetrievalConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
    private final SyncConfigurationBuilder syncConfigurationBuilder;
 
@@ -22,7 +21,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.asyncConfigurationBuilder = new AsyncConfigurationBuilder(this);
       this.hashConfigurationBuilder = new HashConfigurationBuilder(this);
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
-      this.stateRetrievalConfigurationBuilder = new StateRetrievalConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
       this.syncConfigurationBuilder = new SyncConfigurationBuilder(this);
    }
@@ -70,14 +68,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * @deprecated Use {@link #stateTransfer()} instead.
-    */
-   @Override
-   public StateRetrievalConfigurationBuilder stateRetrieval() {
-      return stateRetrievalConfigurationBuilder;
-   }
-
-   /**
     * Configure sync sub element. Once this method is invoked users cannot subsequently invoke
     * <code>configureAsync()</code> as two are mutually exclusive
     */
@@ -98,7 +88,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       asyncConfigurationBuilder.validate();
       hashConfigurationBuilder.validate();
       l1ConfigurationBuilder.validate();
-      stateRetrievalConfigurationBuilder.validate();
       syncConfigurationBuilder.validate();
 
    }

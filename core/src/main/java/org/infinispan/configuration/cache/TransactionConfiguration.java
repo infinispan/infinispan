@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.*;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -60,8 +59,9 @@ public class TransactionConfiguration {
     }
 
     /**
-     * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and transactionAutoCommit is enabled
-     * then for single operation transactions the user doesn't need to manually start a transaction, but a transactions
+     * If the cache is transactional (i.e. {@link #transactionMode()} == TransactionMode.TRANSACTIONAL)
+     * and transactionAutoCommit is enabled then for single operation transactions
+     * the user doesn't need to manually start a transaction, but a transactions
      * is injected by the system. Defaults to true.
      */
     public boolean autoCommit() {
@@ -75,8 +75,9 @@ public class TransactionConfiguration {
      * because even if a new transaction was started just before the cache was stopped, this could
      * only last as long as the transaction timeout allows it.
      */
-    public long cacheStopTimeout() {
-        return cacheStopTimeout;
+    public TransactionConfiguration cacheStopTimeout(long l) {
+        this.cacheStopTimeout = l;
+        return this;
     }
 
     /**
@@ -86,9 +87,8 @@ public class TransactionConfiguration {
      * because even if a new transaction was started just before the cache was stopped, this could
      * only last as long as the transaction timeout allows it.
      */
-    public TransactionConfiguration cacheStopTimeout(long l) {
-        this.cacheStopTimeout = l;
-        return this;
+    public long cacheStopTimeout() {
+        return cacheStopTimeout;
     }
 
     /**
@@ -110,7 +110,7 @@ public class TransactionConfiguration {
      * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
      * transactional then the locking mode is ignored.
      *
-     * @see org.infinispan.config.Configuration#isTransactionalCache()
+     * @see TransactionConfiguration#transactionMode()
      */
     public LockingMode lockingMode() {
         return lockingMode;
@@ -189,10 +189,12 @@ public class TransactionConfiguration {
      * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
      * be enforced by setting transaction's locking mode to PESSIMISTIC.
      */
+    @Deprecated
     public boolean useEagerLocking() {
         return useEagerLocking;
     }
 
+    @Deprecated
     public TransactionConfiguration useEagerLocking(boolean b) {
         this.useEagerLocking = b;
         return this;
@@ -205,30 +207,10 @@ public class TransactionConfiguration {
     /**
      * This method allows configuration of the transaction recovery cache. When this method is
      * called, it automatically enables recovery. So, if you want it to be disabled, make sure you
-     * call {@link org.infinispan.config.FluentConfiguration.RecoveryConfig#disable()}
+     * call {@link RecoveryConfigurationBuilder#enabled(boolean)} with false as parameter
      */
     public RecoveryConfiguration recovery() {
         return recovery;
-    }
-
-    /**
-     * Returns true if the cache is configured to run in transactional mode, false otherwise.
-     * Starting with Infinispan version 5.1 a cache doesn't support mixed access: i.e.won't support
-     * transactional and non-transactional operations. A cache is transactional if one the following:
-     *
-     * <pre>
-     * - a transactionManagerLookup is configured for the cache
-     * - batching is enabled
-     * - it is explicitly marked as transactional: config.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL).
-     *   In this last case a transactionManagerLookup needs to be explicitly set
-     * </pre>
-     *
-     * By default a cache is not transactional.
-     *
-     * @see #autoCommit()
-     */
-    public boolean transactionalCache() {
-        return transactionMode.equals(TransactionMode.TRANSACTIONAL);
     }
 
     /**

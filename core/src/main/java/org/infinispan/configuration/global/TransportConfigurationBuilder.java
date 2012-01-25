@@ -16,7 +16,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
    public static final Class<? extends Transport> DEFAULT_TRANSPORT = JGroupsTransport.class;
    
-   private String clusterName = "Infinispan-Cluster";
+   private String clusterName = "ISPN";
    private String machineId;
    private String rackId;
    private String siteId;

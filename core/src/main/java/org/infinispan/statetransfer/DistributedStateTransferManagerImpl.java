@@ -97,8 +97,8 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
    }
 
    public boolean isLocationInDoubt(Object key) {
-      return isStateTransferInProgress() && !chOld.locate(key, configuration.getNumOwners()).contains(getAddress())
-            && chNew.locate(key, configuration.getNumOwners()).contains(getAddress());
+      return isStateTransferInProgress() && !chOld.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners())
+            && chNew.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners());
    }
 }
 

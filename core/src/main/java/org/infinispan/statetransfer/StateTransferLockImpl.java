@@ -43,6 +43,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.infinispan.util.Util.currentMillisFromNanotime;
+
 /**
  * This class implements a specialized lock that allows the state transfer process (which is not a single thread)
  * to block new write commands for the duration of the state transfer.
@@ -200,20 +202,21 @@ public class StateTransferLockImpl implements StateTransferLock {
          releaseLockForWrite();
 
          // we got a newer cache view id from a remote node, so we know it will be installed on this node as well
-         // even if the cache view installation is cancelled, the rollback will advance the view id so we won't wait forever
-         if (blockingCacheViewId < newCacheViewId) {
-            long end = System.currentTimeMillis() + lockTimeout;
-            long timeout = lockTimeout;
-            synchronized (lock) {
-               while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
-                  if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
-                  lock.wait(timeout);
-                  timeout = end - System.currentTimeMillis();
-               }
+         // even if the cache view installation is cancelled, the rollback will increment the view id so we won't wait forever
+         long end = currentMillisFromNanotime() + lockTimeout;
+         long timeout = lockTimeout;
+         synchronized (lock) {
+            while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
+               if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
+               lock.wait(timeout);
+               timeout = end - currentMillisFromNanotime();
             }
          }
 
-         acquireLockForWriteCommand(ctx);
+         // only try to reacquire the lock if the timeout didn't expire yet
+         if (timeout <= 0 || !acquireLockForWriteCommand(ctx)) {
+            throw new StateTransferLockReacquisitionException("We released the state transfer lock temporarily but we cannot acquire it back");
+         }
       }
    }
 
@@ -293,7 +296,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       // A state transfer is in progress, wait for it to end
       long timeout = lockTimeout;
-      long endTime = System.currentTimeMillis() + lockTimeout;
+      long endTime = currentMillisFromNanotime() + lockTimeout;
       synchronized (lock) {
          while (true) {
             //check first before waiting
@@ -304,7 +307,7 @@ public class StateTransferLockImpl implements StateTransferLock {
             lock.wait(timeout);
 
             // retry, unless the timeout expired
-            timeout = endTime - System.currentTimeMillis();
+            timeout = endTime - currentMillisFromNanotime();
             if (timeout <= 0)
                return false;
          }
@@ -319,7 +322,8 @@ public class StateTransferLockImpl implements StateTransferLock {
          int previousWrites = runningWritesCount.getAndIncrement();
          // if there were no other write commands running someone could have blocked new writes
          // check the local first to skip a volatile read on writesShouldBlock
-         if (previousWrites != 0 || !writesShouldBlock) {
+         // (even though the local might be wrong, allowing an extra write or two)
+         if (previousWrites > 0 || !writesShouldBlock) {
             if (trace) {
                if (traceThreadWrites.get() == Boolean.TRUE)
                   log.error("Trying to acquire state transfer shared lock, but this thread already has it", new Exception());
@@ -331,6 +335,10 @@ public class StateTransferLockImpl implements StateTransferLock {
 
          // roll back the runningWritesCount, we didn't get the lock
          runningWritesCount.decrementAndGet();
+         // we have modified the blocking thread's waiting condition, so we need to wake it up
+         synchronized (lock) {
+            lock.notifyAll();
+         }
       }
       return false;
    }
@@ -370,7 +378,7 @@ public class StateTransferLockImpl implements StateTransferLock {
          int previousWrites = runningWritesCount.getAndIncrement();
          // if there were no other write commands running someone could have blocked new writes
          // check the local first to skip a volatile read on writesBlocked
-         if (previousWrites != 0 || !writesBlocked) {
+         if (previousWrites > 0 || !writesBlocked) {
             if (trace) {
                if (traceThreadWrites.get() == Boolean.TRUE)
                   log.error("Trying to acquire state transfer shared lock, but this thread already has it", new Exception());
@@ -382,6 +390,10 @@ public class StateTransferLockImpl implements StateTransferLock {
 
          // roll back the runningWritesCount, we didn't get the lock
          runningWritesCount.decrementAndGet();
+         // we have modified the blocking thread's waiting condition, so we need to wake it up
+         synchronized (lock) {
+            lock.notifyAll();
+         }
       }
       return false;
    }
@@ -394,8 +406,10 @@ public class StateTransferLockImpl implements StateTransferLock {
       }
       int remainingWrites = runningWritesCount.decrementAndGet();
       if (remainingWrites < 0) {
-         throw new IllegalStateException("Trying to release state transfer shared lock without acquiring it first");
-      } else if (remainingWrites == 0) {
+         // the error was most likely caused by anotherallow the command to proceed,
+         runningWritesCount.incrementAndGet();
+         log.error("Trying to release state transfer shared lock without acquiring it first", new Exception());
+      } else if (remainingWrites == 0 && writesShouldBlock) {
          synchronized (lock) {
             lock.notifyAll();
          }
@@ -403,7 +417,6 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       if (trace) log.tracef("Released shared state transfer shared lock, remaining holders: %d", remainingWrites);
    }
-
 
    @Override
    public String toString() {

@@ -11,12 +11,15 @@ public class L1Configuration {
    private final int invalidationThreshold;
    private final long lifespan;
    private final boolean onRehash;
+   // For use by the LegacyConfigurationAdapter
+   final boolean activated;
 
-   L1Configuration(boolean enabled, int invalidationThreshold, long lifespan, boolean onRehash) {
+   L1Configuration(boolean enabled, int invalidationThreshold, long lifespan, boolean onRehash, boolean activated) {
       this.enabled = enabled;
       this.invalidationThreshold = invalidationThreshold;
       this.lifespan = lifespan;
       this.onRehash = onRehash;
+      this.activated = activated;
    }
 
    public boolean enabled() {

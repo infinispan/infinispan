@@ -20,6 +20,7 @@
 package org.infinispan.nearcache.jms;
 
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
 import org.infinispan.util.logging.Log;
@@ -42,6 +43,7 @@ import java.util.Properties;
  * @author Galder Zamarreño
  * @since 5.1
  */
+@CacheLoaderMetadata(configurationClass = RemoteEventCacheStore.RemoteEventCacheStoreConfig.class)
 public class RemoteEventCacheStore extends RemoteCacheStore {
 
    private static final Log log = LogFactory.getLog(RemoteEventCacheStore.class);
@@ -110,4 +112,5 @@ public class RemoteEventCacheStore extends RemoteCacheStore {
       }
 
    }
+
 }

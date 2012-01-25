@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -223,7 +224,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @param globalConfiguration GlobalConfiguration to use for all caches created
      */
     public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration) {
-        this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), null, true);
+        this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, true);
     }
 
     /**
@@ -247,7 +248,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @param start               if true, the cache manager is started.
      */
     public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, boolean start) {
-        this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), null, start);
+        this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, start);
     }
 
     /**
@@ -271,7 +272,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @param defaultConfiguration default configuration to use. If null, a default instance is created.
      */
     public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration) {
-        this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), new LegacyConfigurationAdaptor().adapt(defaultConfiguration), true);
+        this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), true);
     }
 
     /**
@@ -311,7 +312,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      */
     public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration,
                                boolean start) {
-        this(new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration), new LegacyConfigurationAdaptor().adapt(defaultConfiguration), start);
+        this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), start);
     }
 
     /**
@@ -337,7 +338,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
      * @throws java.io.IOException if there is a problem with the configuration file.
      */
     public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
-        this(FileLookupFactory.newInstance().lookupFile(configurationFile, Thread.currentThread().getContextClassLoader()));
+        this(FileLookupFactory.newInstance().lookupFile(configurationFile, Thread.currentThread().getContextClassLoader()), start);
     }
 
     /**
@@ -368,18 +369,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
         try {
             ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
 
-            globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(holder.getGlobalConfigurationBuilder().build());
+            globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
             globalConfiguration.accept(configurationValidator);
-            defaultConfiguration = new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
+            defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
 
             //Pedro -- set total order protocol in global configuration. The transport only has access to the global
             //configuration, so we need to pass it. This way, it can check if the sequencer is in JGroups protocol stack
             this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
 
-            for (ConfigurationBuilder b : holder.getConfigurationBuilders()) {
-                org.infinispan.configuration.cache.Configuration c = b.build();
-                Configuration legacy = new LegacyConfigurationAdaptor().adapt(c);
-                configurationOverrides.put(c.name(), legacy);
+            for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+                org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
+                Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
+                configurationOverrides.put(entry.getKey(), legacy);
                 //Pedro -- same as above
                 this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(legacy.isTotalOrder());
             }
@@ -417,8 +418,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
         ConfigurationBuilderHolder globalConfigurationBuilderHolder = parser.parse(globalConfigurationFile);
         ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parser.parse(defaultConfigurationFile);
 
-        globalConfiguration = new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
-        defaultConfiguration = new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+        globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+        defaultConfiguration = LegacyConfigurationAdaptor.adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
 
         //Pedro -- set total order protocol in global configuration. The transport only has access to the global
         //configuration, so we need to pass it. This way, it can check if the sequencer is in JGroups protocol stack
@@ -426,10 +427,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
         if (namedCacheFile != null) {
             ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parse(namedCacheFile);
-            org.infinispan.configuration.cache.Configuration c = namedConfigurationBuilderHolder.getConfigurationBuilders().iterator().next().build();
+            Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
 
             //Pedro -- set total order protocol (same as above)
-            boolean totalOrder = defineConfiguration(c.name(), new LegacyConfigurationAdaptor().adapt(c)).isTotalOrder();
+            boolean totalOrder = defineConfiguration(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build())).isTotalOrder();
             this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(totalOrder);
         }
 
@@ -444,7 +445,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     @Override
     public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
                                                                                 org.infinispan.configuration.cache.Configuration configuration) {
-        defineConfiguration(cacheName, new LegacyConfigurationAdaptor().adapt(configuration));
+        defineConfiguration(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
         return configuration;
     }
 
@@ -574,7 +575,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     @Override
     public void removeCache(String cacheName) {
         RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry);
-        cmd.injectComponents(null, globalComponentRegistry.getNamedComponentRegistry(cacheName));
         Transport transport = getTransport();
         try {
             if (transport != null) {
@@ -776,7 +776,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     }
 
     public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
-        return new LegacyGlobalConfigurationAdaptor().adapt(globalConfiguration);
+        return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
     }
 
     public Configuration getDefaultConfiguration() {
@@ -784,7 +784,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     }
 
     public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
-        return new LegacyConfigurationAdaptor().adapt(defaultConfiguration);
+        return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
     }
 
     @Override
@@ -793,7 +793,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
         if (c == null)
             return null;
         else
-            return new LegacyConfigurationAdaptor().adapt(c);
+            return LegacyConfigurationAdaptor.adapt(c);
     }
 
     public Set<String> getCacheNames() {

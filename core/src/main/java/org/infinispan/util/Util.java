@@ -269,6 +269,16 @@ public final class Util {
     }
 
     /**
+     * {@link System#nanoTime()} is less expensive than {@link System#currentTimeMillis()} and better suited
+     * to measure time intervals. It's NOT suited to know the current time, for example to be compared
+     * with the time of other nodes.
+     * @return the value of {@link System#nanoTime()}, but converted in Milliseconds.
+     */
+    public static final long currentMillisFromNanotime() {
+        return TimeUnit.MILLISECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
+    }
+
+    /**
      * Prints a time for display
      *
      * @param millis time in millis

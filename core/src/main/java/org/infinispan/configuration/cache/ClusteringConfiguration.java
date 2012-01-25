@@ -68,14 +68,8 @@ public class ClusteringConfiguration {
       return syncConfiguration;
    }
 
-   /**
-    * Configure stateRetrieval sub element
-    */
-   public StateRetrievalConfiguration stateRetrieval() {
-      return new StateRetrievalConfiguration(stateTransferConfiguration);
-   }
-
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
+
 }

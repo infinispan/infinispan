@@ -150,11 +150,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    @Override
-   public Set<Address> getCaches() {
+   public final Set<Address> getCaches() {
       return caches;
    }
 
-   protected int getPositionIndex(int normalizedHash) {
+   protected final int getPositionIndex(int normalizedHash) {
       int index = Arrays.binarySearch(positionKeys, normalizedHash);
       // Arrays.binarySearch returns (-(insertion point) - 1) when the value is not found
       // we need (insertion point) instead
@@ -170,9 +170,9 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    /**
     * Creates an iterator over the positions "map" starting at the index specified by the <code>normalizedHash</code>.
     */
-   protected Iterator<Map.Entry<Integer, Address>> getPositionsIterator(final int normalizedHash) {
+   protected final Iterator<Address> getPositionsIterator(final int normalizedHash) {
       final int startIndex = getPositionIndex(normalizedHash);
-      return new Iterator<Map.Entry<Integer, Address>>() {
+      return new Iterator<Address>() {
          int i = startIndex;
 
          @Override
@@ -181,9 +181,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
 
          @Override
-         public Map.Entry<Integer, Address> next() {
-            Map.Entry<Integer, Address> value = new AbstractMap.SimpleImmutableEntry(
-                  positionKeys[i], positionValues[i]);
+         public Address next() {
+            Address value = positionValues[i];
             i++;
             // go back to the start
             if (i == positionKeys.length)
@@ -202,7 +201,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    @Override
-   public List<Integer> getHashIds(Address a) {
+   public final List<Integer> getHashIds(Address a) {
       // Not the most efficient way of doing this but it's usage it's so far
       // limited to the HotRod server and it does it only on once on startup,
       // so there's no urgency in finding a better way to implement this.
@@ -230,11 +229,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          return hashIds;
    }
 
-   public int getNormalizedHash(Object key) {
+   public final int getNormalizedHash(final Object key) {
       return Util.getNormalizedHash(key, hashFunction);
    }
 
-   protected boolean isVirtualNodesEnabled() {
+   public final boolean isVirtualNodesEnabled() {
       return numVirtualNodes > 1;
    }
 
@@ -251,6 +250,12 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       }
       sb.append("}");
       return sb.toString();
+   }
+
+   @Override
+   public final Address primaryLocation(final Object key) {
+      final int normalizedHash = getNormalizedHash(getGrouping(key));
+      return positionValues[getPositionIndex(normalizedHash)];
    }
 
 

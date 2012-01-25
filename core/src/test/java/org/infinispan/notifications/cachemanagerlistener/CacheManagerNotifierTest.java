@@ -101,7 +101,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class GetCacheManagerCheckListener {
+   static public class GetCacheManagerCheckListener {
       CacheContainer cacheContainer;
       CyclicBarrier barrier;
       

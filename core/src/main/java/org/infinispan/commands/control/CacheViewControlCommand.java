@@ -152,21 +152,6 @@ public class CacheViewControlCommand implements CacheRpcCommand {
    }
 
    @Override
-   public void injectComponents(Configuration cfg, ComponentRegistry cr) {
-      // This command doesn't need any cache scoped components
-   }
-
-   @Override
-   public Configuration getConfiguration() {
-      return null;
-   }
-
-   @Override
-   public ComponentRegistry getComponentRegistry() {
-      return null;
-   }
-
-   @Override
    public void setOrigin(Address origin) {
       this.sender = origin;
    }

@@ -271,7 +271,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
       lockManager.unlockAll(ctx);
-      if (ctx.isOriginLocal() && rpcManager != null) {
+      if (ctx.isOriginLocal() && ctx.isInTxScope() && rpcManager != null) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();

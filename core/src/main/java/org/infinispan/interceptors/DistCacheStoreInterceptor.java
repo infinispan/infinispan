@@ -169,14 +169,14 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     */
    @Override
    protected boolean skipKey(Object key) {
-      List<Address> addresses = dm.locate(key);
       if (loaderConfig.isShared()) {
-         if (!isFirstOwner(addresses)) {
+         if (!dm.getPrimaryLocation(key).equals(address)) {
             log.trace("Skipping cache store since the cache loader is shared " +
                   "and the caller is not the first owner of the key");
             return true;
          }
       } else {
+         List<Address> addresses = dm.locate(key);
          if (isL1Put(addresses)) {
             log.trace("Skipping cache store since this is an L1 put");
             return true;
@@ -188,11 +188,6 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    private boolean isL1Put(List<Address> addresses) {
       if (address == null) throw new NullPointerException("Local address cannot be null!");
       return !addresses.contains(address);
-   }
-
-   private boolean isFirstOwner(List<Address> addresses) {
-      if (address == null) throw new NullPointerException("Local address cannot be null!");
-      return addresses.get(0).equals(address);
    }
 
 }

@@ -11,6 +11,9 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,34 +47,18 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     TransactionConfigurationBuilder(ConfigurationBuilder builder) {
         super(builder);
         this.recovery = new RecoveryConfigurationBuilder(this);
+        //Pedro -- added the total order thread pool configuration
         this.totalOrderThreading = new TotalOrderThreadingConfigurationBuilder(this);
     }
 
     /**
-     * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and
-     * transactionAutoCommit is enabled then for single operation transactions the user doesn't need
-     * to manually start a transaction, but a transactions is injected by the system. Defaults to
-     * true.
+     * If the cache is transactional (i.e. {@link #transactionMode(org.infinispan.transaction.TransactionMode)} == TransactionMode.TRANSACTIONAL)
+     * and transactionAutoCommit is enabled then for single operation transactions
+     * the user doesn't need to manually start a transaction, but a transactions
+     * is injected by the system. Defaults to true.
      */
     public TransactionConfigurationBuilder autoCommit(boolean b) {
         this.autoCommit = b;
-        return this;
-    }
-
-    /**
-     * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
-     * remote and local transactions to finish. The amount of time to wait for is defined by the
-     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
-     * because even if a new transaction was started just before the cache was stopped, this could
-     * only last as long as the transaction timeout allows it.
-     * <p/>
-     * This configuration property may be adjusted at runtime
-     *
-     * @deprecated use {@link #cacheStopTimeout(long)} instead
-     */
-    @Deprecated
-    public TransactionConfigurationBuilder cacheStopTimeout(int i) {
-        this.cacheStopTimeout = i;
         return this;
     }
 
@@ -191,6 +178,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
         return this;
     }
 
+    /**
+     * Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an
+     * XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery
+     * as well, and registering a synchronization is significantly more efficient.
+     * @param b if true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a {@link TransactionManager}.
+     */
     public TransactionConfigurationBuilder useSynchronization(boolean b) {
         this.useSynchronization = b;
         return this;
@@ -226,7 +219,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             }
         }
 
-//Pedro -- validate total order stuff
+        //Pedro -- validate total order stuff
         if(transactionProtocol != TransactionProtocol.TOTAL_ORDER) {
             //no total order or not => no validation needed
             return;

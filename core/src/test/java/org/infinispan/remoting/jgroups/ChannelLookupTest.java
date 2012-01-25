@@ -34,6 +34,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
+import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.UDP;
@@ -53,7 +54,8 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
 
    public void channelLookupTest() {
       EasyMock.reset(mockChannel);
-      EasyMock.expect(mockChannel.getAddress()).andReturn(a);
+      EasyMock.expect(mockChannel.getAddress()).andReturn(a).atLeastOnce();
+      EasyMock.expect(mockChannel.down(EasyMock.isA(Event.class))).andReturn(a);
       EasyMock.expect(mockChannel.getView()).andReturn(v).atLeastOnce();
       EasyMock.expect(mockChannel.getProtocolStack()).andReturn(ps);
       EasyMock.expect(ps.getTransport()).andReturn(new UDP());

@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 public class Configuration {
    
-   private final String name;
    private final ClassLoader classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
@@ -20,7 +19,7 @@ public class Configuration {
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
 
-   Configuration(String name, ClusteringConfiguration clusteringConfiguration,
+   Configuration(ClusteringConfiguration clusteringConfiguration,
          CustomInterceptorsConfiguration customInterceptorsConfiguration,
          DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
          EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
@@ -30,7 +29,6 @@ public class Configuration {
          LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
          TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
          VersioningConfiguration versioningConfiguration, ClassLoader cl) {
-      this.name = name;
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -47,10 +45,6 @@ public class Configuration {
       this.unsafeConfiguration = unsafeConfiguration;
       this.versioningConfiguration = versioningConfiguration;
       this.classLoader = cl;
-   }
-
-   public String name() {
-      return name;
    }
    
    /**
@@ -122,12 +116,4 @@ public class Configuration {
       return versioningConfiguration;
    }
 
-   public boolean stateTransferEnabled() {
-      return clustering().stateRetrieval().fetchInMemoryState() || loaders().fetchPersistentState();
-   }
-
-   @Deprecated
-   public boolean onePhaseCommit() {
-      return clusteringConfiguration.cacheMode().isSynchronous();
-   }
 }

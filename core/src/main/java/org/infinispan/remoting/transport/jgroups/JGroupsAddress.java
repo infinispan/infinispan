@@ -39,30 +39,30 @@ import org.infinispan.util.Util;
  * @since 4.0
  */
 public class JGroupsAddress implements Address {
-   org.jgroups.Address address;
 
-   public JGroupsAddress() {
-   }
+   protected final org.jgroups.Address address;
+   private final int hashCode;
 
-   public JGroupsAddress(org.jgroups.Address address) {
+   public JGroupsAddress(final org.jgroups.Address address) {
+      if (address == null)
+         throw new IllegalArgumentException("Address shall not be null");
       this.address = address;
+      this.hashCode = address.hashCode();
    }
 
    @Override
-   public boolean equals(Object o) {
+   public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       JGroupsAddress that = (JGroupsAddress) o;
 
-      if (address != null ? !address.equals(that.address) : that.address != null) return false;
-
-      return true;
+      return address.equals(that.address);
    }
 
    @Override
    public int hashCode() {
-      return address != null ? address.hashCode() : 0;
+      return hashCode;
    }
 
    @Override
@@ -74,11 +74,7 @@ public class JGroupsAddress implements Address {
       return address;
    }
 
-   public void setJGroupsAddress(org.jgroups.Address address) {
-      this.address = address;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<JGroupsAddress> {
+   public static final class Externalizer extends AbstractExternalizer<JGroupsAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          try {
@@ -90,10 +86,9 @@ public class JGroupsAddress implements Address {
 
       @Override
       public JGroupsAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         JGroupsAddress address = new JGroupsAddress();
          try {
-            address.address = org.jgroups.util.Util.readAddress(unmarshaller);
-            return address;
+            org.jgroups.Address address = org.jgroups.util.Util.readAddress(unmarshaller);
+            return new JGroupsAddress(address);
          } catch (Exception e) {
             throw new IOException(e);
          }

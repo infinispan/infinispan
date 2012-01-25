@@ -88,12 +88,16 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
       @Override
       public int size() {
-         long currentTimeMillis = System.currentTimeMillis();
+         long currentTimeMillis = 0;
          int size = entrySet.size();
          // First, removed any expired ones
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired(currentTimeMillis))
-               size--;
+            if (e.canExpire()) {
+               if (currentTimeMillis == 0)
+                  currentTimeMillis = System.currentTimeMillis();
+               if (e.isExpired(currentTimeMillis))
+                  size--;
+            }
          }
          // Update according to entries added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
@@ -265,10 +269,14 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          // Size cannot be cached because even if the set is immutable,
          // over time, the expired entries could grow hence reducing the size
          int s = entrySet.size();
-         long currentTimeMillis = System.currentTimeMillis();
+         long currentTimeMillis = 0;
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired(currentTimeMillis))
-               s--;
+            if (e.canExpire()) {
+               if (currentTimeMillis == 0)
+                  currentTimeMillis = System.currentTimeMillis();
+               if (e.isExpired(currentTimeMillis))
+                  s--;
+            }
          }
          return s;
       }

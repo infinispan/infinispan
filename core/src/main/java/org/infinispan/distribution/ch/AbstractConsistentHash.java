@@ -59,6 +59,13 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       return locate(key, replCount).contains(a);
    }
 
+   @Override
+   public Address primaryLocation(Object key) {
+      // simple, far from optimal impl
+      List<Address> locate = locate(key, 1);
+      return locate.get(0);
+   }
+
    public void setGroupManager(GroupManager groupManager) {
       this.groupManager = groupManager;
    }
@@ -91,7 +98,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
     * @param key the key to get the grouping for
     * @return the group, or if no group is applicable, the key
     */
-   protected Object getGrouping(Object key) {
+   protected Object getGrouping(final Object key) {
        String group = groupManager != null ? groupManager.getGroup(key) : null;
        return group != null ? group : key;
    }

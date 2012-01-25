@@ -24,6 +24,7 @@ package org.infinispan.commands.write;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.config.Configuration;
@@ -33,10 +34,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -44,6 +44,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Invalidates an entry in a L1 cache (used with DIST mode)
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class InvalidateL1Command extends InvalidateCommand {
@@ -53,13 +54,16 @@ public class InvalidateL1Command extends InvalidateCommand {
    private DataContainer dataContainer;
    private Configuration config;
    private boolean forRehash;
+   private Address writeOrigin;
 
    public InvalidateL1Command() {
+      writeOrigin = null;
    }
 
    public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
                               CacheNotifier notifier, Object... keys) {
       super(notifier, keys);
+      writeOrigin = null;
       this.dm = dm;
       this.forRehash = forRehash;
       this.dataContainer = dc;
@@ -68,7 +72,13 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
                               CacheNotifier notifier, Collection<Object> keys) {
+      this(null, forRehash, dc, config, dm, notifier, keys);
+   }
+
+   public InvalidateL1Command(Address writeOrigin, boolean forRehash, DataContainer dc, Configuration config,
+                              DistributionManager dm, CacheNotifier notifier, Collection<Object> keys) {
       super(notifier, keys);
+      this.writeOrigin = writeOrigin;
       this.dm = dm;
       this.forRehash = forRehash;
       this.dataContainer = dc;
@@ -148,14 +158,15 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public Object[] getParameters() {
       if (keys == null || keys.length == 0) {
-         return new Object[]{forRehash};
+         return new Object[]{forRehash, writeOrigin};
       } else if (keys.length == 1) {
-         return new Object[]{forRehash, 1, keys[0]};
+         return new Object[]{forRehash, writeOrigin, 1,  keys[0]};
       } else {
-         Object[] retval = new Object[keys.length + 2];
+         Object[] retval = new Object[keys.length + 3];
          retval[0] = forRehash;
-         retval[1] = keys.length;
-         System.arraycopy(keys, 0, retval, 2, keys.length);
+         retval[1] = writeOrigin;
+         retval[2] = keys.length;
+         System.arraycopy(keys, 0, retval, 3, keys.length);
          return retval;
       }
    }
@@ -163,12 +174,13 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public void setParameters(int commandId, Object[] args) {
       forRehash = (Boolean) args[0];
-      int size = (Integer) args[1];
+      writeOrigin = (Address) args[1];
+      int size = (Integer) args[2];
       keys = new Object[size];
       if (size == 1) {
-         keys[0] = args[2];
+         keys[0] = args[3];
       } else if (size > 0) {
-         System.arraycopy(args, 2, keys, 0, size);
+         System.arraycopy(args, 3, keys, 0, size);
       }
    }
 
@@ -189,7 +201,17 @@ public class InvalidateL1Command extends InvalidateCommand {
       return getClass().getSimpleName() + "{" +
             "num keys=" + (keys == null ? 0 : keys.length) +
             ", forRehash=" + forRehash +
+            ", origin=" + writeOrigin +
             '}';
    }
 
+   /**
+    * Returns true if the write that caused the invalidation was performed on this node.
+    * More formal, if a put(k) happens on node A and ch(A)={B}, then an invalidation message
+    * might be multicasted by B to all cluster members including A. This method returns true
+    * if and only if the node where it is invoked is A.
+    */
+   public boolean isCausedByALocalWrite(Address address) {
+      return writeOrigin != null && writeOrigin.equals(address);
+   }
 }

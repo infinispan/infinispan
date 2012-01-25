@@ -822,4 +822,34 @@ public interface Log extends BasicLogger {
    @Message(value = "%s has been deprecated as a synonym for %s. Use one of %s instead", id = 177)
    void randomCacheModeSynonymsDeprecated(String candidate, String mode, List<String> synonyms);
 
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use, " +
+         "instead please make sure all instances of this named cache in the cluster have 'fetchInMemoryState' attribute enabled", id = 178)
+   void alwaysProvideInMemoryStateDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'initialRetryWaitTime' attribute is no longer in use.", id = 179)
+   void initialRetryWaitTimeDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'logFlushTimeout' attribute is no longer in use.", id = 180)
+   void logFlushTimeoutDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'maxProgressingLogWrites' attribute is no longer in use.", id = 181)
+   void maxProgressingLogWritesDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'numRetries' attribute is no longer in use.", id = 182)
+   void numRetriesDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "stateRetrieval's 'retryWaitTimeIncreaseFactor' attribute is no longer in use.", id = 183)
+   void retryWaitTimeIncreaseFactorDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "The stateRetrieval configuration element has been deprecated, " +
+         "we're assuming you meant stateTransfer. Please see XML schema for more information.", id = 184)
+   void stateRetrievalConfigurationDeprecaced();
+
 }

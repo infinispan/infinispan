@@ -19,6 +19,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    private int invalidationThreshold = 0;
    private long lifespan = TimeUnit.MINUTES.toMillis(10);
    private Boolean onRehash = null;
+   boolean activated = false;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
@@ -43,6 +44,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
       this.invalidationThreshold = invalidationThreshold;
+      activated = true;
       return this;
    }
 
@@ -51,6 +53,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder lifespan(long livespan) {
       this.lifespan = livespan;
+      activated = true;
       return this;
    }
 
@@ -59,6 +62,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder enableOnRehash() {
       this.onRehash = true;
+      activated = true;
       return this;
    }
    
@@ -67,6 +71,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder onRehash(boolean enabled) {
       this.onRehash = enabled;
+      activated = true;
       return this;
    }
 
@@ -75,29 +80,41 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder disableOnRehash() {
       this.onRehash = false;
+      activated = true;
       return this;
    }
    
    public L1ConfigurationBuilder enable() {
       this.enabled = true;
+      activated = true;
       return this;
    }
    
    public L1ConfigurationBuilder disable() {
       this.enabled = false;
+      activated = true;
       return this;
    }
    
    public L1ConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
+      activated = true;
       return this;
    }
 
    @Override
    void validate() {
-      // If L1 is disabled, L1ForRehash should also be disabled
-      if (!enabled && onRehash != null && onRehash)
-         throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+      if (enabled) {
+         if (!clustering().cacheMode().isDistributed() && activated)
+            throw new ConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
+
+         if (lifespan < 1)
+            throw new ConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+      } else {
+         // If L1 is disabled, L1ForRehash should also be disabled
+         if (onRehash != null && onRehash)
+            throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+      }
    }
 
    @Override
@@ -109,7 +126,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       } else
          onRehash = false;
       
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash);
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, activated);
    }
    
    @Override

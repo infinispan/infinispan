@@ -124,10 +124,10 @@ public class MapReduceCommand extends BaseRpcCommand {
          Set<Object> nodeLocalKeys = (Set<Object>) invoker.invoke(ctx, keySetCommand);
          List<Object> selectedKeys = new ArrayList<Object>();
          for (Object key : nodeLocalKeys) {
-            List<Address> locations = dm.locate(key);
-            log.tracef("For key %s at %s owners are %s", key, localAddress, locations);
-            if(locations != null && !locations.isEmpty() && locations.get(0).equals(localAddress)){
-               selectedKeys.add(key);               
+            Address primaryLocation = dm.getPrimaryLocation(key);
+            log.tracef("For key %s at %s owner is %s", key, localAddress, primaryLocation);
+            if (primaryLocation != null && primaryLocation.equals(localAddress)) {
+               selectedKeys.add(key);
             }
          }
          if (keys == null)

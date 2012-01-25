@@ -171,6 +171,10 @@ public class TestCacheManagerFactory {
       amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, gcb, defaultCacheConfig, false);
    }
+   
+   public static EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {      
+      return newDefaultCacheManager(true, new GlobalConfigurationBuilder().nonClusteredDefault(), builder, false);
+   }
 
    /**
     * Creates a cache manager and amends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)

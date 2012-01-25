@@ -22,14 +22,14 @@
  */
 package org.infinispan.distribution;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
 public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
@@ -56,11 +56,18 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
       Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
       
       // Check that all nodes (except the one we put to) are notified
-      for (Cache<Object, String> c : getNonOwners(KEY1)) {
-   		ReplListener rl = new ReplListener(c);
+      // but only if the transport is multicast-capable
+      if (owner.getAdvancedCache().getRpcManager().getTransport().isMulticastCapable()) {
+         for (Cache<Object, String> c : getNonOwners(KEY1)) {
+            ReplListener rl = new ReplListener(c);
+            rl.expect(InvalidateL1Command.class);
+            listeners.add(rl);
+            log.debugf("Added nonowner %s", c);
+         }
+      } else {
+         ReplListener rl = new ReplListener(nonOwner);
          rl.expect(InvalidateL1Command.class);
          listeners.add(rl);
-         System.out.println("Added nonowner " + c);
       }
       
       // Put an object into an owner, this will cause the L1 records for this key to be invalidated
@@ -71,8 +78,6 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
       }
       
       Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
-      
-      
    }
    
 }

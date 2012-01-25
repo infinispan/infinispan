@@ -19,6 +19,9 @@ add_jvm_args '-Djava.net.preferIPv4Stack=true'
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
+# LOG4J configuration
+# LOG4J_CONFIG=file:///${ISPN_HOME}/etc/log4j.xml
+
 add_program_args "$@"
 
 start org.infinispan.server.core.Main

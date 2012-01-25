@@ -20,9 +20,10 @@
 package org.infinispan.nearcache.cdi;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.nearcache.jms.RemoteEventCacheStore.RemoteEventCacheStoreConfig;
+import org.infinispan.nearcache.jms.RemoteEventCacheStore;
 
 import javax.enterprise.inject.Produces;
 
@@ -38,11 +39,9 @@ public class Config {
    @ConfigureCache("address-cache")
    @Produces
    public Configuration addressCache() {
-      return new Configuration().fluent()
-         .eviction().strategy(EvictionStrategy.FIFO).maxEntries(4)
-         .loaders().shared(true)
-            // Default remote store connection parameters
-            .addCacheLoader(new RemoteEventCacheStoreConfig())
+      return new ConfigurationBuilder()
+         .eviction().strategy(EvictionStrategy.LRU).maxEntries(4)
+         .loaders().shared(true).addCacheLoader().cacheLoader(new RemoteEventCacheStore())
          .build();
    }
 

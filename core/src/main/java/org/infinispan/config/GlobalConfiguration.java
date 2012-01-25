@@ -1090,7 +1090,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
         private static final long serialVersionUID = -4739815717370060368L;
 
         @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setClusterName")
-        protected String clusterName = "Infinispan-Cluster";
+        protected String clusterName = "ISPN";
 
         @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setMachineId")
         protected String machineId;
