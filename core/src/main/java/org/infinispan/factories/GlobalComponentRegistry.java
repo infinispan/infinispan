@@ -86,7 +86,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final ModuleProperties moduleProperties = new ModuleProperties();
    final List<ModuleLifecycle> moduleLifecycles;
 
-   Map<String, ComponentRegistry> namedComponents = new HashMap<String, ComponentRegistry>(4);
+   final Map<String, ComponentRegistry> namedComponents = new HashMap<String, ComponentRegistry>(4);
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
