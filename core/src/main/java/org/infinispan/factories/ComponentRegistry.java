@@ -34,6 +34,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -57,6 +58,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private CacheManagerNotifier cacheManagerNotifier;
    private StreamingMarshaller cacheMarshaler;
    private StateTransferManager stateTransferManager;
+   private ResponseGenerator responseGenerator;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -217,11 +219,19 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public ResponseGenerator getResponseGenerator() {
+      return responseGenerator;
+   }
+
+   /**
     * Invoked last after all services are wired
     */
    public void prepareWiringCache() {
       cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
       stateTransferManager = getComponent(StateTransferManager.class);
+      responseGenerator = getComponent(ResponseGenerator.class);
    }
 
 }
