@@ -105,8 +105,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
          // but they should not be CacheRpcCommands at all
          marshaller = globalMarshaller;
       } else {
-         marshaller = registry.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+         marshaller = registry.getCacheMarshaller();
       }
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
@@ -144,8 +143,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
          // that the cache is not yet started, so fallback on global marshaller.
          marshaller = globalMarshaller;
       } else {
-         marshaller = registry.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+         marshaller = registry.getCacheMarshaller();
       }
 
       byte[] paramsRaw = new byte[UnsignedNumeric.readUnsignedInt(input)];

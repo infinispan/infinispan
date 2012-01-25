@@ -80,7 +80,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private boolean hasJoinStarted(final ComponentRegistry componentRegistry) throws InterruptedException {
-      StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
+      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
       return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
 
