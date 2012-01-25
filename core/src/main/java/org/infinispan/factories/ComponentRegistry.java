@@ -32,7 +32,9 @@ import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,11 +49,14 @@ import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIA
  * @author Manik Surtani
  * @since 4.0
  */
-public class ComponentRegistry extends AbstractComponentRegistry {
+public final class ComponentRegistry extends AbstractComponentRegistry {
+
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
    private CacheManagerNotifier cacheManagerNotifier;
+   private StreamingMarshaller cacheMarshaler;
+   private StateTransferManager stateTransferManager;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -195,6 +200,28 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+    */
+   public StreamingMarshaller getCacheMarshaller() {
+      return cacheMarshaler;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public StateTransferManager getStateTransferManager() {
+      return stateTransferManager;
+   }
+
+   /**
+    * Invoked last after all services are wired
+    */
+   public void prepareWiringCache() {
+      cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      stateTransferManager = getComponent(StateTransferManager.class);
    }
 
 }
