@@ -116,7 +116,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
 
    private Response handleInternal(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
-      CommandsFactory commandsFactory = cr.getLocalComponent(CommandsFactory.class);
+      CommandsFactory commandsFactory = cr.getCommandsFactory();
 
       // initialize this command with components specific to the intended cache instance
       commandsFactory.initializeReplicableCommand(cmd, true);
