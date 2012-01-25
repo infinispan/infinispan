@@ -24,12 +24,15 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,149 +42,216 @@ import java.util.Set;
  * @since 4.0
  */
 public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand {
-   public static final byte COMMAND_ID = 9;
+    public static final byte COMMAND_ID = 9;
 
-   Map<Object, Object> map;
-   CacheNotifier notifier;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
+    Map<Object, Object> map;
+    CacheNotifier notifier;
+    long lifespanMillis = -1;
+    long maxIdleTimeMillis = -1;
 
-   public PutMapCommand() {
-   }
+    //Pedro -- set of keys that needs write skew check
+    private Set<Object> keysMarkedForWriteSkew = null;
 
-   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      this.map = map;
-      this.notifier = notifier;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
-      this.flags = flags;
-   }
+    public PutMapCommand() {
+    }
 
-   public void init(CacheNotifier notifier) {
-      this.notifier = notifier;
-   }
+    public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+        this.map = map;
+        this.notifier = notifier;
+        this.lifespanMillis = lifespanMillis;
+        this.maxIdleTimeMillis = maxIdleTimeMillis;
+        this.flags = flags;
+    }
 
-   @Override
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitPutMapCommand(ctx, this);
-   }
+    public void init(CacheNotifier notifier) {
+        this.notifier = notifier;
+    }
 
-   private MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {
-      return (MVCCEntry) ctx.lookupEntry(key);
-   }
+    @Override
+    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+        return visitor.visitPutMapCommand(ctx, this);
+    }
 
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      for (Entry<Object, Object> e : map.entrySet()) {
-         Object key = e.getKey();
-         MVCCEntry me = lookupMvccEntry(ctx, key);
-         notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
-         me.setValue(e.getValue());
-         me.setLifespan(lifespanMillis);
-         me.setMaxIdle(maxIdleTimeMillis);
-         notifier.notifyCacheEntryModified(key, me.getValue(), false, ctx);
-      }
-      return null;
-   }
+    private MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {
+        return (MVCCEntry) ctx.lookupEntry(key);
+    }
 
-   public Map<Object, Object> getMap() {
-      return map;
-   }
+    @Override
+    public Object perform(InvocationContext ctx) throws Throwable {
+        //Pedro -- initialize the key set
+        if(ctx.isOriginLocal()) {
+            keysMarkedForWriteSkew = new HashSet<Object>(map.size());
+        }
 
-   public void setMap(Map<Object, Object> map) {
-      this.map = map;
-   }
+        for (Entry<Object, Object> e : map.entrySet()) {
+            Object key = e.getKey();
+            MVCCEntry me = lookupMvccEntry(ctx, key);
 
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
+            if(me instanceof ClusteredRepeatableReadEntry) {
+                if(ctx.isOriginLocal()) {
+                    //locally, we add the key as soon as it was discovered
+                    if(((ClusteredRepeatableReadEntry) me).isMarkedForWriteSkew()) {
+                        keysMarkedForWriteSkew.add(key);
+                    }
+                } else if(keysMarkedForWriteSkew.contains(key)) {
+                    //remotely, we mark the write skew in the entry for furhter verification
+                    ((ClusteredRepeatableReadEntry) me).markForWriteSkewCheck();
+                }
+            }
 
-   @Override
-   public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
-   }
+            notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
+            me.setValue(e.getValue());
+            me.setLifespan(lifespanMillis);
+            me.setMaxIdle(maxIdleTimeMillis);
+            notifier.notifyCacheEntryModified(key, me.getValue(), false, ctx);
+        }
+        return null;
+    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      map = (Map) parameters[0];
-      lifespanMillis = (Long) parameters[1];
-      maxIdleTimeMillis = (Long) parameters[2];
-      if (parameters.length>3) {
-         this.flags = (Set<Flag>) parameters[3];
-      }
-   }
+    public Map<Object, Object> getMap() {
+        return map;
+    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    public void setMap(Map<Object, Object> map) {
+        this.map = map;
+    }
 
-      PutMapCommand that = (PutMapCommand) o;
+    @Override
+    public byte getCommandId() {
+        return COMMAND_ID;
+    }
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
-      if (map != null ? !map.equals(that.map) : that.map != null) return false;
+    @Override
+    public Object[] getParameters() {
+        if(keysMarkedForWriteSkew == null || keysMarkedForWriteSkew.isEmpty()) {
+            //Pedro -- no keys marked for write skew. send the normal parameters
+            return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
+        }
 
-      return true;
-   }
+        /*
+        Pedro -- wrap the keys marked for write skew and send them
+        instead of sending the set with key, I think that is better (in the serialized size of the command)
+        send the key wrapped
+        */
+        Map<Object, Object> mapToSend = new HashMap<Object, Object>(map.size());
+        for (Entry<Object, Object> entry : map.entrySet()) {
+            Object key = entry.getKey();
+            if(keysMarkedForWriteSkew.contains(entry.getKey())) {
+                WriteSkewKey wsk = new WriteSkewKey();
+                wsk.key = key;
+                mapToSend.put(wsk, entry.getValue());
+            } else {
+                mapToSend.put(key, entry.getValue());
+            }
+        }
+        return new Object[]{mapToSend, lifespanMillis, maxIdleTimeMillis, flags};
+    }
 
-   @Override
-   public int hashCode() {
-      int result = map != null ? map.hashCode() : 0;
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
-      return result;
-   }
+    @Override
+    public void setParameters(int commandId, Object[] parameters) {
+        //Pedro -- unwrap the possible keys to write skew and put them in map (see comment above)
+        Map<Object, Object> mapToReceive = (Map) parameters[0];
 
-   @Override
-   public String toString() {
-      return new StringBuilder()
-         .append("PutMapCommand{map=")
-         .append(map)
-         .append(", flags=").append(flags)
-         .append(", lifespanMillis=").append(lifespanMillis)
-         .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
-         .append("}")
-         .toString();
-   }
+        keysMarkedForWriteSkew = new HashSet<Object>(mapToReceive.size());
+        map = new HashMap<Object,Object>(mapToReceive.size());
 
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
+        for (Entry<Object, Object> entry : mapToReceive.entrySet()) {
+            Object key = entry.getKey();
 
-   @Override
-   public boolean isSuccessful() {
-      return true;
-   }
+            if(key instanceof WriteSkewKey) {
+                map.put(((WriteSkewKey) key).key, entry.getValue());
+                keysMarkedForWriteSkew.add(((WriteSkewKey) key).key);
+            } else {
+                map.put(key, entry.getValue());
+            }
+        }
 
-   @Override
-   public boolean isConditional() {
-      return false;
-   }
+        lifespanMillis = (Long) parameters[1];
+        maxIdleTimeMillis = (Long) parameters[2];
+        if (parameters.length>3) {
+            this.flags = (Set<Flag>) parameters[3];
+        }
+    }
 
-   @Override
-   public Set<Object> getAffectedKeys() {
-      return map.keySet();
-   }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;
-   }
+        PutMapCommand that = (PutMapCommand) o;
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
+        if (lifespanMillis != that.lifespanMillis) return false;
+        if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
+        if (map != null ? !map.equals(that.map) : that.map != null) return false;
 
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
-   }
+        return true;
+    }
 
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
-   }
+    @Override
+    public int hashCode() {
+        int result = map != null ? map.hashCode() : 0;
+        result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+        result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("PutMapCommand{map=")
+                .append(map)
+                .append(", flags=").append(flags)
+                .append(", lifespanMillis=").append(lifespanMillis)
+                .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+                .append("}")
+                .toString();
+    }
+
+    @Override
+    public boolean shouldInvoke(InvocationContext ctx) {
+        return true;
+    }
+
+    @Override
+    public boolean isSuccessful() {
+        return true;
+    }
+
+    @Override
+    public boolean isConditional() {
+        return false;
+    }
+
+    @Override
+    public Set<Object> getAffectedKeys() {
+        return map.keySet();
+    }
+
+    @Override
+    public boolean isReturnValueExpected() {
+        return false;
+    }
+
+    public long getLifespanMillis() {
+        return lifespanMillis;
+    }
+
+    public long getMaxIdleTimeMillis() {
+        return maxIdleTimeMillis;
+    }
+
+    @Override
+    public boolean ignoreCommandOnStatus(ComponentStatus status) {
+        return false;
+    }
+
+    //Pedro -- total order
+
+    /**
+     * keys wrapped in this classes needs the write skew check
+     */
+    private class WriteSkewKey {
+        Object key;
+    }
 
 }

@@ -24,6 +24,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -41,150 +42,180 @@ import java.util.Set;
  * @since 4.0
  */
 public class RemoveCommand extends AbstractDataWriteCommand {
-   private static final Log log = LogFactory.getLog(RemoveCommand.class);
-   public static final byte COMMAND_ID = 10;
-   protected CacheNotifier notifier;
-   boolean successful = true;
-   boolean nonExistent = false;
+    private static final Log log = LogFactory.getLog(RemoveCommand.class);
+    public static final byte COMMAND_ID = 10;
+    protected CacheNotifier notifier;
+    boolean successful = true;
+    boolean nonExistent = false;
 
-   /**
-    * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
-    * time the RemoveCommand needs to be marshalled, the condition must have been true locally already, so there's no
-    * need to marshall the value. *
-    */
-   protected transient Object value;
+    //Pedro -- total order -- mark keys for write skew check
+    private boolean writeSkewCheck = false;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags) {
-      super(key, flags);
-      this.value = value;
-      this.notifier = notifier;
-   }
+    /**
+     * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
+     * time the RemoveCommand needs to be marshalled, the condition must have been true locally already, so there's no
+     * need to marshall the value. *
+     */
+    protected transient Object value;
 
-   public void init(CacheNotifier notifier) {
-      this.notifier = notifier;
-   }
+    public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags) {
+        super(key, flags);
+        this.value = value;
+        this.notifier = notifier;
+    }
 
-   public RemoveCommand() {
-   }
+    public void init(CacheNotifier notifier) {
+        this.notifier = notifier;
+    }
 
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitRemoveCommand(ctx, this);
-   }
+    public RemoveCommand() {
+    }
 
-   public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry e = ctx.lookupEntry(key);
-      if (e == null || e.isNull()) {
-         nonExistent = true;
-         log.trace("Nothing to remove since the entry is null or we have a null entry");
-         if (value == null) {
-            return null;
-         } else {
+    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+        return visitor.visitRemoveCommand(ctx, this);
+    }
+
+    public Object perform(InvocationContext ctx) throws Throwable {
+        CacheEntry e = ctx.lookupEntry(key);
+        if (e == null || e.isNull()) {
+            nonExistent = true;
+            log.trace("Nothing to remove since the entry is null or we have a null entry");
+            if (value == null) {
+
+                if(e instanceof ClusteredRepeatableReadEntry) {
+                    if(ctx.isOriginLocal()) {
+                        //Pedro -- in local mode, check if the entry is marked for write skew check
+                        writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
+                    } else if(writeSkewCheck) {
+                        //Pedro -- in remote mode, if the writeSkewCheck boolean is set to true, then mark the entry
+                        //for write skew check
+                        ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
+                    }
+                }
+
+                return null;
+            } else {
+                successful = false;
+                return false;
+            }
+        }
+
+        if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
+
+        if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
             successful = false;
             return false;
-         }
-      }
-
-      if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
-
-      if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
-         successful = false;
-         return false;
-      }
-
-      final Object removedValue = e.getValue();
-      notify(ctx, removedValue, true);
-      e.setRemoved(true);
-      e.setValid(false);
+        }
 
 
-      // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
-      // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
-      // with non-null values, so we should do the same here as an ugly workaround.
-      if (this instanceof EvictCommand) {
-         e.setEvicted(true);
-         notify(ctx, removedValue, false);
-      } else {
-         // FIXME: Do we really need to notify with null when a user can be given with more information?
-         notify(ctx, null, false);
-      }
-      return value == null ? removedValue : true;
-   }
+        if(e instanceof ClusteredRepeatableReadEntry) {
+            if(ctx.isOriginLocal()) {
+                //Pedro -- locally, check if the entry is marked for write skew check
+                writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
+            } else if(writeSkewCheck) {
+                //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
+                //for write skew check
+                ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
+            }
+        }
 
-   protected void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryRemoved(key, value, isPre, ctx);
-   }
-
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof RemoveCommand)) {
-         return false;
-      }
-      if (!super.equals(o)) {
-         return false;
-      }
-
-      RemoveCommand that = (RemoveCommand) o;
-
-      if (value != null ? !value.equals(that.value) : that.value != null) {
-         return false;
-      }
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      return result;
-   }
+        final Object removedValue = e.getValue();
+        notify(ctx, removedValue, true);
+        e.setRemoved(true);
+        e.setValid(false);
 
 
-   @Override
-   public String toString() {
-      return new StringBuilder()
-         .append("RemoveCommand{key=")
-         .append(key)
-         .append(", value=").append(value)
-         .append(", flags=").append(flags)
-         .append("}")
-         .toString();
-   }
+        // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
+        // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
+        // with non-null values, so we should do the same here as an ugly workaround.
+        if (this instanceof EvictCommand) {
+            e.setEvicted(true);
+            notify(ctx, removedValue, false);
+        } else {
+            // FIXME: Do we really need to notify with null when a user can be given with more information?
+            notify(ctx, null, false);
+        }
+        return value == null ? removedValue : true;
+    }
 
-   public boolean isSuccessful() {
-      return successful;
-   }
+    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
+        notifier.notifyCacheEntryRemoved(key, value, isPre, ctx);
+    }
 
-   public boolean isConditional() {
-      return value != null;
-   }
+    public byte getCommandId() {
+        return COMMAND_ID;
+    }
 
-   public boolean isNonExistent() {
-      return nonExistent;
-   }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof RemoveCommand)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
 
-   @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      flags = (Set<Flag>) parameters[1];
-   }
+        RemoveCommand that = (RemoveCommand) o;
 
-   @Override
-   public Object[] getParameters() {
-      return new Object[]{key, flags};
-   }
+        if (value != null ? !value.equals(that.value) : that.value != null) {
+            return false;
+        }
 
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
-   }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        return result;
+    }
+
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("RemoveCommand{key=")
+                .append(key)
+                .append(", value=").append(value)
+                .append(", flags=").append(flags)
+                .append("}")
+                .toString();
+    }
+
+    public boolean isSuccessful() {
+        return successful;
+    }
+
+    public boolean isConditional() {
+        return value != null;
+    }
+
+    public boolean isNonExistent() {
+        return nonExistent;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void setParameters(int commandId, Object[] parameters) {
+        if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+        key = parameters[0];
+        //Pedro -- receive the boolean
+        writeSkewCheck = (Boolean) parameters[1];
+        flags = (Set<Flag>) parameters[2];
+    }
+
+    @Override
+    public Object[] getParameters() {
+        //Pedro -- send the boolean
+        return new Object[]{key, writeSkewCheck, flags};
+    }
+
+    @Override
+    public boolean ignoreCommandOnStatus(ComponentStatus status) {
+        return false;
+    }
 }

@@ -181,11 +181,12 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
         boolean isRepeatableReadEnabled = cfg.locking.isolationLevel == IsolationLevel.REPEATABLE_READ;
         boolean isWriteSkewEnabled = cfg.isWriteSkewCheck();
+        boolean versioningEnabled = cfg.versioning.isEnabled();
 
         //in the future it will be allowed with versioning...
-        if(isRepeatableReadEnabled && isWriteSkewEnabled) {
+        if(isRepeatableReadEnabled && isWriteSkewEnabled && !versioningEnabled) {
             log.warnf("Repeatable Read isolation level and write skew check enabled not " +
-                    "allowed in total order scheme... changing to normal protocol");
+                    "allowed in total order scheme without versioning... changing to normal protocol");
             bean.transactionProtocol(TransactionProtocol.NORMAL);
             return;
         }

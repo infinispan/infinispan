@@ -22,6 +22,7 @@
  */
 package org.infinispan.transaction;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -66,6 +67,10 @@ public class TransactionCoordinator {
 
     boolean trace;
 
+    //Pedro -- indicates if the versioning is enabled, ie, is repeatable read with write skew, optimistic locking
+    //and versioning
+    private boolean versioningEnabled;
+
     @Inject
     public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
                      TransactionTable txTable, Configuration configuration) {
@@ -89,8 +94,11 @@ public class TransactionCoordinator {
 
     @Start
     public void start() {
-        if (configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC
-                && configuration.isEnableVersioning()) {
+        versioningEnabled = configuration.isWriteSkewCheck() &&
+                configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC &&
+                configuration.isEnableVersioning();
+
+        if (versioningEnabled) {
             // We need to create versioned variants of PrepareCommand and CommitCommand
             commandCreator = new CommandCreator() {
                 @Override
@@ -172,7 +180,20 @@ public class TransactionCoordinator {
             validateNotMarkedForRollback(localTransaction);
 
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+            PrepareCommand command;
+
+            //If the versioning scheme is enabled, then create a versioned prepare command. in 2PC this must not happen!
+            if (versioningEnabled) {
+                command = commandsFactory.buildVersionedPrepareCommand(localTransaction.getGlobalTransaction(),
+                        localTransaction.getModifications(), true);
+                if(!configuration.isTotalOrder()) {
+                    throw new IllegalStateException("Cannot create versioned prepare command with one phase commit in 2PC");
+                }
+            } else {
+                command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),
+                        localTransaction.getModifications(), true);
+            }
+
             //Pedro -- set total order
             command.setTotalOrdered(configuration.isTotalOrder());
             try {
@@ -246,9 +267,11 @@ public class TransactionCoordinator {
     }
 
     //Pedro -- one phase commit with total order protocol
-    //with write skew, it needs two phases to commit (write skew check is not supported yet!)
+    //it can commit in one phase if the write skew is disable or the transaction doesn't need the write skew check
+    //ie, the intersection of readset and writeset is empty
+    //note: this method is invoked when configuration.isOnePhase() is false
     private boolean isOnePhaseTotalOrder(LocalTransaction tx) {
-        return configuration.isTotalOrder();
+        return configuration.isTotalOrder() && (!versioningEnabled || tx.noWriteSkewCheckNeeded());
     }
 
     private static interface CommandCreator {

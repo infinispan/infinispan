@@ -26,6 +26,7 @@ package org.infinispan.transaction;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -213,5 +214,18 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             prepareResult.modificationsApplied = true;
             prepareResult.notifyAll();
         }
+    }
+
+    /**
+     * check if this transaction needs to do the write skew check in one or more keys
+     * @return true if the write skew check is not needed, false otherwise
+     */
+    public boolean noWriteSkewCheckNeeded() {
+        for (CacheEntry e : lookedUpEntries.values()) {
+            if (e instanceof ClusteredRepeatableReadEntry && ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

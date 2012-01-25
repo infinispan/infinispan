@@ -23,6 +23,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -35,148 +36,169 @@ import java.util.Set;
  * @since 4.0
  */
 public class ReplaceCommand extends AbstractDataWriteCommand {
-   public static final byte COMMAND_ID = 11;
+    public static final byte COMMAND_ID = 11;
 
-   Object oldValue;
-   Object newValue;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
-   boolean successful = true;
+    Object oldValue;
+    Object newValue;
+    long lifespanMillis = -1;
+    long maxIdleTimeMillis = -1;
+    boolean successful = true;
 
-   public ReplaceCommand() {
-   }
+    //Pedro -- total order -- mark keys for write skew check
+    private boolean writeSkewCheck = false;
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      super(key, flags);
-      this.oldValue = oldValue;
-      this.newValue = newValue;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
-   }
+    public ReplaceCommand() {
+    }
 
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitReplaceCommand(ctx, this);
-   }
+    public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+        super(key, flags);
+        this.oldValue = oldValue;
+        this.newValue = newValue;
+        this.lifespanMillis = lifespanMillis;
+        this.maxIdleTimeMillis = maxIdleTimeMillis;
+    }
 
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e != null) {
-         if (ctx.isOriginLocal()) {
-        	 	//ISPN-514
-            if (e.isNull() || e.getValue() == null) return returnValue(null, false);    
+    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+        return visitor.visitReplaceCommand(ctx, this);
+    }
 
-            if (oldValue == null || oldValue.equals(e.getValue())) {
-               Object old = e.setValue(newValue);
-               e.setLifespan(lifespanMillis);
-               e.setMaxIdle(maxIdleTimeMillis);
-               return returnValue(old, true);
+    public Object perform(InvocationContext ctx) throws Throwable {
+        MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+        if (e != null) {
+            if (ctx.isOriginLocal()) {
+                //ISPN-514
+                if (e.isNull() || e.getValue() == null) return returnValue(null, false);
+
+                if (oldValue == null || oldValue.equals(e.getValue())) {
+                    Object old = e.setValue(newValue);
+                    e.setLifespan(lifespanMillis);
+                    e.setMaxIdle(maxIdleTimeMillis);
+
+                    if(e instanceof ClusteredRepeatableReadEntry) {
+                        //Pedro -- locally, check if the entry is marked for write skew check
+                        writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
+                    }
+
+                    return returnValue(old, true);
+                }
+                return returnValue(null, false);
+            } else {
+                // for remotely originating calls, this doesn't check the status of what is under the key at the moment
+                Object old = e.setValue(newValue);
+                e.setLifespan(lifespanMillis);
+                e.setMaxIdle(maxIdleTimeMillis);
+
+                if(e instanceof ClusteredRepeatableReadEntry) {
+                    if(writeSkewCheck) {
+                        //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
+                        //for write skew check
+                        ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
+                    }
+                }
+
+                return returnValue(old, true);
             }
-            return returnValue(null, false);
-         } else {
-            // for remotely originating calls, this doesn't check the status of what is under the key at the moment
-            Object old = e.setValue(newValue);
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
-            return returnValue(old, true);
-         }
-      }
+        }
 
-      return returnValue(null, false);
-   }
+        return returnValue(null, false);
+    }
 
-   private Object returnValue(Object beingReplaced, boolean successful) {
-      this.successful = successful;
-      if (oldValue == null) {
-         return beingReplaced;
-      } else {
-         return successful;
-      }
-   }
+    private Object returnValue(Object beingReplaced, boolean successful) {
+        this.successful = successful;
+        if (oldValue == null) {
+            return beingReplaced;
+        } else {
+            return successful;
+        }
+    }
 
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
+    public byte getCommandId() {
+        return COMMAND_ID;
+    }
 
-   public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
-   }
+    public Object[] getParameters() {
+        //Pedro -- send the boolean
+        return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags, writeSkewCheck};
+    }
 
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
-      key = parameters[0];
-      oldValue = parameters[1];
-      newValue = parameters[2];
-      lifespanMillis = (Long) parameters[3];
-      maxIdleTimeMillis = (Long) parameters[4];
-      flags = (Set<Flag>) parameters[5];
-   }
+    @SuppressWarnings("unchecked")
+    public void setParameters(int commandId, Object[] parameters) {
+        if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
+        key = parameters[0];
+        oldValue = parameters[1];
+        newValue = parameters[2];
+        lifespanMillis = (Long) parameters[3];
+        maxIdleTimeMillis = (Long) parameters[4];
+        flags = (Set<Flag>) parameters[5];
+        //Pedro -- receive the boolean
+        writeSkewCheck = (Boolean) parameters[6];
+    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
-      ReplaceCommand that = (ReplaceCommand) o;
+        ReplaceCommand that = (ReplaceCommand) o;
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
-      if (newValue != null ? !newValue.equals(that.newValue) : that.newValue != null) return false;
-      if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) return false;
+        if (lifespanMillis != that.lifespanMillis) return false;
+        if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
+        if (newValue != null ? !newValue.equals(that.newValue) : that.newValue != null) return false;
+        if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) return false;
 
-      return true;
-   }
+        return true;
+    }
 
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
-      result = 31 * result + (newValue != null ? newValue.hashCode() : 0);
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
-      return result;
-   }
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
+        result = 31 * result + (newValue != null ? newValue.hashCode() : 0);
+        result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+        result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+        return result;
+    }
 
-   public boolean isSuccessful() {
-      return successful;
-   }
+    public boolean isSuccessful() {
+        return successful;
+    }
 
-   public boolean isConditional() {
-      return true;
-   }
+    public boolean isConditional() {
+        return true;
+    }
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
+    public long getLifespanMillis() {
+        return lifespanMillis;
+    }
 
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
-   }
+    public long getMaxIdleTimeMillis() {
+        return maxIdleTimeMillis;
+    }
 
-   public Object getOldValue() {
-      return oldValue;
-   }
+    public Object getOldValue() {
+        return oldValue;
+    }
 
-   public void setOldValue(Object oldValue) {
-      this.oldValue = oldValue;
-   }
+    public void setOldValue(Object oldValue) {
+        this.oldValue = oldValue;
+    }
 
-   public Object getNewValue() {
-      return newValue;
-   }
+    public Object getNewValue() {
+        return newValue;
+    }
 
-   public void setNewValue(Object newValue) {
-      this.newValue = newValue;
-   }
+    public void setNewValue(Object newValue) {
+        this.newValue = newValue;
+    }
 
-   @Override
-   public String toString() {
-      return "ReplaceCommand{" +
-            "oldValue=" + oldValue +
-            ", newValue=" + newValue +
-            ", flags=" + flags +
-            ", successful=" + successful +
-            '}';
-   }
+    @Override
+    public String toString() {
+        return "ReplaceCommand{" +
+                "oldValue=" + oldValue +
+                ", newValue=" + newValue +
+                ", flags=" + flags +
+                ", successful=" + successful +
+                '}';
+    }
 }

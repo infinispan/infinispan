@@ -230,15 +230,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             throw new ConfigurationException("Non transactional cache can't be used with total order protocol");
         }
 
-        boolean isRepeatableReadEnabled = locking().isolationLevel == IsolationLevel.REPEATABLE_READ;
-        boolean isWriteSkewEnabled = locking().writeSkewCheck;
-
-        //in the future it will be allowed with versioning...
-        if(isRepeatableReadEnabled && isWriteSkewEnabled) {
-            throw new ConfigurationException("Repeatable Read isolation level with write skew check not " +
-                    "allowed with total order protocol");
-        }
-
         //for now, only supports full replication
         if(!clustering().cacheMode().isReplicated()) {
             throw new ConfigurationException("the cache mode [" + clustering().cacheMode() + "] is not supported " +

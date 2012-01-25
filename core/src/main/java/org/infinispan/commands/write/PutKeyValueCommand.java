@@ -25,6 +25,7 @@ package org.infinispan.commands.write;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -39,156 +40,173 @@ import java.util.Set;
  * @since 4.0
  */
 public class PutKeyValueCommand extends AbstractDataWriteCommand {
-   public static final byte COMMAND_ID = 8;
+    public static final byte COMMAND_ID = 8;
 
-   Object value;
-   boolean putIfAbsent;
-   CacheNotifier notifier;
-   boolean successful = true;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
+    Object value;
+    boolean putIfAbsent;
+    CacheNotifier notifier;
+    boolean successful = true;
+    long lifespanMillis = -1;
+    long maxIdleTimeMillis = -1;
 
-   public PutKeyValueCommand() {
-   }
+    //Pedro -- total order -- mark keys for write skew check
+    private boolean writeSkewCheck = false;
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      super(key, flags);
-      this.value = value;
-      this.putIfAbsent = putIfAbsent;
-      this.notifier = notifier;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
-   }
+    public PutKeyValueCommand() {
+    }
 
-   public void init(CacheNotifier notifier) {
-      this.notifier = notifier;
-   }
+    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+        super(key, flags);
+        this.value = value;
+        this.putIfAbsent = putIfAbsent;
+        this.notifier = notifier;
+        this.lifespanMillis = lifespanMillis;
+        this.maxIdleTimeMillis = maxIdleTimeMillis;
+    }
 
-   public Object getValue() {
-      return value;
-   }
+    public void init(CacheNotifier notifier) {
+        this.notifier = notifier;
+    }
 
-   public void setValue(Object value) {
-      this.value = value;
-   }
+    public Object getValue() {
+        return value;
+    }
 
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitPutKeyValueCommand(ctx, this);
-   }
+    public void setValue(Object value) {
+        this.value = value;
+    }
 
-   public Object perform(InvocationContext ctx) throws Throwable {
-      Object o;
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      Object entryValue = e.getValue();
-      if (entryValue != null && putIfAbsent && !e.isRemoved()) {
-         successful = false;
-         return entryValue;
-      } else {
-         notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
+    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+        return visitor.visitPutKeyValueCommand(ctx, this);
+    }
 
-         if (value instanceof Delta) {
-            // magic
-            Delta dv = (Delta) value;
-            DeltaAware toMergeWith = null;
-            if (entryValue instanceof DeltaAware) toMergeWith = (DeltaAware) entryValue;
-            e.setValue(dv.merge(toMergeWith));
-            o = entryValue;
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
-         } else {
-            o = e.setValue(value);
-            if (e.isRemoved()) {
-               e.setRemoved(false);
-               e.setValid(true);
-               o = null;
+    public Object perform(InvocationContext ctx) throws Throwable {
+        Object o;
+        MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+        Object entryValue = e.getValue();
+        if (entryValue != null && putIfAbsent && !e.isRemoved()) {
+            successful = false;
+            return entryValue;
+        } else {
+            notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
+
+            if(e instanceof ClusteredRepeatableReadEntry) {
+                if(ctx.isOriginLocal()) {
+                    //Pedro -- locally, check if the entry is marked for write skew check
+                    writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
+                } else if(writeSkewCheck) {
+                    //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
+                    //for write skew check
+                    ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
+                }
             }
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
-         }
-         notifier.notifyCacheEntryModified(key, e.getValue(), false, ctx);
-      }
-      return o;
-   }
 
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
+            if (value instanceof Delta) {
+                // magic
+                Delta dv = (Delta) value;
+                DeltaAware toMergeWith = null;
+                if (entryValue instanceof DeltaAware) toMergeWith = (DeltaAware) entryValue;
+                e.setValue(dv.merge(toMergeWith));
+                o = entryValue;
+                e.setLifespan(lifespanMillis);
+                e.setMaxIdle(maxIdleTimeMillis);
+            } else {
+                o = e.setValue(value);
+                if (e.isRemoved()) {
+                    e.setRemoved(false);
+                    e.setValid(true);
+                    o = null;
+                }
+                e.setLifespan(lifespanMillis);
+                e.setMaxIdle(maxIdleTimeMillis);
+            }
+            notifier.notifyCacheEntryModified(key, e.getValue(), false, ctx);
+        }
+        return o;
+    }
 
-   public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
-   }
+    public byte getCommandId() {
+        return COMMAND_ID;
+    }
 
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      value = parameters[1];
-      lifespanMillis = (Long) parameters[2];
-      maxIdleTimeMillis = (Long) parameters[3];
-      flags = (Set<Flag>) parameters[4];
-   }
+    public Object[] getParameters() {
+        //Pedro -- send the boolean
+        return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags, writeSkewCheck};
+    }
 
-   public boolean isPutIfAbsent() {
-      return putIfAbsent;
-   }
+    @SuppressWarnings("unchecked")
+    public void setParameters(int commandId, Object[] parameters) {
+        if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+        key = parameters[0];
+        value = parameters[1];
+        lifespanMillis = (Long) parameters[2];
+        maxIdleTimeMillis = (Long) parameters[3];
+        flags = (Set<Flag>) parameters[4];
+        //Pedro -- receive the boolean
+        writeSkewCheck = (Boolean) parameters[5];
+    }
 
-   public void setPutIfAbsent(boolean putIfAbsent) {
-      this.putIfAbsent = putIfAbsent;
-   }
+    public boolean isPutIfAbsent() {
+        return putIfAbsent;
+    }
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
+    public void setPutIfAbsent(boolean putIfAbsent) {
+        this.putIfAbsent = putIfAbsent;
+    }
 
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
-   }
+    public long getLifespanMillis() {
+        return lifespanMillis;
+    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
+    public long getMaxIdleTimeMillis() {
+        return maxIdleTimeMillis;
+    }
 
-      PutKeyValueCommand that = (PutKeyValueCommand) o;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
-      if (putIfAbsent != that.putIfAbsent) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
+        PutKeyValueCommand that = (PutKeyValueCommand) o;
 
-      return true;
-   }
+        if (lifespanMillis != that.lifespanMillis) return false;
+        if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
+        if (putIfAbsent != that.putIfAbsent) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
 
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (putIfAbsent ? 1 : 0);
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
-      return result;
-   }
+        return true;
+    }
 
-   @Override
-   public String toString() {
-      return new StringBuilder()
-            .append("PutKeyValueCommand{key=")
-            .append(key)
-            .append(", value=").append(value)
-            .append(", flags=").append(flags)
-            .append(", putIfAbsent=").append(putIfAbsent)
-            .append(", lifespanMillis=").append(lifespanMillis)
-            .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
-            .append("}")
-            .toString();
-   }
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        result = 31 * result + (putIfAbsent ? 1 : 0);
+        result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+        result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+        return result;
+    }
 
-   public boolean isSuccessful() {
-      return successful;
-   }
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("PutKeyValueCommand{key=")
+                .append(key)
+                .append(", value=").append(value)
+                .append(", flags=").append(flags)
+                .append(", putIfAbsent=").append(putIfAbsent)
+                .append(", lifespanMillis=").append(lifespanMillis)
+                .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+                .append("}")
+                .toString();
+    }
 
-   public boolean isConditional() {
-      return putIfAbsent;
-   }
+    public boolean isSuccessful() {
+        return successful;
+    }
+
+    public boolean isConditional() {
+        return putIfAbsent;
+    }
 }
