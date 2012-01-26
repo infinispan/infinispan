@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public abstract class AbstractKeyValueOperation extends AbstractKeyOperation {
+public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<T> {
 
    protected final byte[] value;
 

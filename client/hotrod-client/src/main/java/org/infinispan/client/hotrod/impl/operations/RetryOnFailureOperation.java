@@ -42,9 +42,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
+ * @param T the return type of this operation
  */
 @Immutable
-public abstract class RetryOnFailureOperation extends HotRodOperation {
+public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
 
@@ -57,7 +58,7 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
    }
 
    @Override
-   public Object execute() {
+   public T execute() {
       int retryCount = 0;
       while (shouldRetry(retryCount)) {
          Transport transport = null;
@@ -99,5 +100,5 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
 
    protected abstract Transport getTransport(int retryCount);
 
-   protected abstract Object executeOperation(Transport transport);
+   protected abstract T executeOperation(Transport transport);
 }

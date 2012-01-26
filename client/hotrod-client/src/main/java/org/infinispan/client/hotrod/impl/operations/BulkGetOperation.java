@@ -29,6 +29,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class BulkGetOperation extends RetryOnFailureOperation {
+public class BulkGetOperation extends RetryOnFailureOperation<Map<byte[], byte[]>> {
 
    private final int entryCount;
 
@@ -52,12 +53,12 @@ public class BulkGetOperation extends RetryOnFailureOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected Map<byte[], byte[]> executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, BULK_GET_REQUEST);
       transport.writeVInt(entryCount);
       transport.flush();
       readHeaderAndValidate(transport, params);
-      HashMap result = new HashMap();
+      Map<byte[], byte[]> result = new HashMap<byte[], byte[]>();
       while ( transport.readByte() == 1) { //there's more!
          result.put(transport.readArray(), transport.readArray());
       }

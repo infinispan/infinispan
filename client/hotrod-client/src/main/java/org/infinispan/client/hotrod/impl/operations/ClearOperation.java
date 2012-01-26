@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class ClearOperation extends RetryOnFailureOperation {
+public class ClearOperation extends RetryOnFailureOperation<Void> {
 
    public ClearOperation(Codec codec, TransportFactory transportFactory,
             byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -51,7 +51,7 @@ public class ClearOperation extends RetryOnFailureOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected Void executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, CLEAR_REQUEST);
       transport.flush();
 
