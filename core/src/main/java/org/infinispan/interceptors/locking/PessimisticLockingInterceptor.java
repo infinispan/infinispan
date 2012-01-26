@@ -96,13 +96,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      try {
-         abortIfRemoteTransactionInvalid(ctx, command);
-         return invokeNextAndCommitIf1Pc(ctx, command);
-      } catch (Throwable t) {
-         // don't remove the locks here, the rollback command will clear them
-         throw t;
-      }
+      abortIfRemoteTransactionInvalid(ctx, command);
+      return invokeNextAndCommitIf1Pc(ctx, command);
+      // don't remove the locks here, the rollback command will clear them
    }
 
    @Override
