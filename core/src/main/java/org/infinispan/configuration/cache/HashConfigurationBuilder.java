@@ -5,9 +5,6 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.distribution.ch.ConsistentHash;
 
-import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
-import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
-
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  * 

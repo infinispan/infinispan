@@ -4,10 +4,6 @@ import org.infinispan.Version;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
