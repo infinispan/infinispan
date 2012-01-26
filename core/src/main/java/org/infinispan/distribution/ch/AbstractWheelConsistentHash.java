@@ -122,6 +122,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
       }
 
+      log.debugf("Using %d virtualNodes to initialize consistent hash wheel ", numVirtualNodes);
       log.tracef("Positions are: %s", positions);
 
       // then populate caches, positionKeys and positionValues with the correct values (and in the correct order)
