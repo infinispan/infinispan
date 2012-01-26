@@ -23,6 +23,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -37,8 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation {
-
+public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<VersionedOperationResponse> {
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
@@ -49,7 +49,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected VersionedOperationResponse executeOperation(Transport transport) {
       // 1) write header
       HeaderParams params = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
 

@@ -42,7 +42,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @since 4.1
  */
 @Immutable
-public class GetWithVersionOperation extends AbstractKeyOperation {
+public class GetWithVersionOperation extends AbstractKeyOperation<BinaryVersionedValue> {
 
    private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
 
@@ -52,9 +52,9 @@ public class GetWithVersionOperation extends AbstractKeyOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected BinaryVersionedValue executeOperation(Transport transport) {
       short status = sendKeyOperation(key, transport, GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE);
-      Object result = null;
+      BinaryVersionedValue result = null;
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
          result = null;
       } else if (status == NO_ERROR_STATUS) {
