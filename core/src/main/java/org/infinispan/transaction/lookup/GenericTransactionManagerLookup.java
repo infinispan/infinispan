@@ -58,7 +58,11 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    private boolean lookupFailed = false;
 
    /**
-    * The JVM TransactionManager found.
+    * No JBoss TM embedded jars found?
+    */
+   private boolean noJBossTM = false;
+   /**
+    * The JTA TransactionManager found.
     */
    private TransactionManager tm = null;
 
@@ -92,7 +96,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
    
    private Configuration configuration;
-   
+
    @Inject
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
@@ -107,13 +111,34 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       if (!lookupDone)
          doLookups(configuration.getClassLoader());
       if (tm != null)
-         return tm;
+         return tm;            
       if (lookupFailed) {
-         //fall back to a dummy from Infinispan
-         tm = DummyTransactionManager.getInstance();
-         log.fallingBackToDummyTm();
+         if (!noJBossTM) {
+            // First try an embedded JBossTM instance
+            tryEmbeddedJBossTM();
+         }
+
+         if (noJBossTM) {
+            //fall back to a dummy from Infinispan
+            useDummyTM();
+         }
       }
       return tm;
+   }
+   
+   private void useDummyTM() {
+      tm = DummyTransactionManager.getInstance();
+      log.fallingBackToDummyTm();
+   }
+   
+   private void tryEmbeddedJBossTM() {
+      try {
+         JBossStandaloneJTAManagerLookup jBossStandaloneJTAManagerLookup = new JBossStandaloneJTAManagerLookup();
+         jBossStandaloneJTAManagerLookup.init(configuration);
+         tm = jBossStandaloneJTAManagerLookup.getTransactionManager();
+      } catch (Exception e) {
+         noJBossTM = true;
+      }
    }
 
    /**
