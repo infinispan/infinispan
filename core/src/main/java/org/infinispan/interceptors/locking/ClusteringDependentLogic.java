@@ -46,7 +46,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a

@@ -26,7 +26,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.transaction.RemoteTransaction;

@@ -41,8 +41,6 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 
-import java.util.Set;
-
 /**
  * Base class for transaction based locking interceptors.
  *
