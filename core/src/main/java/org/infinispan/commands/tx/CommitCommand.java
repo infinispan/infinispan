@@ -34,44 +34,55 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @since 4.0
  */
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte COMMAND_ID = 14;
-   /**
-    * This is sent back to callers if the global transaction is not reconised.  It can happen if a prepare is sent to one
-    * set of nodes, which then fail, and a commit is sent to a "new" data owner which has not seen the prepare.
-    *
-    * Responding with this value instructs the caller to re-send the prepare.  See DistributionInterceptor.visitCommitCommand()
-    * for details.
-    */
-   public static final byte RESEND_PREPARE = 1;
+    public static final byte COMMAND_ID = 14;
+    /**
+     * This is sent back to callers if the global transaction is not reconised.  It can happen if a prepare is sent to one
+     * set of nodes, which then fail, and a commit is sent to a "new" data owner which has not seen the prepare.
+     *
+     * Responding with this value instructs the caller to re-send the prepare.  See DistributionInterceptor.visitCommitCommand()
+     * for details.
+     */
+    public static final byte RESEND_PREPARE = 1;
 
-   private CommitCommand() {
-      super(null); // For command id uniqueness test
-   }
+    private CommitCommand() {
+        super(null); // For command id uniqueness test
+    }
 
-   public CommitCommand(String cacheName, GlobalTransaction gtx) {
-      super(cacheName);
-      this.globalTx = gtx;
-   }
+    public CommitCommand(String cacheName, GlobalTransaction gtx) {
+        super(cacheName);
+        this.globalTx = gtx;
+    }
 
-   public CommitCommand(String cacheName) {
-      super(cacheName);
-   }
+    public CommitCommand(String cacheName) {
+        super(cacheName);
+    }
 
-   @Override
-   protected Object invalidRemoteTxReturnValue() {
-      return RESEND_PREPARE;
-   }
+    @Override
+    protected Object invalidRemoteTxReturnValue() {
+        return RESEND_PREPARE;
+    }
 
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
-   }
+    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+        return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
+    }
 
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
+    public byte getCommandId() {
+        return COMMAND_ID;
+    }
 
-   @Override
-   public String toString() {
-      return "CommitCommand {" + super.toString();
-   }
+    @Override
+    public String toString() {
+        return "CommitCommand {" + super.toString();
+    }
+
+    //Pedro -- added new type of performing
+
+    @Override
+    public Object perform(InvocationContext ctx) throws Throwable {
+        if (configuration.isTotalOrder()) {
+            return performIgnoringUnexistingTransaction(ctx);
+        } else {
+            return perform(ctx);
+        }
+    }
 }

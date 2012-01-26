@@ -34,6 +34,8 @@ import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.totalorder.TOReplicationInterceptor;
+import org.infinispan.interceptors.totalorder.TOVersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.totalorder.TOVersionedReplicationInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
@@ -152,9 +154,15 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             }
         }
 
-        if (needsVersionAwareComponents && configuration.getCacheMode().isClustered())
-            interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
-        else
+        if (needsVersionAwareComponents && configuration.getCacheMode().isClustered()) {
+            //Pedro -- added custom entry wrapping interceptor
+            if(configuration.isTotalOrder()) {
+                interceptorChain.appendInterceptor(createInterceptor(new TOVersionedEntryWrappingInterceptor(),
+                        TOVersionedEntryWrappingInterceptor.class), false);
+            } else {
+                interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
+            }
+        } else
             interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
 
         if (configuration.isUsingCacheLoaders()) {
@@ -189,7 +197,13 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
         switch (configuration.getCacheMode()) {
             case REPL_SYNC:
                 if (needsVersionAwareComponents) {
-                    interceptorChain.appendInterceptor(createInterceptor(new VersionedReplicationInterceptor(), VersionedReplicationInterceptor.class), false);
+                    //Pedro -- added custom interceptor to replace the original
+                    if (configuration.isTotalOrder()) {
+                        interceptorChain.appendInterceptor(createInterceptor(new TOVersionedReplicationInterceptor(),
+                                TOVersionedReplicationInterceptor.class), false);
+                    } else {
+                        interceptorChain.appendInterceptor(createInterceptor(new VersionedReplicationInterceptor(), VersionedReplicationInterceptor.class), false);
+                    }
                     break;
                 }
             case REPL_ASYNC:
