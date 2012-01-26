@@ -43,7 +43,7 @@ import org.jboss.logging.BasicLogger;
  * @since 4.1
  */
 @Immutable
-public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
+public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T> {
 
    private static final BasicLogger log = BasicLogFactory.getLog(AbstractKeyOperation.class);
 

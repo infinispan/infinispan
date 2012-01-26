@@ -160,7 +160,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private volatile boolean started = false;
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
-   private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
+   private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
    private AtomicInteger topologyId = new AtomicInteger();
    private ClassLoader classLoader;
    private Codec codec;
@@ -227,6 +227,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
       this.config = new ConfigurationProperties(props);
       this.classLoader = classLoader;
+      forceReturnValueDefault = config.getForceReturnValues();
       if (asyncExecutorFactory != null) this.asyncExecutorService = asyncExecutorFactory.getExecutor(props);
       if (start) start();
    }
@@ -450,6 +451,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    @Override
    public void start() {
+      forceReturnValueDefault = config.getForceReturnValues();
       codec = CodecFactory.getCodec(config.getProtocolVersion());
 
       String factory = config.getTransportFactory();
@@ -468,11 +470,9 @@ public class RemoteCacheManager implements BasicCacheContainer {
          asyncExecutorService = executorFactory.getExecutor(config.getProperties());
       }
 
-      forceReturnValueDefault = config.getForceReturnValues();
-
       synchronized (cacheName2RemoteCache) {
-         for (RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
-            startRemoteCache(remoteCache);
+         for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
+            startRemoteCache(rcc);
          }
       }
       started = true;
@@ -499,24 +499,27 @@ public class RemoteCacheManager implements BasicCacheContainer {
          throw new HotRodClientException("Issues configuring from client hotrod-client.properties", e);
       }
       config = new ConfigurationProperties(properties);
+      forceReturnValueDefault = config.getForceReturnValues();
    }
 
-   private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
+   @SuppressWarnings("unchecked")
+   private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, Boolean forceReturnValueOverride) {
       synchronized (cacheName2RemoteCache) {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
-            startRemoteCache(result);
+            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? forceReturnValueDefault : forceReturnValueOverride);
+            startRemoteCache(rcc);
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
             if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
                   ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
                return null;
             } else {
-               cacheName2RemoteCache.put(cacheName, result);
+               cacheName2RemoteCache.put(cacheName, rcc);
                return result;
             }
          } else {
-            return cacheName2RemoteCache.get(cacheName);
+            return (RemoteCache<K, V>) cacheName2RemoteCache.get(cacheName).remoteCache;
          }
       }
    }
@@ -534,13 +537,24 @@ public class RemoteCacheManager implements BasicCacheContainer {
       }
    }
 
-   private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
+   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
+      RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
-            transportFactory, result.getName(), topologyId, forceReturnValueDefault, codec);
-      result.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
+            transportFactory, remoteCache.getName(), topologyId, remoteCacheHolder.forceReturnValue, codec);
+      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
    }
 
    private void setMarshaller(Marshaller marshaller) {
       this.marshaller = marshaller;
+   }
+}
+
+class RemoteCacheHolder {
+   final RemoteCacheImpl<?, ?> remoteCache;
+   final boolean forceReturnValue;
+
+   RemoteCacheHolder(RemoteCacheImpl<?, ?> remoteCache, boolean forceReturnValue) {
+      this.remoteCache = remoteCache;
+      this.forceReturnValue = forceReturnValue;
    }
 }

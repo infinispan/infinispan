@@ -42,7 +42,7 @@ import org.jboss.logging.BasicLogger;
  * @since 4.1
  */
 @Immutable
-public class PutIfAbsentOperation extends AbstractKeyValueOperation {
+public class PutIfAbsentOperation extends AbstractKeyValueOperation<byte[]> {
 
    private static final BasicLogger log = BasicLogFactory.getLog(PutIfAbsentOperation.class);
 
@@ -53,7 +53,7 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected byte[] executeOperation(Transport transport) {
       short status = sendPutOperation(transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE);
       byte[] previousValue = null;
       if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
