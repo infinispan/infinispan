@@ -6,6 +6,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.ReplicationInterceptor;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -23,6 +24,7 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
     @Override
     protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
         boolean trace = log.isTraceEnabled();
+        String globalTransactionString = Util.prettyPrintGlobalTransaction(command.getGlobalTransaction());
 
         if(!command.isTotalOrdered()) {
             super.broadcastPrepare(context, command);
@@ -30,7 +32,7 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
         }
 
         if(trace) {
-            log.tracef("Broadcasting with Total Order the command %s", command);
+            log.tracef("Broadcasting transaction %s with Total Order", globalTransactionString);
         }
 
         //broadcast the command
@@ -40,8 +42,8 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
         if(sync) {
             //in sync mode, blocks in the LocalTransaction
             if(trace) {
-                log.tracef("Command [%s] sent in synchronous mode. waiting until modification is applied",
-                        command);
+                log.tracef("Transaction [%s] sent in synchronous mode. waiting until modification is applied",
+                        globalTransactionString);
             }
             //this is only invoked in local context
             LocalTransaction localTransaction = (LocalTransaction) context.getCacheTransaction();
@@ -51,8 +53,8 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
                 throw new RpcException(throwable);
             } finally {
                 if(trace) {
-                    log.tracef("Command [%s] waiting finish",
-                            command);
+                    log.tracef("Transaction [%s] finishes the waiting time",
+                            globalTransactionString);
                 }
             }
         }

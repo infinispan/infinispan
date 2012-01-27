@@ -37,6 +37,9 @@ import org.infinispan.transaction.RemoteTransaction;
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
     public static final byte COMMAND_ID = 13;
 
+    //Pedro -- check if the rollback command should be send over the cluster
+    private boolean shouldInvokedRemotely = true;
+
     private RollbackCommand() {
         super(null); // For command id uniqueness test
     }
@@ -77,5 +80,15 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
         } else {
             return perform(ctx);
         }
+    }
+
+    //sette and getter
+
+    public boolean shouldInvokedRemotely() {
+        return shouldInvokedRemotely;
+    }
+
+    public void setShouldInvokedRemotely(boolean shouldInvokedRemotely) {
+        this.shouldInvokedRemotely = shouldInvokedRemotely;
     }
 }

@@ -26,12 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -60,141 +55,143 @@ import java.util.concurrent.TimeoutException;
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
-   private StateTransferLock stateTransferLock;
-   CommandsFactory cf;
+    private StateTransferLock stateTransferLock;
+    CommandsFactory cf;
 
-   private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
+    private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
+    @Override
+    protected Log getLog() {
+        return log;
+    }
 
-   @Inject
-   public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
-      this.stateTransferLock = stateTransferLock;
-      this.cf = cf;
-   }
+    @Inject
+    public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
+        this.stateTransferLock = stateTransferLock;
+        this.cf = cf;
+    }
 
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+    @Override
+    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+        if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
+        if (shouldInvokeRemoteTxCommand(ctx)) {
+            stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
 
-         sendCommitCommand(ctx, command);
-      }
-      return invokeNextInterceptor(ctx, command);
-   }
+            sendCommitCommand(ctx, command);
+        }
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   /**
-    * If the response to a commit is a request to resend the prepare, respond accordingly *
-    */
-   private boolean needToResendPrepare(Response r) {
-      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
-   }
+    /**
+     * If the response to a commit is a request to resend the prepare, respond accordingly *
+     */
+    private boolean needToResendPrepare(Response r) {
+        return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
+    }
 
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
-         throws TimeoutException, InterruptedException {
-      // may need to resend, so make the commit command synchronous
-      // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
-      if (!responses.isEmpty()) {
-         List<Address> resendTo = new LinkedList<Address>();
-         for (Map.Entry<Address, Response> r : responses.entrySet()) {
-            if (needToResendPrepare(r.getValue()))
-               resendTo.add(r.getKey());
-         }
+    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
+            throws TimeoutException, InterruptedException {
+        // may need to resend, so make the commit command synchronous
+        // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
+        Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
+        if (!responses.isEmpty()) {
+            List<Address> resendTo = new LinkedList<Address>();
+            for (Map.Entry<Address, Response> r : responses.entrySet()) {
+                if (needToResendPrepare(r.getValue()))
+                    resendTo.add(r.getKey());
+            }
 
-         if (!resendTo.isEmpty()) {
-            getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
-            rpcManager.invokeRemotely(resendTo, pc, true, true);
-         }
-      }
-   }
+            if (!resendTo.isEmpty()) {
+                getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+                PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
+                rpcManager.invokeRemotely(resendTo, pc, true, true);
+            }
+        }
+    }
 
-   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
-      // Make sure this is 1-Phase!!
-      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
-   }
+    protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
+        // Make sure this is 1-Phase!!
+        return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retVal = invokeNextInterceptor(ctx, command);
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+    @Override
+    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+        Object retVal = invokeNextInterceptor(ctx, command);
+        if (shouldInvokeRemoteTxCommand(ctx)) {
+            stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
 
-         broadcastPrepare(ctx, command);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-      }
-      return retVal;
-   }
+            broadcastPrepare(ctx, command);
+            ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+        }
+        return retVal;
+    }
 
-   protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
-      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
-      rpcManager.broadcastRpcCommand(command, !async, false);
-   }
+    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
+        boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+        rpcManager.broadcastRpcCommand(command, !async, false);
+    }
 
-   @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
-         rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
-      }
-      return invokeNextInterceptor(ctx, command);
-   }
+    @Override
+    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+        //Pedro -- added first condition: the condition is always true for 2PC but for the total order protocol it can
+        //be false (case in which the transaction was not prepared)
+        if (command.shouldInvokedRemotely() && shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
+            rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
+        }
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command);
-   }
+    @Override
+    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+        return handleCrudMethod(ctx, command);
+    }
 
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command);
-   }
+    @Override
+    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+        return handleCrudMethod(ctx, command);
+    }
 
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command);
-   }
+    @Override
+    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+        return handleCrudMethod(ctx, command);
+    }
 
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command);
-   }
+    @Override
+    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+        return handleCrudMethod(ctx, command);
+    }
 
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command);
-   }
+    @Override
+    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+        return handleCrudMethod(ctx, command);
+    }
 
-   /**
-    * If we are within one transaction we won't do any replication as replication would only be performed at commit
-    * time. If the operation didn't originate locally we won't do any replication either.
-    */
-   private Object handleCrudMethod(final InvocationContext ctx, final WriteCommand command) throws Throwable {
-      // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
-      final Object returnValue = invokeNextInterceptor(ctx, command);
-      populateCommandFlags(command, ctx);
-      if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+    /**
+     * If we are within one transaction we won't do any replication as replication would only be performed at commit
+     * time. If the operation didn't originate locally we won't do any replication either.
+     */
+    private Object handleCrudMethod(final InvocationContext ctx, final WriteCommand command) throws Throwable {
+        // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
+        final Object returnValue = invokeNextInterceptor(ctx, command);
+        populateCommandFlags(command, ctx);
+        if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
+            stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
 
-         if (ctx.isUseFutureReturnType()) {
-            NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
-            rpcManager.broadcastRpcCommandInFuture(command, future);
-            return future;
-         } else {
-            rpcManager.broadcastRpcCommand(command, isSynchronous(ctx));
-         }
-      }
-      return returnValue;
-   }
+            if (ctx.isUseFutureReturnType()) {
+                NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
+                rpcManager.broadcastRpcCommandInFuture(command, future);
+                return future;
+            } else {
+                rpcManager.broadcastRpcCommand(command, isSynchronous(ctx));
+            }
+        }
+        return returnValue;
+    }
 
-   /**
-    * Makes sure the context Flags are bundled in the command, so that they are re-read remotely
-    */
-   private void populateCommandFlags(WriteCommand command, InvocationContext ctx) {
-      command.setFlags(ctx.getFlags());
-   }
+    /**
+     * Makes sure the context Flags are bundled in the command, so that they are re-read remotely
+     */
+    private void populateCommandFlags(WriteCommand command, InvocationContext ctx) {
+        command.setFlags(ctx.getFlags());
+    }
 }

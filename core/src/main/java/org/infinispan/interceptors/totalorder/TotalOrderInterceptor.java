@@ -9,9 +9,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.totalorder.TotalOrderValidator;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Created to control the total order validation. It disable the possibility of acquiring locks during execution through
@@ -25,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TotalOrderInterceptor extends CommandInterceptor {
 
-    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
+    //private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
 
     private TotalOrderValidator totalOrderValidator;
 
@@ -59,6 +56,10 @@ public class TotalOrderInterceptor extends CommandInterceptor {
             if (!ctx.isOriginLocal()) {
                 totalOrderValidator.markTransactionForRollback(gtx);
                 totalOrderValidator.waitForTxPrepared(ctx, gtx);
+            } else {
+                //only send the rollback command is the transaction was prepared previously.
+                //otherwise, doesn't send the rollback, because no locks are acquired remotely
+                command.setShouldInvokedRemotely(totalOrderValidator.isTransactionPrepared(gtx));
             }
             return invokeNextInterceptor(ctx, command);
         } finally {

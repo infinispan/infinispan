@@ -30,10 +30,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.container.versioning.IncrementableEntryVersion;
-import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.container.versioning.*;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -280,11 +277,16 @@ public interface ClusteringDependentLogic {
 
             for (Object key : prepareCommand.getAffectedKeys()) {
                 ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(key);
+
+                //save the original version and updates to the version that transaction reads
+                IncrementableEntryVersion originalLocalVersion = (IncrementableEntryVersion) entry.getVersion();
                 entry.setVersion(versionsSeenMap.get(key));
 
                 if (!entry.isMarkedForWriteSkew() || entry.performWriteSkewCheck(dataContainer)) {
-                    IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() :
-                            versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
+                    IncrementableEntryVersion newVersion = createNewVersion(originalLocalVersion,
+                            (IncrementableEntryVersion) entry.getVersion(),
+                            versionGenerator);
+
                     updatedVersionMap.put(key, newVersion);
                 } else {
                     // Write skew check detected!
@@ -300,6 +302,31 @@ public interface ClusteringDependentLogic {
         @Override
         public Address getAddress() {
             return rpcManager.getAddress();
+        }
+
+        private IncrementableEntryVersion createNewVersion(IncrementableEntryVersion originalLocalVersion,
+                                                           IncrementableEntryVersion versionSeen, VersionGenerator versionGenerator) {
+            if (originalLocalVersion == null) {
+                if (versionSeen == null) {
+                    //both are null (new entry)
+                    return versionGenerator.generateNew();
+                } else {
+                    //version seen is not null... increment that one
+                    return versionGenerator.increment(versionSeen);
+                }
+            } else {
+                if (versionSeen == null) {
+                    //original version is not null
+                    return versionGenerator.increment(originalLocalVersion);
+                } else {
+                    //both are not null. choose the greatest
+                    if (originalLocalVersion.compareTo(versionSeen) == InequalVersionComparisonResult.AFTER) {
+                        return versionGenerator.increment(originalLocalVersion);
+                    } else {
+                        return versionGenerator.increment(versionSeen);
+                    }
+                }
+            }
         }
     }
 }
