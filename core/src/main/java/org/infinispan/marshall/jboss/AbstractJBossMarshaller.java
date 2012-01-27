@@ -40,6 +40,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
    protected final MarshallingConfiguration baseCfg;
    protected static final MarshallerFactory factory = new JBossMarshallerFactory();
+   protected static final int DEF_INSTANCE_COUNT = 16;
+   protected static final int DEF_CLASS_COUNT = 8;
    /**
     * Cache of classes that are considered to be marshallable. Since checking
     * whether a type is marshallable requires attempting to marshalling them,
@@ -54,6 +56,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       baseCfg.setCreator(new SunReflectiveCreator());
       baseCfg.setExceptionListener(new DebuggingExceptionListener());
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
+      baseCfg.setInstanceCount(DEF_INSTANCE_COUNT);
+      baseCfg.setClassCount(DEF_CLASS_COUNT);
       baseCfg.setVersion(3);
    }
 
