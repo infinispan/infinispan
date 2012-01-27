@@ -53,7 +53,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
       baseCfg = new MarshallingConfiguration();
-      baseCfg.setCreator(new SunReflectiveCreator());
+      baseCfg.setExternalizerCreator(new SunReflectiveCreator());
       baseCfg.setExceptionListener(new DebuggingExceptionListener());
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
       baseCfg.setInstanceCount(DEF_INSTANCE_COUNT);
