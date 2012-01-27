@@ -38,10 +38,13 @@ import static org.infinispan.util.Util.EMPTY_OBJECT_ARRAY;
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
-   protected final MarshallingConfiguration baseCfg;
+   protected static final boolean trace = log.isTraceEnabled();
    protected static final MarshallerFactory factory = new JBossMarshallerFactory();
    protected static final int DEF_INSTANCE_COUNT = 16;
    protected static final int DEF_CLASS_COUNT = 8;
+
+   protected final MarshallingConfiguration baseCfg;
+
    /**
     * Cache of classes that are considered to be marshallable. Since checking
     * whether a type is marshallable requires attempting to marshalling them,
@@ -61,12 +64,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       baseCfg.setVersion(3);
    }
 
-   public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
+   final public void objectToObjectStream(final Object obj, final ObjectOutput out) throws IOException {
       out.writeObject(obj);
    }
 
    @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
+   final protected ByteBuffer objectToBuffer(final Object o, final int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput marshaller = startObjectOutput(baos, false);
       try {
@@ -77,7 +80,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
       org.jboss.marshalling.Marshaller marshaller = getMarshaller(isReentrant);
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
@@ -85,10 +88,9 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected abstract Marshaller getMarshaller(boolean isReentrant) throws IOException;
 
-   public void finishObjectOutput(ObjectOutput oo) {
+   final public void finishObjectOutput(final ObjectOutput oo) {
       try {
-         if (log.isTraceEnabled())
-            log.trace("Stop marshaller");
+         if (trace) log.trace("Stop marshaller");
 
          ((org.jboss.marshalling.Marshaller) oo).finish();
       } catch (IOException ignored) {
@@ -96,7 +98,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException,
+   final public Object objectFromByteBuffer(final byte[] buf, final int offset, final int length) throws IOException,
            ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is, false);
@@ -109,10 +111,10 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return o;
    }
 
-   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
+   final public ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
       Unmarshaller unmarshaller = getUnmarshaller(isReentrant);
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Start unmarshaller after retrieving marshaller from %s",
                    isReentrant ? "factory" : "thread local");
 
@@ -122,13 +124,13 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected abstract Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException;
 
-   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
+   final public Object objectFromObjectStream(final ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
    }
 
-   public void finishObjectInput(ObjectInput oi) {
+   final public void finishObjectInput(final ObjectInput oi) {
       try {
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Stop unmarshaller");
 
          if (oi != null) ((Unmarshaller) oi).finish();
@@ -168,18 +170,18 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return o instanceof Serializable;
    }
 
-   protected static class DebuggingExceptionListener implements ExceptionListener {
+   protected static final class DebuggingExceptionListener implements ExceptionListener {
       private static final URL[] EMPTY_URLS = {};
 
       @Override
-      public void handleMarshallingException(Throwable problem, Object subject) {
+      public void handleMarshallingException(final Throwable problem, final Object subject) {
          if (log.isDebugEnabled()) {
             TraceInformation.addUserInformation(problem, "toString = " + subject.toString());
          }
       }
 
       @Override
-      public void handleUnmarshallingException(Throwable problem, Class<?> subjectClass) {
+      public void handleUnmarshallingException(final Throwable problem, final Class<?> subjectClass) {
          if (log.isDebugEnabled()) {
             StringBuilder builder = new StringBuilder();
             ClassLoader cl = subjectClass.getClassLoader();
@@ -208,7 +210,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
          // no-op
       }
 
-      private static URL[] getClassLoaderURLs(ClassLoader cl) {
+      private static URL[] getClassLoaderURLs(final ClassLoader cl) {
          URL[] urls = EMPTY_URLS;
          try {
             Class returnType = urls.getClass();
