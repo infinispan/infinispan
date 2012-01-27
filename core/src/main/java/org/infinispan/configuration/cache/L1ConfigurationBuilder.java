@@ -153,7 +153,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       invalidationThreshold = template.invalidationThreshold();
       lifespan = template.lifespan();
       onRehash = template.onRehash();
-      
+      activated = template.activated;
       return this;
    }
 
