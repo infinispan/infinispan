@@ -118,7 +118,7 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
    void validate() {
       async.validate();
       singletonStore.validate();
-      if (!getLoadersBuilder().shared() && fetchPersistentState && purgeOnStartup
+      if (!getLoadersBuilder().shared() && !fetchPersistentState && !purgeOnStartup
             && getBuilder().clustering().cacheMode().isClustered())
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
    }
