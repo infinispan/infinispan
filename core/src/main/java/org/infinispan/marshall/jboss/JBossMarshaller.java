@@ -47,19 +47,16 @@ import java.io.IOException;
  * @since 4.0
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
-   private InvocationContextContainer icc;
+
    ExternalizerTable externalizerTable;
 
    public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
-      this.icc = icc;
       this.externalizerTable = externalizerTable;
-      baseCfg.setInstanceCount(16);
-      baseCfg.setClassCount(8);
       baseCfg.setObjectTable(externalizerTable);
       // Override the class resolver with one that can detect injected
       // classloaders via AdvancedCache.with(ClassLoader) calls.
-      baseCfg.setClassResolver(new EmbeddedContextClassResolver(cl));
+      baseCfg.setClassResolver(new EmbeddedContextClassResolver(cl, icc));
    }
 
    @Override
@@ -72,6 +69,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       return factory.createUnmarshaller(baseCfg);
    }
 
+   @Override
    public void stop() {
       super.stop();
       // Just in case, to avoid leaking class resolver which references classloader
@@ -88,9 +86,13 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
     * loader from the embedded Infinispan call context. This might happen when
     * {@link org.infinispan.AdvancedCache#with(ClassLoader)} is used.
     */
-   public class EmbeddedContextClassResolver extends DefaultContextClassResolver {
-      public EmbeddedContextClassResolver(ClassLoader defaultClassLoader) {
+   public static final class EmbeddedContextClassResolver extends DefaultContextClassResolver {
+
+      private final InvocationContextContainer icc;
+
+      public EmbeddedContextClassResolver(ClassLoader defaultClassLoader, InvocationContextContainer icc) {
          super(defaultClassLoader);
+         this.icc = icc;
       }
 
       @Override
