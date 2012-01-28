@@ -39,7 +39,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  * @since 4.1
  */
 @Immutable
-public class PutOperation extends AbstractKeyValueOperation {
+public class PutOperation extends AbstractKeyValueOperation<byte[]> {
 
    public PutOperation(Codec codec, TransportFactory transportFactory,
                        byte[] key, byte[] cacheName, AtomicInteger topologyId,
@@ -48,7 +48,7 @@ public class PutOperation extends AbstractKeyValueOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected byte[] executeOperation(Transport transport) {
       short status = sendPutOperation(transport, PUT_REQUEST, PUT_RESPONSE);
       if (status != NO_ERROR_STATUS) {
          throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));

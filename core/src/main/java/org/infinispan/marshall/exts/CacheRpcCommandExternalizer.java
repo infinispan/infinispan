@@ -65,13 +65,16 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCommand> {
+public final class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCommand> {
    private GlobalComponentRegistry gcr;
    private ReplicableCommandExternalizer commandExt = new ReplicableCommandExternalizer();
+   private StreamingMarshaller globalMarshaller;
 
    public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
       commandExt.inject(cmdFactory, gcr);
       this.gcr = gcr;
+      //Cache this locally to avoid having to look it up often:
+      this.globalMarshaller = gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
    }
 
    @Override
@@ -100,11 +103,9 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
       if (registry == null) {
          // TODO This is a hack to support global commands CacheViewControlCommand
          // but they should not be CacheRpcCommands at all
-         marshaller = gcr.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+         marshaller = globalMarshaller;
       } else {
-         marshaller = registry.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+         marshaller = registry.getCacheMarshaller();
       }
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
@@ -140,11 +141,9 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
       if (registry == null) {
          // Even though the command is directed at a cache, it could happen
          // that the cache is not yet started, so fallback on global marshaller.
-         marshaller = gcr.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+         marshaller = globalMarshaller;
       } else {
-         marshaller = registry.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+         marshaller = registry.getCacheMarshaller();
       }
 
       byte[] paramsRaw = new byte[UnsignedNumeric.readUnsignedInt(input)];

@@ -80,7 +80,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private boolean hasJoinStarted(final ComponentRegistry componentRegistry) throws InterruptedException {
-      StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
+      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
       return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
 
@@ -116,14 +116,14 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
 
    private Response handleInternal(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
-      CommandsFactory commandsFactory = cr.getLocalComponent(CommandsFactory.class);
+      CommandsFactory commandsFactory = cr.getCommandsFactory();
 
       // initialize this command with components specific to the intended cache instance
       commandsFactory.initializeReplicableCommand(cmd, true);
 
       try {
          if (trace) log.tracef("Calling perform() on %s", cmd);
-         ResponseGenerator respGen = cr.getComponent(ResponseGenerator.class);
+         ResponseGenerator respGen = cr.getResponseGenerator();
          Object retval = cmd.perform(null);
          return respGen.getResponse(cmd, retval);
       } catch (Exception e) {

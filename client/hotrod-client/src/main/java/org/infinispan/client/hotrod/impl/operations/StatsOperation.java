@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class StatsOperation extends RetryOnFailureOperation {
+public class StatsOperation extends RetryOnFailureOperation<Map<String, String>> {
 
    public StatsOperation(Codec codec, TransportFactory transportFactory,
             byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -53,7 +53,7 @@ public class StatsOperation extends RetryOnFailureOperation {
    }
 
    @Override
-   protected Object executeOperation(Transport transport) {
+   protected Map<String, String> executeOperation(Transport transport) {
       Map<String, String> result;
       // 1) write header
       HeaderParams params = writeHeader(transport, STATS_REQUEST);

@@ -61,8 +61,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.Util.*;
@@ -350,11 +348,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    final static class FutureCollator implements FutureListener<Object> {
       final RspFilter filter;
-      volatile RspList retval;
       final Map<Future<Object>, SenderContainer> futures = new HashMap<Future<Object>, SenderContainer>(4);
-      volatile Exception exception;
-      @GuardedBy("this") private int expectedResponses;
       final long timeout;
+      @GuardedBy("this") private RspList retval;
+      @GuardedBy("this") private Exception exception;
+      @GuardedBy("this") private int expectedResponses;
 
       FutureCollator(RspFilter filter, int expectedResponses, long timeout) {
          this.filter = filter;
@@ -367,28 +365,22 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          f.setListener(this);
       }
 
-      public RspList getResponseList() throws Exception {
-         boolean notTimedOut = true;
-         if (retval == null) { //first, see if we need to synch at all
-            synchronized (this) {
-               if (expectedResponses > 0 && retval == null) { //since we checked before acquiring _this_ some time might have passed already, try avoid nanoTime()
-                  final long giveupTimeNanos = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
-                  boolean firstLoop = true; //we just invoked nanoTime(), avoid doing it right away again
-                  while (notTimedOut && expectedResponses > 0 && retval == null) {
-                     notTimedOut = firstLoop || giveupTimeNanos > System.nanoTime();
-                     firstLoop = false;
-                     this.wait(timeout);
-                  }
-               }
+      public synchronized RspList getResponseList() throws Exception {
+         while (expectedResponses > 0 && retval == null) {
+            try {
+               this.wait(timeout);
+            } catch (InterruptedException e) {
+               // reset interruption flag
+               Thread.currentThread().interrupt();
+               expectedResponses = -1;
             }
          }
-
-         // if we've got here, we either have the response we need or aren't expecting any more responses - or have run out of time.
+         // Now we either have the response we need or aren't expecting any more responses - or have run out of time.
          if (retval != null)
             return retval;
          else if (exception != null)
             throw exception;
-         else if (notTimedOut)
+         else if (expectedResponses == 0)
             throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s", futures.values()));
          else
             throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.", Util.prettyPrintTime(timeout), futures.values()));
@@ -396,44 +388,48 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       @Override
       @SuppressWarnings("unchecked")
-      public void futureDone(Future<Object> objectFuture) {
-         synchronized (this) {
-            SenderContainer sc = futures.get(objectFuture);
-            if (sc.processed) {
-               // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
-               // could be notified twice.
-               if (trace) log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
-            } else {
-               sc.processed = true;
-               Address sender = sc.address;
-               try {
-                  if (retval == null) {
-                     Object response = objectFuture.get();
-                     if (trace) log.tracef("Received response: %s from %s", response, sender);
-                     filter.isAcceptable(response, sender);
-                     if (!filter.needMoreResponses())
-                        retval = new RspList(Collections.singleton(new Rsp(sender, response)));
-                  } else {
-                     if (trace)
-                        log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
+      public synchronized void futureDone(Future<Object> objectFuture) {
+         SenderContainer sc = futures.get(objectFuture);
+         if (sc.processed) {
+            // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
+            // could be notified twice.
+            if (trace) log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
+         } else {
+            sc.processed = true;
+            Address sender = sc.address;
+            boolean done = false;
+            try {
+               if (retval == null) {
+                  Object response = objectFuture.get();
+                  if (trace) log.tracef("Received response: %s from %s", response, sender);
+                  filter.isAcceptable(response, sender);
+                  if (!filter.needMoreResponses()) {
+                     retval = new RspList(Collections.singleton(new Rsp(sender, response)));
+                     done = true;
+                     //TODO cancel other tasks?
                   }
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               } catch (ExecutionException e) {
-                  exception = e;
-                  if (e.getCause() instanceof org.jgroups.TimeoutException)
-                     exception = new TimeoutException("Timeout!", e);
-                  else if (e.getCause() instanceof Exception)
-                     exception = (Exception) e.getCause();
-                  else
-                     exception = new CacheException("Caught a throwable", e.getCause());
+               } else {
+                  if (trace)
+                     log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
+               }
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+               exception = e;
+               if (e.getCause() instanceof org.jgroups.TimeoutException)
+                  exception = new TimeoutException("Timeout!", e);
+               else if (e.getCause() instanceof Exception)
+                  exception = (Exception) e.getCause();
+               else
+                  exception = new CacheException("Caught a throwable", e.getCause());
 
-                  if (log.isDebugEnabled())
-                     log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
-                  if (trace) log.trace("Exception caught: ", exception);
-               } finally {
-                  expectedResponses--;
-                  this.notify();
+               if (log.isDebugEnabled())
+                  log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
+               if (trace) log.trace("Exception caught: ", exception);
+            } finally {
+               expectedResponses--;
+               if (expectedResponses == 0 || done) {
+                  this.notify(); //make sure to awake waiting thread, but avoid unnecessary wakeups!
                }
             }
          }
