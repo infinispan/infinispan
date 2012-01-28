@@ -30,12 +30,16 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Map;
+
+import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
+import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
  * A version of the {@link DistributionInterceptor} that adds logic to handling prepares when entries are versioned.
@@ -57,43 +61,21 @@ public class VersionedDistributionInterceptor extends DistributionInterceptor {
       // Make sure this is 1-Phase!!
       PrepareCommand command = cf.buildVersionedPrepareCommand(commit.getGlobalTransaction(), ctx.getModifications(), true);
 
-      // Build a map of keys to versions as they were seen by the transaction originator's transaction context
-      EntryVersionsMap vs = new EntryVersionsMap();
-      for (CacheEntry ce: ctx.getLookedUpEntries().values()) {
-         vs.put(ce.getKey(), (IncrementableEntryVersion) ce.getVersion());
-      }
+      setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
 
-      // Make sure this version map is attached to the prepare command so that lock owners can perform write skew checks
-      ((VersionedPrepareCommand) command).setVersionsSeen(vs);
       return command;
    }
 
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
-
-      // Build a map of keys to versions as they were seen by the transaction originator's transaction context
-      EntryVersionsMap vs = new EntryVersionsMap();
-      for (WriteCommand wc : command.getModifications()) {
-         for (Object k : wc.getAffectedKeys()) {
-            vs.put(k, (IncrementableEntryVersion) ctx.lookupEntry(k).getVersion());
-         }
-      }
-
-      // Make sure this version map is attached to the prepare command so that lock owners can perform write skew checks
-      ((VersionedPrepareCommand) command).setVersionsSeen(vs);
+      setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
 
       // Perform the RPC
       Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, true, true);
 
       // Now store newly generated versions from lock owners for use during the commit phase.
       CacheTransaction ct = ctx.getCacheTransaction();
-      for (Response r : resps.values()) {
-         if (r != null && r.isSuccessful()) {
-            SuccessfulResponse sr = (SuccessfulResponse) r;
-            EntryVersionsMap uv = (EntryVersionsMap) sr.getResponseValue();
-            if (uv != null) ct.setUpdatedEntryVersions(uv.merge(ct.getUpdatedEntryVersions()));
-         }
-      }
+      for (Response r : resps.values()) readVersionsFromResponse(r, ct);
    }
 }
