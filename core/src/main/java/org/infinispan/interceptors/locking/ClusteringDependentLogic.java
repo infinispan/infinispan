@@ -41,11 +41,14 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+
+import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -82,6 +85,13 @@ public interface ClusteringDependentLogic {
       private DataContainer dataContainer;
 
       private RpcManager rpcManager;
+      private static final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+         @Override
+         public boolean performCheckOnKey(Object key) {
+            return true;
+         }
+      };
+
 
       @Inject
       public void init(DataContainer dc, RpcManager rpcManager) {
@@ -119,19 +129,9 @@ public interface ClusteringDependentLogic {
          // In REPL mode, this happens if we are the coordinator.
          if (rpcManager.getTransport().isCoordinator()) {
             // Perform a write skew check on each entry.
-            EntryVersionsMap uv = new EntryVersionsMap();
-            for (WriteCommand c : prepareCommand.getModifications()) {
-               for (Object k : c.getAffectedKeys()) {
-                  ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
-                  if (entry.performWriteSkewCheck(dataContainer)) {
-                     IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
-                     uv.put(k, newVersion);
-                  } else {
-                     // Write skew check detected!
-                     throw new CacheException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
-                  }
-               }
-            }
+            EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
+                                                                            versionGenerator, context,
+                                                                            keySpecificLogic);
             context.getCacheTransaction().setUpdatedEntryVersions(uv);
             return uv;
          }
@@ -145,6 +145,12 @@ public interface ClusteringDependentLogic {
       private DataContainer dataContainer;
       private Configuration configuration;
       private RpcManager rpcManager;
+      private final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+         @Override
+         public boolean performCheckOnKey(Object key) {
+            return localNodeIsOwner(key);
+         }
+      };
 
       @Inject
       public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration, RpcManager rpcManager) {
@@ -197,30 +203,10 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          // Perform a write skew check on mapped entries.
-         EntryVersionsMap uv = new EntryVersionsMap();
+         EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
+                                                                         versionGenerator, context,
+                                                                         keySpecificLogic);
 
-         for (WriteCommand c : prepareCommand.getModifications()) {
-            for (Object k : c.getAffectedKeys()) {
-
-               if (localNodeIsPrimaryOwner(k)) {
-                  ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
-
-                  if (!context.isOriginLocal()) {
-                     // What version did the transaction originator see??
-                     EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
-                     if (versionSeen != null) entry.setVersion(versionSeen);
-                  }
-
-                  if (entry.performWriteSkewCheck(dataContainer)) {
-                     IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
-                     uv.put(k, newVersion);
-                  } else {
-                     // Write skew check detected!
-                     throw new CacheException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
-                  }
-               }
-            }
-         }
          CacheTransaction cacheTransaction = context.getCacheTransaction();
          EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
          if (uvOld != null && !uvOld.isEmpty()) {
