@@ -49,11 +49,11 @@ public class ClusteredWriteSkewTest extends MultipleCacheManagersTest {
         assert c1.get(COUNTER_KEY) == 0 : "Initial value is different from zero in cache 1" ;
         assert c2.get(COUNTER_KEY) == 0 : "Initial value is different from zero in cache 2" ;
 
-        //this will keep the values putted by both threads. any duplicated value will be detected because of the
+        //this will keep the values put by both threads. any duplicated value will be detected because of the
         //return value of add() method
         ConcurrentSkipListSet<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<Integer>();
 
-        //create both threads (simulate a node)
+        //create both threads (simulates a node)
         IncrementCounterThread ict1 = new IncrementCounterThread("thread-node-1", c1, uniqueValuesIncremented);
         IncrementCounterThread ict2 = new IncrementCounterThread("thread-node-2", c2, uniqueValuesIncremented);
 
@@ -72,11 +72,11 @@ public class ClusteredWriteSkewTest extends MultipleCacheManagersTest {
         assert c1.get(COUNTER_KEY) >= COUNTER_MAX_VALUE : "Final value is less than " + COUNTER_MAX_VALUE +
                 " in cache 1" ;
         assert c2.get(COUNTER_KEY) >= COUNTER_MAX_VALUE : "Final value is less than " + COUNTER_MAX_VALUE +
-                " in cache 1" ;
+                " in cache 2" ;
 
         //check is any duplicated value is detected
-        assert ict1.result : ict1.getName() + " has putted a duplicated value";
-        assert ict2.result : ict2.getName() + " has putted a duplicated value";
+        assert ict1.result : ict1.getName() + " has put a duplicated value";
+        assert ict2.result : ict2.getName() + " has put a duplicated value";
     }
 
     private class IncrementCounterThread extends Thread {
@@ -112,13 +112,14 @@ public class ClusteredWriteSkewTest extends MultipleCacheManagersTest {
 
                         transactionManager.commit();
 
+                        //from javadoc: return true if this set did not already contain the specified element
                         result = uniqueValuesSet.add(value);
                     } catch (Throwable t) {
                         //lets rollback
                         transactionManager.rollback();
                     }
                 } catch (Throwable t) {
-                    //the only possible exception is thrown by the rollback. just ignore it
+                    //the only possible exception is thrown by the rollback method. just ignore it
                 } finally {
                     assert result : "Duplicate value found in " + getName() + " (value=" + lastValue + ")";
                 }
