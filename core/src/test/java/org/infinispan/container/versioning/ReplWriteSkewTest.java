@@ -38,31 +38,23 @@ import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 @Test(testName = "container.versioning.ReplWriteSkewTest", groups = "functional")
 @CleanupAfterMethod
-public class ReplWriteSkewTest extends MultipleCacheManagersTest {
+public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
+
    @Override
-   protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-
-      builder
-            .clustering()
-               .cacheMode(CacheMode.REPL_SYNC)
-            .versioning()
-               .enable()
-               .scheme(VersioningScheme.SIMPLE)
-            .locking()
-               .isolationLevel(IsolationLevel.REPEATABLE_READ)
-               .writeSkewCheck(true)
-            .transaction()
-               .lockingMode(LockingMode.OPTIMISTIC)
-               .syncCommitPhase(true);
-
-      createCluster(builder, 2);
-      waitForClusterToForm();
+   protected CacheMode getCacheMode() {
+      return CacheMode.REPL_SYNC;
    }
 
+   @Override
+   protected int clusterSize() {
+      return 2;
+   }
+   
    public void testWriteSkew() throws Exception {
       Cache<Object, Object> cache0 = cache(0);
       Cache<Object, Object> cache1 = cache(1);

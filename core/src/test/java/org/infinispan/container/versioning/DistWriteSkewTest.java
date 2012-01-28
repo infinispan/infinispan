@@ -43,35 +43,16 @@ import javax.transaction.Transaction;
 
 @Test(testName = "container.versioning.DistWriteSkewTest", groups = "functional")
 @CleanupAfterMethod
-public class DistWriteSkewTest extends MultipleCacheManagersTest {
+public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-
-      builder
-            .clustering()
-               .cacheMode(CacheMode.DIST_SYNC)
-               .l1()
-                  .disable()
-            .versioning()
-               .enable()
-               .scheme(VersioningScheme.SIMPLE)
-            .locking()
-               .isolationLevel(IsolationLevel.REPEATABLE_READ)
-               .writeSkewCheck(true)
-            .transaction()
-               .lockingMode(LockingMode.OPTIMISTIC)
-               .syncCommitPhase(true);
-
-      decorate(builder);
-
-      createCluster(builder, 4);
-      waitForClusterToForm();
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
    }
 
-   protected void decorate(ConfigurationBuilder builder) {
-      // No-op
+   @Override
+   protected int clusterSize() {
+      return 4;
    }
 
    public void testWriteSkew() throws Exception {
