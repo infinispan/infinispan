@@ -23,6 +23,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,5 +94,16 @@ public class VersionedPrepareCommand extends PrepareCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public String toString() {
+      return "VersionedPrepareCommand {" +
+            "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
+            ", onePhaseCommit=" + onePhaseCommit +
+            ", versionsSeen=" + versionsSeen +
+            ", gtx=" + globalTx +
+            ", cacheName='" + cacheName + '\'' +
+            '}';
    }
 }
