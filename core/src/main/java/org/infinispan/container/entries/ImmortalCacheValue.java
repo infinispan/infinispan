@@ -106,7 +106,7 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    @Override
    public String toString() {
-      return "ImmortalCacheValue{" +
+      return getClass().getSimpleName() + " {" +
             "value=" + value +
             '}';
    }

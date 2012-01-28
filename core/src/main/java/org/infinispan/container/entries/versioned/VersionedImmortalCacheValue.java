@@ -61,6 +61,14 @@ public class VersionedImmortalCacheValue extends ImmortalCacheValue implements V
       this.version = version;
    }
 
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + " {" +
+            "value=" + value +
+            ", version=" + version +
+            '}';
+   }
+
    public static class Externalizer extends AbstractExternalizer<VersionedImmortalCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, VersionedImmortalCacheValue icv) throws IOException {
