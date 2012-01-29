@@ -72,7 +72,8 @@ import static org.infinispan.util.Util.*;
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
-   private ExecutorService asyncExecutor;
+
+   private final ExecutorService asyncExecutor;
    private final InboundInvocationHandler inboundInvocationHandler;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
