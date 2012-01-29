@@ -37,7 +37,7 @@ import java.io.IOException;
  * @version 4.1
  * @see <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
  */
-public class GenericJBossMarshaller extends AbstractJBossMarshaller {
+public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
 
    /**
     * Marshaller thread local. In non-internal marshaller usages, such as Java
@@ -45,7 +45,7 @@ public class GenericJBossMarshaller extends AbstractJBossMarshaller {
     * static here. JBMAR clears pretty much any state during finish(), so no
     * urgent need to clear the thread local since it shouldn't be leaking.
     */
-   private ThreadLocal<org.jboss.marshalling.Marshaller> marshallerTL =
+   private final ThreadLocal<org.jboss.marshalling.Marshaller> marshallerTL =
          new ThreadLocal<org.jboss.marshalling.Marshaller>() {
       @Override
       protected org.jboss.marshalling.Marshaller initialValue() {
@@ -63,7 +63,7 @@ public class GenericJBossMarshaller extends AbstractJBossMarshaller {
     * for static here. JBMAR clears pretty much any state during finish(), so
     * no urgent need to clear the thread local since it shouldn't be leaking.
     */
-   private ThreadLocal<Unmarshaller> unmarshallerTL = new
+   private final ThreadLocal<Unmarshaller> unmarshallerTL = new
          ThreadLocal<Unmarshaller>() {
       @Override
       protected Unmarshaller initialValue() {
