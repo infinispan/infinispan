@@ -51,6 +51,11 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
       return new ObjectOutputStream(os);
    }
 
+   @Override @Deprecated
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+      throw new IllegalStateException("Should not invoke deprecated method anymore");
+   }
+
    @Override
    public void finishObjectOutput(ObjectOutput oo) {
       Util.flushAndCloseOutput(oo);
