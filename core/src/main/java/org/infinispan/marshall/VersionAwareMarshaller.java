@@ -129,6 +129,11 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       return out;
    }
 
+   @Deprecated @Override
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+      return startObjectOutput(os, isReentrant, 512);
+   }
+
    @Override
    public void finishObjectOutput(ObjectOutput oo) {
       defaultMarshaller.finishObjectOutput(oo);
