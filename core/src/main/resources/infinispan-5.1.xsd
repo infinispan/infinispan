@@ -818,6 +818,36 @@
                 </xs:attribute>
               </xs:complexType>
             </xs:element>
+            <xs:element name="stateTransfer" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and replication clustered modes.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="chunkSize" type="xs:int">
+                  <xs:annotation>
+                    <xs:documentation>
+                       If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries. If &lt;= 0, the state will be transferred in all at once. Not recommended.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="fetchInMemoryState" type="xs:boolean">
+                  <xs:annotation>
+                    <xs:documentation>
+                      If true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="timeout" type="xs:long">
+                  <xs:annotation>
+                    <xs:documentation>
+                      This is the maximum amount of time - in milliseconds - to wait for state from neighboring caches, before throwing an exception and aborting startup.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+              </xs:complexType>
+            </xs:element>
             <xs:element name="l1" minOccurs="0">
               <xs:annotation>
                 <xs:documentation>
@@ -1009,6 +1039,13 @@
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Enables storing both keys and values as binary.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="storeKeysAsBinary" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
