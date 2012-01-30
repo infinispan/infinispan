@@ -114,7 +114,7 @@ public class MarshalledValue implements Serializable {
             // Do NOT set instance to null over here, since it may be used elsewhere (e.g., in a cache listener).
             // this will be compacted by the MarshalledValueInterceptor when the call returns.
             ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(this.serialisedSize);
-            ObjectOutput out = marshaller.startObjectOutput(baos, true);
+            ObjectOutput out = marshaller.startObjectOutput(baos, true, this.serialisedSize);
             try {
                marshaller.objectToObjectStream(instance, out);
             } finally {

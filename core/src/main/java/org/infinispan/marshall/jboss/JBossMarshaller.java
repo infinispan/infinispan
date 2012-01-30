@@ -51,7 +51,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    ExternalizerTable externalizerTable;
 
    public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
-      if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
+      log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
       baseCfg.setObjectTable(externalizerTable);
       // Override the class resolver with one that can detect injected
@@ -60,7 +60,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    }
 
    @Override
-   protected Marshaller getMarshaller(boolean isReentrant) throws IOException {
+   protected Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException {
       return factory.createMarshaller(baseCfg);
    }
 
