@@ -540,7 +540,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } finally {
@@ -577,7 +577,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false ,12);
       try {
          oo.write(dummyStartBytes);
          cs.toStream(new UnclosableObjectOutputStream(oo));
