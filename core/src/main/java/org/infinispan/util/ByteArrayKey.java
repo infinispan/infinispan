@@ -44,13 +44,15 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.1
  */
-public class ByteArrayKey implements Serializable {
+public final class ByteArrayKey implements Serializable {
 
    private static final long serialVersionUID = 7305972805432411725L;
    private final byte[] data;
+   private final int hashCode;
 
    public ByteArrayKey(byte[] data) {
       this.data = data;
+      this.hashCode = 41 + Arrays.hashCode(data);
    }
 
    public byte[] getData() {
@@ -60,14 +62,14 @@ public class ByteArrayKey implements Serializable {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
+      if (obj == null || ByteArrayKey.class != obj.getClass()) return false;
       ByteArrayKey key = (ByteArrayKey) obj;
       return Arrays.equals(key.data, this.data);
    }
 
    @Override
    public int hashCode() {
-      return 41 + Arrays.hashCode(data);
+      return hashCode;
    }
 
    @Override
