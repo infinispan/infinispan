@@ -26,6 +26,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
@@ -50,6 +51,21 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
    ExternalizerTable externalizerTable;
 
+   private final ThreadLocal<PerThreadInstanceHolder> marshallerTL = new ThreadLocal<PerThreadInstanceHolder>() {
+      @Override
+      protected PerThreadInstanceHolder initialValue() {
+         Marshaller marshaller = null;
+         try {
+            marshaller = factory.createMarshaller(baseCfg);
+         } catch (IOException e) {
+            log.error("Could not create Marshaller to pool. Performance will be reduced!", e);
+            return null;
+         }
+         MarshallingConfiguration cfg = baseCfg.clone();
+         return new PerThreadInstanceHolder(cfg, marshaller);
+      }
+   };
+
    public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
       log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
@@ -61,7 +77,20 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
    @Override
    protected Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException {
-      return factory.createMarshaller(baseCfg);
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      if (instanceHolder == null) {
+         //not expected to happen: only for the case we get an IOException in the #initialValue of the threadlocal
+         //slowest option:
+         return factory.createMarshaller(baseCfg);
+      }
+      if (isReentrant) {
+         MarshallingConfiguration customConfiguration = instanceHolder.threadDedicatedConfiguration;
+         customConfiguration.setBufferSize(estimatedSize);
+         return factory.createMarshaller(customConfiguration);
+      }
+      else {
+         return instanceHolder.reusableMarshaller;
+      }
    }
 
    @Override
@@ -105,6 +134,15 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
             }
          }
          return super.getClassLoader();
+      }
+   }
+
+   public static final class PerThreadInstanceHolder {
+      final MarshallingConfiguration threadDedicatedConfiguration;
+      final Marshaller reusableMarshaller;
+      PerThreadInstanceHolder(final MarshallingConfiguration threadDedicatedConfiguration, final Marshaller reusableMarshaller) {
+         this.threadDedicatedConfiguration = threadDedicatedConfiguration;
+         this.reusableMarshaller = reusableMarshaller;
       }
    }
 
