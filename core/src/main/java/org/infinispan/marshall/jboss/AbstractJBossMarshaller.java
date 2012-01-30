@@ -86,6 +86,11 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return marshaller;
    }
 
+   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
+      return startObjectOutput(os, isReentrant, 512);
+   }
+
+
    protected abstract Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException;
 
    final public void finishObjectOutput(final ObjectOutput oo) {
