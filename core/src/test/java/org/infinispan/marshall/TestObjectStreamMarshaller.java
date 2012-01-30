@@ -47,7 +47,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
    }
 
    @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int expectedByteSize) throws IOException {
       return new ObjectOutputStream(os);
    }
 

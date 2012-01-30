@@ -58,7 +58,7 @@ public class SharedStreamMultiMarshallerTest {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);
          ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(1024);
-         ObjectOutput globalOO = globalMarshal.startObjectOutput(baos, false);
+         ObjectOutput globalOO = globalMarshal.startObjectOutput(baos, false, 1024);
          try {
             globalOO.writeObject(address);
             /** BEGIN: Special treatment **/
@@ -69,7 +69,7 @@ public class SharedStreamMultiMarshallerTest {
 
             // Now try cache marshaller to 'borrow' the output stream
             StreamingMarshaller cacheMarshaller = extractCacheMarshaller(cm.getCache());
-            ObjectOutput cacheOO = cacheMarshaller.startObjectOutput(baos, true);
+            ObjectOutput cacheOO = cacheMarshaller.startObjectOutput(baos, true, 1024);
             try {
                cacheOO.writeObject(cmd);
             } finally {
@@ -120,7 +120,7 @@ public class SharedStreamMultiMarshallerTest {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);
          ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(1024);
-         ObjectOutput globalOO = globalMarshal.startObjectOutput(baos, false);
+         ObjectOutput globalOO = globalMarshal.startObjectOutput(baos, false, 1024);
          try {
             globalOO.writeObject(address);
          } finally {
