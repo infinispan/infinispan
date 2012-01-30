@@ -45,24 +45,20 @@ import java.io.IOException;
  * Unknown types (typically user data) falls back to Java serialization.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 4.0
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
+
+   private static final int PER_THREAD_REUSABLE_INSTANCES = 4;
 
    ExternalizerTable externalizerTable;
 
    private final ThreadLocal<PerThreadInstanceHolder> marshallerTL = new ThreadLocal<PerThreadInstanceHolder>() {
       @Override
       protected PerThreadInstanceHolder initialValue() {
-         Marshaller marshaller = null;
-         try {
-            marshaller = factory.createMarshaller(baseCfg);
-         } catch (IOException e) {
-            log.error("Could not create Marshaller to pool. Performance will be reduced!", e);
-            return null;
-         }
          MarshallingConfiguration cfg = baseCfg.clone();
-         return new PerThreadInstanceHolder(cfg, marshaller);
+         return new PerThreadInstanceHolder(cfg);
       }
    };
 
@@ -78,24 +74,13 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    @Override
    protected Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException {
       PerThreadInstanceHolder instanceHolder = marshallerTL.get();
-      if (instanceHolder == null) {
-         //not expected to happen: only for the case we get an IOException in the #initialValue of the threadlocal
-         //slowest option:
-         return factory.createMarshaller(baseCfg);
-      }
-      if (isReentrant) {
-         MarshallingConfiguration customConfiguration = instanceHolder.threadDedicatedConfiguration;
-         customConfiguration.setBufferSize(estimatedSize);
-         return factory.createMarshaller(customConfiguration);
-      }
-      else {
-         return instanceHolder.reusableMarshaller;
-      }
+      return instanceHolder.getMarshaller(estimatedSize);
    }
 
    @Override
    protected Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
-      return factory.createUnmarshaller(baseCfg);
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      return instanceHolder.getUnmarshaller();
    }
 
    @Override
@@ -137,12 +122,71 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       }
    }
 
-   public static final class PerThreadInstanceHolder {
-      final MarshallingConfiguration threadDedicatedConfiguration;
-      final Marshaller reusableMarshaller;
-      PerThreadInstanceHolder(final MarshallingConfiguration threadDedicatedConfiguration, final Marshaller reusableMarshaller) {
-         this.threadDedicatedConfiguration = threadDedicatedConfiguration;
-         this.reusableMarshaller = reusableMarshaller;
+   private static final class PerThreadInstanceHolder implements RiverCloseListener {
+
+      final MarshallingConfiguration configuration;
+      final ExtendedRiverMarshaller[] reusableMarshaller = new ExtendedRiverMarshaller[PER_THREAD_REUSABLE_INSTANCES];
+      int availableMarshallerIndex = 0;
+      final ExtendedRiverUnmarshaller[] reusableUnMarshaller = new ExtendedRiverUnmarshaller[PER_THREAD_REUSABLE_INSTANCES];
+      int availableUnMarshallerIndex = 0;
+
+      PerThreadInstanceHolder(final MarshallingConfiguration threadDedicatedConfiguration) {
+         this.configuration = threadDedicatedConfiguration;
+      }
+
+      Unmarshaller getUnmarshaller() throws IOException {
+         if (availableUnMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+            //we're above the pool threshold: make a throw-away-after usage Marshaller
+            configuration.setBufferSize(512);//reset to default
+            return factory.createUnmarshaller(configuration);
+         }
+         else {
+            ExtendedRiverUnmarshaller unMarshaller = reusableUnMarshaller[availableUnMarshallerIndex];
+            if (unMarshaller != null) {
+               availableUnMarshallerIndex++;
+               return unMarshaller;
+            }
+            else {
+               configuration.setBufferSize(512);//reset to default
+               unMarshaller = factory.createUnmarshaller(configuration);
+               unMarshaller.setCloseListener(this);
+               reusableUnMarshaller[availableUnMarshallerIndex] = unMarshaller;
+               availableUnMarshallerIndex++;
+               return unMarshaller;
+            }
+         }
+      }
+
+      ExtendedRiverMarshaller getMarshaller(int estimatedSize) throws IOException {
+         if (availableMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+            //we're above the pool threshold: make a throw-away-after usage Marshaller
+            configuration.setBufferSize(estimatedSize);
+            return factory.createMarshaller(configuration);
+         }
+         else {
+            ExtendedRiverMarshaller marshaller = reusableMarshaller[availableMarshallerIndex];
+            if (marshaller != null) {
+               availableMarshallerIndex++;
+               return marshaller;
+            }
+            else {
+               marshaller = factory.createMarshaller(configuration);
+               marshaller.setCloseListener(this);
+               reusableMarshaller[availableMarshallerIndex] = marshaller;
+               availableMarshallerIndex++;
+               return marshaller;
+            }
+         }
+      }
+
+      @Override
+      public void closeMarshaller() {
+         availableMarshallerIndex--;
+      }
+
+      @Override
+      public void closeUnmarshaller() {
+         availableUnMarshallerIndex--;
       }
    }
 

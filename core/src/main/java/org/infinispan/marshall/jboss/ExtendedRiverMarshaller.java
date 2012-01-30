@@ -35,9 +35,23 @@ import java.io.IOException;
  */
 public class ExtendedRiverMarshaller extends RiverMarshaller {
 
+   private RiverCloseListener listener;
+
    public ExtendedRiverMarshaller(RiverMarshallerFactory factory,
          SerializableClassRegistry registry, MarshallingConfiguration cfg) throws IOException {
       super(factory, registry, cfg);
+   }
+
+   @Override
+   public void finish() throws IOException {
+      super.finish();
+      if (listener != null) {
+         listener.closeMarshaller();
+      }
+   }
+
+   void setCloseListener(RiverCloseListener listener) {
+      this.listener = listener;
    }
 
 }
