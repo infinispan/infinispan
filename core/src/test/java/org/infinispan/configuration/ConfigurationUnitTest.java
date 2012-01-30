@@ -24,6 +24,7 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -174,6 +175,17 @@ public class ConfigurationUnitTest {
       } finally {
          TestingUtil.killCacheManagers(manager);
       }
+   }
+   
+   @Test
+   public void testClearCacheLoaders() {
+      Configuration c = new ConfigurationBuilder()
+            .loaders()
+               .addCacheLoader()
+            .loaders()
+               .clearCacheLoaders()
+         .build();
+      assertEquals(c.loaders().cacheLoaders().size(), 0);
    }
    
 }
