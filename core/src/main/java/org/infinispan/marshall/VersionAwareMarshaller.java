@@ -81,7 +81,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    @Override
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutput out = startObjectOutput(baos, false);
+      ObjectOutput out = startObjectOutput(baos, false, estimatedSize);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
       } catch (java.io.NotSerializableException nse) {
@@ -115,8 +115,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    }
 
    @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
-      ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException {
+      ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant, estimatedSize);
       try {
          final int version = VERSION_510;
          out.writeShort(version);
