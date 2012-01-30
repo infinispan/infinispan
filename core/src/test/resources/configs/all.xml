@@ -75,6 +75,7 @@
           </hash>
           <l1 enabled="true" invalidationThreshold="1" lifespan="1" onRehash="true"/>
           <stateRetrieval alwaysProvideInMemoryState="true" fetchInMemoryState="true" initialRetryWaitTime="1" logFlushTimeout="1" maxNonProgressingLogWrites="1" numRetries="1" retryWaitTimeIncreaseFactor="1" timeout="1"/>
+          <stateTransfer chunkSize="1" fetchInMemoryState="true" timeout="1"/>
           <sync replTimeout="1"/>
         </clustering>
         <customInterceptors>
@@ -110,7 +111,7 @@
           </loader>
         </loaders>
         <locking concurrencyLevel="1" isolationLevel="NONE" lockAcquisitionTimeout="1" useLockStriping="true" writeSkewCheck="true"/>
-        <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="true"/>
+        <storeAsBinary enabled="true" storeKeysAsBinary="true" storeValuesAsBinary="true"/>
         <transaction autoCommit="true" cacheStopTimeout="1" eagerLockSingleNode="true" lockingMode="OPTIMISTIC" syncCommitPhase="true" syncRollbackPhase="true" transactionManagerLookupClass="com.acme.TransactionManagerLookup" transactionMode="NON_TRANSACTIONAL" use1PcForAutoCommitTransactions="true" useEagerLocking="true" useSynchronization="true">
           <recovery enabled="true"/>
         </transaction>
