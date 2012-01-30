@@ -4,13 +4,13 @@ import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Xid to be used whe no XAResource enlistment takes place. This is more efficient both creation and memory wise than
+ * Xid to be used when no XAResource enlistment takes place. This is more efficient both creation and memory wise than
  * {@link DummyXid}.
  *
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
  * @since 5.1
  */
-public class DummyNoXaXid implements Xid {
+public final class DummyNoXaXid implements Xid {
 
    private static final AtomicInteger txIdCounter = new AtomicInteger(0);
    private final int id = txIdCounter.incrementAndGet();
