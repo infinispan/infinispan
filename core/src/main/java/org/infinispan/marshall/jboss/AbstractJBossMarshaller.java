@@ -8,7 +8,6 @@ import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
@@ -39,7 +38,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
    protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
    protected static final boolean trace = log.isTraceEnabled();
-   protected static final MarshallerFactory factory = new JBossMarshallerFactory();
+   protected static final JBossMarshallerFactory factory = new JBossMarshallerFactory();
    protected static final int DEF_INSTANCE_COUNT = 16;
    protected static final int DEF_CLASS_COUNT = 8;
 
