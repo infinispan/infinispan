@@ -71,7 +71,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    @Override
    final protected ByteBuffer objectToBuffer(final Object o, final int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutput marshaller = startObjectOutput(baos, false);
+      ObjectOutput marshaller = startObjectOutput(baos, false, estimatedSize);
       try {
          objectToObjectStream(o, marshaller);
       } finally {
@@ -80,13 +80,13 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
-   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
-      org.jboss.marshalling.Marshaller marshaller = getMarshaller(isReentrant);
+   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
+      org.jboss.marshalling.Marshaller marshaller = getMarshaller(isReentrant, estimatedSize);
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
 
-   protected abstract Marshaller getMarshaller(boolean isReentrant) throws IOException;
+   protected abstract Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException;
 
    final public void finishObjectOutput(final ObjectOutput oo) {
       try {

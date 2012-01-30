@@ -81,7 +81,7 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
             new DefaultContextClassResolver(this.getClass().getClassLoader()));
    }
 
-   protected Marshaller getMarshaller(boolean isReentrant) throws IOException {
+   protected Marshaller getMarshaller(boolean isReentrant, int expectedByteSize) throws IOException {
       Marshaller marshaller = isReentrant ?
             factory.createMarshaller(baseCfg) : marshallerTL.get();
 
