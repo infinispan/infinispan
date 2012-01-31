@@ -98,23 +98,14 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
-      org.jboss.marshalling.Marshaller marshaller = getMarshaller(isReentrant, estimatedSize);
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      org.jboss.marshalling.Marshaller marshaller = instanceHolder.getMarshaller(estimatedSize);
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
 
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
       return startObjectOutput(os, isReentrant, 512);
-   }
-
-   private final Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException {
-      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
-      return instanceHolder.getMarshaller(estimatedSize);
-   }
-
-   private final Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
-      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
-      return instanceHolder.getUnmarshaller();
    }
 
    final public void finishObjectOutput(final ObjectOutput oo) {
@@ -141,7 +132,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    final public ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
-      Unmarshaller unmarshaller = getUnmarshaller(isReentrant);
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      Unmarshaller unmarshaller = instanceHolder.getUnmarshaller();
 
       if (trace)
          log.tracef("Start unmarshaller after retrieving marshaller from %s",
