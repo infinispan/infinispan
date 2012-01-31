@@ -22,18 +22,20 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.infinispan.util.Util;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Consistent hash that is aware of cluster topology. Design described here: http://community.jboss.org/wiki/DesigningServerHinting.
@@ -55,6 +57,8 @@ import java.util.TreeSet;
  * @since 4.2
  */
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   private static final Log LOG = LogFactory.getLog(DefaultConsistentHash.class);
+
    private enum Level { SITE, RACK, MACHINE, NONE }
 
    private SortedSet<Integer> siteIdChangeIndexes = new TreeSet<Integer>();
@@ -188,6 +192,11 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
             return true;
       }
       return false;
+   }
+
+   @Override
+   protected Log getLog() {
+      return LOG;
    }
 
    public static class Externalizer extends AbstractWheelConsistentHash.Externalizer<TopologyAwareConsistentHash> {
