@@ -22,12 +22,6 @@
  */
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.CacheException;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
-
 /**
  * A marshaller that makes use of <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
  * to serialize and deserialize objects. This marshaller is oriented at external,
@@ -39,68 +33,10 @@ import java.io.IOException;
  */
 public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
 
-   /**
-    * Marshaller thread local. In non-internal marshaller usages, such as Java
-    * Hot Rod client, this is a singleton shared by all so no urgent need for
-    * static here. JBMAR clears pretty much any state during finish(), so no
-    * urgent need to clear the thread local since it shouldn't be leaking.
-    */
-   private final ThreadLocal<org.jboss.marshalling.Marshaller> marshallerTL =
-         new ThreadLocal<org.jboss.marshalling.Marshaller>() {
-      @Override
-      protected org.jboss.marshalling.Marshaller initialValue() {
-         try {
-            return factory.createMarshaller(baseCfg);
-         } catch (IOException e) {
-            throw new CacheException(e);
-         }
-      }
-   };
-
-   /**
-    * Unmarshaller thread local. In non-internal marshaller usages, such as
-    * Java Hot Rod client, this is a singleton shared by all so no urgent need
-    * for static here. JBMAR clears pretty much any state during finish(), so
-    * no urgent need to clear the thread local since it shouldn't be leaking.
-    */
-   private final ThreadLocal<Unmarshaller> unmarshallerTL = new
-         ThreadLocal<Unmarshaller>() {
-      @Override
-      protected Unmarshaller initialValue() {
-         try {
-            return factory.createUnmarshaller(baseCfg);
-         } catch (IOException e) {
-            throw new CacheException(e);
-         }
-      }
-   };
-
    public GenericJBossMarshaller() {
       super();
       baseCfg.setClassResolver(
             new DefaultContextClassResolver(this.getClass().getClassLoader()));
-   }
-
-   protected Marshaller getMarshaller(boolean isReentrant) throws IOException {
-      Marshaller marshaller = isReentrant ?
-            factory.createMarshaller(baseCfg) : marshallerTL.get();
-
-      if (log.isTraceEnabled())
-         log.tracef("Start marshaller after retrieving marshaller from %s",
-                   isReentrant ? "factory" : "thread local");
-
-      return marshaller;
-   }
-
-   protected Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
-      Unmarshaller unmarshaller = isReentrant ?
-            factory.createUnmarshaller(baseCfg) : unmarshallerTL.get();
-
-      if (log.isTraceEnabled())
-         log.tracef("Start unmarshaller after retrieving marshaller from %s",
-                   isReentrant ? "factory" : "thread local");
-
-      return unmarshaller;
    }
 
 }

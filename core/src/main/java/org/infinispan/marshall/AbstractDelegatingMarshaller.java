@@ -25,6 +25,11 @@ public abstract class AbstractDelegatingMarshaller implements StreamingMarshalle
    }
 
    @Override
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException {
+      return marshaller.startObjectOutput(os, isReentrant, estimatedSize);
+   }
+
+   @Override @Deprecated
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       return marshaller.startObjectOutput(os, isReentrant);
    }

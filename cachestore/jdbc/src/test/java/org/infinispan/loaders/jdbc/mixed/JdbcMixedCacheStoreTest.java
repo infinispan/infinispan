@@ -131,7 +131,7 @@ public class JdbcMixedCacheStoreTest {
       assertRowCounts(2, 2);
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cacheStore.toStream(new UnclosableObjectOutputStream(oo));
       } finally {

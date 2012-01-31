@@ -26,6 +26,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
@@ -44,29 +45,20 @@ import java.io.IOException;
  * Unknown types (typically user data) falls back to Java serialization.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 4.0
  */
-public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
+public final class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
    ExternalizerTable externalizerTable;
 
    public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
-      if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
+      log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
       baseCfg.setObjectTable(externalizerTable);
       // Override the class resolver with one that can detect injected
       // classloaders via AdvancedCache.with(ClassLoader) calls.
       baseCfg.setClassResolver(new EmbeddedContextClassResolver(cl, icc));
-   }
-
-   @Override
-   protected Marshaller getMarshaller(boolean isReentrant) throws IOException {
-      return factory.createMarshaller(baseCfg);
-   }
-
-   @Override
-   protected Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
-      return factory.createUnmarshaller(baseCfg);
    }
 
    @Override

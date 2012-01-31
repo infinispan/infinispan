@@ -68,10 +68,17 @@ public interface StreamingMarshaller extends Marshaller {
     * and the close finish with it.</p>
     *
     * @param os output stream
-    * @param isReentrant whether the call is reentrant or not. 
+    * @param isReentrant whether the call is reentrant or not.
+    * @param estimatedSize estimated size in bytes of the output. Only meant as a possible performance optimization.
     * @return ObjectOutput to write to
     * @throws IOException
     */
+   ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException;
+
+   /**
+    * Use {@link #startObjectOutput(OutputStream, boolean, int)} instead
+    */
+   @Deprecated
    ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException;
 
    /**
@@ -103,7 +110,7 @@ public interface StreamingMarshaller extends Marshaller {
     * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p> 
     *  
     * @param is input stream
-    * @param isReentrant whether the call is reentrant or not. 
+    * @param isReentrant whether the call is reentrant or not.
     * @return ObjectInput to read from
     * @throws IOException
     */

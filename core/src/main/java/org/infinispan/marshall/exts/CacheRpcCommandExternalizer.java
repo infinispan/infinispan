@@ -121,7 +121,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
       int estimatedSize = sizePredictor.nextSize(cmd);
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutput output = marshaller.startObjectOutput(baos, true);
+      ObjectOutput output = marshaller.startObjectOutput(baos, true, estimatedSize);
       try {
          commandExt.writeCommandParameters(output, cmd);
       } finally {
