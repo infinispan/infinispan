@@ -22,9 +22,9 @@
  */
 package org.infinispan.distribution.ch;
 
-import static org.infinispan.util.Util.formatString;
-
 import org.infinispan.remoting.transport.Address;
+
+import static org.infinispan.util.Util.formatString;
 
 /**
  * Virtual addresses are used internally by the consistent hashes in order to provide virtual nodes.
@@ -35,7 +35,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Pete Muir
  *
  */
-class VirtualAddress implements Address {
+public class VirtualAddress implements Address {
    
    private final Address realAddress;
    private final int id;

@@ -34,7 +34,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    private ConsistentHash consistentHash;
    private Hash hash = new MurmurHash3();
    private int numOwners = 2;
-   private int numVirtualNodes = 1;
+   // See VNodesKeyDistributionTest for an explanation of how we came up with the number of nodes
+   private int numVirtualNodes = 48;
    private boolean activated = false;
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
