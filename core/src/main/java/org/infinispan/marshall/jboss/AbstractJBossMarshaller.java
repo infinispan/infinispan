@@ -8,7 +8,6 @@ import org.infinispan.util.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;
-import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
@@ -34,6 +33,7 @@ import static org.infinispan.util.Util.EMPTY_OBJECT_ARRAY;
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
+ * @author Dan Berindei
  * @since 5.0
  */
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller implements StreamingMarshaller {
@@ -44,6 +44,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    protected static final int DEF_INSTANCE_COUNT = 16;
    protected static final int DEF_CLASS_COUNT = 8;
    private static final int PER_THREAD_REUSABLE_INSTANCES = 6;
+   private static final int RIVER_INTERNAL_BUFFER = 512;
 
    protected final MarshallingConfiguration baseCfg;
 
@@ -105,7 +106,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
-      return startObjectOutput(os, isReentrant, 512);
+      return startObjectOutput(os, isReentrant, RIVER_INTERNAL_BUFFER);
    }
 
    final public void finishObjectOutput(final ObjectOutput oo) {
@@ -259,9 +260,10 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       }
 
       Unmarshaller getUnmarshaller() throws IOException {
+         //as opposing to getMarshaller(int), in this case we don't have a good hint about initial buffer sizing
          if (availableUnMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
             //we're above the pool threshold: make a throw-away-after usage Marshaller
-            configuration.setBufferSize(512);//reset to default
+            configuration.setBufferSize(512);//reset to default as it might be changed by getMarshaller
             return factory.createUnmarshaller(configuration);
          }
          else {
@@ -271,7 +273,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
                return unMarshaller;
             }
             else {
-               configuration.setBufferSize(512);//reset to default
+               configuration.setBufferSize(RIVER_INTERNAL_BUFFER);//reset to default as it might be changed by getMarshaller
                unMarshaller = factory.createUnmarshaller(configuration);
                unMarshaller.setCloseListener(this);
                reusableUnMarshaller[availableUnMarshallerIndex] = unMarshaller;
@@ -284,6 +286,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       ExtendedRiverMarshaller getMarshaller(int estimatedSize) throws IOException {
          if (availableMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
             //we're above the pool threshold: make a throw-away-after usage Marshaller
+            //setting the buffer as cheap as possible:
             configuration.setBufferSize(estimatedSize);
             return factory.createMarshaller(configuration);
          }
@@ -294,6 +297,9 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
                return marshaller;
             }
             else {
+               //we're going to pool this one, make sure the buffer size is set to a reasonable value
+               //as we might have changed it previously:
+               configuration.setBufferSize(RIVER_INTERNAL_BUFFER);
                marshaller = factory.createMarshaller(configuration);
                marshaller.setCloseListener(this);
                reusableMarshaller[availableMarshallerIndex] = marshaller;
