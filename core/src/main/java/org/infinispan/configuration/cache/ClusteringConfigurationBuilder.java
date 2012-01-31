@@ -86,8 +86,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * Configure sync sub element. Once this method is invoked users cannot subsequently invoke
-    * <code>configureAsync()</code> as two are mutually exclusive
+    * Configure the {@code stateTransfer} sub element for distributed and replicated caches.
+    * It doesn't have any effect on LOCAL or INVALIDATION-mode caches.
     */
    @Override
    public StateTransferConfigurationBuilder stateTransfer() {
