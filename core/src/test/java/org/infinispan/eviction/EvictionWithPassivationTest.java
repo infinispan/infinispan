@@ -35,6 +35,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "eviction.EvictionWithPassivationTest")
 public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
+   private final int evictionMaxEntries = 2; 
+    
    private Configuration buildCfg(EvictionThreadPolicy threadPolicy, EvictionStrategy strategy) {
       Configuration cfg = new Configuration();
       CacheStoreConfig cacheStoreConfig = new DummyInMemoryCacheStore.Cfg();
@@ -43,7 +45,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       cfg.getCacheLoaderManagerConfig().setPassivation(true);
       cfg.setEvictionStrategy(strategy);
       cfg.setEvictionThreadPolicy(threadPolicy);
-      cfg.setEvictionMaxEntries(2);
+      cfg.setEvictionMaxEntries(evictionMaxEntries);
       cfg.setInvocationBatchingEnabled(true);
       return cfg;
    }
@@ -103,6 +105,12 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       testCache.put("Y", "4568");
       testCache.put("Z", "4569");
 
+      if (!s.equals(EvictionStrategy.NONE)) {
+         assert evictionMaxEntries == testCache.size() : "Cache size should be " + evictionMaxEntries;
+         testCache.get("X");
+         assert evictionMaxEntries == testCache.size() : "Cache size should be " + evictionMaxEntries;
+      }
+      
       assert "4567".equals( testCache.get("X") ) : "Failure on test " + name;
       assert "4568".equals( testCache.get("Y") ) : "Failure on test " + name;
       assert "4569".equals( testCache.get("Z") ) : "Failure on test " + name;
