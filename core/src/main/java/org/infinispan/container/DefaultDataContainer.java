@@ -136,7 +136,7 @@ public class DefaultDataContainer implements DataContainer {
       InternalCacheEntry e = entries.get(k);
       if (e != null) {
          e.setValue(v);
-         InternalCacheEntry original = e.clone();
+         InternalCacheEntry original = e;
          e.setVersion(version);
          e = entryFactory.update(e, lifespan, maxIdle);
          // we have the same instance. So we need to reincarnate.
