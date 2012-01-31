@@ -19,6 +19,10 @@
 
 package org.infinispan.cacheviews;
 
+import java.util.List;
+
+import org.infinispan.remoting.MembershipArithmetic;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,7 +47,7 @@ public class CacheViewInfo {
    private volatile CacheViewListener listener;
 
    // The view installation task - only used if this node is the coordinator
-   private volatile PendingCacheViewChanges pendingChanges;
+   private final PendingCacheViewChanges pendingChanges;
 
 
    public CacheViewInfo(String cacheName, CacheView initialView) {
@@ -146,5 +150,15 @@ public class CacheViewInfo {
 
    boolean hasPendingView() {
       return getPendingView() != null || getPendingChanges().isViewInstallationInProgress();
+   }
+
+   /**
+    * @return The list of members that are no longer present in the {@code newMembers} list.
+    * Includes both committed and pending members.
+    */
+   public List<Address> computeLeavers(List<Address> newMembers) {
+      List<Address> leavers = MembershipArithmetic.getMembersLeft(getCommittedView().getMembers(), newMembers);
+      leavers.addAll(getPendingChanges().computeMissingJoiners(newMembers));
+      return leavers;
    }
 }
