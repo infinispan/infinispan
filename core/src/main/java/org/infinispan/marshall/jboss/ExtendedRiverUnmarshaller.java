@@ -19,6 +19,8 @@
 
 package org.infinispan.marshall.jboss;
 
+import java.io.IOException;
+
 import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
@@ -36,6 +38,7 @@ import org.jboss.marshalling.river.RiverUnmarshaller;
 public class ExtendedRiverUnmarshaller extends RiverUnmarshaller {
 
    private StreamingMarshaller infinispanMarshaller;
+   private RiverCloseListener listener;
 
    protected ExtendedRiverUnmarshaller(RiverMarshallerFactory factory,
          SerializableClassRegistry registry, MarshallingConfiguration cfg) {
@@ -48,6 +51,18 @@ public class ExtendedRiverUnmarshaller extends RiverUnmarshaller {
 
    public void setInfinispanMarshaller(StreamingMarshaller infinispanMarshaller) {
       this.infinispanMarshaller = infinispanMarshaller;
+   }
+
+   void setCloseListener(RiverCloseListener closeListener) {
+      this.listener = closeListener;
+   }
+
+   @Override
+   public void finish() throws IOException {
+      super.finish();
+      if (listener != null) {
+         listener.closeUnmarshaller();
+      }
    }
 
 }

@@ -24,6 +24,15 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.testng.Assert.assertEquals;
+
+import java.io.File;
+import java.net.URL;
+
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -36,6 +45,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -176,4 +187,23 @@ public class ConfigurationUnitTest {
       }
    }
    
+   @Test
+   public void testClearCacheLoaders() {
+      Configuration c = new ConfigurationBuilder()
+            .loaders()
+               .addCacheLoader()
+            .loaders()
+               .clearCacheLoaders()
+         .build();
+      assertEquals(c.loaders().cacheLoaders().size(), 0);
+   }
+   
+   @Test
+   public void testSchema() throws Exception {
+      FileLookup lookup = FileLookupFactory.newInstance();
+      URL schemaFile = lookup.lookupFileLocation("infinispan-5.1.xsd", Thread.currentThread().getContextClassLoader());
+      Source xmlFile = new StreamSource(lookup.lookupFile("configs/all.xml", Thread.currentThread().getContextClassLoader()));
+      SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
+   }
+
 }

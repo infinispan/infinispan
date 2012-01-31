@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class RemoveOperation extends AbstractKeyOperation {
+public class RemoveOperation extends AbstractKeyOperation<byte[]> {
 
    public RemoveOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -46,7 +46,7 @@ public class RemoveOperation extends AbstractKeyOperation {
    }
 
    @Override
-   public Object executeOperation(Transport transport) {
+   public byte[] executeOperation(Transport transport) {
       byte[] result = null;
       short status = sendKeyOperation(key, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
       if (status == KEY_DOES_NOT_EXIST_STATUS) {

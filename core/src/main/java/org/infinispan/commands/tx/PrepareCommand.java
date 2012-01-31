@@ -194,8 +194,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
     @Override
     public String toString() {
         return "PrepareCommand {" +
-                "gtx=" + globalTx +
-                ", modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
+                "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
                 ", onePhaseCommit=" + onePhaseCommit +
                 ", totalOrder=" + totalOrdered +
                 ", " + super.toString();

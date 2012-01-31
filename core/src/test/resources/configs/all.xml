@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:5.1 ../../../../src/main/resources/infinispan-5.1.xsd"
+      xmlns="urn:infinispan:config:5.1">
+      
+      <global>
+        <asyncListenerExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </asyncListenerExecutor>
+        <asyncTransportExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </asyncTransportExecutor>
+        <evictionScheduledExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </evictionScheduledExecutor>
+        <globalJmxStatistics allowDuplicateDomains="true" cacheManagerName="foo" enabled="true" jmxDomain="foo" mBeanServerLookup="com.acme.Lookup">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </globalJmxStatistics>
+        <replicationQueueScheduledExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </replicationQueueScheduledExecutor>
+        <serialization marshallerClass="com.acme.Marshaller" version="1">
+          <advancedExternalizers>
+            <advancedExternalizer externalizerClass="com.acme.Externalizer" id="1" />
+          </advancedExternalizers>
+        </serialization>
+        <shutdown hookBehavior="DEFAULT" />
+        <transport clusterName="foo" distributedSyncTimeout="1" machineId="a" nodeName="a" rackId="a" siteId="a" strictPeerToPeer="true" transportClass="com.acme.Transport">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </transport>
+      </global>
+      
+      <default name="foo">
+        <clustering mode="DIST">
+          <async asyncMarshalling="true" replQueueClass="com.acme.replQueue" replQueueInterval="1" replQueueMaxElements="1" useReplQueue="true"/>
+          <hash class="com.acme.Hash" hashFunctionClass="com.acme.HashFunction" numOwners="1" numVirtualNodes="1" rehashEnabled="true" rehashRpcTimeout="1" rehashWait="1">
+            <groups enabled="true">
+              <grouper class="com.acme.Grouper"/>
+            </groups>
+          </hash>
+          <l1 enabled="true" invalidationThreshold="1" lifespan="1" onRehash="true"/>
+          <stateRetrieval alwaysProvideInMemoryState="true" fetchInMemoryState="true" initialRetryWaitTime="1" logFlushTimeout="1" maxNonProgressingLogWrites="1" numRetries="1" retryWaitTimeIncreaseFactor="1" timeout="1"/>
+          <stateTransfer chunkSize="1" fetchInMemoryState="true" timeout="1"/>
+          <sync replTimeout="1"/>
+        </clustering>
+        <customInterceptors>
+          <interceptor after="com.acme.Foo" before="com.acme.Foo" class="com.acme.Interceptor" index="1" position="1">
+            <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+          </interceptor>
+        </customInterceptors>
+        <dataContainer class="com.acme.Foo">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </dataContainer>
+        <deadlockDetection enabled="true" spinDuration="1"/>
+        <eviction maxEntries="1" strategy="NONE" threadPolicy="PIGGYBACK" wakeUpInterval="1"/>
+        <expiration lifespan="1" maxIdle="1" reaperEnabled="true" wakeUpInterval="1"/>
+        <indexing enabled="true" indexLocalOnly="true">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </indexing>
+        <invocationBatching enabled="true"/>
+        <jmxStatistics enabled="true"/>
+        <lazyDeserialization enabled="true"/>
+        <loaders passivation="true" preload="true" shared="true">
+          <loader fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" purgerThreads="1" purgeSynchronously="true">
+            <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>
+            <properties>
+              <property name="foo" value="bar"/>
+            </properties>
+            <singletonStore enabled="true"/>
+          </loader>
+        </loaders>
+        <locking concurrencyLevel="1" isolationLevel="NONE" lockAcquisitionTimeout="1" useLockStriping="true" writeSkewCheck="true"/>
+        <storeAsBinary enabled="true" storeKeysAsBinary="true" storeValuesAsBinary="true"/>
+        <transaction autoCommit="true" cacheStopTimeout="1" eagerLockSingleNode="true" lockingMode="OPTIMISTIC" syncCommitPhase="true" syncRollbackPhase="true" transactionManagerLookupClass="com.acme.TransactionManagerLookup" transactionMode="NON_TRANSACTIONAL" use1PcForAutoCommitTransactions="true" useEagerLocking="true" useSynchronization="true">
+          <recovery enabled="true"/>
+        </transaction>
+        <unsafe unreliableReturnValues="true"/>
+      </default>
+   
+</infinispan>

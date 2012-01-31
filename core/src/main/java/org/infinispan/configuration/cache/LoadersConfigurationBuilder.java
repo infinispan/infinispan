@@ -80,6 +80,11 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       this.cacheLoaders.add(builder);
       return builder;
    }
+   
+   public LoadersConfigurationBuilder clearCacheLoaders() {
+      this.cacheLoaders.clear();
+      return this;
+   }
 
    List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders() {
       return cacheLoaders;

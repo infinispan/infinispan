@@ -93,6 +93,17 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.purgeExpired();
       assert dc.size() == 0;
    }
+   
+   public void testResetOfCreationTime() throws Exception {
+      long now = System.currentTimeMillis();
+      dc.put("k", "v", null, 1000000, -1);
+      long created1 = dc.get("k").getCreated();
+      assert created1 >= now;
+      Thread.sleep(100);
+      dc.put("k", "v", null, 1000000, -1);
+      long created2 = dc.get("k").getCreated();
+      assert created2 > created1 : "Expected " + created2 + " to be greater than " + created1;
+   }
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;

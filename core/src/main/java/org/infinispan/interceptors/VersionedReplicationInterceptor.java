@@ -22,6 +22,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -29,11 +30,15 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
+
+import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
+import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
  * A form of the {@link ReplicationInterceptor} that adds additional logic to how prepares are handled.
@@ -55,15 +60,8 @@ public class VersionedReplicationInterceptor extends ReplicationInterceptor {
       // Make sure this is 1-Phase!!
       PrepareCommand command = cf.buildVersionedPrepareCommand(commit.getGlobalTransaction(), ctx.getModifications(), true);
 
-       super.buildPrepareCommandForResend(ctx, commit);
-      // Build a map of keys to versions as they were seen by the transaction originator's transaction context
-      EntryVersionsMap vs = new EntryVersionsMap();
-      for (CacheEntry ce: ctx.getLookedUpEntries().values()) {
-         vs.put(ce.getKey(), (IncrementableEntryVersion) ce.getVersion());
-      }
+      setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
 
-      // Make sure this version map is attached to the prepare command so that lock owners can perform write skew checks
-      ((VersionedPrepareCommand) command).setVersionsSeen(vs);
       return command;
    }
 
@@ -75,14 +73,10 @@ public class VersionedReplicationInterceptor extends ReplicationInterceptor {
       // However if the current node is already the coordinator, then we fall back to "normal" ReplicationInterceptor
       // logic for this step.
       if (!rpcManager.getTransport().isCoordinator()) {
+         setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, context);
          Map<Address, Response> resps = rpcManager.invokeRemotely(null, command, true, true);
          Response r = resps.get(rpcManager.getTransport().getCoordinator());  // We only really care about the coordinator's response.
-         CacheTransaction ct = context.getCacheTransaction();
-         if (r.isSuccessful()) {
-            SuccessfulResponse sr = (SuccessfulResponse) r;
-            EntryVersionsMap uv = (EntryVersionsMap) sr.getResponseValue();
-            ct.setUpdatedEntryVersions(uv);
-         }
+         readVersionsFromResponse(r, context.getCacheTransaction());
       } else {
          super.broadcastPrepare(context, command);
       }

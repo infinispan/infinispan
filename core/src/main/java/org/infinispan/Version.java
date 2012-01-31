@@ -37,9 +37,9 @@ public class Version {
 
     private static final String MAJOR = "5";
     private static final String MINOR = "1";
-    private static final String MICRO = "0";
+    private static final String MICRO = "1";
     //Pedro -- help me to distinguish between original and the modified .jars
-    private static final String MODIFIER = "FINAL-total-order";
+    private static final String MODIFIER = "CR1-TOTAL-ORDER";
     private static final boolean SNAPSHOT = false;
 
     public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);

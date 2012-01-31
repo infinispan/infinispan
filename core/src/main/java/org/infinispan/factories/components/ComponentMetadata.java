@@ -31,6 +31,7 @@ import org.infinispan.factories.scopes.Scope;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -190,9 +191,9 @@ public class ComponentMetadata implements Serializable {
       return "ComponentMetadata{" +
             "name='" + name + '\'' +
             ", dependencies=" + dependencies +
-            ", injectMetadata=" + injectMetadata +
-            ", startMethods=" + startMethods +
-            ", stopMethods=" + stopMethods +
+            ", injectMetadata=" + Arrays.toString(injectMetadata) +
+            ", startMethods=" + Arrays.toString(startMethods) +
+            ", stopMethods=" + Arrays.toString(stopMethods) +
             ", globalScope=" + globalScope +
             ", survivesRestarts=" + survivesRestarts +
             '}';

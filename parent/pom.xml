@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.1.0.FINAL</version>
+   <version>5.1.1.CR1</version>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
@@ -113,7 +113,7 @@
       <version.jclouds>1.1.0</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.0.3.Final</version.jgroups>
+      <version.jgroups>3.0.4.Final</version.jgroups>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>

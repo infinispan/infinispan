@@ -5,9 +5,6 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.distribution.ch.ConsistentHash;
 
-import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
-import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
-
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  * 
@@ -19,7 +16,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    private ConsistentHash consistentHash;
    private Hash hash = new MurmurHash3();
    private int numOwners = 2;
-   private int numVirtualNodes = 1;
+   // See VNodesKeyDistributionTest for an explanation of how we came up with the number of nodes
+   private int numVirtualNodes = 48;
    private boolean activated = false;
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
@@ -169,8 +167,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.hash = template.hash();
       this.numOwners = template.numOwners();
       this.numVirtualNodes = template.numVirtualNodes();
+      this.activated = template.activated;
       this.groupsConfigurationBuilder.read(template.groups());
-
       return this;
    }
    

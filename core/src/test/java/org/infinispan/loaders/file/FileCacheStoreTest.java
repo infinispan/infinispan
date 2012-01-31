@@ -161,7 +161,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } finally {
@@ -190,7 +190,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } finally {

@@ -55,7 +55,8 @@ import static org.infinispan.util.InfinispanCollections.transformCollectionToMap
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier {
+public final class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier {
+
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
 
    private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>(16);

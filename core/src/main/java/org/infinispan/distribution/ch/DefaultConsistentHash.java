@@ -22,17 +22,21 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
+
+   private static final Log LOG = LogFactory.getLog(DefaultConsistentHash.class);
 
    public DefaultConsistentHash() {
    }
@@ -43,8 +47,8 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    @Override
    public List<Address> locate(final Object key, final int replCount) {
-      final int actualReplCount = Math.min(replCount, caches.size());
       final int normalizedHash = getNormalizedHash(getGrouping(key));
+      final int actualReplCount = Math.min(replCount, caches.size());
       final List<Address> owners = new ArrayList<Address>(actualReplCount);
       final boolean virtualNodesEnabled = isVirtualNodesEnabled();
 
@@ -85,6 +89,11 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       }
 
       return false;
+   }
+
+   @Override
+   protected Log getLog() {
+      return LOG;
    }
 
    @Override
