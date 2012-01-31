@@ -828,8 +828,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                // add leave requests for all the leavers x all the caches
                for (CacheViewInfo cacheViewInfo : viewsInfo.values()) {
                   // need to let the listener know about leavers first
-                  List<Address> leavers = MembershipArithmetic.getMembersLeft(cacheViewInfo.getCommittedView().getMembers(),
-                        members);
+                  List<Address> leavers = cacheViewInfo.computeLeavers(members);
                   if (!leavers.isEmpty()) {
                      handleLeavers(leavers, cacheViewInfo.getCacheName());
                   }
