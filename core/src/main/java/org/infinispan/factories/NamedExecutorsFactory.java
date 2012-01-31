@@ -24,6 +24,8 @@ package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.executors.LazyInitializingExecutorService;
+import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Stop;
@@ -116,7 +118,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
-      return f.getExecutor(props);
+      return new LazyInitializingExecutorService(f, props);
    }
 
    private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties p, String componentName) throws Exception {
@@ -125,7 +127,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName, globalConfiguration.getClassLoader());
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
-      return f.getScheduledExecutor(props);
+      return new LazyInitializingScheduledExecutorService(f, props);
    }
 
    private void setDefaultThreadPrio(int prio, Properties props) {
