@@ -3,6 +3,7 @@ package org.infinispan.marshall.jboss;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
@@ -32,17 +33,34 @@ import static org.infinispan.util.Util.EMPTY_OBJECT_ARRAY;
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 5.0
  */
-public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
+public abstract class AbstractJBossMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
    protected static final boolean trace = log.isTraceEnabled();
    protected static final JBossMarshallerFactory factory = new JBossMarshallerFactory();
    protected static final int DEF_INSTANCE_COUNT = 16;
    protected static final int DEF_CLASS_COUNT = 8;
+   private static final int PER_THREAD_REUSABLE_INSTANCES = 6;
 
    protected final MarshallingConfiguration baseCfg;
+
+   /**
+    * Marshaller thread local. In non-internal marshaller usages, such as Java
+    * Hot Rod client, this is a singleton shared by all so no urgent need for
+    * static here. JBMAR clears pretty much any state during finish(), so no
+    * urgent need to clear the thread local since it shouldn't be leaking.
+    * It might take a long time to warmup and pre-initialize all needed instances!
+    */
+   private final ThreadLocal<PerThreadInstanceHolder> marshallerTL = new ThreadLocal<PerThreadInstanceHolder>() {
+      @Override
+      protected PerThreadInstanceHolder initialValue() {
+         MarshallingConfiguration cfg = baseCfg.clone();
+         return new PerThreadInstanceHolder(cfg);
+      }
+   };
 
    /**
     * Cache of classes that are considered to be marshallable. Since checking
@@ -89,8 +107,15 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       return startObjectOutput(os, isReentrant, 512);
    }
 
+   private final Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException {
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      return instanceHolder.getMarshaller(estimatedSize);
+   }
 
-   protected abstract Marshaller getMarshaller(boolean isReentrant, final int estimatedSize) throws IOException;
+   private final Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
+      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      return instanceHolder.getUnmarshaller();
+   }
 
    final public void finishObjectOutput(final ObjectOutput oo) {
       try {
@@ -125,8 +150,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
    }
-
-   protected abstract Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException;
 
    final public Object objectFromObjectStream(final ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
@@ -229,6 +252,74 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
          return urls;
       }
 
+   }
+
+   private static final class PerThreadInstanceHolder implements RiverCloseListener {
+
+      final MarshallingConfiguration configuration;
+      final ExtendedRiverMarshaller[] reusableMarshaller = new ExtendedRiverMarshaller[PER_THREAD_REUSABLE_INSTANCES];
+      int availableMarshallerIndex = 0;
+      final ExtendedRiverUnmarshaller[] reusableUnMarshaller = new ExtendedRiverUnmarshaller[PER_THREAD_REUSABLE_INSTANCES];
+      int availableUnMarshallerIndex = 0;
+
+      PerThreadInstanceHolder(final MarshallingConfiguration threadDedicatedConfiguration) {
+         this.configuration = threadDedicatedConfiguration;
+      }
+
+      Unmarshaller getUnmarshaller() throws IOException {
+         if (availableUnMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+            //we're above the pool threshold: make a throw-away-after usage Marshaller
+            configuration.setBufferSize(512);//reset to default
+            return factory.createUnmarshaller(configuration);
+         }
+         else {
+            ExtendedRiverUnmarshaller unMarshaller = reusableUnMarshaller[availableUnMarshallerIndex];
+            if (unMarshaller != null) {
+               availableUnMarshallerIndex++;
+               return unMarshaller;
+            }
+            else {
+               configuration.setBufferSize(512);//reset to default
+               unMarshaller = factory.createUnmarshaller(configuration);
+               unMarshaller.setCloseListener(this);
+               reusableUnMarshaller[availableUnMarshallerIndex] = unMarshaller;
+               availableUnMarshallerIndex++;
+               return unMarshaller;
+            }
+         }
+      }
+
+      ExtendedRiverMarshaller getMarshaller(int estimatedSize) throws IOException {
+         if (availableMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+            //we're above the pool threshold: make a throw-away-after usage Marshaller
+            configuration.setBufferSize(estimatedSize);
+            return factory.createMarshaller(configuration);
+         }
+         else {
+            ExtendedRiverMarshaller marshaller = reusableMarshaller[availableMarshallerIndex];
+            if (marshaller != null) {
+               availableMarshallerIndex++;
+               return marshaller;
+            }
+            else {
+               marshaller = factory.createMarshaller(configuration);
+               marshaller.setCloseListener(this);
+               reusableMarshaller[availableMarshallerIndex] = marshaller;
+               availableMarshallerIndex++;
+               return marshaller;
+            }
+         }
+      }
+
+      @Override
+      public void closeMarshaller() {
+         availableMarshallerIndex--;
+      }
+
+      @Override
+      public void closeUnmarshaller() {
+         availableUnMarshallerIndex--;
+      }
    }
 
 }
