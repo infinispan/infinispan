@@ -31,14 +31,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A delegating executor that lazily constructs and initalizes the underlying executor, since unused JDK executors
+ * A delegating executor that lazily constructs and initializes the underlying executor, since unused JDK executors
  * are expensive.
  *
  * @author Manik Surtani
  * @since 5.1
  */
-public class LazyInitializingExecutorService implements ExecutorService {
-   private ExecutorService delegate;
+public final class LazyInitializingExecutorService implements ExecutorService {
+
+   private volatile ExecutorService delegate;
    private final ExecutorFactory factory;
    private final Properties executorProperties;
 
@@ -86,7 +87,6 @@ public class LazyInitializingExecutorService implements ExecutorService {
          return true;
       else
          return delegate.awaitTermination(timeout, unit);
-         
    }
 
    @Override
