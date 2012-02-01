@@ -22,7 +22,10 @@
  */
 package org.infinispan.query.backend;
 
-import org.infinispan.query.test.*;
+import org.infinispan.query.test.CustomKey;
+import org.infinispan.query.test.CustomKey2;
+import org.infinispan.query.test.CustomKey3;
+import org.infinispan.query.test.CustomKey3Transformer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -132,6 +135,13 @@ public class KeyTransformationHandlerTest {
       CustomKey3 key = new CustomKey3("str");
       String string = keyTransformationHandler.keyToString(key);
       assert key.equals(keyTransformationHandler.stringToKey(string, Thread.currentThread().getContextClassLoader()));
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testStringToKeyWithNoAvailableTransformer() {
+      CustomKey3 key = new CustomKey3("str");
+      String string = keyTransformationHandler.keyToString(key);
+      key.equals(keyTransformationHandler.stringToKey(string, Thread.currentThread().getContextClassLoader()));
    }
 
 }
