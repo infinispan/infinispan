@@ -56,7 +56,7 @@ public class KeyTransformationHandler {
 
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   private final Map<Class<?>, Class<? extends Transformer>> transformers = new ConcurrentHashMap<Class<?>, Class<? extends Transformer>>();
+   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = new ConcurrentHashMap<Class<?>, Class<? extends Transformer>>();
 
    public Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);
@@ -93,21 +93,26 @@ public class KeyTransformationHandler {
             int indexOfSecondDelimiter = s.indexOf(":", 2);
             String keyClassName = s.substring(2, indexOfSecondDelimiter);
             String keyAsString = s.substring(indexOfSecondDelimiter + 1);
-            Transformer t = null;
-            // try and locate class
-            Class keyClass = null;
-            try {
-               keyClass = Util.loadClassStrict(keyClassName, classLoader);
-            } catch (ClassNotFoundException e) {
-               log.keyClassNotFound(keyClassName, e);
-            }
-            if (keyClass != null) {
-               t = getTransformer(keyClass);
-            }
-            if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
+            Transformer t = getCustomTransformer(keyClassName, classLoader);
+            if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClassName);
             return t.fromString(keyAsString);
       }
       throw new CacheException("Unknown type metadata " + type);
+   }
+
+   private Transformer getCustomTransformer(final String keyClassName, final ClassLoader classLoader) {
+      Transformer t = null;
+      // try and locate class
+      Class keyClass = null;
+      try {
+         keyClass = Util.loadClassStrict(keyClassName, classLoader);
+      } catch (ClassNotFoundException e) {
+         log.keyClassNotFound(keyClassName, e);
+      }
+      if (keyClass != null) {
+         t = getTransformer(keyClass);
+      }
+      return t;
    }
 
    public String keyToString(Object key) {
@@ -195,7 +200,7 @@ public class KeyTransformationHandler {
    }
 
    private Class getTransformerClass(Class<?> keyClass) {
-      Class<? extends Transformer> transformerClass = transformers.get(keyClass);
+      Class<? extends Transformer> transformerClass = transformerTypes.get(keyClass);
       if (transformerClass == null) {
          transformerClass = getTransformerClassFromAnnotation(keyClass);
          if (transformerClass != null)
@@ -228,7 +233,7 @@ public class KeyTransformationHandler {
     * @param transformerClass the transformer class to use for the supplied key class
     */
    public void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
-      transformers.put(keyClass, transformerClass);
+      transformerTypes.put(keyClass, transformerClass);
    }
 
    /**
