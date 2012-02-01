@@ -119,19 +119,10 @@ public class QueryInterceptor extends CommandInterceptor {
          Object key = command.getKey();
          Object value = extractValue(command.getValue());
          updateKnownTypesIfNeeded( value );
-         CacheEntry entry = ctx.lookupEntry(key);
 
-         // New entry so we will add it to the indexes.
-         if(entry.isCreated()) {
-            getLog().debug("Entry is created");
-            addToIndexes(value, extractValue(key));
-         }
-         else{
-            // This means that the entry is just modified so we need to update the indexes and not add to them.
-            getLog().debug("Entry is changed");
-            updateIndexes(value, extractValue(key));
-         }
-
+         // This means that the entry is just modified so we need to update the indexes and not add to them.
+         getLog().debug("Entry is changed");
+         updateIndexes(value, extractValue(key));
       }
       return toReturn;
    }
@@ -164,7 +155,7 @@ public class QueryInterceptor extends CommandInterceptor {
          if (p1 != null) {
             removeFromIndexes(p1, key);
          }
-         addToIndexes(p2, key);
+         updateIndexes(p2, key);
       }
 
       return valueReplaced;
@@ -206,18 +197,6 @@ public class QueryInterceptor extends CommandInterceptor {
          }
       }
       return returnValue;
-   }
-
-   // Method that will be called when data needs to be added into Lucene.
-   protected void addToIndexes(Object value, Object key) {
-      if (getLog().isTraceEnabled()) getLog().tracef("Adding to indexes for key [%s] and value [%s]", key, value);
-
-      // The key here is the String representation of the key that is stored in the cache.
-      // The key is going to be the documentID for Lucene.
-      // The object parameter is the actual value that needs to be put into lucene.
-      if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
-      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.ADD), transactionContext);
    }
 
    // Method that will be called when data needs to be removed from Lucene.
