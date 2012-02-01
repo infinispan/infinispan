@@ -49,9 +49,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
     long lifespanMillis = -1;
     long maxIdleTimeMillis = -1;
 
-    //Pedro -- total order -- mark keys for write skew check
-    private boolean writeSkewCheck = false;
-
     public PutKeyValueCommand() {
     }
 
@@ -91,14 +88,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
 
             if(e instanceof ClusteredRepeatableReadEntry) {
-                if(ctx.isOriginLocal()) {
-                    //Pedro -- locally, check if the entry is marked for write skew check
-                    writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
-                } else if(writeSkewCheck) {
-                    //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
-                    //for write skew check
-                    ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
-                }
+                checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
             }
 
             if (value instanceof Delta) {
@@ -131,19 +121,17 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
     public Object[] getParameters() {
         //Pedro -- send the boolean
-        return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags, writeSkewCheck};
+        return new Object[]{serializeKey(), value, lifespanMillis, maxIdleTimeMillis, flags};
     }
 
     @SuppressWarnings("unchecked")
     public void setParameters(int commandId, Object[] parameters) {
         if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-        key = parameters[0];
+        deserializeKey(parameters[0]);
         value = parameters[1];
         lifespanMillis = (Long) parameters[2];
         maxIdleTimeMillis = (Long) parameters[3];
         flags = (Set<Flag>) parameters[4];
-        //Pedro -- receive the boolean
-        writeSkewCheck = (Boolean) parameters[5];
     }
 
     public boolean isPutIfAbsent() {

@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.infinispan.commands.write.AbstractDataWriteCommand.checkIfWriteSkewNeeded;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -47,7 +49,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
     CacheNotifier notifier;
 
     //Pedro -- set of keys that needs write skew check
-    private Set<Object> keysMarkedForWriteSkew = null;
+    private Set<Object> keysMarkedForWriteSkew = new HashSet<Object>();
 
     public ClearCommand() {
     }
@@ -80,16 +82,8 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
                 Object k = me.getKey(), v = me.getValue();
 
                 if(me instanceof ClusteredRepeatableReadEntry) {
-                    if(ctx.isOriginLocal()) {
-                        //Pedro -- locally, check if the entry is marked for write skew check
-                        if(((ClusteredRepeatableReadEntry) me).isMarkedForWriteSkew()) {
-                            keysMarkedForWriteSkew.add(k);
-                        }
-                    } else if(keysMarkedForWriteSkew.contains(k)) {
-                        //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
-                        //for write skew check
-                        ((ClusteredRepeatableReadEntry) me).markForWriteSkewCheck();
-                    }
+                    checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) me, ctx.isOriginLocal(),
+                            keysMarkedForWriteSkew);
                 }
 
                 notifier.notifyCacheEntryRemoved(k, v, true, ctx);

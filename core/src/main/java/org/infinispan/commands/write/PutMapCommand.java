@@ -31,11 +31,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static org.infinispan.commands.write.AbstractDataWriteCommand.*;
+
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,7 +52,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
     long maxIdleTimeMillis = -1;
 
     //Pedro -- set of keys that needs write skew check
-    private Set<Object> keysMarkedForWriteSkew = null;
+    private Set<Object> keysMarkedForWriteSkew = new HashSet<Object>();
 
     public PutMapCommand() {
     }
@@ -78,25 +80,13 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
     @Override
     public Object perform(InvocationContext ctx) throws Throwable {
-        //Pedro -- initialize the key set
-        if(ctx.isOriginLocal()) {
-            keysMarkedForWriteSkew = new HashSet<Object>(map.size());
-        }
 
         for (Entry<Object, Object> e : map.entrySet()) {
             Object key = e.getKey();
             MVCCEntry me = lookupMvccEntry(ctx, key);
 
             if(me instanceof ClusteredRepeatableReadEntry) {
-                if(ctx.isOriginLocal()) {
-                    //locally, we add the key as soon as it was discovered
-                    if(((ClusteredRepeatableReadEntry) me).isMarkedForWriteSkew()) {
-                        keysMarkedForWriteSkew.add(key);
-                    }
-                } else if(keysMarkedForWriteSkew.contains(key)) {
-                    //remotely, we mark the write skew in the entry for furhter verification
-                    ((ClusteredRepeatableReadEntry) me).markForWriteSkewCheck();
-                }
+                checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) me, ctx.isOriginLocal(), keysMarkedForWriteSkew);
             }
 
             notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
@@ -123,49 +113,12 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
     @Override
     public Object[] getParameters() {
-        if(keysMarkedForWriteSkew == null || keysMarkedForWriteSkew.isEmpty()) {
-            //Pedro -- no keys marked for write skew. send the normal parameters
-            return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
-        }
-
-        /*
-        Pedro -- wrap the keys marked for write skew and send them
-        instead of sending the set with key, I think that is better (in the serialized size of the command)
-        send the key wrapped
-        */
-        Map<Object, Object> mapToSend = new HashMap<Object, Object>(map.size());
-        for (Entry<Object, Object> entry : map.entrySet()) {
-            Object key = entry.getKey();
-            if(keysMarkedForWriteSkew.contains(entry.getKey())) {
-                WriteSkewKey wsk = new WriteSkewKey();
-                wsk.key = key;
-                mapToSend.put(wsk, entry.getValue());
-            } else {
-                mapToSend.put(key, entry.getValue());
-            }
-        }
-        return new Object[]{mapToSend, lifespanMillis, maxIdleTimeMillis, flags};
+        return new Object[]{serializeKeys(map, keysMarkedForWriteSkew), lifespanMillis, maxIdleTimeMillis, flags};
     }
 
     @Override
     public void setParameters(int commandId, Object[] parameters) {
-        //Pedro -- unwrap the possible keys to write skew and put them in map (see comment above)
-        Map<Object, Object> mapToReceive = (Map) parameters[0];
-
-        keysMarkedForWriteSkew = new HashSet<Object>(mapToReceive.size());
-        map = new HashMap<Object,Object>(mapToReceive.size());
-
-        for (Entry<Object, Object> entry : mapToReceive.entrySet()) {
-            Object key = entry.getKey();
-
-            if(key instanceof WriteSkewKey) {
-                map.put(((WriteSkewKey) key).key, entry.getValue());
-                keysMarkedForWriteSkew.add(((WriteSkewKey) key).key);
-            } else {
-                map.put(key, entry.getValue());
-            }
-        }
-
+        map = deserializeKeys((Map<Object, Object>) parameters[0], keysMarkedForWriteSkew);
         lifespanMillis = (Long) parameters[1];
         maxIdleTimeMillis = (Long) parameters[2];
         if (parameters.length>3) {
@@ -244,14 +197,4 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
     public boolean ignoreCommandOnStatus(ComponentStatus status) {
         return false;
     }
-
-    //Pedro -- total order
-
-    /**
-     * keys wrapped in this classes needs the write skew check
-     */
-    private class WriteSkewKey {
-        Object key;
-    }
-
 }

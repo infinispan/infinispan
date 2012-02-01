@@ -48,9 +48,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     boolean successful = true;
     boolean nonExistent = false;
 
-    //Pedro -- total order -- mark keys for write skew check
-    private boolean writeSkewCheck = false;
-
     /**
      * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
      * time the RemoveCommand needs to be marshalled, the condition must have been true locally already, so there's no
@@ -83,14 +80,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
             if (value == null) {
 
                 if(e instanceof ClusteredRepeatableReadEntry) {
-                    if(ctx.isOriginLocal()) {
-                        //Pedro -- in local mode, check if the entry is marked for write skew check
-                        writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
-                    } else if(writeSkewCheck) {
-                        //Pedro -- in remote mode, if the writeSkewCheck boolean is set to true, then mark the entry
-                        //for write skew check
-                        ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
-                    }
+                    checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
                 }
 
                 return null;
@@ -109,14 +99,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
 
         if(e instanceof ClusteredRepeatableReadEntry) {
-            if(ctx.isOriginLocal()) {
-                //Pedro -- locally, check if the entry is marked for write skew check
-                writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
-            } else if(writeSkewCheck) {
-                //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
-                //for write skew check
-                ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
-            }
+            checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
         }
 
         final Object removedValue = e.getValue();
@@ -202,16 +185,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     @SuppressWarnings("unchecked")
     public void setParameters(int commandId, Object[] parameters) {
         if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-        key = parameters[0];
-        //Pedro -- receive the boolean
-        writeSkewCheck = (Boolean) parameters[1];
-        flags = (Set<Flag>) parameters[2];
+        deserializeKey(parameters[0]);
+        flags = (Set<Flag>) parameters[1];
     }
 
     @Override
     public Object[] getParameters() {
-        //Pedro -- send the boolean
-        return new Object[]{key, writeSkewCheck, flags};
+        return new Object[]{serializeKey(), flags};
     }
 
     @Override

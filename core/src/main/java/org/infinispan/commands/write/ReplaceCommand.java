@@ -44,9 +44,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
     long maxIdleTimeMillis = -1;
     boolean successful = true;
 
-    //Pedro -- total order -- mark keys for write skew check
-    private boolean writeSkewCheck = false;
-
     public ReplaceCommand() {
     }
 
@@ -75,8 +72,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
                     e.setMaxIdle(maxIdleTimeMillis);
 
                     if(e instanceof ClusteredRepeatableReadEntry) {
-                        //Pedro -- locally, check if the entry is marked for write skew check
-                        writeSkewCheck = ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew();
+                        checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, true);
                     }
 
                     return returnValue(old, true);
@@ -89,11 +85,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
                 e.setMaxIdle(maxIdleTimeMillis);
 
                 if(e instanceof ClusteredRepeatableReadEntry) {
-                    if(writeSkewCheck) {
-                        //Pedro -- remotely, if the writeSkewCheck boolean is set to true, then mark the entry
-                        //for write skew check
-                        ((ClusteredRepeatableReadEntry) e).markForWriteSkewCheck();
-                    }
+                    checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, false);
                 }
 
                 return returnValue(old, true);
@@ -118,20 +110,18 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
     public Object[] getParameters() {
         //Pedro -- send the boolean
-        return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags, writeSkewCheck};
+        return new Object[]{serializeKey(), oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
     }
 
     @SuppressWarnings("unchecked")
     public void setParameters(int commandId, Object[] parameters) {
         if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
-        key = parameters[0];
+        deserializeKey(parameters[0]);
         oldValue = parameters[1];
         newValue = parameters[2];
         lifespanMillis = (Long) parameters[3];
         maxIdleTimeMillis = (Long) parameters[4];
         flags = (Set<Flag>) parameters[5];
-        //Pedro -- receive the boolean
-        writeSkewCheck = (Boolean) parameters[6];
     }
 
     @Override
