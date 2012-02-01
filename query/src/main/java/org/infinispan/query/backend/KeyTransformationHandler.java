@@ -53,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 4.0
  */
 public class KeyTransformationHandler {
+
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
    private final Map<Class<?>, Class<? extends Transformer>> transformers = new ConcurrentHashMap<Class<?>, Class<? extends Transformer>>();
@@ -156,7 +157,8 @@ public class KeyTransformationHandler {
          return "T:" + key.getClass().getName() + ":" + tf.toString(key);
       } else
          throw new IllegalArgumentException("Indexing only works with entries keyed on Strings, primitives " +
-               "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString());
+               "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString() +
+               ". Alternatively, see org.infinispan.query.SearchManager#registerKeyTransformer");
    }
 
    private boolean isStringOrPrimitive(Object key) {
@@ -187,21 +189,27 @@ public class KeyTransformationHandler {
     */
    private Transformer getTransformer(Class<?> keyClass) {
       Class transformerClass = getTransformerClass(keyClass);
-      return instantiate(transformerClass);
+      if (transformerClass != null)
+         return instantiate(transformerClass);
+      return null;
    }
 
    private Class getTransformerClass(Class<?> keyClass) {
       Class<? extends Transformer> transformerClass = transformers.get(keyClass);
       if (transformerClass == null) {
          transformerClass = getTransformerClassFromAnnotation(keyClass);
-         registerTransformer(keyClass, transformerClass);
+         if (transformerClass != null)
+            registerTransformer(keyClass, transformerClass);
       }
       return transformerClass;
    }
 
    private Class<? extends Transformer> getTransformerClassFromAnnotation(Class<?> keyClass) {
       Transformable annotation = keyClass.getAnnotation(Transformable.class);
-      return annotation.transformer();
+      if (annotation!=null) {
+         return annotation.transformer();
+      }
+      return null;
    }
 
    private Transformer instantiate(Class transformerClass) {
