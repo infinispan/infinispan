@@ -1498,6 +1498,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return transaction.totalOrderThreading.keepAliveTime;
     }
 
+    public int getTOQueueSize() {
+        return transaction.totalOrderThreading.queueSize;
+    }
+
     // ------------------------------------------------------------------------------------------------------------
     //   HELPERS
     // ------------------------------------------------------------------------------------------------------------
@@ -4844,6 +4848,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @XmlAttribute (required = false)
         protected long keepAliveTime = 1000; //milliseconds
 
+        @XmlAttribute (required = false)
+        protected int queueSize = 100;
+
         public void accept(ConfigurationBeanVisitor v) {
             v.visitTotalOrderThreadingType(this);
         }
@@ -4863,6 +4870,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @Override
         public TotalOrderThreadingConfig keepAliveTime(long keepAliveTime) {
             setKeepAliveTime(keepAliveTime);
+            return this;
+        }
+
+        @Override
+        public TotalOrderThreadingConfig queueSize(int queueSize) {
+            setQueueSize(queueSize);
             return this;
         }
 
@@ -4899,6 +4912,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         public void setKeepAliveTime(long keepAliveTime) {
             testImmutability("keepAliveTime");
             this.keepAliveTime = keepAliveTime;
+        }
+
+        public void setQueueSize(int queueSize) {
+            testImmutability("queueSize");
+            this.queueSize = queueSize;
         }
     }
 }

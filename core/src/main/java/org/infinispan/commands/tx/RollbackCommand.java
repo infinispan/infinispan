@@ -38,7 +38,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
     public static final byte COMMAND_ID = 13;
 
     //Pedro -- check if the rollback command should be send over the cluster
-    private boolean shouldInvokedRemotely = true;
+    private transient boolean shouldInvokedRemotely = true;
 
     private RollbackCommand() {
         super(null); // For command id uniqueness test
@@ -75,14 +75,14 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
 
     @Override
     public Object perform(InvocationContext ctx) throws Throwable {
-        if (configuration.isTotalOrder()) {
+        if (totalOrdered) {
             return performIgnoringUnexistingTransaction(ctx);
         } else {
             return perform(ctx);
         }
     }
 
-    //sette and getter
+    //Pedro -- setter and getter
 
     public boolean shouldInvokedRemotely() {
         return shouldInvokedRemotely;
@@ -91,4 +91,5 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
     public void setShouldInvokedRemotely(boolean shouldInvokedRemotely) {
         this.shouldInvokedRemotely = shouldInvokedRemotely;
     }
+
 }

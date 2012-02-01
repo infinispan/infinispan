@@ -215,6 +215,8 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
                     "maximumPoolSize) must be greater than zero");
         } else if(config.corePoolSize > config.maximumPoolSize) {
             throw new ConfigurationException("Core pool size value is greater than the maximum pool size");
+        } else if(config.queueSize <= 0) {
+            throw new ConfigurationException("Queue size must be greater than zero");
         }
 
     }

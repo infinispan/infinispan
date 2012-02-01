@@ -55,8 +55,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
-    private StateTransferLock stateTransferLock;
-    CommandsFactory cf;
+    //Pedro -- changed to protected
+    protected StateTransferLock stateTransferLock;
+    protected CommandsFactory cf;
 
     private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
 
@@ -133,9 +134,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
 
     @Override
     public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-        //Pedro -- added first condition: the condition is always true for 2PC but for the total order protocol it can
-        //be false (case in which the transaction was not prepared)
-        if (command.shouldInvokedRemotely() && shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
+        if (shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
             rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
         }
         return invokeNextInterceptor(ctx, command);

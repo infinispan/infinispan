@@ -84,10 +84,6 @@ public class TotalOrderValidator {
     private final AtomicInteger numberOfTxValidated = new AtomicInteger(0);
     private volatile boolean statisticsEnabled;
 
-    public TotalOrderValidator() {
-        threadPoolExecutor = createNewThreadPool();
-    }
-
     @Inject
     public void inject(Configuration configuration, InvocationContextContainer invocationContextContainer) {
         this.configuration = configuration;
@@ -106,17 +102,9 @@ public class TotalOrderValidator {
                     needsMultiThreadValidation);
         }
 
-        if(needsMultiThreadValidation) {
-            //create a thread pool with the parameters in configuration file
-            threadPoolExecutor.setCorePoolSize(configuration.getTOCorePoolSize());
-            threadPoolExecutor.setMaximumPoolSize(configuration.getTOMaximumPoolSize());
-            threadPoolExecutor.setKeepAliveTime(configuration.getTOKeepAliveTime(), TimeUnit.MILLISECONDS);
-        } else {
-            //create a thread pool with one thread only
-            threadPoolExecutor.setCorePoolSize(1);
-            threadPoolExecutor.setMaximumPoolSize(1);
-            threadPoolExecutor.setKeepAliveTime(configuration.getTOKeepAliveTime(), TimeUnit.MILLISECONDS);
-        }
+        threadPoolExecutor = createNewThreadPool(configuration.getTOCorePoolSize(),
+                configuration.getTOMaximumPoolSize(), configuration.getTOKeepAliveTime(), 100,
+                needsMultiThreadValidation);
 
         if(info) {
             log.infof("Thread pool size: core=%s, maximum=%s, idleTime=%s",
@@ -135,7 +123,7 @@ public class TotalOrderValidator {
         remoteTransactionMap.clear();
         keysLocked.clear();
         threadPoolExecutor.shutdownNow();
-        threadPoolExecutor = createNewThreadPool();
+        threadPoolExecutor = null;
     }
 
     /**
@@ -260,10 +248,18 @@ public class TotalOrderValidator {
      * creates a new thread pool executor
      * @return the new thread pool 
      */
-    private static ThreadPoolExecutor createNewThreadPool() {
-        return new ThreadPoolExecutor(1, 1, 1000, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(), NAMED_THREAD_FACTORY,
-                new ThreadPoolExecutor.CallerRunsPolicy());
+    private static ThreadPoolExecutor createNewThreadPool(int corePoolSize, int maxPoolSize, long keepAliveTime,
+                                                          int capacity, boolean needsMultiThread) {
+        //only for write skew check
+        if (needsMultiThread) {
+            return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<Runnable>(capacity), NAMED_THREAD_FACTORY,
+                    new ThreadPoolExecutor.CallerRunsPolicy());
+        } else {
+            return new ThreadPoolExecutor(1, 1, keepAliveTime, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>(), NAMED_THREAD_FACTORY,
+                    new ThreadPoolExecutor.CallerRunsPolicy());
+        }
     }
 
     /**

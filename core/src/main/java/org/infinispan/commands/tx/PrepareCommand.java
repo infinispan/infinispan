@@ -64,9 +64,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
     protected RecoveryManager recoveryManager;
     private transient boolean replayEntryWrapping  = false;
 
-    //Pedro -- meaning: this command must be sent in total order...
-    protected boolean totalOrdered = false;
-
     private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
     public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
@@ -245,15 +242,5 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
     @Override
     public boolean isReturnValueExpected() {
         return false;
-    }
-
-    //Pedro -- setter and getter
-
-    public boolean isTotalOrdered() {
-        return totalOrdered;
-    }
-
-    public void setTotalOrdered(boolean totalOrdered) {
-        this.totalOrdered = totalOrdered;
     }
 }

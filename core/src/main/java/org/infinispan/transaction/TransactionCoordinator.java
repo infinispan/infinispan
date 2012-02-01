@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -142,6 +141,9 @@ public class TransactionCoordinator {
         PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications());
         if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
+        //Pedro -- set the total order boolean is needed
+        prepareCommand.setTotalOrdered(configuration.isTotalOrder());
+
         LocalTxInvocationContext ctx = icc.createTxInvocationContext();
         prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
         ctx.setLocalTransaction(localTransaction);
@@ -203,6 +205,7 @@ public class TransactionCoordinator {
             }
         } else {
             CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
+            commitCommand.setTotalOrdered(configuration.isTotalOrder());
             try {
                 invoker.invoke(ctx, commitCommand);
                 txTable.removeLocalTransaction(localTransaction);
@@ -248,6 +251,10 @@ public class TransactionCoordinator {
     private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
         if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
         RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
+
+        //Pedro
+        rollbackCommand.setTotalOrdered(configuration.isTotalOrder());
+
         LocalTxInvocationContext ctx = icc.createTxInvocationContext();
         ctx.setLocalTransaction(localTransaction);
         invoker.invoke(ctx, rollbackCommand);

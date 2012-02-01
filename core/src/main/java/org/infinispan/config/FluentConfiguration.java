@@ -313,6 +313,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
         TotalOrderThreadingConfig corePoolSize(int corePoolSize);
         TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize);
         TotalOrderThreadingConfig keepAliveTime(long keepAliveTime);
+        TotalOrderThreadingConfig queueSize(int queueSize);
     }
 
     /**

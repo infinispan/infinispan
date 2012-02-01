@@ -354,6 +354,9 @@ public class Parser {
                 case KEEP_ALIVE_TIME:
                     builder.transaction().totalOrderThreading().keepAliveTime(Long.valueOf(value));
                     break;
+                case QUEUE_SIZE:
+                    builder.transaction().totalOrderThreading().queueSize(Integer.valueOf(value));
+                    break;
                 default:
                     throw ParseUtils.unexpectedAttribute(reader, i);
             }

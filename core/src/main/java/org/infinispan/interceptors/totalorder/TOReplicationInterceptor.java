@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.ReplicationInterceptor;
@@ -58,5 +59,13 @@ public class TOReplicationInterceptor extends ReplicationInterceptor {
                 }
             }
         }
+    }
+
+    @Override
+    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+        if (command.shouldInvokedRemotely()) {
+            return super.visitRollbackCommand(ctx, command);
+        }
+        return invokeNextInterceptor(ctx, command);
     }
 }

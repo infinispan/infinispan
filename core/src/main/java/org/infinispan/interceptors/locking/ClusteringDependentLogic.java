@@ -25,7 +25,6 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -40,6 +39,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -276,7 +276,7 @@ public interface ClusteringDependentLogic {
                 } else {
                     // Write skew check detected!
                     throw new CacheException("Write skew detected on key " + key + " for transaction " +
-                            context.getTransaction());
+                            Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
                 }
             }
 

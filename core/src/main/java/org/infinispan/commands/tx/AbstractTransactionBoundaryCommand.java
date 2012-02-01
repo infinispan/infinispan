@@ -28,9 +28,9 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -55,6 +55,11 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
     protected TransactionTable txTable;
     protected Configuration configuration;
     private Address origin;
+
+    //Pedro -- meaning:
+    // PrepareCommand: this command must be sent in total order...
+    // Commit/RollbackCommand: this command must be sent in OOB to obtain faster commit
+    protected boolean totalOrdered = false;
 
     public AbstractTransactionBoundaryCommand(String cacheName) {
         this.cacheName = cacheName;
@@ -195,5 +200,15 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
     @Override
     public boolean isReturnValueExpected() {
         return true;
+    }
+
+    //Pedro -- setter and getter
+
+    public boolean isTotalOrdered() {
+        return totalOrdered;
+    }
+
+    public void setTotalOrdered(boolean totalOrdered) {
+        this.totalOrdered = totalOrdered;
     }
 }

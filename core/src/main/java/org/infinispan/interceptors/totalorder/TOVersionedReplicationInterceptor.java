@@ -1,16 +1,14 @@
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.statetransfer.StateTransferLock;
+
+import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
  * Date: 1/26/12
@@ -19,15 +17,6 @@ import org.infinispan.statetransfer.StateTransferLock;
  * @author pruivo
  */
 public class TOVersionedReplicationInterceptor extends TOReplicationInterceptor {
-
-    private StateTransferLock stateTransferLock;
-    private CommandsFactory cf;
-
-    @Inject
-    public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
-        this.stateTransferLock = stateTransferLock;
-        this.cf = cf;
-    }
 
 
     //Pedro -- copied from VersionedReplicationInterceptor
@@ -58,17 +47,8 @@ public class TOVersionedReplicationInterceptor extends TOReplicationInterceptor 
         Object retVal = invokeNextInterceptor(ctx, command);
         if (shouldInvokeRemoteTxCommand(ctx)) {
             stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
-
-            EntryVersionsMap versionsMap = new EntryVersionsMap();
-
-            for (Object key : command.getAffectedKeys()) {
-                versionsMap.put(key, (IncrementableEntryVersion) ctx.lookupEntry(key).getVersion());
-            }
-
-            ((VersionedPrepareCommand) command).setVersionsSeen(versionsMap);
-
+            setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
             broadcastPrepare(ctx, command);
-            ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
         }
         return retVal;
     }

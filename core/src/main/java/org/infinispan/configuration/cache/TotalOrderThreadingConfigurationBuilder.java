@@ -18,6 +18,8 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     private long keepAliveTime = 1000; //milliseconds
 
+    private int queueSize = 100;
+
     protected TotalOrderThreadingConfigurationBuilder(TransactionConfigurationBuilder builder) {
         super(builder);
     }
@@ -29,12 +31,15 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
                     "maximumPoolSize) must be greater than zero");
         } else if(corePoolSize > maximumPoolSize) {
             throw new ConfigurationException("Core pool size value is greater than the maximum pool size");
+        } else if(queueSize <= 0) {
+            throw new ConfigurationException("Queue size must be greater than zero");
         }
+
     }
 
     @Override
     TotalOrderThreadingConfiguration create() {
-        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime);
+        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime, queueSize);
     }
 
     @Override
@@ -42,6 +47,7 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
         this.corePoolSize = template.getCorePoolSize();
         this.maximumPoolSize = template.getMaximumPoolSize();
         this.keepAliveTime = template.getKeepAliveTime();
+        this.queueSize = template.getQueueSize();
         return this;
     }
 
@@ -57,6 +63,11 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     public TotalOrderThreadingConfigurationBuilder keepAliveTime(long keepAliveTime) {
         this.keepAliveTime = keepAliveTime;
+        return this;
+    }
+
+    public TotalOrderThreadingConfigurationBuilder queueSize(int queueSize) {
+        this.queueSize = queueSize;
         return this;
     }
 }

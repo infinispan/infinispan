@@ -134,7 +134,8 @@ public enum Attribute {
     TRANSACTION_PROTOCOL("transactionProtocol"),
     CORE_POOL_SIZE("corePoolSize"),
     MAXIMUM_POOL_SIZE("maximumPoolSize"),
-    KEEP_ALIVE_TIME("keepAliveTime")
+    KEEP_ALIVE_TIME("keepAliveTime"),
+    QUEUE_SIZE("queueSize")
     ;
 
     private final String name;

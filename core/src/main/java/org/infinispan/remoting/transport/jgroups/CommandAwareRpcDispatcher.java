@@ -23,11 +23,13 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.GuardedBy;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -44,24 +46,15 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
-import org.jgroups.util.Buffer;
-import org.jgroups.util.FutureListener;
-import org.jgroups.util.NotifyingFuture;
-import org.jgroups.util.Rsp;
-import org.jgroups.util.RspList;
+import org.jgroups.util.*;
 
 import java.io.NotSerializableException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.Util.*;
@@ -190,7 +183,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                 ResponseMode mode, long timeout,
                                 boolean anycasting, RspFilter filter, boolean supportReplay, boolean broadcast) {
             this.command = command;
-            this.oob = oob;
             this.dests = dests;
             this.mode = mode;
             this.timeout = timeout;
@@ -201,6 +193,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
             //Pedro -- only the prepare commands can be sent in total order
             this.totalOrder = (command instanceof PrepareCommand) && ((PrepareCommand) command).isTotalOrdered();
+
+            if (command instanceof CommitCommand || command instanceof RollbackCommand) {
+                this.oob = ((AbstractTransactionBoundaryCommand)command).isTotalOrdered();
+            } else {
+                this.oob = oob;
+            }
         }
 
         private Message constructMessage(Buffer buf, Address recipient) {
@@ -213,6 +211,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                 //disable flow control -- send immediately to avoid long commit phases
                 msg.setFlag(Message.Flag.NO_FC);
             }
+
             if (oob) msg.setFlag(Message.OOB);
             if (oob || mode != ResponseMode.GET_NONE) {
                 msg.setFlag(Message.DONT_BUNDLE);
