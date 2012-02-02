@@ -183,6 +183,22 @@ public interface RpcManager {
    void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> future, final long timeout);
 
    /**
+    * The same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
+    * boolean, org.infinispan.util.concurrent.NotifyingNotifiableFuture, long)} except that you can specify a response mode.
+    *
+    * @param recipients       recipients to invoke remote call on
+    * @param rpc              command to execute remotely
+    * @param usePriorityQueue if true, a priority queue is used
+    * @param future           the future which will be passed back to the user
+    * @param timeout          after which to give up (in millis)
+    * @param ignoreLeavers    if {@code true}, recipients that leave or have already left the cluster are ignored
+    *                         if {@code false}, a {@code SuspectException} is thrown when a leave is detected
+    */
+   void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc,
+                               boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future,
+                               long timeout, boolean ignoreLeavers);
+
+   /**
     * @return a reference to the underlying transport.
     */
    Transport getTransport();
