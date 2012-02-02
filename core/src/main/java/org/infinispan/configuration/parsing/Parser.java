@@ -82,16 +82,27 @@ public class Parser {
    }
 
    public ConfigurationBuilderHolder parse(String filename) {
+      return parse(filename, new ConfigurationBuilderHolder());
+   }
+   
+   public ConfigurationBuilderHolder parse(String filename, ConfigurationBuilderHolder holder) {
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      return parse(fileLookup.lookupFile(filename, cl));
+      return parse(fileLookup.lookupFile(filename, cl), holder);
    }
    
    public ConfigurationBuilderHolder parse(InputStream is) {
+      return parse(is, new ConfigurationBuilderHolder());
+   }
+   
+   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder) {
+      if (holder == null) {
+         throw new IllegalArgumentException("Holder cannot be null");
+      }
       try {
          try {
              BufferedInputStream input = new BufferedInputStream(is);
              XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-             ConfigurationBuilderHolder holder = doParse(streamReader);
+             doParse(streamReader, holder);
              streamReader.close();
              input.close();
              is.close();
@@ -106,10 +117,8 @@ public class Parser {
       }
    }
    
-   private ConfigurationBuilderHolder doParse(XMLStreamReader reader) throws XMLStreamException {
+   private void doParse(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
 
-      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
-      
       Element root = ParseUtils.nextElement(reader);
       
       if (!root.getLocalName().equals(Element.ROOT.getLocalName())) {
@@ -136,7 +145,6 @@ public class Parser {
             }
          }
       }
-      return holder;
    }
 
    private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
