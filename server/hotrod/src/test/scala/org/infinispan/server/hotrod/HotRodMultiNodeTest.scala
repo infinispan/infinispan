@@ -85,7 +85,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       server.stop
       server.getCacheManager.stop
       TestingUtil.blockUntilViewsReceived(
-         50000, true, manager(0), manager(1))
+         50000, false, manager(0), manager(1))
    }
 
    @AfterClass(alwaysRun = true)
