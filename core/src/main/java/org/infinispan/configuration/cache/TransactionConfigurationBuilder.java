@@ -208,8 +208,17 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
    
    /**
-    * This configuration option was added for the following situation:
-       * - pre 5.1 code is using the cache
+    * Before Infinispan 5.1 you could access the cache both transactionally and
+    * non-transactionally. Naturally the non-transactional access is faster and
+    * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
+    * access is no longer supported, so if you wanna speed up transactional
+    * caches and you're ready to trade some consistency guarantees, you can
+    * enable use1PcForAutoCommitTransactions. <p/>
+    *
+    * What this configuration option does is force an induced transaction,
+    * that has been started by Infinispan as a result of enabling autoCommit,
+    * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the
+    * case of a full 2 Phase Commit (2PC).
     */
    public TransactionConfigurationBuilder use1PcForAutoCommitTransactions(boolean b) {
       this.use1PcForAutoCommitTransactions = b;
