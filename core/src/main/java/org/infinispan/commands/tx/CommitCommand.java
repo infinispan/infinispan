@@ -80,9 +80,9 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
     @Override
     public Object perform(InvocationContext ctx) throws Throwable {
         if (totalOrdered) {
-            return performIgnoringUnexistingTransaction(ctx);
+            return super.performIgnoringUnexistingTransaction(ctx);
         } else {
-            return perform(ctx);
+            return super.perform(ctx);
         }
     }
 

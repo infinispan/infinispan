@@ -34,14 +34,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.
@@ -167,13 +162,17 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     /**
      * //Pedro -- total order result
      */
-    private class PrepareResult {
+    private class PrepareResult extends CountDownLatch {
         //modifications are applied?
-        private boolean modificationsApplied;
+        private volatile boolean modificationsApplied;
         //is the result an exception?
-        private boolean exception;
+        private volatile boolean exception;
         //the validation result
-        private Object result;
+        private volatile Object result;
+
+        public PrepareResult() {
+            super(1);
+        }
     }
 
     /**
@@ -183,22 +182,19 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
      * @throws Throwable throw the validation result if it is an exception
      */
     public Object awaitUntilModificationsApplied(long timeout) throws Throwable {
-        synchronized (prepareResult) {
-            if(!prepareResult.modificationsApplied) {
-                try {
-                    prepareResult.wait(timeout);
-                } catch (InterruptedException e) {
-                    //do nothing
-                }
-            }
-            if(!prepareResult.modificationsApplied) {
-                throw new TimeoutException("Unable to wait until modifications are applied");
-            }
-            if(prepareResult.exception) {
-                throw (Throwable) prepareResult.result;
-            }
-            return prepareResult.result;
+
+        try {
+            prepareResult.await(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            //do nothing
         }
+        if(!prepareResult.modificationsApplied) {
+            throw new TimeoutException("Unable to wait until modifications are applied");
+        }
+        if(prepareResult.exception) {
+            throw (Throwable) prepareResult.result;
+        }
+        return prepareResult.result;
     }
 
 
@@ -208,12 +204,10 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
      * @param exception is it an exception?
      */
     public void addPrepareResult(Object object, boolean exception) {
-        synchronized (prepareResult) {
-            prepareResult.result = object;
-            prepareResult.exception = exception;
-            prepareResult.modificationsApplied = true;
-            prepareResult.notifyAll();
-        }
+        prepareResult.modificationsApplied = true;
+        prepareResult.result = object;
+        prepareResult.exception = exception;
+        prepareResult.countDown();
     }
 
     /**

@@ -3,7 +3,6 @@ package org.infinispan.totalorder;
 import org.infinispan.CacheException;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -17,7 +16,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -26,13 +24,13 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Units;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.util.Util.prettyPrintGlobalTransaction;
 
 /**
  * this class is responsible to validate transactions in the total order based protocol. It ensures the delivered order
@@ -50,10 +48,10 @@ public class TotalOrderValidator {
 
     //map between GlobalTransaction and LocalTransaction. used to sync the threads in remote validation and the
     //transaction execution thread
-    private final Map<GlobalTransaction, LocalTransaction> localTransactionMap = new HashMap<GlobalTransaction, LocalTransaction>();
+    private final ConcurrentMap<GlobalTransaction, LocalTransaction> localTransactionMap = new ConcurrentHashMap<GlobalTransaction, LocalTransaction>();
 
     //this two maps are only used in repeatable read with write skew check. however, it isn't implemented yet!
-    private final ConcurrentHashMap<GlobalTransaction, TxInfo> remoteTransactionMap = new ConcurrentHashMap<GlobalTransaction, TxInfo>();
+    private final ConcurrentMap<GlobalTransaction, RemoteTxInfo> remoteTransactionMap = new ConcurrentHashMap<GlobalTransaction, RemoteTxInfo>();
     private final ConcurrentMap<Object, TxBarrier> keysLocked = new ConcurrentHashMap<Object, TxBarrier>();
 
     private Configuration configuration;
@@ -103,8 +101,8 @@ public class TotalOrderValidator {
         }
 
         threadPoolExecutor = createNewThreadPool(configuration.getTOCorePoolSize(),
-                configuration.getTOMaximumPoolSize(), configuration.getTOKeepAliveTime(), 100,
-                needsMultiThreadValidation);
+                configuration.getTOMaximumPoolSize(), configuration.getTOKeepAliveTime(),
+                configuration.getTOQueueSize());
 
         if(info) {
             log.infof("Thread pool size: core=%s, maximum=%s, idleTime=%s",
@@ -129,15 +127,16 @@ public class TotalOrderValidator {
     /**
      * Adds a local transaction to the map. Later, it will be notified when the modifications are applied in
      * the data container
-     * @param prepareCommand the prepare command (contains the GlobalTransaction instance)
-     * @param ctx the invocation context (local and transactional) (contains the LocalTransaction)
+     *
+     * @param globalTransaction the global transaction
+     * @param localTransaction the local transaction
      */
-    public void addLocalTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx) {
+    public void addLocalTransaction(GlobalTransaction globalTransaction, LocalTransaction localTransaction) {
         if(trace) {
             log.tracef("receiving local prepare command. Transaction is %s",
-                    Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
+                    prettyPrintGlobalTransaction(globalTransaction));
         }
-        localTransactionMap.put(prepareCommand.getGlobalTransaction(), (LocalTransaction) ctx.getCacheTransaction());
+        localTransactionMap.put(globalTransaction, localTransaction);
     }
 
     /**
@@ -150,13 +149,13 @@ public class TotalOrderValidator {
     public void validateTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx, CommandInterceptor invoker) {
         if(trace) {
             log.tracef("validate transaction %s",
-                    Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
+                    prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
         }
 
         Runnable r;
         if(needsMultiThreadValidation) {
             MultiThreadValidation mtv = new MultiThreadValidation(prepareCommand, ctx, invoker);
-            TxInfo txInfo = mtv.getTxInfo();
+            RemoteTxInfo txInfo = mtv.getTxInfo();
             Set<TxBarrier> previousTxs = new HashSet<TxBarrier>();
 
             //this will collect all the count down latch corresponding to the previous transactions in the queue
@@ -182,7 +181,6 @@ public class TotalOrderValidator {
             r = new SingleThreadValidation(prepareCommand, ctx, invoker);
         }
         threadPoolExecutor.execute(r);
-
     }
 
     /**
@@ -192,11 +190,13 @@ public class TotalOrderValidator {
      */
     public void finishTransaction(GlobalTransaction gtx) {
         if(trace) {
-            log.tracef("transaction %s is finished", Util.prettyPrintGlobalTransaction(gtx));
+            log.tracef("transaction %s is finished", prettyPrintGlobalTransaction(gtx));
         }
-        TxInfo txInfo = remoteTransactionMap.remove(gtx);
+        RemoteTxInfo txInfo = remoteTransactionMap.remove(gtx);
         if(txInfo != null) {
             finishTransaction(txInfo.keys, txInfo.barrier);
+        } else {
+            throw new IllegalStateException("TxInfo can't be null, otherwise can originate deadlocks");
         }
     }
 
@@ -207,14 +207,22 @@ public class TotalOrderValidator {
     public void waitForTxPrepared(TxInvocationContext ctx, GlobalTransaction gtx) {
         if(trace) {
             log.tracef("waiting until transaction %s is prepared",
-                    Util.prettyPrintGlobalTransaction(gtx));
+                    prettyPrintGlobalTransaction(gtx));
         }
-        TxInfo txInfo = getOrCreateTxInfo(gtx);
+        RemoteTxInfo txInfo = getOrCreateTxInfo(gtx);
         try {
-            txInfo.waitPrepared(configuration.getSyncReplTimeout());
+            txInfo.waitPrepared();
+
+            if (txInfo.remoteTransaction == null) {
+                throw new IllegalStateException("Remote Transaction can't be null");
+            }
         } catch (InterruptedException e) {
             log.warnf("Timeout received while waiting for the transaction preparing [%s]. continue invocation",
-                    Util.prettyPrintGlobalTransaction(gtx));
+                    prettyPrintGlobalTransaction(gtx));
+
+            if (txInfo.remoteTransaction == null) {
+                throw new IllegalStateException("Remote Transaction can't be null");
+            }
         } finally {
             if(txInfo.isMarkedForRollback() && txInfo.remoteTransaction != null) {
                 txInfo.remoteTransaction.invalidate();
@@ -222,7 +230,7 @@ public class TotalOrderValidator {
             ((RemoteTxInvocationContext)ctx).setRemoteTransaction(txInfo.remoteTransaction);
             if(trace) {
                 log.tracef("waiting time finished for transaction %s",
-                        Util.prettyPrintGlobalTransaction(gtx));
+                        prettyPrintGlobalTransaction(gtx));
             }
         }
 
@@ -232,11 +240,11 @@ public class TotalOrderValidator {
         return localTransactionMap.containsKey(gtx) || remoteTransactionMap.containsKey(gtx);
     }
 
-    private TxInfo getOrCreateTxInfo(GlobalTransaction gtx) {
-        TxInfo txInfo = remoteTransactionMap.get(gtx);
+    private RemoteTxInfo getOrCreateTxInfo(GlobalTransaction gtx) {
+        RemoteTxInfo txInfo = remoteTransactionMap.get(gtx);
         if(txInfo == null) {
-            txInfo = new TxInfo();
-            TxInfo existingTxInfo = remoteTransactionMap.putIfAbsent(gtx, txInfo);
+            txInfo = new RemoteTxInfo();
+            RemoteTxInfo existingTxInfo = remoteTransactionMap.putIfAbsent(gtx, txInfo);
             if (existingTxInfo != null) {
                 txInfo = existingTxInfo;
             }
@@ -246,12 +254,18 @@ public class TotalOrderValidator {
 
     /**
      * creates a new thread pool executor
-     * @return the new thread pool 
+     * see {@link ThreadPoolExecutor}
+     *
+     * @param corePoolSize the core pool size
+     * @param maxPoolSize the max pool size
+     * @param keepAliveTime the keep alive time in milliseconds
+     * @param capacity the fixed capacity (used only in repeatable read with write skew)
+     * @return the new thread pool
      */
-    private static ThreadPoolExecutor createNewThreadPool(int corePoolSize, int maxPoolSize, long keepAliveTime,
-                                                          int capacity, boolean needsMultiThread) {
+    private ThreadPoolExecutor createNewThreadPool(int corePoolSize, int maxPoolSize, long keepAliveTime,
+                                                   int capacity) {
         //only for write skew check
-        if (needsMultiThread) {
+        if (needsMultiThreadValidation) {
             return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.MILLISECONDS,
                     new ArrayBlockingQueue<Runnable>(capacity), NAMED_THREAD_FACTORY,
                     new ThreadPoolExecutor.CallerRunsPolicy());
@@ -263,9 +277,11 @@ public class TotalOrderValidator {
     }
 
     /**
-     * see #finishTransaction(GlobalTransaction)
+     * see {@link #finishTransaction(org.infinispan.transaction.xa.GlobalTransaction)}
+     *
      * remove the keys from the map (if their didn't change) and release the count down latch, unblocking
      * the next transaction
+     *
      * @param keysModified the keys modified by the transaction
      * @param barrier the count down latch corresponding to the transaction
      */
@@ -273,10 +289,11 @@ public class TotalOrderValidator {
         if (trace) {
             log.tracef("Barrier %s is going to be released", barrier);
         }
+
+        barrier.countDown();
         for(Object key : keysModified) {
             this.keysLocked.remove(key, barrier);
         }
-        barrier.countDown();
     }
 
     /**
@@ -285,6 +302,16 @@ public class TotalOrderValidator {
     private void setLogLevel() {
         trace = log.isTraceEnabled();
         info = log.isInfoEnabled();
+    }
+
+    private void updateDurationStats(long creationTime, long validationStartTime, long validationEndTime,
+                                     long initializationEnd) {
+        if(statisticsEnabled) {
+            //set the profiling information
+            waitTimeInQueue.addAndGet(validationStartTime - creationTime);
+            validationDuration.addAndGet(validationEndTime - initializationEnd);
+            numberOfTxValidated.incrementAndGet();
+        }
     }
 
     /**
@@ -296,9 +323,10 @@ public class TotalOrderValidator {
         private final TxInvocationContext txInvocationContext;
         private final CommandInterceptor invoker;
 
-        private long creationTime;
-        private long validationStartTime;
-        private long validatinEndTime;
+        private long creationTime = -1;
+        private long validationStartTime = -1;
+        private long validationEndTime = -1;
+        private long initializationEnd = -1;
 
         private SingleThreadValidation(PrepareCommand prepareCommand, TxInvocationContext txInvocationContext,
                                        CommandInterceptor invoker) {
@@ -324,14 +352,15 @@ public class TotalOrderValidator {
          * finishes the transaction, ie, mark the modification as applied and set the result (exception or not)
          * @param result the validation return value
          * @param exception true if the return value is an exception
-         * @return the local transaction
          */
-        protected LocalTransaction finalizeValidation(Object result, boolean exception) {
-            LocalTransaction localTransaction = localTransactionMap.remove(prepareCommand.getGlobalTransaction());
+        protected void finalizeValidation(Object result, boolean exception) {
+            GlobalTransaction gtx = prepareCommand.getGlobalTransaction();
+            LocalTransaction localTransaction = localTransactionMap.get(gtx);
+
             if(localTransaction != null) {
                 localTransaction.addPrepareResult(result, exception);
+                localTransactionMap.remove(gtx);
             }
-            return localTransaction;
         }
 
         @Override
@@ -342,9 +371,11 @@ public class TotalOrderValidator {
             try {
                 if(trace) {
                     log.tracef("Thread %s is validating transaction %s", Thread.currentThread().getName(),
-                            Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
+                            prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
                 }
                 initializeValidation();
+                initializationEnd = System.nanoTime();
+
                 //invoke next interceptor in the chain
                 result = prepareCommand.acceptVisitor(txInvocationContext, invoker);
             } catch (Throwable t) {
@@ -353,18 +384,12 @@ public class TotalOrderValidator {
             } finally {
                 if(trace) {
                     log.tracef("Transaction %s finished validation (%s). Validation result is %s ",
-                            Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()),
+                            prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()),
                             (exception ? "failed" : "ok"), (exception ? ((Throwable)result).getMessage() : result));
                 }
                 finalizeValidation(result, exception);
-                validatinEndTime = System.nanoTime();
-            }
-
-            if(statisticsEnabled) {
-                //set the profiling information
-                waitTimeInQueue.addAndGet(validationStartTime - creationTime);
-                validationDuration.addAndGet(validatinEndTime - validationStartTime);
-                numberOfTxValidated.incrementAndGet();
+                validationEndTime = System.nanoTime();
+                updateDurationStats(creationTime, validationStartTime, validationEndTime, initializationEnd);
             }
         }
     }
@@ -380,12 +405,12 @@ public class TotalOrderValidator {
         //the set of others transaction's count down latch (it will be unblocked when the transaction finishes)
         private final Set<TxBarrier> previousTransactions;
 
-        private TxInfo txInfo = null;
+        private RemoteTxInfo txInfo = null;
 
         private MultiThreadValidation(PrepareCommand prepareCommand, TxInvocationContext txInvocationContext,
                                       CommandInterceptor invoker) {
             super(prepareCommand, txInvocationContext, invoker);
-            this.barrier = new TxBarrier(prepareCommand.getGlobalTransaction(), 1);
+            this.barrier = new TxBarrier(prepareCommand.getGlobalTransaction());
             this.previousTransactions = new HashSet<TxBarrier>();
         }
 
@@ -393,15 +418,11 @@ public class TotalOrderValidator {
             this.previousTransactions.addAll(previousTransactions);
         }
 
-        public TxInfo getTxInfo() {
+        public RemoteTxInfo getTxInfo() {
             if(txInfo == null) {
-                txInfo = new TxInfo(prepareCommand.getAffectedKeys(), barrier);
-                TxInfo existingTxInfo = remoteTransactionMap.putIfAbsent(prepareCommand.getGlobalTransaction(), txInfo);
-                if(existingTxInfo != null) {
-                    existingTxInfo.keys = prepareCommand.getAffectedKeys();
-                    existingTxInfo.barrier = barrier;
-                    txInfo = existingTxInfo;
-                }
+                txInfo = getOrCreateTxInfo(prepareCommand.getGlobalTransaction());
+                txInfo.keys.addAll(prepareCommand.getAffectedKeys());
+                txInfo.barrier = barrier;
             }
             return txInfo;
         }
@@ -413,12 +434,15 @@ public class TotalOrderValidator {
          */
         @Override
         protected void initializeValidation() throws Exception {
-            String gtx = Util.prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction());
+            String gtx = prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction());
             super.initializeValidation();
 
             if(txInfo.isMarkedForRollback()) {
                 throw new CacheException("Cannot prepare transaction" + gtx +". it was already marked as rollbacked");
             }
+
+            //just to be safer
+            previousTransactions.remove(barrier);
 
             for (TxBarrier prevTx : previousTransactions) {
                 if(trace) {
@@ -439,18 +463,12 @@ public class TotalOrderValidator {
          * @param exception true if the return value is an exception
          */
         @Override
-        protected LocalTransaction finalizeValidation(Object result, boolean exception) {
+        protected void finalizeValidation(Object result, boolean exception) {
             txInfo.markPreparedAndNotify();
-            LocalTransaction localTransaction = super.finalizeValidation(result, exception);
+            super.finalizeValidation(result, exception);
             if(prepareCommand.isOnePhaseCommit()) {
-                finishTransaction(prepareCommand.getAffectedKeys(), barrier);
-            } else if(result instanceof EntryVersionsMap) {
-                if (localTransaction != null) {
-                    //put in local transaction... this way, it passes the new version to the commit command
-                    localTransaction.setUpdatedEntryVersions((EntryVersionsMap) result);
-                }
+                finishTransaction(txInfo.keys, txInfo.barrier);
             }
-            return localTransaction;
         }
     }
 
@@ -458,7 +476,7 @@ public class TotalOrderValidator {
      * keeps information about a transaction (keys modified and the count down latch)
      * (used in repeatable read with write skew)
      */
-    private class TxInfo {
+    private class RemoteTxInfo {
         public static final byte PREPARED = 1<<1;
         public static final byte ROLLBACK_ONLY = 1<<2;
 
@@ -467,13 +485,7 @@ public class TotalOrderValidator {
         byte state;
         RemoteTransaction remoteTransaction;
 
-        private TxInfo() {
-            this.state = 0;
-        }
-
-        private TxInfo(Set<Object> keys, TxBarrier barrier) {
-            this.keys = keys;
-            this.barrier = barrier;
+        private RemoteTxInfo() {
             this.state = 0;
         }
 
@@ -498,20 +510,21 @@ public class TotalOrderValidator {
             setState(ROLLBACK_ONLY);
         }
 
-        private synchronized boolean waitPrepared(long timeout) throws InterruptedException {
+        private synchronized boolean waitPrepared() throws InterruptedException {
             if (!checkState(PREPARED)) {
-                this.wait(timeout);
+                this.wait();
             }
             return checkState(PREPARED);
         }
+
     }
 
     private class TxBarrier extends CountDownLatch {
         private String gtx;
 
-        public TxBarrier(GlobalTransaction gtx, int i) {
-            super(i);
-            this.gtx = Util.prettyPrintGlobalTransaction(gtx);
+        public TxBarrier(GlobalTransaction gtx) {
+            super(1);
+            this.gtx = prettyPrintGlobalTransaction(gtx);
         }
 
         @Override

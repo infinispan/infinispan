@@ -7,7 +7,14 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
 import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
@@ -17,7 +24,7 @@ import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepar
  * @author pruivo
  */
 public class TOVersionedReplicationInterceptor extends TOReplicationInterceptor {
-
+    private static final Log log = LogFactory.getLog(TOVersionedReplicationInterceptor.class);
 
     //Pedro -- copied from VersionedReplicationInterceptor
     @Override
@@ -51,5 +58,46 @@ public class TOVersionedReplicationInterceptor extends TOReplicationInterceptor 
             broadcastPrepare(ctx, command);
         }
         return retVal;
+    }
+
+    @Override
+    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
+        boolean trace = log.isTraceEnabled();
+        String globalTransactionString = Util.prettyPrintGlobalTransaction(command.getGlobalTransaction());
+
+        if(!command.isTotalOrdered()) {
+            super.broadcastPrepare(context, command);
+            return;
+        }
+
+        if(trace) {
+            log.tracef("Broadcasting transaction %s with Total Order", globalTransactionString);
+        }
+
+        //broadcast the command
+        rpcManager.broadcastRpcCommand(command, false);
+
+        if(trace) {
+            log.tracef("Transaction [%s] sent. waiting until validation finishes",
+                    globalTransactionString);
+        }
+        //this is only invoked in local context
+        LocalTransaction localTransaction = (LocalTransaction) context.getCacheTransaction();
+        try {
+            Object retVal = localTransaction.awaitUntilModificationsApplied(Long.MAX_VALUE);
+
+            if (retVal instanceof EntryVersionsMap) {
+                readVersionsFromResponse(new SuccessfulResponse(retVal), context.getCacheTransaction());
+            } else {
+                throw new IllegalStateException("This must not happen! we must receive the versions");
+            }
+        } catch (Throwable throwable) {
+            throw new RpcException(throwable);
+        } finally {
+            if(trace) {
+                log.tracef("Transaction [%s] finishes the waiting time",
+                        globalTransactionString);
+            }
+        }
     }
 }

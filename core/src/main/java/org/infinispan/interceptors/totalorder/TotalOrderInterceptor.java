@@ -9,6 +9,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.totalorder.TotalOrderValidator;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -52,7 +53,8 @@ public class TotalOrderInterceptor extends CommandInterceptor {
 
         try {
             if(ctx.isOriginLocal()) {
-                totalOrderValidator.addLocalTransaction(command, ctx);
+                totalOrderValidator.addLocalTransaction(command.getGlobalTransaction(),
+                        (LocalTransaction) ctx.getCacheTransaction());
                 return invokeNextInterceptor(ctx, command);
             } else {
                 totalOrderValidator.validateTransaction(command, ctx, getNext());
