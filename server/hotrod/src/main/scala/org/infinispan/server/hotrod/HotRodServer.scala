@@ -58,11 +58,15 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
-   private var viewId: AtomicInteger = _
+   private var viewId: Int = _
 
    def getAddress: ServerAddress = address
 
-   override def getEncoder = new HotRodEncoder(getCacheManager, viewId)
+   def getViewId: Int = viewId
+
+   def setViewId(viewId: Int) = this.viewId = viewId
+
+   override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
    override def getDecoder : HotRodDecoder = {
       val hotRodDecoder = new HotRodDecoder(getCacheManager, transport)
@@ -75,8 +79,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       val defaultPort = 11222
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       if (isClustered) {
-         viewId = new AtomicInteger()
-
          val typedProps = TypedProperties.toTypedProperties(properties)
          defineTopologyCacheConfig(cacheManager, typedProps)
          // Retrieve host and port early on to populate topology cache
@@ -120,7 +122,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
             addressCache.getAdvancedCache.getRpcManager.getTransport))
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(host, port)
-      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache))
+      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       addressCache.put(clusterAddress, address)
@@ -166,23 +168,19 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    /**
     * Listener that provides guarantees for view id updates. So, a view id will
     * only be considered to have changed once the address cache has been
-    * updated to add or remove an address from the cache. That way, when the
-    * encoder makes the view id comparison (client provided vs server side
-    * view id), it has the guarantees that the address cache has already been
-    * updated.
+    * updated to add an address from the cache. That way, when the encoder
+    * makes the view id comparison (client provided vs server side view id),
+    * it has the guarantees that the address cache has already been updated.
     */
    @Listener
    class ViewIdUpdater(transport: Transport) {
 
-      @CacheEntryCreated @CacheEntryRemoved
+      @CacheEntryCreated
       def viewIdUpdate(event: CacheEntryEvent[Address, ServerAddress]) {
          // Only update view id once cache has been updated
          if (!event.isPre) {
             val localViewId = transport.getViewId
-            // Could this be a lazySet? We want the value to eventually be set,
-            // clients could wait a little bit for the view id to be updated
-            // on the server side...
-            viewId.set(localViewId)
+            viewId = localViewId
             if (isTraceEnabled) {
                log.tracef("Address cache had %s for key %s. View id is now %d",
                           event.getType, event.getKey, localViewId)

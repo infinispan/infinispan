@@ -40,8 +40,8 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
    val encoder10 = Encoder10
 
    override def writeHeader(r: Response, buf: ChannelBuffer,
-            addressCache: Cache[Address, ServerAddress], viewId: AtomicInteger) {
-      val topologyResp = getTopologyResponse(r, addressCache, viewId)
+            addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
+      val topologyResp = getTopologyResponse(r, addressCache, server)
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
       buf.writeByte(r.operation.id.byteValue)
@@ -67,12 +67,12 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
       encoder10.writeResponse(this, r, buf, cacheManager)
 
    def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
-            viewId: AtomicInteger): AbstractTopologyResponse = {
+            server: HotRodServer): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          r.clientIntel match {
             case 2 | 3 => {
-               val lastViewId = viewId.get()
+               val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
                   val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
                   val config = cache.getConfiguration
