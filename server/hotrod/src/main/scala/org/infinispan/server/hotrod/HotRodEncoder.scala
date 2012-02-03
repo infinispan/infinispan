@@ -30,7 +30,6 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel.Channel
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.remoting.transport.Address
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Hot Rod specific encoder.
@@ -38,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodEncoder(cacheManager: EmbeddedCacheManager, viewId: AtomicInteger)
+class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
         extends OneToOneEncoder with Constants with Log {
    import HotRodServer._
 
@@ -59,7 +58,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, viewId: AtomicInteger)
       }
 
       r.version match {
-         case VERSION_10 | VERSION_11 => encoder.writeHeader(r, buf, addressCache, viewId)
+         case VERSION_10 | VERSION_11 => encoder.writeHeader(r, buf, addressCache, server)
          // if error before reading version, don't send any topology changes
          // cos the encoding might vary from one version to the other
          case 0 => encoder.writeHeader(r, buf, null, null)

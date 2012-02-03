@@ -23,7 +23,6 @@ import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.Cache
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * This class represents the work to be done by an encoder of a particular
@@ -38,7 +37,7 @@ abstract class AbstractVersionedEncoder {
     * Write the header to the given channel buffer
     */
    def writeHeader(r: Response, buf: ChannelBuffer,
-         addressCache: Cache[Address, ServerAddress], viewId: AtomicInteger)
+         addressCache: Cache[Address, ServerAddress], server: HotRodServer)
 
    /**
     * Write operation response using the given channel buffer

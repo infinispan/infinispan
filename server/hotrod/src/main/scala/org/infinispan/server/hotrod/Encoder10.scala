@@ -41,8 +41,8 @@ import java.util.concurrent.atomic.AtomicInteger
 object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
 
    override def writeHeader(r: Response, buf: ChannelBuffer,
-            addressCache: Cache[Address, ServerAddress], viewId: AtomicInteger) {
-      val topologyResp = getTopologyResponse(r, addressCache, viewId)
+            addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
+      val topologyResp = getTopologyResponse(r, addressCache, server)
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
       buf.writeByte(r.operation.id.byteValue)
@@ -113,12 +113,12 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
    }
 
    def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
-            viewId: AtomicInteger): AbstractTopologyResponse = {
+            server: HotRodServer): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          r.clientIntel match {
             case 2 | 3 => {
-               val lastViewId = viewId.get()
+               val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
                   val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
                   val config = cache.getConfiguration

@@ -36,7 +36,7 @@ import org.infinispan.context.Flag
  * @since 5.1
  */
 @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
-class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress]) extends Log {
+class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server: HotRodServer) extends Log {
 
    // Let all nodes remove the address from their own cache locally. By doing
    // this, we can guarantee that transport view id has been updated before
@@ -56,13 +56,21 @@ class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress]) extend
          val newMembers = collectionAsScalaIterable(e.getNewMembers)
          val oldMembers = collectionAsScalaIterable(e.getOldMembers)
          val goneMembers = oldMembers.filterNot(newMembers contains _)
+         // Consider doing removeAsync and then waiting for all removals...
          goneMembers.foreach { addr =>
             trace("Remove %s from address cache", addr)
             addressCache.remove(addr)
          }
+         updateViewdId(e)
       } catch {
          case t: Throwable => logErrorDetectingCrashedMember(t)
       }
+   }
+
+   protected def updateViewdId(e: ViewChangedEvent) {
+      // Multiple members could leave at the same time, so delay any view id
+      // updates until the all addresses have been removed from memory.
+      server.setViewId(e.getViewId)
    }
 
 }

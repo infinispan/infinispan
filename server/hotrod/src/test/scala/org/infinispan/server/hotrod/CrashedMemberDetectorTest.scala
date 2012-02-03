@@ -22,12 +22,12 @@ package org.infinispan.server.hotrod
 import org.testng.annotations.Test
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.remoting.transport.Address
-import org.infinispan.notifications.cachemanagerlistener.event.EventImpl
 import org.infinispan.notifications.cachemanagerlistener.event.Event.Type
 import org.infinispan.distribution.TestAddress
 import java.util.ArrayList
 import org.testng.AssertJUnit._
 import org.infinispan.test.SingleCacheManagerTest
+import org.infinispan.notifications.cachemanagerlistener.event.{ViewChangedEvent, EventImpl}
 
 /**
  * Tests crashed or stopped member logic.
@@ -47,7 +47,11 @@ class CrashedMemberDetectorTest extends SingleCacheManagerTest {
       cache.put(new TestAddress(2), new ServerAddress("b", 456))
       cache.put(new TestAddress(3), new ServerAddress("c", 789))
 
-      val detector = new CrashedMemberDetectorListener(cache)
+      val detector = new CrashedMemberDetectorListener(cache, null) {
+         override protected def updateViewdId(e: ViewChangedEvent) = {
+            // Do nothing...
+         }
+      }
 
       val oldMembers = new ArrayList[Address]()
       oldMembers.add(new TestAddress(1))
