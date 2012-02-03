@@ -48,10 +48,12 @@ public class TotalOrderValidator {
 
     //map between GlobalTransaction and LocalTransaction. used to sync the threads in remote validation and the
     //transaction execution thread
-    private final ConcurrentMap<GlobalTransaction, LocalTransaction> localTransactionMap = new ConcurrentHashMap<GlobalTransaction, LocalTransaction>();
+    private final ConcurrentMap<GlobalTransaction, LocalTransaction> localTransactionMap =
+            new ConcurrentHashMap<GlobalTransaction, LocalTransaction>();
 
     //this two maps are only used in repeatable read with write skew check. however, it isn't implemented yet!
-    private final ConcurrentMap<GlobalTransaction, RemoteTxInfo> remoteTransactionMap = new ConcurrentHashMap<GlobalTransaction, RemoteTxInfo>();
+    private final ConcurrentMap<GlobalTransaction, RemoteTxInfo> remoteTransactionMap =
+            new ConcurrentHashMap<GlobalTransaction, RemoteTxInfo>();
     private final ConcurrentMap<Object, TxBarrier> keysLocked = new ConcurrentHashMap<Object, TxBarrier>();
 
     private Configuration configuration;
@@ -80,6 +82,7 @@ public class TotalOrderValidator {
     private final AtomicLong waitTimeInQueue = new AtomicLong(0);
     private final AtomicLong validationDuration = new AtomicLong(0);
     private final AtomicInteger numberOfTxValidated = new AtomicInteger(0);
+    private final AtomicLong initializationDuration = new AtomicLong(0);
     private volatile boolean statisticsEnabled;
 
     @Inject
@@ -146,7 +149,8 @@ public class TotalOrderValidator {
      * @param ctx the invocation context
      * @param invoker the next Command Interceptor in the chain
      */
-    public void validateTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx, CommandInterceptor invoker) {
+    public void validateTransaction(PrepareCommand prepareCommand, TxInvocationContext ctx,
+                                    CommandInterceptor invoker) {
         if(trace) {
             log.tracef("validate transaction %s",
                     prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
@@ -309,6 +313,7 @@ public class TotalOrderValidator {
         if(statisticsEnabled) {
             //set the profiling information
             waitTimeInQueue.addAndGet(validationStartTime - creationTime);
+            initializationDuration.addAndGet(initializationEnd - validationStartTime);
             validationDuration.addAndGet(validationEndTime - initializationEnd);
             numberOfTxValidated.incrementAndGet();
         }
@@ -549,25 +554,41 @@ public class TotalOrderValidator {
     }
 
     @ManagedAttribute(description = "The keep alive time of an idle thread in the thread pool (milliseconds)")
-    @Metric(displayName = "Keep Alive Time of a Idle Thread", units = Units.MILLISECONDS, displayType = DisplayType.DETAIL)
+    @Metric(displayName = "Keep Alive Time of a Idle Thread", units = Units.MILLISECONDS,
+            displayType = DisplayType.DETAIL)
     public long getThreadPoolKeepTime() {
         return threadPoolExecutor.getKeepAliveTime(TimeUnit.MILLISECONDS);
     }
 
-    @ManagedAttribute(description = "The number of transactions waiting validation")
-    @Metric(displayName = "Number of Pending Transactions", displayType = DisplayType.SUMMARY)
-    public int getNumberOfTransactionInPendingQueue() {
-        return threadPoolExecutor.getQueue().size();
+    @ManagedAttribute(description = "The percentage of occupation of the queue")
+    @Metric(displayName = "Percentage of Occupation of the Queue", units = Units.PERCENTAGE,
+            displayType = DisplayType.SUMMARY)
+    public double getNumberOfTransactionInPendingQueue() {
+        int remainingCapacity = threadPoolExecutor.getQueue().remainingCapacity();
+        int actualSize = threadPoolExecutor.getQueue().size();
+
+        double percentage = 0;
+        if ((Integer.MAX_VALUE - remainingCapacity) > actualSize) {
+            percentage = actualSize * 100.0 / (remainingCapacity + actualSize);
+        } else {
+            percentage = actualSize * 100.0 / remainingCapacity;
+        }
+
+        return percentage > 100 ? 100.0 : percentage;
     }
 
-    @ManagedAttribute(description = "The approximate number of active threads in the thread pool")
-    @Metric(displayName = "Approximate Number of Active Threads", displayType = DisplayType.SUMMARY)
-    public int getThreadPoolActiveThreads() {
-        return threadPoolExecutor.getActiveCount();
+    @ManagedAttribute(description = "The approximate percentage of active threads in the thread pool")
+    @Metric(displayName = "Percentage of Active Threads", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+    public double getPercentageActiveThreads() {
+        int max = threadPoolExecutor.getMaximumPoolSize();
+        int actual = threadPoolExecutor.getActiveCount();
+        double percentage = actual * 100.0 / max;
+        return percentage > 100 ? 100.0 : percentage;
     }
 
     @ManagedAttribute(description = "Average time in the queue before the validation (milliseconds)")
-    @Metric(displayName = "Average Time In Queue", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+    @Metric(displayName = "Average Waiting Duration In Queue", units = Units.MILLISECONDS,
+            displayType = DisplayType.SUMMARY)
     public double getAverageWaitingTimeInQueue() {
         long time = waitTimeInQueue.get();
         int tx = numberOfTxValidated.get();
@@ -578,9 +599,22 @@ public class TotalOrderValidator {
     }
 
     @ManagedAttribute(description = "Average duration of a transaction validation (milliseconds)")
-    @Metric(displayName = "Average Validation Time", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+    @Metric(displayName = "Average Validation Duration", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
     public double getAverageValidationDuration() {
         long time = validationDuration.get();
+        int tx = numberOfTxValidated.get();
+        if(tx == 0) {
+            return 0;
+        }
+        return (time / tx) / 1000000.0;
+    }
+
+    @ManagedAttribute(description = "Average duration of a transaction initialization before validation, ie, " +
+            "ensuring the order of transactions (milliseconds)")
+    @Metric(displayName = "Average Initialization Duration", units = Units.MILLISECONDS,
+            displayType = DisplayType.SUMMARY)
+    public double getAverageInitializationDuration() {
+        long time = initializationDuration.get();
         int tx = numberOfTxValidated.get();
         if(tx == 0) {
             return 0;
@@ -615,6 +649,7 @@ public class TotalOrderValidator {
         waitTimeInQueue.set(0);
         validationDuration.set(0);
         numberOfTxValidated.set(0);
+        initializationDuration.set(0);
     }
 
     @ManagedAttribute(description = "Show it the gathering of statistics is enabled")

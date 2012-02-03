@@ -28,14 +28,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -51,12 +44,7 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
+import org.rhq.helpers.pluginAnnotations.agent.*;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -75,214 +63,216 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
 public class TxInterceptor extends CommandInterceptor {
 
-   private TransactionTable txTable;
+    private TransactionTable txTable;
 
-   private final AtomicLong prepares = new AtomicLong(0);
-   private final AtomicLong commits = new AtomicLong(0);
-   private final AtomicLong rollbacks = new AtomicLong(0);
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
-   private boolean statisticsEnabled;
-   protected TransactionCoordinator txCoordinator;
+    private final AtomicLong prepares = new AtomicLong(0);
+    private final AtomicLong commits = new AtomicLong(0);
+    private final AtomicLong rollbacks = new AtomicLong(0);
+    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+    private boolean statisticsEnabled;
+    protected TransactionCoordinator txCoordinator;
 
-   private static final Log log = LogFactory.getLog(TxInterceptor.class);
+    private static final Log log = LogFactory.getLog(TxInterceptor.class);
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
+    @Override
+    protected Log getLog() {
+        return log;
+    }
 
-   @Inject
-   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator) {
-      this.configuration = c;
-      this.txTable = txTable;
-      this.txCoordinator = txCoordinator;
-      setStatisticsEnabled(configuration.isExposeJmxStatistics());
-   }
+    @Inject
+    public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator) {
+        this.configuration = c;
+        this.txTable = txTable;
+        this.txCoordinator = txCoordinator;
+        setStatisticsEnabled(configuration.isExposeJmxStatistics());
+    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      //if it is remote and 2PC then first log the tx only after replying mods
-      if (this.statisticsEnabled) prepares.incrementAndGet();
-      Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isOriginLocal()) {
-         if (command.isOnePhaseCommit()) {
-            txTable.remoteTransactionCommitted(command.getGlobalTransaction());
-         } else {
-            txTable.remoteTransactionPrepared(command.getGlobalTransaction());
-         }
-      }
-      return result;
-   }
+    @Override
+    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+        //if it is remote and 2PC then first log the tx only after replying mods
+        if (this.statisticsEnabled) prepares.incrementAndGet();
+        Object result = invokeNextInterceptor(ctx, command);
+        if (!ctx.isOriginLocal()) {
+            if (command.isOnePhaseCommit()) {
+                txTable.remoteTransactionCommitted(command.getGlobalTransaction());
+            } else {
+                txTable.remoteTransactionPrepared(command.getGlobalTransaction());
+            }
+        }
+        return result;
+    }
 
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (this.statisticsEnabled) commits.incrementAndGet();
-      Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isOriginLocal()) {
-         txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
-      }
-      return result;
-   }
+    @Override
+    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+        if (this.statisticsEnabled) commits.incrementAndGet();
+        Object result = invokeNextInterceptor(ctx, command);
+        //Pedro -- in total order, we have remote transaction corresponding a local transaction
+        if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
+            txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
+        }
+        return result;
+    }
 
-   @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      if (!ctx.isOriginLocal()) {
-         txTable.remoteTransactionRollback(command.getGlobalTransaction());
-      }
-      return invokeNextInterceptor(ctx, command);
-   }
+    @Override
+    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+        if (this.statisticsEnabled) rollbacks.incrementAndGet();
+        //Pedro -- in total order, we have remote transaction corresponding a local transaction
+        if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
+            txTable.remoteTransactionRollback(command.getGlobalTransaction());
+        }
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      enlistIfNeeded(ctx);
+    @Override
+    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+        enlistIfNeeded(ctx);
 
-      if (ctx.isOriginLocal()) {
-         command.setGlobalTransaction(ctx.getGlobalTransaction());
-      }
+        if (ctx.isOriginLocal()) {
+            command.setGlobalTransaction(ctx.getGlobalTransaction());
+        }
 
-      return invokeNextInterceptor(ctx, command);
-   }
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
-   
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, invalidateCommand);
-   }
+    @Override
+    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, command);
+    }
 
-   @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
-   }
+    @Override
+    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
+        return enlistWriteAndInvokeNext(ctx, invalidateCommand);
+    }
 
-   private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      enlistIfNeeded(ctx);
-      return invokeNextInterceptor(ctx, command);
-   }
+    @Override
+    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+        return enlistReadAndInvokeNext(ctx, command);
+    }
 
-   private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
-      if (shouldEnlist(ctx)) {
-         LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
-         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         localTxContext.setLocalTransaction(localTransaction);
-      }
-   }
+    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
+        enlistIfNeeded(ctx);
+        return invokeNextInterceptor(ctx, command);
+    }
 
-   private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
-      LocalTransaction localTransaction = null;
-      boolean shouldAddMod = false;
-      if (shouldEnlist(ctx)) {
-         localTransaction = enlist((TxInvocationContext) ctx);
-         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         if (localModeNotForced(ctx)) shouldAddMod = true;
-         localTxContext.setLocalTransaction(localTransaction);
-      }
-      Object rv;
-      try {
-         rv = invokeNextInterceptor(ctx, command);
-      } catch (Throwable throwable) {
-         // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
-         if (ctx.isOriginLocal() && ctx.isInTxScope() && !ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-            TxInvocationContext txCtx = (TxInvocationContext) ctx;
-            txCtx.getTransaction().setRollbackOnly();
-            final LocalTransaction cacheTransaction = (LocalTransaction) txCtx.getCacheTransaction();
-            txTable.removeLocalTransaction(cacheTransaction);
-         }
-         throw throwable;
-      }
-      if (command.isSuccessful() && shouldAddMod) localTransaction.addModification(command);
-      return rv;
-   }
+    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
+        if (shouldEnlist(ctx)) {
+            LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
+            LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
+            localTxContext.setLocalTransaction(localTransaction);
+        }
+    }
 
-   public LocalTransaction enlist(TxInvocationContext ctx) throws SystemException {
-      Transaction transaction = ctx.getTransaction();
-      if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
-      int status = transaction.getStatus();
-      if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
-            " is not in a valid state to be invoking cache operations on.");
-      LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
-      txTable.enlist(transaction, localTransaction);
-      return localTransaction;
-   }
+    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
+        LocalTransaction localTransaction = null;
+        boolean shouldAddMod = false;
+        if (shouldEnlist(ctx)) {
+            localTransaction = enlist((TxInvocationContext) ctx);
+            LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
+            if (localModeNotForced(ctx)) shouldAddMod = true;
+            localTxContext.setLocalTransaction(localTransaction);
+        }
+        Object rv;
+        try {
+            rv = invokeNextInterceptor(ctx, command);
+        } catch (Throwable throwable) {
+            // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
+            if (ctx.isOriginLocal() && ctx.isInTxScope() && !ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+                TxInvocationContext txCtx = (TxInvocationContext) ctx;
+                txCtx.getTransaction().setRollbackOnly();
+                final LocalTransaction cacheTransaction = (LocalTransaction) txCtx.getCacheTransaction();
+                txTable.removeLocalTransaction(cacheTransaction);
+            }
+            throw throwable;
+        }
+        if (command.isSuccessful() && shouldAddMod) localTransaction.addModification(command);
+        return rv;
+    }
 
-   private boolean isNotValid(int status) {
-      return status != Status.STATUS_ACTIVE && status != Status.STATUS_PREPARING;
-   }
+    public LocalTransaction enlist(TxInvocationContext ctx) throws SystemException {
+        Transaction transaction = ctx.getTransaction();
+        if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
+        int status = transaction.getStatus();
+        if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
+                " is not in a valid state to be invoking cache operations on.");
+        LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
+        txTable.enlist(transaction, localTransaction);
+        return localTransaction;
+    }
 
-   private static boolean shouldEnlist(InvocationContext ctx) {
-      return ctx.isInTxScope() && ctx.isOriginLocal();
-   }
+    private boolean isNotValid(int status) {
+        return status != Status.STATUS_ACTIVE && status != Status.STATUS_PREPARING;
+    }
 
-   private boolean localModeNotForced(InvocationContext icx) {
-      if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (getLog().isTraceEnabled()) getLog().debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
-         return false;
-      }
-      return true;
-   }
+    private static boolean shouldEnlist(InvocationContext ctx) {
+        return ctx.isInTxScope() && ctx.isOriginLocal();
+    }
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset Statistics")
-   public void resetStatistics() {
-      prepares.set(0);
-      commits.set(0);
-      rollbacks.set(0);
-   }
+    private boolean localModeNotForced(InvocationContext icx) {
+        if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+            if (getLog().isTraceEnabled()) getLog().debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
+            return false;
+        }
+        return true;
+    }
 
-   @Operation(displayName = "Enable/disable statistics")
-   public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
-      this.statisticsEnabled = enabled;
-   }
+    @ManagedOperation(description = "Resets statistics gathered by this component")
+    @Operation(displayName = "Reset Statistics")
+    public void resetStatistics() {
+        prepares.set(0);
+        commits.set(0);
+        rollbacks.set(0);
+    }
 
-   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
-   public boolean isStatisticsEnabled() {
-      return this.statisticsEnabled;
-   }
+    @Operation(displayName = "Enable/disable statistics")
+    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
+        this.statisticsEnabled = enabled;
+    }
 
-   @ManagedAttribute(description = "Number of transaction prepares performed since last reset")
-   @Metric(displayName = "Prepares", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   public long getPrepares() {
-      return prepares.get();
-   }
+    @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
+    public boolean isStatisticsEnabled() {
+        return this.statisticsEnabled;
+    }
 
-   @ManagedAttribute(description = "Number of transaction commits performed since last reset")
-   @Metric(displayName = "Commits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   public long getCommits() {
-      return commits.get();
-   }
+    @ManagedAttribute(description = "Number of transaction prepares performed since last reset")
+    @Metric(displayName = "Prepares", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+    public long getPrepares() {
+        return prepares.get();
+    }
 
-   @ManagedAttribute(description = "Number of transaction rollbacks performed since last reset")
-   @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   public long getRollbacks() {
-      return rollbacks.get();
-   }
+    @ManagedAttribute(description = "Number of transaction commits performed since last reset")
+    @Metric(displayName = "Commits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+    public long getCommits() {
+        return commits.get();
+    }
+
+    @ManagedAttribute(description = "Number of transaction rollbacks performed since last reset")
+    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+    public long getRollbacks() {
+        return rollbacks.get();
+    }
 }
