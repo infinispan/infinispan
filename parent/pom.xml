@@ -120,6 +120,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
+      <version.hbase>0.90.4</version.hbase>
       <version.hibernate.search>4.1.0.Alpha1</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
