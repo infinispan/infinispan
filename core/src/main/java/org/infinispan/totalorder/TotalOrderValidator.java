@@ -192,15 +192,16 @@ public class TotalOrderValidator {
      * in repeatable read with write skew (not implemented yet!)
      * @param gtx the global transaction
      */
-    public void finishTransaction(GlobalTransaction gtx) {
+    public void finishTransaction(GlobalTransaction gtx, boolean ignoreNullTxInfo) {
         if(trace) {
             log.tracef("transaction %s is finished", prettyPrintGlobalTransaction(gtx));
         }
         RemoteTxInfo txInfo = remoteTransactionMap.remove(gtx);
         if(txInfo != null) {
             finishTransaction(txInfo.keys, txInfo.barrier);
-        } else {
-            throw new IllegalStateException("TxInfo can't be null, otherwise can originate deadlocks");
+        } else if (!ignoreNullTxInfo) {
+            throw new IllegalStateException("TxInfo can't be null, otherwise can originate deadlocks. " +
+                    "GlobalTransaction is " + prettyPrintGlobalTransaction(gtx));
         }
     }
 
@@ -281,7 +282,7 @@ public class TotalOrderValidator {
     }
 
     /**
-     * see {@link #finishTransaction(org.infinispan.transaction.xa.GlobalTransaction)}
+     * see {@link #finishTransaction(org.infinispan.transaction.xa.GlobalTransaction, boolean)}
      *
      * remove the keys from the map (if their didn't change) and release the count down latch, unblocking
      * the next transaction
@@ -476,6 +477,7 @@ public class TotalOrderValidator {
             super.finalizeValidation(result, exception);
             if(prepareCommand.isOnePhaseCommit()) {
                 finishTransaction(txInfo.keys, txInfo.barrier);
+                remoteTransactionMap.remove(prepareCommand.getGlobalTransaction());
             }
         }
     }

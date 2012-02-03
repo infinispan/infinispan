@@ -106,7 +106,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
             }
             throw t;
         } finally {
-            totalOrderValidator.finishTransaction(gtx);
+            totalOrderValidator.finishTransaction(gtx, !command.shouldInvokedRemotely() && ctx.isOriginLocal());
         }
     }
 
@@ -133,7 +133,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
             }
             throw t;
         } finally {
-            totalOrderValidator.finishTransaction(gtx);
+            totalOrderValidator.finishTransaction(gtx, false);
         }
     }
 }
