@@ -25,10 +25,7 @@ package org.infinispan.server.hotrod
 import logging.Log
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
-import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
@@ -38,10 +35,18 @@ import org.infinispan.server.core.Main._
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
 import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.Cache
+import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryCreated}
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
+import org.infinispan.remoting.transport.{Transport, Address}
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
  * on startup and shutdown.
+ *
+ * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers
+ * This should safe some memory for the local case and the code should be cleaner
+ * TODO: In 5.2, convert the clustered hot rod server to new configuration too
  *
  * @author Galder Zamarreño
  * @since 4.1
@@ -53,10 +58,15 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
+   private var viewId: Int = _
 
    def getAddress: ServerAddress = address
 
-   override def getEncoder = new HotRodEncoder(getCacheManager)
+   def getViewId: Int = viewId
+
+   def setViewId(viewId: Int) = this.viewId = viewId
+
+   override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
    override def getDecoder : HotRodDecoder = {
       val hotRodDecoder = new HotRodDecoder(getCacheManager, transport)
@@ -108,9 +118,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
       addressCache = cacheManager.getCache(ADDRESS_CACHE_NAME)
+      addressCache.addListener(new ViewIdUpdater(
+            addressCache.getAdvancedCache.getRpcManager.getTransport))
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(host, port)
-      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache))
+      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       addressCache.put(clusterAddress, address)
@@ -152,6 +164,31 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private[hotrod] def getAddressCache = addressCache
+
+   /**
+    * Listener that provides guarantees for view id updates. So, a view id will
+    * only be considered to have changed once the address cache has been
+    * updated to add an address from the cache. That way, when the encoder
+    * makes the view id comparison (client provided vs server side view id),
+    * it has the guarantees that the address cache has already been updated.
+    */
+   @Listener
+   class ViewIdUpdater(transport: Transport) {
+
+      @CacheEntryCreated
+      def viewIdUpdate(event: CacheEntryEvent[Address, ServerAddress]) {
+         // Only update view id once cache has been updated
+         if (!event.isPre) {
+            val localViewId = transport.getViewId
+            viewId = localViewId
+            if (isTraceEnabled) {
+               log.tracef("Address cache had %s for key %s. View id is now %d",
+                          event.getType, event.getKey, localViewId)
+            }
+         }
+      }
+
+   }
 
 }
 

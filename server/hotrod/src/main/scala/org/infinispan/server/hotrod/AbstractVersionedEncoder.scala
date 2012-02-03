@@ -36,7 +36,8 @@ abstract class AbstractVersionedEncoder {
    /**
     * Write the header to the given channel buffer
     */
-   def writeHeader(r: Response, buf: ChannelBuffer, addressCache: Cache[Address, ServerAddress])
+   def writeHeader(r: Response, buf: ChannelBuffer,
+         addressCache: Cache[Address, ServerAddress], server: HotRodServer)
 
    /**
     * Write operation response using the given channel buffer
