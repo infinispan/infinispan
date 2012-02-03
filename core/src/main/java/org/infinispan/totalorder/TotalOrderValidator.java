@@ -309,12 +309,12 @@ public class TotalOrderValidator {
     }
 
     private void updateDurationStats(long creationTime, long validationStartTime, long validationEndTime,
-                                     long initializationEnd) {
+                                     long initializationEndTime) {
         if(statisticsEnabled) {
             //set the profiling information
             waitTimeInQueue.addAndGet(validationStartTime - creationTime);
-            initializationDuration.addAndGet(initializationEnd - validationStartTime);
-            validationDuration.addAndGet(validationEndTime - initializationEnd);
+            initializationDuration.addAndGet(initializationEndTime - validationStartTime);
+            validationDuration.addAndGet(validationEndTime - initializationEndTime);
             numberOfTxValidated.incrementAndGet();
         }
     }
@@ -331,7 +331,7 @@ public class TotalOrderValidator {
         private long creationTime = -1;
         private long validationStartTime = -1;
         private long validationEndTime = -1;
-        private long initializationEnd = -1;
+        private long initializationEndTime = -1;
 
         private SingleThreadValidation(PrepareCommand prepareCommand, TxInvocationContext txInvocationContext,
                                        CommandInterceptor invoker) {
@@ -379,11 +379,14 @@ public class TotalOrderValidator {
                             prettyPrintGlobalTransaction(prepareCommand.getGlobalTransaction()));
                 }
                 initializeValidation();
-                initializationEnd = System.nanoTime();
+                initializationEndTime = System.nanoTime();
 
                 //invoke next interceptor in the chain
                 result = prepareCommand.acceptVisitor(txInvocationContext, invoker);
             } catch (Throwable t) {
+                if (initializationEndTime == -1) {
+                    initializationEndTime = System.nanoTime();
+                }
                 result = t;
                 exception = true;
             } finally {
@@ -394,7 +397,7 @@ public class TotalOrderValidator {
                 }
                 finalizeValidation(result, exception);
                 validationEndTime = System.nanoTime();
-                updateDurationStats(creationTime, validationStartTime, validationEndTime, initializationEnd);
+                updateDurationStats(creationTime, validationStartTime, validationEndTime, initializationEndTime);
             }
         }
     }
