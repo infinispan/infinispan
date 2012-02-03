@@ -33,6 +33,9 @@ import org.infinispan.Cache;
 public class Search {
    
    public static SearchManager getSearchManager(Cache<?, ?> cache) {
+      if (cache == null) {
+         throw new IllegalArgumentException("cache parameter shall not be null");
+      }
       return new SearchManagerImpl(cache.getAdvancedCache());
    }
 

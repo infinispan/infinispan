@@ -173,6 +173,13 @@ public class ControlledRpcManager implements RpcManager {
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout);
    }
 
+   @Override
+   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout, boolean ignoreLeavers) {
+      log.trace("ControlledRpcManager.invokeRemotelyInFuture4");
+      waitFirst(rpc);
+      realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout, ignoreLeavers);
+   }
+
    public Transport getTransport() {
       return realOne.getTransport();
    }

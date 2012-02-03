@@ -27,6 +27,7 @@ import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.server.hotrod.HotRodServer._
 import collection.JavaConversions._
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -38,8 +39,9 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
 
    val encoder10 = Encoder10
 
-   override def writeHeader(r: Response, buf: ChannelBuffer, addressCache: Cache[Address, ServerAddress]) {
-      val topologyResp = getTopologyResponse(r, addressCache)
+   override def writeHeader(r: Response, buf: ChannelBuffer,
+            addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
+      val topologyResp = getTopologyResponse(r, addressCache, server)
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
       buf.writeByte(r.operation.id.byteValue)
@@ -64,20 +66,21 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
    override def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager) =
       encoder10.writeResponse(this, r, buf, cacheManager)
 
-   def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress]): AbstractTopologyResponse = {
+   def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
+            server: HotRodServer): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          r.clientIntel match {
             case 2 | 3 => {
-               val viewId = addressCache.getAdvancedCache.getRpcManager.getTransport.getViewId
-               if (r.topologyId != viewId) {
+               val lastViewId = server.getViewId
+               if (r.topologyId != lastViewId) {
                   val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
-                     TopologyAwareResponse(viewId)
+                     TopologyAwareResponse(lastViewId)
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     HashDistAware11Response(viewId, config.getNumOwners,
+                     HashDistAware11Response(lastViewId, config.getNumOwners,
                            DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE,
                            config.getNumVirtualNodes)
                   }

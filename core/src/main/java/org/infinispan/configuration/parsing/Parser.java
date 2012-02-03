@@ -1,14 +1,8 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.AbstractLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
@@ -83,16 +77,27 @@ public class Parser {
     }
 
     public ConfigurationBuilderHolder parse(String filename) {
+        return parse(filename, new ConfigurationBuilderHolder());
+    }
+
+    public ConfigurationBuilderHolder parse(String filename, ConfigurationBuilderHolder holder) {
         FileLookup fileLookup = FileLookupFactory.newInstance();
-        return parse(fileLookup.lookupFile(filename, cl));
+        return parse(fileLookup.lookupFile(filename, cl), holder);
     }
 
     public ConfigurationBuilderHolder parse(InputStream is) {
+        return parse(is, new ConfigurationBuilderHolder());
+    }
+
+    public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder) {
+        if (holder == null) {
+            throw new IllegalArgumentException("Holder cannot be null");
+        }
         try {
             try {
                 BufferedInputStream input = new BufferedInputStream(is);
                 XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-                ConfigurationBuilderHolder holder = doParse(streamReader);
+                doParse(streamReader, holder);
                 streamReader.close();
                 input.close();
                 is.close();
@@ -107,9 +112,7 @@ public class Parser {
         }
     }
 
-    private ConfigurationBuilderHolder doParse(XMLStreamReader reader) throws XMLStreamException {
-
-        ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+    private void doParse(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
 
         Element root = ParseUtils.nextElement(reader);
 
@@ -137,7 +140,6 @@ public class Parser {
                 }
             }
         }
-        return holder;
     }
 
     private void parseNamedCache(XMLStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {

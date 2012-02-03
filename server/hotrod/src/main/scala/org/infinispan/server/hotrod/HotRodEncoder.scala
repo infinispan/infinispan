@@ -37,7 +37,7 @@ import org.infinispan.remoting.transport.Address
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodEncoder(cacheManager: EmbeddedCacheManager)
+class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
         extends OneToOneEncoder with Constants with Log {
    import HotRodServer._
 
@@ -58,10 +58,10 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager)
       }
 
       r.version match {
-         case VERSION_10 | VERSION_11 => encoder.writeHeader(r, buf, addressCache)
+         case VERSION_10 | VERSION_11 => encoder.writeHeader(r, buf, addressCache, server)
          // if error before reading version, don't send any topology changes
          // cos the encoding might vary from one version to the other
-         case 0 => encoder.writeHeader(r, buf, null)
+         case 0 => encoder.writeHeader(r, buf, null, null)
       }
 
       encoder.writeResponse(r, buf, cacheManager)

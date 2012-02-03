@@ -26,6 +26,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
+import org.infinispan.context.Flag
 
 /**
  * Listener that detects crashed or stopped members and removes them from
@@ -35,31 +36,41 @@ import org.infinispan.remoting.transport.Address
  * @since 5.1
  */
 @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
-class CrashedMemberDetectorListener(addressCache: Cache[Address, ServerAddress]) extends Log {
+class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server: HotRodServer) extends Log {
+
+   // Let all nodes remove the address from their own cache locally. By doing
+   // this, we can guarantee that transport view id has been updated before
+   // updating the locally cached view id. This cached view id is used to
+   // guarantee that the address cache will be updated *before* the client can
+   // detect a new topology view.
+   val addressCache = cache.getAdvancedCache.withFlags(Flag.CACHE_MODE_LOCAL)
 
    @ViewChanged
    def handleViewChange(e: ViewChangedEvent) {
-      val cacheManager = e.getCacheManager
-      // Only the coordinator can potentially make modifications related to
-      // crashed members. This is to avoid all nodes trying to make the same
-      // modification which would be wasteful and lead to deadlocks.
-      if (cacheManager.isCoordinator)
-         detectCrashedMember(e)
+      detectCrashedMember(e)
    }
 
    private[hotrod] def detectCrashedMember(e: ViewChangedEvent) {
-      trace("View change received on coordinator: %s", e)
+      trace("View change received: %s", e)
       try {
          val newMembers = collectionAsScalaIterable(e.getNewMembers)
          val oldMembers = collectionAsScalaIterable(e.getOldMembers)
          val goneMembers = oldMembers.filterNot(newMembers contains _)
+         // Consider doing removeAsync and then waiting for all removals...
          goneMembers.foreach { addr =>
             trace("Remove %s from address cache", addr)
             addressCache.remove(addr)
          }
+         updateViewdId(e)
       } catch {
          case t: Throwable => logErrorDetectingCrashedMember(t)
       }
+   }
+
+   protected def updateViewdId(e: ViewChangedEvent) {
+      // Multiple members could leave at the same time, so delay any view id
+      // updates until the all addresses have been removed from memory.
+      server.setViewId(e.getViewId)
    }
 
 }

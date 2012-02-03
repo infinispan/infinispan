@@ -40,31 +40,33 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class L1ManagerImpl implements L1Manager {
-	
-	private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
-	private final boolean trace = log.isTraceEnabled();
-	
-	private RpcManager rpcManager;
-	private CommandsFactory commandsFactory;
-	private int threshold;
 
-	private final ConcurrentMap<Object, Collection<Address>> requestors;
-	
-	public L1ManagerImpl() {
-	   requestors = new ConcurrentHashMap<Object, Collection<Address>>();
+   private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
+   private final boolean trace = log.isTraceEnabled();
+
+   private RpcManager rpcManager;
+   private CommandsFactory commandsFactory;
+   private int threshold;
+   private long rpcTimeout;
+
+   private final ConcurrentMap<Object, Collection<Address>> requestors;
+
+   public L1ManagerImpl() {
+      requestors = new ConcurrentHashMap<Object, Collection<Address>>();
    }
-	
+
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory commandsFactory) {
-   	this.rpcManager = rpcManager;
-   	this.commandsFactory = commandsFactory;
-   	this.threshold = configuration.getL1InvalidationThreshold();
+      this.rpcManager = rpcManager;
+      this.commandsFactory = commandsFactory;
+      this.threshold = configuration.getL1InvalidationThreshold();
+      this.rpcTimeout = configuration.getSyncReplTimeout();
    }
-   
+
    public void addRequestor(Object key, Address origin) {
       //we do a plain get first as that's likely to be enough
       Collection<Address> as = requestors.get(key);
-      
+
       if (as == null) {
          // only if needed we create a new HashSet, but make sure we don't replace another one being created
          as = new ConcurrentHashSet<Address>();
@@ -78,54 +80,54 @@ public class L1ManagerImpl implements L1Manager {
          as.add(origin);
       }
    }
-   
+
    public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin) {
       if (trace) log.tracef("Invalidating L1 caches for keys %s", keys);
-      
+
       NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
-      
+
       Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin);
-      
+
       int nodes = invalidationAddresses.size();
 
       if (nodes > 0) {
          // No need to invalidate at all if there is no one to invalidate!
          boolean multicast = isUseMulticast(nodes);
 
-         if (trace) log.tracef("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
-         
+         if (trace)
+            log.tracef("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
+
          if (multicast) {
-         	if (trace) log.tracef("Invalidating keys %s via multicast", keys);
-         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
-      		rpcManager.broadcastRpcCommandInFuture(ic, future);
+            if (trace) log.tracef("Invalidating keys %s via multicast", keys);
+            InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
+            rpcManager.broadcastRpcCommandInFuture(ic, future);
          } else {
-         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
-         	
+            InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
+
             // Ask the caches who have requested from us to remove
             if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
-            rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
+            rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, true, future, rpcTimeout, true);
             return future;
-         }    
-      } else
-         if (trace) log.trace("No L1 caches to invalidate");
+         }
+      } else if (trace) log.trace("No L1 caches to invalidate");
       return future;
    }
-   
+
    private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin) {
-   	Collection<Address> addresses = new HashSet<Address>(2);
-   	
-   	for (Object key : keys) {
-   	   Collection<Address> as = requestors.remove(key);
-   	   if (as != null) {
-   		   addresses.addAll(as);
+      Collection<Address> addresses = new HashSet<Address>(2);
+
+      for (Object key : keys) {
+         Collection<Address> as = requestors.remove(key);
+         if (as != null) {
+            addresses.addAll(as);
             if (origin != null && as.contains(origin)) addRequestor(key, origin);
          }
-   	}
-   	if (origin != null)
-   		addresses.remove(origin);
-   	return addresses;
+      }
+      if (origin != null)
+         addresses.remove(origin);
+      return addresses;
    }
-   
+
    private boolean isUseMulticast(int nodes) {
       // User has requested unicast only
       if (threshold == -1) return false;
