@@ -59,8 +59,9 @@ import java.util.Set;
  * @since 4.0
  */
 @NotThreadSafe
-public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
-   FastCopyHashMap<K, V> delegate;
+public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
+
+   protected final FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
    private volatile AtomicHashMapProxy<K, V> proxy;
    volatile boolean copied = false;
@@ -79,7 +80,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    }
 
    public AtomicHashMap() {
-      delegate = new FastCopyHashMap<K, V>();
+      this.delegate = new FastCopyHashMap<K, V>();
    }
 
    private AtomicHashMap(FastCopyHashMap<K, V> delegate) {
@@ -88,7 +89,13 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    public AtomicHashMap(boolean isCopy) {
       this();
-      copied = isCopy;
+      this.copied = isCopy;
+   }
+
+   private AtomicHashMap(FastCopyHashMap<K, V> newDelegate, AtomicHashMapProxy<K, V> proxy) {
+      this.delegate = newDelegate;
+      this.proxy = proxy;
+      this.copied = true;
    }
 
    public void commit() {
@@ -188,25 +195,15 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    @SuppressWarnings("unchecked")
    public AtomicHashMap<K, V> copy() {
-      try {
-         AtomicHashMap<K, V> clone = (AtomicHashMap<K, V>) super.clone();
-         clone.delegate = (FastCopyHashMap<K, V>) delegate.clone();
-         clone.proxy = proxy;
-         clone.copied = true;
-         return clone;
-      }
-      catch (CloneNotSupportedException e) {
-         // should never happen!!
-         throw new RuntimeException(e);
-      }
+      FastCopyHashMap<K, V> newDelegate = delegate.clone();
+      return new AtomicHashMap(newDelegate, proxy);
    }
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder("AtomicHashMap{delegate=");
-      sb.append(delegate);
-      sb.append("}");
-      return sb.toString();    
+      //Avoid iterating on the delegate as that might lead to exceptions from concurrent iterators:
+      //not nice to have during a toString!
+      return "AtomicHashMap";
    }
 
    /**
@@ -220,8 +217,6 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
    }
-
-
 
    public static class Externalizer extends AbstractExternalizer<AtomicHashMap> {
       @Override

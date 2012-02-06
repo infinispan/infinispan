@@ -367,8 +367,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       size = 0;
    }
 
-   @SuppressWarnings("unchecked")
-   public Object clone() {
+   public FastCopyHashMap<K, V> clone() {
       try {
          FastCopyHashMap<K, V> clone = (FastCopyHashMap<K, V>) super.clone();
          clone.table = table.clone();
