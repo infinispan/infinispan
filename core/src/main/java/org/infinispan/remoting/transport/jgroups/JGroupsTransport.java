@@ -409,6 +409,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         if (addr == null) {
+            return Collections.emptyList();
+         }
          physicalAddress = new JGroupsAddress(addr);
       }
       return Collections.singletonList(physicalAddress);
