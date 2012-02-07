@@ -1,5 +1,29 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
@@ -22,38 +46,35 @@
       <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
-         <version>${version.jgroups}</version>
       </dependency>
 
-      
+      <!--
+         For the JTA 1.1 API; consuming projects can safely
+         exclude this and replace with any valid source of this API, such as a Java EE app server. 
+         -->
       <dependency>
          <groupId>org.jboss.javaee</groupId>
          <artifactId>jboss-transaction-api</artifactId>
-         <version>${version.jta}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-river</artifactId>
-         <version>${version.jboss.marshalling}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling</artifactId>
-         <version>${version.jboss.marshalling}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
-         <version>${version.jboss.logging}</version>
       </dependency>
 
       <dependency>
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.core</artifactId>
-         <version>${version.osgi}</version>
          <optional>true</optional>
       </dependency>
 
@@ -61,7 +82,6 @@
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnp-client</artifactId>
          <scope>test</scope>
-         <version>${version.org.jboss.naming}</version>
          <exclusions>
             <exclusion>
                <groupId>org.jboss.logging</groupId>
@@ -74,7 +94,6 @@
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnpserver</artifactId>
          <scope>test</scope>
-         <version>${version.org.jboss.naming}</version>
          <exclusions>
             <exclusion>
                <groupId>org.jboss.logging</groupId>
@@ -87,20 +106,17 @@
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-math</artifactId>
          <scope>test</scope>
-         <version>${version.commons.math}</version>
       </dependency>
 
       <dependency>
          <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
          <scope>test</scope>
-         <version>${version.javassist}</version>
       </dependency>
       
       <dependency>
          <groupId>org.codehaus.woodstox</groupId>
          <artifactId>woodstox-core-asl</artifactId>
-         <version>${version.org.codehaus.woodstox.woodstox-core-asl}</version>
          <exclusions>
             <exclusion>
                <groupId>javax.xml.stream</groupId>
@@ -112,7 +128,6 @@
       <dependency>
          <groupId>org.codehaus.woodstox</groupId>
          <artifactId>stax2-api</artifactId>
-         <version>${version.org.codehaus.woodstox.stax2-api}</version>
          <exclusions>
             <exclusion>
                <groupId>javax.xml.stream</groupId>
@@ -120,19 +135,13 @@
             </exclusion>
          </exclusions>
       </dependency>
-     
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>staxmapper</artifactId>
-         <version>${version.org.jboss.staxmapper}</version>
-      </dependency>
-
    </dependencies>
+
    <build>
       <pluginManagement>
          <plugins>
             <plugin>
-               
+               <!-- This plugin's configuration is used in m2e only. -->
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
                <version>1.0.0</version>
@@ -149,7 +158,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore />
+                              <ignore></ignore>
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -166,7 +175,7 @@
                                 </goals>
                             </pluginExecutionFilter>
                             <action>
-                                <ignore />
+                                <ignore></ignore>
                             </action>
                         </pluginExecution>
                      </pluginExecutions>
@@ -200,7 +209,11 @@
          </dependencies>
          <build>
             <plugins>
-               
+               <!--
+        Generates XML schema for Infinispan configuration files
+        Run with mvn exec:java
+        For more details see:
+        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
