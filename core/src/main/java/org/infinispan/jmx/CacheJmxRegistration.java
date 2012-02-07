@@ -106,21 +106,23 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
       // make sure we don't set cache to null, in case it needs to be restarted via JMX.
    }
-   
+
    public void unregisterCacheMBean() {
-      String pattern = jmxDomain + ":" + CACHE_JMX_GROUP + ",*";
-      try {
-         Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
-         for (ObjectName name : names) {
-            mBeanServer.unregisterMBean(name);
+      if (mBeanServer != null) {
+         String pattern = jmxDomain + ":" + CACHE_JMX_GROUP + ",*";
+         try {
+            Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
+            for (ObjectName name : names) {
+               mBeanServer.unregisterMBean(name);
+            }
+         } catch (MBeanRegistrationException e) {
+            log.unableToUnregisterMBeanWithPattern(pattern, e);
+         } catch (InstanceNotFoundException e) {
+            // Ignore if Cache MBeans not present
+         } catch (MalformedObjectNameException e) {
+            String message = "Malformed pattern " + pattern;
+            throw new CacheException(message, e);
          }
-      } catch (MBeanRegistrationException e) {
-         log.unableToUnregisterMBeanWithPattern(pattern, e);
-      } catch (InstanceNotFoundException e) {
-         // Ignore if Cache MBeans not present
-      } catch (MalformedObjectNameException e) {
-         String message = "Malformed pattern " + pattern;
-         throw new CacheException(message, e);
       }
    }
 
@@ -136,7 +138,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
       return registrar;
    }
-   
+
    protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
                                MBeanServer mBeanServer, String groupName) {
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
