@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
   ~ contributors as indicated by the @author tags. All rights reserved.
   ~ See the copyright.txt in the distribution for a full listing of
   ~ individual contributors.
@@ -36,35 +36,27 @@
    <packaging>bundle</packaging>
    <name>Infinispan Hot Rod Client</name>
    <description>Infinispan Hot Rod Client</description>
-   <properties>
-      <version.avro>1.3.3</version.avro>
-   </properties>
-   
 
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>commons-pool</groupId>
          <artifactId>commons-pool</artifactId>
-         <version>${version.commons.pool}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.hadoop</groupId>
          <artifactId>avro</artifactId>
-         <version>${version.avro}</version>
          <scope>provided</scope>
       </dependency>
 
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
@@ -72,14 +64,12 @@
        <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
-         <version>${project.version}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
-         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
@@ -87,7 +77,6 @@
       <dependency>
          <groupId>org.scala-lang</groupId>
          <artifactId>scala-library</artifactId>
-         <version>${version.scala}</version>
          <scope>test</scope>
       </dependency>
 
@@ -98,7 +87,6 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
-            <version>${version.maven.bundle}</version>
             <configuration>
                <instructions>
                   <Export-Package>
