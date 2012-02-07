@@ -1,6 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
   ~ contributors as indicated by the @author tags. All rights reserved.
   ~ See the copyright.txt in the distribution for a full listing of
   ~ individual contributors.
@@ -20,69 +21,64 @@
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.infinispan</groupId>
-		<artifactId>infinispan-parent</artifactId>
-		<version>5.2.0-SNAPSHOT</version>
-		<relativePath>../../parent/pom.xml</relativePath>
-	</parent>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>5.2.0-SNAPSHOT</version>
+      <relativePath>../../parent/pom.xml</relativePath>
+   </parent>
 
-	<artifactId>infinispan-ec2-demo</artifactId>
-	<name>Infinispan EC2 Demo</name>
-	<description>Infinispan - EC2 Demo</description>
-	<packaging>jar</packaging>
-	<dependencies>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.martiansoftware</groupId>
-			<artifactId>jsap</artifactId>
-			<version>2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.milyn</groupId>
-			<artifactId>milyn-smooks-javabean</artifactId>
-			<version>1.2.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.milyn</groupId>
-			<artifactId>milyn-smooks-csv</artifactId>
-			<version>1.2.2</version>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-							<mainClass>org.infinispan.ec2demo.InfinispanFluDemo</mainClass>
-						</manifest>
-					</archive>
-					<excludes>
-						<exclude>**/*.dat.gz</exclude>
-					</excludes>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+   <artifactId>infinispan-ec2-demo</artifactId>
+   <name>Infinispan EC2 Demo</name>
+   <description>Infinispan - EC2 Demo</description>
+   <packaging>jar</packaging>
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.martiansoftware</groupId>
+         <artifactId>jsap</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.milyn</groupId>
+         <artifactId>milyn-smooks-javabean</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.milyn</groupId>
+         <artifactId>milyn-smooks-csv</artifactId>
+      </dependency>
+   </dependencies>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <mainClass>org.infinispan.ec2demo.InfinispanFluDemo</mainClass>
+                  </manifest>
+               </archive>
+               <excludes>
+                  <exclude>**/*.dat.gz</exclude>
+               </excludes>
+            </configuration>
+            <executions>
+               <execution>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
 </project>

@@ -1,6 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
   ~ contributors as indicated by the @author tags. All rights reserved.
   ~ See the copyright.txt in the distribution for a full listing of
   ~ individual contributors.
@@ -30,34 +31,24 @@
       <version>5.2.0-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
-
    <artifactId>infinispan-gridfs-webdav</artifactId>
    <packaging>war</packaging>
    <name>Infinispan GridFileSystem WebDAV interface</name>
    <description>WebDAV interface for Infinispan's GridFileSystem, packaged as a WAR file for deployment in a servlet container</description>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
       </dependency>
-
       <dependency>
          <groupId>net.sf.webdav-servlet</groupId>
          <artifactId>webdav-servlet</artifactId>
-         <version>${version.webdav.servlet}</version>
       </dependency>
-
       <!-- required by Webdav-Servlet -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
-         <version>${version.javax.servlet}</version>
          <scope>provided</scope>
       </dependency>
-
-
-
    </dependencies>
 </project>

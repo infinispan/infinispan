@@ -1,8 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
-  ~ as indicated by the @author tags. See the copyright.txt file in the
-  ~ distribution for a full listing of individual contributors.
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
   ~
   ~ This is free software; you can redistribute it and/or modify it
   ~ under the terms of the GNU Lesser General Public License as
@@ -43,22 +45,17 @@
    <properties>
       <scm.module.path>plugin/infinispan</scm.module.path>
       <rhq.defaultDevContainerPath>/jon/dev-container</rhq.defaultDevContainerPath>
-      <version.mc4j>1.2.6</version.mc4j>
-      <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>      
    </properties>
 
    <dependencies>
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-domain</artifactId>
-         <version>${version.rhq}</version>
          <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-plugin-api</artifactId>
-         <version>${version.rhq}</version>
          <exclusions>
             <exclusion>
                <groupId>com.sun.xml.bind</groupId>
@@ -67,38 +64,42 @@
          </exclusions>
          <scope>provided</scope>
       </dependency>
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${version.rhq}</version>
          <scope>provided</scope>
       </dependency>
-      
-<!--  
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-pluginGen</artifactId>
-         <version>${version.rhq.plugingen}</version>
-         <scope>provided</scope>
-      </dependency>
- -->  
 
       <dependency>
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
-         <version>${version.mc4j}</version>
          <scope>provided</scope>
       </dependency>
 
-      <!-- TODO: This is beyond horrible.  Surely we don't need these dependencies!! -->
-
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+      </dependency>
+      
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-tools</artifactId>
+      </dependency>
+      
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
          <version>${version.hibernate.core}</version>
          <scope>provided</scope>
       </dependency>
-
+      
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-annotations</artifactId>
@@ -107,30 +108,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>${version.javax.persistence}</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <!-- END unnenessary deps -->
-
-      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-      
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-tools</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
@@ -171,7 +150,6 @@
          
          <plugin>
              <artifactId>maven-dependency-plugin</artifactId>
-             <version>2.0</version>
              <executions>
                  <execution>
                      <id>copy-infinispan-rhq-plugin-jar</id>
@@ -220,25 +198,6 @@
                </execution>
             </executions>
          </plugin>
-         
-         <!--
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <mainClass>org.infinispan.rhq.util.RhqPluginDescriptorGenerator</mainClass>
-            </configuration>
-         </plugin>
-         -->
 
       </plugins>
    </build>
@@ -260,7 +219,6 @@
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
