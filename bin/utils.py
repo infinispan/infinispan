@@ -380,15 +380,6 @@ def maven_build_distribution(version):
       c.insert(0, '-q')
     c.insert(0, 'mvn')
     subprocess.check_call(c)
-  
-  print "Verifying build"
-  # Check contents of XSD in core/target/classes/schema/infinispan-config-{VMajor.VMinor}.xsd
-  fn = "core/target/classes/schema/infinispan-config-%s.%s.xsd" % ('5', '0')
-  if os.path.isfile(fn):
-	f = open(fn)
-	xsd = f.read()
-	f.close()
-	xsd.find("urn:infinispan:config:5.0")
 
 
 def get_version_pattern(): 

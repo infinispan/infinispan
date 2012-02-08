@@ -250,7 +250,7 @@
                   <argument>"XML Schema for Infinispan"</argument>
                   <argument>-o</argument>
                   <argument>${project.build.directory}/xsd_doc</argument>
-                  <argument>${basedir}/src/main/resources/infinispan-5.1.xsd</argument>
+                  <argument>${basedir}/src/main/resources/schema/infinispan-config-5.2.xsd</argument>
                </arguments>
             </configuration>
          </plugin>
