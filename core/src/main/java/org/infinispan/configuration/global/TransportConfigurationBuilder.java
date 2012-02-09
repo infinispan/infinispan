@@ -1,5 +1,6 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
@@ -148,7 +149,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    
    @Override
    void validate() {
-      // No-op, no validation required
+      if(clusterName == null){
+          throw new ConfigurationException("Transport clusterName cannot be null");
+      }
    }
    
    @Override

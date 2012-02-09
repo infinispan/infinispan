@@ -35,10 +35,12 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.Cache;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -197,7 +199,13 @@ public class ConfigurationUnitTest {
          .build();
       assertEquals(c.loaders().cacheLoaders().size(), 0);
    }
-   
+
+    @Test(expectedExceptions = ConfigurationException.class)
+    public void testClusterNameNull(){
+        GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
+        gc.transport().clusterName(null).build();
+    }
+
    @Test
    public void testSchema() throws Exception {
       FileLookup lookup = FileLookupFactory.newInstance();
