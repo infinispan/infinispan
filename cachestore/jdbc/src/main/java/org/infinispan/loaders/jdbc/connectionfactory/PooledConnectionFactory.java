@@ -44,6 +44,7 @@ import java.util.Properties;
  * hardcoded values will be used.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Tristan Tarrant
  */
 public class PooledConnectionFactory extends ConnectionFactory {
 
@@ -56,8 +57,12 @@ public class PooledConnectionFactory extends ConnectionFactory {
       pooledDataSource = new ComboPooledDataSource();
       pooledDataSource.setProperties(new Properties());
       try {
+         /* Since c3p0 does not throw an exception when it fails to load a driver we attempt to do so here
+          * Also, c3p0 does not allow specifying a custom classloader, so use c3p0's
+          */
+         Class.forName(config.getDriverClass(), true, ComboPooledDataSource.class.getClassLoader());
          pooledDataSource.setDriverClass(config.getDriverClass()); //loads the jdbc driver
-      } catch (PropertyVetoException e) {
+      } catch (Exception e) {
          log.errorInstantiatingJdbcDriver(config.getDriverClass(), e);
          throw new CacheLoaderException(String.format(
                "Error while instatianting JDBC driver: '%s'", config.getDriverClass()), e);
@@ -123,7 +128,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
          try {
             log.tracef("DataSource before %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
                        operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
-         } catch (SQLException e) {                                                                                                                
+         } catch (SQLException e) {
             log.sqlFailureUnexpected(e);
          }
       }
