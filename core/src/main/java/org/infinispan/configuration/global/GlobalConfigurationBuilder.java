@@ -25,6 +25,8 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
+import static java.util.Arrays.asList;
+
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
    
    private ClassLoader cl;
@@ -123,7 +125,17 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return shutdown;
    }
 
+    @SuppressWarnings("unchecked")
+    public void validate() {
+        for (AbstractGlobalConfigurationBuilder<?> validatable :
+                asList(asyncListenerExecutor, asyncTransportExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor,
+                        globalJmxStatistics, transport, serialization, shutdown)) {
+            validatable.validate();
+        }
+    }
+
    public GlobalConfiguration build() {
+       validate();
       return new GlobalConfiguration(
             asyncListenerExecutor.create(), 
             asyncTransportExecutor.create(), 
