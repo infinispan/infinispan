@@ -22,6 +22,7 @@
  */
 package org.infinispan.loaders.jdbc;
 
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -36,19 +37,19 @@ import java.util.Set;
  * Tester class for {@link org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Tristan Tarrant
  */
-@Test(groups = "functional", testName = "loaders.jdbc.PooledConnectionFactoryTest", enabled = false,
-      description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
+@Test(groups = "functional", testName = "loaders.jdbc.PooledConnectionFactoryTest")
 public class PooledConnectionFactoryTest {
 
    private PooledConnectionFactory factory;
-
 
    @AfterMethod
    public void destroyFacotry() {
       factory.stop();
    }
 
+   @Test(enabled = false, description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
    public void testValuesNoOverrides() throws Exception {
       factory = new PooledConnectionFactory();
       ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
@@ -65,10 +66,18 @@ public class PooledConnectionFactoryTest {
       }
       long start = System.currentTimeMillis();
       while (System.currentTimeMillis() - start < 2000) {
-         if (factory.getPooledDataSource().getNumBusyConnections() == 0) break;
+         if (factory.getPooledDataSource().getNumBusyConnections() == 0)
+            break;
       }
-      //this must happen eventually 
+      //this must happen eventually
       assert factory.getPooledDataSource().getNumBusyConnections() == 0;
+   }
+
+   @Test(expectedExceptions = CacheLoaderException.class)
+   public void testNoDriverClassFound() throws Exception {
+      factory = new PooledConnectionFactory();
+      ConnectionFactoryConfig config = UnitTestDatabaseManager.getBrokenConnectionFactoryConfig();
+      factory.start(config, Thread.currentThread().getContextClassLoader());
    }
 
 }
