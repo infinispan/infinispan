@@ -116,7 +116,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
          otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
-         assert e.getCause().getCause() instanceof JmxDomainConflictException;
+         assert e.getCause() instanceof JmxDomainConflictException;
       } finally {
          otherContainer.stop();
       }

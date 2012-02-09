@@ -649,6 +649,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          if (existingCache != null)
             return null;
 
+         // start the global components here, while we have the global lock
+         // do it before we have created the CacheWrapper, so that we don't have to clean it up in case of a failure
+         globalComponentRegistry.start();
+
          Configuration c = getConfiguration(cacheName);
          setConfigurationName(cacheName, c);
 
@@ -661,9 +665,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          if (existingCache != null) {
             throw new IllegalStateException("attempt to initialize the cache twice");
          }
-
-         // start the global components here, while we have the global lock
-         globalComponentRegistry.start();
 
          return cache;
       } catch (InterruptedException e) {

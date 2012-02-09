@@ -28,6 +28,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -232,9 +233,12 @@ public class ReflectionUtil {
       try {
          method.setAccessible(true);
          return method.invoke(instance, parameters);
+      } catch (InvocationTargetException e) {
+         throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
+                                        (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e.getCause());
       } catch (Exception e) {
          throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
-                                        (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
+               (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
       }
    }
 
