@@ -222,7 +222,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (old == null) getLog().tracef("Registering component %s under name %s", c, name);
       if (state == ComponentStatus.RUNNING) {
          populateLifeCycleMethods(c);
-         invokeStartMethods(Arrays.asList(c.startMethods));
+         try {
+            invokeStartMethods(Arrays.asList(c.startMethods));
+         } catch (Throwable t) {
+            // the component hasn't started properly, remove its registration
+            componentLookup.remove(name);
+            // the caller will log the exception
+            handleLifecycleTransitionFailure(t);
+         }
       }
    }
 
