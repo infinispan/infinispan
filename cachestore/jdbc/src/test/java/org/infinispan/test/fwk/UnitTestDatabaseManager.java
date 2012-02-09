@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
  *
  * @author Mircea.Markus@jboss.com
  * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
+ * @author Tristan Tarrant
  */
 
 public class UnitTestDatabaseManager {
@@ -53,6 +54,7 @@ public class UnitTestDatabaseManager {
    private static AtomicInteger userIndex = new AtomicInteger(0);
    private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
+   private static final String NON_EXISTENT_DRIVER = "non.existent.Driver";
 
    static {
       String driver = "";
@@ -99,6 +101,12 @@ public class UnitTestDatabaseManager {
       synchronized (realConfig) {
          return returnBasedOnDifferentInstance();
       }
+   }
+
+   public static ConnectionFactoryConfig getBrokenConnectionFactoryConfig() {
+      ConnectionFactoryConfig brokenConfig = new ConnectionFactoryConfig();
+      brokenConfig.setDriverClass(NON_EXISTENT_DRIVER);
+      return brokenConfig;
    }
 
    public static String getDatabaseName(Properties prop) {

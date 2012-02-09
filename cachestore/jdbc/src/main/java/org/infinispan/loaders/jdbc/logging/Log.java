@@ -22,19 +22,20 @@
 
 package org.infinispan.loaders.jdbc.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.naming.NamingException;
+
 import org.infinispan.loaders.bucket.Bucket;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
-
-import javax.naming.NamingException;
-import java.beans.PropertyVetoException;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Log abstraction for the JDBC cache store. For this module, message ids
@@ -124,7 +125,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while instatianting JDBC driver: '%s'", id = 8020)
-   void errorInstantiatingJdbcDriver(String driverClass, @Cause PropertyVetoException e);
+   void errorInstantiatingJdbcDriver(String driverClass, @Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not destroy C3P0 connection pool: %s", id = 8021)
