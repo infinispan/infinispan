@@ -41,14 +41,12 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
 
    private static final long serialVersionUID = 4396695354693176535L;
 
-   private static final LazyInitializeHolder holder = new LazyInitializeHolder();
-
    public static DummyTransactionManager getInstance() {
-      return holder.dummyTMInstance;
+      return LazyInitializeHolder.dummyTMInstance;
    }
 
    public static DummyUserTransaction getUserTransaction() {
-      return holder.utx;
+      return LazyInitializeHolder.utx;
    }
 
    public static void destroy() {
