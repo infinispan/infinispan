@@ -98,7 +98,8 @@ public class ReflectionUtil {
 
    public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
       List<Field> fields = new ArrayList<Field>(4);
-      for (; !c.equals(Object.class); c = c.getSuperclass()) {
+      // Class could be null in the case of an interface
+      for (;c != null && !c.equals(Object.class); c = c.getSuperclass()) {
          getAnnotatedFieldHelper(fields, c, annotationType);
       }
       return fields;
