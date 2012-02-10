@@ -49,6 +49,7 @@ import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.LCR;
 import org.jgroups.protocols.SEQUENCER;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Rsp;
@@ -264,11 +265,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
         boolean needsTotalOrder = configuration.needsTotalOrderProtocol();
         channel.setDiscardOwnMessages(!needsTotalOrder);
 
-        if(needsTotalOrder) {
+        if(needsTotalOrder && !hasTotalOrderProtocol()) {
             //Pedro --  in total order, the Sequencer must be in the protocol stack
-            if(channel.getProtocolStack().findProtocol(SEQUENCER.class) == null) {
-                throw new CacheException("Total Order protocol needs the sequencer enabled in JGroups");
-            }
+            throw new CacheException("Total Order protocol needs the sequencer enabled in JGroups");
         }
 
         // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
@@ -629,5 +628,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
     public Channel getChannel() {
         return channel;
+    }
+
+    /**
+     * Pedro: check if the total order protocol exists in jgroups protocol stack
+     * @return true if a total order protocol exists, false otherwise
+     */
+    private boolean hasTotalOrderProtocol() {
+        return channel.getProtocolStack().findProtocol(SEQUENCER.class) != null ||
+                channel.getProtocolStack().findProtocol(LCR.class) != null;
     }
 }

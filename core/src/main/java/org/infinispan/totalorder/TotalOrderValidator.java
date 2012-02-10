@@ -421,6 +421,9 @@ public class TotalOrderValidator {
             super(prepareCommand, txInvocationContext, invoker);
             this.barrier = new TxBarrier(prepareCommand.getGlobalTransaction());
             this.previousTransactions = new HashSet<TxBarrier>();
+            txInfo = getOrCreateTxInfo(prepareCommand.getGlobalTransaction());
+            txInfo.keys.addAll(prepareCommand.getAffectedKeys());
+            txInfo.barrier = barrier;
         }
 
         public void setPreviousTransactions(Set<TxBarrier> previousTransactions) {
@@ -428,11 +431,6 @@ public class TotalOrderValidator {
         }
 
         public RemoteTxInfo getTxInfo() {
-            if(txInfo == null) {
-                txInfo = getOrCreateTxInfo(prepareCommand.getGlobalTransaction());
-                txInfo.keys.addAll(prepareCommand.getAffectedKeys());
-                txInfo.barrier = barrier;
-            }
             return txInfo;
         }
 

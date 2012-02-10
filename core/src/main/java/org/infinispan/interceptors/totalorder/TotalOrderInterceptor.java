@@ -11,9 +11,10 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.totalorder.TotalOrderValidator;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.util.Util.prettyPrintGlobalTransaction;
 
 /**
  * Created to control the total order validation. It disable the possibility of acquiring locks during execution through
@@ -46,7 +47,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
     public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
         if (trace) {
             log.tracef("Visit Prepare Command. Transaction is %s, Affected keys are %s, Should invoke remotely? %s",
-                    Util.prettyPrintGlobalTransaction(command.getGlobalTransaction()),
+                    prettyPrintGlobalTransaction(command.getGlobalTransaction()),
                     command.getAffectedKeys(),
                     ctx.hasModifications());
         }
@@ -64,7 +65,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
             if (trace) {
                 log.tracef("Exception caught while visiting prepare command. Transaction is %s, Local? %s, " +
                         "version seen are %s, error message is %s",
-                        Util.prettyPrintGlobalTransaction(command.getGlobalTransaction()),
+                        prettyPrintGlobalTransaction(command.getGlobalTransaction()),
                         ctx.isOriginLocal(), ctx.getCacheTransaction().getUpdatedEntryVersions(),
                         t.getMessage());
             }
@@ -85,24 +86,26 @@ public class TotalOrderInterceptor extends CommandInterceptor {
 
         if (trace) {
             log.tracef("Visit Rollback Command. Transaction is %s",
-                    Util.prettyPrintGlobalTransaction(gtx));
+                    prettyPrintGlobalTransaction(gtx));
+        }
+
+        if (!ctx.isOriginLocal()) {
+            new RollbackThread(ctx, command).start();
+            return null;
         }
 
         try {
-            if (!ctx.isOriginLocal()) {
-                totalOrderValidator.markTransactionForRollback(gtx);
-                totalOrderValidator.waitForTxPrepared(ctx, gtx);
-            } else {
-                //only send the rollback command is the transaction was prepared previously.
-                //otherwise, doesn't send the rollback, because no locks are acquired remotely
-                command.setShouldInvokedRemotely(totalOrderValidator.isTransactionPrepared(gtx));
-            }
+
+            //only send the rollback command is the transaction was prepared previously.
+            //otherwise, doesn't send the rollback, because no locks are acquired remotely
+            command.setShouldInvokedRemotely(totalOrderValidator.isTransactionPrepared(gtx));
+
             return invokeNextInterceptor(ctx, command);
         } catch (Throwable t) {
             if (trace) {
-                log.tracef("Exception caught while visiting rollback command. Transaction is %s, Local? %s, " +
+                log.tracef("Exception caught while visiting local rollback command. Transaction is %s, " +
                         "error message is %s",
-                        Util.prettyPrintGlobalTransaction(gtx), ctx.isOriginLocal(), t.getMessage());
+                        prettyPrintGlobalTransaction(gtx), t.getMessage());
             }
             throw t;
         } finally {
@@ -116,24 +119,85 @@ public class TotalOrderInterceptor extends CommandInterceptor {
 
         if (trace) {
             log.tracef("Visit Commit Command. Transaction is %s",
-                    Util.prettyPrintGlobalTransaction(gtx));
+                    prettyPrintGlobalTransaction(gtx));
+        }
+
+        if (!ctx.isOriginLocal()) {
+            new CommitThread(ctx, command).start();
+            return null;
         }
 
         try {
-            if (!ctx.isOriginLocal()) {
-                totalOrderValidator.waitForTxPrepared(ctx, gtx);
-            }
             return invokeNextInterceptor(ctx, command);
         } catch (Throwable t) {
             if (trace) {
-                log.tracef("Exception caught while visiting commit command. Transaction is %s, Local? %s, " +
+                log.tracef("Exception caught while visiting local commit command. Transaction is %s, " +
                         "version seen are %s, error message is %s",
-                        Util.prettyPrintGlobalTransaction(gtx), ctx.isOriginLocal(),
+                        prettyPrintGlobalTransaction(gtx),
                         ctx.getCacheTransaction().getUpdatedEntryVersions(), t.getMessage());
             }
             throw t;
         } finally {
             totalOrderValidator.finishTransaction(gtx, false);
+        }
+    }
+
+    private class CommitThread extends Thread {
+        TxInvocationContext context;
+        CommitCommand command;
+
+        public CommitThread(TxInvocationContext ctx, CommitCommand command) {
+            super("Commit-Thread-" + prettyPrintGlobalTransaction(command.getGlobalTransaction()));
+            this.context = ctx;
+            this.command = command;
+        }
+
+        @Override
+        public void run() {
+            GlobalTransaction gtx = command.getGlobalTransaction();
+            try {
+                totalOrderValidator.waitForTxPrepared(context, gtx);
+                invokeNextInterceptor(context, command);
+            } catch (Throwable t) {
+                if (trace) {
+                    log.tracef("Exception caught while visiting remote commit command. Transaction is %s, " +
+                            "version seen are %s, error message is %s",
+                            prettyPrintGlobalTransaction(gtx),
+                            context.getCacheTransaction().getUpdatedEntryVersions(), t.getMessage());
+                }
+            } finally {
+                totalOrderValidator.finishTransaction(gtx, false);
+            }
+        }
+    }
+
+    private class RollbackThread extends Thread {
+        TxInvocationContext context;
+        RollbackCommand command;
+
+        public RollbackThread(TxInvocationContext ctx, RollbackCommand command) {
+            super("Rollback-Thread-" + prettyPrintGlobalTransaction(command.getGlobalTransaction()));
+            this.context = ctx;
+            this.command = command;
+        }
+
+        @Override
+        public void run() {
+            GlobalTransaction gtx = command.getGlobalTransaction();
+            try {
+                totalOrderValidator.markTransactionForRollback(gtx);
+                totalOrderValidator.waitForTxPrepared(context, gtx);
+                invokeNextInterceptor(context, command);
+            } catch (Throwable t) {
+                if (trace) {
+                    log.tracef("Exception caught while visiting remote rollback command. Transaction is %s, " +
+                            "version seen are %s, error message is %s",
+                            prettyPrintGlobalTransaction(gtx),
+                            context.getCacheTransaction().getUpdatedEntryVersions(), t.getMessage());
+                }
+            } finally {
+                totalOrderValidator.finishTransaction(gtx, false);
+            }
         }
     }
 }
