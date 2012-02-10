@@ -42,15 +42,19 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-core</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
