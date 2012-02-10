@@ -206,13 +206,15 @@ def unzip_archive(version):
   else:
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
+def update_javadoc_tracker(base_dir, version):
+  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  ## "Fix" the docs to use the appropriate analytics tracker ID
+  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
+
 def upload_javadocs(base_dir, version):
   """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
   
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
-  ## "Fix" the docs to use the appropriate analytics tracker ID
-  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
   os.mkdir(version_short)
   os.rename("apidocs", "%s/apidocs" % version_short)
   
@@ -309,23 +311,28 @@ def release():
   
   ##Unzip the newly built archive now
   unzip_archive(version)
-    
-  # Step 4: Upload javadocs to FTP
-  prettyprint("Step 4: Uploading Javadocs", Levels.INFO)
-  do_task(upload_javadocs, [base_dir, version], async_processes)
+
+  # Step 4: Update javadoc Google Analytics tracker
+  prettyprint("Step 4: Update Google Analytics tracker", Levels.INFO)
+  update_javadoc_tracker(base_dir, version)
   prettyprint("Step 4: Complete", Levels.INFO)
-  
-  prettyprint("Step 5: Uploading Artifacts", Levels.INFO)
-  do_task(upload_artifacts, [base_dir, version], async_processes)    
+
+  # Step 5: Upload javadocs to FTP
+  prettyprint("Step 5: Uploading Javadocs", Levels.INFO)
+  do_task(upload_javadocs, [base_dir, version], async_processes)
   prettyprint("Step 5: Complete", Levels.INFO)
   
-  prettyprint("Step 6: Uploading to configuration XML schema", Levels.INFO)
-  do_task(upload_schema, [base_dir, version], async_processes)    
+  prettyprint("Step 6: Uploading Artifacts", Levels.INFO)
+  do_task(upload_artifacts, [base_dir, version], async_processes)    
   prettyprint("Step 6: Complete", Levels.INFO)
-
-  prettyprint("Step 7: Uploading to configuration documentation", Levels.INFO)
-  do_task(upload_configdocs, [base_dir, version], async_processes)
+  
+  prettyprint("Step 7: Uploading to configuration XML schema", Levels.INFO)
+  do_task(upload_schema, [base_dir, version], async_processes)    
   prettyprint("Step 7: Complete", Levels.INFO)
+
+  prettyprint("Step 8: Uploading to configuration documentation", Levels.INFO)
+  do_task(upload_configdocs, [base_dir, version], async_processes)
+  prettyprint("Step 8: Complete", Levels.INFO)
 
   ## Wait for processes to finish
   for p in async_processes:
