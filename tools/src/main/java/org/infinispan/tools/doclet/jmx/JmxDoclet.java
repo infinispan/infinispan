@@ -60,10 +60,8 @@ public class JmxDoclet {
       List<MBeanComponent> mbeans = new LinkedList<MBeanComponent>();
 
       for (ClassDoc cd : classes) {
-         if (!cd.isAbstract()) {
-            MBeanComponent mbean = toJmxComponent(cd);
-            if (mbean != null) mbeans.add(mbean);
-         }
+         MBeanComponent mbean = toJmxComponent(cd);
+         if (mbean != null) mbeans.add(mbean);
       }
 
       // sort components alphabetically
