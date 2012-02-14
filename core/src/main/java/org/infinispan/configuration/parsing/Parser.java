@@ -83,8 +83,8 @@ public class Parser {
       this.cl = cl;
    }
    
-   public ConfigurationBuilderHolder parse(String filename) {
-      return parseFileNames(Collections.singletonList(filename));
+   public ConfigurationBuilderHolder parseFile(String filename) {
+      return parseFiles(Collections.singletonList(filename));
    }
    
    /**
@@ -98,17 +98,17 @@ public class Parser {
     * @return ConfigurationBuilderHolder with all the values applied and 
     *         overridden according to ordering of files
     */
-   public ConfigurationBuilderHolder parseFileNames(List<String> filenames) {
+   public ConfigurationBuilderHolder parseFiles(List<String> filenames) {
        FileLookup fileLookup = FileLookupFactory.newInstance();
        List<InputStream> streams = new ArrayList<InputStream>(filenames.size());
        for (String filename : filenames) {
            streams.add(fileLookup.lookupFile(filename, cl));
        }
-       return parseStreams(streams);
+       return parse(streams);
    }
    
    public ConfigurationBuilderHolder parse(InputStream is) {
-      return parseStreams(Collections.singletonList(is));
+      return parse(Collections.singletonList(is));
    }
    
    /**
@@ -122,7 +122,7 @@ public class Parser {
     * @return ConfigurationBuilderHolder with all the values applied and 
     *         overridden according to ordering of streams
     */
-   public ConfigurationBuilderHolder parseStreams(List<? extends InputStream> streams) {
+   public ConfigurationBuilderHolder parse(List<? extends InputStream> streams) {
        try {
            List<XMLStreamReader> streamReaders = new ArrayList<XMLStreamReader>(
                  streams.size());

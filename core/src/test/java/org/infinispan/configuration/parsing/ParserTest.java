@@ -217,9 +217,9 @@ public class ParserTest {
       Parser parser = new Parser(Thread.currentThread().getContextClassLoader());
       List<InputStream> streams = new ArrayList<InputStream>();
       for (int i = 0; i < xmls.length; ++i) {
-         streams[i] = new ByteArrayInputStream(xmls[i].getBytes());
+         streams.add(i, new ByteArrayInputStream(xmls[i].getBytes()));
       }
       
-      return parser.parseStreams(streams);
+      return parser.parse(streams);
    }
 }
