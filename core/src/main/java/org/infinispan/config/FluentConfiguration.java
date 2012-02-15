@@ -314,6 +314,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
         TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize);
         TotalOrderThreadingConfig keepAliveTime(long keepAliveTime);
         TotalOrderThreadingConfig queueSize(int queueSize);
+        TotalOrderThreadingConfig onePhaseCommit(boolean onePhaseCommit);
     }
 
     /**

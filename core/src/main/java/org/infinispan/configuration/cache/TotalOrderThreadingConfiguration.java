@@ -18,11 +18,15 @@ public class TotalOrderThreadingConfiguration {
 
     private final int queueSize;
 
-    public TotalOrderThreadingConfiguration(int corePoolSize, int maximumPoolSize, long keepAliveTime, int queueSize) {
+    private final boolean onePhaseCommit;
+
+    public TotalOrderThreadingConfiguration(int corePoolSize, int maximumPoolSize, long keepAliveTime, int queueSize,
+                                            boolean onePhaseCommit) {
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.keepAliveTime = keepAliveTime;
         this.queueSize = queueSize;
+        this.onePhaseCommit = onePhaseCommit;
     }
 
     public int getCorePoolSize() {
@@ -39,5 +43,9 @@ public class TotalOrderThreadingConfiguration {
 
     public int getQueueSize() {
         return queueSize;
+    }
+
+    public boolean isOnePhaseCommit() {
+        return onePhaseCommit;
     }
 }

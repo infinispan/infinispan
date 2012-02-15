@@ -278,7 +278,8 @@ public class TransactionCoordinator {
     //ie, the intersection of readset and writeset is empty
     //note: this method is invoked when configuration.isOnePhase() is false
     private boolean isOnePhaseTotalOrder(LocalTransaction tx) {
-        return configuration.isTotalOrder() && (!versioningEnabled || tx.noWriteSkewCheckNeeded());
+        return configuration.isTotalOrder() && (!versioningEnabled || tx.noWriteSkewCheckNeeded() ||
+                configuration.isTO1PC());
     }
 
     private static interface CommandCreator {

@@ -1724,6 +1724,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         return !getCacheMode().isSynchronous() || getTransactionLockingMode() == LockingMode.PESSIMISTIC;
     }
 
+    //Pedro: added one phase commit check for total order
+    public boolean isTO1PC() {
+        return transaction.totalOrderThreading.onePhaseCommit;
+    }
+
     /**
      * Returns true if the cache is configured to run in transactional mode, false otherwise. Starting with Infinispan
      * version 5.1 a cache doesn't support mixed access: i.e.won't support transactional and non-transactional
@@ -4851,6 +4856,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @XmlAttribute (required = false)
         protected int queueSize = 100;
 
+        @XmlAttribute (required = false)
+        protected boolean onePhaseCommit = false;
+
         public void accept(ConfigurationBeanVisitor v) {
             v.visitTotalOrderThreadingType(this);
         }
@@ -4876,6 +4884,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         @Override
         public TotalOrderThreadingConfig queueSize(int queueSize) {
             setQueueSize(queueSize);
+            return this;
+        }
+
+        @Override
+        public TotalOrderThreadingConfig onePhaseCommit(boolean onePhaseCommit) {
+            setOnePhaseCommit(onePhaseCommit);
             return this;
         }
 
@@ -4917,6 +4931,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
         public void setQueueSize(int queueSize) {
             testImmutability("queueSize");
             this.queueSize = queueSize;
+        }
+
+        public void setOnePhaseCommit(boolean onePhaseCommit) {
+            testImmutability("onePhaseCommit");
+            this.onePhaseCommit = onePhaseCommit;
         }
     }
 }

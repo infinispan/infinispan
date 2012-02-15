@@ -1,10 +1,12 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.FluentConfiguration;
 
 /**
  * Thread pool configuration for total order protocol
+ *
+ * This is only active when we use Total Order with Repeatable Read, Write Skew Check and Versions
+ *
  * Date: 1/17/12
  * Time: 11:44 AM
  *
@@ -19,6 +21,9 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
     private long keepAliveTime = 1000; //milliseconds
 
     private int queueSize = 100;
+
+    //With write skew check, the commit can be done in one phase or two without loosing consistency
+    private boolean onePhaseCommit = false;
 
     protected TotalOrderThreadingConfigurationBuilder(TransactionConfigurationBuilder builder) {
         super(builder);
@@ -39,7 +44,8 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     @Override
     TotalOrderThreadingConfiguration create() {
-        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime, queueSize);
+        return new TotalOrderThreadingConfiguration(corePoolSize, maximumPoolSize, keepAliveTime, queueSize,
+                onePhaseCommit);
     }
 
     @Override
@@ -48,6 +54,7 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
         this.maximumPoolSize = template.getMaximumPoolSize();
         this.keepAliveTime = template.getKeepAliveTime();
         this.queueSize = template.getQueueSize();
+        this.onePhaseCommit = template.isOnePhaseCommit();
         return this;
     }
 
@@ -68,6 +75,11 @@ public class TotalOrderThreadingConfigurationBuilder extends AbstractTransportCo
 
     public TotalOrderThreadingConfigurationBuilder queueSize(int queueSize) {
         this.queueSize = queueSize;
+        return this;
+    }
+
+    public TotalOrderThreadingConfigurationBuilder onePhaseCommit(boolean onePhaseCommit) {
+        this.onePhaseCommit = onePhaseCommit;
         return this;
     }
 }

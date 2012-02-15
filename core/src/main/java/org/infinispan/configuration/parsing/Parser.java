@@ -359,6 +359,9 @@ public class Parser {
                 case QUEUE_SIZE:
                     builder.transaction().totalOrderThreading().queueSize(Integer.valueOf(value));
                     break;
+                case ONE_PHASE_COMMIT:
+                    builder.transaction().totalOrderThreading().onePhaseCommit(Boolean.valueOf(value));
+                    break;
                 default:
                     throw ParseUtils.unexpectedAttribute(reader, i);
             }

@@ -135,7 +135,8 @@ public enum Attribute {
     CORE_POOL_SIZE("corePoolSize"),
     MAXIMUM_POOL_SIZE("maximumPoolSize"),
     KEEP_ALIVE_TIME("keepAliveTime"),
-    QUEUE_SIZE("queueSize")
+    QUEUE_SIZE("queueSize"),
+    ONE_PHASE_COMMIT("onePhaseCommit")
     ;
 
     private final String name;
