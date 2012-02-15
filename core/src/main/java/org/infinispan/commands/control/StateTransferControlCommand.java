@@ -29,6 +29,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -43,6 +44,7 @@ import java.util.Collection;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @author Dan Berindei <dan@infinispan.org>
+ * @author Mircea Markus
  * @since 4.0
  */
 public class StateTransferControlCommand extends BaseRpcCommand {
@@ -53,12 +55,15 @@ public class StateTransferControlCommand extends BaseRpcCommand {
    public enum Type {
       // receive a map of keys and add them to the data container
       APPLY_STATE,
+      APPLY_LOCKS
    }
 
    Type type;
    Address sender;
    int viewId;
    Collection<InternalCacheEntry> state;
+   Collection<LockInfo> locks;
+
 
    // cache components
    StateTransferManager stateTransferManager;
@@ -75,12 +80,13 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public StateTransferControlCommand(String cacheName, Type type, Address sender, int viewId, Collection<InternalCacheEntry> state) {
+   public StateTransferControlCommand(String cacheName, Type type, Address sender, int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
       super(cacheName);
       this.type = type;
       this.sender = sender;
       this.viewId = viewId;
       this.state = state;
+      this.locks = lockInfo;
    }
 
    public StateTransferControlCommand(String cacheName, Type type, Address sender, int viewId) {
@@ -107,6 +113,9 @@ public class StateTransferControlCommand extends BaseRpcCommand {
             case APPLY_STATE:
                stateTransferManager.applyState(state, sender, viewId);
                return null;
+            case APPLY_LOCKS:
+               stateTransferManager.applyLocks(locks, sender, viewId);
+               return null;
             default:
                throw new CacheException("Unknown rehash control command type " + type);
          }
@@ -127,7 +136,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{(byte) type.ordinal(), sender, viewId, state};
+      return new Object[]{(byte) type.ordinal(), sender, viewId, state, locks};
    }
 
    @SuppressWarnings("unchecked")
@@ -137,6 +146,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       sender = (Address) parameters[i++];
       viewId = (Integer) parameters[i++];
       state = (Collection<InternalCacheEntry>) parameters[i++];
+      locks = (Collection<LockInfo>) parameters[i];
    }
 
    @Override
@@ -147,6 +157,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
             ", sender=" + sender +
             ", viewId=" + viewId +
             ", state=" + (state == null ? "N/A" : state.size()) +
+            ", locks=" + (locks == null ? "N/A" : locks.size()) +
             '}';
    }
 

@@ -140,9 +140,9 @@ public abstract class BaseStateTransferTask {
       log.debugf("Node finished pushing data for cache views %d.", newViewId);
    }
 
-   protected void pushPartialState(Collection<Address> targets, Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
+   protected void pushPartialState(Collection<Address> targets, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) throws StateTransferCancelledException {
       checkIfCancelled();
-      stateTransferManager.pushStateToNode(statePushFuture, newViewId, targets, state);
+      stateTransferManager.pushStateToNode(statePushFuture, newViewId, targets, state, lockInfo);
    }
 
    protected void checkIfCancelled() throws StateTransferCancelledException {
