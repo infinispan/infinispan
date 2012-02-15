@@ -110,7 +110,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
             }
 
             // Push any remaining state chunks
-            pushPartialState(joiners, state.get());
+            pushPartialState(joiners, state.get(), null);
 
             // And wait for all the push RPCs to end
             finishPushingState();
@@ -158,7 +158,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
 
          // if we have a full chunk, start pushing it to the joiners
          if (state.size() >= stateTransferChunkSize) {
-            pushPartialState(joiners, state);
+            pushPartialState(joiners, state, null);
             stateRef.set(new ArrayList());
          }
       }

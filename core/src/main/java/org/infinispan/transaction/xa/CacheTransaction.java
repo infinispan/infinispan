@@ -28,6 +28,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -61,6 +62,8 @@ public interface CacheTransaction {
    abstract boolean ownsLock(Object key);
    
    void clearLockedKeys();
+
+   public Set<Object> getLockedKeys();
 
    int getViewId();
 

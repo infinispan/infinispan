@@ -36,6 +36,7 @@ import java.util.Collection;
  * A component that manages the state transfer when the topology of the cluster changes.
  *
  * @author Dan Berindei <dan@infinispan.org>
+ * @author Mircea Markus
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -59,9 +60,12 @@ public interface StateTransferManager {
 
    void applyState(Collection<InternalCacheEntry> state, Address sender, int viewId) throws InterruptedException;
 
+   void applyLocks(Collection<LockInfo> locks, Address sender, int viewId) throws InterruptedException;
+
    /**
     * @return <code>true</code> if the key should be local but has not yet been copied to the local node
     */
    boolean isLocationInDoubt(Object key);
+
 }
 

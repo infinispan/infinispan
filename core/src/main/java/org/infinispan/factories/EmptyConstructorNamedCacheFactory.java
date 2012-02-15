@@ -44,6 +44,11 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.util.concurrent.locks.containers.LockContainer;
+import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
 
 import static org.infinispan.util.Util.getInstance;
 
@@ -56,7 +61,8 @@ import static org.infinispan.util.Util.getInstance;
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
                               CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
                               BatchContainer.class, EvictionManager.class,
-                              TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})
+                              TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
+                              ClusteringDependentLogic.class, LockContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -91,7 +97,14 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return (T) new StateTransferLockImpl();
       } else if (componentType.equals(EvictionManager.class)) {
          return (T) new EvictionManagerImpl();
+      } else if (componentType.equals(LockContainer.class)) {
+         boolean  notTransactional = !configuration.isTransactionalCache();
+         LockContainer lockContainer = configuration.isUseLockStriping() ?
+               notTransactional ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel()) :
+               notTransactional ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel());
+         return (T) lockContainer;
       }
+
 
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());

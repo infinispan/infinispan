@@ -53,6 +53,7 @@ import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.xa.Xid;
@@ -305,7 +306,7 @@ public interface CommandsFactory {
     * coordinates rehashing of nodes when a node join or leaves
     */
    StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
-                                                  Collection<InternalCacheEntry> state);
+                                                         Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
