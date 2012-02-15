@@ -128,11 +128,11 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       else
          this.flags.addAll(flags);
    }
-   
+
    public Address getOrigin() {
 	   return origin;
    }
-   
+
    public void setOrigin(Address origin) {
 	   this.origin = origin;
    }

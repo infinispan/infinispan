@@ -243,4 +243,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
     public boolean isReturnValueExpected() {
         return false;
     }
+
+    public void setOnePhaseCommit(boolean onePhaseCommit) {
+        this.onePhaseCommit = onePhaseCommit;
+    }
 }

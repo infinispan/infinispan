@@ -197,6 +197,27 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
         return prepareResult.result;
     }
 
+    /**
+     * waits until the modification are applied
+     * @return the validation return value
+     * @throws Throwable throw the validation result if it is an exception
+     */
+    public Object awaitUntilModificationsApplied() throws Throwable {
+
+        try {
+            prepareResult.await();
+        } catch (InterruptedException e) {
+            //do nothing
+        }
+        if(!prepareResult.modificationsApplied) {
+            throw new TimeoutException("Unable to wait until modifications are applied");
+        }
+        if(prepareResult.exception) {
+            throw (Throwable) prepareResult.result;
+        }
+        return prepareResult.result;
+    }
+
 
     /**
      * add the transaction result and notify

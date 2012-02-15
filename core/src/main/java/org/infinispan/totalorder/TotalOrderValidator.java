@@ -3,6 +3,7 @@ package org.infinispan.totalorder;
 import org.infinispan.CacheException;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -174,7 +175,6 @@ public class TotalOrderValidator {
             txInfo.remoteTransaction = (RemoteTransaction) ctx.getCacheTransaction();
 
             mtv.setPreviousTransactions(previousTxs);
-            remoteTransactionMap.put(prepareCommand.getGlobalTransaction(), txInfo);
             r = mtv;
 
             if(trace) {
@@ -191,43 +191,47 @@ public class TotalOrderValidator {
      * this will mark a global transaction as finished. It will be invoked in the processing of the commit command
      * in repeatable read with write skew (not implemented yet!)
      * @param gtx the global transaction
+     * @param ignoreNullTxInfo ignore null remote tx info
      */
     public void finishTransaction(GlobalTransaction gtx, boolean ignoreNullTxInfo) {
         if(trace) {
             log.tracef("transaction %s is finished", prettyPrintGlobalTransaction(gtx));
         }
-        RemoteTxInfo txInfo = remoteTransactionMap.remove(gtx);
+        RemoteTxInfo txInfo = remoteTransactionMap.get(gtx);
         if(txInfo != null) {
             finishTransaction(txInfo.keys, txInfo.barrier);
         } else if (!ignoreNullTxInfo) {
             throw new IllegalStateException("TxInfo can't be null, otherwise can originate deadlocks. " +
                     "GlobalTransaction is " + prettyPrintGlobalTransaction(gtx));
         }
+        remoteTransactionMap.remove(gtx);
     }
 
-    public void markTransactionForRollback(GlobalTransaction gtx) {
-        getOrCreateTxInfo(gtx).markRollbackOnly();
-    }
-
-    public void waitForTxPrepared(TxInvocationContext ctx, GlobalTransaction gtx) {
+    //returns true if the command needs to be processed, false otherwise
+    public boolean waitForTxPrepared(TxInvocationContext ctx, GlobalTransaction gtx, boolean commit) {
         if(trace) {
             log.tracef("waiting until transaction %s is prepared",
                     prettyPrintGlobalTransaction(gtx));
         }
-        RemoteTxInfo txInfo = getOrCreateTxInfo(gtx);
-        try {
-            txInfo.waitPrepared();
 
-            if (txInfo.remoteTransaction == null) {
+        RemoteTxInfo txInfo = getOrCreateTxInfo(gtx);
+        boolean result = false;
+
+        try {
+            result = txInfo.waitPrepared(commit);
+
+            if (result && txInfo.remoteTransaction == null) {
                 throw new IllegalStateException("Remote Transaction can't be null");
             }
         } catch (InterruptedException e) {
-            log.warnf("Timeout received while waiting for the transaction preparing [%s]. continue invocation",
+            log.warnf("Timeout received while waiting for the transaction preparing [%s]. ignore invocation",
                     prettyPrintGlobalTransaction(gtx));
 
             if (txInfo.remoteTransaction == null) {
                 throw new IllegalStateException("Remote Transaction can't be null");
             }
+
+            result = false;
         } finally {
             if(txInfo.isMarkedForRollback() && txInfo.remoteTransaction != null) {
                 txInfo.remoteTransaction.invalidate();
@@ -238,7 +242,7 @@ public class TotalOrderValidator {
                         prettyPrintGlobalTransaction(gtx));
             }
         }
-
+        return result;
     }
 
     public boolean isTransactionPrepared(GlobalTransaction gtx) {
@@ -248,7 +252,7 @@ public class TotalOrderValidator {
     private RemoteTxInfo getOrCreateTxInfo(GlobalTransaction gtx) {
         RemoteTxInfo txInfo = remoteTransactionMap.get(gtx);
         if(txInfo == null) {
-            txInfo = new RemoteTxInfo();
+            txInfo = new RemoteTxInfo(gtx);
             RemoteTxInfo existingTxInfo = remoteTransactionMap.putIfAbsent(gtx, txInfo);
             if (existingTxInfo != null) {
                 txInfo = existingTxInfo;
@@ -295,6 +299,7 @@ public class TotalOrderValidator {
             log.tracef("Barrier %s is going to be released", barrier);
         }
 
+        //System.out.println("Count Down " + barrier);
         barrier.countDown();
         for(Object key : keysModified) {
             this.keysLocked.remove(key, barrier);
@@ -326,7 +331,7 @@ public class TotalOrderValidator {
     private class SingleThreadValidation implements Runnable {
 
         protected final PrepareCommand prepareCommand;
-        private final TxInvocationContext txInvocationContext;
+        protected final TxInvocationContext txInvocationContext;
         private final CommandInterceptor invoker;
 
         private long creationTime = -1;
@@ -408,9 +413,6 @@ public class TotalOrderValidator {
      */
     private class MultiThreadValidation extends SingleThreadValidation {
 
-        //to order the transactions
-        private final TxBarrier barrier;
-
         //the set of others transaction's count down latch (it will be unblocked when the transaction finishes)
         private final Set<TxBarrier> previousTransactions;
 
@@ -419,11 +421,9 @@ public class TotalOrderValidator {
         private MultiThreadValidation(PrepareCommand prepareCommand, TxInvocationContext txInvocationContext,
                                       CommandInterceptor invoker) {
             super(prepareCommand, txInvocationContext, invoker);
-            this.barrier = new TxBarrier(prepareCommand.getGlobalTransaction());
             this.previousTransactions = new HashSet<TxBarrier>();
             txInfo = getOrCreateTxInfo(prepareCommand.getGlobalTransaction());
             txInfo.keys.addAll(prepareCommand.getAffectedKeys());
-            txInfo.barrier = barrier;
         }
 
         public void setPreviousTransactions(Set<TxBarrier> previousTransactions) {
@@ -445,11 +445,14 @@ public class TotalOrderValidator {
             super.initializeValidation();
 
             if(txInfo.isMarkedForRollback()) {
-                throw new CacheException("Cannot prepare transaction" + gtx +". it was already marked as rollbacked");
+                prepareCommand.setOnePhaseCommit(true);
+                throw new CacheException("Cannot prepare transaction" + gtx +". it was already marked as rollback");
             }
 
             //just to be safer
-            previousTransactions.remove(barrier);
+            previousTransactions.remove(txInfo.barrier);
+
+            //System.out.println("Tx " + gtx + " will wait for " + previousTransactions);
 
             for (TxBarrier prevTx : previousTransactions) {
                 if(trace) {
@@ -458,8 +461,16 @@ public class TotalOrderValidator {
                 prevTx.await();
             }
 
+            boolean alreadyCommitOrRollback = txInfo.markForPreparing();
+
             if(txInfo.isMarkedForRollback()) {
-                throw new CacheException("Cannot prepare transaction" + gtx + ". it was already marked as rollbacked");
+                prepareCommand.setOnePhaseCommit(true);
+                throw new CacheException("Cannot prepare transaction" + gtx + ". it was already marked as rollback");
+            }
+
+            if (alreadyCommitOrRollback) { //it is not rollback, only case is commit
+                txInvocationContext.setFlags(Flag.SKIP_WRITE_SKEW_CHECK);
+                prepareCommand.setOnePhaseCommit(true);
             }
         }
 
@@ -474,9 +485,13 @@ public class TotalOrderValidator {
             txInfo.markPreparedAndNotify();
             super.finalizeValidation(result, exception);
             if(prepareCommand.isOnePhaseCommit()) {
-                finishTransaction(txInfo.keys, txInfo.barrier);
-                remoteTransactionMap.remove(prepareCommand.getGlobalTransaction());
+                markTxCompleted();
             }
+        }
+
+        private void markTxCompleted() {
+            finishTransaction(txInfo.keys, txInfo.barrier);
+            remoteTransactionMap.remove(prepareCommand.getGlobalTransaction());
         }
     }
 
@@ -485,16 +500,19 @@ public class TotalOrderValidator {
      * (used in repeatable read with write skew)
      */
     private class RemoteTxInfo {
-        public static final byte PREPARED = 1<<1;
-        public static final byte ROLLBACK_ONLY = 1<<2;
+        public static final byte PREPARING = 1 << 1;
+        public static final byte PREPARED = 1 << 2;
+        public static final byte ROLLBACK_ONLY = 1 << 3;
+        public static final byte COMMIT_ONLY = 1 << 4;
 
         Set<Object> keys = new HashSet<Object>();
         TxBarrier barrier;
         byte state;
         RemoteTransaction remoteTransaction;
 
-        private RemoteTxInfo() {
+        private RemoteTxInfo(GlobalTransaction gtx) {
             this.state = 0;
+            this.barrier = new TxBarrier(gtx);
         }
 
         private void setState(byte b) {
@@ -514,15 +532,27 @@ public class TotalOrderValidator {
             this.notifyAll();
         }
 
-        private synchronized void markRollbackOnly() {
-            setState(ROLLBACK_ONLY);
+        private synchronized boolean markForPreparing() {
+            setState(PREPARING);
+            return checkState(COMMIT_ONLY) || checkState(ROLLBACK_ONLY);
         }
 
-        private synchronized boolean waitPrepared() throws InterruptedException {
-            if (!checkState(PREPARED)) {
-                this.wait();
+        /**
+         *
+         * @param commit true if commit, false otherwise
+         * @return true if the command can be processed, false otherwise
+         * @throws InterruptedException when something is wrong
+         */
+        private synchronized boolean waitPrepared(boolean commit) throws InterruptedException {
+            if (checkState(PREPARED)) {
+                return true;
             }
-            return checkState(PREPARED);
+            if (checkState(PREPARING)) {
+                this.wait();
+                return true;
+            }
+            setState(commit ? COMMIT_ONLY : ROLLBACK_ONLY);
+            return false;
         }
 
     }

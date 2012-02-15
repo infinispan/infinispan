@@ -84,7 +84,7 @@ public class TOVersionedReplicationInterceptor extends TOReplicationInterceptor 
         //this is only invoked in local context
         LocalTransaction localTransaction = (LocalTransaction) context.getCacheTransaction();
         try {
-            Object retVal = localTransaction.awaitUntilModificationsApplied(Long.MAX_VALUE);
+            Object retVal = localTransaction.awaitUntilModificationsApplied();
 
             if (retVal instanceof EntryVersionsMap) {
                 readVersionsFromResponse(new SuccessfulResponse(retVal), context.getCacheTransaction());

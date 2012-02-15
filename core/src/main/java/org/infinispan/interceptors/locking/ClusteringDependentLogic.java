@@ -30,6 +30,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.versioning.*;
+import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -267,7 +268,9 @@ public interface ClusteringDependentLogic {
                 IncrementableEntryVersion originalLocalVersion = (IncrementableEntryVersion) entry.getVersion();
                 entry.setVersion(versionsSeenMap.get(key));
 
-                if (!entry.isMarkedForWriteSkew() || entry.performWriteSkewCheck(dataContainer)) {
+                if (context.hasFlag(Flag.SKIP_WRITE_SKEW_CHECK) ||
+                        !entry.isMarkedForWriteSkew() ||
+                        entry.performWriteSkewCheck(dataContainer)) {
                     IncrementableEntryVersion newVersion = createNewVersion(originalLocalVersion,
                             (IncrementableEntryVersion) entry.getVersion(),
                             versionGenerator);
