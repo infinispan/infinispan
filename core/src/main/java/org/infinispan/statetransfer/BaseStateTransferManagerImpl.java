@@ -42,8 +42,11 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -87,6 +90,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private final ReclosableLatch stateTransferInProgressLatch = new ReclosableLatch(false);
    private volatile BaseStateTransferTask stateTransferTask;
    private CommandBuilder commandBuilder;
+   protected TransactionTable transactionTable;
+   private LockContainer lockContainer;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -95,7 +100,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
-                    CacheViewsManager cacheViewsManager) {
+                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer lockContainer) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -106,6 +111,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.icc = icc;
       this.cacheNotifier = cacheNotifier;
       this.cacheViewsManager = cacheViewsManager;
+      this.transactionTable = transactionTable;
+      this.lockContainer = lockContainer;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -221,22 +228,42 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          return;
       }
 
-      log.debugf("Applying new state from %s: received %d keys", sender, state.size());
-      if (trace) log.tracef("Received keys: %s", keys(state));
-      for (InternalCacheEntry e : state) {
-         InvocationContext ctx = icc.createInvocationContext(false, 1);
-         // locking not necessary as during rehashing we block all transactions
-         ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
-                      SKIP_OWNERSHIP_CHECK);
-         try {
-            PutKeyValueCommand put = commandBuilder.buildPut(ctx, e);
-            interceptorChain.invoke(ctx, put);
-         } catch (Exception ee) {
-            log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
+      if (state != null) {
+         log.debugf("Applying new state from %s: received %d keys", sender, state.size());
+         if (trace) log.tracef("Received keys: %s", keys(state));
+         for (InternalCacheEntry e : state) {
+            InvocationContext ctx = icc.createInvocationContext(false, 1);
+            // locking not necessary as during rehashing we block all transactions
+            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
+                         SKIP_OWNERSHIP_CHECK);
+            try {
+               PutKeyValueCommand put = commandBuilder.buildPut(ctx, e);
+               interceptorChain.invoke(ctx, put);
+            } catch (Exception ee) {
+               log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
+            }
+         }
+
+         if(trace) log.tracef("After applying state data container has %d keys", dataContainer.size());
+      } 
+   }
+
+   @Override
+   public void applyLocks(Collection<LockInfo> lockInfo, Address sender, int viewId) throws InterruptedException {
+      if (lockInfo != null) {
+         log.debugf("Integrating %d locks from %s", lockInfo.size(), sender);
+         for (LockInfo lock : lockInfo) {
+            RemoteTransaction remoteTx = transactionTable.getRemoteTransaction(lock.getGlobalTransaction());
+            if (remoteTx == null) {
+               remoteTx = transactionTable.createRemoteTransaction(lock.getGlobalTransaction(), null);
+               remoteTx.setMissingModifications(true);
+            }
+            Object result = lockContainer.acquireLock(remoteTx.getGlobalTransaction(), lock.getKey(), 0, TimeUnit.SECONDS);
+            if (result == null) {
+               throw new IllegalStateException("Could not acquire lock for key " + lock.getKey());
+            }
          }
       }
-
-      if(trace) log.tracef("After applying state data container has %d keys", dataContainer.size());
    }
 
    private Collection<Object> keys(Collection<InternalCacheEntry> state) {
@@ -264,11 +291,20 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public abstract CacheStore getCacheStoreForStateTransfer();
 
    public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Collection<Address> targets,
-                               Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
-      log.debugf("Pushing to nodes %s %d keys", targets, state.size());
-      log.tracef("Pushing to nodes %s keys: %s", targets, keys(state));
+                               Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) throws StateTransferCancelledException {
+      StateTransferControlCommand.Type type;
+      if (state != null) {
+         log.debugf("Pushing to nodes %s %d keys", targets,  state.size());
+         log.tracef("Pushing to nodes %s keys: %s", targets, keys(state));
+         type =  StateTransferControlCommand.Type.APPLY_STATE;
+      } else  if (lockInfo != null) {
+         log.debugf("Migrating %d locks to node(s) %s", lockInfo.size(), targets);
+         type =  StateTransferControlCommand.Type.APPLY_LOCKS;
+      } else {
+         throw new IllegalStateException("Cannot have both locks and state set to null.");
+      }
 
-      final StateTransferControlCommand cmd = cf.buildStateTransferCommand(StateTransferControlCommand.Type.APPLY_STATE, getAddress(), viewId, state);
+      final StateTransferControlCommand cmd = cf.buildStateTransferCommand(type, getAddress(), viewId, state, lockInfo);
 
       rpcManager.invokeRemotelyInFuture(targets, cmd, false, stateTransferFuture, configuration.getRehashRpcTimeout());
    }

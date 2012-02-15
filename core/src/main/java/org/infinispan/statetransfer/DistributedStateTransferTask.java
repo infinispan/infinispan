@@ -29,6 +29,8 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.logging.Log;
@@ -59,6 +61,7 @@ import java.util.Map;
  *
  * @author Bela Ban
  * @author Dan Berindei <dan@infinispan.org>
+ * @author Mircea Markus
  * @since 4.2
  */
 public class DistributedStateTransferTask extends BaseStateTransferTask {
@@ -69,12 +72,13 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
    private List<Object> keysToRemove;
    private Collection<Address> oldCacheSet;
    private Collection<Address> newCacheSet;
+   private TransactionTable transactionTable;
 
    public DistributedStateTransferTask(RpcManager rpcManager, Configuration configuration, DataContainer dataContainer,
                                        DistributedStateTransferManagerImpl stateTransferManager,
                                        DistributionManager dm, StateTransferLock stateTransferLock,
                                        CacheNotifier cacheNotifier, int newViewId, Collection<Address> members,
-                                       ConsistentHash chOld, ConsistentHash chNew, boolean initialView) {
+                                       ConsistentHash chOld, ConsistentHash chNew, boolean initialView, TransactionTable transactionTable) {
       super(stateTransferManager, rpcManager, stateTransferLock, cacheNotifier, configuration, dataContainer, members, newViewId, chNew, chOld, initialView);
       this.dm = dm;
       this.stateTransferManager = stateTransferManager;
@@ -82,6 +86,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       // Cache sets for notification
       oldCacheSet = chOld != null ? Immutables.immutableCollectionWrap(chOld.getCaches()) : Collections.<Address>emptySet();
       newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
+      this.transactionTable = transactionTable;
    }
 
 
@@ -135,12 +140,46 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
          // Push any remaining state chunks
          for (Map.Entry<Address, Collection<InternalCacheEntry>> entry : states.entrySet()) {
-            pushPartialState(Collections.singleton(entry.getKey()), entry.getValue());
+            pushPartialState(Collections.singleton(entry.getKey()), entry.getValue(), null);
          }
+         
+         // Push locks if the cache is transactional and it is distributed
+         if (transactionTable != null) {
+            log.debug("Starting lock migration");
+            Map<Address, Collection<LockInfo>> locksToMigrate = new HashMap<Address, Collection<LockInfo>>();
+            rebalanceLocks(numOwners, locksToMigrate, transactionTable.getRemoteTransactions());
+            rebalanceLocks(numOwners, locksToMigrate, transactionTable.getLocalTransactions());
+            for (Map.Entry<Address, Collection<LockInfo>> e : locksToMigrate.entrySet()) {
+               pushPartialState(Collections.singleton(e.getKey()), null, e.getValue());
+            }
+         }
+         
          // And wait for all the push RPCs to end
          finishPushingState();
       } else {
          if (!initialView) log.trace("Rehash not enabled, so not pushing state");
+      }
+   }
+
+   private void rebalanceLocks(int numOwners, Map<Address, Collection<LockInfo>> locksToMigrate, Collection<? extends CacheTransaction> tx) throws StateTransferCancelledException {
+      for (CacheTransaction cacheTx : tx) {
+         for (Object key : cacheTx.getLockedKeys()) {
+            Address oldLockOwner = self;
+            Address newLockOwner = chNew.locate(key, numOwners).get(0);
+            if (!oldLockOwner.equals(newLockOwner)) {
+               log.tracef("Migrating lock %s from node %s to ", key, oldLockOwner, newLockOwner);
+               Collection<LockInfo> lockInfo = locksToMigrate.get(newLockOwner);
+               if (lockInfo == null) {
+                  lockInfo = new ArrayList<LockInfo>();
+                  locksToMigrate.put(newLockOwner, lockInfo);
+               }
+               lockInfo.add(new LockInfo(cacheTx.getGlobalTransaction(),key));
+               if (lockInfo.size() > stateTransferChunkSize) {
+                  pushPartialState(Collections.singleton(newLockOwner), null, lockInfo);
+                  locksToMigrate.remove(newLockOwner);
+               }
+            }
+         }
       }
    }
 
@@ -209,17 +248,17 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
          for (Address server : newOwners) {
             if (!oldOwners.contains(server)) { // server doesn't have K
-               Collection<InternalCacheEntry> map = states.get(server);
-               if (map == null) {
-                  map = new ArrayList<InternalCacheEntry>();
-                  states.put(server, map);
+               Collection<InternalCacheEntry> stateForANode = states.get(server);
+               if (stateForANode == null) {
+                  stateForANode = new ArrayList<InternalCacheEntry>();
+                  states.put(server, stateForANode);
                }
                if (value != null)
-                  map.add(value);
+                  stateForANode.add(value);
 
                // if we have a full chunk, start pushing it to the new owner
-               if (map.size() >= stateTransferChunkSize) {
-                  pushPartialState(Collections.singleton(server), map);
+               if (stateForANode.size() >= stateTransferChunkSize) {
+                  pushPartialState(Collections.singleton(server), stateForANode, null);
                   states.remove(server);
                }
             }

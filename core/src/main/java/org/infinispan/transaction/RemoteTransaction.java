@@ -47,6 +47,11 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    private volatile boolean valid = true;
 
+   /**
+    * During state transfer only the locks are being migrated over, but no modifications.
+    */
+   private boolean missingModifications;
+
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
       super(tx, viewId);
       this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
@@ -107,7 +112,16 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", lookedUpEntries=" + lookedUpEntries +
             ", lockedKeys= " + lockedKeys +
             ", backupKeyLocks " + backupKeyLocks +
+            ", isMissingModifications " + missingModifications +
             ", tx=" + tx +
             '}';
+   }
+
+   public void setMissingModifications(boolean missingModifications) {
+      this.missingModifications = missingModifications;
+   }
+
+   public boolean isMissingModifications() {
+      return missingModifications;
    }
 }

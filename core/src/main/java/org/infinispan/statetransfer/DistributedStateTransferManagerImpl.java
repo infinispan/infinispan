@@ -67,7 +67,7 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
 
    protected BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView) {
       return new DistributedStateTransferTask(rpcManager, configuration, dataContainer,
-            this, dm, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView);
+            this, dm, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView, transactionTable);
    }
 
    protected ConsistentHash createConsistentHash(List<Address> members) {

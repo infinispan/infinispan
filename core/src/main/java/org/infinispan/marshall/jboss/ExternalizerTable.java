@@ -83,6 +83,7 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
+import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -207,6 +208,7 @@ public class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new MurmurHash3.Externalizer());
 
       internalExternalizers.add(new CacheView.Externalizer());
+      internalExternalizers.add(new LockInfo.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer ext) {

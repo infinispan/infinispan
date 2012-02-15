@@ -74,6 +74,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -414,8 +415,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                         int viewId, Collection<InternalCacheEntry> state) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId, state);
+                                                                int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
+      return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
    }
 
    public String getCacheName() {

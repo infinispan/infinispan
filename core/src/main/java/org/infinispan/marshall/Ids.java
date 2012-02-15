@@ -106,4 +106,5 @@ public interface Ids {
    int VERSIONED_MORTAL_VALUE = 81;
    int VERSIONED_TRANSIENT_VALUE = 82;
    int VERSIONED_TRANSIENT_MORTAL_VALUE = 83;
+   int LOCK_INFO = 84;
 }

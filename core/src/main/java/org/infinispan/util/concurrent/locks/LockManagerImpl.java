@@ -66,16 +66,10 @@ public class LockManagerImpl implements LockManager {
    private static final String ANOTHER_THREAD = "(another thread)";
 
    @Inject
-   public void injectDependencies(Configuration configuration, TransactionManager transactionManager) {
+   public void injectDependencies(Configuration configuration, TransactionManager transactionManager, LockContainer lockContainer) {
       this.configuration = configuration;
       this.transactionManager = transactionManager;
-   }
-
-   @Start (priority = 8)
-   public void startLockManager() {
-      lockContainer = configuration.isUseLockStriping() ?
-      transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel()) :
-      transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel());
+      this.lockContainer = lockContainer;
    }
 
    public boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException {

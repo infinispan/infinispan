@@ -110,7 +110,11 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional) {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(transactional);
+      return getDefaultClusteredCacheConfig(mode, transactional, false);
+   }
+
+   public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional, boolean useCustomTxLookup) {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(transactional, useCustomTxLookup);
       builder.
          clustering()
             .cacheMode(mode)
