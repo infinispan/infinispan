@@ -64,12 +64,28 @@
    <FD_SOCK/>
    <FD_ALL/>   
    <BARRIER />
+   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)  
    <pbcast.NAKACK  exponential_backoff="0"
                    use_mcast_xmit="true"
-                   retransmit_timeout="50,300,600,1200"
-                   discard_delivered_msgs="true"/>
-   <UNICAST timeout="300,600,1200"/>
-   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>
+                   retransmit_timeout="300,600,1200"
+                   discard_delivered_msgs="true"/> -->
+    <pbcast.NAKACK2
+                    xmit_interval="1000"
+                    xmit_table_num_rows="100"
+                    xmit_table_msgs_per_row="10000"
+                    xmit_table_max_compaction_time="10000"
+                    max_msg_batch_size="100" /> 
+                                   
+   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually) 
+   <UNICAST2 timeout="300,600,1200"/>  -->
+   <UNICAST2
+              max_bytes="20M"
+              xmit_table_num_rows="20"
+              xmit_table_msgs_per_row="10000"
+              xmit_table_max_compaction_time="10000"
+              max_msg_batch_size="100"/>
+   <RSVP/>           
+   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>   
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <FC max_credits="500000" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>

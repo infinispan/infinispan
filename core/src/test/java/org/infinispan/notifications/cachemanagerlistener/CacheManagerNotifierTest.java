@@ -37,6 +37,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 import static org.easymock.EasyMock.*;
@@ -86,13 +87,12 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    public void testViewChange() throws Exception {
       EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager();
       cmA.getCache();
-      CyclicBarrier barrier = new CyclicBarrier(2);
+      CountDownLatch barrier = new CountDownLatch(1);
       GetCacheManagerCheckListener listener = new GetCacheManagerCheckListener(barrier);
       cmA.addListener(listener);
       CacheContainer cmB = TestCacheManagerFactory.createClusteredCacheManager();
       cmB.getCache();
       try {
-         barrier.await();
          barrier.await();
          assert listener.cacheContainer != null;
       } finally {
@@ -103,19 +103,17 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    @Listener
    static public class GetCacheManagerCheckListener {
       CacheContainer cacheContainer;
-      CyclicBarrier barrier;
+      CountDownLatch barrier;
       
-      public GetCacheManagerCheckListener(CyclicBarrier barrier) {
+      public GetCacheManagerCheckListener(CountDownLatch barrier) {
          this.barrier = barrier;
       }
 
       @ViewChanged
-      public void onViewChange(ViewChangedEvent e) throws Exception {
-         barrier.await();
+      public void onViewChange(ViewChangedEvent e) throws Exception {         
          cacheContainer = e.getCacheManager();
-         barrier.await();
+         barrier.countDown();
       }
-
    }
 
 }
