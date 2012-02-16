@@ -24,8 +24,9 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -50,12 +51,12 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalCfg1 = createForeignExternalizerGlobalConfig();
-      GlobalConfiguration globalCfg2 = createForeignExternalizerGlobalConfig();
-      CacheContainer cm1 = TestCacheManagerFactory.createCacheManager(globalCfg1);
-      CacheContainer cm2 = TestCacheManagerFactory.createCacheManager(globalCfg2);
+      GlobalConfigurationBuilder globalCfg1 = createForeignExternalizerGlobalConfig();
+      GlobalConfigurationBuilder globalCfg2 = createForeignExternalizerGlobalConfig();
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      CacheContainer cm1 = TestCacheManagerFactory.createCacheManager(globalCfg1, cfg);
+      CacheContainer cm2 = TestCacheManagerFactory.createCacheManager(globalCfg2, cfg);
       registerCacheManager(cm1, cm2);
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       defineConfigurationOnAllManagers(getCacheName(), cfg);
       waitForClusterToForm(getCacheName());
    }
@@ -64,13 +65,13 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
       return "ForeignExternalizers";
    }
 
-   protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
-      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      globalCfg.fluent().serialization()
-         .addAdvancedExternalizer(1234, IdViaConfigObj.Externalizer.class)
-         .addAdvancedExternalizer(IdViaAnnotationObj.Externalizer.class)
-         .addAdvancedExternalizer(3456, IdViaBothObj.Externalizer.class);
-      return globalCfg;
+   protected GlobalConfigurationBuilder createForeignExternalizerGlobalConfig() {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
+      builder.serialization()
+         .addAdvancedExternalizer(1234, new IdViaConfigObj.Externalizer())
+         .addAdvancedExternalizer(new IdViaAnnotationObj.Externalizer())
+         .addAdvancedExternalizer(3456, new IdViaBothObj.Externalizer());
+      return builder;
    }
 
    public void testReplicatePojosWithUserDefinedExternalizers(Method m) {
