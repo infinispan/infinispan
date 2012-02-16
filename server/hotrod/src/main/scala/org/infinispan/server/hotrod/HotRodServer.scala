@@ -64,7 +64,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    def getViewId: Int = viewId
 
-   def setViewId(viewId: Int) = this.viewId = viewId
+   def setViewId(viewId: Int) {
+      trace("Set view id to %d", viewId)
+      this.viewId = viewId
+   }
 
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
@@ -180,7 +183,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          // Only update view id once cache has been updated
          if (!event.isPre) {
             val localViewId = transport.getViewId
-            viewId = localViewId
+            setViewId(localViewId)
             if (isTraceEnabled) {
                log.tracef("Address cache had %s for key %s. View id is now %d",
                           event.getType, event.getKey, localViewId)
