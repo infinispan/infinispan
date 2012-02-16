@@ -173,7 +173,11 @@ public class TestCacheManagerFactory {
    }
    
    public static EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {      
-      return newDefaultCacheManager(true, new GlobalConfigurationBuilder().nonClusteredDefault(), builder, false);
+      return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return newDefaultCacheManager(true, globalBuilder, builder, false);
    }
 
    /**
