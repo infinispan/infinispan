@@ -285,6 +285,8 @@ public class JGroupsConfigBuilder {
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL,
       BARRIER,
       NAKACK, UNICAST,
+      NAKACK2, UNICAST2,
+      RSVP,
       STABLE,
       GMS,
       UFC, MFC, FC,
