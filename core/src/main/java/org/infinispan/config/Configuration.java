@@ -2447,6 +2447,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public L1Config l1() {
          l1.setEnabled(true);
+         l1.activate();
          l1.setConfiguration(config);
          return l1;
       }
@@ -2454,6 +2455,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public HashConfig hash() {
          hash.setConfiguration(config);
+         hash.activate();
          return hash;
       }
 
@@ -3529,7 +3531,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setConsistentHashClass(String consistentHashClass) {
          testImmutability("consistentHashClass");
-         activated = true;
+         activate();
          this.consistentHashClass = consistentHashClass;
       }
 
@@ -3551,8 +3553,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setHashFunctionClass(String hashFunctionClass) {
          testImmutability("hashFunctionClass");
-         activated = true;
+         activate();
          this.hashFunctionClass = hashFunctionClass;
+      }
+      
+      private void activate() {
+         activated = true;
+         overriddenConfigurationElements.add("activated");
       }
 
       @Override
@@ -3582,7 +3589,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setNumVirtualNodes(Integer numVirtualNodes) {
          testImmutability("numVirtualNodes");
-         activated = true;
+         activate();
          this.numVirtualNodes = numVirtualNodes;
       }
 
@@ -3593,7 +3600,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setNumOwners(Integer numOwners) {
          testImmutability("numOwners");
-         activated = true;
+         activate();
          this.numOwners = numOwners;
       }
 
@@ -3615,7 +3622,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashWait(Long rehashWaitTime) {
          testImmutability("rehashWait");
-         activated = true;
+         activate();
          this.rehashWait = rehashWaitTime;
       }
 
@@ -3637,7 +3644,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashRpcTimeout(Long rehashRpcTimeout) {
          testImmutability("rehashRpcTimeout");
-         activated = true;
+         activate();
          this.rehashRpcTimeout = rehashRpcTimeout;
       }
 
@@ -3659,7 +3666,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setRehashEnabled(Boolean rehashEnabled) {
          testImmutability("rehashEnabled");
-         activated = true;
+         activate();
          this.rehashEnabled = rehashEnabled;
       }
 
@@ -3671,7 +3678,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       public GroupsConfiguration groups() {
          groups.setConfiguration(config);
-         activated = true;
+         activate();
          return groups;
       }
       
@@ -3765,6 +3772,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlTransient
       public boolean activated = false;
 
+      private void activate() {
+         activated = true;
+         overriddenConfigurationElements.add("activated");
+      }
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitL1Type(this);
       }
@@ -3780,7 +3792,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setEnabled(Boolean enabled) {
          testImmutability("enabled");
-         activated = true;
+         activate();
          this.enabled = enabled;
          return this;
       }
@@ -3796,7 +3808,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setLifespan(Long lifespan) {
          testImmutability("lifespan");
-         activated = true;
+         activate();
          this.lifespan = lifespan;
          return this;
       }
@@ -3819,7 +3831,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public L1Config setOnRehash(Boolean onRehash) {
          testImmutability("onRehash");
-         activated = true;
+         activate();
          this.onRehash = onRehash;
          return this;
       }
@@ -3839,7 +3851,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
      
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
-         activated = true;
+         activate();
          this.invalidationThreshold = threshold;
       }
       
