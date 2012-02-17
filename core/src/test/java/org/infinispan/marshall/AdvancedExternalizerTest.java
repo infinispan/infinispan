@@ -54,8 +54,8 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder globalCfg1 = createForeignExternalizerGlobalConfig();
       GlobalConfigurationBuilder globalCfg2 = createForeignExternalizerGlobalConfig();
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      CacheContainer cm1 = TestCacheManagerFactory.createCacheManager(globalCfg1, cfg);
-      CacheContainer cm2 = TestCacheManagerFactory.createCacheManager(globalCfg2, cfg);
+      CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(globalCfg1, cfg);
+      CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalCfg2, cfg);
       registerCacheManager(cm1, cm2);
       defineConfigurationOnAllManagers(getCacheName(), cfg);
       waitForClusterToForm(getCacheName());
