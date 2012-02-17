@@ -117,4 +117,14 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "ExpirationConfigurationBuilder{" +
+            "lifespan=" + lifespan +
+            ", maxIdle=" + maxIdle +
+            ", reaperEnabled=" + reaperEnabled +
+            ", wakeUpInterval=" + wakeUpInterval +
+            '}';
+   }
+
 }

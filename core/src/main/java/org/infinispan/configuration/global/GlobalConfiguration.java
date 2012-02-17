@@ -112,6 +112,22 @@ public class GlobalConfiguration {
    public ClassLoader classLoader() {
       return cl;
    }
+
+   @Override
+   public String toString() {
+      return "GlobalConfiguration{" +
+            "asyncListenerExecutor=" + asyncListenerExecutor +
+            ", asyncTransportExecutor=" + asyncTransportExecutor +
+            ", evictionScheduledExecutor=" + evictionScheduledExecutor +
+            ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
+            ", globalJmxStatistics=" + globalJmxStatistics +
+            ", transport=" + transport +
+            ", serialization=" + serialization +
+            ", shutdown=" + shutdown +
+            ", cl=" + cl +
+            '}';
+   }
+
 }
 
 

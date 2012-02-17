@@ -129,4 +129,14 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "SerializationConfigurationBuilder{" +
+            "advancedExternalizers=" + advancedExternalizers +
+            ", marshaller=" + marshaller +
+            ", marshallVersion=" + marshallVersion +
+            '}';
+   }
+
 }

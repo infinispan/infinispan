@@ -60,6 +60,15 @@ public class StoreAsBinaryConfiguration {
     */
    public boolean storeValuesAsBinary() {
       return storeValuesAsBinary;
-   }   
-   
+   }
+
+   @Override
+   public String toString() {
+      return "StoreAsBinaryConfiguration{" +
+            "enabled=" + enabled +
+            ", storeKeysAsBinary=" + storeKeysAsBinary +
+            ", storeValuesAsBinary=" + storeValuesAsBinary +
+            '}';
+   }
+
 }

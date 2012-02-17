@@ -49,5 +49,14 @@ public class SerializationConfiguration {
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers;
    }
-   
+
+   @Override
+   public String toString() {
+      return "SerializationConfiguration{" +
+            "advancedExternalizers=" + advancedExternalizers +
+            ", marshaller=" + marshaller +
+            ", version=" + version +
+            '}';
+   }
+
 }

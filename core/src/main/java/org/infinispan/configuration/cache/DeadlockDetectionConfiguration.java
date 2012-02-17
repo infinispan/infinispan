@@ -45,5 +45,13 @@ public class DeadlockDetectionConfiguration {
    public boolean enabled() {
       return enabled;
    }
-   
+
+   @Override
+   public String toString() {
+      return "DeadlockDetectionConfiguration{" +
+            "enabled=" + enabled +
+            ", spinDuration=" + spinDuration +
+            '}';
+   }
+
 }

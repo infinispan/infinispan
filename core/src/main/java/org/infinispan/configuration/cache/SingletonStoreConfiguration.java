@@ -63,4 +63,13 @@ public class SingletonStoreConfiguration {
       return pushStateWhenCoordinator;
    }
 
+   @Override
+   public String toString() {
+      return "SingletonStoreConfiguration{" +
+            "enabled=" + enabled +
+            ", pushStateTimeout=" + pushStateTimeout +
+            ", pushStateWhenCoordinator=" + pushStateWhenCoordinator +
+            '}';
+   }
+
 }

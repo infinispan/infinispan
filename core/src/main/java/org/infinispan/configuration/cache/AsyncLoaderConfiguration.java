@@ -99,4 +99,15 @@ public class AsyncLoaderConfiguration {
       return threadPoolSize;
    }
 
+   @Override
+   public String toString() {
+      return "AsyncLoaderConfiguration{" +
+            "enabled=" + enabled +
+            ", flushLockTimeout=" + flushLockTimeout +
+            ", modificationQueueSize=" + modificationQueueSize +
+            ", shutdownTimeout=" + shutdownTimeout +
+            ", threadPoolSize=" + threadPoolSize +
+            '}';
+   }
+
 }

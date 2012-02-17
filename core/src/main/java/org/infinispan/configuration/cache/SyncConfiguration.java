@@ -49,4 +49,11 @@ public class SyncConfiguration {
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "SyncConfiguration{" +
+            "replTimeout=" + replTimeout +
+            '}';
+   }
+
 }

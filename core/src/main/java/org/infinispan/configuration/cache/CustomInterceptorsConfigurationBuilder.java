@@ -69,4 +69,12 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
       }
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "CustomInterceptorsConfigurationBuilder{" +
+            "interceptors=" + interceptorBuilders +
+            '}';
+   }
+
 }

@@ -30,4 +30,11 @@ public class ShutdownConfiguration {
       return hookBehavior;
    }
 
+   @Override
+   public String toString() {
+      return "ShutdownConfiguration{" +
+            "hookBehavior=" + hookBehavior +
+            '}';
+   }
+
 }

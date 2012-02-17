@@ -163,4 +163,19 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "LoaderConfigurationBuilder{" +
+            "cacheLoader=" + cacheLoader +
+            ", fetchPersistentState=" + fetchPersistentState +
+            ", ignoreModifications=" + ignoreModifications +
+            ", purgeOnStartup=" + purgeOnStartup +
+            ", purgerThreads=" + purgerThreads +
+            ", purgeSynchronously=" + purgeSynchronously +
+            ", properties=" + properties +
+            ", async=" + async +
+            ", singletonStore=" + singletonStore +
+            '}';
+   }
+
 }
