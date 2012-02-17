@@ -360,7 +360,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
       streamBufferSize = config.getStreamBufferSize();
 
-      switch (config.getFsyncMode()) {
+      FileCacheStoreConfig.FsyncMode fsyncMode = config.getFsyncMode();
+      switch (fsyncMode) {
          case DEFAULT:
             fileSync = new BufferedFileSync();
             break;
@@ -371,6 +372,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
             fileSync = new PeriodicFileSync(config.getFsyncInterval());
             break;
       }
+      
+      log.debugf("Using %s file sync mode", fsyncMode);
    }
 
    @Override

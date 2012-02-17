@@ -46,19 +46,18 @@ import java.beans.PropertyEditorSupport;
  * before timing out and throwing an exception.  By default, this is set to <tt>60000</tt>.</li>
  *    <li><tt>fsyncMode</tt> - configures how the file changes will be
  * synchronized with the underlying file system. This property has three
- * possible values:
+ * possible values (The default mode configured is <tt>default</tt>):
  *       <ul>
- *          <li><tt>default</tt> means that the file system will be
+ *          <li><tt>default</tt> - means that the file system will be
  *       synchronized when the OS buffer is full or when the bucket is read.</li>
- *          <li><tt>perWrite<tt/> configures the file cache store to sync up
- *       changes after each write request<li/>
- *          <li><tt>periodic<tt/> enables sync operations to happen as per a
- *       defined interval, or when the bucket is about to be read.<li/>
- *   The default mode configured is <tt>default</tt>
- *   </li>
+ *          <li><tt>perWrite</tt> - configures the file cache store to sync up
+ *       changes after each write request</li>
+ *          <li><tt>periodic</tt> - enables sync operations to happen as per a
+ *       defined interval, or when the bucket is about to be read.</li>
+ *       </ul>
  *   <li><tt>fsyncInterval</tt> - specifies the time after which the file
  * changes in the cache need to be flushed. This option has only effect when
- * <tt>periodic<tt/> fsync mode is in use. The default fsync interval is 1
+ * <tt>periodic</tt> fsync mode is in use. The default fsync interval is 1
  * second.</li>
  *
  * </ul>
