@@ -176,5 +176,27 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "ConfigurationBuilder{" +
+            "classLoader=" + classLoader +
+            ", clustering=" + clustering +
+            ", customInterceptors=" + customInterceptors +
+            ", dataContainer=" + dataContainer +
+            ", deadlockDetection=" + deadlockDetection +
+            ", eviction=" + eviction +
+            ", expiration=" + expiration +
+            ", indexing=" + indexing +
+            ", invocationBatching=" + invocationBatching +
+            ", jmxStatistics=" + jmxStatistics +
+            ", loaders=" + loaders +
+            ", locking=" + locking +
+            ", storeAsBinary=" + storeAsBinary +
+            ", transaction=" + transaction +
+            ", versioning=" + versioning +
+            ", unsafe=" + unsafe +
+            '}';
+   }
+
 }

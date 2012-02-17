@@ -110,4 +110,16 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "ClusteringConfigurationBuilder{" +
+            "async=" + asyncConfigurationBuilder +
+            ", cacheMode=" + cacheMode +
+            ", hash=" + hashConfigurationBuilder +
+            ", l1=" + l1ConfigurationBuilder +
+            ", stateTransfer=" + stateTransferConfigurationBuilder +
+            ", sync=" + syncConfigurationBuilder +
+            '}';
+   }
+
 }

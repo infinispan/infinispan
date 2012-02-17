@@ -28,4 +28,12 @@ public class CustomInterceptorsConfiguration {
    public List<InterceptorConfiguration> interceptors() {
       return interceptors;
    }
+
+   @Override
+   public String toString() {
+      return "CustomInterceptorsConfiguration{" +
+            "interceptors=" + interceptors +
+            '}';
+   }
+
 }

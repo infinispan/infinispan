@@ -120,4 +120,14 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "LoadersConfigurationBuilder{" +
+            "cacheLoaders=" + cacheLoaders +
+            ", passivation=" + passivation +
+            ", preload=" + preload +
+            ", shared=" + shared +
+            '}';
+   }
+
 }

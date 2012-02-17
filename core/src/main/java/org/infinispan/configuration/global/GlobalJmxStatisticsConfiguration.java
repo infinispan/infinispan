@@ -45,4 +45,17 @@ public class GlobalJmxStatisticsConfiguration {
    public MBeanServerLookup mbeanServerLookup() {
       return mBeanServerLookup;
    }
+
+   @Override
+   public String toString() {
+      return "GlobalJmxStatisticsConfiguration{" +
+            "allowDuplicateDomains=" + allowDuplicateDomains +
+            ", enabled=" + enabled +
+            ", jmxDomain='" + jmxDomain + '\'' +
+            ", mBeanServerLookup=" + mBeanServerLookup +
+            ", cacheManagerName='" + cacheManagerName + '\'' +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

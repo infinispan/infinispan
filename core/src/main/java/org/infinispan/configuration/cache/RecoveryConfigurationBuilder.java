@@ -68,4 +68,12 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "RecoveryConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", recoveryInfoCacheName='" + recoveryInfoCacheName + '\'' +
+            '}';
+   }
+
 }

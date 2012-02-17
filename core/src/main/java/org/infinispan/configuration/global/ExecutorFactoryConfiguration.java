@@ -17,4 +17,11 @@ public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfigu
       return factory;
    }
 
+   @Override
+   public String toString() {
+      return "ExecutorFactoryConfiguration{" +
+            "factory=" + factory +
+            '}';
+   }
+
 }

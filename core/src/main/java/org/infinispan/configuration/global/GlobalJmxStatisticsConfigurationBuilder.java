@@ -120,4 +120,17 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
       
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "GlobalJmxStatisticsConfigurationBuilder{" +
+            "allowDuplicateDomains=" + allowDuplicateDomains +
+            ", properties=" + properties +
+            ", jmxDomain='" + jmxDomain + '\'' +
+            ", cacheManagerName='" + cacheManagerName + '\'' +
+            ", mBeanServerLookupInstance=" + mBeanServerLookupInstance +
+            ", enabled=" + enabled +
+            '}';
+   }
+
 }

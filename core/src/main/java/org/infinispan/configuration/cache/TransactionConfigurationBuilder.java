@@ -252,4 +252,24 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "TransactionConfigurationBuilder{" +
+            "autoCommit=" + autoCommit +
+            ", cacheStopTimeout=" + cacheStopTimeout +
+            ", eagerLockingSingleNode=" + eagerLockingSingleNode +
+            ", lockingMode=" + lockingMode +
+            ", syncCommitPhase=" + syncCommitPhase +
+            ", syncRollbackPhase=" + syncRollbackPhase +
+            ", transactionManagerLookup=" + transactionManagerLookup +
+            ", transactionSynchronizationRegistryLookup=" + transactionSynchronizationRegistryLookup +
+            ", transactionMode=" + transactionMode +
+            ", useEagerLocking=" + useEagerLocking +
+            ", useSynchronization=" + useSynchronization +
+            ", recovery=" + recovery +
+            ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
+            '}';
+   }
+
 }

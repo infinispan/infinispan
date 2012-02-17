@@ -91,4 +91,14 @@ public class LoadersConfiguration {
       return !passivation() && cacheLoaders.size() > 1;
    }
 
+   @Override
+   public String toString() {
+      return "LoadersConfiguration{" +
+            "cacheLoaders=" + cacheLoaders +
+            ", passivation=" + passivation +
+            ", preload=" + preload +
+            ", shared=" + shared +
+            '}';
+   }
+
 }

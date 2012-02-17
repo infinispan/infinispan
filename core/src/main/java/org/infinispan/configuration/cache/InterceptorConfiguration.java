@@ -66,4 +66,15 @@ public class InterceptorConfiguration {
       return position() == Position.LAST;
    }
 
+   @Override
+   public String toString() {
+      return "InterceptorConfiguration{" +
+            "after=" + after +
+            ", before=" + before +
+            ", interceptor=" + interceptor +
+            ", index=" + index +
+            ", position=" + position +
+            '}';
+   }
+
 }

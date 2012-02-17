@@ -26,5 +26,12 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
    public DataContainer dataContainer() {
       return dataContainer;
    }
-   
+
+   @Override
+   public String toString() {
+      return "DataContainerConfiguration{" +
+            "dataContainer=" + dataContainer +
+            '}';
+   }
+
 }

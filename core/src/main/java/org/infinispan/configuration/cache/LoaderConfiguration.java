@@ -24,4 +24,19 @@ public class LoaderConfiguration extends AbstractLoaderConfiguration {
       return cacheLoader;
    }
 
+   @Override
+   public String toString() {
+      return "LoaderConfiguration{" +
+            "cacheLoader=" + cacheLoader +
+            ", purgeOnStartup=" + purgeOnStartup() +
+            ", purgeSynchronously=" + purgeSynchronously() +
+            ", purgerThreads=" + purgerThreads() +
+            ", fetchPersistentState=" + fetchPersistentState() +
+            ", ignoreModifications=" + ignoreModifications() +
+            ", properties=" + properties() +
+            ", async=" + async() +
+            ", singletonStore=" + singletonStore() +
+            '}';
+   }
+
 }

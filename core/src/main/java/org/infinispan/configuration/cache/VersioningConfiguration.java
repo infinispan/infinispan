@@ -39,4 +39,13 @@ public class VersioningConfiguration {
    public VersioningScheme scheme() {
       return scheme;
    }
+
+   @Override
+   public String toString() {
+      return "VersioningConfiguration{" +
+            "enabled=" + enabled +
+            ", scheme=" + scheme +
+            '}';
+   }
+
 }

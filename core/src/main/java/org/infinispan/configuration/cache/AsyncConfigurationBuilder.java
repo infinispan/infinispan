@@ -105,8 +105,19 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
       this.replicationQueueInterval = template.replQueueInterval();
       this.replicationQueueMaxElements = template.replQueueMaxElements();
       this.useReplicationQueue = template.useReplQueue();
-      
+
       return this;
+   }
+
+   @Override
+   public String toString() {
+      return "AsyncConfigurationBuilder{" +
+            "asyncMarshalling=" + asyncMarshalling +
+            ", replicationQueue=" + replicationQueue +
+            ", replicationQueueInterval=" + replicationQueueInterval +
+            ", replicationQueueMaxElements=" + replicationQueueMaxElements +
+            ", useReplicationQueue=" + useReplicationQueue +
+            '}';
    }
 
 }

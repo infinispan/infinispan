@@ -59,4 +59,15 @@ public class L1Configuration {
       return onRehash;
    }
 
+   @Override
+   public String toString() {
+      return "L1Configuration{" +
+            "activated=" + activated +
+            ", enabled=" + enabled +
+            ", invalidationThreshold=" + invalidationThreshold +
+            ", lifespan=" + lifespan +
+            ", onRehash=" + onRehash +
+            '}';
+   }
+
 }

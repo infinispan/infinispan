@@ -64,4 +64,13 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
       
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "VersioningConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", scheme=" + scheme +
+            '}';
+   }
+
 }

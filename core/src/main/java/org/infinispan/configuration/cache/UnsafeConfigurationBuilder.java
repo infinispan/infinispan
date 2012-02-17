@@ -47,4 +47,11 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "UnsafeConfigurationBuilder{" +
+            "unreliableReturnValues=" + unreliableReturnValues +
+            '}';
+   }
+
 }

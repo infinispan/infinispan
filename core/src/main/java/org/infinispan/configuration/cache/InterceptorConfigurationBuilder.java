@@ -36,7 +36,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     * interceptor is not found in the interceptor chain, a {@link ConfigurationException} will be thrown when the
     * cache starts.
     *
-    * @param after the class of the interceptor to look for
+    * @param before the class of the interceptor to look for
     */
    public InterceptorConfigurationBuilder before(Class<? extends CommandInterceptor> before) {
       this.before = before;
@@ -111,4 +111,16 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "InterceptorConfigurationBuilder{" +
+            "after=" + after +
+            ", before=" + before +
+            ", interceptor=" + interceptor +
+            ", index=" + index +
+            ", position=" + position +
+            '}';
+   }
+
 }

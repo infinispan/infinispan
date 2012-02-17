@@ -107,4 +107,16 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "LockingConfigurationBuilder{" +
+            "concurrencyLevel=" + concurrencyLevel +
+            ", isolationLevel=" + isolationLevel +
+            ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
+            ", useLockStriping=" + useLockStriping +
+            ", writeSkewCheck=" + writeSkewCheck +
+            '}';
+   }
+
 }

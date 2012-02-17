@@ -67,4 +67,20 @@ public class TransportConfiguration {
    public boolean hasTopologyInfo() {
       return siteId() != null || rackId() != null || machineId() != null;
    }
+
+   @Override
+   public String toString() {
+      return "TransportConfiguration{" +
+            "clusterName='" + clusterName + '\'' +
+            ", machineId='" + machineId + '\'' +
+            ", rackId='" + rackId + '\'' +
+            ", siteId='" + siteId + '\'' +
+            ", strictPeerToPeer=" + strictPeerToPeer +
+            ", distributedSyncTimeout=" + distributedSyncTimeout +
+            ", transport=" + transport +
+            ", nodeName='" + nodeName + '\'' +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

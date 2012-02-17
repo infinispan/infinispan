@@ -182,4 +182,20 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    public Transport getTransport() {
       return transport;
    }
+
+   @Override
+   public String toString() {
+      return "TransportConfigurationBuilder{" +
+            "clusterName='" + clusterName + '\'' +
+            ", machineId='" + machineId + '\'' +
+            ", rackId='" + rackId + '\'' +
+            ", siteId='" + siteId + '\'' +
+            ", distributedSyncTimeout=" + distributedSyncTimeout +
+            ", transport=" + transport +
+            ", nodeName='" + nodeName + '\'' +
+            ", properties=" + properties +
+            ", strictPeerToPeer=" + strictPeerToPeer +
+            '}';
+   }
+
 }

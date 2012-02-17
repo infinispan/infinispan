@@ -17,4 +17,11 @@ public class ScheduledExecutorFactoryConfiguration extends AbstractTypedProperti
       return factory;
    }
 
+   @Override
+   public String toString() {
+      return "ScheduledExecutorFactoryConfiguration{" +
+            "factory=" + factory +
+            '}';
+   }
+
 }

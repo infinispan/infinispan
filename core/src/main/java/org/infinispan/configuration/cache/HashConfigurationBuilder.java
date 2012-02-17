@@ -171,5 +171,17 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.groupsConfigurationBuilder.read(template.groups());
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "HashConfigurationBuilder{" +
+            "activated=" + activated +
+            ", consistentHash=" + consistentHash +
+            ", hash=" + hash +
+            ", numOwners=" + numOwners +
+            ", numVirtualNodes=" + numVirtualNodes +
+            ", groups=" + groupsConfigurationBuilder +
+            '}';
+   }
+
 }

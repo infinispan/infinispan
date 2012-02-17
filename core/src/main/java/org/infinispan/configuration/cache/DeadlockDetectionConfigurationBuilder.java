@@ -65,5 +65,13 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "DeadlockDetectionConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", spinDuration=" + spinDuration +
+            '}';
+   }
+
 }

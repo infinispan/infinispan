@@ -34,4 +34,12 @@ public class RecoveryConfiguration {
       return recoveryInfoCacheName;
    }
 
+   @Override
+   public String toString() {
+      return "RecoveryConfiguration{" +
+            "enabled=" + enabled +
+            ", recoveryInfoCacheName='" + recoveryInfoCacheName + '\'' +
+            '}';
+   }
+
 }

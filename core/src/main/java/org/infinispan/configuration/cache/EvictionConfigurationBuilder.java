@@ -79,4 +79,13 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "EvictionConfigurationBuilder{" +
+            "maxEntries=" + maxEntries +
+            ", strategy=" + strategy +
+            ", threadPolicy=" + threadPolicy +
+            '}';
+   }
+
 }
