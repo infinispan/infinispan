@@ -23,15 +23,14 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.config.AdvancedExternalizerConfig;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Tests configuration of user defined {@link AdvancedExternalizer} implementations
- * using helpers methods in {@link GlobalConfiguration}.
+ * using helpers methods in {@link GlobalConfigurationBuilder}.
  *
  * @author Galder Zamarreño
  * @since 5.0
@@ -40,30 +39,29 @@ import java.util.List;
 public class AdvancedExternalizerQuickConfigTest extends AdvancedExternalizerTest {
 
    @Override
-   protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
-      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      globalCfg.fluent().serialization()
-         .addAdvancedExternalizer(1234, new IdViaConfigObj.Externalizer())
-         .addAdvancedExternalizer(new IdViaAnnotationObj.Externalizer())
-         .addAdvancedExternalizer(3456, new IdViaBothObj.Externalizer());
-      return globalCfg;
+   protected GlobalConfigurationBuilder createForeignExternalizerGlobalConfig() {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
+      builder.serialization()
+            .addAdvancedExternalizer(1234, new IdViaConfigObj.Externalizer())
+            .addAdvancedExternalizer(new IdViaAnnotationObj.Externalizer())
+            .addAdvancedExternalizer(3456, new IdViaBothObj.Externalizer());
+      return builder;
    }
 
    public void testExternalizerConfigInfo() {
-      List<AdvancedExternalizerConfig> advancedExternalizers = manager(0).getGlobalConfiguration().getExternalizers();
-      assert advancedExternalizers.size() == 3;
-      AdvancedExternalizerConfig config = advancedExternalizers.get(0);
-      assert config.getAdvancedExternalizer() != null;
-      assert config.getExternalizerClass() == IdViaConfigObj.Externalizer.class.getName();
-      assert config.getId() == 1234;
-      config = advancedExternalizers.get(1);
-      assert config.getAdvancedExternalizer() != null;
-      assert config.getExternalizerClass() == IdViaAnnotationObj.Externalizer.class.getName();
-      assert config.getId() == 5678;
-      config = advancedExternalizers.get(2);
-      assert config.getAdvancedExternalizer() != null;
-      assert config.getExternalizerClass() == IdViaBothObj.Externalizer.class.getName();
-      assert config.getId() == 3456;
+      Map<Integer, AdvancedExternalizer<?>> advExts =
+            manager(0).getCacheManagerConfiguration().serialization().advancedExternalizers();
+      assert advExts.size() == 3;
+      AdvancedExternalizer<?> ext = advExts.get(1234);
+      assert ext != null;
+      assert ext.getClass() == IdViaConfigObj.Externalizer.class;
+      ext = advExts.get(5678);
+      assert ext != null;
+      assert ext.getClass() == IdViaAnnotationObj.Externalizer.class;
+      assert ext.getId() == 5678;
+      ext = advExts.get(3456);
+      assert ext != null;
+      assert ext.getClass() == IdViaBothObj.Externalizer.class;
    }
 
    @Override

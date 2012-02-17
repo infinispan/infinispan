@@ -149,7 +149,7 @@
       <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
-      <version.jta>1.0.1.GA</version.jta>
+      <version.jta>1.0.0.Final</version.jta>
       <version.junit>4.8.2</version.junit>
       <version.log4j>1.2.16</version.log4j>
       <version.lucene>3.5.0</version.lucene>
@@ -450,8 +450,8 @@
             <scope>import</scope>
          </dependency>
          <dependency>
-            <groupId>org.jboss.javaee</groupId>
-            <artifactId>jboss-transaction-api</artifactId>
+            <groupId>org.jboss.spec.javax.transaction</groupId>
+            <artifactId>jboss-transaction-api_1.1_spec</artifactId>
             <version>${version.jta}</version>
          </dependency>
          <dependency>
