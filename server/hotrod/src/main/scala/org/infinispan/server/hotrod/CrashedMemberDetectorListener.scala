@@ -56,12 +56,13 @@ class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server
          val newMembers = collectionAsScalaIterable(e.getNewMembers)
          val oldMembers = collectionAsScalaIterable(e.getOldMembers)
          val goneMembers = oldMembers.filterNot(newMembers contains _)
-         // Consider doing removeAsync and then waiting for all removals...
-         goneMembers.foreach { addr =>
-            trace("Remove %s from address cache", addr)
-            addressCache.remove(addr)
+         if (!goneMembers.isEmpty) {
+            // Consider doing removeAsync and then waiting for all removals...
+            goneMembers.foreach(addressCache.remove(_))
+            // Only update view id once we've removed all addresses to
+            // guarantee that the cache will be up to date
+            updateViewdId(e)
          }
-         updateViewdId(e)
       } catch {
          case t: Throwable => logErrorDetectingCrashedMember(t)
       }
