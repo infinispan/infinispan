@@ -237,4 +237,23 @@ public class TransactionConfiguration {
       return use1PcForAutoCommitTransactions;
    }
 
+   @Override
+   public String toString() {
+      return "TransactionConfiguration{" +
+            "autoCommit=" + autoCommit +
+            ", cacheStopTimeout=" + cacheStopTimeout +
+            ", eagerLockingSingleNode=" + eagerLockingSingleNode +
+            ", lockingMode=" + lockingMode +
+            ", syncCommitPhase=" + syncCommitPhase +
+            ", syncRollbackPhase=" + syncRollbackPhase +
+            ", transactionManagerLookup=" + transactionManagerLookup +
+            ", transactionSynchronizationRegistryLookup=" + transactionSynchronizationRegistryLookup +
+            ", transactionMode=" + transactionMode +
+            ", useEagerLocking=" + useEagerLocking +
+            ", useSynchronization=" + useSynchronization +
+            ", recovery=" + recovery +
+            ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
+            '}';
+   }
+
 }

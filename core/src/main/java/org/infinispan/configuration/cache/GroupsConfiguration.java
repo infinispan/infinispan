@@ -57,4 +57,12 @@ public class GroupsConfiguration {
       return groupers;
    }
 
+   @Override
+   public String toString() {
+      return "GroupsConfiguration{" +
+            "enabled=" + enabled +
+            ", groupers=" + groupers +
+            '}';
+   }
+
 }

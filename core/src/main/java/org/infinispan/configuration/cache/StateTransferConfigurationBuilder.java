@@ -109,4 +109,13 @@ public class StateTransferConfigurationBuilder extends
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "StateTransferConfigurationBuilder{" +
+            "chunkSize=" + chunkSize +
+            ", fetchInMemoryState=" + fetchInMemoryState +
+            ", timeout=" + timeout +
+            '}';
+   }
+
 }

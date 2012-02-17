@@ -47,4 +47,12 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
       
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "ShutdownConfigurationBuilder{" +
+            "shutdownHookBehavior=" + shutdownHookBehavior +
+            '}';
+   }
+
 }

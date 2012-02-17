@@ -151,4 +151,24 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "FileCacheStoreConfigurationBuilder{" +
+            "fetchPersistentState=" + fetchPersistentState +
+            ", location='" + location + '\'' +
+            ", fsyncInterval=" + fsyncInterval +
+            ", fsyncMode=" + fsyncMode +
+            ", streamBufferSize=" + streamBufferSize +
+            ", ignoreModifications=" + ignoreModifications +
+            ", purgeOnStartup=" + purgeOnStartup +
+            ", purgerThreads=" + purgerThreads +
+            ", purgeSynchronously=" + purgeSynchronously +
+            ", lockConcurrencyLevel=" + lockConcurrencyLevel +
+            ", lockAcquistionTimeout=" + lockAcquistionTimeout +
+            ", properties=" + properties +
+            ", async=" + async +
+            ", singletonStore=" + singletonStore +
+            '}';
+   }
+
 }

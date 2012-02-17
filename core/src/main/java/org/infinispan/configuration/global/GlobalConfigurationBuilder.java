@@ -174,4 +174,20 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
       return builder;
    }
+
+   @Override
+   public String toString() {
+      return "GlobalConfigurationBuilder{" +
+            "asyncListenerExecutor=" + asyncListenerExecutor +
+            ", cl=" + cl +
+            ", transport=" + transport +
+            ", globalJmxStatistics=" + globalJmxStatistics +
+            ", serialization=" + serialization +
+            ", asyncTransportExecutor=" + asyncTransportExecutor +
+            ", evictionScheduledExecutor=" + evictionScheduledExecutor +
+            ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
+            ", shutdown=" + shutdown +
+            '}';
+   }
+
 }

@@ -93,4 +93,15 @@ public class LockingConfiguration {
       return writeSkewCheck;
    }
 
+   @Override
+   public String toString() {
+      return "LockingConfiguration{" +
+            "concurrencyLevel=" + concurrencyLevel +
+            ", isolationLevel=" + isolationLevel +
+            ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
+            ", useLockStriping=" + useLockStriping +
+            ", writeSkewCheck=" + writeSkewCheck +
+            '}';
+   }
+
 }

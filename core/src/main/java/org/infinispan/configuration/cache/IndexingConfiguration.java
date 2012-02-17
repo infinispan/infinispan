@@ -67,4 +67,12 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return super.properties();
    }
 
+   @Override
+   public String toString() {
+      return "IndexingConfiguration{" +
+            "enabled=" + enabled +
+            ", indexLocalOnly=" + indexLocalOnly +
+            '}';
+   }
+
 }

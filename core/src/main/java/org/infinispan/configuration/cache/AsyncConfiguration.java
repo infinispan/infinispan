@@ -85,4 +85,15 @@ public class AsyncConfiguration {
       return useReplicationQueue;
    }
 
+   @Override
+   public String toString() {
+      return "AsyncConfiguration{" +
+            "asyncMarshalling=" + asyncMarshalling +
+            ", replicationQueue=" + replicationQueue +
+            ", replicationQueueInterval=" + replicationQueueInterval +
+            ", replicationQueueMaxElements=" + replicationQueueMaxElements +
+            ", useReplicationQueue=" + useReplicationQueue +
+            '}';
+   }
+
 }

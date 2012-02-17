@@ -82,4 +82,14 @@ public class StateTransferConfiguration {
       return chunkSize;
    }
 
+   @Override
+   public String toString() {
+      return "StateTransferConfiguration{" +
+            "chunkSize=" + chunkSize +
+            ", fetchInMemoryState=" + fetchInMemoryState +
+            ", originalFetchInMemoryState=" + originalFetchInMemoryState +
+            ", timeout=" + timeout +
+            '}';
+   }
+
 }

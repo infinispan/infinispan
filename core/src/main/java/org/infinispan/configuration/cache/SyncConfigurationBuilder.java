@@ -55,8 +55,14 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public SyncConfigurationBuilder read(SyncConfiguration template) {
       this.replTimeout = template.replTimeout();
-      
       return this;
+   }
+
+   @Override
+   public String toString() {
+      return "SyncConfigurationBuilder{" +
+            "replTimeout=" + replTimeout +
+            '}';
    }
 
 }

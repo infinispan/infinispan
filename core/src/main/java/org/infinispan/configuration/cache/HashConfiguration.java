@@ -123,4 +123,17 @@ public class HashConfiguration {
       return groupsConfiguration;
    }
 
+   @Override
+   public String toString() {
+      return "HashConfiguration{" +
+            "activated=" + activated +
+            ", consistentHash=" + consistentHash +
+            ", hash=" + hash +
+            ", numOwners=" + numOwners +
+            ", numVirtualNodes=" + numVirtualNodes +
+            ", groupsConfiguration=" + groupsConfiguration +
+            ", stateTransferConfiguration=" + stateTransferConfiguration +
+            '}';
+   }
+
 }

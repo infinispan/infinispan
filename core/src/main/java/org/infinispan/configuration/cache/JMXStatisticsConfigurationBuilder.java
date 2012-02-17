@@ -74,4 +74,11 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "JMXStatisticsConfigurationBuilder{" +
+            "enabled=" + enabled +
+            '}';
+   }
+
 }

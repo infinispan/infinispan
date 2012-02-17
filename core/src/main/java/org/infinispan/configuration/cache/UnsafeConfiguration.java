@@ -42,4 +42,12 @@ public class UnsafeConfiguration {
    public boolean unreliableReturnValues() {
       return unreliableReturnValues;
    }
+
+   @Override
+   public String toString() {
+      return "UnsafeConfiguration{" +
+            "unreliableReturnValues=" + unreliableReturnValues +
+            '}';
+   }
+
 }

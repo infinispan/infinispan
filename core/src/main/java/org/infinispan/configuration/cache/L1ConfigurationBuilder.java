@@ -157,4 +157,15 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "L1ConfigurationBuilder{" +
+            "activated=" + activated +
+            ", enabled=" + enabled +
+            ", invalidationThreshold=" + invalidationThreshold +
+            ", lifespan=" + lifespan +
+            ", onRehash=" + onRehash +
+            '}';
+   }
+
 }
