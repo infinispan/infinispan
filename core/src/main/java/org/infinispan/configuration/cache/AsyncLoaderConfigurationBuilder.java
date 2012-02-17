@@ -117,4 +117,15 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "AsyncLoaderConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", flushLockTimeout=" + flushLockTimeout +
+            ", modificationQueueSize=" + modificationQueueSize +
+            ", shutdownTimeout=" + shutdownTimeout +
+            ", threadPoolSize=" + threadPoolSize +
+            '}';
+   }
+
 }

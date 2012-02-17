@@ -101,5 +101,14 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "SingletonStoreConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", pushStateTimeout=" + pushStateTimeout +
+            ", pushStateWhenCoordinator=" + pushStateWhenCoordinator +
+            '}';
+   }
+
 }

@@ -40,5 +40,12 @@ public class JMXStatisticsConfiguration {
    public boolean enabled() {
       return enabled;
    }
-   
+
+   @Override
+   public String toString() {
+      return "JMXStatisticsConfiguration{" +
+            "enabled=" + enabled +
+            '}';
+   }
+
 }

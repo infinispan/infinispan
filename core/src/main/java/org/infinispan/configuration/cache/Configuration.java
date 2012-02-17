@@ -134,4 +134,26 @@ public class Configuration {
       return versioningConfiguration;
    }
 
+   @Override
+   public String toString() {
+      return "Configuration{" +
+            "classLoader=" + classLoader +
+            ", clustering=" + clusteringConfiguration +
+            ", customInterceptors=" + customInterceptorsConfiguration +
+            ", dataContainer=" + dataContainerConfiguration +
+            ", deadlockDetection=" + deadlockDetectionConfiguration +
+            ", eviction=" + evictionConfiguration +
+            ", expiration=" + expirationConfiguration +
+            ", indexing=" + indexingConfiguration +
+            ", invocationBatching=" + invocationBatchingConfiguration +
+            ", jmxStatistics=" + jmxStatisticsConfiguration +
+            ", loaders=" + loadersConfiguration +
+            ", locking=" + lockingConfiguration +
+            ", storeAsBinary=" + storeAsBinaryConfiguration +
+            ", transaction=" + transactionConfiguration +
+            ", versioning=" + versioningConfiguration +
+            ", unsafe=" + unsafeConfiguration +
+            '}';
+   }
+
 }

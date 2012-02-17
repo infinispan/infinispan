@@ -140,4 +140,13 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "IndexingConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", indexLocalOnly=" + indexLocalOnly +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

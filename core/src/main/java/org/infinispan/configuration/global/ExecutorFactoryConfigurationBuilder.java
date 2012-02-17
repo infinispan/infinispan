@@ -91,5 +91,13 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "ExecutorFactoryConfigurationBuilder{" +
+            "factory=" + factory +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

@@ -66,4 +66,13 @@ public class EvictionConfiguration {
       return maxEntries;
    }
 
+   @Override
+   public String toString() {
+      return "EvictionConfiguration{" +
+            "maxEntries=" + maxEntries +
+            ", strategy=" + strategy +
+            ", threadPolicy=" + threadPolicy +
+            '}';
+   }
+
 }

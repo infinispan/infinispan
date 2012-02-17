@@ -29,5 +29,12 @@ public class InvocationBatchingConfiguration {
    public boolean enabled() {
       return enabled;
    }
-   
+
+   @Override
+   public String toString() {
+      return "InvocationBatchingConfiguration{" +
+            "enabled=" + enabled +
+            '}';
+   }
+
 }

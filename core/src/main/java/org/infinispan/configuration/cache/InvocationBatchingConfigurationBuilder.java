@@ -55,5 +55,12 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "InvocationBatchingConfigurationBuilder{" +
+            "enabled=" + enabled +
+            '}';
+   }
+
 }

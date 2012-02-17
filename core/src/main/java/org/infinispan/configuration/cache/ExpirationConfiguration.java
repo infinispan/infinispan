@@ -73,4 +73,14 @@ public class ExpirationConfiguration {
       return wakeUpInterval;
    }
 
+   @Override
+   public String toString() {
+      return "ExpirationConfiguration{" +
+            "lifespan=" + lifespan +
+            ", maxIdle=" + maxIdle +
+            ", reaperEnabled=" + reaperEnabled +
+            ", wakeUpInterval=" + wakeUpInterval +
+            '}';
+   }
+
 }

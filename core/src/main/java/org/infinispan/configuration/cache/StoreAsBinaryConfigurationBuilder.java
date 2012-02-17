@@ -98,4 +98,14 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "StoreAsBinaryConfigurationBuilder{" +
+            "enabled=" + enabled +
+            ", storeKeysAsBinary=" + storeKeysAsBinary +
+            ", storeValuesAsBinary=" + storeValuesAsBinary +
+            '}';
+   }
+
 }

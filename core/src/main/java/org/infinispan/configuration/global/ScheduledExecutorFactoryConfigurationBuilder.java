@@ -91,5 +91,13 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       
       return this;
    }
-   
+
+   @Override
+   public String toString() {
+      return "ScheduledExecutorFactoryConfigurationBuilder{" +
+            "factory=" + factory +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

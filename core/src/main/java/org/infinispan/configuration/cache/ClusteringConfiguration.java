@@ -90,4 +90,16 @@ public class ClusteringConfiguration {
       return stateTransferConfiguration;
    }
 
+   @Override
+   public String toString() {
+      return "ClusteringConfiguration{" +
+            "async=" + asyncConfiguration +
+            ", cacheMode=" + cacheMode +
+            ", hash=" + hashConfiguration +
+            ", l1=" + l1Configuration +
+            ", stateTransfer=" + stateTransferConfiguration +
+            ", sync=" + syncConfiguration +
+            '}';
+   }
+
 }

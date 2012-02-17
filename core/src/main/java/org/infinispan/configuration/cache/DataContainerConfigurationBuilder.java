@@ -91,4 +91,12 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   @Override
+   public String toString() {
+      return "DataContainerConfigurationBuilder{" +
+            "dataContainer=" + dataContainer +
+            ", properties=" + properties +
+            '}';
+   }
+
 }

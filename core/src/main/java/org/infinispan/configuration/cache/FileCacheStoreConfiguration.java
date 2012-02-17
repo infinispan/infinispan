@@ -66,4 +66,24 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
       return streamBufferSize;
    }
 
+   @Override
+   public String toString() {
+      return "FileCacheStoreConfiguration{" +
+            "fsyncInterval=" + fsyncInterval +
+            ", location='" + location + '\'' +
+            ", fsyncMode=" + fsyncMode +
+            ", streamBufferSize=" + streamBufferSize +
+            ", lockAcquistionTimeout=" + lockAcquistionTimeout() +
+            ", lockConcurrencyLevel=" + lockConcurrencyLevel() +
+            ", purgeOnStartup=" + purgeOnStartup() +
+            ", purgeSynchronously=" + purgeSynchronously() +
+            ", purgerThreads=" + purgerThreads() +
+            ", fetchPersistentState=" + fetchPersistentState() +
+            ", ignoreModifications=" + ignoreModifications() +
+            ", properties=" + properties() +
+            ", async=" + async() +
+            ", singletonStore=" + singletonStore() +
+            '}';
+   }
+
 }
