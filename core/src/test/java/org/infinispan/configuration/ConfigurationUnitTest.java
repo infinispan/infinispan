@@ -23,11 +23,13 @@
 
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.net.URL;
+import java.util.concurrent.Callable;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
@@ -41,9 +43,9 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -64,9 +66,13 @@ public class ConfigurationUnitTest {
    }
    
    @Test
-   public void testCreateCache() {
-      DefaultCacheManager cm = new DefaultCacheManager(new ConfigurationBuilder().build());
-      TestingUtil.killCacheManagers(cm);
+   public void testCreateCache() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            return new DefaultCacheManager(new ConfigurationBuilder().build());
+         }
+      });
    }
    
    @Test
@@ -97,53 +103,59 @@ public class ConfigurationUnitTest {
    }
    
   @Test
-  public void testDummyTMGetCache() {
-     ConfigurationBuilder cb = new ConfigurationBuilder();
-     cb.transaction().use1PcForAutoCommitTransactions(true)
-        .transactionManagerLookup(new DummyTransactionManagerLookup());
-     DefaultCacheManager cm = new DefaultCacheManager(cb.build());
-     try {
-        cm.getCache();
-     } finally {
-        TestingUtil.killCacheManagers(cm);
-     }
+  public void testDummyTMGetCache() throws Exception {
+     withCacheManager(new Callable<EmbeddedCacheManager>() {
+        @Override
+        public EmbeddedCacheManager call() throws Exception {
+           ConfigurationBuilder cb = new ConfigurationBuilder();
+           cb.transaction().use1PcForAutoCommitTransactions(true)
+                 .transactionManagerLookup(new DummyTransactionManagerLookup());
+           DefaultCacheManager cm = new DefaultCacheManager(cb.build());
+           cm.getCache();
+           return cm;
+        }
+     });
   }
    
    @Test
-   public void testGetCache() {
-      DefaultCacheManager cm = new DefaultCacheManager(new ConfigurationBuilder().build());
-      try {
-         cm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+   public void testGetCache() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            DefaultCacheManager cm = new DefaultCacheManager(new ConfigurationBuilder().build());
+            cm.getCache();
+            return cm;
+         }
+      });
    }
    
    @Test
-   public void testDefineNamedCache() {
-      DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
-      try {
-         cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
-      } finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+   public void testDefineNamedCache() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
+            cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
+            return cacheManager;
+         }
+      });
    }
    
    @Test
-   public void testGetAndPut() {
-   // new configuration
-      DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
-
-      try {
-         Cache<String, String> cache = cacheManager.getCache();
-         cache.put("Foo", "2");
-         cache.put("Bar", "4");
-
-         Assert.assertEquals(cache.get("Foo"), "2");
-         Assert.assertEquals(cache.get("Bar"), "4");
-      } finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+   public void testGetAndPut() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            // new configuration
+            DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
+            Cache<String, String> cache = cacheManager.getCache();
+            cache.put("Foo", "2");
+            cache.put("Bar", "4");
+            Assert.assertEquals(cache.get("Foo"), "2");
+            Assert.assertEquals(cache.get("Bar"), "4");
+            return cacheManager;
+         }
+      });
    }
    
    @Test
@@ -156,15 +168,19 @@ public class ConfigurationUnitTest {
    }
    
    @Test(expectedExceptions=IllegalStateException.class)
-   public void testInvocationBatchingAndNonTransactional() {
-      Configuration c = new ConfigurationBuilder()
-         .transaction()
-            .transactionMode(NON_TRANSACTIONAL)
-         .invocationBatching()
-            .enable()
-         .build();
-      DefaultCacheManager cm = new DefaultCacheManager(c);
-      TestingUtil.killCacheManagers(cm);
+   public void testInvocationBatchingAndNonTransactional() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            Configuration c = new ConfigurationBuilder()
+                  .transaction()
+                  .transactionMode(NON_TRANSACTIONAL)
+                  .invocationBatching()
+                  .enable()
+                  .build();
+            return new DefaultCacheManager(c);
+         }
+      });
    }
    
    @Test
@@ -174,19 +190,21 @@ public class ConfigurationUnitTest {
    }
 
    @Test
-   public void testDisableL1() {
-      EmbeddedCacheManager manager = TestCacheManagerFactory
-            .createClusteredCacheManager(new ConfigurationBuilder(), new TransportFlags());
-      try {
-         ConfigurationBuilder cb = new ConfigurationBuilder();
-         cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
-         manager.defineConfiguration("testConfigCache", cb.build());
-         Cache<Object, Object> cache = manager.getCache("testConfigCache");
-         assert !cache.getCacheConfiguration().clustering().l1().enabled();
-         assert !cache.getCacheConfiguration().clustering().l1().onRehash();
-      } finally {
-         TestingUtil.killCacheManagers(manager);
-      }
+   public void testDisableL1() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            EmbeddedCacheManager manager = TestCacheManagerFactory
+                  .createClusteredCacheManager(new ConfigurationBuilder(), new TransportFlags());
+            ConfigurationBuilder cb = new ConfigurationBuilder();
+            cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
+            manager.defineConfiguration("testConfigCache", cb.build());
+            Cache<Object, Object> cache = manager.getCache("testConfigCache");
+            assert !cache.getCacheConfiguration().clustering().l1().enabled();
+            assert !cache.getCacheConfiguration().clustering().l1().onRehash();
+            return manager;
+         }
+      });
    }
    
    @Test
@@ -212,6 +230,22 @@ public class ConfigurationUnitTest {
       URL schemaFile = lookup.lookupFileLocation("schema/infinispan-config-5.1.xsd", Thread.currentThread().getContextClassLoader());
       Source xmlFile = new StreamSource(lookup.lookupFile("configs/all.xml", Thread.currentThread().getContextClassLoader()));
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
+   }
+
+   public void testEvictionWithoutStrategy() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            Configuration c = new ConfigurationBuilder()
+                  .eviction().maxEntries(76767)
+                  .build();
+            DefaultCacheManager cm = new DefaultCacheManager(c);
+            Configuration cfg = cm.getCache().getCacheConfiguration();
+            assert cfg.eviction().maxEntries() == 76767;
+            assert cfg.eviction().strategy() != EvictionStrategy.NONE;
+            return cm;
+         }
+      });
    }
 
 }
