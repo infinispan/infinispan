@@ -1229,4 +1229,24 @@ public class TestingUtil {
       }
    }
 
+   public static void withCacheManager(Callable<EmbeddedCacheManager> c) throws Exception {
+      EmbeddedCacheManager cm = null;
+      boolean threwException = false;
+      try {
+         cm = c.call();
+      } catch (Exception e) {
+         threwException = true;
+         throw e;
+      } catch (Error e) {
+         threwException = true;
+         throw e;
+      } finally {
+         if (cm == null && !threwException)
+            throw new IllegalStateException(
+                  "Callable must return a non-null cache manager instance");
+
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
+
 }
