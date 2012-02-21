@@ -14,9 +14,9 @@ add_jvm_args '-Djava.net.preferIPv4Stack=true'
 add_jvm_args "-DCFGPath=${ISPN_HOME}/etc/config-samples/ec2-demo/"
 
 # RHQ monitoring options
-#add_jvm_args '-Dcom.sun.management.jmxremote.ssl=false'
-#add_jvm_args '-Dcom.sun.management.jmxremote.authenticate=false'
-#add_jvm_args '-Dcom.sun.management.jmxremote.port=6996'
+add_jvm_args '-Dcom.sun.management.jmxremote.ssl=false'
+add_jvm_args '-Dcom.sun.management.jmxremote.authenticate=false'
+add_jvm_args -Dcom.sun.management.jmxremote.port=$(find_tcp_port)
 
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
