@@ -262,16 +262,19 @@ public class ExternalizerTable implements ObjectTable {
       if (adapter == null) {
          if (!started) {
             if (log.isTraceEnabled())
-               log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: %s", readers);
+               log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not properly populated: %s", readers);
 
-            if (Thread.currentThread().isInterrupted())
+            if (Thread.currentThread().isInterrupted()) {
                throw new IOException(String.format(
                      "Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",
                      readerIndex), new InterruptedException());
-            else
+            } else if (gcr.getStatus().isStopping()) {
+               log.tracef("Cache manager is shutting down and type (id=%d) cannot be resolved (thread not interrupted)", readerIndex);
+            } else {
                throw new CacheException(String.format(
-                     "Cache manager is either starting up or shutting down but it's not interrupted, so type (id=%d) cannot be resolved.",
+                     "Cache manager is either starting up and type (id=%d) cannot be resolved (thread not interrupted)",
                      readerIndex));
+            }
          } else {
             if (log.isTraceEnabled()) {
                log.tracef("Unknown type. Input stream has %s to read", input.available());
