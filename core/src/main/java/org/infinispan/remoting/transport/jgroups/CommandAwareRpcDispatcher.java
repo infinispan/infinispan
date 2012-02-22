@@ -233,7 +233,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (oob) msg.setFlag(Message.OOB);
       if (oob || mode != ResponseMode.GET_NONE) {
          msg.setFlag(Message.DONT_BUNDLE);
-         msg.setFlag(Message.NO_FC);
+         // This is removed since this optimisation is no longer valid.  See ISPN-1878
+         // msg.setFlag(Message.NO_FC);
       }
       if (recipient != null) msg.setDest(recipient);
       return msg;
