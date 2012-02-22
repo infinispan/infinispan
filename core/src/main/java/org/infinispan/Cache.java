@@ -50,9 +50,11 @@ import java.util.concurrent.ConcurrentMap;
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
  * <p /> 
- * Other methods such as {@link #size()} provide an approximation-only, and should not be relied on for an accurate picture
- * as to the size of the entire, distributed cache.  Remote nodes are <i>not</i> queried and in-fly transactions are not
- * taken into account, even if {@link #size()} is invoked from within such a transaction.
+ * {@link #size()} provides the size of the local, internal data container only.  This does not take into account
+ * in-fly transactions, entries stored in a cache store, or remote entries.  It may also take into consideration
+ * entries that have expired but haven't yet been removed from the internal container, as well as entries in the L1
+ * cache if L1 is enabled along with distribution as a clustering mode.  See the Infinispan User Guide section on
+ * <a href="https://docs.jboss.org/author/display/ISPN51/Clustering+modes#Clusteringmodes-L1Caching">L1 caching</a> for more details.
  * <p/>
  * Also, like many {@link ConcurrentMap} implementations, Cache does not support the use of <tt>null</tt> keys or
  * values.
