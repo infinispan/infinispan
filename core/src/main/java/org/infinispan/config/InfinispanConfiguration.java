@@ -29,6 +29,7 @@ import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.util.SysPropertyActions;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -345,12 +346,12 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    private static boolean skipSchemaValidation() {
-      String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
+      String s = SysPropertyActions.getProperty(VALIDATING_SYSTEM_PROPERTY);
       return s != null && !Boolean.parseBoolean(s);
    }
 
    private static boolean skipTokenReplacement() {
-      String s = System.getProperty(SKIP_TOKEN_REPLACEMENT, "false");
+      String s = SysPropertyActions.getProperty(SKIP_TOKEN_REPLACEMENT, "false");
       return s != null && Boolean.parseBoolean(s);
    }
 
@@ -410,11 +411,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    private static String schemaPath() {
-      return System.getProperty(SCHEMA_SYSTEM_PROPERTY, DEFAULT_SCHEMA_LOCATION);
+      return SysPropertyActions.getProperty(SCHEMA_SYSTEM_PROPERTY, DEFAULT_SCHEMA_LOCATION);
    }
 
    private static String schemaURL() {
-      return System.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
+      return SysPropertyActions.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
    }
 
    private InfinispanConfiguration() {

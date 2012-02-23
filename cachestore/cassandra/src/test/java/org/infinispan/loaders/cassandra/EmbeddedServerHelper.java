@@ -15,6 +15,7 @@ import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.thrift.CassandraDaemon;
 import org.apache.thrift.transport.TTransportException;
+import org.infinispan.util.SysPropertyActions;
 
 /**
  * Taken from Hector (MIT license).
@@ -31,7 +32,7 @@ import org.apache.thrift.transport.TTransportException;
  * substantial portions of the Software.
  */
 public class EmbeddedServerHelper {
-   private static final String TMP = System.getProperty("java.io.tmpdir")+File.separator+EmbeddedServerHelper.class.getPackage().getName()+"-test";
+   private static final String TMP = SysPropertyActions.getProperty("java.io.tmpdir")+File.separator+EmbeddedServerHelper.class.getPackage().getName()+"-test";
 
    private final String yamlFile;
    static CassandraDaemon cassandraDaemon;
@@ -99,7 +100,7 @@ public class EmbeddedServerHelper {
       mkdir(directory);
       InputStream is = EmbeddedServerHelper.class.getResourceAsStream(resource);
       String fileName = resource.substring(resource.lastIndexOf("/") + 1);
-      File file = new File(directory + System.getProperty("file.separator") + fileName);
+      File file = new File(directory + SysPropertyActions.getProperty("file.separator") + fileName);
       OutputStream out = new FileOutputStream(file);
       byte buf[] = new byte[1024];
       int len;

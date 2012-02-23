@@ -44,6 +44,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbm.logging.Log;
+import org.infinispan.util.SysPropertyActions;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -107,7 +108,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public void start() throws CacheLoaderException {
       String locationStr = config.getLocation();
       if (locationStr == null) {
-         locationStr = System.getProperty("java.io.tmpdir");
+         locationStr = SysPropertyActions.getProperty("java.io.tmpdir");
          config.setLocation(locationStr);
       }
 
