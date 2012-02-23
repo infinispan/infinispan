@@ -168,7 +168,12 @@ public enum Flag {
     * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
     * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
     */
-   SKIP_OWNERSHIP_CHECK;
+   SKIP_OWNERSHIP_CHECK,
+   /**
+    * indicates that the write skew check must be skipped. It happens when the commit or rollback command are received
+    * before the prepare command (total order based scheme)
+    */
+   SKIP_WRITE_SKEW_CHECK;
 
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.

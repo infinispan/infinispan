@@ -92,6 +92,10 @@ public class LegacyGlobalConfigurationAdaptor {
       
       legacy.shutdown().hookBehavior(org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.valueOf(config.shutdown().hookBehavior().name()));
       
+      legacy.totalOrderExecutor()
+            .factory(config.totalOrderExecutor().factory().getClass())
+            .withProperties(config.totalOrderExecutor().properties());
+
       return legacy.build();
    }
    
@@ -153,6 +157,10 @@ public class LegacyGlobalConfigurationAdaptor {
       
       builder.shutdown().hookBehavior(ShutdownHookBehavior.valueOf(legacy.getShutdownHookBehavior().name()));
       
+      builder.totalOrderExecutor()
+            .factory(Util.<ExecutorFactory>getInstance(legacy.getTotalOrderExecutorFactorClass(), legacy.getClassLoader()))
+            .withProperties(legacy.getTotalOrderExecutorProperties());
+
       return builder.build();
    }
 

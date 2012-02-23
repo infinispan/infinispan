@@ -47,6 +47,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
@@ -377,6 +378,12 @@ public class Parser {
                break;
             case USE_1PC_FOR_AUTOCOMMIT_TX:
                builder.transaction().use1PcForAutoCommitTransactions(Boolean.parseBoolean(value));
+               break;
+            case TRANSACTION_PROTOCOL:
+               builder.transaction().transactionProtocol(TransactionProtocol.valueOf(value));
+               break;
+            case USE_1PC_IN_TOTAL_ORDER:
+               builder.transaction().use1PCInTotalOrder(Boolean.valueOf(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1275,6 +1282,9 @@ public class Parser {
                transportParsed = true;
                break;
             }
+            case TOTAL_ORDER_EXECUTOR:
+               parseTotalOrderExecutor(reader, builder);
+               break;
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -1588,6 +1598,37 @@ public class Parser {
          switch (element) {
             case PROPERTIES: {
                builder.asyncTransportExecutor().withProperties(parseProperties(reader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseTotalOrderExecutor(XMLStreamReader reader, GlobalConfigurationBuilder builder)
+         throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceSystemProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case FACTORY: {
+               builder.totalOrderExecutor().factory(Util.<ExecutorFactory> getInstance(value, cl));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTIES: {
+               builder.totalOrderExecutor().withProperties(parseProperties(reader));
                break;
             }
             default: {

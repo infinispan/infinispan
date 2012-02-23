@@ -26,6 +26,7 @@ import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.naming.Context;
 import java.io.Closeable;
@@ -566,6 +567,16 @@ public final class Util {
    public static int getNormalizedHash(Object key, Hash hashFct) {
       // more efficient impl
       return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+   }
+
+   /**
+    * pretty print the global transaction instance: address + counter
+    *
+    * @param gtx the global transaction
+    * @return a string representing the global transaction
+    */
+   public static String prettyPrintGlobalTransaction(GlobalTransaction gtx) {
+      return gtx.getAddress() + ":" + gtx.getId();
    }
 
 }

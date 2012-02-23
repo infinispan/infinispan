@@ -56,6 +56,7 @@ import java.util.concurrent.TimeoutException;
  * Takes care of replicating modifications to other caches in a cluster.
  *
  * @author Bela Ban
+ * @author Pedro Ruivo
  * @since 4.0
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
@@ -132,7 +133,8 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    }
 
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
-      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC &&
+            !configuration.isTotalOrder();
       rpcManager.broadcastRpcCommand(command, !async, false);
    }
 

@@ -852,4 +852,25 @@ public interface Log extends BasicLogger {
          "we're assuming you meant stateTransfer. Please see XML schema for more information.", id = 184)
    void stateRetrievalConfigurationDeprecaced();
 
+   @LogMessage(level = TRACE)
+   @Message(value = "The cache mode %s is not supported with Total Order protocol. Changing to 2PC protocol", id = 185)
+   void cacheModeNotSupportedByTOProtocol(String cacheMode);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Remote transaction is null for %s. This can originate blocking problems!", id = 186)
+   void remoteTransactionIsNull(String globalTx);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Starting Total Order Manager component. Using multiple threads for validation ? %s. " +
+         "Thread Pool configuration: core=%s, maximum=%s, keepAliveTime=%s", id = 187)
+   void startTotalOrderManager(String multiThread, int coreThreads, int maxThread, long keepAliveTime);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Starting Total Order Manager component. Using multiple threads for validation ? %s.", id = 188)
+   void startTotalOrderManager(String multiThread);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
+         "Transaction is %s", id = 189)
+   void timeoutWaitingUntilTransactionPrepared(String globalTx);
 }

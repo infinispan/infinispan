@@ -27,6 +27,8 @@ import org.infinispan.config.GlobalConfiguration.TransportType;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -37,6 +39,7 @@ import java.util.Set;
  * 
  * 
  * @author Vladimir Blagojevic
+ * @author Pedro Ruivo
  * @since 4.0
  */
 @SuppressWarnings("boxing")
@@ -163,6 +166,30 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
             bean.useSynchronization = true;
          }
       }
-   }
 
+      if(!bean.transactionProtocol.isTotalOrder()) {
+         //no total order => no validation needed
+         return;
+      }
+
+      //in the future we can allow this in total order??
+      if(bean.transactionMode == TransactionMode.NON_TRANSACTIONAL) {
+         log.tracef("Non transactional cache is not supported in Total Order protocol. Total Order protocol will" +
+               " be ignored.");
+         return;
+      }
+
+
+      //for now, only supports full replication
+      if(!cfg.getCacheMode().isReplicated()) {
+         log.cacheModeNotSupportedByTOProtocol(cfg.getCacheModeString());
+         bean.transactionProtocol(TransactionProtocol.TWO_PHASE_COMMIT);
+         return;
+      }
+
+      //eager locking is no longer needed
+      if(bean.isUseEagerLocking()) {
+         log.tracef("Eager locking will be ignore with Total Order protocol");
+      }
+   }
 }

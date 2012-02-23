@@ -73,4 +73,14 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    public void clearThreadLocal() {
       ctxHolder.remove();
    }
+
+   /**
+    * set the context in the Thread Local. It is needed for the total order protocol because it uses a executor
+    * service to validate transactions
+    * @param ctx the invocation context
+    */
+   @Override
+   public void setContext(InvocationContext ctx) {
+      ctxHolder.set(ctx);
+   }
 }

@@ -44,11 +44,13 @@ public class KnownComponentNames {
    public static final String GLOBAL_MARSHALLER = "org.infinispan.marshaller.global";
    public static final String CACHE_MARSHALLER = "org.infinispan.marshaller.cache";
    public static final String CLASS_LOADER = "java.lang.ClassLoader";
+   public static final String TOTAL_ORDER_EXECUTOR = "org.infinispan.executors.totalOrder";
 
    // Please make sure this is kept up to date
    public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
       ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, EVICTION_SCHEDULED_EXECUTOR, ASYNC_REPLICATION_QUEUE_EXECUTOR,
-      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER
+      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER,
+      TOTAL_ORDER_EXECUTOR
    );
 
    private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(2);
@@ -57,11 +59,13 @@ public class KnownComponentNames {
    static {
       DEFAULT_THREADCOUNTS.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
       DEFAULT_THREADCOUNTS.put(ASYNC_TRANSPORT_EXECUTOR, 25);
+      DEFAULT_THREADCOUNTS.put(TOTAL_ORDER_EXECUTOR, 32);
 
       DEFAULT_THREADPRIO.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.MIN_PRIORITY);
       DEFAULT_THREADPRIO.put(ASYNC_TRANSPORT_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREADPRIO.put(EVICTION_SCHEDULED_EXECUTOR, Thread.MIN_PRIORITY);
       DEFAULT_THREADPRIO.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, Thread.NORM_PRIORITY);
+      DEFAULT_THREADPRIO.put(TOTAL_ORDER_EXECUTOR, Thread.NORM_PRIORITY);
    }
 
    public static int getDefaultThreads(String componentName) {

@@ -316,17 +316,24 @@ public class CommandsFactoryImpl implements CommandsFactory {
                DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
                transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
             }
+            //The configuration is needed to check for total order
+            pc.injectComponents(configuration);
             break;
          case CommitCommand.COMMAND_ID:
          case VersionedCommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
             commitCommand.init(interceptorChain, icc, txTable);
             commitCommand.markTransactionAsRemote(isRemote);
+            //The configuration is needed to check for total order
+            commitCommand.injectComponents(configuration);
+
             break;
          case RollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
             rollbackCommand.init(interceptorChain, icc, txTable);
             rollbackCommand.markTransactionAsRemote(isRemote);
+            //The configuration is needed to check for total order
+            rollbackCommand.injectComponents(configuration);
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;

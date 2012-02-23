@@ -36,6 +36,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -49,6 +50,7 @@ import java.util.Properties;
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 5.0
  */
 @Deprecated
@@ -280,6 +282,10 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * - pre 5.1 code is using the cache
        */
       Configuration.TransactionType use1PcForAutoCommitTransactions(boolean b);
+
+      TransactionConfig transactionProtocol(TransactionProtocol transactionProtocol);
+
+      TransactionConfig use1PCInTotalOrder(boolean b);
    }
 
    /**
@@ -1022,6 +1028,10 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
 
    public FluentConfiguration.RecoveryConfig recovery() {
       return transaction().recovery();
+   }
+
+   public FluentConfiguration.TransactionConfig transactionProtocol(TransactionProtocol transactionProtocol) {
+      return transaction().transactionProtocol(transactionProtocol);
    }
 
    @Override

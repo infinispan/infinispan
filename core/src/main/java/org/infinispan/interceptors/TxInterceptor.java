@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @see org.infinispan.transaction.xa.TransactionXaAdapter
  * @since 4.0
  */
@@ -118,7 +119,8 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isOriginLocal()) {
+      //In total order, we have remote transaction corresponding a local transaction
+      if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
          txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
       }
       return result;
@@ -127,7 +129,8 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      if (!ctx.isOriginLocal()) {
+      //In total order, we have remote transaction corresponding a local transaction
+      if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
       return invokeNextInterceptor(ctx, command);
