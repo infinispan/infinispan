@@ -28,14 +28,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -51,12 +44,7 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
+import org.rhq.helpers.pluginAnnotations.agent.*;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -118,7 +106,8 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isOriginLocal()) {
+      //Pedro -- in total order, we have remote transaction corresponding a local transaction
+      if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
          txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
       }
       return result;
@@ -127,7 +116,8 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      if (!ctx.isOriginLocal()) {
+      //Pedro -- in total order, we have remote transaction corresponding a local transaction
+      if (!ctx.isOriginLocal() || configuration.isTotalOrder()) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
       return invokeNextInterceptor(ctx, command);
@@ -148,7 +138,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, command);
    }
-   
+
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, command);

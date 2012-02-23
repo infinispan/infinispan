@@ -66,6 +66,10 @@ public class TransactionCoordinator {
 
    boolean trace;
 
+   //Pedro -- indicates if the versioning is enabled, ie, is repeatable read with write skew, optimistic locking
+   //and versioning
+   private boolean versioningEnabled;
+
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
                     TransactionTable txTable, Configuration configuration) {
@@ -89,8 +93,11 @@ public class TransactionCoordinator {
 
    @Start
    public void start() {
-      if (configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC
-            && configuration.isEnableVersioning()) {
+      versioningEnabled = configuration.isWriteSkewCheck() &&
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC &&
+            configuration.isEnableVersioning();
+
+      if (versioningEnabled) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
          commandCreator = new CommandCreator() {
             @Override
@@ -124,14 +131,18 @@ public class TransactionCoordinator {
 
    public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
-
-      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction)) {
+      //Pedro -- total order protocol with one phase commit
+      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction) ||
+            isOnePhaseTotalOrder(localTransaction)) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
 
       PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications());
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
+
+      //Pedro -- set the total order boolean is needed
+      prepareCommand.setTotalOrdered(configuration.isTotalOrder());
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
@@ -165,11 +176,28 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction)) {
+      //Pedro -- one phase total order commit
+      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction) ||
+            isOnePhaseTotalOrder(localTransaction)) {
          validateNotMarkedForRollback(localTransaction);
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+         PrepareCommand command;
+
+         //If the versioning scheme is enabled, then create a versioned prepare command. in 2PC this must not happen!
+         if (versioningEnabled) {
+            command = commandsFactory.buildVersionedPrepareCommand(localTransaction.getGlobalTransaction(),
+                  localTransaction.getModifications(), true);
+            if(!configuration.isTotalOrder()) {
+               throw new IllegalStateException("Cannot create versioned prepare command with one phase commit in 2PC");
+            }
+         } else {
+            command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),
+                  localTransaction.getModifications(), true);
+         }
+
+         //Pedro -- set total order
+         command.setTotalOrdered(configuration.isTotalOrder());
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
@@ -177,6 +205,7 @@ public class TransactionCoordinator {
          }
       } else {
          CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
+         commitCommand.setTotalOrdered(configuration.isTotalOrder());
          try {
             invoker.invoke(ctx, commitCommand);
             txTable.removeLocalTransaction(localTransaction);
@@ -222,6 +251,10 @@ public class TransactionCoordinator {
    private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
       if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
+
+      //Pedro
+      rollbackCommand.setTotalOrdered(configuration.isTotalOrder());
+
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
       invoker.invoke(ctx, rollbackCommand);
@@ -238,6 +271,15 @@ public class TransactionCoordinator {
 
    private boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
       return configuration.isUse1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
+   }
+
+   //Pedro -- one phase commit with total order protocol
+   //it can commit in one phase if the write skew is disable or the transaction doesn't need the write skew check
+   //ie, the intersection of readset and writeset is empty
+   //note: this method is invoked when configuration.isOnePhase() is false
+   private boolean isOnePhaseTotalOrder(LocalTransaction tx) {
+      return configuration.isTotalOrder() && (!versioningEnabled || tx.noWriteSkewCheckNeeded() ||
+            configuration.isTO1PC());
    }
 
    private static interface CommandCreator {

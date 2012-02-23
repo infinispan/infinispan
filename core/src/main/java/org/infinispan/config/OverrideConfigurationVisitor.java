@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * OverrideConfigurationVisitor breaks down fields of Configuration object to individual components
  * and then compares them for field updates.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
@@ -61,9 +61,11 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private RecoveryType recoveryType = null;
    private StoreAsBinary storeAsBinary = null;
    private DataContainerType dataContainerType;
+   //Pedro -- total order thread pool configuration
+   private TotalOrderThreadingType totalOrderThreadingType = null;
 
    public void override(OverrideConfigurationVisitor override) {
-      
+
       // special handling for BooleanAttributeType
       Set<Entry<String, BooleanAttributeType>> entrySet = override.bats.entrySet();
       for (Entry<String, BooleanAttributeType> entry : entrySet) {
@@ -72,10 +74,10 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
          BooleanAttributeType overrideAttributeType = override.bats.get(booleanAttributeName);
          overrideFields(attributeType, overrideAttributeType);
       }
-      
+
       //do we need to make clones of complex objects like list of cache loaders?
-      overrideFields(cacheLoaderManagerConfig, override.cacheLoaderManagerConfig);      
-      
+      overrideFields(cacheLoaderManagerConfig, override.cacheLoaderManagerConfig);
+
       //everything else...
       overrideFields(asyncType, override.asyncType);
       overrideFields(clusteringType, override.clusteringType);
@@ -95,6 +97,8 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(customInterceptorsType, override.customInterceptorsType);
       overrideFields(storeAsBinary, override.storeAsBinary);
       overrideFields(dataContainerType, override.dataContainerType);
+      //Pedro -- total order thread pool configuration
+      overrideFields(totalOrderThreadingType, override.totalOrderThreadingType);
    }
 
    private void overrideFields(AbstractConfigurationBean bean, AbstractConfigurationBean overrides) {
@@ -108,10 +112,10 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
                ReflectionUtil.setValue(bean, overridenField, ReflectionUtil.getValue(overrides,overridenField));
             } catch (Exception e1) {
                throw new CacheException("Could not apply value for field " + overridenField
-                        + " from instance " + overrides + " on instance " + this, e1);
+                     + " from instance " + overrides + " on instance " + this, e1);
             }
          }
-      } 
+      }
    }
 
    @Override
@@ -153,7 +157,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    public void visitExpirationType(ExpirationType bean) {
       expirationType = bean;
    }
-   
+
    @Override
    public void visitGroupConfig(GroupsConfiguration bean) {
       groupsConfiguration = bean;
@@ -212,6 +216,12 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    @Override
    public void visitDataContainerType(DataContainerType bean) {
       this.dataContainerType = bean;
+   }
+
+   //Pedro -- total order thread pool configuration
+   @Override
+   public void visitTotalOrderThreadingType(TotalOrderThreadingType config) {
+      this.totalOrderThreadingType = config;
    }
 
 }

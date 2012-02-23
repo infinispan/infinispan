@@ -26,6 +26,7 @@ import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.naming.Context;
 import java.io.Closeable;
@@ -65,7 +66,7 @@ public final class Util {
     * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
     * classloader.
     * </p>
-    * 
+    *
     * <p>
     * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
     * classloader.
@@ -74,7 +75,7 @@ public final class Util {
     * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
     * {@link CacheConfigurationException} and is re-thrown.
     * </p>
-    * 
+    *
     * @param classname name of the class to load
     * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
     *        Infinispan
@@ -88,20 +89,20 @@ public final class Util {
          throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
-   
+
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
       return new ClassLoader[] {
             appClassLoader,  // User defined classes
             Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
             ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
-            };
+      };
    }
 
    /**
     * <p>
     * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
     * </p>
-    * 
+    *
     * <p>
     * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
     * </p>
@@ -115,27 +116,27 @@ public final class Util {
    @SuppressWarnings("unchecked")
    public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
       ClassLoader[] cls = getClassLoaders(userClassLoader);
-         ClassNotFoundException e = null;
-         NoClassDefFoundError ne = null;
-         for (ClassLoader cl : cls)  {
-            if (cl == null)
-               continue;
+      ClassNotFoundException e = null;
+      NoClassDefFoundError ne = null;
+      for (ClassLoader cl : cls)  {
+         if (cl == null)
+            continue;
 
-            try {
-               return (Class<T>) Class.forName(classname, true, cl);
-            } catch (ClassNotFoundException ce) {
-               e = ce;
-            } catch (NoClassDefFoundError ce) {
-               ne = ce;
-            }
+         try {
+            return (Class<T>) Class.forName(classname, true, cl);
+         } catch (ClassNotFoundException ce) {
+            e = ce;
+         } catch (NoClassDefFoundError ce) {
+            ne = ce;
          }
+      }
 
-         if (e != null)
-            throw e;
-         else if (ne != null)
-            throw new ClassNotFoundException(classname, ne);
-         else
-            throw new IllegalStateException();
+      if (e != null)
+         throw e;
+      else if (ne != null)
+         throw new ClassNotFoundException(classname, ne);
+      else
+         throw new IllegalStateException();
    }
 
    private static Method getFactoryMethod(Class<?> c) {
@@ -221,28 +222,28 @@ public final class Util {
       Class<T> clazz = loadClassStrict(classname, cl);
       return getInstanceStrict(clazz);
    }
-   
+
    /**
     * Clones parameter x of type T with a given Marshaller reference;
-    * 
-    * 
-    * @return a deep clone of an object parameter x 
+    *
+    *
+    * @return a deep clone of an object parameter x
     */
    @SuppressWarnings("unchecked")
    public static <T> T cloneWithMarshaller(Marshaller marshaller, T x){
       if (marshaller == null)
          throw new IllegalArgumentException("Cannot use null Marshaller for clone");
-      
+
       byte[] byteBuffer;
       try {
          byteBuffer = marshaller.objectToByteBuffer(x);
          return (T) marshaller.objectFromByteBuffer(byteBuffer);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
-         throw new CacheException(e);      
+         throw new CacheException(e);
       } catch (Exception e) {
          throw new CacheException(e);
-      }     
+      }
    }
 
 
@@ -400,7 +401,7 @@ public final class Util {
          return null;
 
       char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
       char[] result = new char[(input.length < limit ? input.length : limit) * 2];
 
@@ -428,7 +429,7 @@ public final class Util {
       ThreadMXBean threadMx = ManagementFactory.getThreadMXBean();
       if (threadMx.isObjectMonitorUsageSupported() && threadMx.isSynchronizerUsageSupported()) {
          // Print lock info if, and only if, both object monitor usage and synchronizer usage are supported.
-          dumpThreadInfo(threadDump, true, threadMx);
+         dumpThreadInfo(threadDump, true, threadMx);
       } else {
          dumpThreadInfo(threadDump, false, threadMx);
       }
@@ -465,16 +466,16 @@ public final class Util {
       StackTraceElement[] stacktrace = threadInfo.getStackTrace();
       MonitorInfo[] monitors = threadInfo.getLockedMonitors();
       for (int i = 0; i < stacktrace.length; i++) {
-          StackTraceElement ste = stacktrace[i];
-          threadDump.append(INDENT + "at " + ste.toString());
-          threadDump.append("\n");
-          for (int j = 1; j < monitors.length; j++) {
-              MonitorInfo mi = monitors[j];
-              if (mi.getLockedStackDepth() == i) {
-                  threadDump.append(INDENT + "  - locked " + mi);
-                  threadDump.append("\n");
-              }
-          }
+         StackTraceElement ste = stacktrace[i];
+         threadDump.append(INDENT + "at " + ste.toString());
+         threadDump.append("\n");
+         for (int j = 1; j < monitors.length; j++) {
+            MonitorInfo mi = monitors[j];
+            if (mi.getLockedStackDepth() == i) {
+               threadDump.append(INDENT + "  - locked " + mi);
+               threadDump.append("\n");
+            }
+         }
       }
       threadDump.append("\n");
    }
@@ -492,28 +493,28 @@ public final class Util {
    private static void printThread(ThreadInfo threadInfo, StringBuilder threadDump) {
       StringBuilder sb = new StringBuilder(
             "\"" + threadInfo.getThreadName() + "\"" +
-            " nid=" + threadInfo.getThreadId() + " state=" +
-            threadInfo.getThreadState());
+                  " nid=" + threadInfo.getThreadId() + " state=" +
+                  threadInfo.getThreadState());
       if (threadInfo.getLockName() != null && threadInfo.getThreadState() != Thread.State.BLOCKED) {
-          String[] lockInfo = threadInfo.getLockName().split("@");
-          sb.append("\n" + INDENT +"- waiting on <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
-          sb.append("\n" + INDENT +"- locked <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+         String[] lockInfo = threadInfo.getLockName().split("@");
+         sb.append("\n" + INDENT +"- waiting on <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+         sb.append("\n" + INDENT +"- locked <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
       } else if (threadInfo.getLockName() != null && threadInfo.getThreadState() == Thread.State.BLOCKED) {
-          String[] lockInfo = threadInfo.getLockName().split("@");
-          sb.append("\n" + INDENT +"- waiting to lock <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+         String[] lockInfo = threadInfo.getLockName().split("@");
+         sb.append("\n" + INDENT +"- waiting to lock <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
       }
       if (threadInfo.isSuspended())
-          sb.append(" (suspended)");
+         sb.append(" (suspended)");
 
       if (threadInfo.isInNative())
-          sb.append(" (running in native)");
+         sb.append(" (running in native)");
 
       threadDump.append(sb.toString());
       threadDump.append("\n");
       if (threadInfo.getLockOwnerName() != null) {
-           threadDump.append(INDENT + " owned by " + threadInfo.getLockOwnerName() +
-                              " id=" + threadInfo.getLockOwnerId());
-           threadDump.append("\n");
+         threadDump.append(INDENT + " owned by " + threadInfo.getLockOwnerName() +
+               " id=" + threadInfo.getLockOwnerId());
+         threadDump.append("\n");
       }
    }
 
@@ -545,7 +546,7 @@ public final class Util {
       StringBuilder buf = new StringBuilder(buffer.length << 1);
       for (byte b : buffer)
          buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
-            .append(HEX_VALUES.charAt((b & 0x0F)));
+               .append(HEX_VALUES.charAt((b & 0x0F)));
 
       return buf.toString();
    }
@@ -566,6 +567,12 @@ public final class Util {
    public static int getNormalizedHash(Object key, Hash hashFct) {
       // more efficient impl
       return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+   }
+
+   //Pedro -- pretty print global transaction, ie, transaction ID
+   //most of the time I only need information about address and ID and don't the keys and so one
+   public static String prettyPrintGlobalTransaction(GlobalTransaction gtx) {
+      return gtx.getAddress() + ":" + gtx.getId();
    }
 
 }

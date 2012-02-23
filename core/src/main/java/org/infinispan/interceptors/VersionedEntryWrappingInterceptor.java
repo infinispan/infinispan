@@ -42,60 +42,61 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
-   private VersionGenerator versionGenerator;
-   private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
+    //Pedro -- changed to protected. it needs to be visible to Total Order version of this interceptor
+    protected VersionGenerator versionGenerator;
+    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
+    @Override
+    protected Log getLog() {
+        return log;
+    }
 
-   @Inject
-   public void initialize(VersionGenerator versionGenerator) {
-      this.versionGenerator = versionGenerator;
-   }
+    @Inject
+    public void initialize(VersionGenerator versionGenerator) {
+        this.versionGenerator = versionGenerator;
+    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
-         for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
-      }
-      EntryVersionsMap newVersionData= null;
-      if (ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+    @Override
+    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+        if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
+            for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
+        }
+        EntryVersionsMap newVersionData= null;
+        if (ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
-      Object retval = invokeNextInterceptor(ctx, command);
+        Object retval = invokeNextInterceptor(ctx, command);
 
-      if (!ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
-      if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
+        if (!ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+        if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
-      if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx);
-      return retval;
-   }
+        if (newVersionData != null) retval = newVersionData;
+        if (command.isOnePhaseCommit()) commitContextEntries(ctx);
+        return retval;
+    }
 
 
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      try {
-         if (ctx.isOriginLocal())
-            ((VersionedCommitCommand) command).setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+    @Override
+    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+        try {
+            if (ctx.isOriginLocal())
+                ((VersionedCommitCommand) command).setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
 
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         if (!ctx.isOriginLocal())
-            ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
-         commitContextEntries(ctx);
-      }
-   }
+            return invokeNextInterceptor(ctx, command);
+        } finally {
+            if (!ctx.isOriginLocal())
+                ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
+            commitContextEntries(ctx);
+        }
+    }
 
-   @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
-      if (ctx.isInTxScope()) {
-         EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         cll.commitEntry(entry, version, skipOwnershipCheck);
-      } else {
-         // This could be a state transfer call!
-         cll.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
-      }
-   }
+    @Override
+    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
+        if (ctx.isInTxScope()) {
+            EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+            cll.commitEntry(entry, version, skipOwnershipCheck);
+        } else {
+            // This could be a state transfer call!
+            cll.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
+        }
+    }
 }

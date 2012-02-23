@@ -127,4 +127,7 @@ public interface InvocationContextContainer {
     * Must be called as each thread exists the interceptor chain.
     */
    void clearThreadLocal();
+
+   //Pedro -- is it really needed? (see comment in implementation)
+   void setContext(InvocationContext ctx);
 }

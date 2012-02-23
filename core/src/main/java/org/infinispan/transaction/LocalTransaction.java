@@ -26,20 +26,17 @@ package org.infinispan.transaction;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.
@@ -60,6 +57,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private final Transaction transaction;
 
    private final boolean implicitTransaction;
+
+   //Pedro -- total order result -- has the result and behaves like a synchronization point
+   private final PrepareResult prepareResult = new PrepareResult();
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
       super(tx, viewId);
@@ -84,8 +84,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public Collection<Address> getRemoteLocksAcquired(){
-	   if (remoteLockedNodes == null) return Collections.emptySet();
-	   return remoteLockedNodes;
+      if (remoteLockedNodes == null) return Collections.emptySet();
+      return remoteLockedNodes;
    }
 
    public void clearRemoteLocksAcquired() {
@@ -157,5 +157,90 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public void setModifications(List<WriteCommand> modifications) {
       this.modifications = modifications;
+   }
+
+   /**
+    * //Pedro -- total order result
+    */
+   private class PrepareResult extends CountDownLatch {
+      //modifications are applied?
+      private volatile boolean modificationsApplied;
+      //is the result an exception?
+      private volatile boolean exception;
+      //the validation result
+      private volatile Object result;
+
+      public PrepareResult() {
+         super(1);
+      }
+   }
+
+   /**
+    * waits until the modification are applied
+    * @param timeout the time to wait in milliseconds
+    * @return the validation return value
+    * @throws Throwable throw the validation result if it is an exception
+    */
+   public Object awaitUntilModificationsApplied(long timeout) throws Throwable {
+
+      try {
+         prepareResult.await(timeout, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         //do nothing
+      }
+      if(!prepareResult.modificationsApplied) {
+         throw new TimeoutException("Unable to wait until modifications are applied");
+      }
+      if(prepareResult.exception) {
+         throw (Throwable) prepareResult.result;
+      }
+      return prepareResult.result;
+   }
+
+   /**
+    * waits until the modification are applied
+    * @return the validation return value
+    * @throws Throwable throw the validation result if it is an exception
+    */
+   public Object awaitUntilModificationsApplied() throws Throwable {
+
+      try {
+         prepareResult.await();
+      } catch (InterruptedException e) {
+         //do nothing
+      }
+      if(!prepareResult.modificationsApplied) {
+         throw new TimeoutException("Unable to wait until modifications are applied");
+      }
+      if(prepareResult.exception) {
+         throw (Throwable) prepareResult.result;
+      }
+      return prepareResult.result;
+   }
+
+
+   /**
+    * add the transaction result and notify
+    * @param object the validation result
+    * @param exception is it an exception?
+    */
+   public void addPrepareResult(Object object, boolean exception) {
+      prepareResult.modificationsApplied = true;
+      prepareResult.result = object;
+      prepareResult.exception = exception;
+      prepareResult.countDown();
+   }
+
+   /**
+    * check if this transaction needs to do the write skew check in one or more keys
+    * @return true if the write skew check is not needed, false otherwise
+    */
+   public boolean noWriteSkewCheckNeeded() {
+      for (CacheEntry e : lookedUpEntries.values()) {
+         if (e instanceof ClusteredRepeatableReadEntry && ((ClusteredRepeatableReadEntry) e).isMarkedForWriteSkew()) {
+            return false;
+         }
+      }
+      return true;
    }
 }

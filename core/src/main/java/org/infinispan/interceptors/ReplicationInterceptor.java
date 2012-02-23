@@ -26,12 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -60,8 +55,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
-   private StateTransferLock stateTransferLock;
-   CommandsFactory cf;
+   //Pedro -- changed to protected
+   protected StateTransferLock stateTransferLock;
+   protected CommandsFactory cf;
 
    private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
 

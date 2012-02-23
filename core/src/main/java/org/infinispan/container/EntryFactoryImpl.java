@@ -26,14 +26,7 @@ package org.infinispan.container;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.entries.NullMarkerEntry;
-import org.infinispan.container.entries.NullMarkerEntryForRemoval;
-import org.infinispan.container.entries.ReadCommittedEntry;
-import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.container.entries.*;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -53,7 +46,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final boolean trace = log.isTraceEnabled();
-   
+
    protected boolean useRepeatableRead;
    private DataContainer container;
    protected boolean localModeWriteSkewCheck;
@@ -84,7 +77,15 @@ public class EntryFactoryImpl implements EntryFactory {
             MVCCEntry mvccEntry = cacheEntry == null ?
                   createWrappedEntry(key, null, null, false, false, -1) :
                   createWrappedEntry(key, cacheEntry.getValue(), cacheEntry.getVersion(), false, false, cacheEntry.getLifespan());
-            if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
+
+            if (mvccEntry != null) {
+               ctx.putLookedUpEntry(key, mvccEntry);
+            }
+
+            //Pedro -- mark the entry as read. if it is written in the future (for the first time), it will set the write skew boolean
+            if(mvccEntry instanceof ClusteredRepeatableReadEntry) {
+               ((ClusteredRepeatableReadEntry) mvccEntry).markAsRead();
+            }
             return mvccEntry;
          } else if (cacheEntry != null) { // if not in transaction and repeatable read, or simply read committed (regardless of whether in TX or not), do not wrap
             ctx.putLookedUpEntry(key, cacheEntry);
@@ -145,20 +146,20 @@ public class EntryFactoryImpl implements EntryFactory {
       } else {
          InternalCacheEntry ice = (icEntry == null ? getFromContainer(key) : icEntry);
          mvccEntry = ice != null ?
-             wrapInternalCacheEntryForPut(ctx, key, ice) :
-             newMvccEntryForPut(ctx, key);
+               wrapInternalCacheEntryForPut(ctx, key, ice) :
+               newMvccEntryForPut(ctx, key);
       }
       mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
       return mvccEntry;
    }
-   
+
    @Override
    public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, deltaKey);
       DeltaAwareCacheEntry deltaAwareEntry = null;
-      if (cacheEntry != null) {        
+      if (cacheEntry != null) {
          deltaAwareEntry = wrapEntryForDelta(ctx, deltaKey, cacheEntry);
-      } else {                     
+      } else {
          InternalCacheEntry ice = getFromContainer(deltaKey);
          if (ice != null){
             deltaAwareEntry = newDeltaAwareCacheEntry(ctx, deltaKey, (DeltaAware)ice.getValue());
@@ -168,12 +169,12 @@ public class EntryFactoryImpl implements EntryFactory {
          deltaAwareEntry.appendDelta(delta);
       return deltaAwareEntry;
    }
-   
+
    private DeltaAwareCacheEntry wrapEntryForDelta(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
       if (cacheEntry instanceof DeltaAwareCacheEntry) return (DeltaAwareCacheEntry) cacheEntry;
       return wrapInternalCacheEntryForDelta(ctx, key, cacheEntry);
    }
-   
+
    private DeltaAwareCacheEntry wrapInternalCacheEntryForDelta(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
       DeltaAwareCacheEntry e;
       if(cacheEntry instanceof MVCCEntry){
@@ -250,13 +251,13 @@ public class EntryFactoryImpl implements EntryFactory {
 
       return useRepeatableRead ? new RepeatableReadEntry(key, value, version, lifespan) : new ReadCommittedEntry(key, value, version, lifespan);
    }
-   
+
    private DeltaAwareCacheEntry newDeltaAwareCacheEntry(InvocationContext ctx, Object key, DeltaAware deltaAware){
       DeltaAwareCacheEntry deltaEntry = createWrappedDeltaEntry(key, deltaAware, null);
       ctx.putLookedUpEntry(key, deltaEntry);
       return deltaEntry;
    }
-   
+
    private  DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry) {
       return new DeltaAwareCacheEntry(key,deltaAware, entry);
    }

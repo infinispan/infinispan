@@ -27,6 +27,7 @@ import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -121,8 +122,15 @@ public class RpcManagerImpl implements RpcManager {
       if (!configuration.getCacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
+      //Pedro -- in total order protocol, we should invoke remotely even if we are the only members in the cache
+      //the sequencer will order the local transactions.
+      boolean forceInvokeRemotely = false;
+      if (rpcCommand instanceof PrepareCommand) {
+         forceInvokeRemotely = ((PrepareCommand) rpcCommand).isTotalOrdered();
+      }
+
       List<Address> clusterMembers = t.getMembers();
-      if (clusterMembers.size() < 2) {
+      if (!forceInvokeRemotely && clusterMembers.size() < 2) {
          log.tracef("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
@@ -134,8 +142,8 @@ public class RpcManagerImpl implements RpcManager {
             // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
             if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
                List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
-               // the filter won't work if there is no other member in the cache, so we have to 
-               if (cacheMembers.size() < 2) {
+               // the filter won't work if there is no other member in the cache, so we have to
+               if (!forceInvokeRemotely && cacheMembers.size() < 2) {
                   log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
                   return Collections.emptyMap();
                }
@@ -287,7 +295,7 @@ public class RpcManagerImpl implements RpcManager {
          }
       }
    }
-   
+
    // -------------------------------------------- JMX information -----------------------------------------------
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
