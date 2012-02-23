@@ -250,4 +250,10 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
 
    public void defaultVisit(AbstractConfigurationBean c) {
    }
+
+   //Pedro -- total order thread pool configuration configuration
+   @Override
+   public void visitTotalOrderThreadingType(Configuration.TotalOrderThreadingType config) {
+      defaultVisit(config);
+   }
 }

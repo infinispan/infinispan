@@ -37,6 +37,10 @@ import org.infinispan.transaction.RemoteTransaction;
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 13;
 
+   //Pedro -- check if the rollback command should be send over the cluster
+   //if the transaction was not prepared, so don't send the command (locks doesn't exists in total order)
+   private transient boolean shouldInvokedRemotely = true;
+
    private RollbackCommand() {
       super(null); // For command id uniqueness test
    }
@@ -67,4 +71,25 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public String toString() {
       return "RollbackCommand {" + super.toString();
    }
+
+   //Pedro -- added new type of performing
+   //In total order, the rollback command can be received before the prepare command
+   @Override
+   public Object perform(InvocationContext ctx) throws Throwable {
+      if (totalOrdered) {
+         return super.performIgnoringUnexistingTransaction(ctx);
+      } else {
+         return super.perform(ctx);
+      }
+   }
+
+   //Pedro -- setter and getter
+   public boolean shouldInvokedRemotely() {
+      return shouldInvokedRemotely;
+   }
+
+   public void setShouldInvokedRemotely(boolean shouldInvokedRemotely) {
+      this.shouldInvokedRemotely = shouldInvokedRemotely;
+   }
+
 }

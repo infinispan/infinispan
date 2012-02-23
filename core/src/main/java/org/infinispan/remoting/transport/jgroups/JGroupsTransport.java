@@ -49,6 +49,7 @@ import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.SEQUENCER;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
@@ -151,7 +152,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller, ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
-            CacheManagerNotifier notifier) {
+                          CacheManagerNotifier notifier) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
@@ -259,7 +260,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
       // invalidations targeted at remote instances will be received by self.
-      channel.setDiscardOwnMessages(true);
+      //Pedro -- total order needs to deliver own messages
+      boolean needsTotalOrder = configuration.needsTotalOrderProtocol();
+      channel.setDiscardOwnMessages(!needsTotalOrder);
+
+      if(needsTotalOrder && !hasTotalOrderProtocol()) {
+         //Pedro --  in total order, the Sequencer must be in the protocol stack
+         throw new CacheException("Total Order protocol needs the sequencer enabled in JGroups");
+      }
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
       // JGroups
@@ -423,7 +431,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
-            boolean supportReplay) throws Exception {
+                                                boolean supportReplay) throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
@@ -448,7 +456,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       boolean broadcast = recipients == null || recipients.size() == members.size();
       RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressList(recipients), rpcCommand, toJGroupsMode(mode), timeout, recipients != null, usePriorityQueue,
-               toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
+            toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
 
       if (mode.isAsynchronous())
          return Collections.emptyMap();// async case
@@ -462,7 +470,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       boolean noValidResponses = true;
       for (Rsp<Object> rsp : rsps.values()) {
          noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),
-                  responseFilter != null, ignoreLeavers);
+               responseFilter != null, ignoreLeavers);
       }
 
       if (noValidResponses)
@@ -622,5 +630,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    public Channel getChannel() {
       return channel;
+   }
+
+   /**
+    * Pedro: check if the total order protocol exists in jgroups protocol stack
+    * @return true if a total order protocol exists, false otherwise
+    */
+   private boolean hasTotalOrderProtocol() {
+      return channel.getProtocolStack().findProtocol(SEQUENCER.class) != null;
    }
 }

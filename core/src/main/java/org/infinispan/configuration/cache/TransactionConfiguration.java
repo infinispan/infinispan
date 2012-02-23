@@ -20,14 +20,15 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class TransactionConfiguration {
 
@@ -44,12 +45,19 @@ public class TransactionConfiguration {
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
    private final boolean use1PcForAutoCommitTransactions;
+   //Pedro -- total order stuff
+   //2PC or Total order protocol
+   private final TransactionProtocol transactionProtocol;
+   //thread pool configuration for total order
+   private final TotalOrderThreadingConfiguration totalOrderThreading;
 
+   //Pedro -- added total order parameters
    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
-         boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
-         TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
-         boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
-         RecoveryConfiguration recovery) {
+                            boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
+                            TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
+                            boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
+                            RecoveryConfiguration recovery, TransactionProtocol transactionProtocol,
+                            TotalOrderThreadingConfiguration totalOrderThreading) {
       this.autoCommit = autoCommit;
       this.cacheStopTimeout = cacheStopTimeout;
       this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -63,6 +71,9 @@ public class TransactionConfiguration {
       this.useSynchronization = useSynchronization;
       this.recovery = recovery;
       this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
+      //Pedro -- total order stuff
+      this.transactionProtocol = transactionProtocol;
+      this.totalOrderThreading = totalOrderThreading;
    }
 
    /**
@@ -116,7 +127,7 @@ public class TransactionConfiguration {
    /**
     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
     * transactional then the locking mode is ignored.
-    * 
+    *
     * @see TransactionConfiguration#transactionMode()
     */
    public LockingMode lockingMode() {
@@ -144,7 +155,7 @@ public class TransactionConfiguration {
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions.
-    * 
+    *
     * @return
     */
    public boolean syncRollbackPhase() {
@@ -256,4 +267,14 @@ public class TransactionConfiguration {
             '}';
    }
 
+
+   //Pedro -- total order stuff
+   public TransactionProtocol transactionProtocol() {
+      return transactionProtocol;
+   }
+
+   //Pedro -- total order stuff
+   public TotalOrderThreadingConfiguration totalOrderThreading() {
+      return totalOrderThreading;
+   }
 }

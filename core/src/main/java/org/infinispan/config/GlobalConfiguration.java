@@ -129,7 +129,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @XmlTransient
    GlobalComponentRegistry gcr;
-   
+
    @XmlTransient
    private final ClassLoader cl;
 
@@ -137,17 +137,17 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * Create a new GlobalConfiguration, using the Thread Context ClassLoader to load any
     * classes or resources required by this configuration. The TCCL will also be used as
     * default classloader for the CacheManager and any caches created.
-    * 
+    *
     */
    public GlobalConfiguration() {
       this(Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Create a new GlobalConfiguration, specifying the classloader to use. This classloader will
     * be used to load resources or classes required by configuration, and used as the default
     * classloader for the CacheManager and any caches created.
-    * 
+    *
     * @param cl
     */
    public GlobalConfiguration(ClassLoader cl) {
@@ -867,10 +867,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportProperties((Properties) null);
       return gc;
    }
-   
+
    /**
     * Get the classloader in use by this configuration.
-    * 
+    *
     * @return
     */
    public ClassLoader getClassLoader() {
@@ -885,10 +885,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       private static final long serialVersionUID = 7625606997888180254L;
 
       @ConfigurationDocs({
-              @ConfigurationDoc(name = "maxThreads",
-                      desc = "Maximum number of threads for this executor. Default values can be found <a href=&quot;https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes&quot;>here</a>"),
-              @ConfigurationDoc(name = "threadNamePrefix",
-                      desc = "Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes&quot;>here</a>")})
+            @ConfigurationDoc(name = "maxThreads",
+                  desc = "Maximum number of threads for this executor. Default values can be found <a href=&quot;https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes&quot;>here</a>"),
+            @ConfigurationDoc(name = "threadNamePrefix",
+                  desc = "Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes&quot;>here</a>")})
       protected TypedProperties properties = new TypedProperties();
 
       public void accept(ConfigurationBeanVisitor v) {
@@ -939,10 +939,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDocs({
-           @ConfigurationDoc(name = "asyncListenerExecutor",
-                   desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
-           @ConfigurationDoc(name = "asyncTransportExecutor",
-                   desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().")})
+         @ConfigurationDoc(name = "asyncListenerExecutor",
+               desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
+         @ConfigurationDoc(name = "asyncTransportExecutor",
+               desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().")})
    @Deprecated public static class ExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ExecutorFactory> {
 
       private static final long serialVersionUID = 6895901500645539386L;
@@ -1010,10 +1010,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDocs({
-           @ConfigurationDoc(name = "evictionScheduledExecutor",
-                   desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
-           @ConfigurationDoc(name = "replicationQueueScheduledExecutor",
-                   desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.")})
+         @ConfigurationDoc(name = "evictionScheduledExecutor",
+               desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
+         @ConfigurationDoc(name = "replicationQueueScheduledExecutor",
+               desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.")})
    @Deprecated public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ScheduledExecutorFactory> {
 
       private static final long serialVersionUID = 7806391452092647488L;
@@ -1105,7 +1105,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected Boolean strictPeerToPeer = false;
 
       @ConfigurationDoc(name="distributedSyncTimeout",
-                        desc="Hijacked to use as timeout for view installation tasks")
+            desc="Hijacked to use as timeout for view installation tasks")
       protected Long distributedSyncTimeout = 60000L; // default
 
       @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setTransportClass")
@@ -1116,6 +1116,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @XmlElement(name = "properties")
       protected TypedProperties properties = new TypedProperties();
+
+      //Pedro -- total order stuff
+      //Indicates if the total order protocol is enabled.
+      //When JChannel is constructed, it checks this booleans. If true, it tries to find the SEQUENCER in
+      // Protocol Stack
+      private boolean needTotalOrderProtocol = false;
 
       public TransportType() {
          super();
@@ -1754,6 +1760,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          super.setGlobalConfiguration(globalConfig);
          return this;
       }
+   }
+
+   //Pedro -- getter
+   public boolean needsTotalOrderProtocol() {
+      return transport.needTotalOrderProtocol;
+   }
+
+   //Pedro -- setter
+   public void checkIfTotalOrderProtocolIsNeeded(boolean totalOrderProtocolEnabled) {
+      transport.needTotalOrderProtocol = transport.needTotalOrderProtocol || totalOrderProtocolEnabled;
    }
 }
 

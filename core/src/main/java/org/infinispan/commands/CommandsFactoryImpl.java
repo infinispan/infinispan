@@ -321,11 +321,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
             CommitCommand commitCommand = (CommitCommand) c;
             commitCommand.init(interceptorChain, icc, txTable);
             commitCommand.markTransactionAsRemote(isRemote);
+            //Pedro -- mark as total order if needed
+            commitCommand.setTotalOrdered(configuration.isTotalOrder());
             break;
          case RollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
             rollbackCommand.init(interceptorChain, icc, txTable);
             rollbackCommand.markTransactionAsRemote(isRemote);
+            //Pedro -- mark as total order if needed
+            rollbackCommand.setTotalOrdered(configuration.isTotalOrder());
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;
@@ -414,7 +418,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                         int viewId, Collection<InternalCacheEntry> state) {
+                                                                int viewId, Collection<InternalCacheEntry> state) {
       return new StateTransferControlCommand(cacheName, type, sender, viewId, state);
    }
 

@@ -23,10 +23,13 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.GuardedBy;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -43,24 +46,15 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
-import org.jgroups.util.Buffer;
-import org.jgroups.util.FutureListener;
-import org.jgroups.util.NotifyingFuture;
-import org.jgroups.util.Rsp;
-import org.jgroups.util.RspList;
+import org.jgroups.util.*;
 
 import java.io.NotSerializableException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.Util.*;
@@ -182,12 +176,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       private final RspFilter filter;
       private final boolean supportReplay;
       private final boolean broadcast;
+      //Pedro -- total order
+      //indicates if the command must be sent with total order properties or not
+      private final boolean totalOrder;
 
       private ReplicationTask(ReplicableCommand command, boolean oob, List<Address> dests,
                               ResponseMode mode, long timeout,
                               boolean anycasting, RspFilter filter, boolean supportReplay, boolean broadcast) {
          this.command = command;
-         this.oob = oob;
          this.dests = dests;
          this.mode = mode;
          this.timeout = timeout;
@@ -195,11 +191,28 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          this.filter = filter;
          this.supportReplay = supportReplay;
          this.broadcast = broadcast;
+
+         //Pedro -- only the prepare commands can be sent in total order
+         this.totalOrder = (command instanceof PrepareCommand) && ((PrepareCommand) command).isTotalOrdered();
+
+         if (command instanceof CommitCommand || command instanceof RollbackCommand) {
+            this.oob = ((AbstractTransactionBoundaryCommand)command).isTotalOrdered();
+         } else {
+            this.oob = oob;
+         }
       }
 
       private Message constructMessage(Buffer buf, Address recipient) {
          Message msg = new Message();
          msg.setBuffer(buf);
+         //Pedro -- in total order protocol, the sequencer is in the protocol stack so we need to bypass the protocol
+         if(!totalOrder) {
+            msg.setFlag(Message.NO_TOTAL_ORDER);
+         } else {
+            //disable flow control -- send immediately to avoid long commit phases
+            msg.setFlag(Message.Flag.NO_FC);
+         }
+
          if (oob) msg.setFlag(Message.OOB);
          if (oob || mode != ResponseMode.GET_NONE) {
             msg.setFlag(Message.DONT_BUNDLE);
@@ -233,6 +246,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             opts.setTimeout(timeout);
             opts.setRspFilter(filter);
             opts.setAnycasting(false);
+
+            //Pedro -- only the commands in total order must be received...
+            //For correctness, ispn doesn't need their own message, so add own address to exclusion list
+            if(!totalOrder) {
+               opts.setExclusionList(channel.getAddress());
+            }
+
             buf = marshallCall();
             retval = castMessage(dests, constructMessage(buf, null), opts);
          } else {
@@ -270,7 +290,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                      retval.addRsp(entry.getKey(), entry.getValue().get(timeout, MILLISECONDS));
                   } catch (java.util.concurrent.TimeoutException te) {
                      throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
-                                                             prettyPrintTime(timeout), entry.getKey()));
+                           prettyPrintTime(timeout), entry.getKey()));
                   }
                }
 
@@ -290,7 +310,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // the serialization problem could be on the remote end and this is why we cannot catch this above, when marshalling.
             if (retval == null)
                throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for "
-                                                        + command.getClass().getSimpleName() + " not being serializable.");
+                     + command.getClass().getSimpleName() + " not being serializable.");
 
             if (supportReplay) {
                boolean replay = false;

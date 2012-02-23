@@ -24,15 +24,20 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static org.infinispan.commands.write.AbstractDataWriteCommand.*;
+
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -45,6 +50,9 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    CacheNotifier notifier;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+
+   //Pedro -- set of keys that needs write skew check
+   private Set<Object> keysMarkedForWriteSkew = new HashSet<Object>();
 
    public PutMapCommand() {
    }
@@ -72,9 +80,15 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry me = lookupMvccEntry(ctx, key);
+
+         if(me instanceof ClusteredRepeatableReadEntry) {
+            checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) me, ctx.isOriginLocal(), keysMarkedForWriteSkew);
+         }
+
          notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
          me.setValue(e.getValue());
          me.setLifespan(lifespanMillis);
@@ -99,12 +113,12 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{serializeKeys(map, keysMarkedForWriteSkew), lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
-      map = (Map) parameters[0];
+      map = deserializeKeys((Map<Object, Object>) parameters[0], keysMarkedForWriteSkew);
       lifespanMillis = (Long) parameters[1];
       maxIdleTimeMillis = (Long) parameters[2];
       if (parameters.length>3) {
@@ -137,13 +151,13 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    @Override
    public String toString() {
       return new StringBuilder()
-         .append("PutMapCommand{map=")
-         .append(map)
-         .append(", flags=").append(flags)
-         .append(", lifespanMillis=").append(lifespanMillis)
-         .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
-         .append("}")
-         .toString();
+            .append("PutMapCommand{map=")
+            .append(map)
+            .append(", flags=").append(flags)
+            .append(", lifespanMillis=").append(lifespanMillis)
+            .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+            .append("}")
+            .toString();
    }
 
    @Override
@@ -183,5 +197,4 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
-
 }

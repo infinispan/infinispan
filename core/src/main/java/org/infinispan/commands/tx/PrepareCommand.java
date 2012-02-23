@@ -63,7 +63,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    protected CacheNotifier notifier;
    protected RecoveryManager recoveryManager;
    private transient boolean replayEntryWrapping  = false;
-   
+
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
@@ -109,12 +109,12 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
          remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
       } else {
          /*
-          * remote tx was already created by Cache#lock() API call
-          * set the proper modifications since lock has none
-          * 
-          * @see LockControlCommand.java 
-          * https://jira.jboss.org/jira/browse/ISPN-48
-          */
+         * remote tx was already created by Cache#lock() API call
+         * set the proper modifications since lock has none
+         *
+         * @see LockControlCommand.java
+         * https://jira.jboss.org/jira/browse/ISPN-48
+         */
          remoteTransaction.setModifications(getModifications());
       }
 
@@ -155,11 +155,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
       int i = 0;
-      final int params = 3;
+      final int params = 4;
       Object[] retval = new Object[numMods + params];
       retval[i++] = globalTx;
       retval[i++] = onePhaseCommit;
       retval[i++] = numMods;
+      //Pedro -- send the boolean
+      retval[i] = totalOrdered;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
       return retval;
    }
@@ -171,6 +173,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       globalTx = (GlobalTransaction) args[i++];
       onePhaseCommit = (Boolean) args[i++];
       int numMods = (Integer) args[i++];
+      //Pedro -- receive the boolean
+      totalOrdered = (Boolean) args[i++];
       if (numMods > 0) {
          modifications = new WriteCommand[numMods];
          System.arraycopy(args, i, modifications, 0, numMods);
@@ -190,6 +194,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       return "PrepareCommand {" +
             "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
+            ", totalOrder=" + totalOrdered +
             ", " + super.toString();
    }
 
@@ -238,5 +243,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
+   }
+
+   //Pedro -- set the prepare command as one phase commit when the commit or rollback commands
+   //         are received before the prepare command
+   public void setOnePhaseCommit(boolean onePhaseCommit) {
+      this.onePhaseCommit = onePhaseCommit;
    }
 }

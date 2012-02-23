@@ -23,6 +23,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -62,13 +63,18 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
-        	 	//ISPN-514
-            if (e.isNull() || e.getValue() == null) return returnValue(null, false);    
+            //ISPN-514
+            if (e.isNull() || e.getValue() == null) return returnValue(null, false);
 
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);
                e.setLifespan(lifespanMillis);
                e.setMaxIdle(maxIdleTimeMillis);
+
+               if(e instanceof ClusteredRepeatableReadEntry) {
+                  checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, true);
+               }
+
                return returnValue(old, true);
             }
             return returnValue(null, false);
@@ -77,6 +83,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
+
+            if(e instanceof ClusteredRepeatableReadEntry) {
+               checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, false);
+            }
+
             return returnValue(old, true);
          }
       }
@@ -98,13 +109,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
+      //Pedro -- send the boolean
+      return new Object[]{serializeKey(), oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
-      key = parameters[0];
+      deserializeKey(parameters[0]);
       oldValue = parameters[1];
       newValue = parameters[2];
       lifespanMillis = (Long) parameters[3];

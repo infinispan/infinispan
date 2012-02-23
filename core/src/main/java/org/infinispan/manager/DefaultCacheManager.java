@@ -133,7 +133,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
    private final DelegatingConfigurationVisitor configurationValidator = new DelegatingConfigurationVisitor(new ConfigurationBeanVisitor[] {
-            new ConfigurationValidatingVisitor(), new TimeoutConfigurationValidatingVisitor() });
+         new ConfigurationValidatingVisitor(), new TimeoutConfigurationValidatingVisitor() });
    protected final GlobalConfiguration globalConfiguration;
    protected final Configuration defaultConfiguration;
    private final ConcurrentMap<String, CacheWrapper> caches = new ConcurrentHashMap<String, CacheWrapper>();
@@ -171,7 +171,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
    }
-   
+
    /**
     * Constructs and starts a new instance of the CacheManager, using the default configuration passed in.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
     * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
@@ -195,7 +195,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
       this(null, defaultConfiguration, start);
    }
-   
+
    /**
     * Constructs a new instance of the CacheManager, using the default configuration passed in.  See
     * {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
@@ -218,7 +218,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(GlobalConfiguration globalConfiguration) {
       this(globalConfiguration, null, true);
    }
-   
+
    /**
     * Constructs and starts a new instance of the CacheManager, using the global configuration passed in, and system
     * defaults for the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -242,7 +242,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, boolean start) {
       this(globalConfiguration, null, start);
    }
-   
+
    /**
     * Constructs a new instance of the CacheManager, using the global configuration passed in, and system defaults for
     * the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -267,7 +267,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
       this(globalConfiguration, defaultConfiguration, true);
    }
-   
+
    /**
     * Constructs and starts a new instance of the CacheManager, using the global and default configurations passed in.
     * If either of these are null, system defaults are used.
@@ -292,15 +292,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
                               boolean start) {
       this.globalConfiguration = globalConfiguration == null ? new GlobalConfiguration() : globalConfiguration
-              .clone();
+            .clone();
       this.globalConfiguration.accept(configurationValidator);
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
+
+      //Pedro -- set total order protocol
+      //it needs to pass this information to Global Configuration because the JChannel only has access to
+      //this configuration and needs to check if SEQUENCER is in Protocol Stack
+      this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
+
       this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
       this.cacheCreateLock = new ReentrantLock();
       if (start)
          start();
    }
-   
+
    /**
     * Constructs a new instance of the CacheManager, using the global and default configurations passed in. If either of
     * these are null, system defaults are used.
@@ -366,17 +372,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       try {
          ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
-         
+
          globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
          globalConfiguration.accept(configurationValidator);
          defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
-         
+
+         //Pedro -- set total order protocol (see the first comment)
+         this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
+
          for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
             Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
             configurationOverrides.put(entry.getKey(), legacy);
+            //Pedro -- set total order protocol (see the first comment)
+            this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(legacy.isTotalOrder());
          }
-         
+
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
@@ -387,7 +398,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       if (start)
          start();
    }
-   
+
    /**
     * Constructs a new instance of the CacheManager, using the holder passed in to read configuration settings.
     *
@@ -400,13 +411,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
          globalConfiguration.accept(configurationValidator);
          defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
-         
+         //Pedro -- set total order protocol (see the first comment)
+         this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
+
          for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
             Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
             configurationOverrides.put(entry.getKey(), legacy);
+            //Pedro -- set total order protocol (see the first comment)
+            this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(legacy.isTotalOrder());
          }
-         
+
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
@@ -434,43 +449,49 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public DefaultCacheManager(String globalConfigurationFile, String defaultConfigurationFile, String namedCacheFile,
                               boolean start) throws IOException {
       Parser parser = new Parser(Thread.currentThread().getContextClassLoader());
-      
+
       ConfigurationBuilderHolder globalConfigurationBuilderHolder = parser.parseFile(globalConfigurationFile);
       ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parser.parseFile(defaultConfigurationFile);
-      
+
       globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
       defaultConfiguration = LegacyConfigurationAdaptor.adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
-      
+
+      //Pedro -- set total order protocol (see the first comment)
+      this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(this.defaultConfiguration.isTotalOrder());
+
       if (namedCacheFile != null) {
          ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parseFile(namedCacheFile);
          Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-         defineConfiguration(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
+
+         //Pedro -- set total order protocol (see the first comment)
+         boolean totalOrder = defineConfiguration(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build())).isTotalOrder();
+         this.globalConfiguration.checkIfTotalOrderProtocolIsNeeded(totalOrder);
       }
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
       cacheCreateLock = new ReentrantLock();
 
-   if (start)
-      start();
+      if (start)
+         start();
    }
 
 
    @Override
    public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
-         org.infinispan.configuration.cache.Configuration configuration) {
+                                                                               org.infinispan.configuration.cache.Configuration configuration) {
       defineConfiguration(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
       return configuration;
    }
-   
+
    /**
     * {@inheritDoc}
     */
    public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
       return defineConfiguration(cacheName, configurationOverride, defaultConfiguration, true);
    }
-   
-   
-   
+
+
+
 
    /**
     * {@inheritDoc}
@@ -762,7 +783,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private void unregisterCacheMBean(Cache<?, ?> cache) {
       if (cache.getConfiguration().isExposeJmxStatistics()) {
          cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class)
-                 .unregisterCacheMBean();
+               .unregisterCacheMBean();
       }
    }
 
@@ -788,7 +809,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
-   
+
    public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
       return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
    }
@@ -796,11 +817,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public Configuration getDefaultConfiguration() {
       return defaultConfiguration;
    }
-   
+
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
       return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
    }
-   
+
    @Override
    public org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name) {
       Configuration c = configurationOverrides.get(name);

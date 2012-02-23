@@ -295,4 +295,12 @@ public class DelegatingConfigurationVisitor implements ConfigurationBeanVisitor 
          delegate.visitVersioningConfigurationBean(config);
       }
    }
+
+   //Pedro -- total order thread pool
+   @Override
+   public void visitTotalOrderThreadingType(TotalOrderThreadingType config) {
+      for (ConfigurationBeanVisitor delegate : delegates) {
+         delegate.visitTotalOrderThreadingType(config);
+      }
+   }
 }

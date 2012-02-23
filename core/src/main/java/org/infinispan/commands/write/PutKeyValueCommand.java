@@ -25,6 +25,7 @@ package org.infinispan.commands.write;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -86,6 +87,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       } else {
          notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
 
+         if(e instanceof ClusteredRepeatableReadEntry) {
+            checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
+         }
+
          if (value instanceof Delta) {
             // magic
             Delta dv = (Delta) value;
@@ -115,13 +120,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
+      //Pedro -- send the boolean
+      return new Object[]{serializeKey(), value, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
+      deserializeKey(parameters[0]);
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];

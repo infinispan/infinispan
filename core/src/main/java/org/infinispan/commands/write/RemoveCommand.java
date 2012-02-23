@@ -24,6 +24,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -77,6 +78,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {
+
+            if(e instanceof ClusteredRepeatableReadEntry) {
+               checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
+            }
+
             return null;
          } else {
             successful = false;
@@ -89,6 +95,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
          successful = false;
          return false;
+      }
+
+
+      if(e instanceof ClusteredRepeatableReadEntry) {
+         checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) e, ctx.isOriginLocal());
       }
 
       final Object removedValue = e.getValue();
@@ -150,12 +161,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    @Override
    public String toString() {
       return new StringBuilder()
-         .append("RemoveCommand{key=")
-         .append(key)
-         .append(", value=").append(value)
-         .append(", flags=").append(flags)
-         .append("}")
-         .toString();
+            .append("RemoveCommand{key=")
+            .append(key)
+            .append(", value=").append(value)
+            .append(", flags=").append(flags)
+            .append("}")
+            .toString();
    }
 
    public boolean isSuccessful() {
@@ -174,13 +185,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
+      deserializeKey(parameters[0]);
       flags = (Set<Flag>) parameters[1];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, flags};
+      return new Object[]{serializeKey(), flags};
    }
 
    @Override

@@ -141,8 +141,8 @@ public class Version {
 
    public static short encodeVersion(int major, int minor, int patch) {
       return (short) ((major << MAJOR_SHIFT)
-                            + (minor << MINOR_SHIFT)
-                            + patch);
+            + (minor << MINOR_SHIFT)
+            + patch);
    }
 
    public static String decodeVersion(short version) {

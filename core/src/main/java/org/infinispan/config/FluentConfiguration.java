@@ -36,6 +36,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -286,6 +287,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * - pre 5.1 code is using the cache
        */
       Configuration.TransactionType use1PcForAutoCommitTransactions(boolean b);
+
+      //Pedro -- total order stuff
+      //setter
+      TransactionConfig transactionProtocol(TransactionProtocol transactionProtocol);
+
+      //Pedro -- total order stuff
+      //getter
+      TotalOrderThreadingConfig totalOrderThreading();
    }
 
    /**
@@ -300,6 +309,15 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * a cache named {@link Configuration.RecoveryType#DEFAULT_RECOVERY_INFO_CACHE}
        */
       RecoveryConfig recoveryInfoCacheName(String cacheName);
+   }
+
+   //Pedro -- total order thread pool configuration
+   @Deprecated public static interface TotalOrderThreadingConfig extends TransactionConfig {
+      TotalOrderThreadingConfig corePoolSize(int corePoolSize);
+      TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize);
+      TotalOrderThreadingConfig keepAliveTime(long keepAliveTime);
+      TotalOrderThreadingConfig queueSize(int queueSize);
+      TotalOrderThreadingConfig onePhaseCommit(boolean onePhaseCommit);
    }
 
    /**
@@ -349,7 +367,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Controls the eviction settings for the cache.
     */
-@Deprecated public interface EvictionConfig extends FluentTypes {
+   @Deprecated public interface EvictionConfig extends FluentTypes {
       /**
        * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
        * eviction).
@@ -381,8 +399,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    @Deprecated public static interface ExpirationConfig extends FluentTypes {
       /**
        * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
-       * milliseconds. -1 means the entries never expire. 
-       * 
+       * milliseconds. -1 means the entries never expire.
+       *
        * Note that this can be overridden on a per-entry basis by using the Cache API.
        *
        * @param lifespan
@@ -392,8 +410,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       /**
        * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the
        * idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never
-       * expire. 
-       * 
+       * expire.
+       *
        * Note that this can be overridden on a per-entry basis by using the Cache API.
        *
        * @param maxIdle
@@ -473,7 +491,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * sent over the wire, it does not wait for an acknowledgment before returning. AsyncConfig is
     * mutually exclusive with the SyncConfig
     */
-@Deprecated public interface AsyncConfig extends ClusteringConfig {
+   @Deprecated public interface AsyncConfig extends ClusteringConfig {
       /**
        * If true, this forces all async communications to be queued up and sent out periodically as
        * a batch.
@@ -522,7 +540,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * sent over the wire, it blocks until it receives an acknowledgment from the recipient.
     * SyncConfig is mutually exclusive with the AsyncConfig.
     */
-@Deprecated public interface SyncConfig extends ClusteringConfig {
+   @Deprecated public interface SyncConfig extends ClusteringConfig {
       /**
        * This is the timeout used to wait for an acknowledgment when making a remote call, after
        * which the call is aborted and an exception is thrown.
@@ -536,7 +554,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Configures how state is retrieved when a new cache joins the cluster.
     * Used with invalidation and replication clustered modes.
     */
-@Deprecated public interface StateRetrievalConfig extends ClusteringConfig {
+   @Deprecated public interface StateRetrievalConfig extends ClusteringConfig {
       /**
        * If true, this will cause the cache to ask neighboring caches for state when it starts up,
        * so the cache starts 'warm', although it will impact startup time.
@@ -608,7 +626,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Configures the L1 cache behavior in 'distributed' caches instances.
     * In any other cache modes, this element is ignored.
     */
-@Deprecated public interface L1Config extends ClusteringConfig {
+   @Deprecated public interface L1Config extends ClusteringConfig {
       /**
        * Maximum lifespan of an entry placed in the L1 cache.
        *
@@ -625,23 +643,23 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       L1Config onRehash(Boolean onRehash);
 
       L1Config disable();
-      
+
       /**
        * <p>
        * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
        * </p>
-       * 
+       *
        * <p>
        * By default multicast will be used.
        * </p>
-       * 
+       *
        * <p>
-       * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+       * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast
        * will be always be used.
        * </p>
-       * 
+       *
        * @param threshold the threshold over which to use a multicast
-       * 
+       *
        */
       L1Config invalidationThreshold(Integer threshold);
    }
@@ -649,7 +667,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Allows fine-tuning of rehashing characteristics. Only used with 'distributed' cache mode, and otherwise ignored.
     */
-@Deprecated public interface HashConfig extends FluentTypes {
+   @Deprecated public interface HashConfig extends FluentTypes {
       /**
        * Fully qualified name of class providing consistent hash algorithm
        *
@@ -689,50 +707,50 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param rehashEnabled
        */
       HashConfig rehashEnabled(Boolean rehashEnabled);
-      
+
       /**
        * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes
        * at ...
-       * 
+       *
        * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
        * must be used if you wish to take advnatage of virtual nodes.
-       * 
+       *
        * A default of 1 is used.
-       * 
+       *
        * @param numVirtualNodes the number of virtual nodes. Must be >0.
        * @throws IllegalArgumentException if numVirtualNodes <0
-       * 
+       *
        */
       HashConfig numVirtualNodes(Integer numVirtualNodes);
-      
+
       GroupsConfig groups();
 
       @Override // Override definition so that Scala classes can see it.
       Configuration build();
    }
-   
-@Deprecated public interface GroupsConfig extends FluentTypes {
+
+   @Deprecated public interface GroupsConfig extends FluentTypes {
       /**
        * Enable grouping support, such that {@link Group} annotations are honoured and any configured
        * groupers will be invoked
-       * 
+       *
        * @param enabled
        * @return
        */
       GroupsConfig enabled(Boolean enabled);
-      
+
       Boolean isEnabled();
-      
+
       /**
        * Set the groupers currently in use
        */
       GroupsConfig groupers(List<Grouper<?>> groupers);
-      
+
       /**
        * Get's the current groupers in use
        */
       List<Grouper<?>> getGroupers();
-      
+
       @Override // Override definition so that Scala classes can see it.
       Configuration build();
    }
@@ -740,7 +758,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Configures indexing of entries in the cache for searching.
     */
-@Deprecated public interface IndexingConfig extends FluentTypes {
+   @Deprecated public interface IndexingConfig extends FluentTypes {
       /**
        * If true, only index changes made locally, ignoring remote changes. This is useful if
        * indexes are shared across a cluster to prevent redundant indexing of updates.
@@ -756,7 +774,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return <code>this</code>, for method chaining
        */
       IndexingConfig disable();
-      
+
       /**
        * <p>The Query engine relies on properties for configuration.</p>
        * <p>These properties are passed directly to the embedded Hibernate Search engine, so
@@ -767,7 +785,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return <code>this</code>, for method chaining
        */
       IndexingConfig withProperties(Properties properties);
-      
+
       /**
        * <p>Defines a single property. Can be used multiple times to define all needed properties,
        * but the full set is overridden by {@link #withProperties(Properties)}.</p>
@@ -1028,6 +1046,16 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
 
    public FluentConfiguration.RecoveryConfig recovery() {
       return transaction().recovery();
+   }
+
+   //Pedro -- total order
+   public FluentConfiguration.TotalOrderThreadingConfig totalOrderThreading() {
+      return transaction().totalOrderThreading();
+   }
+
+   //Pedro -- total order stuff
+   public FluentConfiguration.TransactionConfig transactionProtocol(TransactionProtocol transactionProtocol) {
+      return transaction().transactionProtocol(transactionProtocol);
    }
 
    @Override

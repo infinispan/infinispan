@@ -28,10 +28,11 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,6 +55,11 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected TransactionTable txTable;
    protected Configuration configuration;
    private Address origin;
+
+   //Pedro -- meaning:
+   // PrepareCommand: this command must be sent in total order...
+   // Commit/RollbackCommand: this command must be sent in OOB to obtain faster commit
+   protected boolean totalOrdered = false;
 
    public AbstractTransactionBoundaryCommand(String cacheName) {
       this.cacheName = cacheName;
@@ -113,6 +119,32 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       return invoker.invoke(ctxt, this);
    }
 
+   /**
+    * Pedro -- total order protocol. The commit or the rollback command can be received before the prepare message
+    * we let the commands be invoked in the interceptor chain. They will be block in TotalOrderInterceptor while the
+    * prepare command doesn't arrives
+    * @param ctx the same as {@link #perform(org.infinispan.context.InvocationContext)}
+    * @return the same as {@link #perform(org.infinispan.context.InvocationContext)}
+    * @throws Throwable the same as {@link #perform(org.infinispan.context.InvocationContext)}
+    */
+   protected Object performIgnoringUnexistingTransaction(InvocationContext ctx) throws Throwable {
+      if (ctx != null) throw new IllegalStateException("Expected null context!");
+      markGtxAsRemote();
+      RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
+      if (transaction != null) {
+         visitRemoteTransaction(transaction);
+      } else {
+         log.warnf("Will execute tx command %s without the remote transaction [%s]", this,
+               Util.prettyPrintGlobalTransaction(globalTx));
+      }
+
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(
+            transaction, getOrigin());
+
+      if (trace) log.tracef("About to execute tx command %s", this);
+      return invoker.invoke(ctxt, this);
+   }
+
    protected void visitRemoteTransaction(RemoteTransaction tx) {
       // to be overridden
    }
@@ -156,17 +188,26 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    private void markGtxAsRemote() {
       globalTx.setRemote(true);
    }
-   
+
    public Address getOrigin() {
-	   return origin;
+      return origin;
    }
-   
+
    public void setOrigin(Address origin) {
-	   this.origin = origin;
+      this.origin = origin;
    }
 
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   //Pedro -- setter and getter
+   public boolean isTotalOrdered() {
+      return totalOrdered;
+   }
+
+   public void setTotalOrdered(boolean totalOrdered) {
+      this.totalOrdered = totalOrdered;
    }
 }

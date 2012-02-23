@@ -74,4 +74,16 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public String toString() {
       return "CommitCommand {" + super.toString();
    }
+
+   //Pedro -- added new type of performing
+   //In total order, the commit command can be received before the prepare command
+   @Override
+   public Object perform(InvocationContext ctx) throws Throwable {
+      if (totalOrdered) {
+         return super.performIgnoringUnexistingTransaction(ctx);
+      } else {
+         return super.perform(ctx);
+      }
+   }
+
 }

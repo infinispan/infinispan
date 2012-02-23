@@ -32,6 +32,11 @@ import org.infinispan.container.versioning.InequalVersionComparisonResult;
 public class ClusteredRepeatableReadEntry extends RepeatableReadEntry {
    private EntryVersion version;
 
+   //Pedro -- total order: identifies this entry as read
+   private boolean read;
+   //Pedro -- total order: mark this entries to do the write skew check in commit time (if write skew is enabled)
+   private boolean writeSkewInCommitTime;
+
    public ClusteredRepeatableReadEntry(Object key, Object value, EntryVersion version, long lifespan) {
       super(key, value, version, lifespan);
       this.version = version;
@@ -55,5 +60,38 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry {
    @Override
    public void setVersion(EntryVersion version) {
       this.version = version;
+   }
+
+   //Pedro -- total order stuff..
+
+   @Override
+   public void copyForUpdate(DataContainer container, boolean localModeWriteSkewCheck) {
+      if(!isChanged()) {
+         //Pedro -- this entry needs the write skew check if, in write time, it was previously read
+         writeSkewInCommitTime = read;
+      }
+      super.copyForUpdate(container, localModeWriteSkewCheck);    //To change body of overridden methods use File | Settings | File Templates.
+   }
+
+   /**
+    * mark this entry as read
+    */
+   public void markAsRead() {
+      read = true;
+   }
+
+   /**
+    * check is this entry is marked for write skew in commit time
+    * @return true if the write skew must be performed, false otherwise
+    */
+   public boolean isMarkedForWriteSkew() {
+      return writeSkewInCommitTime;
+   }
+
+   /**
+    * mark this entry for write skew in commit time
+    */
+   public void markForWriteSkewCheck() {
+      writeSkewInCommitTime = true;
    }
 }

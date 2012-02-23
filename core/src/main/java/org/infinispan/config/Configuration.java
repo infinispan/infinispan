@@ -44,6 +44,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
@@ -109,7 +110,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @XmlTransient
    FluentConfiguration fluentConfig = new FluentConfiguration(this);
-   
+
    @XmlTransient
    private ClassLoader cl;
 
@@ -217,8 +218,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-     * Returns the name of the cache associated with this configuration.
-   */
+    * Returns the name of the cache associated with this configuration.
+    */
    public final String getName() {
       return name;
    }
@@ -230,11 +231,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       else if (cl == null && globalConfiguration != null)
          // The classloader is not set for this configuration, and we have a global config
          return globalConfiguration.getClassLoader();
-      else 
-         // Return the default CL 
+      else
+         // Return the default CL
          return Thread.currentThread().getContextClassLoader();
    }
-   
+
    public void setClassLoader(ClassLoader cl) {
       this.cl = cl;
    }
@@ -1007,21 +1008,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1OnRehash(boolean l1OnRehash) {
       this.clustering.l1.setOnRehash(l1OnRehash);
    }
-   
+
    /**
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
     * </p>
-    * 
+    *
     * <p>
     * By default multicast will be used.
     * </p>
-    * 
+    *
     * <p>
-    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast
     * will be always be used.
     * </p>
-    * 
+    *
     * @param threshold the threshold over which to use a multicast
     * @deprecated Use {@link FluentConfiguration.L1Config#invalidationThreshold(Integer)} instead
     */
@@ -1029,9 +1030,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1InvalidationThreshold(int threshold) {
       this.clustering.l1.setInvalidationThreshold(threshold);
    }
-   
+
    public int getL1InvalidationThreshold() {
-   	return this.clustering.l1.invalidationThreshold;
+      return this.clustering.l1.invalidationThreshold;
    }
 
    /**
@@ -1167,7 +1168,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isIndexLocalOnly() {
       return indexing.isIndexLocalOnly();
    }
-   
+
    public TypedProperties getIndexingProperties() {
       return indexing.properties;
    }
@@ -1411,7 +1412,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
       return clustering.hash.consistentHashClass;
    }
-   
+
    public boolean hasConsistentHashClass() {
       return clustering.hash.consistentHashClass != null;
    }
@@ -1434,19 +1435,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public int getNumOwners() {
       return clustering.hash.numOwners;
    }
-   
+
    public int getNumVirtualNodes() {
       return clustering.hash.numVirtualNodes;
    }
-   
+
    public boolean isGroupsEnabled() {
       clustering.hash.groups.setConfiguration(this);
       return clustering.hash.groups.enabled;
    }
-   
+
    public List<Grouper<?>> getGroupers() {
       clustering.hash.groups.setConfiguration(this);
-      return clustering.hash.groups.groupers; 
+      return clustering.hash.groups.groupers;
    }
 
    public boolean isRehashEnabled() {
@@ -1478,6 +1479,47 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    public boolean isUseSynchronizationForTransactions() {
       return transaction.isUseSynchronization();
+   }
+
+   /**
+    * Pedro -- total order stuff
+    * check if the Total Order Protocol based is enabled or not
+    * @return true if total order protocol is enabled, false otherwise
+    */
+   public boolean isTotalOrder() {
+      return transaction.transactionProtocol.isTotalOrder();
+   }
+
+   /**
+    * Pedro:
+    * @return the core size of the thread pool
+    */
+   public int getTOCorePoolSize() {
+      return transaction.totalOrderThreading.corePoolSize;
+   }
+
+   /**
+    * Pedro
+    * @return get the maximum number of threads in the thread pool
+    */
+   public int getTOMaximumPoolSize() {
+      return transaction.totalOrderThreading.maximumPoolSize;
+   }
+
+   /**
+    * Pedro
+    * @return get the maximum time of an idle before it was terminated
+    */
+   public long getTOKeepAliveTime() {
+      return transaction.totalOrderThreading.keepAliveTime;
+   }
+
+   /**
+    * Pedro
+    * @return get the queue size
+    */
+   public int getTOQueueSize() {
+      return transaction.totalOrderThreading.queueSize;
    }
 
    // ------------------------------------------------------------------------------------------------------------
@@ -1694,12 +1736,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public void assertValid() throws ConfigurationException {
       if (clustering.mode.isClustered() && (globalConfiguration != null
-              && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0)))
+            && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0)))
          throw new ConfigurationException("Cache cannot use a clustered mode (" + clustering.mode + ") mode and not define a transport!");
    }
 
    public boolean isOnePhaseCommit() {
       return !getCacheMode().isSynchronous() || getTransactionLockingMode() == LockingMode.PESSIMISTIC;
+   }
+
+   //Pedro: added one phase commit check for total order
+   public boolean isTO1PC() {
+      return transaction.totalOrderThreading.onePhaseCommit;
    }
 
    /**
@@ -1722,8 +1769,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public boolean isExpirationReaperEnabled() {
-       return expiration.reaperEnabled;
-    }
+      return expiration.reaperEnabled;
+   }
+
+   //Pedro -- total order stuff
+   //Getter
+   public TransactionProtocol getTransactionProtocol() {
+      return transaction.transactionProtocol;
+   }
 
    public boolean isHashActivated() {
       return clustering.hash.activated;
@@ -1791,6 +1844,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isUse1PcForAutoCommitTransactions")
       private Boolean use1PcForAutoCommitTransactions = Boolean.FALSE;
 
+      //Pedro -- total order stuff
+      //Changes between 2PC and Total Order protocol
+      @XmlAttribute
+      protected TransactionProtocol transactionProtocol = TransactionProtocol.NORMAL;
+
+      //the thread pool configuration
+      @XmlElement
+      protected TotalOrderThreadingType totalOrderThreading = new TotalOrderThreadingType();
+
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
@@ -1798,6 +1860,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void accept(ConfigurationBeanVisitor v) {
          v.visitTransactionType(this);
          recovery.accept(v);
+         //Pedro -- validate the total order parameters
+         totalOrderThreading().accept(v);
       }
 
       public TransactionType() {
@@ -1893,6 +1957,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("use1PcForAutoCommitTransactions");
          this.use1PcForAutoCommitTransactions = b;
          return this;
+      }
+
+      //Pedro -- total order stuff
+      //setter
+      @Override
+      public TransactionType transactionProtocol(TransactionProtocol transactionProtocol) {
+         setTransactionProtocol(transactionProtocol);
+         return this;
+      }
+
+      //Pedro -- total order stuff
+      //setter
+      public void setTransactionProtocol(TransactionProtocol transactionProtocol) {
+         testImmutability("transactionProtocol");
+         this.transactionProtocol = transactionProtocol;
       }
 
       @XmlAttribute
@@ -2079,6 +2158,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lockingMode != null ? !lockingMode.equals(that.lockingMode) : that.lockingMode != null)
             return false;
 
+         //Pedro -- total order stuff
+         //change in equals method
+         if (transactionProtocol != null ? !transactionProtocol.equals(that.transactionProtocol) :
+               that.transactionProtocol != null) {
+            return false;
+         }
+
          return true;
       }
 
@@ -2106,6 +2192,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (recovery != null)
             dolly.recovery = (RecoveryType) recovery.clone();
          return dolly;
+      }
+
+      //Pedro -- total order
+      //Thread pool configuration
+      @Override
+      public TotalOrderThreadingType totalOrderThreading() {
+         totalOrderThreading.setConfiguration(config);
+         return totalOrderThreading;
       }
    }
 
@@ -2286,14 +2380,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Recovery makes sure data in both transactional resource and Infinispan end up in a consistent state. 
-    * Fore more details see 
+    * Recovery makes sure data in both transactional resource and Infinispan end up in a consistent state.
+    * Fore more details see
     * <a href="https://docs.jboss.org/author/display/ISPN/Transaction+recovery">Infinispan Transaction Recovery</a>.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "recovery", parentName = "transaction")
    @Deprecated public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
-      
+
       /** The serialVersionUID */
       private static final long serialVersionUID = 7727835976746044904L;
 
@@ -3506,10 +3600,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashEnabled")
       protected Boolean rehashEnabled = true;
-      
+
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
       protected Integer numVirtualNodes = 1;
-      
+
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "groups")
       protected GroupsConfiguration groups = new GroupsConfiguration();
       @XmlTransient
@@ -3572,17 +3666,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public Integer getNumOwners() {
          return numOwners;
       }
-      
+
       @XmlAttribute
       public Integer getNumVirtualNodes() {
          return numVirtualNodes;
       }
-      
+
       public HashConfig numVirtualNodes(Integer numVirtualNodes) {
          setNumVirtualNodes(numVirtualNodes);
          return this;
       }
-      
+
       /**
        * @deprecated The visibility of this will be reduced, use {@link #numVirtualNodes(Integer)}
        */
@@ -3675,20 +3769,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setRehashEnabled(rehashEnabled);
          return this;
       }
-      
+
       public GroupsConfiguration groups() {
          groups.setConfiguration(config);
          activate();
          return groups;
       }
-      
+
       @XmlElement
       public void setGroups(GroupsConfiguration groups) {
          testImmutability("groups");
          this.groups = groups;
       }
-      
-      
+
+
       public GroupsConfiguration getGroups() {
          return groups();
       }
@@ -3727,7 +3821,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (rehashEnabled ? 0 : 1);
          return result;
       }
-      
+
       @Override
       public HashType clone() throws CloneNotSupportedException {
          HashType dolly = (HashType) super.clone();
@@ -3766,7 +3860,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1OnRehash")
       protected Boolean onRehash = true;
-      
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1InvalidationThreshold")
       protected Integer invalidationThreshold = 0;
       @XmlTransient
@@ -3841,23 +3935,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setOnRehash(onRehash);
          return this;
       }
-      
+
       @Override
       public L1Config invalidationThreshold(Integer threshold) {
          setInvalidationThreshold(threshold);
          return this;
       }
-      
-     
+
+
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
          activate();
          this.invalidationThreshold = threshold;
       }
-      
+
       @XmlAttribute
       public Integer getInvalidationThreshold() {
-	      return invalidationThreshold;
+         return invalidationThreshold;
       }
 
       @Override
@@ -3876,7 +3970,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
          if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
          if (invalidationThreshold != null ? !invalidationThreshold.equals(l1Type.invalidationThreshold) : l1Type.invalidationThreshold != null) return false;
-         
+
          return true;
       }
 
@@ -4349,8 +4443,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Allows you to tune various unsafe or non-standard characteristics. Certain operations such as Cache.put() that are
     * supposed to return the previous value associated with the specified key according to the java.util.Map contract
-    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at 
-    * <a href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a> 
+    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at
+    * <a href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a>
     *
     * @see <a href="../../../config.html#ce_default_unsafe">Configuration reference</a>
     */
@@ -4431,7 +4525,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlElement(name = "interceptor")
       private List<CustomInterceptorConfig> customInterceptors = new LinkedList<CustomInterceptorConfig>();
-      
+
       public CustomInterceptorsType() {
          testImmutability("customInterceptors");
       }
@@ -4603,10 +4697,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setIndexLocalOnly(indexLocalOnly);
          return this;
       }
-      
+
       @XmlElement(name = "properties")
       protected TypedProperties properties = new TypedProperties();
-      
+
       @Override
       public IndexingConfig withProperties(Properties properties) {
          testImmutability("properties");
@@ -4649,7 +4743,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (indexLocalOnly != null ? !indexLocalOnly.equals(that.indexLocalOnly) : that.indexLocalOnly != null)
             return false;
-         
+
          if (!properties.equals(that.properties))
             return false;
 
@@ -4681,7 +4775,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             throw new RuntimeException("Should not happen!", shouldNotHappen);
          }
       }
-      
+
       public String toString(){
          return "Indexing[enabled="+enabled+",localOnly="+indexLocalOnly+"]";
       }
@@ -4775,6 +4869,112 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             default:
                return this;
          }
+      }
+   }
+
+   /**
+    * Total Order Thread Pool configuration parameters
+    */
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name = "totalOrderThreading", parentName = "transaction")
+   @Deprecated public static class TotalOrderThreadingType extends AbstractFluentConfigurationBean implements
+         TotalOrderThreadingConfig {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 7724325977464324904L;
+
+      @XmlAttribute (required = false)
+      protected int corePoolSize = 1;
+
+      @XmlAttribute (required = false)
+      protected int maximumPoolSize = 8;
+
+      @XmlAttribute (required = false)
+      protected long keepAliveTime = 1000; //milliseconds
+
+      @XmlAttribute (required = false)
+      protected int queueSize = 100;
+
+      @XmlAttribute (required = false)
+      protected boolean onePhaseCommit = false;
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitTotalOrderThreadingType(this);
+      }
+
+      @Override
+      public TotalOrderThreadingConfig corePoolSize(int corePoolSize) {
+         setCorePoolSize(corePoolSize);
+         return this;
+      }
+
+      @Override
+      public TotalOrderThreadingConfig maximumPoolSize(int maxPoolSize) {
+         setMaximumPoolSize(maxPoolSize);
+         return this;
+      }
+
+      @Override
+      public TotalOrderThreadingConfig keepAliveTime(long keepAliveTime) {
+         setKeepAliveTime(keepAliveTime);
+         return this;
+      }
+
+      @Override
+      public TotalOrderThreadingConfig queueSize(int queueSize) {
+         setQueueSize(queueSize);
+         return this;
+      }
+
+      @Override
+      public TotalOrderThreadingConfig onePhaseCommit(boolean onePhaseCommit) {
+         setOnePhaseCommit(onePhaseCommit);
+         return this;
+      }
+
+      @Override
+      public TransactionConfig lockingMode(LockingMode lockingMode) {
+         return transaction().lockingMode(lockingMode);
+      }
+
+      @Override
+      public TransactionConfig transactionMode(TransactionMode transactionMode) {
+         return transaction().transactionMode(transactionMode);
+      }
+
+      @Override
+      public TransactionConfig autoCommit(boolean enabled) {
+         return transaction().autoCommit(enabled);
+      }
+
+      @Override
+      public TransactionType use1PcForAutoCommitTransactions(boolean b) {
+         return transaction().use1PcForAutoCommitTransactions(b);
+      }
+
+      public void setCorePoolSize(int corePoolSize) {
+         testImmutability("corePoolSize");
+         this.corePoolSize = corePoolSize;
+      }
+
+      public void setMaximumPoolSize(int maximumPoolSize) {
+         testImmutability("maximumPoolSize");
+         this.maximumPoolSize = maximumPoolSize;
+      }
+
+      public void setKeepAliveTime(long keepAliveTime) {
+         testImmutability("keepAliveTime");
+         this.keepAliveTime = keepAliveTime;
+      }
+
+      public void setQueueSize(int queueSize) {
+         testImmutability("queueSize");
+         this.queueSize = queueSize;
+      }
+
+      public void setOnePhaseCommit(boolean onePhaseCommit) {
+         testImmutability("onePhaseCommit");
+         this.onePhaseCommit = onePhaseCommit;
       }
    }
 }

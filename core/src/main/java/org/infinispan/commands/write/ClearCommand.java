@@ -25,23 +25,31 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+
+import static org.infinispan.commands.write.AbstractDataWriteCommand.checkIfWriteSkewNeeded;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
-   
+
    public static final byte COMMAND_ID = 5;
    CacheNotifier notifier;
+
+   //Pedro -- set of keys that needs write skew check
+   private Set<Object> keysMarkedForWriteSkew = new HashSet<Object>();
 
    public ClearCommand() {
    }
@@ -60,10 +68,24 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (CacheEntry e : ctx.getLookedUpEntries().values()) {
+      Collection<CacheEntry> cacheEntrySet = ctx.getLookedUpEntries().values();
+
+      //Pedro -- initialize the key set
+      if(ctx.isOriginLocal()) {
+         keysMarkedForWriteSkew = new HashSet<Object>(cacheEntrySet.size());
+      }
+
+      for (CacheEntry e : cacheEntrySet) {
          if (e instanceof MVCCEntry) {
             MVCCEntry me = (MVCCEntry) e;
+
             Object k = me.getKey(), v = me.getValue();
+
+            if(me instanceof ClusteredRepeatableReadEntry) {
+               checkIfWriteSkewNeeded((ClusteredRepeatableReadEntry) me, ctx.isOriginLocal(),
+                     keysMarkedForWriteSkew);
+            }
+
             notifier.notifyCacheEntryRemoved(k, v, true, ctx);
             me.setRemoved(true);
             me.setValid(false);
@@ -74,7 +96,9 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    public Object[] getParameters() {
-      return new Object[]{flags};
+      //Pedro -- send the key set, if it is not empty or null. otherwise send null
+      return new Object[]{(keysMarkedForWriteSkew != null && keysMarkedForWriteSkew.isEmpty() ?
+            null : keysMarkedForWriteSkew), flags};
    }
 
    public byte getCommandId() {
@@ -83,8 +107,17 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
-      if (parameters.length > 0) {
-         this.flags = (Set<Flag>) parameters[0];
+
+      //Pedro -- receive the key set
+      keysMarkedForWriteSkew = (Set<Object>) parameters[0];
+
+      //Pedro -- it sends a null value if the set is empty
+      if(keysMarkedForWriteSkew == null) {
+         keysMarkedForWriteSkew = Collections.emptySet();
+      }
+
+      if (parameters.length > 1) {
+         this.flags = (Set<Flag>) parameters[1];
       }
    }
 
@@ -95,10 +128,10 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    @Override
    public String toString() {
       return new StringBuilder()
-         .append("ClearCommand{flags=")
-         .append(flags)
-         .append("}")
-         .toString();
+            .append("ClearCommand{flags=")
+            .append(flags)
+            .append("}")
+            .toString();
    }
 
    public boolean isSuccessful() {

@@ -73,4 +73,11 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    public void clearThreadLocal() {
       ctxHolder.remove();
    }
+
+   //Pedro -- is it really needed? is it safe?
+   //I need to set the context because each transaction is processed in a thread pool
+   @Override
+   public void setContext(InvocationContext ctx) {
+      ctxHolder.set(ctx);
+   }
 }

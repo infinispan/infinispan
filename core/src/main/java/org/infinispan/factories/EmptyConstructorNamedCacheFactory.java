@@ -42,6 +42,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.totalorder.TotalOrderValidator;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
@@ -53,10 +54,12 @@ import static org.infinispan.util.Util.getInstance;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+//Pedro: added total order validator class to this factory
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
-                              BatchContainer.class, EvictionManager.class,
-                              TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})
+      CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
+      BatchContainer.class, EvictionManager.class,
+      TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class,
+      TotalOrderValidator.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -65,7 +68,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       Class componentImpl;
       if (componentType.equals(ClusteringDependentLogic.class)) {
          if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
-            return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+            if (configuration.isTotalOrder()) {
+               return componentType.cast(new ClusteringDependentLogic.TotalOrderAllNodesLogic());
+            } else {
+               return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+            }
          } else {
             return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
          }
@@ -91,6 +98,9 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return (T) new StateTransferLockImpl();
       } else if (componentType.equals(EvictionManager.class)) {
          return (T) new EvictionManagerImpl();
+         //Pedro -- added the constructor for the total order validator
+      } else if (componentType.equals(TotalOrderValidator.class)) {
+         return (T) new TotalOrderValidator();
       }
 
 
