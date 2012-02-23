@@ -50,6 +50,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.SysPropertyActions;
 import org.infinispan.util.Util;
 
 /**
@@ -451,6 +452,9 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    @Override
    public void start() {
+      // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
+      SysPropertyActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
+
       forceReturnValueDefault = config.getForceReturnValues();
       codec = CodecFactory.getCodec(config.getProtocolVersion());
 
