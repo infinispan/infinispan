@@ -19,6 +19,11 @@ for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\demos\gui\lib\*.ja
         )
 set my_classpath=%my_classpath:~1%
 
-java -cp "%my_classpath%" -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.demo.InfinispanDemo
+:test
+set /a "TESTPORT=%RANDOM%+2000"
+netstat -an | findstr ":%TESTPORT% "
+if %ERRORLEVEL%==0 goto test
+
+java -cp "%my_classpath%" -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=%TESTPORT% -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.demo.InfinispanDemo
 
 
