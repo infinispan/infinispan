@@ -156,7 +156,7 @@ public class StringPropertyReplacer {
                   if (props != null)
                      value = props.getProperty(key);
                   else
-                     value = System.getProperty(key);
+                     value = SysPropertyActions.getProperty(key);
 
                   if (value == null) {
                      // Check for a default value ${key:default}
@@ -166,7 +166,7 @@ public class StringPropertyReplacer {
                         if (props != null)
                            value = props.getProperty(realKey);
                         else
-                           value = System.getProperty(realKey);
+                           value = SysPropertyActions.getProperty(realKey);
 
                         if (value == null) {
                            // Check for a composite key, "key1,key2"
@@ -234,7 +234,7 @@ public class StringPropertyReplacer {
             if (props != null)
                value = props.getProperty(key1);
             else
-               value = System.getProperty(key1);
+               value = SysPropertyActions.getProperty(key1);
          }
          // Check the second part, if there is one and first lookup failed
          if (value == null && comma < key.length() - 1) {
@@ -242,7 +242,7 @@ public class StringPropertyReplacer {
             if (props != null)
                value = props.getProperty(key2);
             else
-               value = System.getProperty(key2);
+               value = SysPropertyActions.getProperty(key2);
          }
       }
       // Return whatever we've found or null
