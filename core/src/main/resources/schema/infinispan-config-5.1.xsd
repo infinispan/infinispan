@@ -465,6 +465,13 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="class" type="xs:int">
+                  <xs:annotation>
+                    <xs:documentation>
+                      The cache loader to configure and use
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
           </xs:sequence>
