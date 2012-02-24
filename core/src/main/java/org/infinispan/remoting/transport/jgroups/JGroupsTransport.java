@@ -292,6 +292,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
+      dispatcher.start();
    }
 
    // This is per CM, so the CL in use should be the CM CL

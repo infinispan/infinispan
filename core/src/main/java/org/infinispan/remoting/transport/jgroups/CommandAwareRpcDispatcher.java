@@ -22,6 +22,25 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.util.Util.formatString;
+import static org.infinispan.util.Util.prettyPrintTime;
+import static org.infinispan.util.Util.rewrapAsCacheException;
+
+import java.io.NotSerializableException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 import net.jcip.annotations.GuardedBy;
 
 import org.infinispan.CacheException;
@@ -39,31 +58,17 @@ import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.Message;
+import org.jgroups.UpHandler;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
-
-import java.io.NotSerializableException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.util.Util.*;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -82,7 +87,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
                                     InboundInvocationHandler inboundInvocationHandler) {
-      super(channel, null, transport, transport);
+      // MessageDispatcher superclass constructors will call start() so perform all init here
+      this.setMembershipListener(transport);
+      this.setChannel(channel);
+      // If existing up handler is a muxing up handler, setChannel(..) will not have replaced it
+      UpHandler handler = channel.getUpHandler();
+      if (handler instanceof Muxer<?>) {
+         @SuppressWarnings("unchecked")
+         Muxer<UpHandler> mux = (Muxer<UpHandler>) handler;
+         mux.setDefaultHandler(this.prot_adapter);
+      }
+      channel.addChannelListener(this);
+      this.server_obj = transport;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
    }
