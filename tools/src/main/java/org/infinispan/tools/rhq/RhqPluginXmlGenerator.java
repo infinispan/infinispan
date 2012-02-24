@@ -62,7 +62,7 @@ import com.sun.javadoc.RootDoc;
 
 /**
  * RhqPluginDoclet.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -70,7 +70,7 @@ public class RhqPluginXmlGenerator {
    private static final Log log = LogFactory.getLog(RhqPluginXmlGenerator.class);
    private static ClassPool classPool;
    private static String cp;
-   
+
    public static void main(String[] args) throws Exception {
       cp = System.getProperty("java.class.path");
       start(null);
@@ -84,7 +84,7 @@ public class RhqPluginXmlGenerator {
 
       return true;
    }
-   
+
    public static boolean start(RootDoc rootDoc) throws Exception {
       List<Class<?>> mbeanIspnClasses = getMBeanClasses();
       List<Class<?>> globalClasses = new ArrayList<Class<?>>();
@@ -99,12 +99,12 @@ public class RhqPluginXmlGenerator {
             namedCacheClasses.add(clazz);
          }
       }
-      
+
       // Init the Javassist class pool.
       classPool = ClassPool.getDefault();
       classPool.insertClassPath(new ClassClassPath(RhqPluginXmlGenerator.class));
       PluginGen pg = new PluginGen();
-      
+
       Props root = new Props();
       root.setPluginName("Infinispan");
       root.setPluginDescription("Supports management and monitoring of Infinispan");
@@ -119,6 +119,8 @@ public class RhqPluginXmlGenerator {
       servers.add(new TypeKey("JMX Server", "JMX"));
       servers.add(new TypeKey("JBossAS Server", "JBossAS"));
       servers.add(new TypeKey("JBossAS Server", "JBossAS5"));
+      servers.add(new TypeKey("JBossAS7 Standalone Server", "jboss-as-7"));
+      servers.add(new TypeKey("Profile", "jboss-as-7"));
       root.setRunsInsides(servers);
       populateMetricsAndOperations(globalClasses, root, false);
 
@@ -131,7 +133,7 @@ public class RhqPluginXmlGenerator {
       cache.setSingleton(false);
       cache.setCategory(ResourceCategory.SERVICE);
       populateMetricsAndOperations(namedCacheClasses, cache, true);
-      
+
       root.getChildren().add(cache);
 
       String metaInfDir = "../../../src/main/resources/META-INF";
@@ -141,7 +143,7 @@ public class RhqPluginXmlGenerator {
 
       pg.createFile(root, "descriptor", "rhq-plugin.xml", metaInfDir);
       copyFile(new File(metaInfDir + "/rhq-plugin.xml"), new File(targetMetaInfDir + "/rhq-plugin.xml"));
-      
+
       return true;
    }
 
@@ -157,7 +159,7 @@ public class RhqPluginXmlGenerator {
          if (outCh != null) outCh.close();
       }
    }
-   
+
    private static List<Class<?>> getMBeanClasses() throws IOException {
       try {
          return ClassFinder.withAnnotationDeclared(ClassFinder.infinispanClasses(cp), MBean.class);
@@ -167,7 +169,7 @@ public class RhqPluginXmlGenerator {
          throw ioe;
       }
    }
-   
+
    private static void populateMetricsAndOperations(List<Class<?>> classes,
             Props props, boolean withNamePrefix) throws Exception {
       props.setHasOperations(true);
@@ -212,7 +214,7 @@ public class RhqPluginXmlGenerator {
                }
                props.getMetrics().add(metric);
             }
-            
+
             Operation rhqOperation = (Operation) ctMethod.getAnnotation(Operation.class);
             if (rhqOperation != null) {
                debug("Operation annotation found " + rhqOperation);
@@ -235,7 +237,7 @@ public class RhqPluginXmlGenerator {
                   debug("Operation has no managed annotations, so take the description from the display name.");
                   operation.setDescription(rhqOperation.displayName());
                }
-               
+
                Object[][] paramAnnotations = ctMethod.getParameterAnnotations();
                int i = 0;
                for (Object[] paramAnnotationsInEach : paramAnnotations) {
@@ -296,7 +298,7 @@ public class RhqPluginXmlGenerator {
                props.getMetrics().add(metric);
             }
          }
-        
+
       }
    }
 

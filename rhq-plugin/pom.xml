@@ -52,6 +52,12 @@
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-domain</artifactId>
          <scope>provided</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>hibernate</groupId>
+               <artifactId>hibernate3</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.rhq</groupId>
@@ -78,21 +84,18 @@
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-      
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-tools</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-core</artifactId>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
          <scope>provided</scope>
       </dependency>
 
+      <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+      </dependency>
+
+      <!-- Crazy dependencies to solve the usual compiler bug with unavailable annotations -->
       <dependency>
          <groupId>javax.persistence</groupId>
          <artifactId>persistence-api</artifactId>
@@ -110,6 +113,19 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-annotations</artifactId>
          <version>${version.hibernate.annotations}</version>
+         <scope>provided</scope>
+      </dependency>
+      
+      <!-- Dependencies for plugin descriptor generation -->
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-core</artifactId>
          <scope>provided</scope>
       </dependency>
 
@@ -154,7 +170,7 @@
             </executions>
          </plugin>
          
-         <plugin>
+         <!-- <plugin>
              <artifactId>maven-dependency-plugin</artifactId>
              <executions>
                  <execution>
@@ -165,7 +181,7 @@
                      </goals>
                      <configuration>
                          <artifactItems>
-                             <!-- TODO include other needed external jars that should go into your jar file -->
+                             TODO include other needed external jars that should go into your jar file
                              <artifactItem>
                                  <groupId>org.infinispan</groupId>
                                  <artifactId>infinispan-core</artifactId>
@@ -181,7 +197,7 @@
                      </configuration>
                  </execution>
              </executions>
-         </plugin>
+         </plugin> -->
  
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

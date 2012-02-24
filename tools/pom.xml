@@ -60,13 +60,11 @@
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginGen</artifactId>
-         <version>${version.rhq.plugingen}</version>
       </dependency>
 
       <dependency>
          <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
-         <version>${version.javassist}</version>
       </dependency>
 
       <dependency>
@@ -78,7 +76,6 @@
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>${version.commons.logging}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -108,7 +105,6 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
-            <version>${version.maven.bundle}</version>
             <configuration>
                <instructions>
                   <Export-Package>

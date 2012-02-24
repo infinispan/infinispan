@@ -22,8 +22,8 @@
  */
 package org.infinispan.rhq;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -46,6 +46,7 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
    private static final Log log = LogFactory.getLog(CacheDiscovery.class);
 
    /** Run the discovery */
+   @Override
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> ctx) {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Discover resources with context");
@@ -55,11 +56,11 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
       if (trace) log.trace("Connection to ems server established");
 
       String pattern = getAllCachesPattern(ctx.getParentResourceContext().getResourceKey());
-      if (trace) log.tracef("Pattern to query is %s", pattern);
+      if (trace) log.trace("Pattern to query is " + pattern);
 
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (trace) log.tracef("Querying [%s] returned beans: %s", queryUtility.getTranslatedQuery(), beans);
+      if (trace) log.trace("Querying "+queryUtility.getTranslatedQuery()+" returned beans: " + beans);
 
       for (EmsBean bean : beans) {
          /* A discovered resource must have a unique key, that must
@@ -67,11 +68,11 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
           * time */
          String name = bean.getAttribute("CacheName").getValue().toString();
          String mbeanCacheName = bean.getBeanName().getKeyProperty("name");
-         if (trace) log.tracef("Resource name is %s and resource key %s", name, mbeanCacheName);
+         if (trace) log.trace("Resource name is "+name+" and resource key "+ mbeanCacheName);
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                ctx.getResourceType(), // Resource Type
                mbeanCacheName, // Resource Key
-               name, // Resource name 
+               name, // Resource name
                null, // Version
                "One cache within Infinispan", // ResourceDescription
                ctx.getDefaultPluginConfiguration(), // Plugin Config
