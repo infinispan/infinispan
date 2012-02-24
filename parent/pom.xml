@@ -159,9 +159,8 @@
       <version.netty>3.2.6.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.2.1.GA</version.resteasy>
-      <version.rhq.pluginAnnotations>3.0.4</version.rhq.pluginAnnotations>
-      <version.rhq.plugingen>3.0.4</version.rhq.plugingen>
-      <version.rhq>3.0.0</version.rhq>
+      <version.rhq.helpers>3.0.4</version.rhq.helpers>
+      <version.rhq>4.2.0</version.rhq>
       <version.scala>2.9.1</version.scala>
       <version.slf4j>1.6.1</version.slf4j>
       <version.solder>3.1.0.Final</version.solder>
@@ -575,7 +574,12 @@
          <dependency>
             <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-pluginAnnotations</artifactId>
-            <version>${version.rhq}</version>
+            <version>${version.rhq.helpers}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq.helpers</groupId>
+            <artifactId>rhq-pluginGen</artifactId>
+            <version>${version.rhq.helpers}</version>
          </dependency>
          <dependency>
             <groupId>org.scala-lang</groupId>
