@@ -22,17 +22,17 @@
  */
 package org.infinispan.server.websocket.handlers;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.CacheListener;
+import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
-import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Handler for the "notify" and "unnotify" operations.
@@ -41,7 +41,7 @@ import org.json.JSONObject;
  */
 public class NotifyHandler implements OpHandler {
 	
-	private Map<Cache, CacheListener> listeners = new ConcurrentHashMap<Cache, CacheListener>();
+	private Map<Cache, CacheListener> listeners = ConcurrentMapFactory.makeConcurrentMap();
 
 	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String opCode = (String) opPayload.get(OpHandler.OP_CODE);

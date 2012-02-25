@@ -30,13 +30,13 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class L1ManagerImpl implements L1Manager {
@@ -52,7 +52,7 @@ public class L1ManagerImpl implements L1Manager {
    private final ConcurrentMap<Object, Collection<Address>> requestors;
 
    public L1ManagerImpl() {
-      requestors = new ConcurrentHashMap<Object, Collection<Address>>();
+	   requestors = ConcurrentMapFactory.makeConcurrentMap();
    }
 
    @Inject

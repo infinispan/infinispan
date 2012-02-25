@@ -32,6 +32,7 @@ import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * MapReduceCommand is used to migrate {@link Mapper} and {@link Reducer} to remote JVM where they
@@ -223,7 +223,7 @@ public class MapReduceCommand extends BaseRpcCommand {
     */
    private static class DefaultCollector<KOut, VOut> implements Collector<KOut, VOut> {
 
-      private final Map<KOut, List<VOut>> store = new ConcurrentHashMap<KOut, List<VOut>>();
+      private final Map<KOut, List<VOut>> store = ConcurrentMapFactory.makeConcurrentMap();
 
       @Override
       public void emit(KOut key, VOut value) {

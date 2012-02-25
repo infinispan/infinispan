@@ -22,7 +22,8 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import java.util.concurrent.ConcurrentHashMap;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
+
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -38,7 +39,7 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
    protected final ConcurrentMap<Object, L> locks;
 
    protected AbstractPerEntryLockContainer(int concurrencyLevel) {
-      locks = new ConcurrentHashMap<Object, L>(16, .75f, concurrencyLevel);
+      locks = ConcurrentMapFactory.makeConcurrentMap(16, concurrencyLevel);
    }
 
    protected abstract L newLock();

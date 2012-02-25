@@ -44,6 +44,7 @@ import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
 import org.infinispan.server.websocket.handlers.RemoveHandler;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -116,7 +117,7 @@ public class WebSocketServer extends AbstractProtocolServer {
 
       private CacheContainer cacheContainer;
       private Map<String, OpHandler> operationHandlers;
-      private Map<String, Cache> startedCaches = new ConcurrentHashMap<String, Cache>();
+      private Map<String, Cache> startedCaches = ConcurrentMapFactory.makeConcurrentMap();
 
       public WebSocketServerPipelineFactory(CacheContainer cacheContainer) {
          this.cacheContainer = cacheContainer;

@@ -37,6 +37,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -141,7 +141,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       }
 
       lockContainer = new ReleaseAllLockContainer(concurrencyLevel);
-      transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, concurrencyLevel);
+      transactions = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
    }
 
    @Override
@@ -412,7 +412,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    }
 
    private ConcurrentMap<Object, Modification> newStateMap() {
-      return new ConcurrentHashMap<Object, Modification>(64, 0.75f, concurrencyLevel);
+      return ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
    }
    
    private static class ReleaseAllLockContainer extends ReentrantPerEntryLockContainer {
