@@ -28,6 +28,7 @@ import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +48,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not
@@ -76,9 +76,9 @@ public class ResourceDMBean implements DynamicMBean {
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
    private final ManageableComponentMetadata mBeanMetadata;
 
-   private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<String, Field>();
-   private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<String, Method>();
-   private static final Map<String[], Class[]> PARAM_TYPE_CACHE = new ConcurrentHashMap<String[], Class[]>();
+   private static final Map<String, Field> FIELD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
+   private static final Map<String, Method> METHOD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
+   private static final Map<String[], Class[]> PARAM_TYPE_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
 
    private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
 

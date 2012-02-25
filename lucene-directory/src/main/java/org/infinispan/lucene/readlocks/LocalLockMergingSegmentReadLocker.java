@@ -22,10 +22,11 @@
  */
 package org.infinispan.lucene.readlocks;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.Cache;
 import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
+
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * LocalLockMergingSegmentReadLocker decorates the {@link DistributedSegmentReadLocker} to minimize
@@ -39,7 +40,7 @@ import org.infinispan.lucene.InfinispanDirectory;
 @SuppressWarnings("unchecked")
 public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
-   private final ConcurrentHashMap<String, LocalReadLock> localLocks = new ConcurrentHashMap<String, LocalReadLock>();
+   private final ConcurrentMap<String, LocalReadLock> localLocks = ConcurrentMapFactory.makeConcurrentMap();
    private final DistributedSegmentReadLocker delegate;
 
    /**

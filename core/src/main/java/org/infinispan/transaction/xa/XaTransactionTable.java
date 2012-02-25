@@ -28,13 +28,13 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -58,7 +58,7 @@ public class XaTransactionTable extends TransactionTable {
    @Start
    private void startXidMapping() {
       final int concurrencyLevel = configuration.getConcurrencyLevel();
-      xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
+      xid2LocalTx = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
    }
 
    @Override

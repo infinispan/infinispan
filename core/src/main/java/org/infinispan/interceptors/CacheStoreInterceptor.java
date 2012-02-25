@@ -52,6 +52,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -63,7 +64,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
@@ -104,8 +104,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       store = loaderManager.getCacheStore();
       this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
       loaderConfig = configuration.getCacheLoaderManagerConfig();
-      txStores = new ConcurrentHashMap<GlobalTransaction, Integer>(64, 0.75f, configuration.getConcurrencyLevel());
-      preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>(64, 0.75f, configuration.getConcurrencyLevel());
+      txStores = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
+      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
    }
 
    /**

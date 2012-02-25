@@ -42,11 +42,12 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.bdbje.logging.Log;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.loaders.bdbje.logging.Log;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -58,7 +59,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An Oracle SleepyCat JE implementation of a {@link org.infinispan.loaders.CacheStore}.  <p/>This implementation uses
@@ -151,7 +151,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    }
 
    private void openTransactionServices() {
-      txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>(64, 0.75f, getConcurrencyLevel());
+      txnMap = ConcurrentMapFactory.makeConcurrentMap(64, getConcurrencyLevel());
       currentTransaction = factory.createCurrentTransaction(env);
       transactionRunner = factory.createPreparableTransactionRunner(env);
    }
