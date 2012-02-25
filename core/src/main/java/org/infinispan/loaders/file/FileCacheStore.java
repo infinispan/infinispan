@@ -32,14 +32,30 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.loaders.bucket.BucketBasedCacheStore}.  This file store
@@ -469,8 +485,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    private static class BufferedFileSync implements FileSync {
-      protected final ConcurrentMap<String, FileChannel> streams =
-            new ConcurrentHashMap<String, FileChannel>();
+      protected final ConcurrentMap<String, FileChannel> streams = ConcurrentMapFactory.makeConcurrentMap();
 
       @Override
       public void write(byte[] bytes, File f) throws IOException {
@@ -554,8 +569,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    private class PeriodicFileSync extends BufferedFileSync {
       private final ScheduledExecutorService executor =
             Executors.newSingleThreadScheduledExecutor();
-      protected final ConcurrentMap<String, IOException> flushErrors =
-            new ConcurrentHashMap<String, IOException>();
+      protected final ConcurrentMap<String, IOException> flushErrors = ConcurrentMapFactory.makeConcurrentMap();
 
       private PeriodicFileSync(long interval) {
          executor.scheduleWithFixedDelay(new Runnable() {

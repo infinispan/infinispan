@@ -1,12 +1,12 @@
 package org.infinispan.distribution.group;
 
 import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.util.ReflectionUtil;
@@ -59,7 +59,7 @@ public class GroupManagerImpl implements GroupManager {
     private final List<Grouper<?>> groupers;
     
     public GroupManagerImpl(List<Grouper<?>> groupers) {
-        this.groupMetadataCache = new ConcurrentHashMap<Class<?>, GroupMetadata>();
+        this.groupMetadataCache = ConcurrentMapFactory.makeConcurrentMap();
         if (groupers != null)
             this.groupers = groupers;
         else

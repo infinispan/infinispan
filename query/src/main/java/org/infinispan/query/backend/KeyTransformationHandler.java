@@ -29,10 +29,10 @@ import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
@@ -56,7 +56,7 @@ public class KeyTransformationHandler {
 
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = new ConcurrentHashMap<Class<?>, Class<? extends Transformer>>();
+   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = ConcurrentMapFactory.makeConcurrentMap();
 
    public Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);

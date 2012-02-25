@@ -49,6 +49,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,7 +58,6 @@ import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -129,11 +129,11 @@ public class TransactionTable {
    @Start
    private void start() {
       final int concurrencyLevel = configuration.getConcurrencyLevel();
-      localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
+      localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
       if (configuration.getCacheMode().isClustered()) {
          minViewRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
-         remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>(concurrencyLevel, 0.75f, concurrencyLevel);
+         remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
          cleanupService.start(configuration, rpcManager, invoker);
          cm.addListener(cleanupService);
          cm.addListener(this);
