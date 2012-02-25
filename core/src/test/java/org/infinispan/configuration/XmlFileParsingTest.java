@@ -318,7 +318,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = cm.getCacheConfiguration("evictionCache");
       assert c.eviction().maxEntries() == 5000;
-      assert c.eviction().strategy().equals(EvictionStrategy.FIFO);
+      assert c.eviction().strategy().equals(EvictionStrategy.LIRS);
       assert c.expiration().lifespan() == 60000;
       assert c.expiration().maxIdle() == 1000;
       assert c.eviction().threadPolicy() == EvictionThreadPolicy.PIGGYBACK;

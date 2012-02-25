@@ -37,7 +37,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
 
    private Configuration getCfg() {
       return new Configuration().fluent()
-            .eviction().strategy(EvictionStrategy.FIFO).build();
+            .eviction().strategy(EvictionStrategy.LRU).build();
    }
 
    public void testNoEvictionThread() {

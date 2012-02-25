@@ -28,7 +28,7 @@
       <xsl:comment>
          This XSL stylesheet is used to convert an EHCache 1.x configuration into an Infinispan 5.1.x configuration.
          Note that Infinispan supports JGroups only, caches are migrated to using JGroups.
-         Peer discovery will also be using JGroups. Eviction policies are translated to LRU, FIFO or NONE.
+         Peer discovery will also be using JGroups. Eviction policies are translated to LRU or NONE.
       </xsl:comment>
       <xsl:element name="infinispan">
 
@@ -84,15 +84,22 @@
       <xsl:if test="@memoryStoreEvictionPolicy">
          <xsl:element name="eviction">
             <xsl:attribute name="strategy">
-               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LRU') or contains(@memoryStoreEvictionPolicy, 'FIFO')">
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LRU')">
                   <xsl:value-of select="@memoryStoreEvictionPolicy"/>
                </xsl:if>
 
                <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LFU')">
-                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LRU instead.
+                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LIRS instead.
                   </xsl:message>
-                  <xsl:text>LRU</xsl:text>
+                  <xsl:text>LIRS</xsl:text>
                </xsl:if>
+
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'FIFO')">
+                  <xsl:message terminate="no">WARNING!!! Infinispan does not support FIFO eviction. Using LIRS instead.
+                  </xsl:message>
+                  <xsl:text>LIRS</xsl:text>
+               </xsl:if>
+
             </xsl:attribute>
 
             <xsl:if test="@maxElementsInMemory">

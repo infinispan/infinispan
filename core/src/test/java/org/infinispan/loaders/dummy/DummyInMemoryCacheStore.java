@@ -51,6 +51,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    ConcurrentMap<String, Integer> stats;
    Cfg config;
 
+   public DummyInMemoryCacheStore(String storeName) {
+      this.storeName = storeName;
+   }
+
+   public DummyInMemoryCacheStore() {
+   }
+
    private void record(String method) {
       boolean replaced;
       long end = System.currentTimeMillis() + 5000;

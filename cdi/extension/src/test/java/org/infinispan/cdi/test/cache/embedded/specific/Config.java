@@ -25,13 +25,12 @@ package org.infinispan.cdi.test.cache.embedded.specific;
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
-
-import static org.infinispan.eviction.EvictionStrategy.FIFO;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -78,7 +77,7 @@ public class Config {
    @ApplicationScoped
    public EmbeddedCacheManager specificCacheManager() {
       return new DefaultCacheManager(new ConfigurationBuilder()
-                                           .eviction().maxEntries(4000).strategy(FIFO)
+                                           .eviction().maxEntries(4000).strategy(EvictionStrategy.LIRS)
                                            .build());
    }
 }

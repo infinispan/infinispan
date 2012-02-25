@@ -91,7 +91,7 @@
           </properties>
         </dataContainer>
         <deadlockDetection enabled="true" spinDuration="1"/>
-        <eviction maxEntries="1" strategy="NONE" threadPolicy="PIGGYBACK" wakeUpInterval="1"/>
+        <eviction maxEntries="1" strategy="NONE" threadPolicy="PIGGYBACK"/>
         <expiration lifespan="1" maxIdle="1" reaperEnabled="true" wakeUpInterval="1"/>
         <indexing enabled="true" indexLocalOnly="true">
           <properties>
@@ -100,7 +100,7 @@
         </indexing>
         <invocationBatching enabled="true"/>
         <jmxStatistics enabled="true"/>
-        <lazyDeserialization enabled="true"/>
+        <storeAsBinary enabled="true"/>
         <loaders passivation="true" preload="true" shared="true">
           <loader fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" purgerThreads="1" purgeSynchronously="true">
             <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>

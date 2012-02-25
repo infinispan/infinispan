@@ -22,22 +22,23 @@
  */
 package org.infinispan.api;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
@@ -53,44 +54,32 @@ public abstract class CacheAPITest extends APINonTxTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setIsolationLevel(getIsolationLevel());
-      c = addEviction(c);
-      amend(c);
+      ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(true);
+      cb.locking().isolationLevel(getIsolationLevel());
+      addEviction(cb);
+      amend(cb);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      cm.defineConfiguration("test", c);
+      cm.defineConfiguration("test", cb.build());
       cache = cm.getCache("test");
       return cm;
    }
 
-   protected void amend(Configuration c) {
+   protected void amend(ConfigurationBuilder cb) {
    }
 
    protected abstract IsolationLevel getIsolationLevel();
 
-   protected Configuration addEviction(Configuration cfg) {
-      return cfg; // No eviction by default
+   protected ConfigurationBuilder addEviction(ConfigurationBuilder cb) {
+      return cb;
    }
 
    /**
     * Tests that the configuration contains the values expected, as well as immutability of certain elements
     */
    public void testConfiguration() {
-      Configuration c = cache.getConfiguration();
-      assert Configuration.CacheMode.LOCAL.equals(c.getCacheMode());
-      assert null != c.getTransactionManagerLookupClass();
-
-      // note that certain values should be immutable.  E.g., CacheMode cannot be changed on the fly.
-      try {
-         c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-         assert false : "Should have thrown an Exception";
-      }
-      catch (ConfigurationException e) {
-         // expected
-      }
-
-      // others should be changeable though.
-      c.setLockAcquisitionTimeout(100);
+      Configuration c = cache.getCacheConfiguration();
+      assert CacheMode.LOCAL.equals(c.clustering().cacheMode());
+      assert null != c.transaction().transactionManagerLookup();
    }
 
    public void testGetMembersInLocalMode() {
