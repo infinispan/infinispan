@@ -465,7 +465,7 @@ public class ConfigurationOverridesTest {
    @Test
    public final void configurationOverridesShouldOverrideEvictionStrategyClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedEvictionStrategyClass = "FIFO";
+      final String expectedEvictionStrategyClass = "LRU";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionStrategyClass(expectedEvictionStrategyClass);
@@ -475,7 +475,7 @@ public class ConfigurationOverridesTest {
       AssertJUnit
                .assertEquals(
                         "ConfigurationOverrides should have overridden default value with explicitly set EvictionStrategyClass property. However, it didn't.",
-                        EvictionStrategy.FIFO, defaultConfiguration.getEvictionStrategy());
+                        EvictionStrategy.LRU, defaultConfiguration.getEvictionStrategy());
    }
 
    /**

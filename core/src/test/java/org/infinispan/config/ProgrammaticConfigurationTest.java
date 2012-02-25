@@ -188,7 +188,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
             .add(new CacheStoreInterceptor()).after(OptimisticLockingInterceptor.class)
             .add(new CacheLoaderInterceptor()).before(CallInterceptor.class)
          .eviction()
-            .maxEntries(7676).strategy(EvictionStrategy.FIFO)
+            .maxEntries(7676).strategy(EvictionStrategy.LIRS)
             .threadPolicy(EvictionThreadPolicy.PIGGYBACK)
          .expiration()
             .maxIdle(8392L).lifespan(4372L).wakeUpInterval(7585L)
@@ -269,7 +269,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert 8392L == c.getExpirationMaxIdle();
 
       assert 7676 == c.getEvictionMaxEntries();
-      assert EvictionStrategy.FIFO == c.getEvictionStrategy();
+      assert EvictionStrategy.LIRS == c.getEvictionStrategy();
       assert EvictionThreadPolicy.PIGGYBACK == c.getEvictionThreadPolicy();
       assert 7585L == c.getExpirationWakeUpInterval();
 

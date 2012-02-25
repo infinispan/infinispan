@@ -309,6 +309,5 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    public void testConfigFile() {
       // no op
    }
-
 }
 

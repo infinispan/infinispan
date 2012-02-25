@@ -24,16 +24,18 @@ package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.config.Configuration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -56,7 +58,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          assert cm.getCache().getName().equals(CacheContainer.DEFAULT_CACHE_NAME);
 
          try {
-            cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME, new Configuration());
+            cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME, new ConfigurationBuilder().build());
             assert false : "Should fail";
          }
          catch (IllegalArgumentException e) {
@@ -79,9 +81,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    public void testClashingNames() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
-         Configuration c = new Configuration();
-         Configuration firstDef = cm.defineConfiguration("aCache", c);
-         Configuration secondDef = cm.defineConfiguration("aCache", c);
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         Configuration firstDef = cm.defineConfiguration("aCache", c.build());
+         Configuration secondDef = cm.defineConfiguration("aCache", c.build());
          assert firstDef.equals(secondDef);
       } finally {
          TestingUtil.killCacheManagers(cm);
@@ -126,43 +128,43 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
       
       try {
-         cm.defineConfiguration(null, new Configuration());
+         cm.defineConfiguration(null, new org.infinispan.config.Configuration());
          assert false : "Should fail";
       } catch(NullPointerException npe) {
          assert npe.getMessage() != null;
       }
-      
-      Configuration c = cm.defineConfiguration("cache1", null, new Configuration());
+
+      org.infinispan.config.Configuration c = cm.defineConfiguration("cache1", null, new org.infinispan.config.Configuration());
       assert c.equalsIgnoreName(cm.getDefaultConfiguration()) ;
       
-      c = cm.defineConfiguration("cache1", "does-not-exist-cache", new Configuration());
+      c = cm.defineConfiguration("cache1", "does-not-exist-cache", new org.infinispan.config.Configuration());
       assert c.equalsIgnoreName(cm.getDefaultConfiguration());
    }
 
    public void testDefiningConfigurationWithTemplateName() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
 
-      Configuration c = new Configuration();
+      org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
       c.setIsolationLevel(IsolationLevel.NONE);
-      Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
+      org.infinispan.config.Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
       assert oneCacheConfiguration.equalsIgnoreName(c) ;
       assert oneCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
-      c = new Configuration();
-      Configuration secondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
+      c = new org.infinispan.config.Configuration();
+      org.infinispan.config.Configuration secondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
       assert oneCacheConfiguration.equalsIgnoreName(secondCacheConfiguration) ;
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
-      c = new Configuration();
+      c = new org.infinispan.config.Configuration();
       c.setIsolationLevel(IsolationLevel.SERIALIZABLE);
-      Configuration anotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
+      org.infinispan.config.Configuration anotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
       assert !secondCacheConfiguration.equals(anotherSecondCacheConfiguration);
       assert anotherSecondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.SERIALIZABLE);
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
-      c = new Configuration();
+      c = new org.infinispan.config.Configuration();
       c.setExpirationMaxIdle(Long.MAX_VALUE);
-      Configuration yetAnotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
+      org.infinispan.config.Configuration yetAnotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
       assert yetAnotherSecondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       assert yetAnotherSecondCacheConfiguration.getExpirationMaxIdle() == Long.MAX_VALUE;
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
@@ -171,30 +173,29 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public void testDefiningConfigurationOverridingBooleans() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      Configuration c = new Configuration();
-      c.setUseLazyDeserialization(true);
-      Configuration lazy = cm.defineConfiguration("storeAsBinary", c);
-      assert lazy.isUseLazyDeserialization();
+      org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
+      c.fluent().storeAsBinary();
+      org.infinispan.config.Configuration lazy = cm.defineConfiguration("storeAsBinary", c);
+      assert lazy.isStoreAsBinary();
 
-      c = new Configuration();
-      c.setEvictionStrategy(EvictionStrategy.LRU);
-      c.setEvictionMaxEntries(1);
-      Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "storeAsBinary", c);
-      assert lazyLru.isUseLazyDeserialization();
+      c = new org.infinispan.config.Configuration();
+      c.fluent().eviction().strategy(EvictionStrategy.LRU).maxEntries(1);
+      org.infinispan.config.Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "storeAsBinary", c);
+      assert lazy.isStoreAsBinary();
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
    }
 
    public void testDefineConfigurationTwice() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
-         Configuration override = new Configuration();
-         override.fluent().invocationBatching();
-         assert override.isInvocationBatchingEnabled();
-         assert cm.defineConfiguration("test1", override).isInvocationBatchingEnabled();
-         Configuration config = new Configuration();
-         config.applyOverrides(override);
-         assert config.isInvocationBatchingEnabled();
-         assert cm.defineConfiguration("test2", config).isInvocationBatchingEnabled();
+         Configuration override = new ConfigurationBuilder().invocationBatching().enable().build();
+         assert override.invocationBatching().enabled();
+         assert cm.defineConfiguration("test1", override).invocationBatching().enabled();
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.read(override);
+         Configuration config = cb.build();
+         assert config.invocationBatching().enabled();
+         assert cm.defineConfiguration("test2", config).invocationBatching().enabled();
       } finally {
          cm.stop();
       }
@@ -203,8 +204,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    public void testGetCacheNames() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
-         cm.defineConfiguration("one", new Configuration());
-         cm.defineConfiguration("two", new Configuration());
+         cm.defineConfiguration("one", new ConfigurationBuilder().build());
+         cm.defineConfiguration("two", new ConfigurationBuilder().build());
          cm.getCache("three");
          Set<String> cacheNames = cm.getCacheNames();
          assert 3 == cacheNames.size();
@@ -316,17 +317,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared, String storePrefix) {
       String storeName = storePrefix + m.getName();
-      Configuration c = new Configuration();
-      FluentConfiguration.LoadersConfig loaders = c.fluent().loaders();
-      if (isStoreShared)
-         loaders = loaders.shared(true);
-
-      loaders.addCacheLoader(
-            new DummyInMemoryCacheStore.Cfg(storeName));
-      if (isClustered) {
-         c.fluent().clustering().mode(Configuration.CacheMode.REPL_SYNC);
-         return TestCacheManagerFactory.createClusteredCacheManager(c);
-      }
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c
+            .loaders()
+               .shared(isStoreShared).addCacheLoader().cacheLoader(new DummyInMemoryCacheStore(storeName))
+            .clustering()
+               .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 
       return TestCacheManagerFactory.createCacheManager(c);
    }

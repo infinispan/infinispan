@@ -41,7 +41,7 @@ public class EvictionDuringBatchTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration().fluent()
-         .eviction().strategy(EvictionStrategy.FIFO).maxEntries(128) // 128 max entries
+         .eviction().strategy(EvictionStrategy.LRU).maxEntries(128) // 128 max entries
          .expiration().wakeUpInterval(100L)
          .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
          .invocationBatching()

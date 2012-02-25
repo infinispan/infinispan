@@ -211,7 +211,7 @@
       <!--
          Eviction configuration.
       -->
-      <eviction maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="FIFO"/>
+      <eviction maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="LRU"/>
       <!--
          Expiration wakeUpInterval defines the interval between successive runs
          to purge expired entries from memory and any cache stores.

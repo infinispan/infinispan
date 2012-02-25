@@ -50,7 +50,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration().fluent()
-         .eviction().strategy(EvictionStrategy.FIFO).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
+         .eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
          .expiration().wakeUpInterval(100L)
          .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
          .storeAsBinary()
