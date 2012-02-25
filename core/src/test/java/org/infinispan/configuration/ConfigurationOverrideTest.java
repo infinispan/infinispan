@@ -39,7 +39,7 @@ public class ConfigurationOverrideTest {
 
    public void testConfigurationOverride() {
       Configuration defaultConfiguration = new ConfigurationBuilder()
-            .eviction().maxEntries(200).strategy(EvictionStrategy.FIFO)
+            .eviction().maxEntries(200).strategy(EvictionStrategy.LIRS)
             .build();
 
       Configuration cacheConfiguration = new ConfigurationBuilder().read(defaultConfiguration).build();
@@ -50,12 +50,12 @@ public class ConfigurationOverrideTest {
       Cache<?, ?> cache = embeddedCacheManager.getCache("my-cache");
 
       Assert.assertEquals(cache.getCacheConfiguration().eviction().maxEntries(), 200);
-      Assert.assertEquals(cache.getCacheConfiguration().eviction().strategy(), EvictionStrategy.FIFO);
+      Assert.assertEquals(cache.getCacheConfiguration().eviction().strategy(), EvictionStrategy.LIRS);
    }
 
    public void testOldConfigurationOverride() {
       org.infinispan.config.Configuration defaultConfiguration = new org.infinispan.config.Configuration().fluent()
-            .eviction().maxEntries(200).strategy(EvictionStrategy.FIFO)
+            .eviction().maxEntries(200).strategy(EvictionStrategy.LIRS)
             .build();
 
       org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
@@ -67,7 +67,7 @@ public class ConfigurationOverrideTest {
       Cache<?, ?> cache = embeddedCacheManager.getCache("my-cache");
 
       Assert.assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
-      Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(), EvictionStrategy.FIFO);
+      Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(), EvictionStrategy.LIRS);
    }
    
    public void testSimpleDistributedClusterModeDefault() {

@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.eviction.EvictionStrategy.FIFO;
+import static org.infinispan.eviction.EvictionStrategy.LIRS;
 import static org.infinispan.eviction.EvictionStrategy.NONE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -65,14 +65,14 @@ public class SpecificCacheManagerTest extends Arquillian {
 
    public void testSpecificCacheManager() throws Exception {
       assertEquals(largeCache.getCacheConfiguration().eviction().maxEntries(), 2000);
-      assertEquals(largeCache.getCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(largeCache.getCacheConfiguration().eviction().strategy(), LIRS);
       assertEquals(largeCache.getCacheManager().getDefaultCacheConfiguration().eviction().maxEntries(), 4000);
-      assertEquals(largeCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(largeCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), LIRS);
 
       assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 20);
-      assertEquals(smallCache.getCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(smallCache.getCacheConfiguration().eviction().strategy(), LIRS);
       assertEquals(smallCache.getCacheManager().getDefaultCacheConfiguration().eviction().maxEntries(), 4000);
-      assertEquals(smallCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), FIFO);
+      assertEquals(smallCache.getCacheManager().getDefaultCacheConfiguration().eviction().strategy(), LIRS);
 
       // asserts that the small and large cache are defined in the same cache manager
       assertTrue(smallCache.getCacheManager().equals(largeCache.getCacheManager()));

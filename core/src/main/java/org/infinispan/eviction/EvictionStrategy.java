@@ -35,6 +35,7 @@ public enum EvictionStrategy {
     * 
     * FIFO strategy is deprecated, LRU will be used instead
     */
+   @Deprecated
    FIFO, 
    LRU, 
    LIRS;

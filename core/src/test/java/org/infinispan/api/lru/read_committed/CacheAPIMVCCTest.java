@@ -24,13 +24,11 @@ package org.infinispan.api.lru.read_committed;
 
 import org.infinispan.api.CacheAPITest;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 
 @Test(groups = "functional", testName = "api.lru.read_committed.CacheAPIMVCCTest")
 public class CacheAPIMVCCTest extends CacheAPITest {
@@ -40,16 +38,14 @@ public class CacheAPIMVCCTest extends CacheAPITest {
    }
 
    @Override
-   protected Configuration addEviction(Configuration cfg) {
-      cfg.setEvictionStrategy(EvictionStrategy.LRU);
-      cfg.setEvictionWakeUpInterval(60000);
-      cfg.setEvictionMaxEntries(1000);
-      return cfg;
-   }
-
-   @Override
-   public void testConcurrentMapMethods() {
-      super.testConcurrentMapMethods();    // TODO: Customise this generated block
+   protected ConfigurationBuilder addEviction(ConfigurationBuilder cb) {
+      cb
+            .eviction()
+               .strategy(EvictionStrategy.LRU)
+               .maxEntries(1000)
+            .expiration()
+               .wakeUpInterval(60000);
+      return cb;
    }
 
    public void testRollbackAfterClear() throws Exception {

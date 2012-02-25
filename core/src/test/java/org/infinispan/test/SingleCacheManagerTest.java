@@ -24,6 +24,7 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -104,6 +105,10 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected Configuration getDefaultStandaloneConfig(boolean transactional) {
       return TestCacheManagerFactory.getDefaultConfiguration(transactional);
+   }
+
+   protected ConfigurationBuilder getDefaultStandaloneCacheConfig(boolean transactional) {
+      return TestCacheManagerFactory.getDefaultCacheConfiguration(transactional);
    }
 
    protected TransactionManager tm() {

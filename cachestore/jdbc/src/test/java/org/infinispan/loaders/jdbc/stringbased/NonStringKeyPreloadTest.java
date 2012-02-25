@@ -94,7 +94,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       Configuration config = createCacheStoreConfig(mapperName, true, true);
-      config.setEvictionStrategy(EvictionStrategy.FIFO);
+      config.setEvictionStrategy(EvictionStrategy.LRU);
       config.setEvictionMaxEntries(3);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
