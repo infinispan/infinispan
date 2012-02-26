@@ -47,8 +47,8 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
 
    public static final int KEY_QUEUE_SIZE = 100;
    EmbeddedCacheManager manager1 = null, manager2 = null;
-   AdvancedCache cache1 = null, cache2 = null;
-   KeyAffinityService keyAffinityService1 = null, keyAffinityService2 = null;
+   AdvancedCache<Object, Object> cache1 = null, cache2 = null;
+   KeyAffinityService<Object> keyAffinityService1 = null, keyAffinityService2 = null;
 
    @BeforeMethod
    protected void setUp() throws Exception {

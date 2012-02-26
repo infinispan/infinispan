@@ -58,11 +58,11 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
       ThreadFactory tf = new ThreadFactory() {
          @Override
-         public Thread newThread(Runnable r) {
+         public Thread newThread(Runnable r) {       
             return new Thread(r, "KeyGeneratorThread");
          }
       };
-      keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),
+      keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),
                                                                                                     Executors.newSingleThreadExecutor(tf),
                                                                                                     new RndKeyGenerator(), 100);
    }
@@ -97,7 +97,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
    public void testServerAdded() throws InterruptedException {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, configuration);
-      Cache cache = cm.getCache(cacheName);
+      Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
       eventually(new Condition() {

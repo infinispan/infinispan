@@ -59,15 +59,15 @@ public class KeyAffinityServiceFactory {
     * @return an {@link org.infinispan.affinity.KeyAffinityService} implementation.
     * @throws IllegalStateException if the supplied cache is not DIST.
     */
-   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Executor ex, KeyGenerator keyGenerator, int keyBufferSize, boolean start) {
-      return new KeyAffinityServiceImpl(ex, cache, keyGenerator, keyBufferSize, null, start);
+   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Executor ex, KeyGenerator<K> keyGenerator, int keyBufferSize, boolean start) {
+      return new KeyAffinityServiceImpl<K>(ex, cache, keyGenerator, keyBufferSize, null, start);
    }
 
    /**
     * Same as {@link #newKeyAffinityService(org.infinispan.Cache, java.util.concurrent.Executor, KeyGenerator, int,
     * boolean)} with start == true;
     */
-   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Executor ex, KeyGenerator keyGenerator, int keyBufferSize) {
+   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Executor ex, KeyGenerator<K> keyGenerator, int keyBufferSize) {
       return newKeyAffinityService(cache, ex, keyGenerator, keyBufferSize, true);
    }
 
@@ -76,22 +76,22 @@ public class KeyAffinityServiceFactory {
     *
     * @param filter the set of addresses for which to generate keys
     */
-   public static <K, V> KeyAffinityService newKeyAffinityService(Cache<K, V> cache, Collection<Address> filter, KeyGenerator keyGenerator, Executor ex, int keyBufferSize, boolean start) {
-      return new KeyAffinityServiceImpl(ex, cache, keyGenerator, keyBufferSize, filter, start);
+   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Collection<Address> filter, KeyGenerator<K> keyGenerator, Executor ex, int keyBufferSize, boolean start) {
+      return new KeyAffinityServiceImpl<K>(ex, cache, keyGenerator, keyBufferSize, filter, start);
    }
 
    /**
     * Same as {@link #newKeyAffinityService(org.infinispan.Cache, java.util.Collection, KeyGenerator,
     * java.util.concurrent.Executor, int, boolean)} with start == true.
     */
-   public static <K, V> KeyAffinityService newKeyAffinityService(Cache<K, V> cache, Collection<Address> filter, KeyGenerator keyGenerator, Executor ex, int keyBufferSize) {
+   public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Collection<Address> filter, KeyGenerator<K> keyGenerator, Executor ex, int keyBufferSize) {
       return newKeyAffinityService(cache, filter, keyGenerator, ex, keyBufferSize, true);
    }
 
    /**
     * Created an service that only generates keys for the local address.
     */
-   public static <K, V> KeyAffinityService newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator keyGenerator, Executor ex, int keyBufferSize, boolean start) {
+   public static <K, V> KeyAffinityService<K> newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator<K> keyGenerator, Executor ex, int keyBufferSize, boolean start) {
       Address localAddress = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
       Collection<Address> forAddresses = Collections.singletonList(localAddress);
       return newKeyAffinityService(cache, forAddresses, keyGenerator, ex, keyBufferSize, start);
@@ -100,7 +100,7 @@ public class KeyAffinityServiceFactory {
    /**
     * Same as {@link #newLocalKeyAffinityService(org.infinispan.Cache, KeyGenerator, java.util.concurrent.Executor, int, boolean)} with start == true.
     */
-   public static <K, V> KeyAffinityService newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator keyGenerator, Executor ex, int keyBufferSize) {
+   public static <K, V> KeyAffinityService<K> newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator<K> keyGenerator, Executor ex, int keyBufferSize) {
       return newLocalKeyAffinityService(cache, keyGenerator, ex, keyBufferSize, true);
    }
 }

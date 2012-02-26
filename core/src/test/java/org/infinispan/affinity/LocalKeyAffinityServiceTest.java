@@ -49,7 +49,7 @@ public class LocalKeyAffinityServiceTest extends BaseFilterKeyAffinityServiceTes
             }
          };
          cacheManager = caches.get(0).getCacheManager();
-         keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.
+         keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.
                newLocalKeyAffinityService(cacheManager.getCache(cacheName), new RndKeyGenerator(),
                                           Executors.newSingleThreadExecutor(tf), 100);
       }
