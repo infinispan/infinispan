@@ -47,11 +47,15 @@ public class DummyInvalidationStateTransferManagerImpl extends BaseStateTransfer
    }
 
    @Override
-   protected BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView) {
+   protected BaseStateTransferTask createStateTransferTask(final int viewId, final List<Address> members,
+                                                           final boolean initialView) {
       return new BaseStateTransferTask(this, rpcManager, stateTransferLock, cacheNotifier, configuration, dataContainer,
             members, viewId, null, null, initialView) {
          public void doPerformStateTransfer() throws Exception {
-            // do nothing
+            // The state transfer lock is not really used in invalidation mode
+            // but it's easier to block write commands here than override the base methods
+            // to remove all the blocking and unblocking
+            stateTransferLock.blockNewTransactions(viewId);
          }
 
          @Override
