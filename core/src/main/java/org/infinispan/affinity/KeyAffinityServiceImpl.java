@@ -25,13 +25,14 @@ package org.infinispan.affinity;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -43,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -65,7 +65,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private final Set<Address> filter;
 
    @GuardedBy("maxNumberInvariant")
-   private final Map<Address, BlockingQueue> address2key = new ConcurrentHashMap<Address, BlockingQueue>();
+   private final Map<Address, BlockingQueue> address2key = ConcurrentMapFactory.makeConcurrentMap();
    private final Executor executor;
    private final Cache cache;
    private final KeyGenerator keyGenerator;

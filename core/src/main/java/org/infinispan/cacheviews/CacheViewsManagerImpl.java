@@ -38,6 +38,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,7 +109,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
    // the complete state of every cache in the cluster
    // entries can only be added, never removed
-   private final ConcurrentMap<String, CacheViewInfo> viewsInfo = new ConcurrentHashMap<String, CacheViewInfo>();
+   private final ConcurrentMap<String, CacheViewInfo> viewsInfo = ConcurrentMapFactory.makeConcurrentMap();
    // only used if this node is the coordinator
    private long timeout = 10 * 1000;
    // TODO Make the cooldown configurable, or change the view installation timing altogether

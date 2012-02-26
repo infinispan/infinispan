@@ -38,6 +38,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -63,7 +64,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -97,7 +97,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
-   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
+   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = ConcurrentMapFactory.makeConcurrentMap();
 
    protected boolean startChannel = true, stopChannel = true;
    private CommandAwareRpcDispatcher dispatcher;

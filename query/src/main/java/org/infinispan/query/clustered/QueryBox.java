@@ -21,16 +21,17 @@
  */
 package org.infinispan.query.clustered;
 
-import java.util.LinkedList;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.LinkedList;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators
@@ -49,7 +50,7 @@ import org.infinispan.util.logging.LogFactory;
 public class QueryBox {
 
    // <query UUID, ISPNQuery>
-   private final ConcurrentHashMap<UUID, DocumentExtractor> queries = new ConcurrentHashMap<UUID, DocumentExtractor>();
+   private final ConcurrentMap<UUID, DocumentExtractor> queries = ConcurrentMapFactory.makeConcurrentMap();
 
    // queries UUIDs ordered (for eviction)
    private final LinkedList<UUID> ageOrderedQueries = new LinkedList<UUID>();

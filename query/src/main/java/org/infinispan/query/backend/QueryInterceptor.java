@@ -42,6 +42,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
@@ -50,7 +51,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,7 +71,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class QueryInterceptor extends CommandInterceptor {
 
    private final SearchFactoryIntegrator searchFactory;
-   private final ConcurrentHashMap<Class,Class> knownClasses = new ConcurrentHashMap<Class,Class>();
+   private final ConcurrentMap<Class<?>,Class<?>> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    protected TransactionManager transactionManager;
@@ -234,11 +235,11 @@ public class QueryInterceptor extends CommandInterceptor {
    }
    
    private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
-      ArrayList<Class> toAdd = null;
-      for (Class type : classes) {
-         if (knownClasses.contains(type) == false) {
+      ArrayList<Class<?>> toAdd = null;
+      for (Class<?> type : classes) {
+         if (!knownClasses.containsValue(type)) {
             if (toAdd==null)
-               toAdd = new ArrayList<Class>(classes.length);
+               toAdd = new ArrayList<Class<?>>(classes.length);
             toAdd.add(type);
          }
       }
@@ -246,14 +247,14 @@ public class QueryInterceptor extends CommandInterceptor {
          return;
       }
       if (locked) {
-         Set<Class> existingClasses = knownClasses.keySet();
+         Set<Class<?>> existingClasses = knownClasses.keySet();
          int index = existingClasses.size();
          Class[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
-         for (Class toAddClass : toAdd) {
+         for (Class<?> toAddClass : toAdd) {
             all[index++] = toAddClass;
          }
          searchFactory.addClasses(all);
-         for (Class type : toAdd) {
+         for (Class<?> type : toAdd) {
             knownClasses.put(type, type);
          }
       } else {
@@ -268,8 +269,8 @@ public class QueryInterceptor extends CommandInterceptor {
    
    private void updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
-         Class<? extends Object> potentialNewType = value.getClass();
-         if ( ! this.knownClasses.contains(potentialNewType) ) {
+         Class<?> potentialNewType = value.getClass();
+         if ( ! this.knownClasses.containsValue(potentialNewType) ) {
             mutating.lock();
             try {
                enableClassesIncrementally( new Class[]{potentialNewType}, true);

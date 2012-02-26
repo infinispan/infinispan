@@ -34,6 +34,7 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -42,7 +43,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -66,7 +66,7 @@ public class DefaultDataContainer implements DataContainer {
    private PassivationManager passivator;
 
    public DefaultDataContainer(int concurrencyLevel) {
-      entries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f,concurrencyLevel);
+      entries = ConcurrentMapFactory.makeConcurrentMap(128, concurrencyLevel);
       evictionListener = null;
    }
 

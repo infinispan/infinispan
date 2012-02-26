@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A simple Set implementation backed by a {@link java.util.concurrent.ConcurrentHashMap} to deal with the fact that the
@@ -42,13 +42,13 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
    /** The serialVersionUID */
    private static final long serialVersionUID = 5312604953511379869L;
    
-   protected final ConcurrentHashMap<E, Object> map;
+   protected final ConcurrentMap<E, Object> map;
    
    /** any Serializable object will do, Integer.valueOf(0) is known cheap **/
    private static final Serializable DUMMY = 0;
 
    public ConcurrentHashSet() {
-      map = new ConcurrentHashMap<E, Object>();
+      map = ConcurrentMapFactory.makeConcurrentMap();
    }
 
    /**
@@ -56,7 +56,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     *                         float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int concurrencyLevel) {
-      map = new ConcurrentHashMap<E, Object>(16, 0.75f, concurrencyLevel);
+      map = ConcurrentMapFactory.makeConcurrentMap(16, concurrencyLevel);
    }
 
    /**
@@ -64,7 +64,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     * float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int initSize, float loadFactor, int concurrencyLevel) {
-      map = new ConcurrentHashMap<E, Object>(initSize, loadFactor, concurrencyLevel);
+      map = ConcurrentMapFactory.makeConcurrentMap(initSize, loadFactor, concurrencyLevel);
    }
 
 
