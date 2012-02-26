@@ -419,7 +419,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                future.getCommand().init(cache);
                try {
                   result = future.getCommand().perform(null);
-                  return Collections.singletonMap(rpc.getAddress(), new SuccessfulResponse(result));
+                  return Collections.singletonMap(rpc.getAddress(), SuccessfulResponse.create(result));
                } catch (Throwable e) {
                   return e;
                } finally {

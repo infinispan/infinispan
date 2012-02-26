@@ -38,15 +38,17 @@ import org.infinispan.util.Util;
  * @since 4.0
  */
 public class SuccessfulResponse extends ValidResponse {
+   public static final SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulResponse(null);
 
-   private Object responseValue;
+   private final Object responseValue;
 
-   public SuccessfulResponse() {
-   }
-
-   public SuccessfulResponse(Object responseValue) {
+   private SuccessfulResponse(Object responseValue) {
       this.responseValue = responseValue;
    }
+
+   public static SuccessfulResponse create(Object responseValue) {
+      return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse(responseValue);
+   }    
 
    public boolean isSuccessful() {
       return true;
@@ -54,10 +56,6 @@ public class SuccessfulResponse extends ValidResponse {
 
    public Object getResponseValue() {
       return responseValue;
-   }
-
-   public void setResponseValue(Object responseValue) {
-      this.responseValue = responseValue;
    }
 
    @Override
@@ -87,12 +85,22 @@ public class SuccessfulResponse extends ValidResponse {
    public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {
       @Override
       public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
-         output.writeObject(response.responseValue);
+         if (response.responseValue == null) {
+            output.writeBoolean(false);
+         } else {
+            output.writeBoolean(true);
+            output.writeObject(response.responseValue);
+         }
       }
 
       @Override
       public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new SuccessfulResponse(input.readObject());
+         boolean nonNullResponse = input.readBoolean();
+         if (nonNullResponse) {
+            return new SuccessfulResponse(input.readObject());
+         } else {
+            return SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
+         }
       }
 
       @Override

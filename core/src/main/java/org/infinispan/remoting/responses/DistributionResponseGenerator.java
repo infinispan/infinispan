@@ -52,7 +52,7 @@ public class DistributionResponseGenerator implements ResponseGenerator {
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
          if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
             return UnsureResponse.INSTANCE;
-         return new SuccessfulResponse(returnValue);
+         return SuccessfulResponse.create(returnValue);
       } else if (command instanceof SingleRpcCommand) {
          SingleRpcCommand src = (SingleRpcCommand) command;
          ReplicableCommand c = src.getCommand();
@@ -64,20 +64,20 @@ public class DistributionResponseGenerator implements ResponseGenerator {
             return handleWriteCommand(wc, returnValue);
          } else if (commandId == MapReduceCommand.COMMAND_ID || commandId == DistributedExecuteCommand.COMMAND_ID) {
             // Even null values should be wrapped in this case.
-            return new SuccessfulResponse(returnValue);
+            return SuccessfulResponse.create(returnValue);
          } else if (c.isReturnValueExpected()) {
             if (returnValue == null) return null;
-            return new SuccessfulResponse(returnValue);
+            return SuccessfulResponse.create(returnValue);
          }
       } else if (command.isReturnValueExpected()) {
-         return new SuccessfulResponse(returnValue);
+         return SuccessfulResponse.create(returnValue);
       }
       return null; // no unnecessary response values!
    }
    
    protected Response handleWriteCommand(WriteCommand wc, Object returnValue) {
       if (wc.isSuccessful()) {
-         return wc.isReturnValueExpected() ? new SuccessfulResponse(returnValue) : null;
+         return wc.isReturnValueExpected() ? SuccessfulResponse.create(returnValue) : null;
       } else
          return UnsuccessfulResponse.INSTANCE;
    }
