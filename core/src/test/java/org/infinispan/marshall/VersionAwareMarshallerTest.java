@@ -224,7 +224,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testExtendedResponseMarshalling() throws Exception {
-      SuccessfulResponse sr = new SuccessfulResponse("Blah");
+      SuccessfulResponse sr = SuccessfulResponse.create("Blah");
       ExtendedResponse extended = new ExtendedResponse(sr, false);
       byte[] bytes = marshaller.objectToByteBuffer(extended);
       ExtendedResponse readObj = (ExtendedResponse) marshaller.objectFromByteBuffer(bytes);
