@@ -37,8 +37,8 @@ import java.util.concurrent.ThreadFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test (groups = "functional", testName = "affinity.FilteredKeyAffinityService")
-public class FilteredKeyAffinityService extends BaseFilterKeyAffinityServiceTest {
+@Test (groups = "functional", testName = "affinity.FilteredKeyAffinityServiceTest")
+public class FilteredKeyAffinityServiceTest extends BaseFilterKeyAffinityServiceTest {
    private List<Address> filter;
 
    @Override
@@ -53,7 +53,7 @@ public class FilteredKeyAffinityService extends BaseFilterKeyAffinityServiceTest
       filter.add(caches.get(0).getAdvancedCache().getRpcManager().getTransport().getAddress());
       filter.add(caches.get(1).getAdvancedCache().getRpcManager().getTransport().getAddress());
       cacheManager = caches.get(0).getCacheManager();
-      keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.
+      keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.
             newKeyAffinityService(cacheManager.getCache(cacheName), filter, new RndKeyGenerator(),
                                        Executors.newSingleThreadExecutor(tf), 100);
    }

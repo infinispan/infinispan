@@ -56,7 +56,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 4.1
  */
 @ThreadSafe
-public class KeyAffinityServiceImpl implements KeyAffinityService {
+public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    public final static float THRESHOLD = 0.5f;
    
@@ -65,13 +65,13 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private final Set<Address> filter;
 
    @GuardedBy("maxNumberInvariant")
-   private final Map<Address, BlockingQueue> address2key = ConcurrentMapFactory.makeConcurrentMap();
+   private final Map<Address, BlockingQueue<K>> address2key = ConcurrentMapFactory.makeConcurrentMap();
    private final Executor executor;
-   private final Cache cache;
-   private final KeyGenerator keyGenerator;
+   private final Cache<? extends K, ?> cache;
+   private final KeyGenerator<? extends K> keyGenerator;
    private final int bufferSize;
    private final AtomicInteger maxNumberOfKeys = new AtomicInteger(); //(nr. of addresses) * bufferSize;
-   private final AtomicInteger exitingNumberOfKeys = new AtomicInteger();
+   final AtomicInteger existingKeyCount = new AtomicInteger();
 
    private volatile boolean started;
 
@@ -88,7 +88,8 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private volatile ListenerRegistration listenerRegistration;
 
 
-   public KeyAffinityServiceImpl(Executor executor, Cache cache, KeyGenerator keyGenerator, int bufferSize, Collection<Address> filter, boolean start) {
+   public KeyAffinityServiceImpl(Executor executor, Cache<? extends K, ?> cache, KeyGenerator<? extends K> keyGenerator,
+                                 int bufferSize, Collection<Address> filter, boolean start) {
       this.executor = executor;
       this.cache = cache;
       this.keyGenerator = keyGenerator;
@@ -106,24 +107,24 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    }
 
    @Override
-   public Object getCollocatedKey(Object otherKey) {
+   public K getCollocatedKey(K otherKey) {
       Address address = getAddressForKey(otherKey);
       return getKeyForAddress(address);
    }
 
    @Override
-   public Object getKeyForAddress(Address address) {
+   public K getKeyForAddress(Address address) {
       if (!started) {
          throw new IllegalStateException("You have to start the service first!");
       }
       if (address == null)
          throw new NullPointerException("Null address not supported!");
-      BlockingQueue queue = address2key.get(address);
+      BlockingQueue<K> queue = address2key.get(address);
       if (queue == null)
          throw new IllegalStateException("Address " + address + " is no longer in the cluster");
 
       try {
-         Object result = null;
+         K result = null;
          while (result == null && !keyGenWorker.isStopped()) {
             // obtain the read lock inside the loop, otherwise a topology change will never be able
             // to obtain the write lock
@@ -142,7 +143,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
                maxNumberInvariant.readLock().unlock();
             }
          }
-         exitingNumberOfKeys.decrementAndGet();
+         existingKeyCount.decrementAndGet();
          return result;
       } finally {
          if (queue.size() < bufferSize * THRESHOLD + 1) {
@@ -264,9 +265,9 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
             // in order to fill all the queues
             int maxMisses = maxNumberOfKeys.get();
             int missCount = 0;
-            while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get()
+            while (!Thread.currentThread().isInterrupted() && existingKeyCount.get() < maxNumberOfKeys.get()
                   && missCount < maxMisses) {
-               Object key = keyGenerator.getKey();
+               K key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
                if (interestedInAddress(addressForKey)) {
                   boolean added = tryAddKey(addressForKey, key);
@@ -295,23 +296,14 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          return false;
       }
 
-      private boolean tryAddKey(Address address, Object key) {
-         BlockingQueue queue = address2key.get(address);
+      private boolean tryAddKey(Address address, K key) {
+         BlockingQueue<K> queue = address2key.get(address);
          // on node stop the distribution manager might still return the dead server for a while after we have already removed its queue
          if (queue == null)
             return false;
 
          boolean added = queue.offer(key);
-         if (added) {
-            exitingNumberOfKeys.incrementAndGet();
-         }
-         if (log.isTraceEnabled()) {
-            if (added)
-               log.tracef("Successfully added key(%s) to the address(%s), maxNumberOfKeys=%d, exitingNumberOfKeys=%d",
-                          key, address, maxNumberOfKeys.get(), exitingNumberOfKeys.get());
-            else
-               log.tracef("Not added key(%s) to the address(%s)", key, address);
-         }
+         if (added) existingKeyCount.incrementAndGet();
          return added;
       }
 
@@ -329,10 +321,10 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
     */
    private void resetNumberOfKeys() {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
-      exitingNumberOfKeys.set(0);
+      existingKeyCount.set(0);
       if (log.isTraceEnabled()) {
-         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, exitingNumberOfKeys=%s",
-                    maxNumberOfKeys.get(), exitingNumberOfKeys.get());
+         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, existingKeyCount=%s",
+                    maxNumberOfKeys.get(), existingKeyCount.get());
       }
    }
 
@@ -342,7 +334,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private void addQueuesForAddresses(Collection<Address> addresses) {
       for (Address address : addresses) {
          if (interestedInAddress(address)) {
-            address2key.put(address, new ArrayBlockingQueue(bufferSize));
+            address2key.put(address, new ArrayBlockingQueue<K>(bufferSize));
          } else {
             if (log.isTraceEnabled())
                log.tracef("Skipping address: %s", address);
@@ -377,16 +369,12 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       return distributionManager;
    }
 
-   public Map<Address, BlockingQueue> getAddress2KeysMapping() {
+   public Map<Address, BlockingQueue<K>> getAddress2KeysMapping() {
       return Collections.unmodifiableMap(address2key);
    }
 
    public int getMaxNumberOfKeys() {
       return maxNumberOfKeys.intValue();
-   }
-
-   public int getExitingNumberOfKeys() {
-      return exitingNumberOfKeys.intValue();
    }
 
    public boolean isKeyGeneratorThreadActive() {
