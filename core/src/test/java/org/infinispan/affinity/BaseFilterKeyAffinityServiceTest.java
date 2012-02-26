@@ -59,7 +59,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
 
 
    protected void testSingleKey() throws InterruptedException {
-      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       assertEquals(getAddresses().size(), blockingQueueMap.keySet().size());
       assertEventualFullCapacity(getAddresses());
    }

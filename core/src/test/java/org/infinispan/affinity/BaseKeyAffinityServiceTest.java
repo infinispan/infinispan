@@ -41,7 +41,7 @@ import static junit.framework.Assert.assertEquals;
  */
 public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    
-   protected KeyAffinityServiceImpl keyAffinityService;
+   protected KeyAffinityServiceImpl<Object> keyAffinityService;
 
    protected void assertMapsToAddress(Object o, Address addr) {
       ConsistentHash hash = caches.get(0).getAdvancedCache().getDistributionManager().getConsistentHash();
@@ -67,25 +67,25 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    }
 
    protected void assertEventualFullCapacity(List<Address> addresses) throws InterruptedException {
-      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       long maxWaitTime = 20 * 60 * 1000; // No more than 20 minutes per address since any more is ridiculous!
       for (Address addr : addresses) {
-         BlockingQueue queue = blockingQueueMap.get(addr);
+         BlockingQueue<Object> queue = blockingQueueMap.get(addr);
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          //the queue will eventually get filled
          while (queue.size() != 100 && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
          assertEquals(100, queue.size());
       }
-      assertEquals(keyAffinityService.getMaxNumberOfKeys(), keyAffinityService.getExitingNumberOfKeys());
-      assertEquals(addresses.size() * 100, keyAffinityService.getExitingNumberOfKeys());
+      assertEquals(keyAffinityService.getMaxNumberOfKeys(), keyAffinityService.existingKeyCount.get());
+      assertEquals(addresses.size() * 100, keyAffinityService.existingKeyCount.get());
       assertEquals(false, keyAffinityService.isKeyGeneratorThreadActive());
    }
 
    protected void assertCorrectCapacity(List<Address> addresses) throws InterruptedException {
-      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       long maxWaitTime = 5 * 60 * 1000;
       for (Address addr : addresses) {
-         BlockingQueue queue = blockingQueueMap.get(addr);
+         BlockingQueue<Object> queue = blockingQueueMap.get(addr);
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          while (queue.size() < KeyAffinityServiceImpl.THRESHOLD * 100 && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
          assert queue.size() >= KeyAffinityServiceImpl.THRESHOLD * 100 : "Obtained " + queue.size();
@@ -98,9 +98,9 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    }
 
    protected void assertKeyAffinityCorrectness(Collection<Address> addressList) {
-      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       for (Address addr : addressList) {
-         BlockingQueue queue = blockingQueueMap.get(addr);
+         BlockingQueue<Object> queue = blockingQueueMap.get(addr);
          assertEquals(100, queue.size());
          for (Object o : queue) {
             assertMapsToAddress(o, addr);

@@ -52,7 +52,7 @@ public class KeyAffinityServiceShutdownTest extends BaseKeyAffinityServiceTest {
       };
       executor = Executors.newSingleThreadExecutor(tf);
       cacheManager = manager(0);
-      keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.newKeyAffinityService(cacheManager.getCache(cacheName),
+      keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.newKeyAffinityService(cacheManager.getCache(cacheName),
                                                                                                     executor,
                                                                                                     new RndKeyGenerator(), 100);
    }
