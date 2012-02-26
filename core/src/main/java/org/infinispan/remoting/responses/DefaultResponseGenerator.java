@@ -35,7 +35,7 @@ public class DefaultResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue == null) return null;
       if (returnValue instanceof EntryVersionsMap || command.isReturnValueExpected()) {
-         return new SuccessfulResponse(returnValue);
+         return SuccessfulResponse.create(returnValue);
       } else {
          return null; // saves on serializing a response!
       }

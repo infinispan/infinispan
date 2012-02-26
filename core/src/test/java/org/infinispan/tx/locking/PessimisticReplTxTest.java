@@ -106,11 +106,10 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
 
    public void simpleTest() throws Exception {
       tm(0).begin();
-      cache(0).put("k","v");
+      cache(0).put(k,"v");
       tm(0).commit();
-
-      assertEquals(cache(0).get("k"), "v");
-      assertEquals(cache(1).get("k"), "v");
+      assertEquals(cache(0).get(k), "v");
+      assertEquals(cache(1).get(k), "v");
    }
    
 

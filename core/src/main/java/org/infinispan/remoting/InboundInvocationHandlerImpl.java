@@ -92,7 +92,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (cmd instanceof CacheViewControlCommand) {
          ((CacheViewControlCommand) cmd).init(cacheViewsManager);
          try {
-            return new SuccessfulResponse(cmd.perform(null));
+            return SuccessfulResponse.create(cmd.perform(null));
          } catch (Exception e) {
             return new ExceptionResponse(e);
          }

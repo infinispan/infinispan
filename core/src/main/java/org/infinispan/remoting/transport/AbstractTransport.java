@@ -48,7 +48,7 @@ public abstract class AbstractTransport implements Transport {
       this.configuration = globalConfiguration;
    }
 
-   protected final boolean shouldThrowException(Exception ce) {
+   private boolean shouldThrowException(Exception ce) {
       if (!configuration.isStrictPeerToPeer()) {
          if (ce instanceof NamedCacheNotFoundException) return false;
          if (ce.getCause() != null && ce.getCause() instanceof NamedCacheNotFoundException) return false;
@@ -56,7 +56,32 @@ public abstract class AbstractTransport implements Transport {
       return true;
    }
 
-   protected boolean parseResponseAndAddToResponseList(Object responseObject, Throwable exception, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
+   public final boolean checkResponse(Object responseObject, Address sender) throws Exception {
+      Log log = getLog();
+      if (responseObject instanceof Response) {
+         Response response = (Response) responseObject;
+         if (response instanceof ExceptionResponse) {
+            Exception e = ((ExceptionResponse) response).getException();
+            if (!(e instanceof RpcException)) {
+               // if we have any application-level exceptions make sure we throw them!!
+               if (shouldThrowException(e)) {
+                  throw e;
+               } else {
+                  if (log.isDebugEnabled()) log.debug("Received exception from sender" + sender, e);
+               }
+            }
+         }
+         return true;
+      } else if (responseObject != null) {
+         // null responses should just be ignored, all other responses should trigger an exception
+         Class<?> responseClass = responseObject.getClass();
+         log.tracef("Unexpected response object type from %s: %s", sender, responseClass);
+         throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
+      }
+      return false;
+   } 
+   
+   protected final boolean parseResponseAndAddToResponseList(Object responseObject, Throwable exception, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
                                                        boolean wasReceived, Address sender, boolean usedResponseFilter, boolean ignoreLeavers)
            throws Exception
    {
@@ -68,26 +93,8 @@ public abstract class AbstractTransport implements Transport {
             log.tracef(exception, "Unexpected exception from %s", sender);
             throw new CacheException("Remote (" + sender + ") failed unexpectedly", exception);
          }
-         if (responseObject instanceof Response) {
-            Response response = (Response) responseObject;
-            if (response instanceof ExceptionResponse) {
-               Exception e = ((ExceptionResponse) response).getException();
-               if (!(e instanceof RpcException)) {
-                  // if we have any application-level exceptions make sure we throw them!!
-                  if (shouldThrowException(e)) {
-                     throw e;
-                  } else {
-                     if (log.isDebugEnabled()) log.debug("Received exception from sender" + sender, e);
-                  }
-               }
-            }
-            responseListToAddTo.put(sender, response);
-         } else if (responseObject != null) {
-            // null responses should just be ignored, all other responses should trigger an exception
-            Class<?> responseClass = responseObject.getClass();
-            log.tracef("Unexpected response object type from %s: %s", sender, responseClass);
-            throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
-         }
+         
+         if (checkResponse(responseObject, sender)) responseListToAddTo.put(sender, (Response) responseObject);
       } else if (wasSuspected) {
          if (!ignoreLeavers) {
             throw new SuspectException("Suspected member: " + sender, sender);
