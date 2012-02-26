@@ -587,12 +587,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (hasNotifier) {
          Notify n;
          if (newView instanceof MergeView) {
-            if (log.isInfoEnabled())
-               log.receivedMergedView(newView);
+            log.receivedMergedView(newView);
             n = new NotifyMerge();
          } else {
-            if (log.isInfoEnabled())
-               log.receivedClusterView(newView);
+            log.receivedClusterView(newView);
             n = new NotifyViewChange();
          }
 
