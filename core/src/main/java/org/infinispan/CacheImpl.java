@@ -473,6 +473,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    boolean lock(Collection<? extends K> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      if (!config.isTransactionalCache())
+         throw new UnsupportedOperationException("Calling lock() on non-transactional caches is not allowed");
+
       if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }

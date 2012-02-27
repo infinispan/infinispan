@@ -49,6 +49,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 
 @Test(testName = "lock.APITest", groups = "functional")
@@ -207,4 +208,17 @@ public class APITest extends MultipleCacheManagersTest {
       assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock(Arrays.asList("k1", "k2", "k3"));
       tm(0).rollback();
    }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testLockOnNonTransactionalCache() throws Exception {
+      withCacheManager(new Callable<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager call() throws Exception {
+            EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+            cm.getCache().getAdvancedCache().lock("k");
+            return cm;
+         }
+      });
+   }
+
 }
