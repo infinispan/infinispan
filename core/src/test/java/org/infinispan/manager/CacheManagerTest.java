@@ -33,6 +33,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -330,11 +331,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    private void doTestRemoveCacheClustered(final Method m, final boolean isStoreShared) throws Exception {
-      withCacheManagers(new Callable<EmbeddedCacheManager[]>() {
+      withCacheManagers(new MultiCacheManagerCallable(
+            getManagerWithStore(m, true, isStoreShared, "store1-"),
+            getManagerWithStore(m, true, isStoreShared, "store2-")) {
          @Override
-         public EmbeddedCacheManager[] call() throws Exception {
-            EmbeddedCacheManager manager1 = getManagerWithStore(m, true, isStoreShared, "store1-");
-            EmbeddedCacheManager manager2 = getManagerWithStore(m, true, isStoreShared, "store2-");
+         public void call() throws Exception {
+            EmbeddedCacheManager manager1 = cms[0];
+            EmbeddedCacheManager manager2 = cms[0];
             Cache cache1 = manager1.getCache("cache", true);
             Cache cache2 = manager2.getCache("cache", true);
             assert cache1 != null;
@@ -363,7 +366,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             assert 0 == data1.size();
             assert store2.isEmpty();
             assert 0 == data2.size();
-            return new EmbeddedCacheManager[]{manager1, manager2};
          }
       });
    }
