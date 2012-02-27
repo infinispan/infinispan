@@ -62,7 +62,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * 
     * @param task a task to execute across Infinispan cluster
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable} 
-    * @return a list of Futures, one future per Infinispan cluster node where task was executed
+    * @return a Future representing pending completion of the task
     */
    public <T, K> Future<T> submit(Callable<T> task, K... input);
 

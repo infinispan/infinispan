@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -80,8 +81,63 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          cacheManager.stop();
       }
    }
+   
+   /**
+    * Tests that we can invoke DistributedExecutorService task with keys
+    * https://issues.jboss.org/browse/ISPN-1886
+    * 
+    * @throws Exception
+    */
+   public void testSingleCacheWithKeysExecution() throws Exception {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      try {
+         Cache<Object, Object> c1 = cacheManager.getCache();
+         c1.put("key1", "Manik");
+         c1.put("key2", "Mircea");
+         c1.put("key3", "Galder");
+         c1.put("key4", "Sanne");
+
+         DistributedExecutorService des = new DefaultExecutorService(c1);
+
+         Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
+                  "key1", "key2" });
+         Boolean r = future.get();
+         assert r;
+      } finally {
+         cacheManager.stop();
+      }
+   }
 
 
+   static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
+            Serializable {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 623845442163221832L;
+      private boolean invokedProperly = false;
+      private final boolean hasKeys;
+
+      public SimpleDistributedCallable(boolean hasKeys) {
+         this.hasKeys = hasKeys;
+      }
+
+      @Override
+      public Boolean call() throws Exception {
+         return invokedProperly;
+      }
+
+      @Override
+      public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
+         boolean keysProperlySet = hasKeys ? inputKeys != null && !inputKeys.isEmpty()
+                  : inputKeys != null && inputKeys.isEmpty();
+         invokedProperly = cache != null && keysProperlySet;
+      }
+
+      public boolean validlyInvoked() {
+         return invokedProperly;
+      }
+   }
    static class SimpleCallable implements Callable<Integer>, Serializable {
 
       /** The serialVersionUID */
