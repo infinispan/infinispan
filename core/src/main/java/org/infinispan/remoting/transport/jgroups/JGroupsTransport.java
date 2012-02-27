@@ -473,17 +473,17 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                if (singleRecipient) singleJGAddress = toJGroupsAddress(others.get(0));
             }
             if (!skipRpc) {
-            if (singleRecipient) {
-               if (singleJGAddress == null) singleJGAddress = jgAddressList.get(0);
+               if (singleRecipient) {
+                  if (singleJGAddress == null) singleJGAddress = jgAddressList.get(0);
                   singleResponse = dispatcher.invokeRemoteCommand(singleJGAddress, rpcCommand, toJGroupsMode(mode), timeout,
-                                                               usePriorityQueue, supportReplay, asyncMarshalling);
+                                                                  usePriorityQueue, supportReplay, asyncMarshalling);
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                                                      recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
-                                                      supportReplay, asyncMarshalling);
+                                                         recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
+                                                         supportReplay, asyncMarshalling);
                }
             }
-         }         
+         }
       }
 
       if (mode.isAsynchronous())
