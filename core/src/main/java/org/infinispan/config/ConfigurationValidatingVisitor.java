@@ -39,6 +39,7 @@ import java.util.Set;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
+@SuppressWarnings("boxing")
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
 
    private static final Log log = LogFactory.getLog(ConfigurationValidatingVisitor.class);

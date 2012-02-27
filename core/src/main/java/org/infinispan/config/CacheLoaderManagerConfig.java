@@ -53,6 +53,7 @@ import java.util.List;
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @ConfigurationDoc(name="loaders",desc="Holds the configuration for cache loaders and stores")
+@SuppressWarnings("boxing")
 public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean implements LoadersConfig {
 
    private static final long serialVersionUID = 2210349340378984424L;

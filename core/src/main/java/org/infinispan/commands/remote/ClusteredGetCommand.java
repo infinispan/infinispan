@@ -64,7 +64,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private InvocationContextContainer icc;
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
-   private Boolean acquireRemoteLock;
+   private boolean acquireRemoteLock;
    private GlobalTransaction gtx;
    private Set<Flag> flags;
 

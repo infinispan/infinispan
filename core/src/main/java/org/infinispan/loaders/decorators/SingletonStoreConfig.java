@@ -43,6 +43,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @ConfigurationDoc(name="singletonStore")
+@SuppressWarnings("boxing")
 public class SingletonStoreConfig extends AbstractDecoratorConfigurationBean {
 
    private static final long serialVersionUID = 824251894176131850L;
