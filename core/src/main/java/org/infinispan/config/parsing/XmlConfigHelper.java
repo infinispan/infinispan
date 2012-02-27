@@ -441,8 +441,7 @@ public class XmlConfigHelper {
             if (setter.equals(m.getName())) {
                Class paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
-                  if (log.isTraceEnabled())
-                     log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
+                  log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
                   continue; // try another param with the same name.
                }
 

@@ -135,8 +135,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public boolean hasLockAtOrigin(Collection<Object> remoteLockIntention) {
-      if (log.isTraceEnabled())
-         log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
+      log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
                     this, locksAtOrigin, remoteLockIntention);
       for (Object key : remoteLockIntention) {
          if (this.locksAtOrigin.contains(key)) {

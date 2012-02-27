@@ -58,7 +58,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       String cacheName = configuration.getName() == null ? CacheContainer.DEFAULT_CACHE_NAME : configuration.getName();
       if (recoveryEnabled) {
          String recoveryCacheName = configuration.getTransactionRecoveryCacheName();
-         if (log.isTraceEnabled()) log.tracef("Using recovery cache name %s", recoveryCacheName);
+         log.tracef("Using recovery cache name %s", recoveryCacheName);
          EmbeddedCacheManager cm = componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
          boolean useDefaultCache = recoveryCacheName.equals(Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
 
@@ -99,13 +99,13 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    }
 
    private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
-      if (log.isTraceEnabled()) log.tracef("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
+      log.tracef("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
       Cache recoveryCache = cm.getCache(recoveryCacheName);
       if (recoveryCache.getConfiguration().isTransactionalCache()) {
          //see comment in getDefaultRecoveryCacheConfig
          throw new ConfigurationException("The recovery cache shouldn't be transactional.");
       }
-      if (log.isTraceEnabled()) log.tracef("Obtained a reference to the recovery cache: %s", recoveryCacheName);
+      log.tracef("Obtained a reference to the recovery cache: %s", recoveryCacheName);
       return new RecoveryManagerImpl(recoveryCache,  cacheName);
    }
 }

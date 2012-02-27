@@ -249,7 +249,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    private boolean isPutForExternalRead(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-         if (log.isTraceEnabled()) log.trace("Put for external read called.  Suppressing clustered invalidation.");
+         log.trace("Put for external read called.  Suppressing clustered invalidation.");
          return true;
       }
       return false;

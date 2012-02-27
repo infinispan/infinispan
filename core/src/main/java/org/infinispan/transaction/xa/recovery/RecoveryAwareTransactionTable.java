@@ -168,7 +168,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
             return gtx.getXid();
          }
       }
-      if (log.isTraceEnabled()) log.tracef("Could not find remote transactions matching internal id %s", internalId);
+      log.tracef("Could not find remote transactions matching internal id %s", internalId);
       return null;
    }
 

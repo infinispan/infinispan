@@ -480,7 +480,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       @Override
       protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
          if (mods.get(key) != null && block) {
-            if (log.isTraceEnabled()) log.trace("Wait for v1 latch");
+            log.trace("Wait for v1 latch");
             try {
                v2Latch.countDown();
                block = false;
@@ -489,7 +489,7 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
             super.applyModificationsSync(mods);
          } else if (mods.get(key) != null && !block) {
-            if (log.isTraceEnabled()) log.trace("Do v2 modification and unleash v1 latch");
+            log.trace("Do v2 modification and unleash v1 latch");
             super.applyModificationsSync(mods);
             v1Latch.countDown();
             endLatch.countDown();

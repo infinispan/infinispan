@@ -87,14 +87,13 @@ public class JmxUtil {
       if (!mBeanServer.isRegistered(objectName)) {
          try {
             mBeanServer.registerMBean(dynamicMBean, objectName);
-            if (log.isTraceEnabled()) log.tracef("Registered %s under %s", dynamicMBean, objectName);
+            log.tracef("Registered %s under %s", dynamicMBean, objectName);
          } catch (InstanceAlreadyExistsException e) {
             //this might happen if multiple instances are trying to concurrently register same objectName
             log.couldNotRegisterObjectName(objectName, e);
          }
       } else {
-         if (log.isDebugEnabled())
-            log.debugf("Object name %s already registered", objectName);
+         log.debugf("Object name %s already registered", objectName);
       }
    }
 
@@ -108,7 +107,7 @@ public class JmxUtil {
    public static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (mBeanServer.isRegistered(objectName)) {
          mBeanServer.unregisterMBean(objectName);
-         if (log.isTraceEnabled()) log.tracef("Unregistered %s", objectName);
+         log.tracef("Unregistered %s", objectName);
       }
    }
 

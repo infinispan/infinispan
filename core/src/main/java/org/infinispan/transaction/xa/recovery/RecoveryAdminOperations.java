@@ -137,10 +137,10 @@ public class RecoveryAdminOperations {
    private String completeTransaction(Xid xid, RecoveryManager.InDoubtTxInfo i, boolean commit) {
       //try to run it locally at first
       if (i.isLocal()) {
-         if (log.isTraceEnabled()) log.tracef("Forcing completion of local transaction: %s", i);
+         log.tracef("Forcing completion of local transaction: %s", i);
          return recoveryManager.forceTransactionCompletion(xid, commit);
       } else {
-         if (log.isTraceEnabled()) log.tracef("Forcing completion of remote transaction: %s", i);
+         log.tracef("Forcing completion of remote transaction: %s", i);
          Set<Address> owners = i.getOwners();
          if (owners == null || owners.isEmpty()) throw new IllegalStateException("Owner list cannot be empty for " + i);
          return recoveryManager.forceTransactionCompletionFromCluster(xid, owners.iterator().next(), commit);
@@ -152,7 +152,7 @@ public class RecoveryAdminOperations {
       SerializableXid xid = new SerializableXid(branchQualifier, globalTxId, formatId);
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getXid().equals(xid)) {
-            if (log.isTraceEnabled()) log.tracef("Found matching recovery info: %s", i);
+            log.tracef("Found matching recovery info: %s", i);
             return i;
          }
       }
@@ -161,7 +161,7 @@ public class RecoveryAdminOperations {
 
    private Set<RecoveryManager.InDoubtTxInfo> getRecoveryInfoFromCluster() {
       Set<RecoveryManager.InDoubtTxInfo> info = recoveryManager.getInDoubtTransactionInfoFromCluster();
-      if (log.isTraceEnabled()) log.tracef("Recovery info from cluster is: %s", info);
+      log.tracef("Recovery info from cluster is: %s", info);
       return info;
    }
 
@@ -169,7 +169,7 @@ public class RecoveryAdminOperations {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getInternalId().equals(internalId)) {
-            if (log.isTraceEnabled()) log.tracef("Found matching recovery info: %s", i);
+            log.tracef("Found matching recovery info: %s", i);
             return i;
          }
       }

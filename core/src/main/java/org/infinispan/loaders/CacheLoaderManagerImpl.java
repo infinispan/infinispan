@@ -204,7 +204,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             if (store != null) {
                InvocationContext ctx = icc.getInvocationContext(false);
                if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
-                  if (log.isTraceEnabled()) log.trace("Requested removal of data on stop, so clear cache store");
+                  log.trace("Requested removal of data on stop, so clear cache store");
                   store.clear();
                }
             }

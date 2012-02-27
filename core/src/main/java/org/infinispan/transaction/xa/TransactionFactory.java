@@ -306,7 +306,7 @@ public class TransactionFactory {
       } else if (!dldEnabled && !recoveryEnabled && !xa) {
          txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
       }
-      if (log.isTraceEnabled()) log.tracef("Setting factory enum to %s", txFactoryEnum);
+      log.tracef("Setting factory enum to %s", txFactoryEnum);
 
       if (txFactoryEnum == null) {
          log.unsupportedTransactionConfiguration(dldEnabled, recoveryEnabled, xa);

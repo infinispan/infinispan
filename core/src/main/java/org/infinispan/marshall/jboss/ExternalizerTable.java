@@ -239,8 +239,7 @@ public class ExternalizerTable implements ObjectTable {
       writers.clear();
       readers.clear();
       started = false;
-      if (log.isTraceEnabled())
-         log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
+      log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
@@ -263,8 +262,7 @@ public class ExternalizerTable implements ObjectTable {
       ExternalizerAdapter adapter = readers.get(readerIndex);
       if (adapter == null) {
          if (!started) {
-            if (log.isTraceEnabled())
-               log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not properly populated: %s", readers);
+            log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not properly populated: %s", readers);
 
             if (Thread.currentThread().isInterrupted()) {
                throw new IOException(String.format(
@@ -331,8 +329,7 @@ public class ExternalizerTable implements ObjectTable {
    }
 
    private void loadForeignMarshallables(GlobalConfiguration globalCfg) {
-      if (log.isTraceEnabled())
-         log.trace("Loading user defined externalizers");
+      log.trace("Loading user defined externalizers");
       List<AdvancedExternalizerConfig> configs = globalCfg.getExternalizers();
       for (AdvancedExternalizerConfig config : configs) {
          AdvancedExternalizer ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
