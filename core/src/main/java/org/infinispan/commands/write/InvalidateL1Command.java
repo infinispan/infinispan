@@ -99,7 +99,8 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-		if (log.isTraceEnabled()) log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
+      final boolean trace = log.isTraceEnabled();
+      if (trace) log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
       for (Object k : getKeys()) {
          InternalCacheEntry ice = dataContainer.get(k);
          if (ice != null) {
@@ -114,10 +115,10 @@ public class InvalidateL1Command extends InvalidateCommand {
 
             if (!locality.isLocal()) {
                if (forRehash && config.isL1OnRehash()) {
-                  if (log.isTraceEnabled()) log.trace("Not removing, instead entry will be stored in L1");
+                  if (trace) log.trace("Not removing, instead entry will be stored in L1");
                   // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
                } else {
-               	if (log.isTraceEnabled()) log.tracef("Invalidating key %s.", k);
+               	if (trace) log.tracef("Invalidating key %s.", k);
                   invalidate(ctx, k);
                }
             }

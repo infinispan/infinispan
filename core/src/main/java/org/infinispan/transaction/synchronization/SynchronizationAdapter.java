@@ -63,9 +63,7 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
 
    @Override
    public void beforeCompletion() {
-      if (log.isTraceEnabled()) {
-         log.tracef("beforeCompletion called for %s", localTransaction);
-      }
+      log.tracef("beforeCompletion called for %s", localTransaction);
       try {
          txCoordinator.prepare(localTransaction);
       } catch (XAException e) {

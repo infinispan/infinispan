@@ -182,13 +182,13 @@ public class RecoveryManagerImpl implements RecoveryManager {
             RecoverableTransactionIdentifier globalTransaction = (RecoverableTransactionIdentifier) raRemoteTx.getGlobalTransaction();
             if (internalId.equals(globalTransaction.getInternalId())) {
                Xid xid = globalTransaction.getXid();
-               if (log.isTraceEnabled()) log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
+               log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
                removeRecoveryInformation(xid);
                return raRemoteTx;
             }
          }
       }
-      if (log.isTraceEnabled()) log.tracef("Could not find tx to map to internal id %s", internalId);
+      log.tracef("Could not find tx to map to internal id %s", internalId);
       return null;
    }
 
@@ -200,7 +200,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          if (key.cacheName.equals(cacheName))
             result.add(key.xid);
       }
-      if (log.isTraceEnabled()) log.tracef("Returning %s ", result);
+      log.tracef("Returning %s ", result);
       return result;
    }
 
@@ -208,8 +208,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public Set<InDoubtTxInfo> getInDoubtTransactionInfo() {
       List<Xid> txs = getInDoubtTransactions();
       Set<RecoveryAwareLocalTransaction> localTxs = txTable.getLocalTxThatFailedToComplete();
-      if (log.isTraceEnabled())
-         log.tracef("Local transactions that failed to complete is %s", localTxs);
+      log.tracef("Local transactions that failed to complete is %s", localTxs);
       Set<InDoubtTxInfo> result = new HashSet<InDoubtTxInfo>();
       for (RecoveryAwareLocalTransaction r : localTxs) {
          long internalId = ((RecoverableTransactionIdentifier) r.getGlobalTransaction()).getInternalId();
@@ -222,7 +221,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), pTx.getStatus());
          result.add(infoInDoubt);
       }
-      if (log.isTraceEnabled()) log.tracef("The set of in-doubt txs from this node is %s", result);
+      log.tracef("The set of in-doubt txs from this node is %s", result);
       return result;
    }
 

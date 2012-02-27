@@ -750,13 +750,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                globalComponentRegistry.stop();
 
             } else {
-               if (log.isTraceEnabled())
-                  log.trace("Ignore call to stop as the cache manager is stopping");
+               log.trace("Ignore call to stop as the cache manager is stopping");
             }
          }
       } else {
-         if (log.isTraceEnabled())
-            log.trace("Ignore call to stop as the cache manager is stopping");
+         log.trace("Ignore call to stop as the cache manager is stopping");
       }
    }
 
