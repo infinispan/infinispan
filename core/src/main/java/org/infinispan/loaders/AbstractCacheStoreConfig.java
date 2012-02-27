@@ -55,6 +55,7 @@ import javax.xml.bind.annotation.*;
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @XmlType(propOrder= {})
 @ConfigurationDoc(name="loader",desc="Responsible for loading/storing cache data from/to an external source.")
+@SuppressWarnings("boxing")
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
 
    /** The serialVersionUID */

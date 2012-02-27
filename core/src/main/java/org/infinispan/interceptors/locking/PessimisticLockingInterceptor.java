@@ -221,13 +221,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             if (ctx.isOriginLocal())
                throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
             releaseLocksOnFailureBeforePrepare(ctx);
-            return false;
+            return Boolean.FALSE;
          }
 
          for (Object key : command.getKeys()) {
             lockAndRegisterBackupLock(ctx, key);
          }
-         return true;
+         return Boolean.TRUE;
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;

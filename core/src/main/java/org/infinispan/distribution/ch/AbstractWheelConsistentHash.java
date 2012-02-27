@@ -129,8 +129,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
       }
 
-      getLog().debugf("Using %d virtualNodes to initialize consistent hash wheel ", numVirtualNodes);
-      getLog().tracef("Positions are: %s", positions);
+      Log logger = getLog();
+      if (logger.isDebugEnabled()) {
+         logger.debugf("Using %d virtualNodes to initialize consistent hash wheel ", numVirtualNodes);
+         logger.tracef("Positions are: %s", positions);
+      }
 
       // then populate caches, positionKeys and positionValues with the correct values (and in the correct order)
       caches = new LinkedHashSet<Address>(newCaches.size());

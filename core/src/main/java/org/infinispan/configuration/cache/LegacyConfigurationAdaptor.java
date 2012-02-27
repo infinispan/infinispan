@@ -23,7 +23,7 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.util.Util;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "boxing"})
 public class LegacyConfigurationAdaptor {
    private LegacyConfigurationAdaptor() {
       // Hide constructor

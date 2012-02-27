@@ -89,6 +89,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
 @XmlRootElement(name = "namedCacheConfiguration")
 @ConfigurationDoc(name = "default")
 @Deprecated
+@SuppressWarnings("boxing")
 public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 5553791890144997466L;
