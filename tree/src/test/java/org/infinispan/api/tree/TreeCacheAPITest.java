@@ -30,6 +30,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -46,7 +47,6 @@ import org.testng.annotations.Test;
 import javax.transaction.TransactionManager;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.*;
@@ -208,31 +208,24 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testTreeCacheFactory() throws Exception {
-      withCacheManager(new Callable<EmbeddedCacheManager>() {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().invocationBatching().enable().build())) {
          @Override
-         public EmbeddedCacheManager call() throws Exception {
-            org.infinispan.configuration.cache.Configuration config = new ConfigurationBuilder().invocationBatching().enable().build();
-            DefaultCacheManager cm = new DefaultCacheManager(config);
+         public void call() throws Exception {
             TreeCacheFactory tcf = new TreeCacheFactory();
             tcf.createTreeCache(cm.getCache());
-            return cm;
          }
-
       });
-
    }
 
    @Test(expectedExceptions=ConfigurationException.class)
    public void testFactoryNoBatching() throws Exception {
-      withCacheManager(new Callable<EmbeddedCacheManager>() {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().build())) {
          @Override
-         public EmbeddedCacheManager call() throws Exception {
-            org.infinispan.configuration.cache.Configuration config = new ConfigurationBuilder().build();
-            DefaultCacheManager cm = new DefaultCacheManager(config);
+         public void call() throws Exception {
             TreeCacheFactory tcf = new TreeCacheFactory();
             tcf.createTreeCache(cm.getCache());
-            return cm;
          }
       });
    }
+
 }
