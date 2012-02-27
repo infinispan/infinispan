@@ -127,14 +127,10 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (lock.isWriteLockedByCurrentThread()) {
          lock.writeLock().unlock();
-         if (log.isTraceEnabled()) {
-            log.tracef("WL released for '%s'", key);
-        }
+         log.tracef("WL released for '%s'", key);
       } else {
          lock.readLock().unlock();
-         if (log.isTraceEnabled()) {
-            log.tracef("RL released for '%s'", key);
-        }
+         log.tracef("RL released for '%s'", key);
       }
    }
 

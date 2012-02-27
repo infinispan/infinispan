@@ -72,9 +72,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (config == null) {
         throw new CacheLoaderException("Null config. Possible reason is not calling super.init(...)");
       }
-      if (log.isTraceEnabled()) {
-         log.tracef("Starting cache with config: %s", config);
-      }
+      log.tracef("Starting cache with config: %s", config);
 
       locks = new StripedLock(config.getLockConcurrencyLevel());
       globalLockTimeoutMillis = config.getLockAcquistionTimeout();

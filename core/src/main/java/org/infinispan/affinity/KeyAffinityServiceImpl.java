@@ -199,9 +199,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       if (vce.isPre())
          return;
 
-      if (log.isTraceEnabled()) {
-         log.tracef("TopologyChangedEvent received: %s", vce);
-      }
+      log.tracef("TopologyChangedEvent received: %s", vce);
       maxNumberInvariant.writeLock().lock();
       try {
          address2key.clear(); //wee need to drop everything as key-mapping data is stale due to view change
@@ -218,9 +216,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    }
 
    public void handleCacheStopped(CacheStoppedEvent cse) {
-      if (log.isTraceEnabled()) {
-         log.tracef("Cache stopped, stopping the service: %s", cse);
-      }
+      log.tracef("Cache stopped, stopping the service: %s", cse);
       stop();
    }
 
@@ -238,15 +234,11 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             while (true) {
                if (waitToBeWakenUp()) break;
                isActive = true;
-               if (log.isTraceEnabled()) {
-                  log.trace("KeyGeneratorWorker marked as ACTIVE");
-               }
+               log.trace("KeyGeneratorWorker marked as ACTIVE");
                generateKeys();
 
                isActive = false;
-               if (log.isTraceEnabled()) {
-                  log.trace("KeyGeneratorWorker marked as INACTIVE");
-               }
+               log.trace("KeyGeneratorWorker marked as INACTIVE");
             }
          } finally {
             isStopped = true;
@@ -336,8 +328,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
          if (interestedInAddress(address)) {
             address2key.put(address, new ArrayBlockingQueue<K>(bufferSize));
          } else {
-            if (log.isTraceEnabled())
-               log.tracef("Skipping address: %s", address);
+            log.tracef("Skipping address: %s", address);
          }
       }
    }
