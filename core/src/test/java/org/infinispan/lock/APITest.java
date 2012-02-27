@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -211,12 +212,11 @@ public class APITest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testLockOnNonTransactionalCache() throws Exception {
-      withCacheManager(new Callable<EmbeddedCacheManager>() {
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createLocalCacheManager(false)) {
          @Override
-         public EmbeddedCacheManager call() throws Exception {
-            EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+         public void call() throws Exception {
             cm.getCache().getAdvancedCache().lock("k");
-            return cm;
          }
       });
    }

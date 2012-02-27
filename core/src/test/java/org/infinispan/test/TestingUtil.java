@@ -1237,23 +1237,12 @@ public class TestingUtil {
     * @param c task to execute
     * @throws Exception if the task fails somehow
     */
-   public static void withCacheManager(Callable<EmbeddedCacheManager> c) throws Exception {
-      EmbeddedCacheManager cm = null;
-      boolean threwException = false;
+   public static void withCacheManager(CacheManagerCallable c)
+            throws Exception {
       try {
-         cm = c.call();
-      } catch (Exception e) {
-         threwException = true;
-         throw e;
-      } catch (Error e) {
-         threwException = true;
-         throw e;
+         c.call();
       } finally {
-         if (cm == null && !threwException)
-            throw new IllegalStateException(
-                  "Callable must return a non-null cache manager instance");
-
-         TestingUtil.killCacheManagers(cm);
+         TestingUtil.killCacheManagers(c.cm);
       }
    }
 
@@ -1265,23 +1254,12 @@ public class TestingUtil {
     * @param c task to execute
     * @throws Exception if the task fails somehow
     */
-   public static void withCacheManagers(Callable<EmbeddedCacheManager[]> c) throws Exception {
-      EmbeddedCacheManager[] cms = null;
-      boolean threwException = false;
+   public static void withCacheManagers(MultiCacheManagerCallable c)
+            throws Exception {
       try {
-         cms = c.call();
-      } catch (Exception e) {
-         threwException = true;
-         throw e;
-      } catch (Error e) {
-         threwException = true;
-         throw e;
+         c.call();
       } finally {
-         if (cms == null && !threwException)
-            throw new IllegalStateException(
-                  "Callable must return a non-null cache manager instance");
-
-         TestingUtil.killCacheManagers(cms);
+         TestingUtil.killCacheManagers(c.cms);
       }
    }
 
