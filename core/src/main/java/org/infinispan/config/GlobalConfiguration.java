@@ -1082,6 +1082,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "transport")
+   @SuppressWarnings("boxing")
    @Deprecated public static class TransportType extends AbstractConfigurationBeanWithGCR implements TransportConfig {
 
       /**

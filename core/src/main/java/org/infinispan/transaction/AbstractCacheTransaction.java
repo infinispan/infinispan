@@ -53,6 +53,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
    private static Log log = LogFactory.getLog(AbstractCacheTransaction.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
    protected List<WriteCommand> modifications;
@@ -108,7 +109,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void notifyOnTransactionFinished() {
-      log.tracef("Transaction %s has completed, notifying listening threads.", tx);
+      if (trace) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
       txComplete = true; //this one is cheap but does not guarantee visibility
       if (needToNotifyWaiters) {
          synchronized (this) {
@@ -122,7 +123,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
       if (txComplete) return true; //using an unsafe optimisation: if it's true, we for sure have the latest read of the value without needing memory barriers
       final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
-      log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
+      if (trace) log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
       if (potentiallyLocked) {
          synchronized (this) {
             // Check again after acquiring a lock on the monitor that the transaction has completed.
@@ -155,7 +156,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void registerLockedKey(Object key) {
       if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
-      log.tracef("Registering locked key: %s", key);
+      if (trace) log.tracef("Registering locked key: %s", key);
       lockedKeys.add(key);
    }
 
@@ -164,7 +165,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public void clearLockedKeys() {
-      log.tracef("Clearing locked keys: %s", lockedKeys);
+      if (trace) log.tracef("Clearing locked keys: %s", lockedKeys);
       lockedKeys = null;
    }
 
