@@ -253,7 +253,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                              Address destination, ResponseMode origMode,
                                              Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob,
                                              JGroupsTransport transport) throws Exception {
-      log.tracef("Replication task sending %s to single recipient %s", command, destination);
+      if (trace) log.tracef("Replication task sending %s to single recipient %s", command, destination);
 
       // Replay capability requires responses from all members!
       ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : origMode;
@@ -264,11 +264,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                 new RequestOptions(mode, timeout));
 
       // we only bother parsing responses if we are not in ASYNC mode.
-      log.tracef("Response: %s", retval);
+      if (trace) log.tracef("Response: %s", retval);
       if (mode != ResponseMode.GET_NONE) {
          if (retval != null) {
             if (!transport.checkResponse(retval, fromJGroupsAddress(destination))) {
-               log.tracef("Invalid response from %s", destination);
+               if (trace) log.tracef("Invalid response from %s", destination);
                throw new TimeoutException("Received an invalid response " + retval + " from " + destination);
             }
 
@@ -286,7 +286,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   //See ISPN-192 for more details
                   msg.setFlag(Message.DONT_BUNDLE);
 
-                  log.tracef("Replaying message to ignoring sender: %s", destination);
+                  if (trace) log.tracef("Replaying message to ignoring sender: %s", destination);
                   Response rv2 = card.sendMessage(msg, new RequestOptions(ResponseMode.GET_ALL, timeout, false));
                   if (rv2 != null) retval = rv2;
                }
@@ -301,7 +301,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static RspList<Object> processCalls(ReplicableCommand command, boolean broadcast, boolean supportReplay, long timeout,
                                                RspFilter filter, List<Address> dests, ResponseMode origMode,
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
-      log.tracef("Replication task sending %s to addresses %s", command, dests);
+      if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
 
       // Replay capability requires responses from all members!
       ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : origMode;
@@ -356,7 +356,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       // we only bother parsing responses if we are not in ASYNC mode.
       if (mode != ResponseMode.GET_NONE) {
 
-         log.tracef("Responses: %s", retval);
+         if (trace) log.tracef("Responses: %s", retval);
 
          // a null response is 99% likely to be due to a marshalling problem - we throw a NSE, this needs to be changed when
          // JGroups supports http://jira.jboss.com/jira/browse/JGRP-193
@@ -462,7 +462,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (sc.processed) {
             // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
             // could be notified twice.
-            log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
+            if (trace) log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
          } else {
             sc.processed = true;
             Address sender = sc.address;
@@ -470,7 +470,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             try {
                if (retval == null) {
                   Object response = objectFuture.get();
-                  log.tracef("Received response: %s from %s", response, sender);
+                  if (trace) log.tracef("Received response: %s from %s", response, sender);
                   filter.isAcceptable(response, sender);
                   if (!filter.needMoreResponses()) {
                      retval = new RspList(Collections.singleton(new Rsp(sender, response)));
@@ -478,7 +478,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                      //TODO cancel other tasks?
                   }
                } else {
-                  log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
+                  if (trace) log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
                }
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
