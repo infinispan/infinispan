@@ -1229,6 +1229,14 @@ public class TestingUtil {
       }
    }
 
+   /**
+    * Invoke a task using a cache manager. This method guarantees that the
+    * cache manager used in the task will be cleaned up after the task has
+    * completed, regardless of the task outcome.
+    *
+    * @param c task to execute
+    * @throws Exception if the task fails somehow
+    */
    public static void withCacheManager(Callable<EmbeddedCacheManager> c) throws Exception {
       EmbeddedCacheManager cm = null;
       boolean threwException = false;
@@ -1246,6 +1254,34 @@ public class TestingUtil {
                   "Callable must return a non-null cache manager instance");
 
          TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   /**
+    * Invoke a task using a several cache managers. This method guarantees
+    * that the cache managers used in the task will be cleaned up after the
+    * task has completed, regardless of the task outcome.
+    *
+    * @param c task to execute
+    * @throws Exception if the task fails somehow
+    */
+   public static void withCacheManagers(Callable<EmbeddedCacheManager[]> c) throws Exception {
+      EmbeddedCacheManager[] cms = null;
+      boolean threwException = false;
+      try {
+         cms = c.call();
+      } catch (Exception e) {
+         threwException = true;
+         throw e;
+      } catch (Error e) {
+         threwException = true;
+         throw e;
+      } finally {
+         if (cms == null && !threwException)
+            throw new IllegalStateException(
+                  "Callable must return a non-null cache manager instance");
+
+         TestingUtil.killCacheManagers(cms);
       }
    }
 

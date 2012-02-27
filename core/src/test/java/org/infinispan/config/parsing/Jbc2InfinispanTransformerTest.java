@@ -102,7 +102,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
 
          Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
          assert regionTwo != null;
-         assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.LIRS);
+         assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
          assert regionTwo.getEvictionMaxEntries() == 3003;
          assert regionTwo.getExpirationWakeUpInterval() == 50015;
 

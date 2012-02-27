@@ -36,4 +36,22 @@ public class CustomInterceptorsConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CustomInterceptorsConfiguration that = (CustomInterceptorsConfiguration) o;
+
+      if (interceptors != null ? !interceptors.equals(that.interceptors) : that.interceptors != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return interceptors != null ? interceptors.hashCode() : 0;
+   }
+
 }

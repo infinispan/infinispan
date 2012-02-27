@@ -65,4 +65,28 @@ public class ExpirationConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ExpirationConfiguration that = (ExpirationConfiguration) o;
+
+      if (lifespan != that.lifespan) return false;
+      if (maxIdle != that.maxIdle) return false;
+      if (reaperEnabled != that.reaperEnabled) return false;
+      if (wakeUpInterval != that.wakeUpInterval) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (int) (lifespan ^ (lifespan >>> 32));
+      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+      result = 31 * result + (reaperEnabled ? 1 : 0);
+      result = 31 * result + (int) (wakeUpInterval ^ (wakeUpInterval >>> 32));
+      return result;
+   }
+
 }

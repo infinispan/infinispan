@@ -93,9 +93,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    /**
     * This method allows configuration of the global, or cache manager level,
-    * jmx statistics. When this method is called, it automatically enables
-    * global jmx statistics. So, if you want it to be disabled, make sure you call
-    * {@link org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig#disable()}
+    * jmx statistics.
     */
    public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
       return globalJmxStatistics;
@@ -188,6 +186,48 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
             ", shutdown=" + shutdown +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
+
+      if (asyncListenerExecutor != null ? !asyncListenerExecutor.equals(that.asyncListenerExecutor) : that.asyncListenerExecutor != null)
+         return false;
+      if (asyncTransportExecutor != null ? !asyncTransportExecutor.equals(that.asyncTransportExecutor) : that.asyncTransportExecutor != null)
+         return false;
+      if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
+      if (evictionScheduledExecutor != null ? !evictionScheduledExecutor.equals(that.evictionScheduledExecutor) : that.evictionScheduledExecutor != null)
+         return false;
+      if (globalJmxStatistics != null ? !globalJmxStatistics.equals(that.globalJmxStatistics) : that.globalJmxStatistics != null)
+         return false;
+      if (replicationQueueScheduledExecutor != null ? !replicationQueueScheduledExecutor.equals(that.replicationQueueScheduledExecutor) : that.replicationQueueScheduledExecutor != null)
+         return false;
+      if (serialization != null ? !serialization.equals(that.serialization) : that.serialization != null)
+         return false;
+      if (shutdown != null ? !shutdown.equals(that.shutdown) : that.shutdown != null)
+         return false;
+      if (transport != null ? !transport.equals(that.transport) : that.transport != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = cl != null ? cl.hashCode() : 0;
+      result = 31 * result + (transport != null ? transport.hashCode() : 0);
+      result = 31 * result + (globalJmxStatistics != null ? globalJmxStatistics.hashCode() : 0);
+      result = 31 * result + (serialization != null ? serialization.hashCode() : 0);
+      result = 31 * result + (asyncTransportExecutor != null ? asyncTransportExecutor.hashCode() : 0);
+      result = 31 * result + (asyncListenerExecutor != null ? asyncListenerExecutor.hashCode() : 0);
+      result = 31 * result + (evictionScheduledExecutor != null ? evictionScheduledExecutor.hashCode() : 0);
+      result = 31 * result + (replicationQueueScheduledExecutor != null ? replicationQueueScheduledExecutor.hashCode() : 0);
+      result = 31 * result + (shutdown != null ? shutdown.hashCode() : 0);
+      return result;
    }
 
 }

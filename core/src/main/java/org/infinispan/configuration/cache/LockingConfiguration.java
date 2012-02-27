@@ -86,4 +86,30 @@ public class LockingConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LockingConfiguration that = (LockingConfiguration) o;
+
+      if (concurrencyLevel != that.concurrencyLevel) return false;
+      if (lockAcquisitionTimeout != that.lockAcquisitionTimeout) return false;
+      if (useLockStriping != that.useLockStriping) return false;
+      if (writeSkewCheck != that.writeSkewCheck) return false;
+      if (isolationLevel != that.isolationLevel) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = concurrencyLevel;
+      result = 31 * result + (isolationLevel != null ? isolationLevel.hashCode() : 0);
+      result = 31 * result + (int) (lockAcquisitionTimeout ^ (lockAcquisitionTimeout >>> 32));
+      result = 31 * result + (useLockStriping ? 1 : 0);
+      result = 31 * result + (writeSkewCheck ? 1 : 0);
+      return result;
+   }
+
 }

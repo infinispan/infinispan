@@ -40,9 +40,11 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
 
 /**
  * @author Manik Surtani
@@ -303,11 +305,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testRemoveCacheClusteredLocalStores(Method m) {
+   public void testRemoveCacheClusteredLocalStores(Method m) throws Exception {
       doTestRemoveCacheClustered(m, false);
    }
 
-   public void testRemoveCacheClusteredSharedStores(Method m) {
+   public void testRemoveCacheClusteredSharedStores(Method m) throws Exception {
       doTestRemoveCacheClustered(m, true);
    }
 
@@ -324,44 +326,46 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             .clustering()
                .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 
-      return TestCacheManagerFactory.createCacheManager(c);
+      return TestCacheManagerFactory.createClusteredCacheManager(c);
    }
-   private void doTestRemoveCacheClustered(Method m, boolean isStoreShared) {
-      EmbeddedCacheManager manager1 = getManagerWithStore(m, true, isStoreShared, "store1-");
-      EmbeddedCacheManager manager2 = getManagerWithStore(m, true, isStoreShared, "store2-");
-      try {
-         Cache cache1 = manager1.getCache("cache", true);
-         Cache cache2 = manager2.getCache("cache", true);
-         assert cache1 != null;
-         assert cache2 != null;
-         assert manager1.cacheExists("cache");
-         assert manager2.cacheExists("cache");
-         cache1.put(k(m, 1), v(m, 1));
-         cache1.put(k(m, 2), v(m, 2));
-         cache1.put(k(m, 3), v(m, 3));
-         cache2.put(k(m, 4), v(m, 4));
-         cache2.put(k(m, 5), v(m, 5));
-         DummyInMemoryCacheStore store1 = getDummyStore(cache1);
-         DataContainer data1 = getDataContainer(cache1);
-         DummyInMemoryCacheStore store2 = getDummyStore(cache2);
-         DataContainer data2 = getDataContainer(cache2);
-         assert !store1.isEmpty();
-         assert 5 == data1.size();
-         assert !store2.isEmpty();
-         assert 5 == data2.size();
-         manager1.removeCache("cache");
-         assert !manager1.cacheExists("cache");
-         assert !manager2.cacheExists("cache");
-         assert null == manager1.getCache("cache", false);
-         assert null == manager2.getCache("cache", false);
-         assert store1.isEmpty();
-         assert 0 == data1.size();
-         assert store2.isEmpty();
-         assert 0 == data2.size();
-      } finally {
-         manager1.stop();
-         manager2.stop();
-      }
+
+   private void doTestRemoveCacheClustered(final Method m, final boolean isStoreShared) throws Exception {
+      withCacheManagers(new Callable<EmbeddedCacheManager[]>() {
+         @Override
+         public EmbeddedCacheManager[] call() throws Exception {
+            EmbeddedCacheManager manager1 = getManagerWithStore(m, true, isStoreShared, "store1-");
+            EmbeddedCacheManager manager2 = getManagerWithStore(m, true, isStoreShared, "store2-");
+            Cache cache1 = manager1.getCache("cache", true);
+            Cache cache2 = manager2.getCache("cache", true);
+            assert cache1 != null;
+            assert cache2 != null;
+            assert manager1.cacheExists("cache");
+            assert manager2.cacheExists("cache");
+            cache1.put(k(m, 1), v(m, 1));
+            cache1.put(k(m, 2), v(m, 2));
+            cache1.put(k(m, 3), v(m, 3));
+            cache2.put(k(m, 4), v(m, 4));
+            cache2.put(k(m, 5), v(m, 5));
+            DummyInMemoryCacheStore store1 = getDummyStore(cache1);
+            DataContainer data1 = getDataContainer(cache1);
+            DummyInMemoryCacheStore store2 = getDummyStore(cache2);
+            DataContainer data2 = getDataContainer(cache2);
+            assert !store1.isEmpty();
+            assert 5 == data1.size();
+            assert !store2.isEmpty();
+            assert 5 == data2.size();
+            manager1.removeCache("cache");
+            assert !manager1.cacheExists("cache");
+            assert !manager2.cacheExists("cache");
+            assert null == manager1.getCache("cache", false);
+            assert null == manager2.getCache("cache", false);
+            assert store1.isEmpty();
+            assert 0 == data1.size();
+            assert store2.isEmpty();
+            assert 0 == data2.size();
+            return new EmbeddedCacheManager[]{manager1, manager2};
+         }
+      });
    }
 
    private DummyInMemoryCacheStore getDummyStore(Cache cache1) {

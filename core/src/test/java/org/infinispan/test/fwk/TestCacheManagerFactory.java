@@ -174,6 +174,10 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(gcb, defaultCacheConfig, new TransportFlags());
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilder defaultCacheConfig) {
+      return createClusteredCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultCacheConfig);
+   }
+
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
       amendMarshaller(gcb);
       minimizeThreads(gcb);

@@ -75,7 +75,6 @@
           </hash>
           <l1 enabled="true" invalidationThreshold="1" lifespan="1" onRehash="true"/>
           <stateRetrieval alwaysProvideInMemoryState="true" fetchInMemoryState="true" initialRetryWaitTime="1" logFlushTimeout="1" maxNonProgressingLogWrites="1" numRetries="1" retryWaitTimeIncreaseFactor="1" timeout="1"/>
-          <stateTransfer chunkSize="1" fetchInMemoryState="true" timeout="1"/>
           <sync replTimeout="1"/>
         </clustering>
         <customInterceptors>
@@ -100,7 +99,6 @@
         </indexing>
         <invocationBatching enabled="true"/>
         <jmxStatistics enabled="true"/>
-        <storeAsBinary enabled="true"/>
         <loaders passivation="true" preload="true" shared="true">
           <loader fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" purgerThreads="1" purgeSynchronously="true">
             <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>

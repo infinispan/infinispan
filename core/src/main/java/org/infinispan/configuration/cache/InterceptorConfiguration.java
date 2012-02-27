@@ -45,15 +45,19 @@ public class InterceptorConfiguration {
    public Class<? extends CommandInterceptor> after() {
       return after;
    }
+
    public Class<? extends CommandInterceptor> before() {
       return before;
    }
+
    public CommandInterceptor interceptor() {
       return interceptor;
    }
+
    public int index() {
       return index;
    }
+
    public Position position() {
       return position;
    }
@@ -75,6 +79,35 @@ public class InterceptorConfiguration {
             ", index=" + index +
             ", position=" + position +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InterceptorConfiguration that = (InterceptorConfiguration) o;
+
+      if (index != that.index) return false;
+      if (after != null ? !after.equals(that.after) : that.after != null)
+         return false;
+      if (before != null ? !before.equals(that.before) : that.before != null)
+         return false;
+      if (interceptor != null ? !interceptor.equals(that.interceptor) : that.interceptor != null)
+         return false;
+      if (position != that.position) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = after != null ? after.hashCode() : 0;
+      result = 31 * result + (before != null ? before.hashCode() : 0);
+      result = 31 * result + (interceptor != null ? interceptor.hashCode() : 0);
+      result = 31 * result + index;
+      result = 31 * result + (position != null ? position.hashCode() : 0);
+      return result;
    }
 
 }

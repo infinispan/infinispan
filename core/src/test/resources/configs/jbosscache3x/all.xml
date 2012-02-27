@@ -160,7 +160,7 @@
        Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
        the eviction thread will never run.
     -->
-    <eviction>
+    <eviction wakeUpInterval="50015">
         <default algorithmClass="org.jboss.cache.eviction.LRUAlgorithm" eventQueueSize="200000">
             <property name="maxNodes" value="5001"/>
             <property name="timeToLive" value="1001"/>

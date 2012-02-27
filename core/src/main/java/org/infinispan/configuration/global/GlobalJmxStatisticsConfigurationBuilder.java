@@ -133,4 +133,37 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GlobalJmxStatisticsConfigurationBuilder that = (GlobalJmxStatisticsConfigurationBuilder) o;
+
+      if (enabled != that.enabled) return false;
+      if (allowDuplicateDomains != null ? !allowDuplicateDomains.equals(that.allowDuplicateDomains) : that.allowDuplicateDomains != null)
+         return false;
+      if (cacheManagerName != null ? !cacheManagerName.equals(that.cacheManagerName) : that.cacheManagerName != null)
+         return false;
+      if (jmxDomain != null ? !jmxDomain.equals(that.jmxDomain) : that.jmxDomain != null)
+         return false;
+      if (mBeanServerLookupInstance != null ? !mBeanServerLookupInstance.equals(that.mBeanServerLookupInstance) : that.mBeanServerLookupInstance != null)
+         return false;
+      if (properties != null ? !properties.equals(that.properties) : that.properties != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = properties != null ? properties.hashCode() : 0;
+      result = 31 * result + (jmxDomain != null ? jmxDomain.hashCode() : 0);
+      result = 31 * result + (allowDuplicateDomains != null ? allowDuplicateDomains.hashCode() : 0);
+      result = 31 * result + (cacheManagerName != null ? cacheManagerName.hashCode() : 0);
+      result = 31 * result + (mBeanServerLookupInstance != null ? mBeanServerLookupInstance.hashCode() : 0);
+      result = 31 * result + (enabled ? 1 : 0);
+      return result;
+   }
+
 }

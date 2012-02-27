@@ -238,4 +238,50 @@ public class TransactionConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TransactionConfiguration that = (TransactionConfiguration) o;
+
+      if (autoCommit != that.autoCommit) return false;
+      if (cacheStopTimeout != that.cacheStopTimeout) return false;
+      if (eagerLockingSingleNode != that.eagerLockingSingleNode) return false;
+      if (syncCommitPhase != that.syncCommitPhase) return false;
+      if (syncRollbackPhase != that.syncRollbackPhase) return false;
+      if (use1PcForAutoCommitTransactions != that.use1PcForAutoCommitTransactions)
+         return false;
+      if (useEagerLocking != that.useEagerLocking) return false;
+      if (useSynchronization != that.useSynchronization) return false;
+      if (lockingMode != that.lockingMode) return false;
+      if (recovery != null ? !recovery.equals(that.recovery) : that.recovery != null)
+         return false;
+      if (transactionManagerLookup != null ? !transactionManagerLookup.equals(that.transactionManagerLookup) : that.transactionManagerLookup != null)
+         return false;
+      if (transactionMode != that.transactionMode) return false;
+      if (transactionSynchronizationRegistryLookup != null ? !transactionSynchronizationRegistryLookup.equals(that.transactionSynchronizationRegistryLookup) : that.transactionSynchronizationRegistryLookup != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (autoCommit ? 1 : 0);
+      result = 31 * result + (int) (cacheStopTimeout ^ (cacheStopTimeout >>> 32));
+      result = 31 * result + (eagerLockingSingleNode ? 1 : 0);
+      result = 31 * result + (lockingMode != null ? lockingMode.hashCode() : 0);
+      result = 31 * result + (syncCommitPhase ? 1 : 0);
+      result = 31 * result + (syncRollbackPhase ? 1 : 0);
+      result = 31 * result + (transactionManagerLookup != null ? transactionManagerLookup.hashCode() : 0);
+      result = 31 * result + (transactionSynchronizationRegistryLookup != null ? transactionSynchronizationRegistryLookup.hashCode() : 0);
+      result = 31 * result + (transactionMode != null ? transactionMode.hashCode() : 0);
+      result = 31 * result + (useEagerLocking ? 1 : 0);
+      result = 31 * result + (useSynchronization ? 1 : 0);
+      result = 31 * result + (recovery != null ? recovery.hashCode() : 0);
+      result = 31 * result + (use1PcForAutoCommitTransactions ? 1 : 0);
+      return result;
+   }
+
 }

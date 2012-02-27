@@ -84,4 +84,37 @@ public class ClusteringConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClusteringConfiguration that = (ClusteringConfiguration) o;
+
+      if (asyncConfiguration != null ? !asyncConfiguration.equals(that.asyncConfiguration) : that.asyncConfiguration != null)
+         return false;
+      if (cacheMode != that.cacheMode) return false;
+      if (hashConfiguration != null ? !hashConfiguration.equals(that.hashConfiguration) : that.hashConfiguration != null)
+         return false;
+      if (l1Configuration != null ? !l1Configuration.equals(that.l1Configuration) : that.l1Configuration != null)
+         return false;
+      if (stateTransferConfiguration != null ? !stateTransferConfiguration.equals(that.stateTransferConfiguration) : that.stateTransferConfiguration != null)
+         return false;
+      if (syncConfiguration != null ? !syncConfiguration.equals(that.syncConfiguration) : that.syncConfiguration != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = cacheMode != null ? cacheMode.hashCode() : 0;
+      result = 31 * result + (asyncConfiguration != null ? asyncConfiguration.hashCode() : 0);
+      result = 31 * result + (hashConfiguration != null ? hashConfiguration.hashCode() : 0);
+      result = 31 * result + (l1Configuration != null ? l1Configuration.hashCode() : 0);
+      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
+      result = 31 * result + (syncConfiguration != null ? syncConfiguration.hashCode() : 0);
+      return result;
+   }
+
 }

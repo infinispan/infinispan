@@ -118,4 +118,38 @@ public class HashConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      HashConfiguration that = (HashConfiguration) o;
+
+      if (activated != that.activated) return false;
+      if (numOwners != that.numOwners) return false;
+      if (numVirtualNodes != that.numVirtualNodes) return false;
+      if (consistentHash != null ? !consistentHash.equals(that.consistentHash) : that.consistentHash != null)
+         return false;
+      if (groupsConfiguration != null ? !groupsConfiguration.equals(that.groupsConfiguration) : that.groupsConfiguration != null)
+         return false;
+      if (hash != null ? !hash.equals(that.hash) : that.hash != null)
+         return false;
+      if (stateTransferConfiguration != null ? !stateTransferConfiguration.equals(that.stateTransferConfiguration) : that.stateTransferConfiguration != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = consistentHash != null ? consistentHash.hashCode() : 0;
+      result = 31 * result + (hash != null ? hash.hashCode() : 0);
+      result = 31 * result + numOwners;
+      result = 31 * result + numVirtualNodes;
+      result = 31 * result + (groupsConfiguration != null ? groupsConfiguration.hashCode() : 0);
+      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
+      result = 31 * result + (activated ? 1 : 0);
+      return result;
+   }
+
 }
