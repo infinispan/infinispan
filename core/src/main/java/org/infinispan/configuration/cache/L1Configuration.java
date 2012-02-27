@@ -88,4 +88,30 @@ public class L1Configuration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      L1Configuration that = (L1Configuration) o;
+
+      if (activated != that.activated) return false;
+      if (enabled != that.enabled) return false;
+      if (invalidationThreshold != that.invalidationThreshold) return false;
+      if (lifespan != that.lifespan) return false;
+      if (onRehash != that.onRehash) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (enabled ? 1 : 0);
+      result = 31 * result + invalidationThreshold;
+      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
+      result = 31 * result + (onRehash ? 1 : 0);
+      result = 31 * result + (activated ? 1 : 0);
+      return result;
+   }
+
 }

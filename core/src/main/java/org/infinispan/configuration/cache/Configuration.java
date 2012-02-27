@@ -156,4 +156,68 @@ public class Configuration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Configuration that = (Configuration) o;
+
+      if (classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
+         return false;
+      if (clusteringConfiguration != null ? !clusteringConfiguration.equals(that.clusteringConfiguration) : that.clusteringConfiguration != null)
+         return false;
+      if (customInterceptorsConfiguration != null ? !customInterceptorsConfiguration.equals(that.customInterceptorsConfiguration) : that.customInterceptorsConfiguration != null)
+         return false;
+      if (dataContainerConfiguration != null ? !dataContainerConfiguration.equals(that.dataContainerConfiguration) : that.dataContainerConfiguration != null)
+         return false;
+      if (deadlockDetectionConfiguration != null ? !deadlockDetectionConfiguration.equals(that.deadlockDetectionConfiguration) : that.deadlockDetectionConfiguration != null)
+         return false;
+      if (evictionConfiguration != null ? !evictionConfiguration.equals(that.evictionConfiguration) : that.evictionConfiguration != null)
+         return false;
+      if (expirationConfiguration != null ? !expirationConfiguration.equals(that.expirationConfiguration) : that.expirationConfiguration != null)
+         return false;
+      if (indexingConfiguration != null ? !indexingConfiguration.equals(that.indexingConfiguration) : that.indexingConfiguration != null)
+         return false;
+      if (invocationBatchingConfiguration != null ? !invocationBatchingConfiguration.equals(that.invocationBatchingConfiguration) : that.invocationBatchingConfiguration != null)
+         return false;
+      if (jmxStatisticsConfiguration != null ? !jmxStatisticsConfiguration.equals(that.jmxStatisticsConfiguration) : that.jmxStatisticsConfiguration != null)
+         return false;
+      if (loadersConfiguration != null ? !loadersConfiguration.equals(that.loadersConfiguration) : that.loadersConfiguration != null)
+         return false;
+      if (lockingConfiguration != null ? !lockingConfiguration.equals(that.lockingConfiguration) : that.lockingConfiguration != null)
+         return false;
+      if (storeAsBinaryConfiguration != null ? !storeAsBinaryConfiguration.equals(that.storeAsBinaryConfiguration) : that.storeAsBinaryConfiguration != null)
+         return false;
+      if (transactionConfiguration != null ? !transactionConfiguration.equals(that.transactionConfiguration) : that.transactionConfiguration != null)
+         return false;
+      if (unsafeConfiguration != null ? !unsafeConfiguration.equals(that.unsafeConfiguration) : that.unsafeConfiguration != null)
+         return false;
+      if (versioningConfiguration != null ? !versioningConfiguration.equals(that.versioningConfiguration) : that.versioningConfiguration != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = classLoader != null ? classLoader.hashCode() : 0;
+      result = 31 * result + (clusteringConfiguration != null ? clusteringConfiguration.hashCode() : 0);
+      result = 31 * result + (customInterceptorsConfiguration != null ? customInterceptorsConfiguration.hashCode() : 0);
+      result = 31 * result + (dataContainerConfiguration != null ? dataContainerConfiguration.hashCode() : 0);
+      result = 31 * result + (deadlockDetectionConfiguration != null ? deadlockDetectionConfiguration.hashCode() : 0);
+      result = 31 * result + (evictionConfiguration != null ? evictionConfiguration.hashCode() : 0);
+      result = 31 * result + (expirationConfiguration != null ? expirationConfiguration.hashCode() : 0);
+      result = 31 * result + (indexingConfiguration != null ? indexingConfiguration.hashCode() : 0);
+      result = 31 * result + (invocationBatchingConfiguration != null ? invocationBatchingConfiguration.hashCode() : 0);
+      result = 31 * result + (jmxStatisticsConfiguration != null ? jmxStatisticsConfiguration.hashCode() : 0);
+      result = 31 * result + (loadersConfiguration != null ? loadersConfiguration.hashCode() : 0);
+      result = 31 * result + (lockingConfiguration != null ? lockingConfiguration.hashCode() : 0);
+      result = 31 * result + (storeAsBinaryConfiguration != null ? storeAsBinaryConfiguration.hashCode() : 0);
+      result = 31 * result + (transactionConfiguration != null ? transactionConfiguration.hashCode() : 0);
+      result = 31 * result + (versioningConfiguration != null ? versioningConfiguration.hashCode() : 0);
+      result = 31 * result + (unsafeConfiguration != null ? unsafeConfiguration.hashCode() : 0);
+      return result;
+   }
+
 }

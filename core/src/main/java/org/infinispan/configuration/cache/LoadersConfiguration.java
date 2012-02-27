@@ -119,4 +119,29 @@ public class LoadersConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LoadersConfiguration that = (LoadersConfiguration) o;
+
+      if (passivation != that.passivation) return false;
+      if (preload != that.preload) return false;
+      if (shared != that.shared) return false;
+      if (cacheLoaders != null ? !cacheLoaders.equals(that.cacheLoaders) : that.cacheLoaders != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (passivation ? 1 : 0);
+      result = 31 * result + (preload ? 1 : 0);
+      result = 31 * result + (shared ? 1 : 0);
+      result = 31 * result + (cacheLoaders != null ? cacheLoaders.hashCode() : 0);
+      return result;
+   }
+
 }

@@ -139,4 +139,28 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SerializationConfigurationBuilder that = (SerializationConfigurationBuilder) o;
+
+      if (marshallVersion != that.marshallVersion) return false;
+      if (advancedExternalizers != null ? !advancedExternalizers.equals(that.advancedExternalizers) : that.advancedExternalizers != null)
+         return false;
+      if (marshaller != null ? !marshaller.equals(that.marshaller) : that.marshaller != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = marshaller != null ? marshaller.hashCode() : 0;
+      result = 31 * result + (int) marshallVersion;
+      result = 31 * result + (advancedExternalizers != null ? advancedExternalizers.hashCode() : 0);
+      return result;
+   }
+
 }

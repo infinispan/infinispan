@@ -71,4 +71,26 @@ public class StoreAsBinaryConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      StoreAsBinaryConfiguration that = (StoreAsBinaryConfiguration) o;
+
+      if (enabled != that.enabled) return false;
+      if (storeKeysAsBinary != that.storeKeysAsBinary) return false;
+      if (storeValuesAsBinary != that.storeValuesAsBinary) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (enabled ? 1 : 0);
+      result = 31 * result + (storeKeysAsBinary ? 1 : 0);
+      result = 31 * result + (storeValuesAsBinary ? 1 : 0);
+      return result;
+   }
+
 }
