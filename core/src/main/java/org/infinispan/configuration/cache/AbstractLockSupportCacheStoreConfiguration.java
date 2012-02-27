@@ -51,4 +51,26 @@ public abstract class AbstractLockSupportCacheStoreConfiguration extends Abstrac
       return lockConcurrencyLevel;
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+
+      AbstractLockSupportCacheStoreConfiguration that = (AbstractLockSupportCacheStoreConfiguration) o;
+
+      if (lockAcquistionTimeout != that.lockAcquistionTimeout) return false;
+      if (lockConcurrencyLevel != that.lockConcurrencyLevel) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + lockConcurrencyLevel;
+      result = 31 * result + (int) (lockAcquistionTimeout ^ (lockAcquistionTimeout >>> 32));
+      return result;
+   }
+
 }

@@ -37,4 +37,21 @@ public class InvocationBatchingConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InvocationBatchingConfiguration that = (InvocationBatchingConfiguration) o;
+
+      if (enabled != that.enabled) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return (enabled ? 1 : 0);
+   }
+
 }

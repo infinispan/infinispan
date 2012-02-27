@@ -96,4 +96,33 @@ public class AsyncConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      AsyncConfiguration that = (AsyncConfiguration) o;
+
+      if (asyncMarshalling != that.asyncMarshalling) return false;
+      if (replicationQueueInterval != that.replicationQueueInterval)
+         return false;
+      if (replicationQueueMaxElements != that.replicationQueueMaxElements)
+         return false;
+      if (useReplicationQueue != that.useReplicationQueue) return false;
+      if (replicationQueue != null ? !replicationQueue.equals(that.replicationQueue) : that.replicationQueue != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (asyncMarshalling ? 1 : 0);
+      result = 31 * result + (replicationQueue != null ? replicationQueue.hashCode() : 0);
+      result = 31 * result + (int) (replicationQueueInterval ^ (replicationQueueInterval >>> 32));
+      result = 31 * result + replicationQueueMaxElements;
+      result = 31 * result + (useReplicationQueue ? 1 : 0);
+      return result;
+   }
+
 }

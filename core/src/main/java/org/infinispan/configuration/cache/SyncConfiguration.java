@@ -56,4 +56,21 @@ public class SyncConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SyncConfiguration that = (SyncConfiguration) o;
+
+      if (replTimeout != that.replTimeout) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return (int) (replTimeout ^ (replTimeout >>> 32));
+   }
+
 }

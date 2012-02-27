@@ -50,4 +50,21 @@ public class UnsafeConfiguration {
             '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      UnsafeConfiguration that = (UnsafeConfiguration) o;
+
+      if (unreliableReturnValues != that.unreliableReturnValues) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return (unreliableReturnValues ? 1 : 0);
+   }
+
 }

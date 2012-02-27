@@ -107,4 +107,37 @@ public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertie
       return ignoreModifications;
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      AbstractLoaderConfiguration that = (AbstractLoaderConfiguration) o;
+      
+      if (!super.equals(that)) return false;
+      if (fetchPersistentState != that.fetchPersistentState) return false;
+      if (ignoreModifications != that.ignoreModifications) return false;
+      if (purgeOnStartup != that.purgeOnStartup) return false;
+      if (purgeSynchronously != that.purgeSynchronously) return false;
+      if (purgerThreads != that.purgerThreads) return false;
+      if (async != null ? !async.equals(that.async) : that.async != null)
+         return false;
+      if (singletonStore != null ? !singletonStore.equals(that.singletonStore) : that.singletonStore != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = 31 * super.hashCode() + (purgeOnStartup ? 1 : 0);
+      result = 31 * result + (purgeSynchronously ? 1 : 0);
+      result = 31 * result + purgerThreads;
+      result = 31 * result + (fetchPersistentState ? 1 : 0);
+      result = 31 * result + (ignoreModifications ? 1 : 0);
+      result = 31 * result + (async != null ? async.hashCode() : 0);
+      result = 31 * result + (singletonStore != null ? singletonStore.hashCode() : 0);
+      return result;
+   }
+
 }

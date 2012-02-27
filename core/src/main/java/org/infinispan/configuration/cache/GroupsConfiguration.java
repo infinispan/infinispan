@@ -42,8 +42,7 @@ public class GroupsConfiguration {
    /**
     * If grouping support is enabled, then {@link Group} annotations are honored and any configured
     * groupers will be invoked
-    * 
-    * @param enabled
+    *
     * @return
     */
    public boolean enabled() {
@@ -63,6 +62,27 @@ public class GroupsConfiguration {
             "enabled=" + enabled +
             ", groupers=" + groupers +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GroupsConfiguration that = (GroupsConfiguration) o;
+
+      if (enabled != that.enabled) return false;
+      if (groupers != null ? !groupers.equals(that.groupers) : that.groupers != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (enabled ? 1 : 0);
+      result = 31 * result + (groupers != null ? groupers.hashCode() : 0);
+      return result;
    }
 
 }
