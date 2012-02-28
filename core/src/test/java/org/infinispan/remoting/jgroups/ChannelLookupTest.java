@@ -55,7 +55,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
    public void channelLookupTest() {
       EasyMock.reset(mockChannel);
       EasyMock.expect(mockChannel.getAddress()).andReturn(a).atLeastOnce();
-      EasyMock.expect(mockChannel.down(EasyMock.isA(Event.class))).andReturn(a);
+      EasyMock.expect(mockChannel.down(EasyMock.isA(Event.class))).andReturn(a).anyTimes();
       EasyMock.expect(mockChannel.getView()).andReturn(v).atLeastOnce();
       EasyMock.expect(mockChannel.getProtocolStack()).andReturn(ps);
       EasyMock.expect(ps.getTransport()).andReturn(new UDP());
