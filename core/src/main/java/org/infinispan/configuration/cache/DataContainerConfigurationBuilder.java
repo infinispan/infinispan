@@ -31,7 +31,7 @@ import org.infinispan.util.TypedProperties;
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder<DataContainerConfiguration> {
 
-   // TODO provide a deafult here
+   // TODO provide a default here
    private DataContainer dataContainer;
    private Properties properties = new Properties();
    
@@ -74,8 +74,6 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
    }
 
    @Override

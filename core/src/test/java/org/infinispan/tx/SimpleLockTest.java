@@ -5,13 +5,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
-/**
- * // TODO: Document this
- *
- * @author Mircea Markus
- * @since 5.1
- */
-@Test
+@Test (testName = "tx.SimpleLockTest", groups = "functional")
 public class SimpleLockTest extends MultipleCacheManagersTest {
 
    @Override

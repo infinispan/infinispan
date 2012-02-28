@@ -176,8 +176,8 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    private void testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations firstOperation, PerCacheExecutorThread.Operations secondOperation) {
 
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGIN_TX);
 
       t1.setKeyValue("k1", "value_1_t1");
       t2.setKeyValue("k2", "value_2_t2");

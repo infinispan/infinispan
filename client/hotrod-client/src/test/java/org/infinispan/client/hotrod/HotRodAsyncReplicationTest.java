@@ -30,12 +30,6 @@ import java.lang.reflect.Method;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = "functional", testName = "client.hotrod.HotRodAsyncReplicationTest")
 public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
 

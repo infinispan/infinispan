@@ -30,12 +30,6 @@ import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
 import org.testng.annotations.Test;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = "functional", testName = "api.tree.LazyDeserializationTreeCacheTest")
 public class LazyDeserializationTreeCacheTest extends SingleCacheManagerTest {
 

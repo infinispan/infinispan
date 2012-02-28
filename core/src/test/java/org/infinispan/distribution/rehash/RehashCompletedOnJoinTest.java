@@ -33,12 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since 4.1
- */
 @Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinTest")
 public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
 

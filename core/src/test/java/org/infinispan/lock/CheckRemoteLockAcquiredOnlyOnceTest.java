@@ -132,7 +132,7 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
       });
    }
 
-   public void testPutAllTheLock() throws Exception {
+   public void testPutAllThenLock() throws Exception {
       testOperationThenLock(new CacheOperation() {
          @Override
          public void execute() {

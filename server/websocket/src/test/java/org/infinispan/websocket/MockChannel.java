@@ -132,7 +132,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture bind(SocketAddress arg0) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -141,7 +140,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture close() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -150,7 +148,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture connect(SocketAddress arg0) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -159,7 +156,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture disconnect() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -182,7 +178,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFactory getFactory() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -191,7 +186,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public Integer getId() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -200,7 +194,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public int getInterestOps() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -209,7 +202,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public Channel getParent() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -218,7 +210,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelPipeline getPipeline() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -235,7 +226,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public boolean isReadable() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -244,7 +234,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public boolean isWritable() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -253,7 +242,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture setInterestOps(int arg0) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -262,7 +250,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture setReadable(boolean arg0) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -271,7 +258,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture unbind() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -280,7 +266,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture write(Object arg0, SocketAddress arg1) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -289,7 +274,6 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public int compareTo(Channel o) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 }

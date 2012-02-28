@@ -168,8 +168,6 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
             handler.handleOp(payload, cache, ctx);
          }
       } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
       }
    }
 
