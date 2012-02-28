@@ -33,12 +33,6 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * // TODO: Document this
- *
- * @author Mircea Markus
- * @since 5.1
- */
 @Test (groups = "functional")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
@@ -64,7 +58,7 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
                   System.out.println("ownableReentrantLock = " + ownableReentrantLock);
                   if (ownableReentrantLock != null) return;
                } catch (InterruptedException e) {
-                  e.printStackTrace();  // TODO: Customise this generated block
+                  e.printStackTrace();
                }
             }
          }

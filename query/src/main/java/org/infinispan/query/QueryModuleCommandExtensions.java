@@ -23,12 +23,6 @@ import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 public class QueryModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override

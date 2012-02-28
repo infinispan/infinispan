@@ -70,7 +70,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    /**
-    * TODO
+    * Timeout for coordinating cluster formation when nodes join or leave the cluster.
     *
     * @param distributedSyncTimeout
     * @return

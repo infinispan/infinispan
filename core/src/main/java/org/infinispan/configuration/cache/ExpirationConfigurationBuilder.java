@@ -80,8 +80,6 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
    }
 
    @Override

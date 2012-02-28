@@ -29,8 +29,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
-import javax.transaction.TransactionManager;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -68,7 +66,7 @@ public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLock
       assert lm0.isLocked("k1");
       assert !lm1.isLocked("k1");
       try {
-         ex0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+         ex0.execute(PerCacheExecutorThread.Operations.BEGIN_TX);
          ex0.setKeyValue("k1", "v1_1");
          ex0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
          assert ex0.lastResponse() instanceof TimeoutException : "received " + ex0.lastResponse();

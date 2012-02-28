@@ -24,12 +24,6 @@ package org.infinispan.statetransfer;
 
 import java.io.Serializable;
 
-/**
- * // TODO: Document this
- *
- * @author Mircea.Markus@jboss.com
- * @since 4.2
- */
 public class BigObject implements Serializable {
 
     private static final long serialVersionUID = 1L;

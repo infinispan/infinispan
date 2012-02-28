@@ -144,11 +144,5 @@ public interface Transport extends Lifecycle {
     */
    int getViewId();
 
-   /**
-    * TODO: Document
-    *
-    * @return
-    */
    Log getLog();
-
 }

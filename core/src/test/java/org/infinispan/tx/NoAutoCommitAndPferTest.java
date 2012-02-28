@@ -25,12 +25,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.testng.annotations.Test;
 
-/**
- * // TODO: Document this
- *
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
- * @since // TODO
- */
 @Test(groups = "functional", testName = "tx.NoAutoCommitAndPferTest")
 public class NoAutoCommitAndPferTest extends SingleCacheManagerTest {
 

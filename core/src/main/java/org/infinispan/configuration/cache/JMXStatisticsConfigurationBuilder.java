@@ -40,8 +40,6 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
    }
 
    @Override

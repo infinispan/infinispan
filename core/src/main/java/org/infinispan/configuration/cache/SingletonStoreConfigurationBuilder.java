@@ -66,8 +66,6 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
    }
 
    @Override

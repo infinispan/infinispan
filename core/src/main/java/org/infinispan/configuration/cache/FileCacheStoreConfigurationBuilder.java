@@ -72,7 +72,6 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
 
    @Override
    void validate() {
-      // TODO: Customise this generated block
    }
 
    // Shared with others cache stores...

@@ -49,8 +49,6 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
    }
 
    @Override
