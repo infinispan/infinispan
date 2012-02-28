@@ -31,11 +31,6 @@ import org.infinispan.test.MultipleCacheManagersTest
 import test.HotRodTestingUtil._
 import org.infinispan.test.AbstractCacheTest._
 
-/**
- * // TODO: Document this
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSingleClusteredTest")
 class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
 

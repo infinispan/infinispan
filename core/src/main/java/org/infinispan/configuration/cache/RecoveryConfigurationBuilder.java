@@ -68,8 +68,6 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
    }
 
    @Override

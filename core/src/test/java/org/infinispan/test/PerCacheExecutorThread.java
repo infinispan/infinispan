@@ -96,12 +96,12 @@ public final class PerCacheExecutorThread extends Thread {
          }
          log.tracef("about to process operation %s", operation);
          switch (operation) {
-            case BEGGIN_TX: {
+            case BEGIN_TX: {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
                try {
                   txManager.begin();
                   ongoingTransaction = txManager.getTransaction();
-                  setResponse(OperationsResult.BEGGIN_TX_OK);
+                  setResponse(OperationsResult.BEGIN_TX_OK);
                } catch (Exception e) {
                   log.trace("Failure on beginning tx", e);
                   setResponse(e);
@@ -219,11 +219,11 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum Operations {
-      BEGGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD, FORCE2PC;
+      BEGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD, FORCE2PC;
       public OperationsResult getCorrespondingOkResult() {
          switch (this) {
-            case BEGGIN_TX:
-               return OperationsResult.BEGGIN_TX_OK;
+            case BEGIN_TX:
+               return OperationsResult.BEGIN_TX_OK;
             case COMMIT_TX:
                return OperationsResult.COMMIT_TX_OK;
             case PUT_KEY_VALUE:
@@ -249,7 +249,7 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum OperationsResult {
-      BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK , FORCE2PC_OK
+      BEGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK , FORCE2PC_OK
    }
 
    public Transaction getOngoingTransaction() {

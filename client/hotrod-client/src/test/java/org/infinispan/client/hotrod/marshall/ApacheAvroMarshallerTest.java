@@ -33,12 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since 5.0
- */
 @Test(groups = "functional", testName = "client.hotrod.ApacheAvroMarshallerTest")
 public class ApacheAvroMarshallerTest {
 

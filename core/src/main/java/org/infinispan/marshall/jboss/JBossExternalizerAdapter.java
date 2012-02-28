@@ -30,12 +30,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
 
    final Externalizer externalizer;

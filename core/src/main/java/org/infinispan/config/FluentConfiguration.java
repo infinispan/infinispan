@@ -151,12 +151,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        */
       LoadersConfig shared(Boolean shared);
 
-      /**
-       * TODO
-       *
-       * @param configs
-       * @return
-       */
       LoadersConfig addCacheLoader(CacheLoaderConfig... configs);
    }
 

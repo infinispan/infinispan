@@ -21,12 +21,6 @@ package org.infinispan.query;
 
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 
-/**
- * // TODO: Document this
- *
- * @author Manik Surtani
- * @since 5.1
- */
 public class QueryMetadataFileFinder implements ModuleMetadataFileFinder {
    @Override
    public String getMetadataFilename() {

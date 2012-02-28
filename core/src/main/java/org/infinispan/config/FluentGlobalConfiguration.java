@@ -71,12 +71,6 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
        */
       SerializationConfig version(String marshallVersion);
 
-      /**
-       * TODO
-       *
-       * @param marshallVersion
-       * @return
-       */
       SerializationConfig version(short marshallVersion);
 
       /**
@@ -145,12 +139,6 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
        */
       TransportConfig siteId(String siteId);
 
-      /**
-       * TODO
-       *
-       * @param distributedSyncTimeout
-       * @return
-       */
       TransportConfig distributedSyncTimeout(Long distributedSyncTimeout);
 
       /**
@@ -188,13 +176,6 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
        */
       TransportConfig strictPeerToPeer(Boolean strictPeerToPeer);
 
-      /**
-       * TODO
-       *
-       * @param key
-       * @param value
-       * @return
-       */
       TransportConfig addProperty(String key, String value);
    }
 

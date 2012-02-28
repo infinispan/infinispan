@@ -27,11 +27,6 @@ import org.infinispan.server.core.Main
 import test.MemcachedTestingUtil
 import org.testng.Assert._
 
-/**
- * // TODO: Document this
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedMainTest")
 class MemcachedMainTest extends MemcachedTestingUtil {
 

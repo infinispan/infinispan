@@ -29,12 +29,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = "functional", testName = "marshall.MarshalledValueSingleNodeTest")
 public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
 

@@ -97,8 +97,6 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
    }
 
    @Override

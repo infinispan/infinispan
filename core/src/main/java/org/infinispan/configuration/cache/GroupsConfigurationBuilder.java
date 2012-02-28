@@ -92,8 +92,6 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-
    }
 
    @Override

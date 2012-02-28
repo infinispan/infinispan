@@ -40,7 +40,6 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      // TODO Auto-generated constructor stub
    }
 
    /**
