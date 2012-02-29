@@ -27,10 +27,10 @@
          mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
          mcast_port="${jgroups.udp.mcast_port:46655}"
          tos="8"
-         ucast_recv_buf_size="20000000"
-         ucast_send_buf_size="640000"
-         mcast_recv_buf_size="25000000"
-         mcast_send_buf_size="640000"
+         ucast_recv_buf_size="20m"
+         ucast_send_buf_size="640k"
+         mcast_recv_buf_size="25m"
+         mcast_send_buf_size="640k"
          loopback="true"
          discard_incompatible_packets="true"
          max_bundle_size="64000"
@@ -63,8 +63,7 @@
    <MERGE2 max_interval="30000" min_interval="10000"/>
    <FD_SOCK/>
    <FD_ALL/>
-   <BARRIER />
-   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)  
+   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)
    <pbcast.NAKACK  exponential_backoff="0"
                    use_mcast_xmit="true"
                    retransmit_timeout="300,600,1200"
@@ -75,19 +74,21 @@
                     xmit_table_msgs_per_row="10000"
                     xmit_table_max_compaction_time="10000"
                     max_msg_batch_size="100" /> 
-                                   
+
    <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually) 
-   <UNICAST2 timeout="300,600,1200"/>  -->
+   <UNICAST timeout="300,600,1200"/>  -->
    <UNICAST2
+              stable_interval="5000"
+              xmit_interval="500"
               max_bytes="20M"
               xmit_table_num_rows="20"
               xmit_table_msgs_per_row="10000"
               xmit_table_max_compaction_time="10000"
               max_msg_batch_size="100"/>
    <RSVP />            
-   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>
+   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
-   <UFC max_credits="500000" min_threshold="0.20"/>
-   <MFC max_credits="500000" min_threshold="0.20"/>
-   <FRAG2 frag_size="60000"  />
+   <UFC max_credits="200k" min_threshold="0.20"/>
+   <MFC max_credits="200k" min_threshold="0.20"/>
+   <FRAG2 frag_size="8000"  />
 </config>
