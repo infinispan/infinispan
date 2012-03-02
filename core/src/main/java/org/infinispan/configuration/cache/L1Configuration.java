@@ -45,7 +45,7 @@ public class L1Configuration {
    }
 
    /**
-    * Maximum lifespan of an entry placed in the L1 cache.
+    * Maximum lifespan of an entry placed in the L1 cache. Default 10 minutes.
     */
    public long lifespan() {
       return lifespan;
@@ -53,7 +53,7 @@ public class L1Configuration {
 
    /**
     * If true, entries removed due to a rehash will be moved to L1 rather than being removed
-    * altogether.
+    * altogether. Enabled by default.
     */
    public boolean onRehash() {
       return onRehash;
