@@ -139,7 +139,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
          }
       }
    }
-      
+
    private def putInCache(cache: Cache[String, Any], mediaType: String, key: String, data: Array[Byte], ttl: Long, idleTime: Long): Response = {
       val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
       (ttl, idleTime, useAsync) match {
@@ -174,6 +174,14 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                }
             }
          }
+         case obj: Any => {
+            if (useAsync) {
+               ManagerInstance.getCache(cacheName).removeAsync(key)
+            } else {
+               ManagerInstance.getCache(cacheName).remove(key)
+            }
+            Response.ok.build
+         }
          case null => Response.ok.build
       }
    }
@@ -192,7 +200,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
          preconditionNotImplementedResponse
       }
    }
-   
+
    private def preconditionNotImplementedResponse() = {
       Response.status(501).entity(
          "Preconditions were not implemented yet for PUT, POST, and DELETE methods.").build()
@@ -216,7 +224,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
 }
 
 /**
- * Just wrap a single instance of the Infinispan cache manager. 
+ * Just wrap a single instance of the Infinispan cache manager.
  */
 object ManagerInstance {
    var instance: EmbeddedCacheManager = null
