@@ -54,14 +54,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Run it with -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true
@@ -96,7 +96,7 @@ public class InfinispanDemo {
    private String startCacheButtonLabel = "Start Cache", stopCacheButtonLabel = "Stop Cache";
    private String statusStarting = "Starting Cache ... ", statusStarted = "Cache Running.", statusStopping = "Stopping Cache ...", statusStopped = "Cache Stopped.";
    private ExecutorService asyncExecutor;
-   private final AtomicInteger updateCounter = new AtomicInteger(0);
+   private ExecutorService tableUpdateExecutor;
    private JTable dataTable;
    private JSlider generateSlider;
    private JSpinner lifespanSpinner;
@@ -125,6 +125,8 @@ public class InfinispanDemo {
 
    public InfinispanDemo(String cfgFileName) {
       asyncExecutor = Executors.newFixedThreadPool(1);
+      tableUpdateExecutor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue(1),
+            new ThreadPoolExecutor.DiscardPolicy());
 
       cacheConfigFile = cfgFileName;
       cacheStatusProgressBar.setVisible(false);
@@ -245,9 +247,18 @@ public class InfinispanDemo {
                public void run() {
                   int entries = generateSlider.getValue();
 
+                  if (entries > 1000) {
+                     for (int i = 0; i < entries / 1000; i++) {
+                        Map<String, String> rand = new HashMap<String, String>();
+                        while (rand.size() < 1000) rand.put(randomString(), randomString());
+                        cache.putAll(rand);
+                     }
+                     // generate the rest of the entries
+                     entries = entries % 1000;
+                  }
+
                   Map<String, String> rand = new HashMap<String, String>();
                   while (rand.size() < entries) rand.put(randomString(), randomString());
-
                   cache.putAll(rand);
 
                   processAction(randomGeneratorButton, false);
@@ -486,7 +497,7 @@ public class InfinispanDemo {
       }
    }
 
-   @Listener
+   @Listener(sync = true)
    public class CacheListener {
       @ViewChanged
       @Merged
@@ -503,10 +514,9 @@ public class InfinispanDemo {
    }
 
    private void updateCachedDataTable() {
-      updateCounter.incrementAndGet();
-      asyncExecutor.execute(new Runnable() {
+      tableUpdateExecutor.execute(new Runnable() {
          public void run() {
-            if (updateCounter.decrementAndGet() == 0) cachedDataTableModel.update();
+            cachedDataTableModel.update();
          }
       });
    }
@@ -568,7 +578,7 @@ public class InfinispanDemo {
 
    public class CachedDataTableModel extends AbstractTableModel {
 
-      List<InternalCacheEntry> data = new LinkedList<InternalCacheEntry>();
+      List<InternalCacheEntry> data = new ArrayList<InternalCacheEntry>();
       private static final long serialVersionUID = -7109980678271415778L;
 
       public int getRowCount() {
