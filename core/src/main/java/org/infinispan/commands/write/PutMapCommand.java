@@ -30,6 +30,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -136,14 +137,30 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public String toString() {
-      return new StringBuilder()
-         .append("PutMapCommand{map=")
-         .append(map)
-         .append(", flags=").append(flags)
+      StringBuilder sb = new StringBuilder();
+      sb.append("PutMapCommand{map={");
+      if (!map.isEmpty()) {
+         Iterator<Entry<Object, Object>> it = map.entrySet().iterator();
+         int i = 0;
+         for (;;) {
+            Entry<Object, Object> e = it.next();
+            sb.append(e.getKey()).append('=').append(e.getValue());
+            if (!it.hasNext()) {
+               break;
+            }
+            if (i > 100) {
+               sb.append(" ...");
+               break;
+            }
+            sb.append(", ");
+            i++;
+         }
+      }
+      sb.append("}, flags=").append(flags)
          .append(", lifespanMillis=").append(lifespanMillis)
          .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
-         .append("}")
-         .toString();
+         .append("}");
+      return sb.toString();
    }
 
    @Override
