@@ -22,6 +22,7 @@
  */
 package org.infinispan.transaction;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Defines the state of a remotely originated transaction.
@@ -69,14 +71,23 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (valid) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
-         }
-         lookedUpEntries.put(key, e);
-      } else {
+      if (!valid) {
          throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is invalid");
       }
+      if (log.isTraceEnabled()) {
+         log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
+      }
+      lookedUpEntries.put(key, e);
+   }
+
+   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
+      if (!valid) {
+         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is invalid");
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("Adding keys %s to tx %s", entries.keySet(), getGlobalTransaction());
+      }
+      lookedUpEntries.putAll(entries);
    }
 
    @Override
