@@ -108,8 +108,9 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       if (lookedUpEntries.size() > 1) throw illegalStateException();
-      this.key = lookedUpEntries.entrySet().iterator().next();
-      this.cacheEntry = lookedUpEntries.get(this.key);
+      Map.Entry<Object, CacheEntry> e = lookedUpEntries.entrySet().iterator().next();
+      this.key = e.getKey();
+      this.cacheEntry = e.getValue();
    }
 
    @Override

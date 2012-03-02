@@ -121,6 +121,17 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       lookedUpEntries.put(key, e);
    }
 
+   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
+      if (isMarkedForRollback()) {
+         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
+      }
+      if (lookedUpEntries == null) {
+         lookedUpEntries = new HashMap<Object, CacheEntry>(entries);
+      } else {
+         lookedUpEntries.putAll(entries);
+      }
+   }
+
    public boolean isReadOnly() {
       return (modifications == null || modifications.isEmpty()) && (lookedUpEntries == null || lookedUpEntries.isEmpty());
    }

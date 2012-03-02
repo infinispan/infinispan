@@ -100,9 +100,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
-         remoteTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
-      }
+      remoteTransaction.putLookedUpEntries(lookedUpEntries);
    }
 
    @Override
