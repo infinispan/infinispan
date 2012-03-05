@@ -59,6 +59,8 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -85,6 +87,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    CacheStore store;
    private CacheLoaderManager loaderManager;
    private InternalEntryFactory entryFactory;
+   private TransactionManager transactionManager;
 
    private static final Log log = LogFactory.getLog(CacheStoreInterceptor.class);
 
@@ -94,9 +97,10 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory) {
+   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory, TransactionManager transactionManager) {
       this.loaderManager = loaderManager;
       this.entryFactory = entryFactory;
+      this.transactionManager = transactionManager;
    }
 
    @Start(priority = 15)
@@ -133,6 +137,13 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             // this is a commit call.
             GlobalTransaction tx = ctx.getGlobalTransaction();
             if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
+
+            //hack for Bug758178. This should be dropped once a proper fix for ISPN-604 is in place
+            Transaction xaTx = null;
+            if (transactionManager != null) {
+               xaTx = transactionManager.suspend();
+            }
+
             try {
                store.commit(tx);
             } catch (Throwable t) {
@@ -140,6 +151,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             } finally {
                // Regardless of outcome, remove from preparing txs
                preparingTxs.remove(tx);
+
+               //part of the hack for  Bug758178
+               if (transactionManager != null && xaTx != null) {
+                  transactionManager.resume(xaTx);
+               }
             }
             if (getStatisticsEnabled()) {
                Integer puts = txStores.get(tx);
