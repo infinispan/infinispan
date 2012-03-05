@@ -35,6 +35,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -51,6 +52,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -87,7 +89,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assertCacheMode(config);
    }
-   
+
+   @Test(expectedExceptions=FileNotFoundException.class)
+   public void testFailOnUnexpectedConfigurationFile() throws IOException {
+      new DefaultCacheManager( "does-not-exist.xml", false);
+   }
+
    public void testDeprecatedNonsenseMode() throws Exception {
       // TODO When we remove the nonsense mode, this test should be deleted
       String config = INFINISPAN_START_TAG +
