@@ -27,6 +27,7 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -55,10 +56,10 @@ import java.util.Set;
  * @since 4.0
  */
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
-   RemoteCommandsFactory cmdFactory;
-   private GlobalComponentRegistry globalComponentRegistry;
+   private final RemoteCommandsFactory cmdFactory;
+   private final GlobalComponentRegistry globalComponentRegistry;
    
-   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
+   public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
       this.cmdFactory = cmdFactory;
       this.globalComponentRegistry = globalComponentRegistry;
    }
@@ -107,7 +108,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       return cmdFactory.fromStream((byte) methodId, args, type);
    }
 
-   protected static Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
+   protected Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
       if (numArgs > 0) {
@@ -118,6 +119,10 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
       return args;
+   }
+
+   protected CacheRpcCommand fromStream(byte id, Object[] parameters, byte type, String cacheName) {
+      return cmdFactory.fromStream(id, parameters, type, cacheName);
    }
 
    @Override

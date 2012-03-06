@@ -41,6 +41,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -131,6 +132,40 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       } finally {
          TestingUtil.killCacheManagers(local);
       }
+   }
+
+   public void testPreloadStoredAsBinary() {
+      CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
+      cacheLoaders.setPreload(true);
+      cacheLoaders.addCacheLoaderConfig(csConfig);
+      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(false);
+      cfg.setUseLazyDeserialization(true);
+      cfg.setCacheLoaderManagerConfig(cacheLoaders);
+      CacheContainer local = TestCacheManagerFactory.createCacheManager(cfg);
+      try {
+         Cache<String, Pojo> cache = local.getCache();
+         cacheNames.add(cache.getName());
+         cache.start();
+
+         assert cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+         assert cache.getConfiguration().isUseLazyDeserialization();
+
+         cache.put("k1", new Pojo());
+         cache.put("k2", new Pojo(), 111111, TimeUnit.MILLISECONDS);
+         cache.put("k3", new Pojo(), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+         cache.put("k4", new Pojo(), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+
+         cache.stop();
+
+         cache.start();
+
+         cache.entrySet();
+      } finally {
+         TestingUtil.killCacheManagers(local);
+      }
+   }
+
+   public static class Pojo implements Serializable {
    }
 
    public void testRestoreAtomicMap(Method m) {

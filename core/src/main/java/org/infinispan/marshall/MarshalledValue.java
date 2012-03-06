@@ -25,7 +25,6 @@ package org.infinispan.marshall;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
@@ -314,10 +313,10 @@ public class MarshalledValue implements Serializable {
    }
 
    public static class Externalizer extends AbstractExternalizer<MarshalledValue> {
-      private GlobalComponentRegistry gcr;
+      private final StreamingMarshaller globalMarshaller;
 
-      public void inject(GlobalComponentRegistry gcr) {
-         this.gcr = gcr;
+      public Externalizer(StreamingMarshaller globalMarshaller) {
+         this.globalMarshaller = globalMarshaller;
       }
 
       @Override
@@ -343,17 +342,12 @@ public class MarshalledValue implements Serializable {
             if (ispnMarshaller != null)
                marshaller = ispnMarshaller;
             else
-               marshaller = getGlobalMarshaller();
+               marshaller = globalMarshaller;
          } else {
-            marshaller = getGlobalMarshaller();
+            marshaller = globalMarshaller;
          }
 
          return new MarshalledValue(raw, hc, marshaller);
-      }
-
-      private StreamingMarshaller getGlobalMarshaller() {
-         return gcr.getComponent(
-               StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
       }
 
       @Override
