@@ -44,7 +44,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * Number of cluster-wide replicas for each cache entry.
     */
    public HashConfigurationBuilder numOwners(int numOwners) {
-      if (numVirtualNodes < 1) throw new IllegalArgumentException("numOwners cannot be less than 1");
+      if (numOwners < 1) throw new IllegalArgumentException("numOwners cannot be less than 1");
       this.numOwners = numOwners;
       activated = true;
       return this;
