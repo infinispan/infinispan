@@ -58,6 +58,7 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -68,6 +69,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.LinkedListExternalizer;
@@ -101,11 +103,12 @@ import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
@@ -121,7 +124,6 @@ import java.util.WeakHashMap;
 @Scope(Scopes.GLOBAL)
 public class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
-   private final Set<AdvancedExternalizer> internalExternalizers = new HashSet<AdvancedExternalizer>();
 
    /**
     * Contains mapping of classes to their corresponding externalizer classes via ExternalizerAdapter instances.
@@ -143,88 +145,19 @@ public class ExternalizerTable implements ObjectTable {
 
    private RemoteCommandsFactory cmdFactory;
    private GlobalComponentRegistry gcr;
-
-   private void initInternalExternalizers() {
-      internalExternalizers.add(new ArrayListExternalizer());
-      internalExternalizers.add(new LinkedListExternalizer());
-      internalExternalizers.add(new MapExternalizer());
-      internalExternalizers.add(new SetExternalizer());
-      internalExternalizers.add(new SingletonListExternalizer());
-
-      internalExternalizers.add(new GlobalTransaction.Externalizer());
-      internalExternalizers.add(new RecoveryAwareGlobalTransaction.Externalizer());
-      internalExternalizers.add(new DldGlobalTransaction.Externalizer());
-      internalExternalizers.add(new RecoveryAwareDldGlobalTransaction.Externalizer());
-      internalExternalizers.add(new JGroupsAddress.Externalizer());
-      internalExternalizers.add(new Immutables.ImmutableMapWrapperExternalizer());
-      internalExternalizers.add(new MarshalledValue.Externalizer());
-
-      internalExternalizers.add(new ExtendedResponse.Externalizer());
-      internalExternalizers.add(new SuccessfulResponse.Externalizer());
-      internalExternalizers.add(new ExceptionResponse.Externalizer());
-      internalExternalizers.add(new RequestIgnoredResponse.Externalizer());
-      internalExternalizers.add(new UnsuccessfulResponse.Externalizer());
-      internalExternalizers.add(new UnsureResponse.Externalizer());
-
-      internalExternalizers.add(new ReplicableCommandExternalizer());
-      internalExternalizers.add(new CacheRpcCommandExternalizer());
-
-      internalExternalizers.add(new ImmortalCacheEntry.Externalizer());
-      internalExternalizers.add(new MortalCacheEntry.Externalizer());
-      internalExternalizers.add(new TransientCacheEntry.Externalizer());
-      internalExternalizers.add(new TransientMortalCacheEntry.Externalizer());
-      internalExternalizers.add(new ImmortalCacheValue.Externalizer());
-      internalExternalizers.add(new MortalCacheValue.Externalizer());
-      internalExternalizers.add(new TransientCacheValue.Externalizer());
-      internalExternalizers.add(new TransientMortalCacheValue.Externalizer());
-
-      internalExternalizers.add(new VersionedImmortalCacheEntry.Externalizer());
-      internalExternalizers.add(new VersionedMortalCacheEntry.Externalizer());
-      internalExternalizers.add(new VersionedTransientCacheEntry.Externalizer());
-      internalExternalizers.add(new VersionedTransientMortalCacheEntry.Externalizer());
-      internalExternalizers.add(new VersionedImmortalCacheValue.Externalizer());
-      internalExternalizers.add(new VersionedMortalCacheValue.Externalizer());
-      internalExternalizers.add(new VersionedTransientCacheValue.Externalizer());
-      internalExternalizers.add(new VersionedTransientMortalCacheValue.Externalizer());
-
-      internalExternalizers.add(new AtomicHashMap.Externalizer());
-      internalExternalizers.add(new Bucket.Externalizer());
-      internalExternalizers.add(new AtomicHashMapDelta.Externalizer());
-      internalExternalizers.add(new PutOperation.Externalizer());
-      internalExternalizers.add(new RemoveOperation.Externalizer());
-      internalExternalizers.add(new ClearOperation.Externalizer());
-      internalExternalizers.add(new DefaultConsistentHash.Externalizer());
-      internalExternalizers.add(new UnionConsistentHash.Externalizer());
-      internalExternalizers.add(new JGroupsTopologyAwareAddress.Externalizer());
-      internalExternalizers.add(new TopologyAwareConsistentHash.Externalizer());
-      internalExternalizers.add(new ByteArrayKey.Externalizer());
-
-      internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
-      internalExternalizers.add(new SerializableXid.XidExternalizer());
-      internalExternalizers.add(new InDoubtTxInfoImpl.Externalizer());
-
-      internalExternalizers.add(new MurmurHash2.Externalizer());
-      internalExternalizers.add(new MurmurHash2Compat.Externalizer());
-      internalExternalizers.add(new MurmurHash3.Externalizer());
-
-      internalExternalizers.add(new CacheView.Externalizer());
-      internalExternalizers.add(new LockInfo.Externalizer());
-   }
-
-   void addInternalExternalizer(AdvancedExternalizer ext) {
-      internalExternalizers.add(ext);
-   }
+   private StreamingMarshaller globalMarshaller;
 
    @Inject
-   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
+   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr,
+         @ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller globalMarshaller) {
       this.cmdFactory = cmdFactory;
       this.gcr = gcr;
+      this.globalMarshaller = globalMarshaller;
    }
 
    @Start(priority = 7) // Should start before global marshaller
    public void start() {
-      initInternalExternalizers();
-      loadInternalMarshallables(cmdFactory, gcr);
+      loadInternalMarshallables();
       loadForeignMarshallables(gcr.getGlobalConfiguration());
       started = true;
       if (log.isTraceEnabled()) {
@@ -235,7 +168,6 @@ public class ExternalizerTable implements ObjectTable {
 
    @Stop(priority = 13) // Stop after global marshaller
    public void stop() {
-      internalExternalizers.clear();
       writers.clear();
       readers.clear();
       started = false;
@@ -298,18 +230,78 @@ public class ExternalizerTable implements ObjectTable {
       return writers.get(o.getClass()).getExternalizerId();
    }
 
-   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
-      for (AdvancedExternalizer ext : internalExternalizers) {
-         if (ext instanceof ReplicableCommandExternalizer)
-            ((ReplicableCommandExternalizer) ext).inject(cmdFactory, gcr);
-         if (ext instanceof CacheRpcCommandExternalizer)
-            ((CacheRpcCommandExternalizer) ext).inject(cmdFactory, gcr);
-         if (ext instanceof MarshalledValue.Externalizer)
-            ((MarshalledValue.Externalizer) ext).inject(gcr);
+   private void loadInternalMarshallables() {
+      addInternalExternalizer(new ArrayListExternalizer());
+      addInternalExternalizer(new LinkedListExternalizer());
+      addInternalExternalizer(new MapExternalizer());
+      addInternalExternalizer(new SetExternalizer());
+      addInternalExternalizer(new SingletonListExternalizer());
 
-         int id = checkInternalIdLimit(ext.getId(), ext);
-         updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
-      }
+      addInternalExternalizer(new GlobalTransaction.Externalizer());
+      addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer());
+      addInternalExternalizer(new DldGlobalTransaction.Externalizer());
+      addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer());
+      addInternalExternalizer(new JGroupsAddress.Externalizer());
+      addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
+      addInternalExternalizer(new MarshalledValue.Externalizer(globalMarshaller));
+
+      addInternalExternalizer(new ExtendedResponse.Externalizer());
+      addInternalExternalizer(new SuccessfulResponse.Externalizer());
+      addInternalExternalizer(new ExceptionResponse.Externalizer());
+      addInternalExternalizer(new RequestIgnoredResponse.Externalizer());
+      addInternalExternalizer(new UnsuccessfulResponse.Externalizer());
+      addInternalExternalizer(new UnsureResponse.Externalizer());
+
+      ReplicableCommandExternalizer cmExt =
+            new ReplicableCommandExternalizer(cmdFactory, gcr);
+      addInternalExternalizer(cmExt);
+      addInternalExternalizer(new CacheRpcCommandExternalizer(gcr, cmExt));
+
+      addInternalExternalizer(new ImmortalCacheEntry.Externalizer());
+      addInternalExternalizer(new MortalCacheEntry.Externalizer());
+      addInternalExternalizer(new TransientCacheEntry.Externalizer());
+      addInternalExternalizer(new TransientMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new ImmortalCacheValue.Externalizer());
+      addInternalExternalizer(new MortalCacheValue.Externalizer());
+      addInternalExternalizer(new TransientCacheValue.Externalizer());
+      addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
+
+      addInternalExternalizer(new VersionedImmortalCacheEntry.Externalizer());
+      addInternalExternalizer(new VersionedMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new VersionedTransientCacheEntry.Externalizer());
+      addInternalExternalizer(new VersionedTransientMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new VersionedImmortalCacheValue.Externalizer());
+      addInternalExternalizer(new VersionedMortalCacheValue.Externalizer());
+      addInternalExternalizer(new VersionedTransientCacheValue.Externalizer());
+      addInternalExternalizer(new VersionedTransientMortalCacheValue.Externalizer());
+
+      addInternalExternalizer(new AtomicHashMap.Externalizer());
+      addInternalExternalizer(new Bucket.Externalizer());
+      addInternalExternalizer(new AtomicHashMapDelta.Externalizer());
+      addInternalExternalizer(new PutOperation.Externalizer());
+      addInternalExternalizer(new RemoveOperation.Externalizer());
+      addInternalExternalizer(new ClearOperation.Externalizer());
+      addInternalExternalizer(new DefaultConsistentHash.Externalizer());
+      addInternalExternalizer(new UnionConsistentHash.Externalizer());
+      addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
+      addInternalExternalizer(new TopologyAwareConsistentHash.Externalizer());
+      addInternalExternalizer(new ByteArrayKey.Externalizer());
+
+      addInternalExternalizer(new RemoteTransactionLogDetails.Externalizer());
+      addInternalExternalizer(new SerializableXid.XidExternalizer());
+      addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());
+
+      addInternalExternalizer(new MurmurHash2.Externalizer());
+      addInternalExternalizer(new MurmurHash2Compat.Externalizer());
+      addInternalExternalizer(new MurmurHash3.Externalizer());
+
+      addInternalExternalizer(new CacheView.Externalizer());
+      addInternalExternalizer(new LockInfo.Externalizer());
+   }
+
+   void addInternalExternalizer(AdvancedExternalizer ext) {
+      int id = checkInternalIdLimit(ext.getId(), ext);
+      updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
    }
 
    private void updateExtReadersWritersWithTypes(ExternalizerAdapter adapter) {
