@@ -98,9 +98,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      for (Map.Entry<Object, CacheEntry> ce : lookedUpEntries.entrySet()) {
-         localTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
-      }
+      localTransaction.putLookedUpEntries(lookedUpEntries);
    }
 
    public void removeLookedUpEntry(Object key) {
