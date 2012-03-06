@@ -19,7 +19,6 @@
 
 package org.infinispan.marshall.exts;
 
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -66,12 +65,12 @@ import java.util.Set;
  * @since 5.1
  */
 public final class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCommand> {
-   private GlobalComponentRegistry gcr;
-   private ReplicableCommandExternalizer commandExt = new ReplicableCommandExternalizer();
-   private StreamingMarshaller globalMarshaller;
+   private final GlobalComponentRegistry gcr;
+   private final ReplicableCommandExternalizer cmdExt;
+   private final StreamingMarshaller globalMarshaller;
 
-   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
-      commandExt.inject(cmdFactory, gcr);
+   public CacheRpcCommandExternalizer(GlobalComponentRegistry gcr, ReplicableCommandExternalizer cmdExt) {
+      this.cmdExt = cmdExt;
       this.gcr = gcr;
       //Cache this locally to avoid having to look it up often:
       this.globalMarshaller = gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
@@ -94,7 +93,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    @Override
    public void writeObject(ObjectOutput output, CacheRpcCommand command) throws IOException {
-      commandExt.writeCommandHeader(output, command);
+      cmdExt.writeCommandHeader(output, command);
 
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
@@ -123,7 +122,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput output = marshaller.startObjectOutput(baos, true, estimatedSize);
       try {
-         commandExt.writeCommandParameters(output, cmd);
+         cmdExt.writeCommandParameters(output, cmd);
       } finally {
          marshaller.finishObjectOutput(output);
       }
@@ -161,8 +160,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
          ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
 
       try {
-         Object[] args = commandExt.readParameters(paramsInput);
-         return commandExt.cmdFactory.fromStream(methodId, args, type, cacheName);
+         Object[] args = cmdExt.readParameters(paramsInput);
+         return cmdExt.fromStream(methodId, args, type, cacheName);
       } catch (IOException e) {
          throw e;
       } finally {
