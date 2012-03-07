@@ -52,7 +52,7 @@ import org.infinispan.util.FileLookupFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "config.ConfigurationUnitTest")
+@Test(groups = "functional", testName = "configuration.ConfigurationUnitTest")
 public class ConfigurationUnitTest {
 
    @Test
@@ -226,5 +226,31 @@ public class ConfigurationUnitTest {
          }
       });
    }
+
+    @Test(expectedExceptions=IllegalArgumentException.class)
+    public void testNumOwners(){
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+        cb.clustering().hash().numOwners(5);
+
+        Configuration c = cb.build();
+        Assert.assertEquals(5, c.clustering().hash().numOwners());
+
+        // negative test
+        cb.clustering().hash().numOwners(0);
+    }
+
+    @Test(expectedExceptions=IllegalArgumentException.class)
+    public void numVirtualNodes(){
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+        cb.clustering().hash().numVirtualNodes(5);
+
+        Configuration c = cb.build();
+        Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
+
+        // negative test
+        cb.clustering().hash().numVirtualNodes(0);
+    }
 
 }
