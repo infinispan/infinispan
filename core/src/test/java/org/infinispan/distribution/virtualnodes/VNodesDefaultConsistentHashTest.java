@@ -32,8 +32,10 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertEqualsNoOrder;
 
 @Test(groups = "unit", testName = "distribution.VNodesDefaultConsistentHashTest", enabled = true)
 public class VNodesDefaultConsistentHashTest extends AbstractInfinispanTest {
@@ -70,7 +72,7 @@ public class VNodesDefaultConsistentHashTest extends AbstractInfinispanTest {
             // check that we get all the servers for numOwners > nodesCount
             for (int i = 0; i < nodesCount; i++) {
                List<Address> owners = ch.locate(sortedServers.get(i), nodesCount + 1);
-               assertEquals(new HashSet<Address>(owners), servers);
+               assertEqualsNoOrder(owners.toArray(), servers.toArray());
             }
          }
       }
