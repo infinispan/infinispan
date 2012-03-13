@@ -129,7 +129,7 @@
       <version.h2.driver>1.1.117</version.h2.driver>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.1.0.Beta1</version.hibernate.search>
+      <version.hibernate.search>4.1.0.CR2</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
