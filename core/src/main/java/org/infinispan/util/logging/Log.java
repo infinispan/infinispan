@@ -764,7 +764,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "FileCacheStore ignored an unexpected file %2$s in path %1$s. The store path should be dedicated!", id = 163)
-   void chacheLoaderIgnoringUnexpectedFile(String parentPath, String name);
+   void cacheLoaderIgnoringUnexpectedFile(Object parentPath, String name);
 
    @LogMessage(level = ERROR)
    @Message(value = "Rolling back to cache view %d, but last committed view is %d", id = 164)
@@ -805,11 +805,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
    void customInterceptorExpectsInjection(String customInterceptorFQCN);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Unexpected error reading configuration", id = 174)
    void errorReadingConfiguration(@Cause Exception e);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Unexpected error closing resource", id = 175)
    void failedToCloseResource(@Cause Throwable e);
@@ -817,7 +817,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The 'wakeUpInterval' attribute of the 'eviction' configuration XML element is deprecated. Setting the 'wakeUpInterval' attribute of the 'expiration' configuration XML element to %d instead", id = 176)
    void evictionWakeUpIntervalDeprecated(Long wakeUpInterval);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "%s has been deprecated as a synonym for %s. Use one of %s instead", id = 177)
    void randomCacheModeSynonymsDeprecated(String candidate, String mode, List<String> synonyms);
