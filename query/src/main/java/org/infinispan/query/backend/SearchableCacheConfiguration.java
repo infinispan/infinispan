@@ -26,9 +26,8 @@ package org.infinispan.query.backend;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.cfg.spi.SearchConfigurationBase;
 import org.hibernate.search.impl.SearchMappingBuilder;
-import org.hibernate.search.impl.SimpleInitializer;
-import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.spi.ServiceProvider;
 
 import java.util.Collections;
@@ -45,7 +44,7 @@ import java.util.Set;
  * @author Navin Surtani
  * @author Sanne Grinovero
  */
-public class SearchableCacheConfiguration implements SearchConfiguration {
+public class SearchableCacheConfiguration extends SearchConfigurationBase implements SearchConfiguration {
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
@@ -112,11 +111,6 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
    @Override
    public boolean isTransactionManagerExpected() {
       return false;
-   }
-
-   @Override
-   public InstanceInitializer getInstanceInitializer() {
-      return SimpleInitializer.INSTANCE;
    }
 
 }
