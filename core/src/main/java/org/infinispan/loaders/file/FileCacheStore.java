@@ -96,7 +96,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       try {
          File[] listFiles;
-         if (root != null && (listFiles = root.listFiles()) != null) {
+         if (root != null && (listFiles = root.listFiles(NUMERIC_NAMED_FILES_FILTER)) != null) {
             for (File bucketFile : listFiles) {
                Bucket bucket = loadBucket(bucketFile);
                if (handler.handle(bucket)) {
@@ -156,7 +156,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
-         File[] files = root.listFiles();
+         File[] files = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
          if (files == null)
             throw new CacheLoaderException("Root not directory or IO error occurred");
 
@@ -196,7 +196,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    @Override
    protected void clearLockSafe() throws CacheLoaderException {
-      File[] toDelete = root.listFiles();
+      File[] toDelete = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
       if (toDelete == null) {
          return;
       }
@@ -216,7 +216,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected void purgeInternal() throws CacheLoaderException {
       if (trace) log.trace("purgeInternal()");
 
-      File[] files = root.listFiles(new NumericNamedFilesFilter());
+      File[] files = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
       if (files == null)
          throw new CacheLoaderException("Root not directory or IO error occurred");
 
@@ -388,7 +388,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             fileSync = new PeriodicFileSync(config.getFsyncInterval());
             break;
       }
-      
+
       log.debugf("Using %s file sync mode", fsyncMode);
    }
 
@@ -649,20 +649,26 @@ public class FileCacheStore extends BucketBasedCacheStore {
    /**
     * Makes sure that files opened are actually named as numbers (ignore all other files)
     */
-   private static class NumericNamedFilesFilter implements FilenameFilter {
-
+   public static class NumericNamedFilesFilter implements FilenameFilter {
       @Override
       public boolean accept(File dir, String name) {
-         try {
-            Integer.parseInt(name);
-            return true;
-         } catch (NumberFormatException nfe) {
-            log.chacheLoaderIgnoringUnexpectedFile(dir.getAbsolutePath(), name);
+         int l = name.length();
+         int s = name.charAt(0) == '-' ? 1 : 0;
+         if (l - s > 10) {
+            log.cacheLoaderIgnoringUnexpectedFile(dir, name);
             return false;
          }
+         for (int i = s; i < l; i++) {
+            char c = name.charAt(i);
+            if (c < '0' || c > '9') {
+               log.cacheLoaderIgnoringUnexpectedFile(dir, name);
+               return false;
+            }
+         }
+         return true;
       }
-
    }
 
+   public static final NumericNamedFilesFilter NUMERIC_NAMED_FILES_FILTER = new NumericNamedFilesFilter();
 
 }

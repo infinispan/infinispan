@@ -70,7 +70,7 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    }
 
    @Override
-   public void testPreload() throws CacheLoaderException {
+   public void testPreload() throws Exception {
       super.testPreload();
    }
 
@@ -93,7 +93,7 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       assert fcs.load("k2") == null;
       assert fcs.load("k3") == null;
    }
-   
+
    public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
@@ -133,7 +133,7 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       InternalCacheEntry k2 = TestInternalCacheEntryFactory.create("k2", "v2");
       cs.store(k1);
       cs.store(k2);
-      
+
       Set<InternalCacheEntry> set = cs.loadAll();
       Iterator<InternalCacheEntry> i = set.iterator();
       assert i.hasNext() == true;
