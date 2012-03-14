@@ -63,7 +63,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -425,8 +424,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // ------------------------------------------------------------------------------------------------------------------
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
-            boolean supportReplay) throws Exception {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter)
+         throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
@@ -459,8 +458,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       if (broadcast) {
          rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout, recipients != null,
-                                                   usePriorityQueue, toJGroupsFilter(responseFilter), supportReplay,
-                                                   asyncMarshalling);
+                                                   usePriorityQueue, toJGroupsFilter(responseFilter),
+               asyncMarshalling);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = jgAddressList != null && jgAddressList.size() == 1;
@@ -476,11 +475,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                if (singleRecipient) {
                   if (singleJGAddress == null) singleJGAddress = jgAddressList.get(0);
                   singleResponse = dispatcher.invokeRemoteCommand(singleJGAddress, rpcCommand, toJGroupsMode(mode), timeout,
-                                                                  usePriorityQueue, supportReplay, asyncMarshalling);
+                                                                  usePriorityQueue, asyncMarshalling);
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
                                                          recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
-                                                         supportReplay, asyncMarshalling);
+                        asyncMarshalling);
                }
             }
          }

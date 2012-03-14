@@ -59,9 +59,6 @@ import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod
 import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.ExtendedResponse;
-import org.infinispan.remoting.responses.RequestIgnoredResponse;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -219,19 +216,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testImmutableResponseMarshalling() throws Exception {
-      marshallAndAssertEquality(RequestIgnoredResponse.INSTANCE);
       marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);
-   }
-
-   public void testExtendedResponseMarshalling() throws Exception {
-      SuccessfulResponse sr = SuccessfulResponse.create("Blah");
-      ExtendedResponse extended = new ExtendedResponse(sr, false);
-      byte[] bytes = marshaller.objectToByteBuffer(extended);
-      ExtendedResponse readObj = (ExtendedResponse) marshaller.objectFromByteBuffer(bytes);
-      assert extended.getResponse().equals(readObj.getResponse()) :
-            "Writen[" + extended.getResponse() + "] and read[" + readObj.getResponse() + "] objects should be the same";
-      assert extended.isReplayIgnoredRequests() == readObj.isReplayIgnoredRequests() :
-            "Writen[" + extended.isReplayIgnoredRequests() + "] and read[" + readObj.isReplayIgnoredRequests() + "] objects should be the same";
    }
 
    public void testReplicableCommandsMarshalling() throws Exception {
