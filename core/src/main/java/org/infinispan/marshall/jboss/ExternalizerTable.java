@@ -78,8 +78,6 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.ExtendedResponse;
-import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -245,10 +243,8 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
       addInternalExternalizer(new MarshalledValue.Externalizer(globalMarshaller));
 
-      addInternalExternalizer(new ExtendedResponse.Externalizer());
       addInternalExternalizer(new SuccessfulResponse.Externalizer());
       addInternalExternalizer(new ExceptionResponse.Externalizer());
-      addInternalExternalizer(new RequestIgnoredResponse.Externalizer());
       addInternalExternalizer(new UnsuccessfulResponse.Externalizer());
       addInternalExternalizer(new UnsureResponse.Externalizer());
 
