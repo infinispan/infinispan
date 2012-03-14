@@ -29,8 +29,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.ExtendedResponse;
-import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -54,7 +52,6 @@ import org.jgroups.util.RspList;
 import java.io.NotSerializableException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -116,13 +113,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     * @param recipients Guaranteed not to be null.  Must <b>not</b> contain self.
     */
    public RspList<Object> invokeRemoteCommands(final List<Address> recipients, final ReplicableCommand command, final ResponseMode mode, final long timeout,
-                                               final boolean anycasting, final boolean oob, final RspFilter filter, final boolean supportReplay,
+                                               final boolean anycasting, final boolean oob, final RspFilter filter,
                                                boolean asyncMarshalling) throws InterruptedException {
       if (asyncMarshalling) {
          asyncExecutor.submit(new Callable<RspList<Object>>() {
             @Override
             public RspList<Object> call() throws Exception {
-               return processCalls(command, recipients == null, supportReplay, timeout, filter, recipients, mode,
+               return processCalls(command, recipients == null, timeout, filter, recipients, mode,
                                    req_marshaller, CommandAwareRpcDispatcher.this, oob, anycasting);
             }
          });
@@ -130,7 +127,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else {
          RspList<Object> response;
          try {
-            response = processCalls(command, recipients == null, supportReplay, timeout, filter, recipients, mode,
+            response = processCalls(command, recipients == null, timeout, filter, recipients, mode,
                                     req_marshaller, this, oob, anycasting);
          } catch (InterruptedException e) {
             throw e;
@@ -146,14 +143,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    public Response invokeRemoteCommand(final Address recipient, final ReplicableCommand command, final ResponseMode mode,
-                                       final long timeout, final boolean oob, final boolean supportReplay,
+                                       final long timeout, final boolean oob,
                                        boolean asyncMarshalling) throws InterruptedException {
       if (asyncMarshalling) {
          asyncExecutor.submit(new Callable<Response>() {
 
             @Override
             public Response call() throws Exception {
-               return processSingleCall(command, supportReplay, timeout, recipient, mode,
+               return processSingleCall(command, timeout, recipient, mode,
                                         req_marshaller, CommandAwareRpcDispatcher.this, oob, transport);
             }
          });
@@ -161,7 +158,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else {
          Response response;
          try {
-            response = processSingleCall(command, supportReplay, timeout, recipient, mode,
+            response = processSingleCall(command, timeout, recipient, mode,
                                          req_marshaller, this, oob, transport);
          } catch (InterruptedException e) {
             throw e;
@@ -174,9 +171,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    public RspList<Object> broadcastRemoteCommands(ReplicableCommand command, ResponseMode mode, long timeout,
-                                                  boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay,
+                                                  boolean anycasting, boolean oob, RspFilter filter,
                                                   boolean asyncMarshalling) throws InterruptedException {
-      return invokeRemoteCommands(null, command, mode, timeout, anycasting, oob, filter, supportReplay, asyncMarshalling);
+      return invokeRemoteCommands(null, command, mode, timeout, anycasting, oob, filter, asyncMarshalling);
    }
 
    private boolean containsOnlyNulls(RspList<Object> l) {
@@ -250,14 +247,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return buf;
    }
 
-   private static Response processSingleCall(ReplicableCommand command, boolean supportReplay, long timeout,
-                                             Address destination, ResponseMode origMode,
+   private static Response processSingleCall(ReplicableCommand command, long timeout,
+                                             Address destination, ResponseMode mode,
                                              Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob,
                                              JGroupsTransport transport) throws Exception {
       if (trace) log.tracef("Replication task sending %s to single recipient %s", command, destination);
 
       // Replay capability requires responses from all members!
-      ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : origMode;
       Response retval;
       Buffer buf;
       buf = marshallCall(marshaller, command);
@@ -266,46 +262,23 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       // we only bother parsing responses if we are not in ASYNC mode.
       if (trace) log.tracef("Response: %s", retval);
-      if (mode != ResponseMode.GET_NONE) {
-         if (retval != null) {
-            if (!transport.checkResponse(retval, fromJGroupsAddress(destination))) {
-               if (trace) log.tracef("Invalid response from %s", destination);
-               throw new TimeoutException("Received an invalid response " + retval + " from " + destination);
-            }
-
-            if (supportReplay) {
-               boolean replay = false;
-               if (retval instanceof ExtendedResponse) {
-                  ExtendedResponse extended = (ExtendedResponse) retval;
-                  replay = extended.isReplayIgnoredRequests();
-                  retval = extended.getResponse();
-               }
-
-               if (replay) {
-                  Message msg = constructMessage(buf, destination, oob, mode);
-                  //Since we are making a sync call make sure we don't bundle
-                  //See ISPN-192 for more details
-                  msg.setFlag(Message.DONT_BUNDLE);
-
-                  if (trace) log.tracef("Replaying message to ignoring sender: %s", destination);
-                  Response rv2 = card.sendMessage(msg, new RequestOptions(ResponseMode.GET_ALL, timeout, false));
-                  if (rv2 != null) retval = rv2;
-               }
-            }
-         }
-         return retval;
-      } else {
+      if (mode == ResponseMode.GET_NONE)
          return null;
+
+      if (retval != null) {
+         if (!transport.checkResponse(retval, fromJGroupsAddress(destination))) {
+            if (trace) log.tracef("Invalid response from %s", destination);
+            throw new TimeoutException("Received an invalid response " + retval + " from " + destination);
+         }
       }
+
+      return retval;
    }
 
-   private static RspList<Object> processCalls(ReplicableCommand command, boolean broadcast, boolean supportReplay, long timeout,
-                                               RspFilter filter, List<Address> dests, ResponseMode origMode,
+   private static RspList<Object> processCalls(ReplicableCommand command, boolean broadcast, long timeout,
+                                               RspFilter filter, List<Address> dests, ResponseMode mode,
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
-
-      // Replay capability requires responses from all members!
-      ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : origMode;
 
       RspList<Object> retval = null;
       Buffer buf;
@@ -365,34 +338,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (retval == null)
             throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for "
                                                      + command.getClass().getSimpleName() + " not being serializable.");
-
-         if (supportReplay) {
-            boolean replay = false;
-            List<Address> ignorers = new LinkedList<Address>();
-            for (Map.Entry<Address, Rsp<Object>> entry : retval.entrySet()) {
-               Object value = entry.getValue().getValue();
-               if (value instanceof RequestIgnoredResponse) {
-                  ignorers.add(entry.getKey());
-               } else if (value instanceof ExtendedResponse) {
-                  ExtendedResponse extended = (ExtendedResponse) value;
-                  replay |= extended.isReplayIgnoredRequests();
-                  entry.getValue().setValue(extended.getResponse());
-               }
-            }
-
-            if (replay && !ignorers.isEmpty()) {
-               Message msg = constructMessage(buf, null, oob, mode);
-               //Since we are making a sync call make sure we don't bundle
-               //See ISPN-192 for more details
-               msg.setFlag(Message.DONT_BUNDLE);
-
-               RequestOptions opts = new RequestOptions(ResponseMode.GET_ALL, timeout, anycasting, filter);
-               RspList<Object> responses = card.castMessage(ignorers, msg, opts);
-               if (responses != null)
-                  retval.putAll(responses);
-            }
-         }
       }
+
       return retval;
    }
 

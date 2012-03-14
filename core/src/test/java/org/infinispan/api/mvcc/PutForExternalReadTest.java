@@ -179,7 +179,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          when(mockTransport.getViewId()).thenReturn(originalTransport.getViewId());
 
          when(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
-                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
+                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject()))
                .thenThrow(new RuntimeException("Barf!"));
 
          try {
