@@ -235,10 +235,10 @@ public class ReflectionUtil {
          method.setAccessible(true);
          return method.invoke(instance, parameters);
       } catch (InvocationTargetException e) {
-         throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
                                         (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e.getCause());
       } catch (Exception e) {
-         throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
                (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
       }
    }

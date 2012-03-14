@@ -59,16 +59,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
-   protected volatile LockContainer lockContainer;
-   private TransactionManager transactionManager;
+   protected volatile LockContainer<?> lockContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
    private static final String ANOTHER_THREAD = "(another thread)";
 
    @Inject
-   public void injectDependencies(Configuration configuration, TransactionManager transactionManager, LockContainer lockContainer) {
+   public void injectDependencies(Configuration configuration, LockContainer<?> lockContainer) {
       this.configuration = configuration;
-      this.transactionManager = transactionManager;
       this.lockContainer = lockContainer;
    }
 
