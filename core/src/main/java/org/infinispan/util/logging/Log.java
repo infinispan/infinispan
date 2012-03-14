@@ -506,10 +506,8 @@ public interface Log extends BasicLogger {
    void unprocessedTxLogEntries(int size);
 
    @LogMessage(level = WARN)
-   @Message(value = "Stopping, but there are transactions that did not finish in time: localTransactions=%s, remoteTransactions%s", id = 100)
-   void unfinishedTransactionsRemain(
-         ConcurrentMap<Transaction, LocalTransaction> localTransactions,
-         ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions);
+   @Message(value = "Stopping, but there are %s local transactions and %s remote transactions that did not finish in time.", id = 100)
+   void unfinishedTransactionsRemain(int localTransactions, int remoteTransactions);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed synchronization registration", id = 101)
