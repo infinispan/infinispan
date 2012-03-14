@@ -462,7 +462,8 @@ public class TransactionTable {
       }
 
       if (txsOnGoing) {
-         log.unfinishedTransactionsRemain(localTransactions, remoteTransactions);
+         log.unfinishedTransactionsRemain(localTransactions == null ? 0 : localTransactions.size(),
+                                          remoteTransactions == null ? 0 : remoteTransactions.size());
       } else {
          log.debug("All transactions terminated");
       }
