@@ -84,7 +84,8 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    }
 
    @Override
-   public void testPreload() throws CacheLoaderException {
+   public void testPreload() throws Exception {
+      createUnrelatedFile();
       super.testPreload();
    }
 
@@ -215,5 +216,13 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
          assert expected.remove(se.getKey());
       }
       assert expected.isEmpty();
+   }
+
+   public void testNumericNamedFilesFilter() {
+      File dir = new File(".");
+      assert FileCacheStore.NUMERIC_NAMED_FILES_FILTER.accept(dir, "-123456789");
+      assert FileCacheStore.NUMERIC_NAMED_FILES_FILTER.accept(dir, "987654321");
+      assert !FileCacheStore.NUMERIC_NAMED_FILES_FILTER.accept(dir, ".nfs1234");
+      assert !FileCacheStore.NUMERIC_NAMED_FILES_FILTER.accept(dir, "12345678901");
    }
 }

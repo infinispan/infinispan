@@ -382,6 +382,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.prepare(mods, tx, false);
 
       Thread t = new Thread(new Runnable() {
+         @Override
          public void run() {
             cs.rollback(tx);
          }
@@ -403,6 +404,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.prepare(mods, tx, false);
 
       Thread t2 = new Thread(new Runnable() {
+         @Override
          public void run() {
             cs.rollback(tx);
          }
@@ -426,7 +428,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("old");
    }
 
-   public void testPreload() throws CacheLoaderException {
+   public void testPreload() throws Exception {
       cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
       cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
       cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
@@ -635,6 +637,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       final List<Exception> exceptions = new LinkedList<Exception>();
 
       final Runnable store = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
@@ -646,6 +649,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       };
 
       final Runnable remove = new Runnable() {
+         @Override
          public void run() {
             try {
                cs.remove(keys[r.nextInt(10)]);
@@ -656,6 +660,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       };
 
       final Runnable get = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
@@ -672,6 +677,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       for (int i = 0; i < numThreads; i++) {
          threads[i] = new Thread(getClass().getSimpleName() + "-" + i) {
+            @Override
             public void run() {
                for (int i = 0; i < loops; i++) {
                   store.run();
