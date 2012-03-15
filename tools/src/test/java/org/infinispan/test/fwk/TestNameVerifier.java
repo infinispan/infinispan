@@ -37,13 +37,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Class that tests that test names are correclty set for each test.
+ * Class that tests that test names are correctly set for each test.
  *
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "test.fwk.TestNameVerifier")
 public class TestNameVerifier {
-   String dir = "src/test/java/org/infinispan";
+    
+   String dir = "src" + File.separator + "test" + File.separator + "java" + File.separator + "org" + File.separator + "infinispan";
    public List<String> modules = new ArrayList<String>();
 
 
@@ -222,25 +223,20 @@ public class TestNameVerifier {
    // method that populates the list of module names
    private void populateModuleList() {
       modules.add("core");
-      modules.add("cachestore/cloud");
-      modules.add("cachestore/bdbje");
-      modules.add("cachestore/jdbc");
-      modules.add("cachestore/jdbm");
+      modules.add("cachestore" + File.separator + "cloud");
+      modules.add("cachestore" + File.separator + "bdbje");
+      modules.add("cachestore" + File.separator + "jdbc");
+      modules.add("cachestore" + File.separator + "jdbm");
       modules.add("rhq-plugin");
       modules.add("tree");
    }
 
    // Old method that Mircea wrote that originally returned an array. Now returns a list and will be added to the list in getAllJavaFiles()
    private List<File> getFilesFromModule(String moduleName) {
-      File file = new File(dir);
-      if (!file.exists()) {
-         // try prepending dir with module name
-         file = new File(moduleName + File.separator + dir);
-      }
+      File file = new File(new File(dir).getAbsolutePath());
       assert file.isDirectory();
       ArrayList<File> result = new ArrayList<File>();
       addJavaFiles(file, result);
       return result;
-
    }
 }
