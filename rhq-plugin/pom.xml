@@ -57,6 +57,18 @@
                <groupId>hibernate</groupId>
                <artifactId>hibernate3</artifactId>
             </exclusion>
+            <exclusion>
+               <groupId>com.sun.xml.bind</groupId>
+               <artifactId>jaxb-impl</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>javax.xml.bind</groupId>
+               <artifactId>jaxb-api</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+            </exclusion>
          </exclusions>
       </dependency>
       <dependency>
@@ -67,6 +79,14 @@
                <groupId>com.sun.xml.bind</groupId>
                <artifactId>jaxb-impl</artifactId>
             </exclusion>
+            <exclusion>
+               <groupId>javax.xml.bind</groupId>
+               <artifactId>jaxb-api</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+            </exclusion>
          </exclusions>
          <scope>provided</scope>
       </dependency>
@@ -74,7 +94,40 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>com.sun.xml.bind</groupId>
+               <artifactId>jaxb-impl</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>javax.xml.bind</groupId>
+               <artifactId>jaxb-api</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+            </exclusion>
+         </exclusions>
          <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.hyperic</groupId>
+               <artifactId>sigar</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.hyperic</groupId>
+               <artifactId>sigar-dist</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -97,25 +150,17 @@
 
       <!-- Crazy dependencies to solve the usual compiler bug with unavailable annotations -->
       <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.0-api</artifactId>
          <scope>provided</scope>
       </dependency>
       
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
-         <version>${version.hibernate.core}</version>
          <scope>provided</scope>
       </dependency>
-      
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <version>${version.hibernate.annotations}</version>
-         <scope>provided</scope>
-      </dependency>
-      
+
       <!-- Dependencies for plugin descriptor generation -->
       <dependency>
          <groupId>${project.groupId}</groupId>

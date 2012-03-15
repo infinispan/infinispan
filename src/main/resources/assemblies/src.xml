@@ -38,6 +38,23 @@
     <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
         <fileSet>
+            <includes>
+                <include>pom.xml</include>
+                <include>README*</include>
+                <include>parent/**</include>
+                <include>core/**</include>
+                <include>tools/**</include>
+                <include>cachestore/pom.xml</include>
+                <include>cachestore/jdbc/**</include>
+                <include>cachestore/remote/**</include>
+                <include>client/**</include>
+                <include>server/pom.xml</include>
+                <include>server/core/**</include>
+                <include>server/hotrod/**</include>
+                <include>server/memcached/**</include>
+                <include>server/rest/**</include>
+                <include>rhq-plugin/**</include>
+            </includes>
             <excludes>
                 <exclude>**/target/**</exclude>
                 <exclude>**/output/**</exclude>

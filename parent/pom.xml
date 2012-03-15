@@ -27,6 +27,14 @@
    <artifactId>infinispan-parent</artifactId>
    <version>5.1.4-SNAPSHOT</version>
    <packaging>pom</packaging>
+   
+   <parent>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-parent</artifactId>
+      <version>8-redhat-1</version>
+      <relativePath />
+   </parent>
+
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
@@ -106,80 +114,43 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
-      <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
-      <version.arquillian>1.0.0.CR5</version.arquillian>
-      <version.arquillian.container.weld>1.0.0.CR2</version.arquillian.container.weld>
-      <version.avro>1.3.3</version.avro>
-      <version.bdbje>4.0.92</version.bdbje>
-      <version.c3p0>0.9.1.2</version.c3p0>
-      <version.cassandra>1.0.2</version.cassandra>
-      <version.cassandra.pool>1.0.0.CR1</version.cassandra.pool>
-      <version.cdi>1.0-SP4</version.cdi>
-      <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
-      <version.commons.compress>1.4</version.commons.compress>
-      <version.commons.dbcp>1.4</version.commons.dbcp>
-      <version.commons.pool>1.6</version.commons.pool>
-      <version.commons.httpclient>3.1</version.commons.httpclient>
-      <version.commons.logging>1.1</version.commons.logging>
+
       <version.commons.math>2.2</version.commons.math>
-      <version.gnu.getopt>1.0.13</version.gnu.getopt>
-      <version.guava>11.0.2</version.guava>
-      <version.h2.driver>1.3.166</version.h2.driver>
-      <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
-      <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.1.0.Final</version.hibernate.search>
-      <version.jackson>1.9.2</version.jackson>
-      <version.javax.cache>0.4</version.javax.cache>
-      <version.javax.persistence>1.0</version.javax.persistence>
-      <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.marshalling>1.3.11.GA</version.jboss.marshalling>
-      <version.jbossjta>4.16.3.Final</version.jbossjta>
-      <version.osgi>4.3.0</version.osgi>
-      <version.jboss.logging>3.1.0.GA</version.jboss.logging>
-      <version.jboss.logging.processor>1.0.1.Final</version.jboss.logging.processor>
-      <version.jboss.logmanager>1.2.0.GA</version.jboss.logmanager>
-      <version.jboss.spec>1.0.0.Final</version.jboss.spec>
-      <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.1.0</version.jclouds>
+      <version.hibernate>3.6.5.Final-redhat-1</version.hibernate>
       <version.jetty>6.1.25</version.jetty>
-      <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.0.9.Final</version.jgroups>
-      <version.jsap>2.1</version.jsap>
-      <version.json>20090211</version.json>
-      <version.jstl>1.2</version.jstl>
-      <version.jta>1.0.0.Final</version.jta>
-      <version.junit>4.10</version.junit>
-      <version.log4j>1.2.16</version.log4j>
-      <version.lucene>3.5.0</version.lucene>
-      <version.mc4j>1.2.6</version.mc4j>
-      <version.milyn.smooks>1.2.2</version.milyn.smooks>
+      <version.jetty.maven.plugin>8.0.0.M3-redhat-1</version.jetty.maven.plugin>
+      <version.jgroups>3.0.8.Final-redhat-1</version.jgroups>
+      <version.mc4j>1.2.15.1</version.mc4j>
       <version.mockito>1.8.5</version.mockito>
-      <version.mysql.driver>5.1.19</version.mysql.driver>
-      <version.netty>3.2.6.Final</version.netty>
-      <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
-      <version.resteasy>2.3.2.Final</version.resteasy>
-      <version.rhq.helpers>3.0.4</version.rhq.helpers>
+      <version.org.jboss.naming>5.0.5.Final-redhat-1</version.org.jboss.naming>
+      <version.relaxngDatatype>1.0</version.relaxngDatatype>
       <version.rhq>4.2.0</version.rhq>
-      <version.scala>2.9.2</version.scala>
-      <version.slf4j>1.6.4</version.slf4j>
-      <version.solder>3.1.0.Final</version.solder>
-      <version.spring>3.1.0.RELEASE</version.spring>
-      <version.spymemcached>2.5</version.spymemcached>
-      <version.testng>5.14.10</version.testng>
-      <version.webdav.servlet>2.0.1</version.webdav.servlet>
-      <version.weld>1.1.4.Final</version.weld>
-      <version.xsom>20081112</version.xsom>
-      <version.xstream>1.4.1</version.xstream>
-      <version.javassist>3.15.0-GA</version.javassist>
-      <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
-      <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
-      <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
-      <version.maven.bundle>2.3.7</version.maven.bundle>
-      <version.maven.source>2.1.2</version.maven.source>
+      <version.rhq.helpers>3.0.4-redhat-1</version.rhq.helpers>
+      <version.scala>2.9.2-redhat-1</version.scala>
+      <version.spymemcached>2.8.0</version.spymemcached>
+      <version.testng>5.14.10-redhat-1</version.testng>
+      <version.xsom>20070515</version.xsom>
+      <!-- Versions for plugins -->
+      <version.exec.maven.plugin>1.2.1-redhat-1</version.exec.maven.plugin>
+      <version.maven.antrun.plugin>1.7-redhat-1</version.maven.antrun.plugin>
    </properties>
    <dependencyManagement>
       <dependencies>
          <dependency>
+            <groupId>org.jboss.component.management</groupId>
+            <artifactId>jboss-dependency-management-all</artifactId>
+            <version>6.0.0-redhat-1</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.component.management</groupId>
+            <artifactId>jboss-project-dependency-relocations</artifactId>
+            <version>6.0.0-redhat-1</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
@@ -189,11 +160,6 @@
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cachestore-jdbm</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -216,16 +182,6 @@
             <artifactId>infinispan-core</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-ec2-demo</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-lucene-directory</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -261,90 +217,9 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>c3p0</groupId>
-            <artifactId>c3p0</artifactId>
-            <version>${version.c3p0}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${version.h2.driver}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.intellij</groupId>
-            <artifactId>forms_rt</artifactId>
-            <version>${version.com.intellij.forms_rt}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.martiansoftware</groupId>
-            <artifactId>jsap</artifactId>
-            <version>${version.jsap}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.sleepycat</groupId>
-            <artifactId>je</artifactId>
-            <version>${version.bdbje}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-            <version>${version.xstream}</version>
-         </dependency>
-         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>${version.commons.dbcp}</version>
-         </dependency>
-         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>${version.commons.httpclient}</version>
-         </dependency>
-         <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>${version.commons.logging}</version>
-            <scope>runtime</scope>
-         </dependency>
-         <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>${version.commons.pool}</version>
-         </dependency>
-         <dependency>
-            <groupId>gnu-getopt</groupId>
-            <artifactId>getopt</artifactId>
-            <version>${version.gnu.getopt}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>${version.javassist}</version>
-         </dependency>
-         <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>${version.javax.persistence}</version>
-         </dependency>
-         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
-            <version>${version.jstl}</version>
-         </dependency>
-         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>${version.javax.servlet}</version>
-         </dependency>
-         <dependency>
-            <groupId>jgoodies</groupId>
-            <artifactId>forms</artifactId>
-            <version>${version.jgoodies.forms}</version>
-         </dependency>
-         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${version.log4j}</version>
+            <groupId>com.sun.xsom</groupId>
+            <artifactId>xsom</artifactId>
+            <version>${version.xsom}</version>
          </dependency>
          <dependency>
             <groupId>mc4j</groupId>
@@ -352,176 +227,19 @@
             <version>${version.mc4j}</version>
          </dependency>
          <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${version.mysql.driver}</version>
-         </dependency>
-         <dependency>
-            <groupId>net.dataforte.cassandra</groupId>
-            <artifactId>cassandra-connection-pool</artifactId>
-            <version>${version.cassandra.pool}</version>
-         </dependency>
-         <dependency>
-            <groupId>net.sf.webdav-servlet</groupId>
-            <artifactId>webdav-servlet</artifactId>
-            <version>${version.webdav.servlet}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-thrift</artifactId>
-            <version>${version.cassandra}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-all</artifactId>
-            <version>${version.cassandra}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${version.commons.compress}</version>
-         </dependency>
-         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math</artifactId>
             <version>${version.commons.math}</version>
          </dependency>
          <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-jdbm</artifactId>
-            <version>${version.apacheds.jdbm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>avro</artifactId>
-            <version>${version.avro}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${version.lucene}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>stax2-api</artifactId>
-            <version>${version.org.codehaus.woodstox.stax2-api}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>stax-api</artifactId>
-                  <groupId>javax.xml.stream</groupId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>woodstox-core-asl</artifactId>
-            <version>${version.org.codehaus.woodstox.woodstox-core-asl}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>stax-api</artifactId>
-                  <groupId>javax.xml.stream</groupId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-engine</artifactId>
-            <version>${version.hibernate.search}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hibernate</groupId>
-                    <artifactId>hibernate-search-analyzers</artifactId>
-                </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.arquillian</groupId>
-            <artifactId>arquillian-bom</artifactId>
-            <version>${version.arquillian}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.spec.javax.transaction</groupId>
-            <artifactId>jboss-transaction-api_1.1_spec</artifactId>
-            <version>${version.jta}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>${version.jboss.logging}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling</artifactId>
-            <version>${version.jboss.marshalling}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-river</artifactId>
-            <version>${version.jboss.marshalling}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.naming</groupId>
-            <artifactId>jnp-client</artifactId>
-            <version>${version.org.jboss.naming}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>jboss-logging-spi</artifactId>
-                  <groupId>org.jboss.logging</groupId>
-               </exclusion>
-            </exclusions>
+            <artifactId>hibernate-core</artifactId>
+            <version>${version.hibernate}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.naming</groupId>
             <artifactId>jnpserver</artifactId>
             <version>${version.org.jboss.naming}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>jboss-logging-spi</artifactId>
-                  <groupId>org.jboss.logging</groupId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>${version.netty}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
-            <version>${version.resteasy}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-blobstore</artifactId>
-            <version>${version.jclouds}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jclouds.driver</groupId>
-            <artifactId>jclouds-enterprise</artifactId>
-            <version>${version.jclouds}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jclouds.driver</groupId>
-            <artifactId>jclouds-log4j</artifactId>
-            <version>${version.jclouds}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-allblobstore</artifactId>
-            <version>${version.jclouds}</version>
          </dependency>
          <dependency>
             <groupId>org.jgroups</groupId>
@@ -529,33 +247,18 @@
             <version>${version.jgroups}</version>
          </dependency>
          <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${version.json}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.milyn</groupId>
-            <artifactId>milyn-smooks-javabean</artifactId>
-            <version>${version.milyn.smooks}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.milyn</groupId>
-            <artifactId>milyn-smooks-csv</artifactId>
-            <version>${version.milyn.smooks}</version>
-         </dependency>
-         <dependency>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty-embedded</artifactId>
             <version>${version.jetty}</version>
          </dependency>
          <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>${version.osgi}</version>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${version.rhq}</version>
          </dependency>
          <dependency>
             <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
+            <artifactId>rhq-core-native-system</artifactId>
             <version>${version.rhq}</version>
          </dependency>
          <dependency>
@@ -590,28 +293,13 @@
             <version>${version.scala}</version>
          </dependency>
          <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${version.slf4j}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version.spring}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>${version.spring}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>${version.spring}</version>
+            <groupId>relaxngDatatype</groupId>
+            <artifactId>relaxngDatatype</artifactId>
+            <version>${version.relaxngDatatype}</version>
          </dependency>
          <dependency>
             <groupId>spy</groupId>
-            <artifactId>memcached</artifactId>
+            <artifactId>spymemcached</artifactId>
             <version>${version.spymemcached}</version>
          </dependency>
       </dependencies>
@@ -636,7 +324,6 @@
       <dependency>
          <groupId>net.jcip</groupId>
          <artifactId>jcip-annotations</artifactId>
-         <version>${version.jcipannotations}</version>
          <optional>true</optional>
       </dependency>
       <dependency>
@@ -648,7 +335,7 @@
       <dependency>
          <groupId>org.jboss.jbossts</groupId>
          <artifactId>jbossjta</artifactId>
-         <version>${version.jbossjta}</version>
+         <version>${version.org.jboss.jbossts.jbossjts}</version>
          <scope>test</scope>
          <exclusions>
             <exclusion>
@@ -795,8 +482,12 @@
       </dependency>
       <dependency>
          <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-generator</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
-         <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
       </dependency>
       <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
@@ -821,33 +512,25 @@
          <version>${version.testng}</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>3.8.2</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>xmlpull</groupId>
+         <artifactId>xmlpull</artifactId>
+         <version>1.1.3.1</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>xpp3</groupId>
+         <artifactId>xpp3_min</artifactId>
+         <version>1.1.4c-redhat-1</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
-   <repositories>
-      <repository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>jboss-public-repository</id>
-         <name>JBoss Public Repository and Proxy for third party repositories</name>
-         <url>https://repository.jboss.org/nexus/content/groups/public</url>
-      </repository>
-   </repositories>
-   <pluginRepositories>
-      <pluginRepository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>jboss-public-plugin-repository</id>
-         <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
-         <url>https://repository.jboss.org/nexus/content/groups/public</url>
-      </pluginRepository>
-   </pluginRepositories>
    <build>
       <directory>${buildDirectory}</directory>
       <finalName>${project.artifactId}</finalName>
@@ -856,28 +539,23 @@
             <plugin>
                <groupId>org.apache.felix</groupId>
                <artifactId>maven-bundle-plugin</artifactId>
-               <version>${version.maven.bundle}</version>
             </plugin>
             <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-assembly-plugin</artifactId>
-                  <version>2.2-beta-3</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
-               <version>2.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.8.1</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
                <!-- See also reporting plugins -->
-               <version>2.6</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>1.6</targetJdk>
@@ -888,135 +566,30 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
-               <version>2.12</version>
+               <version>2.12-redhat-1</version>
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
-               <version>2.1.1</version>
                <configuration>
                   <attachClasses>true</attachClasses>
                </configuration>
             </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
-               <artifactId>appassembler-maven-plugin</artifactId>
-               <version>1.0</version>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
                <artifactId>exec-maven-plugin</artifactId>
-               <version>1.2.1</version>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>ideauidesigner-maven-plugin</artifactId>
-               <version>1.0-beta-1</version>
-            </plugin>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-            <plugin>
-               <groupId>org.eclipse.m2e</groupId>
-               <artifactId>lifecycle-mapping</artifactId>
-               <version>1.0.0</version>
-               <configuration>
-                  <lifecycleMappingMetadata>
-                     <pluginExecutions>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.apache.maven.plugins</groupId>
-                              <artifactId>maven-dependency-plugin</artifactId>
-                              <versionRange>[2.0,)</versionRange>
-                              <goals>
-                                 <goal>copy</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.apache.maven.plugins</groupId>
-                              <artifactId>maven-javadoc-plugin</artifactId>
-                              <versionRange>[2.8,)</versionRange>
-                              <goals>
-                                 <goal>javadoc</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.apache.maven.plugins</groupId>
-                              <artifactId>maven-antrun-plugin</artifactId>
-                              <versionRange>[1.7,)</versionRange>
-                              <goals>
-                                 <goal>run</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.codehaus.mojo</groupId>
-                              <artifactId>exec-maven-plugin</artifactId>
-                              <versionRange>[1.2.1,)</versionRange>
-                              <goals>
-                                 <goal>java</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.scala-tools</groupId>
-                              <artifactId>maven-scala-plugin</artifactId>
-                              <versionRange>[2.15.2,)</versionRange>
-                              <goals>
-                                 <goal>testCompile</goal>
-                                 <goal>compile</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.codehaus.mojo</groupId>
-                              <artifactId>ideauidesigner-maven-plugin</artifactId>
-                              <versionRange>[1.0-beta-1,)</versionRange>
-                              <goals>
-                                 <goal>javac2</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                     </pluginExecutions>
-                  </lifecycleMappingMetadata>
-               </configuration>
             </plugin>
             <plugin>
                <groupId>org.jboss.maven.plugins</groupId>
                <artifactId>maven-injection-plugin</artifactId>
-               <version>1.0.2</version>
             </plugin>
             <plugin>
                <groupId>org.mortbay.jetty</groupId>
                <artifactId>jetty-maven-plugin</artifactId>
-               <version>8.0.0.M3</version>
+               <version>${version.jetty.maven.plugin}</version>
             </plugin>
             <plugin>
                <groupId>org.scala-tools</groupId>
                <artifactId>maven-scala-plugin</artifactId>
-               <version>2.15.2</version>
                <executions>
                   <execution>
                      <id>compile</id>
@@ -1047,24 +620,6 @@
       </pluginManagement>
       <plugins>
          <plugin>
-            <artifactId>maven-remote-resources-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <id>attach-license</id>
-                  <goals>
-                     <goal>process</goal>
-                  </goals>
-                  <inherited>true</inherited>
-                  <configuration>
-                     <resourceBundles>
-                        <resourceBundle>org.infinispan:infinispan-license:1</resourceBundle>
-                     </resourceBundles>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
             <extensions>true</extensions>
@@ -1079,7 +634,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>${version.maven.antrun.plugin}</version>
             <executions>
                <execution>
                   <id>copy_serialized_metadata</id>
@@ -1089,9 +644,9 @@
                   </goals>
                   <configuration>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
-                     <tasks>
+                     <target>
                         <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"></copy>
-                     </tasks>
+                     </target>
                   </configuration>
                </execution>
             </executions>
@@ -1100,7 +655,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>2.3.2</version>
             <configuration>
                <source>1.6</source>
                <target>1.6</target>
@@ -1108,29 +662,9 @@
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
             </configuration>
          </plugin>
-         <!-- eclipse project file generation -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-eclipse-plugin</artifactId>
-            <version>2.7</version>
-            <configuration>
-               <downloadSources>true</downloadSources>
-               <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
-            </configuration>
-         </plugin>
-         <!-- IntelliJ project file generation -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-idea-plugin</artifactId>
-            <version>2.2</version>
-            <configuration>
-               <downloadSources>true</downloadSources>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.3</version>
             <executions>
                <execution>
                   <id>build-test-jar</id>
@@ -1169,12 +703,10 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-release-plugin</artifactId>
-            <version>2.1</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.4.3</version>
             <configuration>
                <encoding>UTF-8</encoding>
             </configuration>
@@ -1216,6 +748,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
+            <version>${version.exec.maven.plugin}</version>
             <executions>
                <execution>
                   <id>serialize_component_metadata</id>
@@ -1249,18 +782,15 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
             <!-- Needs to be re-defined and configured in pluginManagement section -->
-            <version>2.6</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
-            <version>2.4.3-JBOSS</version>
          </plugin>
          <!-- Findbugs report -->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-            <version>2.3</version>
             <configuration>
                <onlyAnalyze>org.infinispan.*</onlyAnalyze>
                <xmlOutput>true</xmlOutput>
@@ -1281,7 +811,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-enforcer-plugin</artifactId>
-                  <version>1.0-beta-1</version>
                   <executions>
                      <execution>
                         <id>enforce-java</id>
@@ -1305,7 +834,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
-                  <version>${version.maven.source}</version>
                   <executions>
                      <execution>
                         <id>attach-sources</id>
@@ -1397,7 +925,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <version>2.4.3-JBOSS</version>
                   <configuration>
                      <parallel>tests</parallel>
                      <threadCount>${infinispan.test.parallel.threads}</threadCount>

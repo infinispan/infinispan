@@ -79,8 +79,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
+         <groupId>org.jboss.spec.javax.servlet</groupId>
+         <artifactId>jboss-servlet-api_3.0_spec</artifactId>
          <scope>provided</scope>
       </dependency>
 
@@ -90,11 +90,6 @@
       </dependency>
 
       <!-- and now for unit and integration tests -->
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
-         <scope>test</scope>
-      </dependency>
 
       <dependency>
          <groupId>commons-httpclient</groupId>

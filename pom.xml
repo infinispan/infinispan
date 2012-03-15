@@ -44,36 +44,16 @@
       <module>parent</module>
       <module>core</module>
       <module>tools</module>
-      <module>query</module>
-      <module>tree</module>
-      <module>lucene-directory</module>
       <module>cachestore</module>
       <module>cachestore/jdbc</module>
-      <module>cachestore/jdbm</module>
-      <module>cachestore/bdbje</module>
-      <module>cachestore/cloud</module>
       <module>cachestore/remote</module>
-      <module>cachestore/cassandra</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
       <module>server/hotrod</module>
-      <module>server/websocket</module>
       <module>server/rest</module>
       <module>client/hotrod-client</module>
       <module>rhq-plugin</module>
-      <module>spring</module>
-      <module>demos/gui</module>
-      <module>demos/ec2</module>
-      <module>demos/distexec</module>
-      <module>demos/ec2-ui</module>
-      <module>demos/directory</module>
-      <module>demos/lucene-directory-demo</module>
-      <module>demos/gridfs-webdav</module>
-      <module>demos/nearcache</module>
-      <module>demos/nearcache-client</module>
-      <module>cdi/extension</module>
-      <module>cdi/tck-runner</module>
    </modules>
 
    <profiles>
@@ -95,10 +75,11 @@
                         <id>javadoc</id>
                         <phase>prepare-package</phase>
                         <goals>
-                           <goal>aggregate</goal>
+                           <goal>aggregate-jar</goal>
                         </goals>
                         <configuration>
                            <quiet>true</quiet>
+                           
                            <!-- In case you anyone needs to trace javadoc issues
                            <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
                            -->
@@ -109,20 +90,6 @@
                               <link>http://java.sun.com/javase/6/docs/api/</link>
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
-                           <footer><![CDATA[
--->
-                      <!-- Google Analytics -->
-<!--
-<script type='text/javascript'>
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
-try {
-var pageTracker = _gat._getTracker("UA-8601422-4");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-                     ]]></footer>
                         </configuration>
                      </execution>
                   </executions>
@@ -136,33 +103,6 @@ pageTracker._trackPageview();
                         <phase>none</phase>
                      </execution>
                   </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>assemble</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>single</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>src/main/resources/assemblies/bin.xml</descriptor>
-                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
-                        <descriptor>src/main/resources/assemblies/src.xml</descriptor>
-                         <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
-                     </descriptors>
-                     <finalName>${project.artifactId}-${project.version}</finalName>
-                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
-
-                     <!-- Do not attach ZIP files to the Maven repository -->
-                     <attach>false</attach>
-                  </configuration>
                </plugin>
             </plugins>
          </build>
@@ -335,6 +275,52 @@ pageTracker._trackPageview();
             </plugins>
          </build>
       </profile>
+      
+      <profile>
+         <id>source-distribution</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>build-test-jar</id>
+                        <phase>none</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>single</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/resources/assemblies/src.xml</descriptor>
+                     </descriptors>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
 
    </profiles>
 </project>

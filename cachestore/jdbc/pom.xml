@@ -43,13 +43,6 @@
          <artifactId>h2</artifactId>
          <scope>test</scope>
       </dependency>
-
-      <!-- for testing against MySQL -->
-      <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>     
