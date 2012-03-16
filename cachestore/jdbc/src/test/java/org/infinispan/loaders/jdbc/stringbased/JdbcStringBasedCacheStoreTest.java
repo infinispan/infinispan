@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import static org.easymock.classextension.EasyMock.*;
+import static org.mockito.Mockito.*;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreTest")
 public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
 
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -61,23 +62,21 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       stringBasedCacheStore.start();
       assert stringBasedCacheStore.getConnectionFactory() == null;
 
-      // this will make sure that if a method like stop is called on the connection then it will barf an exception 
-      ConnectionFactory connectionFactory = createMock(ConnectionFactory.class);
-      TableManipulation tableManipulation = createMock(TableManipulation.class);
+      // this will make sure that if a method like stop is called on the connection then it will barf an exception
+      ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
+      TableManipulation tableManipulation = mock(TableManipulation.class);
       config.setTableManipulation(tableManipulation);
 
       tableManipulation.start(connectionFactory);
       tableManipulation.setCacheName("otherName");
-      replay(tableManipulation);
+
       stringBasedCacheStore.doConnectionFactoryInitialization(connectionFactory);
-      verify(tableManipulation);
 
       //stop should be called even if this is an external
       reset(tableManipulation, connectionFactory);
       tableManipulation.stop();
-      replay(tableManipulation, connectionFactory);
+
       stringBasedCacheStore.stop();
-      verify(tableManipulation, connectionFactory);
    }
 
    @Override

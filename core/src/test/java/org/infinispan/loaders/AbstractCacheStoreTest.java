@@ -22,16 +22,17 @@
  */
 package org.infinispan.loaders;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.easymock.classextension.EasyMock.createMock;
 
 /**
  * Unit tests that cover {@link  AbstractCacheStoreTest }
@@ -46,7 +47,7 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws NoSuchMethodException, CacheLoaderException {
-      cs = createMock(AbstractCacheStore.class, AbstractCacheStore.class.getMethod("clear"));
+      cs = mock(AbstractCacheStore.class, Mockito.CALLS_REAL_METHODS);
       cfg = new AbstractCacheStoreConfig();
       cs.init(cfg, null, null);
    }

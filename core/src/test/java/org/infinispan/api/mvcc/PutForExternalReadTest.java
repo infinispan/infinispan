@@ -22,9 +22,28 @@
  */
 package org.infinispan.api.mvcc;
 
-import static org.easymock.EasyMock.*;
-import org.infinispan.Cache;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.transaction.Status;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
@@ -39,24 +58,14 @@ import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionTable;
-
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
 @CleanupAfterMethod
 public class PutForExternalReadTest extends MultipleCacheManagersTest {
-   final String key = "k", value = "v", value2 = "v2";   
+   final String key = "k", value = "v", value2 = "v2";
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       createClusteredCaches(2, "replSync", c);
@@ -151,28 +160,27 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    public void testExceptionSuppression() throws Exception {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
-      Transport mockTransport = createNiceMock(Transport.class);
+      Transport mockTransport = mock(Transport.class);
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
 
-         Address mockAddress1 = createNiceMock(Address.class);
-         Address mockAddress2 = createNiceMock(Address.class);
+         Address mockAddress1 = mock(Address.class);
+         Address mockAddress2 = mock(Address.class);
 
          List<Address> memberList = new ArrayList<Address>(2);
          memberList.add(mockAddress1);
          memberList.add(mockAddress2);
 
-         expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
          rpcManager.setTransport(mockTransport);
 
-         expect(mockTransport.getViewId()).andReturn(originalTransport.getViewId()).anyTimes();
+         when(mockTransport.getMembers()).thenReturn(memberList);
 
-         expect(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
+         when(mockTransport.getViewId()).thenReturn(originalTransport.getViewId());
+
+         when(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
-               .andThrow(new RuntimeException("Barf!")).anyTimes();
-
-         replay(mockTransport);
+               .thenThrow(new RuntimeException("Barf!"));
 
          try {
             cache1.put(key, value);

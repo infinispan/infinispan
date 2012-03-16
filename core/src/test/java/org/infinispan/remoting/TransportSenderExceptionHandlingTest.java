@@ -46,7 +46,7 @@ import java.io.EOFException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.EmptyStackException;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {
@@ -57,7 +57,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       createClusteredCaches(2, "replSync",
             getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC));
    }
-   
+
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
@@ -68,19 +68,18 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       CommandAwareRpcDispatcher dispatcher2 = transport2.getCommandAwareRpcDispatcher();
       RpcDispatcher.Marshaller originalMarshaller = dispatcher2.getMarshaller();
       try {
-         RpcDispatcher.Marshaller mockMarshaller1 = createMock(RpcDispatcher.Marshaller.class);
-         RpcDispatcher.Marshaller mockMarshaller = createMock(RpcDispatcher.Marshaller.class);
+         RpcDispatcher.Marshaller mockMarshaller1 = mock(RpcDispatcher.Marshaller.class);
+         RpcDispatcher.Marshaller mockMarshaller = mock(RpcDispatcher.Marshaller.class);
          PutKeyValueCommand putCommand = new PutKeyValueCommand();
          putCommand.setKey(key);
          putCommand.setValue(value);
          SingleRpcCommand rpcCommand = new SingleRpcCommand("replSync");
          Object[] params = new Object[]{putCommand};
          rpcCommand.setParameters(SingleRpcCommand.COMMAND_ID, params);
-         expect(mockMarshaller1.objectToBuffer(anyObject())).andReturn(originalMarshaller1.objectToBuffer(rpcCommand));
-         expect(mockMarshaller.objectFromBuffer((byte[]) anyObject(), anyInt(), anyInt())).andThrow(new EOFException());
+         when(mockMarshaller1.objectToBuffer(anyObject())).thenReturn(originalMarshaller1.objectToBuffer(rpcCommand));
+         when(mockMarshaller.objectFromBuffer((byte[]) anyObject(), anyInt(), anyInt())).thenThrow(new EOFException());
          dispatcher1.setRequestMarshaller(mockMarshaller1);
          dispatcher2.setRequestMarshaller(mockMarshaller);
-         replay(mockMarshaller1, mockMarshaller);
          cache1.put(key, value);
          assert false : "Should have thrown an exception";
       } catch(CacheException ce) {

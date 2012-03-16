@@ -22,7 +22,15 @@
  */
 package org.infinispan.notifications.cachelistener;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,7 +70,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
-      mockNotifier = createMock(CacheNotifier.class);
+      mockNotifier = mock(CacheNotifier.class);
       origNotifier = TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
@@ -83,12 +91,6 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    }
 
    private void initCacheData(Map<Object, Object> data) {
-      expectTransactionBoundaries(true);
-      mockNotifier.notifyCacheEntryCreated(anyObject(), anyBoolean(), isA(InvocationContext.class));
-      expectLastCall().anyTimes();
-      mockNotifier.notifyCacheEntryModified(anyObject(), anyObject(), anyBoolean(), isA(InvocationContext.class));
-      expectLastCall().anyTimes();
-      replay(mockNotifier);
       try {
          tm.begin();
          cache.putAll(data);
@@ -96,9 +98,10 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-      verify(mockNotifier);
 
-      // now resume the mock
+      expectTransactionBoundaries(true);
+      verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(anyObject(), anyBoolean(), isA(InvocationContext.class));
+      verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(), anyObject(), anyBoolean(), isA(InvocationContext.class));
       reset(mockNotifier);
    }
 
@@ -107,69 +110,54 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    }
 
    static void expectSingleEntryCreated(Object key, Object value, CacheNotifier mockNotifier) {
-      mockNotifier.notifyCacheEntryCreated(eq(key), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryCreated(eq(key), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryModified(eq(key), isNull(), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryModified(eq(key), eq(value), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(false), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq(key), isNull(), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq(key), eq(value), eq(false), isA(InvocationContext.class));
    }
 
    private void expectTransactionBoundaries(boolean successful) {
-      mockNotifier.notifyTransactionRegistered(isA(GlobalTransaction.class), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyTransactionCompleted(isA(GlobalTransaction.class), eq(successful), isA(InvocationContext.class));
-      expectLastCall().once();
+      verify(mockNotifier).notifyTransactionRegistered(isA(GlobalTransaction.class), isA(InvocationContext.class));
+      verify(mockNotifier).notifyTransactionCompleted(isA(GlobalTransaction.class), eq(successful), isA(InvocationContext.class));
    }
 
    // -- now the transactional ones
 
    public void testTxNonexistentRemove() throws Exception {
-      expectTransactionBoundaries(true);
-      replay(mockNotifier);
       tm.begin();
       cache.remove("doesNotExist");
       tm.commit();
-      verify(mockNotifier);
+
+      expectTransactionBoundaries(true);
    }
 
    public void testTxCreationCommit() throws Exception {
-      expectTransactionBoundaries(true);
-      expectSingleEntryCreated("key", "value");
-      replay(mockNotifier);
       tm.begin();
       cache.put("key", "value");
       tm.commit();
-      verify(mockNotifier);
+
+      expectTransactionBoundaries(true);
+      expectSingleEntryCreated("key", "value");
    }
 
    public void testTxCreationRollback() throws Exception {
-      expectTransactionBoundaries(false);
-      expectSingleEntryCreated("key", "value");
-      replay(mockNotifier);
       tm.begin();
       cache.put("key", "value");
       tm.rollback();
-      verify(mockNotifier);
+
+      expectTransactionBoundaries(false);
+      expectSingleEntryCreated("key", "value");
    }
 
    public void testTxOnlyModification() throws Exception {
       initCacheData("key", "value");
-      expectTransactionBoundaries(true);
-      mockNotifier.notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-
-      replay(mockNotifier);
-
       tm.begin();
       cache.put("key", "value2");
       tm.commit();
 
-      verify(mockNotifier);
+      expectTransactionBoundaries(true);
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
    }
 
    public void testTxRemoveData() throws Exception {
@@ -177,17 +165,13 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       data.put("key", "value");
       data.put("key2", "value2");
       initCacheData(data);
-      expectTransactionBoundaries(true);
-      mockNotifier.notifyCacheEntryRemoved(eq("key2"), eq("value2"), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryRemoved(eq("key2"), isNull(), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-      replay(mockNotifier);
 
       tm.begin();
       cache.remove("key2");
       tm.commit();
 
-      verify(mockNotifier);
+      expectTransactionBoundaries(true);
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), isNull(), eq(false), isA(InvocationContext.class));
    }
 }
