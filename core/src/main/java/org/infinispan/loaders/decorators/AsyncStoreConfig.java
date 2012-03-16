@@ -1,11 +1,31 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
-import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.config.Dynamic;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -22,7 +42,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @ConfigurationDoc(name="async",parentName="loader")
-public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
+public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -8596800049019004961L;
@@ -37,9 +57,13 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setFlushLockTimeout")
    protected Long flushLockTimeout = 5000L;
 
+   // By default a bit under the default cache stop timeout
    @Dynamic
    @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setShutdownTimeout")
-   protected Long shutdownTimeout = 7200L;
+   protected Long shutdownTimeout = 25000L;
+
+   @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setModificationQueueSize")
+   protected Integer modificationQueueSize = 1024;
 
    @XmlAttribute
    public Boolean isEnabled() {
@@ -50,23 +74,14 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * If true, all modifications to this cache store happen asynchronously, on a separate thread.
     * 
     * @param enabled
+    * @deprecated The visibility of this method will be reduced in favour of more fluent writer method calls.
     */
+   @Deprecated
    public void setEnabled(Boolean enabled) {
       testImmutability("enabled");
       this.enabled = enabled;
    }
    
-   /**
-    * If true, all modifications to this cache store happen asynchronously, on a separate thread.
-    * 
-    * @param enabled
-    */
-   public AsyncStoreConfig enabled(Boolean enabled) {
-      testImmutability("enabled");
-      this.enabled = enabled;
-      return this;
-   }
-
    @XmlAttribute
    public Integer getThreadPoolSize() {
       return threadPoolSize;
@@ -76,7 +91,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * Size of the thread pool whose threads are responsible for applying the modifications.
     * 
     * @param threadPoolSize
+    * @deprecated The visibility of this method will be reduced. Use {@link #threadPoolSize(Integer)} instead.
     */
+   @Deprecated
    public void setThreadPoolSize(Integer threadPoolSize) {
       testImmutability("threadPoolSize");
       this.threadPoolSize = threadPoolSize;      
@@ -103,7 +120,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * periodically.
     * 
     * @param stateLockTimeout
+    * @deprecated The visibility of this method will be reduced. Use {@link #flushLockTimeout(Long)} instead.
     */
+   @Deprecated
    public AsyncStoreConfig setFlushLockTimeout(Long stateLockTimeout) {
       testImmutability("flushLockTimeout");
       this.flushLockTimeout = stateLockTimeout;
@@ -133,7 +152,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * sure to not loose data
     * 
     * @param shutdownTimeout
+    * @deprecated The visibility of this method will be reduced. Use {@link #shutdownTimeout(Long)} instead.
     */
+   @Deprecated
    public void setShutdownTimeout(Long shutdownTimeout) {
       testImmutability("shutdownTimeout");
       this.shutdownTimeout = shutdownTimeout;
@@ -152,16 +173,37 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       return this;
    }
 
+   @XmlAttribute
+   public Integer getModificationQueueSize() {
+      return modificationQueueSize;
+   }
+
+   public AsyncStoreConfig modificationQueueSize(Integer modificationQueueSize) {
+      testImmutability("modificationQueueSize");
+      this.modificationQueueSize = modificationQueueSize;
+      return this;
+   }
+
+   /**
+    * Sets the size of the modification queue for the async store.  If updates are made at a rate that is faster than
+    * the underlying cache store can process this queue, then the async store behaves like a synchronous store for
+    * that period, blocking until the queue can accept more elements.
+    *
+    * @param modificationQueueSize The size of the modification queue
+    */
+   @Deprecated
+   public void setModificationQueueSize(Integer modificationQueueSize) {
+      testImmutability("modificationQueueSize");
+      this.modificationQueueSize = modificationQueueSize;
+   }
+
    @Override
    public AsyncStoreConfig clone() {
-      try {
-         return (AsyncStoreConfig) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new RuntimeException("Should not happen!", e);
-      }
+      return (AsyncStoreConfig) super.clone();
    }
 
    public void accept(ConfigurationBeanVisitor v) {
       v.visitAsyncStoreConfig(this);
    }
+
 }

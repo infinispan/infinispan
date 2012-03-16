@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -55,19 +56,20 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    
    @Test
    public void roundingTest() {
-      FileMetadata m = new FileMetadata();
-      m.setBufferSize(10);
+      FileMetadata m = new FileMetadata(10);
       Assert.assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
       Assert.assertEquals(2, m.getNumberOfChunks());
-      m.setBufferSize(11);
+      m = new FileMetadata(11);
+      m.setSize(11);
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
       Assert.assertEquals(2, m.getNumberOfChunks());
       m.setSize(31);
-      m.setBufferSize(10);
+      m = new FileMetadata(10);
+      m.setSize(31);
       Assert.assertEquals(4, m.getNumberOfChunks());
    }
    

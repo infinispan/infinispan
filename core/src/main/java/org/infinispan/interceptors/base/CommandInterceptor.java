@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,7 @@
 package org.infinispan.interceptors.base;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
@@ -41,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
  * intercept invocations on {@link VisitableCommand}s.
  * <p/>
- * Commands are either created by the {@link CacheDelegate} (for invocations on the {@link Cache} public interface), or
+ * Commands are either created by the {@link CacheImpl} (for invocations on the {@link Cache} public interface), or
  * by the {@link InboundInvocationHandler} for remotely originating invocations, and are passed up the interceptor chain
  * by using the {@link InterceptorChain} helper class.
  * <p/>
@@ -65,14 +66,11 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class CommandInterceptor extends AbstractVisitor {
    private CommandInterceptor next;
 
-   protected Log log;
-   protected boolean trace;
 
    protected Configuration configuration;
 
-   public CommandInterceptor() {
-      log = LogFactory.getLog(getClass());
-      trace = log.isTraceEnabled();
+   protected Log getLog() {
+      return LogFactory.getLog(CommandInterceptor.class);
    }
 
    @Inject

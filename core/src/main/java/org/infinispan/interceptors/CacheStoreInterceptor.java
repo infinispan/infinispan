@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -34,9 +34,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -52,6 +52,8 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -62,7 +64,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
@@ -83,15 +84,19 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
+   private InternalEntryFactory entryFactory;
 
-   public CacheStoreInterceptor() {
-      log = LogFactory.getLog(getClass());
-      trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(CacheStoreInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Inject
-   protected void init(CacheLoaderManager loaderManager) {
+   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory) {
       this.loaderManager = loaderManager;
+      this.entryFactory = entryFactory;
    }
 
    @Start(priority = 15)
@@ -99,8 +104,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       store = loaderManager.getCacheStore();
       this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
       loaderConfig = configuration.getCacheLoaderManagerConfig();
-      txStores = new ConcurrentHashMap<GlobalTransaction, Integer>(64, 0.75f, configuration.getConcurrencyLevel());
-      preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>(64, 0.75f, configuration.getConcurrencyLevel());
+      txStores = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
+      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
    }
 
    /**
@@ -109,13 +114,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader does not implement cache store
       if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
+         log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
       }
 
       if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
-         if (trace) log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
+         log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
       }
 
@@ -128,12 +132,14 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          if (ctx.hasModifications()) {
             // this is a commit call.
             GlobalTransaction tx = ctx.getGlobalTransaction();
-            if (trace) log.trace("Calling loader.commit() for transaction %s", tx);
+            if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
             try {
                store.commit(tx);
             } catch (Throwable t) {
-               preparingTxs.remove(tx);
                throw t;
+            } finally {
+               // Regardless of outcome, remove from preparing txs
+               preparingTxs.remove(tx);
             }
             if (getStatisticsEnabled()) {
                Integer puts = txStores.get(tx);
@@ -144,7 +150,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             }
             return invokeNextInterceptor(ctx, command);
          } else {
-            if (trace) log.trace("Commit called with no modifications; ignoring.");
+            if (getLog().isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -153,7 +159,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
          if (ctx.hasModifications()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
             // this is a rollback method
@@ -163,7 +169,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             }
             if (getStatisticsEnabled()) txStores.remove(tx);
          } else {
-            if (trace) log.trace("Rollback called with no modifications; ignoring.");
+            if (getLog().isTraceEnabled()) getLog().trace("Rollback called with no modifications; ignoring.");
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -172,7 +178,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
          prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
       return invokeNextInterceptor(ctx, command);
@@ -184,7 +190,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
-         if (trace) log.trace("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
       return retval;
    }
@@ -193,7 +199,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (!skip(ctx, command) && !ctx.isInTxScope()) {
          store.clear();
-         if (trace) log.trace("Cleared cache store");
+         if (getLog().isTraceEnabled()) getLog().trace("Cleared cache store");
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -206,7 +212,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.trace("Stored entry %s under key %s", se, key);
+      if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -220,7 +226,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.trace("Stored entry %s under key %s", se, key);
+      if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -235,7 +241,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       for (Object key : map.keySet()) {
          InternalCacheEntry se = getStoredEntry(key, ctx);
          store.store(se);
-         if (trace) log.trace("Stored entry %s under key %s", se, key);
+         if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
@@ -248,14 +254,14 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       List<WriteCommand> modifications = transactionContext.getModifications();
 
       if (!transactionContext.hasModifications()) {
-         if (trace) log.trace("Transaction has not logged any modifications!");
+         if (getLog().isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
          return;
       }
-      if (trace) log.trace("Cache loader modification list: %s", modifications);
-      StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled());
+      if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
+      StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled(), modifications.size());
       for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
       int numMods = modsBuilder.modifications.size();
-      if (trace) log.trace("Converted method calls to cache loader modifications.  List size: %s", numMods);
+      if (getLog().isTraceEnabled()) getLog().tracef("Converted method calls to cache loader modifications.  List size: %s", numMods);
 
       if (numMods > 0) {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();
@@ -274,16 +280,16 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    public class StoreModificationsBuilder extends AbstractVisitor {
 
-      boolean generateStatistics;
-
+      private final boolean generateStatistics;
       int putCount;
+      private final Set<Object> affectedKeys;
+      private final List<Modification> modifications;
 
-      Set<Object> affectedKeys = new HashSet<Object>();
-
-      List<Modification> modifications = new ArrayList<Modification>();
-
-      public StoreModificationsBuilder(boolean generateStatistics) {
+      public StoreModificationsBuilder(boolean generateStatistics, int numMods) {
          this.generateStatistics = generateStatistics;
+         affectedKeys = new HashSet<Object>(numMods);
+         modifications = new ArrayList<Modification>(numMods);
+
       }
 
       @Override
@@ -353,7 +359,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (entry instanceof InternalCacheEntry) {
          return (InternalCacheEntry) entry;
       } else {
-         return InternalEntryFactory.create(entry.getKey(), entry.getValue(), entry.getLifespan(), entry.getMaxIdle());
+         return entryFactory.create(entry);
       }
    }
 }

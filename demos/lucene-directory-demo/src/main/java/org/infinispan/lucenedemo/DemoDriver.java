@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -37,11 +38,15 @@ import org.infinispan.remoting.transport.Address;
  * clustering capabilities.
  * This class parses the user input and drives the actions implemented in DemoActions.
  * 
+ * As always when running JGroups to run a demo cluster of multiple applications running
+ * on the same host, set these JVM options:
+ * -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
+ * 
  * @author Sanne Grinovero
  * @since 4.0
  */
 public class DemoDriver implements Runnable {
-   
+
    private final DemoActions actions;
 
    public DemoDriver(InfinispanDirectory infinispanDirectory, Cache cache) {
@@ -62,7 +67,7 @@ public class DemoDriver implements Runnable {
       }
    }
 
-   private void doQuery(Scanner scanner) throws IOException {
+   private void doQuery(Scanner scanner) {
       scanner.nextLine();
       Query query = null;
       while (query == null) {

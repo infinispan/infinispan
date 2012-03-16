@@ -1,15 +1,32 @@
 /*
- * JBoss, the OpenSource J2EE webOS
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
- * Distributable under LGPL license.
- * See terms of license at gnu.org.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
 package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
@@ -18,19 +35,24 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,6 +63,7 @@ import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
 import javax.management.ObjectName;
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -53,6 +76,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static java.io.File.separator;
 
@@ -63,8 +89,8 @@ public class TestingUtil {
    public static final String TEST_PATH = "target" + separator + "tempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "      xsi:schemaLocation=\"urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd\"\n" +
-           "      xmlns=\"urn:infinispan:config:5.0\">";
+           "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
+           "      xmlns=\"urn:infinispan:config:5.2\">";
    public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
@@ -126,6 +152,80 @@ public class TestingUtil {
       return null;
    }
 
+   public static void waitForRehashToComplete(Cache... caches) {
+      // give it 1 second to start rehashing
+      // TODO Should look at the last committed view instead and check if it contains all the caches
+      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+      int gracetime = 30000; // 30 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      for (Cache c : caches) {
+         CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), CacheViewsManager.class);
+         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
+         while (cacheViewsManager.getCommittedView(c.getName()).getMembers().size() != caches.length) {
+            if (System.currentTimeMillis() > giveup) {
+               String message = String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",
+                     rpcManager.getAddress(), Arrays.toString(caches), cacheViewsManager.getCommittedView(c.getName()));
+               log.error(message);
+               throw new RuntimeException(message);
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+         }
+         log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+      }
+   }
+   
+   public static void waitForRehashToComplete(Cache cache, int groupSize) {
+      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+      int gracetime = 30000; // 30 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), CacheViewsManager.class);
+      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      while (cacheViewsManager.getCommittedView(cache.getName()).getMembers().size() != groupSize) {
+         if (System.currentTimeMillis() > giveup) {
+            String message = String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",
+                  rpcManager.getAddress(), groupSize, cacheViewsManager.getCommittedView(cache.getName()));
+            log.error(message);
+            throw new RuntimeException(message);
+         }
+         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+      }
+      log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+   }
+
+   public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
+      waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
+   }
+
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
+   public static void waitForInitRehashToComplete(Cache... caches) {
+      int gracetime = 30000; // 30 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      for (Cache c : caches) {
+         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
+         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
+         while (!stateTransferManager.isJoinComplete()) {
+            if (System.currentTimeMillis() > giveup) {
+               String message = "Timed out waiting for join to complete on node " + rpcManager.getAddress() + " !";
+               log.error(message);
+               throw new RuntimeException(message);
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+         }
+         log.trace("Node " + rpcManager.getAddress() + " finished join task.");
+      }
+   }
+
+   /**
+    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
+    */
+   public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
+      Set<Cache> cachesSet = new HashSet<Cache>();
+      cachesSet.addAll(caches);
+      waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
+   }
+
    /**
     * Loops, continually calling {@link #areCacheViewsComplete(Cache[])} until it either returns true or
     * <code>timeout</code> ms have elapsed.
@@ -146,14 +246,55 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(caches);
    }
+
+   private static void viewsTimedOut(Cache[] caches) {
+      CacheContainer[] cacheContainers = new CacheContainer[caches.length];
+      for (int i = 0; i < caches.length; i++) {
+         cacheContainers[i] = caches[i].getCacheManager();
+      }
+      viewsTimedOut(cacheContainers);
+   }
+   private static void viewsTimedOut(CacheContainer[] cacheContainers) {
+      int length = cacheContainers.length;
+      List<List<Address>> allViews = new ArrayList<List<Address>>(length);
+      for (int i = 0; i < length; i++) {
+         EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainers[i];
+         allViews.add(cm.getMembers());
+      }
+
+      throw new RuntimeException(String.format(
+         "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
+         cacheContainers.length, allViews));
+   }
+
+   public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
+      long failTime = System.currentTimeMillis() + timeout;
+
+      while (System.currentTimeMillis() < failTime) {
+         sleepThreadInt(100, null);
+         if (areCacheViewsComplete(caches)) {
+            return;
+         }
+      }
+
+      viewsTimedOut(caches);
+   }
+
 
    /**
     * Version of blockUntilViewsReceived that uses varargs
     */
    public static void blockUntilViewsReceived(long timeout, Cache... caches) {
       blockUntilViewsReceived(caches, timeout);
+   }
+
+   /**
+    * Version of blockUntilViewsReceived that throws back any interruption
+    */
+   public static void blockUntilViewsReceivedInt(long timeout, Cache... caches) throws InterruptedException {
+      blockUntilViewsReceivedInt(caches, timeout);
    }
 
    /**
@@ -185,7 +326,7 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(cacheContainers);
    }
 
    /**
@@ -231,7 +372,7 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(caches);
    }
 
    /**
@@ -253,13 +394,15 @@ public class TestingUtil {
 
       while (System.currentTimeMillis() < failTime) {
          sleepThread(100);
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), groupSize, barfIfTooManyMembersInView)) {
             return;
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      throw new RuntimeException(String.format(
+         "Timed out before cache had %d members.  View is %s",
+         groupSize, cache.getCacheManager().getMembers()));
    }
 
    /**
@@ -280,7 +423,7 @@ public class TestingUtil {
       int memberCount = caches.length;
 
       for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) caches[i].getCacheManager();
+         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
@@ -339,7 +482,7 @@ public class TestingUtil {
     * @param memberCount
     */
    public static boolean isCacheViewComplete(Cache c, int memberCount) {
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+      EmbeddedCacheManager cacheManager = c.getCacheManager();
       return isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, true);
    }
 
@@ -371,6 +514,60 @@ public class TestingUtil {
       return true;
    }
 
+   /**
+    * This method blocks until the given caches have a view of whose size
+    * matches the desired value. This method is particularly useful for
+    * discovering that members have been split, or that they have joined back
+    * again.
+    *
+    * @param timeout max number of milliseconds to block for
+    * @param finalViewSize desired final view size
+    * @param caches caches representing current, or expected members in the cluster.
+    */
+   public static void blockUntilViewsChanged(long timeout, int finalViewSize, Cache... caches) {
+      blockUntilViewsChanged(caches, timeout, finalViewSize);
+   }
+
+   private static void blockUntilViewsChanged(Cache[] caches, long timeout, int finalViewSize) {
+      long failTime = System.currentTimeMillis() + timeout;
+
+      while (System.currentTimeMillis() < failTime) {
+         sleepThread(100);
+         if (areCacheViewsChanged(caches, finalViewSize)) {
+            return;
+         }
+      }
+
+      List<List<Address>> allViews = new ArrayList<List<Address>>(caches.length);
+      for (int i = 0; i < caches.length; i++) {
+         allViews.add(caches[i].getCacheManager().getMembers());
+      }
+
+      throw new RuntimeException(String.format(
+            "Timed out before caches had changed views (%s) to contain %d members",
+            allViews, finalViewSize));
+   }
+
+   private static boolean areCacheViewsChanged(Cache[] caches, int finalViewSize) {
+      int memberCount = caches.length;
+
+      for (int i = 0; i < memberCount; i++) {
+         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
+         if (!isCacheViewChanged(cacheManager.getMembers(), finalViewSize)) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   private static boolean isCacheViewChanged(List members, int finalViewSize) {
+      if (members == null || finalViewSize != members.size())
+         return false;
+      else
+         return true;
+   }
+
 
    /**
     * Puts the current thread to sleep for the desired number of ms, suppressing any exceptions.
@@ -388,6 +585,17 @@ public class TestingUtil {
       catch (InterruptedException ie) {
          if (messageOnInterrupt != null)
             log.error(messageOnInterrupt);
+      }
+   }
+
+   public static void sleepThreadInt(long sleeptime, String messageOnInterrupt) throws InterruptedException {
+      try {
+         Thread.sleep(sleeptime);
+      }
+      catch (InterruptedException ie) {
+         if (messageOnInterrupt != null)
+            log.error(messageOnInterrupt);
+         throw ie;
       }
    }
 
@@ -419,30 +627,47 @@ public class TestingUtil {
    }
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {
-      EmbeddedCacheManager[] ecms = new EmbeddedCacheManager[cacheContainers.length];
-      int i = 0;
-      for (CacheContainer cc : cacheContainers) ecms[i++] = (EmbeddedCacheManager) cc;
-      killCacheManagers(ecms);
+      EmbeddedCacheManager[] cms = new EmbeddedCacheManager[cacheContainers.length];
+      for (int i = 0; i < cacheContainers.length; i++) cms[i] = (EmbeddedCacheManager) cacheContainers[i];
+      killCacheManagers(cms);
    }
 
-   public static void killCacheManagers(EmbeddedCacheManager... cacheContainers) {
-      if (cacheContainers != null) {
-         for (EmbeddedCacheManager cm : cacheContainers) {
-            try {
-               try {
-                  clearContent(cm);
-               } finally {
-                  if (cm != null) cm.stop();
-               }
-            } catch (Throwable e) {
-               log.warn("Problems killing cache manager " + cm, e);
-            }
+   public static void killCacheManagers(List<? extends CacheContainer> cacheContainers) {
+      EmbeddedCacheManager[] cms = new EmbeddedCacheManager[cacheContainers.size()];
+      for (int i = 0; i < cacheContainers.size(); i++) cms[i] = (EmbeddedCacheManager) cacheContainers.get(i);
+      killCacheManagers(cms);
+   }
+
+   public static void killCacheManagers(EmbeddedCacheManager... cacheManagers) {
+      // stop the caches first so that stopping the cache managers doesn't trigger a rehash
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            killCaches(getRunningCaches(cm));
+         } catch (Throwable e) {
+            log.warn("Problems stopping cache manager " + cm, e);
+         }
+      }
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            if (cm != null) cm.stop();
+         } catch (Throwable e) {
+            log.warn("Problems killing cache manager " + cm, e);
          }
       }
    }
 
-   public static void killCacheManagers(Collection<? extends EmbeddedCacheManager> cacheManagers) {
-      killCacheManagers(cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
+   public static void clearContent(EmbeddedCacheManager... cacheManagers) {
+      clearContent(Arrays.asList(cacheManagers));
+   }
+
+   public static void clearContent(List<? extends EmbeddedCacheManager> cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            clearContent(cm);
+         } catch (Throwable e) {
+            log.warn("Problems clearing cache manager " + cm, e);
+         }
+      }
    }
 
    public static void clearContent(EmbeddedCacheManager cacheContainer) {
@@ -455,16 +680,18 @@ public class TestingUtil {
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
          for (Cache cache : runningCaches) {
-            removeInMemoryData(cache);
-            clearCacheLoader(cache);
             clearReplicationQueues(cache);
-            ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
+            clearCacheLoader(cache);
+            removeInMemoryData(cache);
          }
       }
    }
 
    protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       Set<Cache> running = new HashSet<Cache>();
+      if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
+         return running;
+
       for (String cacheName : cacheContainer.getCacheNames()) {
          if (cacheContainer.isRunning(cacheName)) {
             Cache c = cacheContainer.getCache(cacheName);
@@ -473,7 +700,7 @@ public class TestingUtil {
       }
 
       if (cacheContainer.isDefaultRunning()) {
-         Cache defaultCache = ((DefaultCacheManager) cacheContainer).getCache();
+         Cache defaultCache = cacheContainer.getCache();
          if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
       }
 
@@ -498,7 +725,7 @@ public class TestingUtil {
       if (queue != null) queue.reset();
    }
 
-   private static void clearCacheLoader(Cache cache) {
+   public static void clearCacheLoader(Cache cache) {
       CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       if (cacheLoaderManager != null && cacheLoaderManager.getCacheStore() != null) {
          try {
@@ -510,24 +737,31 @@ public class TestingUtil {
    }
 
    private static void removeInMemoryData(Cache cache) {
-      EmbeddedCacheManager mgr = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager mgr = cache.getCacheManager();
       Address a = mgr.getAddress();
       String str;
       if (a == null)
          str = "a non-clustered cache manager";
       else
          str = "a cache manager at address " + a;
-      log.debug("Cleaning data for cache '%s' on %s", cache.getName(), str);
+      log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      log.debug("removeInMemoryData(): dataContainerBefore == %s", dataContainer);
+      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerBefore == %s", dataContainer.entrySet());
       dataContainer.clear();
-      log.debug("removeInMemoryData(): dataContainerAfter == %s", dataContainer);
+      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerAfter == %s", dataContainer.entrySet());
    }
 
    /**
     * Kills a cache - stops it, clears any data in any cache loaders, and rolls back any associated txs
     */
    public static void killCaches(Cache... caches) {
+      killCaches(Arrays.asList(caches));
+   }
+
+   /**
+    * Kills a cache - stops it and rolls back any associated txs
+    */
+   public static void killCaches(Collection<Cache> caches) {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
@@ -540,6 +774,7 @@ public class TestingUtil {
                      // don't care
                   }
                }
+               log.tracef("Cache contents before stopping: %s", c.entrySet());
                c.stop();
             }
          }
@@ -593,7 +828,9 @@ public class TestingUtil {
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
-      return (ComponentRegistry) extractField(cache, "componentRegistry");
+      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
+      if (cr == null) cr = cache.getAdvancedCache().getComponentRegistry();
+      return cr;
    }
 
    public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
@@ -615,6 +852,22 @@ public class TestingUtil {
       return (ComponentRegistry) extractField(ci, "componentRegistry");
    }
 
+   public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
+      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
+      StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      return (AbstractDelegatingMarshaller) marshaller;
+   }
+
+   public static AbstractDelegatingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cm, "globalComponentRegistry");
+      return (AbstractDelegatingMarshaller)
+            gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+   }
+
+   public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
+      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
+      return gcr.getComponent(ExternalizerTable.class);
+   }
 
    /**
     * Replaces the existing interceptor chain in the cache wih one represented by the interceptor passed in.  This
@@ -665,8 +918,8 @@ public class TestingUtil {
     *
     * @return remote delegate, or null if the cacge is not configured for replication.
     */
-   public static CacheDelegate getInvocationDelegate(Cache cache) {
-      return (CacheDelegate) cache;
+   public static CacheImpl getInvocationDelegate(Cache cache) {
+      return (CacheImpl) cache;
    }
 
    /**
@@ -690,12 +943,26 @@ public class TestingUtil {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
       InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      InvocationContext ctxt = icc.createInvocationContext();
+      InvocationContext ctxt = icc.createInvocationContext(true, -1);
       ic.invoke(ctxt, command);
    }
 
-   public static void blockUntilViewsReceived(int timeout, List caches) {
-      blockUntilViewsReceived((Cache[]) caches.toArray(new Cache[]{}), timeout);
+   public static void blockUntilViewsReceived(int timeout, Collection caches) {
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
+   }
+
+   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {
@@ -710,7 +977,7 @@ public class TestingUtil {
          if (c == null) {
             System.out.println("  ** Cache " + count + " is null!");
          } else {
-            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            EmbeddedCacheManager cacheManager = c.getCacheManager();
             System.out.println("  ** Cache " + count + " is " + cacheManager.getAddress());
          }
          count++;
@@ -829,13 +1096,23 @@ public class TestingUtil {
       return discard;
    }
 
-   public static DELAY setDelayForCache(Cache<?, ?> c, int in_delay, int out_delay) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+   /**
+    * Inserts a DELAY protocol in the JGroups stack used by the cache, and returns it.
+    * The DELAY protocol can then be used to inject delays in milliseconds both at receiver
+    * and sending side.
+    * @param cache
+    * @param in_delay_millis
+    * @param out_delay_millis
+    * @return a reference to the DELAY instance being used by the JGroups stack
+    * @throws Exception
+    */
+   public static DELAY setDelayForCache(Cache<?, ?> cache, int in_delay_millis, int out_delay_millis) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DELAY delay = new DELAY();
-      delay.setInDelay(in_delay);
-      delay.setOutDelay(out_delay);
+      delay.setInDelay(in_delay_millis);
+      delay.setOutDelay(out_delay_millis);
       ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
       return delay;
    }
@@ -908,6 +1185,10 @@ public class TestingUtil {
             + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);
    }
 
+   public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) throws Exception {
+      return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
+   }
+
    public static String generateRandomString(int numberOfChars) {
       Random r = new Random(System.currentTimeMillis());
       StringBuilder sb = new StringBuilder();
@@ -922,6 +1203,64 @@ public class TestingUtil {
    public static void assertNoLocks(Cache<?,?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
       for (Object key : cache.keySet()) assert !lm.isLocked(key);
+   }
+
+   /**
+    * Call an operation within a transaction. This method guarantees that the
+    * right pattern is used to make sure that the transaction is always either
+    * committed or rollbacked.
+    *
+    * @param tm transaction manager
+    * @param c callable instance to run within a transaction
+    * @param <T> type of callable return
+    * @return returns whatever the callable returns
+    * @throws Exception
+    */
+   public static <T> T withTx(TransactionManager tm, Callable<T> c) throws Exception {
+      tm.begin();
+      try {
+         return c.call();
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+         else tm.rollback();
+      }
+   }
+
+   /**
+    * Invoke a task using a cache manager. This method guarantees that the
+    * cache manager used in the task will be cleaned up after the task has
+    * completed, regardless of the task outcome.
+    *
+    * @param c task to execute
+    * @throws Exception if the task fails somehow
+    */
+   public static void withCacheManager(CacheManagerCallable c)
+            throws Exception {
+      try {
+         c.call();
+      } finally {
+         TestingUtil.killCacheManagers(c.cm);
+      }
+   }
+
+   /**
+    * Invoke a task using a several cache managers. This method guarantees
+    * that the cache managers used in the task will be cleaned up after the
+    * task has completed, regardless of the task outcome.
+    *
+    * @param c task to execute
+    * @throws Exception if the task fails somehow
+    */
+   public static void withCacheManagers(MultiCacheManagerCallable c)
+            throws Exception {
+      try {
+         c.call();
+      } finally {
+         TestingUtil.killCacheManagers(c.cms);
+      }
    }
 
 }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,7 @@
 package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -48,7 +49,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
-      jdbcBinaryCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBinaryCacheStore.start();
       assert jdbcBinaryCacheStore.getConnectionFactory() instanceof ManagedConnectionFactory;
       return jdbcBinaryCacheStore;

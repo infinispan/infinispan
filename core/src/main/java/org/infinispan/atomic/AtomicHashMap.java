@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,9 +23,9 @@
 package org.infinispan.atomic;
 
 import net.jcip.annotations.NotThreadSafe;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.batch.BatchContainer;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.FlagContainer;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.FastCopyHashMap;
@@ -58,11 +59,13 @@ import java.util.Set;
  * @since 4.0
  */
 @NotThreadSafe
-public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
-   FastCopyHashMap<K, V> delegate;
+public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
+
+   protected final FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
    private volatile AtomicHashMapProxy<K, V> proxy;
    volatile boolean copied = false;
+   volatile boolean removed = false;
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
@@ -77,7 +80,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    }
 
    public AtomicHashMap() {
-      delegate = new FastCopyHashMap<K, V>();
+      this.delegate = new FastCopyHashMap<K, V>();
    }
 
    private AtomicHashMap(FastCopyHashMap<K, V> delegate) {
@@ -86,7 +89,13 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    public AtomicHashMap(boolean isCopy) {
       this();
-      copied = isCopy;
+      this.copied = isCopy;
+   }
+
+   private AtomicHashMap(FastCopyHashMap<K, V> newDelegate, AtomicHashMapProxy<K, V> proxy) {
+      this.delegate = newDelegate;
+      this.proxy = proxy;
+      this.copied = true;
    }
 
    public void commit() {
@@ -150,7 +159,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
       ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
-      if (delta != null) delta.addOperation(op);
+      getDelta().addOperation(op);
       delegate.clear();
    }
 
@@ -158,17 +167,24 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   AtomicMap<K, V> getProxy(Cache cache, Object mapKey,
-                             BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey, boolean fineGrained, FlagContainer flagContainer) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
          synchronized (this) {
             if (proxy == null)
-               proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+               if(fineGrained){
+                  proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey);
+               } else {
+                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, flagContainer);
+               }
          }
       }
       return proxy;
+   }
+
+   public void markRemoved(boolean b) {
+      removed = b;
    }
 
    public Delta delta() {
@@ -178,25 +194,16 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    }
 
    @SuppressWarnings("unchecked")
-   public AtomicHashMap<K, V> copyForWrite() {
-      try {
-         AtomicHashMap<K, V> clone = (AtomicHashMap<K, V>) super.clone();
-         clone.delegate = (FastCopyHashMap<K, V>) delegate.clone();
-         clone.proxy = proxy;
-         clone.copied = true;
-         return clone;
-      }
-      catch (CloneNotSupportedException e) {
-         // should never happen!!
-         throw new RuntimeException(e);
-      }
+   public AtomicHashMap<K, V> copy() {
+      FastCopyHashMap<K, V> newDelegate = delegate.clone();
+      return new AtomicHashMap(newDelegate, proxy);
    }
 
    @Override
    public String toString() {
-      return "AtomicHashMap{" +
-            "delegate=" + delegate +
-            '}';
+      //Avoid iterating on the delegate as that might lead to exceptions from concurrent iterators:
+      //not nice to have during a toString!
+      return "AtomicHashMap";
    }
 
    /**
@@ -206,7 +213,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       delta = new AtomicHashMapDelta();
    }
 
-   private AtomicHashMapDelta getDelta() {
+   AtomicHashMapDelta getDelta() {
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
    }
@@ -230,6 +237,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends AtomicHashMap>> getTypeClasses() {
          return Util.<Class<? extends AtomicHashMap>>asSet(AtomicHashMap.class);
       }

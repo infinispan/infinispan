@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -18,7 +19,6 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- *
  */
 
 package org.infinispan.atomic;
@@ -26,11 +26,9 @@ package org.infinispan.atomic;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-
 @Test(groups = "unit", testName = "atomic.AtomicHashMapTest")
 public class AtomicHashMapTest extends AbstractInfinispanTest {
-   public void testDeltasWithEmptyMap() throws IOException {
+   public void testDeltasWithEmptyMap() {
       AtomicHashMap m = new AtomicHashMap();
       Delta d = m.delta();
       assert d instanceof NullDelta;
@@ -46,7 +44,7 @@ public class AtomicHashMapTest extends AbstractInfinispanTest {
       assert newMap.isEmpty();
    }
 
-   public void testDeltasWithNoChanges() throws IOException {
+   public void testDeltasWithNoChanges() {
       AtomicHashMap m = new AtomicHashMap();
       m.initForWriting();
       m.put("k1", "v1");

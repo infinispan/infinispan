@@ -1,7 +1,29 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.BaseCacheStoreTest;
@@ -15,19 +37,16 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "loaders.decorators.ChainingCacheLoaderTest")
 public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
@@ -38,16 +57,22 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    protected CacheStore createCacheStore() throws CacheLoaderException {
       ChainingCacheStore store = new ChainingCacheStore();
-      CacheStoreConfig cfg;
+      CacheStoreConfig cfg = new DummyInMemoryCacheStore.Cfg()
+         .storeName("ChainingCacheLoaderTest_instance1")
+         .purgeOnStartup(false)
+         .fetchPersistentState(false);
       store1 = new DummyInMemoryCacheStore();
-      store1.init((cfg = new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance1", false)), null, new TestObjectStreamMarshaller());
+      store1.init(cfg, null, new TestObjectStreamMarshaller());
 
       store.addCacheLoader(store1, cfg);
 
       store2 = new DummyInMemoryCacheStore();
-      store2.init((cfg = new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance2", false)), null, new TestObjectStreamMarshaller());
       // set store2 up for streaming
-      cfg.setFetchPersistentState(true);
+      cfg = new DummyInMemoryCacheStore.Cfg()
+         .storeName("ChainingCacheLoaderTest_instance2")
+         .purgeOnStartup(false)
+         .fetchPersistentState(true);
+      store2.init(cfg, null, new TestObjectStreamMarshaller());
       store.addCacheLoader(store2, cfg);
 
       stores = new DummyInMemoryCacheStore[]{store1, store2};
@@ -67,8 +92,8 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingWrites() throws Exception {
       // put something in the store
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan));
 
       int i = 1;
       for (CacheStore s : stores) {
@@ -100,9 +125,9 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          assert s.load("k2") == null;
       }
 
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
-      cs.store(InternalEntryFactory.create("k3", "v3", 1000)); // short lifespan!
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", 1000)); // short lifespan!
 
       for (CacheStore s : stores) {
          assert s.containsKey("k1");
@@ -129,17 +154,17 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       assert cs.load("k4") == null;
 
       // k1 is on store1
-      store1.store(InternalEntryFactory.create("k1", "v1"));
+      store1.store(TestInternalCacheEntryFactory.create("k1", "v1"));
 
       assertEquals(cs.loadAll().size(), 1);
       // k2 is on store2
-      store2.store(InternalEntryFactory.create("k2", "v2"));
+      store2.store(TestInternalCacheEntryFactory.create("k2", "v2"));
       assertEquals(cs.loadAll().size(), 2);
 
       // k3 is on both
-      store1.store(InternalEntryFactory.create("k3", "v3"));
+      store1.store(TestInternalCacheEntryFactory.create("k3", "v3"));
       assertEquals(cs.loadAll().size(), 3);
-      store2.store(InternalEntryFactory.create("k3", "v3"));
+      store2.store(TestInternalCacheEntryFactory.create("k3", "v3"));
       assertEquals(cs.loadAll().size(), 3);
 
       // k4 is on neither
@@ -168,14 +193,14 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingOnePhaseCommit() throws Exception {
       List<Modification> list = new LinkedList<Modification>();
-      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
-      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
       list.add(new Remove("k3"));
       list.add(new Clear());
-      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
-      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
-      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k4", "v4")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
       GlobalTransaction t = gtf.newGlobalTransaction(null, false);
       cs.prepare(list, t, true);
@@ -203,14 +228,14 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingTwoPhaseCommit() throws Exception {
       List<Modification> list = new LinkedList<Modification>();
-      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
-      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
       list.add(new Remove("k3"));
       list.add(new Clear());
-      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
-      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
-      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k4", "v4")));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(TestInternalCacheEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(list, tx, false);
@@ -238,9 +263,9 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    }
 
 
-   public void testPropagatingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store2.store(InternalEntryFactory.create("k1", "v1"));
-      store2.store(InternalEntryFactory.create("k2", "v2", lifespan));
+   public void testPropagatingStreams() throws IOException, CacheLoaderException {
+      store2.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store2.store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan));
 
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
@@ -284,6 +309,5 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    public void testConfigFile() {
       // no op
    }
-
 }
 

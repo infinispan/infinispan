@@ -182,7 +182,8 @@ def get_module_name(pom_file):
   return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
 
 
-def upload_artifacts_to_sourceforge(base_dir, version):
+def upload_artifacts(base_dir, version):
+  """Artifacts gets rsync'ed to filemgmt.jboss.org, in the downloads_htdocs/infinispan directory"""
   shutil.rmtree(".tmp", ignore_errors = True)  
   os.mkdir(".tmp")
   os.mkdir(".tmp/%s" % version)
@@ -193,7 +194,7 @@ def upload_artifacts_to_sourceforge(base_dir, version):
     full_name = "%s/%s" % (dist_dir, item)
     if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):      
       shutil.copy2(full_name, version)
-  uploader.upload_scp(version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan")
+  uploader.upload_rsync(version, "infinispan@filemgmt.jboss.org:/downloads_htdocs/infinispan")
   shutil.rmtree(".tmp", ignore_errors = True)  
 
 def unzip_archive(version):
@@ -205,26 +206,42 @@ def unzip_archive(version):
   else:
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
+def update_javadoc_tracker(base_dir, version):
+  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  ## "Fix" the docs to use the appropriate analytics tracker ID
+  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
+
 def upload_javadocs(base_dir, version):
   """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
   
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
-  ## "Fix" the docs to use the appropriate analytics tracker ID
-  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
   os.mkdir(version_short)
   os.rename("apidocs", "%s/apidocs" % version_short)
   
   ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan", flags = ['-rv', '--protocol=28'])
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
 
 def upload_schema(base_dir, version):
-  """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas directory"""
+  """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
   os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (base_dir, version))
   
+  ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
+  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
+  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/")
+  os.chdir(base_dir)
+
+def upload_configdocs(base_dir, version):
+  """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
+  version_short = get_version_major_minor(version)
+
+  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  ## "Fix" the docs to use the appropriate analytics tracker ID
+  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
+  os.rename("configdocs", "%s/configdocs" % version_short)
+
   ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas", flags = ['-rv', '--protocol=28'])
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
 
 def do_task(target, args, async_processes):
@@ -287,27 +304,36 @@ def release():
   
   # Step 3: Build and test in Maven2
   prettyprint("Step 3: Build and test in Maven2", Levels.INFO)
-  maven_build_distribution()
+  maven_build_distribution(version)
   prettyprint("Step 3: Complete", Levels.INFO)
   
   async_processes = []
   
   ##Unzip the newly built archive now
   unzip_archive(version)
-    
-  # Step 4: Upload javadocs to FTP
-  prettyprint("Step 4: Uploading Javadocs", Levels.INFO)
-  do_task(upload_javadocs, [base_dir, version], async_processes)
+
+  # Step 4: Update javadoc Google Analytics tracker
+  prettyprint("Step 4: Update Google Analytics tracker", Levels.INFO)
+  update_javadoc_tracker(base_dir, version)
   prettyprint("Step 4: Complete", Levels.INFO)
-  
-  prettyprint("Step 5: Uploading to Sourceforge", Levels.INFO)
-  do_task(upload_artifacts_to_sourceforge, [base_dir, version], async_processes)    
+
+  # Step 5: Upload javadocs to FTP
+  prettyprint("Step 5: Uploading Javadocs", Levels.INFO)
+  do_task(upload_javadocs, [base_dir, version], async_processes)
   prettyprint("Step 5: Complete", Levels.INFO)
   
-  prettyprint("Step 6: Uploading to configuration XML schema", Levels.INFO)
-  do_task(upload_schema, [base_dir, version], async_processes)    
+  prettyprint("Step 6: Uploading Artifacts", Levels.INFO)
+  do_task(upload_artifacts, [base_dir, version], async_processes)    
   prettyprint("Step 6: Complete", Levels.INFO)
   
+  prettyprint("Step 7: Uploading to configuration XML schema", Levels.INFO)
+  do_task(upload_schema, [base_dir, version], async_processes)    
+  prettyprint("Step 7: Complete", Levels.INFO)
+
+  prettyprint("Step 8: Uploading to configuration documentation", Levels.INFO)
+  do_task(upload_configdocs, [base_dir, version], async_processes)
+  prettyprint("Step 8: Complete", Levels.INFO)
+
   ## Wait for processes to finish
   for p in async_processes:
     p.start()

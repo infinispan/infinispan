@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,6 @@
 package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.BidirectionalMap;
 
 import java.util.Map;
 
@@ -47,7 +47,7 @@ public interface EntryLookup {
     * <p/>
     * @return a map of looked up entries.
     */
-   BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
+   Map<Object, CacheEntry> getLookedUpEntries();
 
    /**
     * Puts an entry in the registry of looked up entries in the current scope.
@@ -66,13 +66,5 @@ public interface EntryLookup {
     * Clears the collection of entries looked up
     */
    void clearLookedUpEntries();
-
-   /**
-    * Using this method should always ensure locks checked in the appropriate scope.
-    *
-    * @param key lock to test
-    * @return true if the lock being tested is already held in the current scope, false otherwise.
-    */
-   boolean hasLockedKey(Object key);
 
 }

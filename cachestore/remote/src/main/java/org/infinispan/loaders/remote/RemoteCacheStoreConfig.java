@@ -1,13 +1,41 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.remote;
-
-import org.infinispan.CacheException;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.util.FileLookup;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import org.infinispan.CacheException;
+import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configuration for RemoteCacheStore.
@@ -26,8 +54,9 @@ import java.util.Properties;
 public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    private volatile String remoteCacheName;
-
+   private static final Log log = LogFactory.getLog(RemoteCacheStoreConfig.class);
    private final Properties hotRodClientProperties = new Properties();
+   private ExecutorFactory asyncExecutorFactory = null;
 
    public RemoteCacheStoreConfig() {
       setCacheLoaderClassName(RemoteCacheStore.class.getName());
@@ -43,7 +72,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setUseDefaultRemoteCache(boolean useDefaultRemoteCache) {
       if (useDefaultRemoteCache) {
-         setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
+         setRemoteCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME);
       }
    }
 
@@ -56,17 +85,27 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
    }
 
    public void setHotRodClientProperties(Properties props) {
-      this.hotRodClientProperties.putAll(props);
+      hotRodClientProperties.putAll(props);
    }
 
-   public void setHotRodClientPropertiesFile(String hotRodClientProperties) {
-      FileLookup fileLookup = new FileLookup();
-      InputStream inputStream = fileLookup.lookupFile(hotRodClientProperties);
+   public ExecutorFactory getAsyncExecutorFactory() {
+      return asyncExecutorFactory;
+   }
+
+   public void setAsyncExecutorFactory(ExecutorFactory asyncExecutorFactory) {
+      this.asyncExecutorFactory = asyncExecutorFactory;
+   }
+
+   public void setHotRodClientPropertiesFile(String hotRodClientPropertiesFile) {
+      FileLookup fileLookup = FileLookupFactory.newInstance();
+      InputStream inputStream = fileLookup.lookupFile(hotRodClientPropertiesFile, getClassLoader());
       try {
-         this.hotRodClientProperties.load(inputStream);
+         hotRodClientProperties.load(inputStream);
       } catch (IOException e) {
-         log.error("Issues while loading properties from file", e);
+         log.error("Issues while loading properties from file " + hotRodClientPropertiesFile, e);
          throw new CacheException(e);
+      } finally {
+         Util.close(inputStream);
       }
    }
 }

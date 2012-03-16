@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc;
 
 /**
@@ -76,7 +98,13 @@ public abstract class AbstractNonDelegatingJdbcCacheStoreConfig extends Abstract
    }
 
    /**
-    * Sets the type of the column where data will be binary stored. BLOB-like type, DBMS dependent. Mandatory.
+    * Sets the type of the column where data will be binary stored. It should be a binary type like <tt>BLOB</tt>.
+    * Mandatory.
+    * <br>
+    * Character types like <tt>CLOB</tt>/<tt>LONGVARCHAR</tt>/<tt>VARCHAR</tt> are <b>not</b> supported.
+    * <br>
+    * Note that on MySQL you need to use <a href="http://dev.mysql.com/doc/refman/5.0/en/server-sql-mode.html#sqlmode_strict_all_tables">strict mode</a>
+    * or the database will truncate long values without raising any errors, leading to unmarshalling errors on load.
     */
    public void setDataColumnType(String dataColumnType) {
       testImmutability("tableManipulation");

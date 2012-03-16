@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.affinity;
 
 import org.infinispan.Cache;
@@ -36,11 +58,11 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
       ThreadFactory tf = new ThreadFactory() {
          @Override
-         public Thread newThread(Runnable r) {
+         public Thread newThread(Runnable r) {       
             return new Thread(r, "KeyGeneratorThread");
          }
       };
-      keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),
+      keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),
                                                                                                     Executors.newSingleThreadExecutor(tf),
                                                                                                     new RndKeyGenerator(), 100);
    }
@@ -68,14 +90,14 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
          assertEquals(null, kc.exception);
       }
 
-      assertEventualFullCapacity();
+      assertCorrectCapacity();
    }
 
    @Test (dependsOnMethods = "testConcurrentConsumptionOfKeys")
    public void testServerAdded() throws InterruptedException {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, configuration);
-      Cache cache = cm.getCache(cacheName);
+      Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
       eventually(new Condition() {
@@ -91,7 +113,6 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Test(dependsOnMethods = "testServerAdded")
    public void testServersDropped() throws InterruptedException {
-      log.info("*** Here it is");
       caches.get(2).getCacheManager().stop();
       caches.remove(2);
       waitForClusterToResize();

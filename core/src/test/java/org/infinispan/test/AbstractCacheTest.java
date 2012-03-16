@@ -1,14 +1,35 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.Set;
@@ -19,8 +40,6 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  */
 public class AbstractCacheTest extends AbstractInfinispanTest {
-
-   protected final Log log = LogFactory.getLog(getClass());
 
    public static enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
@@ -69,29 +88,72 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
-      Configuration configuration = TestCacheManagerFactory.getDefaultConfiguration(transactional);
-      configuration.setCacheMode(mode);
-      configuration.setSyncCommitPhase(true);
-      configuration.setSyncRollbackPhase(true);
-      configuration.setFetchInMemoryState(false);
-      return configuration;
+      if (mode.isSynchronous()) {
+         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
+            .mode(mode)
+            .clustering()
+               .sync()
+                  .stateRetrieval().fetchInMemoryState(false)
+               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+               .cacheStopTimeout(0)
+            .build();
+      } else {
+         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
+            .mode(mode)
+            .clustering()
+               .async()
+                  .stateRetrieval().fetchInMemoryState(false)
+               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+               .cacheStopTimeout(0)
+            .build();
+      }
+   }
+
+   public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional) {
+      return getDefaultClusteredCacheConfig(mode, transactional, false);
+   }
+
+   public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional, boolean useCustomTxLookup) {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(transactional, useCustomTxLookup);
+      builder.
+         clustering()
+            .cacheMode(mode)
+            .stateTransfer().fetchInMemoryState(false)
+         .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+         .cacheStopTimeout(0L);
+
+      if (mode.isSynchronous())
+         builder.clustering().sync();
+      else
+         builder.clustering().async();
+
+      return builder;
    }
 
    protected boolean xor(boolean b1, boolean b2) {
       return (b1 || b2) && !(b1 && b2);
    }
 
-   protected void assertNotLocked(Cache cache, Object key) {
-      LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
+   protected void assertNotLocked(final Cache cache, final Object key) {
+      //lock release happens async, hence the eventually...
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return !checkLocked(cache, key);
+         }
+      });
    }
 
    protected void assertLocked(Cache cache, Object key) {
+      assert checkLocked(cache, key) : "expected key '" + key + "' to be locked on cache " + cache + ", but it is not";
+   }
+
+   protected boolean checkLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
+      return lockManager.isLocked(key);
    }
 
    public EmbeddedCacheManager manager(Cache c) {
-      return (EmbeddedCacheManager) c.getCacheManager();
+      return c.getCacheManager();
    }
 }

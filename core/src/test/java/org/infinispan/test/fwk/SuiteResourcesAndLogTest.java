@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
@@ -22,7 +44,6 @@ public class SuiteResourcesAndLogTest {
    public void printEnvInformation() {
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");      
       log("jgroups.bind_addr = " + System.getProperty("jgroups.bind_addr"));
-      log("bind.address = " + System.getProperty("bind.address"));
       log("java.runtime.version = " + System.getProperty("java.runtime.version"));
       log("java.runtime.name =" + System.getProperty("java.runtime.name"));
       log("java.vm.version = " + System.getProperty("java.vm.version"));
@@ -36,6 +57,7 @@ public class SuiteResourcesAndLogTest {
       String preferIpV4 = System.getProperty("java.net.preferIPv4Stack");
       log("java.net.preferIPv4Stack = " + preferIpV4);
       log("java.net.preferIPv6Stack = " + System.getProperty("java.net.preferIPv6Stack"));
+      log("log4.configuration = " + System.getProperty("log4j.configuration"));
       log("MAVEN_OPTS = " + System.getProperty("MAVEN_OPTS"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       

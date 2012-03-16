@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -46,10 +47,9 @@ import java.util.Set;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent, JAXBUnmarshallable {
    private static final long serialVersionUID = 4879873994727821938L;
-   protected static final TypedProperties EMPTY_PROPERTIES = new TypedProperties();
-   protected transient Log log = LogFactory.getLog(getClass());  
+   private static final Log log = LogFactory.getLog(AbstractConfigurationBean.class);
    private boolean accessible;
-   protected Set<String> overriddenConfigurationElements = new HashSet<String>();
+   protected Set<String> overriddenConfigurationElements = new HashSet<String>(4);
 
    protected AbstractConfigurationBean() {}
    
@@ -70,11 +70,11 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
     * @param p properties to convert
     * @return TypedProperties instance
     */
-   protected TypedProperties toTypedProperties(Properties p) {
+   protected static TypedProperties toTypedProperties(Properties p) {
       return TypedProperties.toTypedProperties(p);
    }
 
-   protected TypedProperties toTypedProperties(String s) {
+   protected static TypedProperties toTypedProperties(String s) {
       TypedProperties tp = new TypedProperties();
       if (s != null && s.trim().length() > 0) {
          InputStream stream = new ByteArrayInputStream(s.getBytes());
@@ -106,7 +106,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
          }
       }
       catch (NoSuchFieldException e) {
-         log.warn("Field " + fieldName + " not found!!");
+         log.fieldNotFound(fieldName);
       }
       finally {
          accessible = false;
@@ -118,7 +118,9 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
 
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
-      return (AbstractConfigurationBean) super.clone();
+      AbstractConfigurationBean dolly = (AbstractConfigurationBean) super.clone();
+      dolly.overriddenConfigurationElements = new HashSet<String>(this.overriddenConfigurationElements);
+      return dolly;
    }
 
    @Override

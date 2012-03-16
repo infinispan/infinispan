@@ -1,9 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -23,7 +44,6 @@ import static org.testng.Assert.assertEquals;
 /**
  * A base test for all rehashing tests
  */
-@Test(groups = "functional", testName = "distribution.rehash.RehashTestBase")
 public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected RehashTestBase() {
@@ -61,15 +81,16 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
 
       i = 0;
-      for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
+      for (MagicKey key : keys) assertOwnershipAndNonOwnership(key, false);
 
-      log.info("Initialized with keys %s", keys);
+      log.infof("Initialized with keys %s", keys);
       return keys;
    }
 
    /**
     * Simple test.  Put some state, trigger event, test results
     */
+   @Test
    public void testNonTransactional() {
       List<MagicKey> keys = init();
 
@@ -78,7 +99,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       waitForRehashCompletion();
       log.info("Rehash complete");
-      additionalWait();
+
       int i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
       assertProperConsistentHashOnAllCaches();
@@ -89,16 +110,11 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * More complex - init some state.  Start a new transaction, and midway trigger a rehash.  Then complete transaction
     * and test results.
     */
+   @Test
    public void testTransactional() throws Exception {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
-
-      StateTransferFunctionalTest.MergedViewListener mergedViewListener = new StateTransferFunctionalTest.MergedViewListener();
-      cacheManagers.get(0).addListener(mergedViewListener);
-      cacheManagers.get(1).addListener(mergedViewListener);
-      cacheManagers.get(2).addListener(mergedViewListener);
-      cacheManagers.get(3).addListener(mergedViewListener);
 
       Thread th = new Thread("Updater") {
          @Override
@@ -115,12 +131,14 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
                      try {
                         l.await();
                      } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                      }
                      return XAResource.XA_OK;
                   }
                });
                t1.commit();
             } catch (Exception e) {
+               log.error("Error committing transaction", e);
                rollback.set(true);
                throw new RuntimeException(e);
             }
@@ -134,25 +152,23 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       l.countDown();
       th.join();
 
+      //ownership can only be verified after the rehashing has completed
+      waitForRehashCompletion();
       log.info("Rehash complete");
-      additionalWait();
 
       //only check for these values if tx was not rolled back
       if (!rollback.get()) {
-         // lets first see what the value of k1 is on c1 ...
+         // the ownership of k1 might change during the tx and a cache might end up with it in L1
+         assertOwnershipAndNonOwnership(keys.get(0), true);
+         assertOwnershipAndNonOwnership(keys.get(1), l1OnRehash);
+         assertOwnershipAndNonOwnership(keys.get(2), l1OnRehash);
+         assertOwnershipAndNonOwnership(keys.get(3), l1OnRehash);
 
+         // checking the values will bring the keys to L1, so we want to do it after checking ownership
          assertOnAllCaches(keys.get(0), "transactionally_replaced");
          assertOnAllCaches(keys.get(1), "v" + 2);
          assertOnAllCaches(keys.get(2), "v" + 3);
          assertOnAllCaches(keys.get(3), "v" + 4);
-
-         //ownership can only be verified after the rehashing has completed
-         if (!mergedViewListener.merged) {
-            RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
-            assertOwnershipAndNonOwnership(keys.get(0));
-            assertOwnershipAndNonOwnership(keys.get(1));
-            assertOwnershipAndNonOwnership(keys.get(3));
-         }
 
          assertProperConsistentHashOnAllCaches();
       }
@@ -193,7 +209,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Updater u : updaters) u.join();
 
       waitForRehashCompletion();
-      additionalWait();
 
       log.info("Rehash complete");
 

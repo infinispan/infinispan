@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -89,15 +90,15 @@ public final class FileListCacheKey implements Serializable {
       return "*|" + indexName;
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileListCacheKey> {
+   public static final class Externalizer extends AbstractExternalizer<FileListCacheKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, FileListCacheKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final FileListCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
       }
 
       @Override
-      public FileListCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileListCacheKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          return new FileListCacheKey(indexName);
       }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -27,11 +28,8 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
-import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author bela
@@ -42,11 +40,6 @@ import java.util.List;
 public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
    DummyTransactionManager tm;
    private static final long serialVersionUID = -6568400755677046127L;
-
-   /**
-    * List<Synchronization>
-    */
-   List<Synchronization> l = new ArrayList<Synchronization>();
 
    public DummyUserTransaction(DummyTransactionManager tm) {
       this.tm = tm;

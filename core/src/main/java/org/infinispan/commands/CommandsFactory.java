@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,40 +22,46 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.commands.tx.VersionedCommitCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.*;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distexec.mapreduce.Mapper;
+import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import javax.transaction.xa.Xid;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -78,6 +85,17 @@ public interface CommandsFactory {
     * @return a PutKeyValueCommand
     */
    PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
+
+   /**
+    * Builds a special form of {@link PutKeyValueCommand} that also holds a reference to a version to be applied.
+    * @param key key to put
+    * @param value value to put
+    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
+    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @param version version to apply with this put
+    * @return a PutKeyValueCommand
+    */
+   VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags);
 
    /**
     * Builds a RemoveCommand
@@ -109,6 +127,12 @@ public interface CommandsFactory {
     * @return an InvalidateFromL1Command
     */
    InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
+
+
+   /**
+    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Collection)
+    */
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand
@@ -184,11 +208,28 @@ public interface CommandsFactory {
    PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
 
    /**
+    * Builds a VersionedPrepareCommand
+    *
+    * @param gtx global transaction associated with the prepare
+    * @param modifications list of modifications
+    * @param onePhase
+    * @return a VersionedPrepareCommand
+    */
+   VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase);
+
+   /**
     * Builds a CommitCommand
     * @param gtx global transaction associated with the commit
     * @return a CommitCommand
     */
    CommitCommand buildCommitCommand(GlobalTransaction gtx);
+
+   /**
+    * Builds a VersionedCommitCommand
+    * @param gtx global transaction associated with the commit
+    * @return a VersionedCommitCommand
+    */
+   VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx);
 
    /**
     * Builds a RollbackCommand
@@ -225,72 +266,109 @@ public interface CommandsFactory {
    SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
 
    /**
-    * Builds a StateTransferControlCommand
-    * @param block whether to start blocking or not
-    * @return a StateTransferControlCommand
-    */
-   StateTransferControlCommand buildStateTransferControlCommand(boolean block);
-
-   /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx);
 
    /**
     * Builds a LockControlCommand to control explicit remote locking
+    *
+    *
     * @param keys keys to lock
-    * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
+    * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx);
+
+   /**
+    * Same as {@link #buildLockControlCommand(Object, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
+    * but for locking a single key vs a collection of keys.
+    */
+   LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
+
+
+   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
     * control command with just a command type and sender.
     * @param subtype type of RehashControlCommand
     * @param sender sender's Address
+    * @param viewId the last view id on the sender
     * @return a RehashControlCommand
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
-    * control command with a sender and a payload - a transaction log of writes that occured during the generation and
-    * delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX}.
-    *
-    * @param sender sender's Address
-    * @param state list of writes
-    * @return a RehashControlCommand
-    */
-   RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> state);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
-    * control command with a sender and a payload - a transaction log of pending prepares that occured during the generation
-    * and delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX_PREPARES}.
-    *
-    * @param sender sender's Address
-    * @param state list of pending prepares
-    * @return a RehashControlCommand
-    */
-   RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> state);
-
+   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
     * coordinates rehashing of nodes when a node join or leaves
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype,
-            Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
-            ConsistentHash newCH, List<Address> leaversHandled);
+   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
+                                                         Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
     * @return the name of the cache this CommandFactory is set up to construct commands for.
     */
    String getCacheName();
+
+   /**
+    * Builds a {@link org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand}.
+    */
+   GetInDoubtTransactionsCommand buildGetInDoubtTransactionsCommand();
+
+   /**
+    * Builds a {@link org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand}.
+    */
+   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction);
+   
+   /**
+    * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables. 
+    * 
+    * @param callable the callable task
+    * @param sender sender's Address
+    * @param keys keys used in Callable 
+    * @return a DistributedExecuteCommand
+    */
+   <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
+   
+   /**
+    * Builds a MapReduceCommand used for migration and execution of MapReduce tasks.
+    * 
+    * @param m Mapper for MapReduceTask
+    * @param r Reducer for MapReduceTask
+    * @param sender sender's Address
+    * @param keys keys used in MapReduceTask
+    * @return a MapReduceCommand
+    */
+   MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys);
+
+   /**
+    * @see GetInDoubtTxInfoCommand
+    */
+   GetInDoubtTxInfoCommand buildGetInDoubtTxInfoCommand();
+
+   /**
+    * Builds a CompleteTransactionCommand command.
+    * @param xid the xid identifying the transaction we want to complete.
+    * @param commit commit(true) or rollback(false)?
+    */
+   CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit);
+
+   /**
+    * @param internalId the internal id identifying the transaction to be removed.
+    * @see org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand
+    */
+   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId);
+   
+   
+   /**
+    * Builds a ApplyDeltaCommand used for applying Delta objects to DeltaAware containers stored in cache 
+    * 
+    * @return ApplyDeltaCommand instance
+    * @see ApplyDeltaCommand
+    */
+   ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
 }

@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,13 +24,10 @@ package org.infinispan.query.blackbox;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryFactory;
-import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.query.Search;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -46,12 +44,9 @@ import static org.infinispan.config.Configuration.CacheMode.LOCAL;
  *
  * @author Navin Surtani
  */
-
 @Test(groups = "functional")
-public class KeyTypeTest extends SingleCacheManagerTest{
+public class KeyTypeTest extends SingleCacheManagerTest {
 
-   Cache<Object, Person> cache;
-   QueryHelper qh;
    Person person1;
 
    public KeyTypeTest() {
@@ -61,11 +56,12 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.setIndexingEnabled(true);
-      c.setIndexLocalOnly(false);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
-      cache = cacheManager.getCache();
-      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
+      c.fluent()
+         .indexing()
+         .indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
 
       person1 = new Person();
       person1.setName("Navin");
@@ -77,12 +73,12 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    public void testPrimitiveAndStringKeys(){
       String key1 = "key1";
       int key2 = 2;
-      byte key3 = (byte) 3;
-      float key4 = (float) 4;
-      long key5 = (long) 5;
-      short key6 = (short) 6;
+      byte key3 = 3;
+      float key4 = 4;
+      long key5 = 5;
+      short key6 = 6;
       boolean key7 = true;
-      double key8 = (double) 8;
+      double key8 = 8;
       char key9 = '9';
 
 
@@ -98,7 +94,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
 
       // Going to search the 'blurb' field for 'owns'
       Term term = new Term ("blurb", "owns");
-      CacheQuery cacheQuery = new QueryFactory(cache, qh).getQuery(new TermQuery(term));
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
       assert cacheQuery.getResultSize() == 9;
 
       List<Object> found = cacheQuery.list();
@@ -118,7 +114,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
       cache.put(key3, person1);
 
       Term term = new Term("blurb", "owns");
-      CacheQuery cacheQuery = new QueryFactory(cache, qh).getQuery(new TermQuery(term));
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
       int i;
       assert (i = cacheQuery.getResultSize()) == 3 : "Expected 3, was " + i;
    }

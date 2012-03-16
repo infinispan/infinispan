@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -28,6 +29,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners
@@ -37,6 +40,13 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  */
 public class NotificationInterceptor extends CommandInterceptor {
    private CacheNotifier notifier;
+
+   private static final Log log = LogFactory.getLog(NotificationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    @Inject
    public void injectDependencies(CacheNotifier notifier) {

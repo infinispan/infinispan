@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -35,15 +36,15 @@ import java.io.ByteArrayOutputStream;
 public class Version {
 
    private static final String MAJOR = "5";
-   private static final String MINOR = "0";
+   private static final String MINOR = "2";
    private static final String MICRO = "0";
    private static final String MODIFIER = "SNAPSHOT";
    private static final boolean SNAPSHOT = true;
 
-   public static String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static String CODENAME = "Pagoa";
+   public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
+   public static final String CODENAME = "Delirium";
    public static final String PROJECT_NAME = "Infinispan";
-   public static byte[] VERSION_ID = readVersionBytes();
+   public static final byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
 
    private static final int MAJOR_SHIFT = 11;
@@ -77,9 +78,10 @@ public class Version {
    public static void printFullVersionInformation() {
       System.out.println(PROJECT_NAME);
       System.out.println();
-      System.out.printf("Version: \t%s\n", VERSION);
-      System.out.printf("Codename: \t%s\n", CODENAME);
-      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)\n");
+      System.out.printf("Version: \t%s%n", VERSION);
+      System.out.printf("Codename: \t%s%n", CODENAME);
+      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
+      System.out.println();
    }
 
    /**

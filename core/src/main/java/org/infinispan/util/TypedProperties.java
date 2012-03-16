@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.util;
 
 import org.infinispan.config.TypedPropertiesAdapter;
@@ -33,7 +55,7 @@ public class TypedProperties extends Properties {
     * @param p properties instance to from.  If null, then it is treated as an empty Properties instance.
     */
    public TypedProperties(Properties p) {
-      if (p != null && !p.isEmpty()) putAll(p);
+      if (p != null && !p.isEmpty()) super.putAll(p);
    }
 
    /**
@@ -71,7 +93,7 @@ public class TypedProperties extends Properties {
          return Integer.parseInt(value);
       }
       catch (NumberFormatException nfe) {
-         log.warn("Unable to convert string property [" + value + "] to an int!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToInt(value, defaultValue);
          return defaultValue;
       }
    }
@@ -93,7 +115,7 @@ public class TypedProperties extends Properties {
          return Long.parseLong(value);
       }
       catch (NumberFormatException nfe) {
-         log.warn("Unable to convert string property [" + value + "] to a long!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToLong(value, defaultValue);
          return defaultValue;
       }
    }
@@ -115,7 +137,7 @@ public class TypedProperties extends Properties {
          return Boolean.parseBoolean(value);
       }
       catch (Exception e) {
-         log.warn("Unable to convert string property [" + value + "] to a boolean!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToBoolean(value, defaultValue);
          return defaultValue;
       }
    }
@@ -129,10 +151,17 @@ public class TypedProperties extends Properties {
     * @param   doStringReplace   boolean indicating whether to apply string property replacement
     * @return  the value in this property list with the specified key valu after optionally being inspected for String property replacement
     */
-   public String getProperty(String key, String defaultValue, boolean doStringReplace) {
+   public synchronized String getProperty(String key, String defaultValue, boolean doStringReplace) {
       if (doStringReplace)
          return StringPropertyReplacer.replaceProperties(getProperty(key, defaultValue));
       else
          return getProperty(key, defaultValue);
    }
+
+   @Override
+   public synchronized TypedProperties setProperty(String key, String value) {
+      super.setProperty(key, value);
+      return this;
+   }
+
 }

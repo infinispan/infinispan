@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,6 @@
 package org.infinispan.lucene;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -40,6 +40,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.Util;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -83,7 +84,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testIndexUsage() throws IOException, ClassNotFoundException, SQLException {
+   public void testIndexUsage() throws IOException {
       cache = cacheManager.getCache();
       Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
       writeTextToIndex(dir, 0, "hello database");
@@ -116,8 +117,8 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             if (expected==null && actual==null)
                continue;
             if (expected instanceof byte[]){
-               expected = Arrays.toString((byte[]) expected);
-               actual = Arrays.toString((byte[]) actual);
+               expected = Util.printArray((byte[]) expected, false);
+               actual = Util.printArray((byte[]) actual, false);
             }
             if (expected == null || ! expected.equals(actual)) {
                System.out.println("Failure on key["+key.toString()+"] expected value:\n\t"+expected+"\tactual value:\n\t"+actual);

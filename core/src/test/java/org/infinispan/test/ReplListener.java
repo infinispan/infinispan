@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test;
 
 import org.infinispan.Cache;
@@ -165,7 +187,7 @@ public class ReplListener {
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
          info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful + " Expected commands " + expectedCommands);
          if (!successful && !latch.await(time, unit)) {
-            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            EmbeddedCacheManager cacheManager = c.getCacheManager();
             assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + cacheManager.getAddress() + "]";
          } else {
             info("Exiting wait for rpc with expected commands " + expectedCommands);
@@ -175,7 +197,9 @@ public class ReplListener {
          throw new IllegalStateException("unexpected", e);
       }
       finally {
+         expectationSetupLock.lock();
          expectedCommands = null;
+         expectationSetupLock.unlock();
          expectAny = false;
          sawAtLeastOneInvocation = false;
          latch = new CountDownLatch(1);
@@ -191,6 +215,11 @@ public class ReplListener {
       eagerCommands.clear();
    }
 
+   public void reconfigureListener(boolean recordCommandsEagerly, boolean watchLocal) {
+      this.recordCommandsEagerly = recordCommandsEagerly;
+      this.watchLocal = watchLocal;
+   }
+
    protected class ReplListenerInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
@@ -199,6 +228,7 @@ public class ReplListener {
          try {
             o = invokeNextInterceptor(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
+            info("Checking whether command " + cmd.getClass().getSimpleName() + " should be marked as local with watch local set to " + watchLocal);
             if (!ctx.isOriginLocal() || watchLocal) markAsVisited(cmd);
          }
          return o;
@@ -222,7 +252,10 @@ public class ReplListener {
             if (expectedCommands != null) {
                if (expectedCommands.remove(cmd.getClass())) {
                   info("Successfully removed command: " + cmd.getClass());
-               }                                      
+               }
+               else {
+                  if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
+               }
                sawAtLeastOneInvocation = true;
                if (expectedCommands.isEmpty()) {
                   info("Nothing to wait for, releasing latch");

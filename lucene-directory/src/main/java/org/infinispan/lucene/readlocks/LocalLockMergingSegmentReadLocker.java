@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,10 +22,11 @@
  */
 package org.infinispan.lucene.readlocks;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.Cache;
 import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
+
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * LocalLockMergingSegmentReadLocker decorates the {@link DistributedSegmentReadLocker} to minimize
@@ -38,7 +40,7 @@ import org.infinispan.lucene.InfinispanDirectory;
 @SuppressWarnings("unchecked")
 public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
-   private final ConcurrentHashMap<String, LocalReadLock> localLocks = new ConcurrentHashMap<String, LocalReadLock>();
+   private final ConcurrentMap<String, LocalReadLock> localLocks = ConcurrentMapFactory.makeConcurrentMap();
    private final DistributedSegmentReadLocker delegate;
 
    /**
@@ -60,11 +62,6 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     */
    public LocalLockMergingSegmentReadLocker(Cache locksCache, Cache chunksCache, Cache metadataCache, String indexName) {
       this.delegate = new DistributedSegmentReadLocker(locksCache, chunksCache, metadataCache, indexName);
-   }
-
-   @Override @Deprecated
-   public boolean aquireReadLock(String filename) {
-      return acquireReadLock(filename);
    }
 
    /**

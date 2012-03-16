@@ -1,7 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.remote;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
+import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -9,9 +32,8 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -41,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 @CacheLoaderMetadata(configurationClass = RemoteCacheStoreConfig.class)
 public class RemoteCacheStore extends AbstractCacheStore {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheStore.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheStore.class, Log.class);
 
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
@@ -69,7 +91,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
    @Override
    public void store(InternalCacheEntry entry) throws CacheLoaderException {
       if (log.isTraceEnabled()) {
-         log.trace("Adding entry: " + entry);
+         log.tracef("Adding entry: %s", entry);
       }
       remoteCache.put(entry.getKey(), entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
    }
@@ -119,9 +141,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      String message = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode";
-      log.error(message);
-      throw new CacheLoaderException(message);
+      log.sharedModeOnlyAllowed();
+      throw new CacheLoaderException("RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode");
    }
 
    @Override
@@ -136,8 +157,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
       StreamingMarshaller marshaller = getMarshaller();
 
       if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
-      remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties());
-      if (config.getRemoteCacheName().equals(CacheContainer.DEFAULT_CACHE_NAME))
+      remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+      if (config.getRemoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
          remoteCache = remoteCacheManager.getCache();
       else
          remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());
@@ -145,6 +166,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      super.stop();
       remoteCacheManager.stop();
    }
 
@@ -156,8 +178,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
    private long toSeconds(long millis, InternalCacheEntry entry, String desc) {
       if (millis > 0 && millis < 1000) {
          if (log.isTraceEnabled()) {
-            log.trace("Adjusting " + desc + " time for (k,v): (" + entry.getKey() + ", " + entry.getValue() + ") from "
-                  + millis + " millis to 1 sec, as milliseconds are not supported by HotRod");
+            log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
+                       desc ,entry.getKey(), entry.getValue(), millis);
          }
          return 1;
       }

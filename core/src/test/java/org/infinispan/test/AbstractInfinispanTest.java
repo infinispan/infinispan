@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,10 +22,12 @@
  */
 package org.infinispan.test;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -37,22 +40,19 @@ import static org.testng.Assert.assertEquals;
  */
 public class AbstractInfinispanTest {
 
+   protected final Log log = LogFactory.getLog(getClass());
+
+   private Set<Thread> spawnedThreads = new HashSet<Thread>();
+
    @AfterTest(alwaysRun = true)
-   protected void nullifyInstanceFields() {
-      for (Class<?> current = this.getClass(); current.getSuperclass() != null; current = current.getSuperclass()) {
-         Field[] fields = current.getDeclaredFields();
-         for (Field f : fields) {
-            try {
-               if (!Modifier.isStatic(f.getModifiers()) && !f.getDeclaringClass().isPrimitive()) {
-                  f.setAccessible(true);
-                  f.set(this, null);
-               }
-            } catch (Exception e) {}
-         }
+   protected void killSpawnedThreads() {
+      for (Thread t : spawnedThreads) {
+         if (t.isAlive())
+            t.interrupt();
       }
    }
 
-   public void eventually(Condition ec, long timeout) {
+   protected void eventually(Condition ec, long timeout) {
       int loops = 10;
       long sleepDuration = timeout / loops;
       try {
@@ -67,45 +67,50 @@ public class AbstractInfinispanTest {
       }
    }
 
-   public void fork(Runnable r, boolean sync) {
-      final SyncForkSupport syncForkSupport = new SyncForkSupport(r);
-      Thread t = new Thread(syncForkSupport);
+   protected Thread fork(Runnable r, boolean waitForCompletion) {
+      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + r.hashCode();
+      log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
+      final Thread t = new Thread(new RunnableWrapper(r), name);
+      spawnedThreads.add(t);
       t.start();
-      if (sync) {
+      if (waitForCompletion) {
          eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
-               return syncForkSupport.done;
+               return t.getState().equals(Thread.State.TERMINATED);
             }
          });
       }
+      return t;
    }
 
+   public final class RunnableWrapper implements Runnable {
 
-   public void eventually(Condition ec) {
-      eventually(ec, 10000);
-   }
+      final Runnable realOne;
 
-   public interface Condition {
-      public boolean isSatisfied() throws Exception;
-   }
-
-   private class SyncForkSupport implements Runnable {
-
-      volatile Runnable realOne;
-      volatile boolean done = false;
-
-      private SyncForkSupport(Runnable realOne) {
+      public RunnableWrapper(Runnable realOne) {
          this.realOne = realOne;
       }
 
       @Override
       public void run() {
          try {
+            log.trace("Started fork thread..");
             realOne.run();
+         } catch (Throwable e) {
+            log.trace("Exiting fork thread due to exception", e);
          } finally {
-            done = true;
+            log.trace("Exiting fork thread.");
          }
       }
+   }
+
+
+   protected void eventually(Condition ec) {
+      eventually(ec, 10000);
+   }
+
+   protected interface Condition {
+      public boolean isSatisfied() throws Exception;
    }
 }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,6 +23,8 @@
 package org.infinispan.transaction.lookup;
 
 
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -39,20 +42,23 @@ import java.lang.reflect.Method;
 public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup {
    private Method manager, user;
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
-
-   public JBossStandaloneJTAManagerLookup() {
+   
+   @Inject
+   public void init(Configuration configuration) {
+      // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       try {
-         manager = Util.loadClassStrict("com.arjuna.ats.jta.TransactionManager").getMethod("transactionManager");
-         user = Util.loadClassStrict("com.arjuna.ats.jta.UserTransaction").getMethod("userTransaction");
-      }
-      catch (Exception e) {
+         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", configuration.getClassLoader()).getMethod("transactionManager");
+         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", configuration.getClassLoader()).getMethod("userTransaction");
+      } catch (SecurityException e) {
+         throw new RuntimeException(e);
+      } catch (NoSuchMethodException e) {
          throw new RuntimeException(e);
       }
    }
 
    public TransactionManager getTransactionManager() throws Exception {
       TransactionManager tm = (TransactionManager) manager.invoke(null);
-      if (log.isInfoEnabled()) log.info("Retrieving transaction manager %s", tm);
+      if (log.isInfoEnabled()) log.retrievingTm(tm);
       return tm;
    }
 

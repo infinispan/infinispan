@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,21 +22,21 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Set;
-
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
+
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCommand {
+public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand implements DataCommand {
    protected Object key;
-   protected Set<Flag> flags;
 
    public Object getKey() {
       return key;
@@ -43,14 +44,6 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
 
    public void setKey(Object key) {
       this.key = key;
-   }
-   
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-   
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
    }
 
    protected AbstractDataCommand(Object key, Set<Flag> flags) {
@@ -68,7 +61,12 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }
-   
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
@@ -98,12 +96,16 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
    
    @Override
    public String toString() {
-      return new StringBuilder()
-         .append("AbstractDataCommand{key=")
+      return new StringBuilder(getClass().getSimpleName())
+         .append(" {key=")
          .append(key)
          .append(", flags=").append(flags)
          .append("}")
          .toString();
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
 }

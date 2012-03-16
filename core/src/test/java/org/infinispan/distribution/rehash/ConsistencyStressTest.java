@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
@@ -70,7 +92,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       List<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
 
       for (int i = 0; i < NUM_NODES; i++)
-         cacheManagers.add(createCacheManager(gc, c, true));
+         cacheManagers.add(createCacheManager(gc, c));
 
       registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
    }
@@ -119,7 +141,8 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       Thread.sleep(25000);
 
       // lets make sure any rehashing work has completed
-      RehashTestBase.RehashWaiter.waitForRehashToComplete(cacheMap.values().toArray(new Cache[NUM_NODES - 1]));
+      TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
+      TestingUtil.waitForRehashToComplete(cacheMap.values());
       AbstractWheelConsistentHash hash = (AbstractWheelConsistentHash) cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
 
       for (int i = 0; i < NUM_NODES; i++) {
@@ -127,7 +150,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                String key = keyFor(i, j, k);
                if (keysToIgnore.contains(key)) {
-                  log.info("Skipping test on failing key %s", key);
+                  log.infof("Skipping test on failing key %s", key);
                } else {
                   List<Address> owners = hash.locate(key, 2);
                   for (Map.Entry<Address, Cache<Object, Object>> e : cacheMap.entrySet()) {
@@ -135,7 +158,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                         if (owners.contains(e.getKey())) DistributionTestHelper.assertIsInContainerImmortal(e.getValue(), key);
                         // Don't bother testing non-owners since invalidations caused by rehashing are async!
                      } catch (Throwable th) {
-                        log.fatal("Key %s (hash %s) should be on owners %s according to %s", key, hash.getNormalizedHash(key), owners, hash);
+                        log.fatalf("Key %s (hash %s) should be on owners %s according to %s", key, hash.getNormalizedHash(key), owners, hash);
                         throw th;
                      }
                   }
@@ -143,6 +166,8 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             }
          }
       }
+
+      executorService.shutdownNow();
    }
 
    private static String keyFor(int nodeId, int workerId, int iterationId) {
@@ -167,7 +192,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       public Void call() {
          for (int iterationId = 0; iterationId < NUM_ITERATIONS; iterationId++) {
             if (iterationId % 500 == 0)
-               log.info("  >> Stressor %s Worker %s Iteration %s", cacheId, workerId, iterationId);
+               log.infof("  >> Stressor %s Worker %s Iteration %s", cacheId, workerId, iterationId);
             boolean txError = false;
             Exception exception = null;
             String key = keyFor(cacheId, workerId, iterationId);
@@ -207,7 +232,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
 
                if (IGNORE_TX_FAILURES) {
                   keysToIgnore.add(key);
-                  log.error("  >> Saw a %s when trying to process key %s", exception.getClass().getSimpleName(), key);
+                  log.errorf("  >> Saw a %s when trying to process key %s", exception.getClass().getSimpleName(), key);
                } else {
                   throw new RuntimeException(exception);
                }

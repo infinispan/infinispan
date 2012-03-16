@@ -1,39 +1,77 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.0.0-SNAPSHOT</version>
+   <version>5.2.0-SNAPSHOT</version>
+   <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
-   <packaging>pom</packaging>
-
    <organization>
       <name>JBoss, a division of Red Hat</name>
       <url>http://www.jboss.org</url>
    </organization>
-
    <licenses>
       <license>
          <name>GNU Lesser General Public License</name>
-         <url>http://www.gnu.org/copyleft/lesser.html</url>
+         <url>http://repository.jboss.org/licenses/lgpl-2.1.txt</url>
          <distribution>repo</distribution>
       </license>
    </licenses>
-
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://www.infinispan.org for a complete list of contributors</name>
+      </developer>
+   </developers>
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Commit Notificatons</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
+         <post>infinispan-commits@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
    <scm>
-      <connection>scm:svn:http://anonsvn.jboss.org/repos/infinispan</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/infinispan</developerConnection>
-      <url>http://viewvc.jboss.org/cgi-bin/viewvc.cgi/infinispan/</url>
+      <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
+      <url>https://github.com/infinispan/infinispan</url>
    </scm>
-
    <issueManagement>
       <system>jira</system>
       <url>https://jira.jboss.com/jira/browse/ISPN</url>
    </issueManagement>
-
    <ciManagement>
       <system>hudson</system>
       <url>http://hudson.jboss.org/hudson/view/Infinispan</url>
@@ -44,45 +82,43 @@
          </notifier>
       </notifiers>
    </ciManagement>
-   <developers>
-      <developer>
-         <id>placeholder</id>
-         <name>See http://www.infinispan.org for a complete list of contributors</name>
-      </developer>
-   </developers>
-   <mailingLists>
-      <mailingList>
-         <name>Infinispan Commit Notificatons</name>
-         <post>infinispan-commits@lists.jboss.org</post>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
-         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
-      </mailingList>
-      <mailingList>
-         <name>Infinispan Developers</name>
-         <post>infinispan-dev@lists.jboss.org</post>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
-         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
-      </mailingList>
-   </mailingLists>
-
+   <distributionManagement>
+      <repository>
+         <id>jboss-releases-repository</id>
+         <name>JBoss Release Repository</name>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
+      <snapshotRepository>
+         <id>jboss-snapshots-repository</id>
+         <name>JBoss Snapshot Repository</name>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
    <properties>
+      <buildDirectory>target</buildDirectory>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
+      <infinispan.test.parallel.threads>20</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
-
+      <packaging>jar</packaging>
+      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
+      <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
-      <version.apacheds.jdbm>1.5.4</version.apacheds.jdbm>
-      <version.bdbje>4.0.92</version.bdbje>
+      <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
+      <version.arquillian>1.0.0.CR5</version.arquillian>
+      <version.arquillian.container.weld>1.0.0.CR2</version.arquillian.container.weld>
+      <version.avro>1.3.3</version.avro>
+      <version.bdbje>5.0.34</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
-      <version.cassandra>0.6.6</version.cassandra>
-      <version.cassandra.connection.pool>0.3.2</version.cassandra.connection.pool>
+      <version.cassandra>1.0.2</version.cassandra>
+      <version.cassandra.pool>1.0.0.CR1</version.cassandra.pool>
+      <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.0</version.commons.compress>
-      <version.commons.pool>1.5.4</version.commons.pool>
+      <version.commons.dbcp>1.4</version.commons.dbcp>
+      <version.commons.pool>1.5.6</version.commons.pool>
       <version.commons.httpclient>3.1</version.commons.httpclient>
       <version.commons.logging>1.1</version.commons.logging>
       <version.commons.math>2.0</version.commons.math>
@@ -91,51 +127,508 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
-      <version.hibernate.search>3.4.0-SNAPSHOT</version.hibernate.search>
-      <version.jackson>1.6.1</version.jackson>
+      <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
+      <version.hibernate.core>3.3.1.GA</version.hibernate.core>
+      <version.hibernate.search>4.1.0.Beta1</version.hibernate.search>
+      <version.jackson>1.9.2</version.jackson>
+      <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
-      <version.jboss.marshalling>1.2.3.GA</version.jboss.marshalling>
-      <version.jbossjta>4.9.0.GA</version.jbossjta>
-      <version.jbossjts>4.9.0.GA</version.jbossjts>
-      <version.jbossts-common>4.6.1.GA</version.jbossts-common>
+      <version.jboss.marshalling>1.3.6.GA</version.jboss.marshalling>
+      <version.jbossjta>4.16.2.Final</version.jbossjta>
+      <version.osgi>4.3.0</version.osgi>
+      <version.jboss.logging>3.1.0.CR2</version.jboss.logging>
+      <version.jboss.logging.processor>1.0.0.CR5</version.jboss.logging.processor>
+      <version.jboss.logmanager>1.2.0.GA</version.jboss.logmanager>
+      <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.0-beta-7</version.jclouds>
+      <version.jclouds>1.1.0</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>2.12.0.CR1</version.jgroups>
+      <version.jgroups>3.1.0.Alpha2</version.jgroups>
+      <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
-      <version.jta>1.0.1.GA</version.jta>
+      <version.jta>1.0.0.Final</version.jta>
+      <version.junit>4.8.2</version.junit>
       <version.log4j>1.2.16</version.log4j>
+      <version.lucene>3.5.0</version.lucene>
+      <version.mc4j>1.2.6</version.mc4j>
+      <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mysql.driver>5.1.9</version.mysql.driver>
-      <version.netty>3.2.3.Final</version.netty>
-      <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
-      <version.resteasy>2.0.1.GA</version.resteasy>
-<!--
-      <version.rhq.pluginAnnotations>4.0.0-SNAPSHOT</version.rhq.pluginAnnotations>
-      <version.rhq.plugingen>4.0.0-SNAPSHOT</version.rhq.plugingen>
--->
-      <version.rhq.pluginAnnotations>3.0.1</version.rhq.pluginAnnotations>
-      <version.rhq.plugingen>3.0.1</version.rhq.plugingen>
-      <version.rhq>3.0.0</version.rhq>
-      <version.scala>2.8.1</version.scala>
+      <version.netty>3.2.6.Final</version.netty>
+      <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
+      <version.resteasy>2.2.1.GA</version.resteasy>
+      <version.rhq.helpers>3.0.4</version.rhq.helpers>
+      <version.rhq>4.2.0</version.rhq>
+      <version.scala>2.9.1</version.scala>
       <version.slf4j>1.6.1</version.slf4j>
+      <version.solder>3.1.0.Final</version.solder>
+      <version.spring>3.1.0.RELEASE</version.spring>
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>5.11</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
+      <version.weld>1.1.4.Final</version.weld>
       <version.xsom>20081112</version.xsom>
-      <version.xstream>1.3.1</version.xstream>
-   </properties>
+      <version.xstream>1.4.1</version.xstream>
+      <version.javassist>3.12.1.GA</version.javassist>
+      <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
+      <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
+      <version.org.jboss.staxmapper>1.0.0.Final</version.org.jboss.staxmapper>
+      <!-- 
+         The Felix Bundle plugin used has an incompatibility with Maven's Source plugin. 
+         Hence this workaround to use an older version of the Bundle plugin.  See
 
+            http://comments.gmane.org/gmane.comp.apache.felix.devel/22887
+
+         for details. -->
+      <version.maven.bundle>2.3.4</version.maven.bundle>
+      <version.maven.source>2.1.2</version.maven.source>
+   </properties>
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cachestore-jdbm</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-ec2-demo</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-lucene-directory</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-core</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-hotrod</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-hotrod</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-tools</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${version.c3p0}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${version.h2.driver}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>forms_rt</artifactId>
+            <version>${version.com.intellij.forms_rt}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.martiansoftware</groupId>
+            <artifactId>jsap</artifactId>
+            <version>${version.jsap}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.sleepycat</groupId>
+            <artifactId>je</artifactId>
+            <version>${version.bdbje}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>${version.xstream}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-dbcp</groupId>
+            <artifactId>commons-dbcp</artifactId>
+            <version>${version.commons.dbcp}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>${version.commons.httpclient}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>${version.commons.logging}</version>
+            <scope>runtime</scope>
+         </dependency>
+         <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
+            <version>${version.commons.pool}</version>
+         </dependency>
+         <dependency>
+            <groupId>gnu-getopt</groupId>
+            <artifactId>getopt</artifactId>
+            <version>${version.gnu.getopt}</version>
+         </dependency>
+         <dependency>
+            <groupId>javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>${version.javassist}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>${version.javax.persistence}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>${version.jstl}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>${version.javax.servlet}</version>
+         </dependency>
+         <dependency>
+            <groupId>jgoodies</groupId>
+            <artifactId>forms</artifactId>
+            <version>${version.jgoodies.forms}</version>
+         </dependency>
+         <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${version.log4j}</version>
+         </dependency>
+         <dependency>
+            <groupId>mc4j</groupId>
+            <artifactId>org-mc4j-ems</artifactId>
+            <version>${version.mc4j}</version>
+         </dependency>
+         <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${version.mysql.driver}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.dataforte.cassandra</groupId>
+            <artifactId>cassandra-connection-pool</artifactId>
+            <version>${version.cassandra.pool}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.sf.webdav-servlet</groupId>
+            <artifactId>webdav-servlet</artifactId>
+            <version>${version.webdav.servlet}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-thrift</artifactId>
+            <version>${version.cassandra}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-all</artifactId>
+            <version>${version.cassandra}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${version.commons.compress}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math</artifactId>
+            <version>${version.commons.math}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-jdbm</artifactId>
+            <version>${version.apacheds.jdbm}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>avro</artifactId>
+            <version>${version.avro}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${version.lucene}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>${version.jackson}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>stax2-api</artifactId>
+            <version>${version.org.codehaus.woodstox.stax2-api}</version>
+            <exclusions>
+               <exclusion>
+                  <artifactId>stax-api</artifactId>
+                  <groupId>javax.xml.stream</groupId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>woodstox-core-asl</artifactId>
+            <version>${version.org.codehaus.woodstox.woodstox-core-asl}</version>
+            <exclusions>
+               <exclusion>
+                  <artifactId>stax-api</artifactId>
+                  <groupId>javax.xml.stream</groupId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>${version.hibernate.search}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-search-analyzers</artifactId>
+                </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.arquillian</groupId>
+            <artifactId>arquillian-bom</artifactId>
+            <version>${version.arquillian}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec.javax.transaction</groupId>
+            <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+            <version>${version.jta}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>${version.jboss.logging}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling</artifactId>
+            <version>${version.jboss.marshalling}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling-river</artifactId>
+            <version>${version.jboss.marshalling}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.naming</groupId>
+            <artifactId>jnp-client</artifactId>
+            <version>${version.org.jboss.naming}</version>
+            <exclusions>
+               <exclusion>
+                  <artifactId>jboss-logging-spi</artifactId>
+                  <groupId>org.jboss.logging</groupId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.naming</groupId>
+            <artifactId>jnpserver</artifactId>
+            <version>${version.org.jboss.naming}</version>
+            <exclusions>
+               <exclusion>
+                  <artifactId>jboss-logging-spi</artifactId>
+                  <groupId>org.jboss.logging</groupId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>${version.netty}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxrs</artifactId>
+            <version>${version.resteasy}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-blobstore</artifactId>
+            <version>${version.jclouds}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jclouds.driver</groupId>
+            <artifactId>jclouds-enterprise</artifactId>
+            <version>${version.jclouds}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jclouds.driver</groupId>
+            <artifactId>jclouds-log4j</artifactId>
+            <version>${version.jclouds}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-allblobstore</artifactId>
+            <version>${version.jclouds}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jgroups</groupId>
+            <artifactId>jgroups</artifactId>
+            <version>${version.jgroups}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${version.json}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.milyn</groupId>
+            <artifactId>milyn-smooks-javabean</artifactId>
+            <version>${version.milyn.smooks}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.milyn</groupId>
+            <artifactId>milyn-smooks-csv</artifactId>
+            <version>${version.milyn.smooks}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-embedded</artifactId>
+            <version>${version.jetty}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>${version.osgi}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${version.rhq}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-plugin-api</artifactId>
+            <version>${version.rhq}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>com.sun.xml.bind</groupId>
+                  <artifactId>jaxb-impl</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-jmx-plugin</artifactId>
+            <version>${version.rhq}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq.helpers</groupId>
+            <artifactId>rhq-pluginAnnotations</artifactId>
+            <version>${version.rhq.helpers}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq.helpers</groupId>
+            <artifactId>rhq-pluginGen</artifactId>
+            <version>${version.rhq.helpers}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${version.scala}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${version.slf4j}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${version.spring}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>${version.spring}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${version.spring}</version>
+         </dependency>
+         <dependency>
+            <groupId>spy</groupId>
+            <artifactId>memcached</artifactId>
+            <version>${version.spymemcached}</version>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
    <dependencies>
+      <!-- used to serialize non-serializable objects for a dummy marshaller -->
       <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <version>${version.testng}</version>
+         <groupId>com.thoughtworks.xstream</groupId>
+         <artifactId>xstream</artifactId>
          <scope>test</scope>
-	 <classifier>jdk15</classifier>
+      </dependency>
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>net.jcip</groupId>
@@ -145,78 +638,470 @@
       </dependency>
       <dependency>
          <groupId>org.easymock</groupId>
-         <artifactId>easymockclassextension</artifactId>
-         <version>${version.easymockclassext}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.easymock</groupId>
          <artifactId>easymock</artifactId>
          <version>${version.easymock}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>jboss.jbossts</groupId>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>${version.easymockclassext}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.jbossts</groupId>
          <artifactId>jbossjta</artifactId>
          <version>${version.jbossjta}</version>
          <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <artifactId>commons-httpclient</artifactId>
+               <groupId>commons-httpclient</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>ironjacamar-spec-api</artifactId>
+               <groupId>org.jboss.ironjacamar</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jbogging-spi</artifactId>
+               <groupId>org.jboss.logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-logging</artifactId>
+               <groupId>org.jboss.logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-logging-processor</artifactId>
+               <groupId>org.jboss.logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-logging-generator</artifactId>
+               <groupId>org.jboss.logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jbossws-native-core</artifactId>
+               <groupId>org.jboss.ws.native</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>emma</artifactId>
+               <groupId>emma</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>emma_ant</artifactId>
+               <groupId>emma</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>hornetq-core</artifactId>
+               <groupId>org.hornetq</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>netty</artifactId>
+               <groupId>org.jboss.netty</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>wrapper</artifactId>
+               <groupId>tanukisoft</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jacorb</artifactId>
+               <groupId>jacorb</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jfreechart</artifactId>
+               <groupId>jfree</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-corba-ots-spi</artifactId>
+               <groupId>org.jboss.integration</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-server-manager</artifactId>
+               <groupId>org.jboss.jbossas</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+               <groupId>org.jboss.spec.javax.ejb</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jnp-client</artifactId>
+               <groupId>org.jboss.naming</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+               <groupId>org.jboss.spec.javax.servlet</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jbossws-common</artifactId>
+               <groupId>org.jboss.ws</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jcl-over-slf4j</artifactId>
+               <groupId>org.slf4j</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>stax-api</artifactId>
+               <groupId>stax</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>idl</artifactId>
+               <groupId>jacorb</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-logging-tools</artifactId>
+               <groupId>org.jboss.logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-connector-api_1.5_spec</artifactId>
+               <groupId>org.jboss.spec.javax.resource</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-transaction-spi</artifactId>
+               <groupId>org.jboss.integration</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-remoting</artifactId>
+               <groupId>org.jboss.remoting</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>slf4j-api</artifactId>
+               <groupId>org.slf4j</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>dom4j</artifactId>
+               <groupId>dom4j</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>commons-codec</artifactId>
+               <groupId>commons-codec</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-logmanager</artifactId>
+               <groupId>org.jboss.logmanager</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>hibernate-jpa-2.0-api</artifactId>
+               <groupId>org.hibernate.javax.persistence</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>commons-logging</artifactId>
+               <groupId>commons-logging</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jcommon</artifactId>
+               <groupId>jfree</groupId>
+            </exclusion>
+            <exclusion>
+               <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+               <groupId>org.jboss.spec.javax.transaction</groupId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossjts</artifactId>
-         <version>${version.jbossjts}</version>
-         <scope>test</scope>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-generator</artifactId>
+         <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>commons-logging</groupId>
-         <artifactId>commons-logging</artifactId>
-         <version>${version.commons.logging}</version>
-         <scope>test</scope>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-processor</artifactId>
+         <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
+      </dependency>
+      <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
+           which means they are no longer required at runtime. However, 
+           because of a Sun compiler bug http://bugs.sun.com/view_bug.do?bug_id=6550655
+           it still needs to be present when using the Infinispan artifacts. This
+           doesn't happen when using Java 7. Please add exclusions accordingly
+           if you don't want to pull this in -->
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+         <exclusions>
+            <exclusion>
+               <artifactId>i18nlog</artifactId>
+               <groupId>i18nlog</groupId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossts-common</artifactId>
-         <version>${version.jbossts-common}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <version>${version.log4j}</version>
-         <optional>true</optional>
-      </dependency>
-
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
-      <dependency>
-         <groupId>com.thoughtworks.xstream</groupId>
-         <artifactId>xstream</artifactId>
-         <version>${version.xstream}</version>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>${version.testng}</version>
+         <classifier>jdk15</classifier>
          <scope>test</scope>
       </dependency>
    </dependencies>
-
+   <repositories>
+      <repository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>jboss-public-repository</id>
+         <name>JBoss Public Repository and Proxy for third party repositories</name>
+         <url>https://repository.jboss.org/nexus/content/groups/public</url>
+      </repository>
+   </repositories>
+   <pluginRepositories>
+      <pluginRepository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>jboss-public-plugin-repository</id>
+         <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
+         <url>https://repository.jboss.org/nexus/content/groups/public</url>
+      </pluginRepository>
+   </pluginRepositories>
    <build>
+      <directory>${buildDirectory}</directory>
+      <finalName>${project.artifactId}</finalName>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <groupId>org.apache.felix</groupId>
+               <artifactId>maven-bundle-plugin</artifactId>
+               <version>${version.maven.bundle}</version>
+            </plugin>
+            <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <version>2.2-beta-3</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-dependency-plugin</artifactId>
+               <version>2.0</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>2.8.1</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-pmd-plugin</artifactId>
+               <!-- See also reporting plugins -->
+               <version>2.6</version>
+               <configuration>
+                  <minimumTokens>100</minimumTokens>
+                  <targetJdk>1.6</targetJdk>
+                  <linkXref>false</linkXref>
+                  <sourceEncoding>utf-8</sourceEncoding>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <version>2.4.3-JBOSS</version>
+            </plugin>
+            <plugin>
+               <artifactId>maven-war-plugin</artifactId>
+               <version>2.1.1</version>
+               <configuration>
+                  <attachClasses>true</attachClasses>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>appassembler-maven-plugin</artifactId>
+               <version>1.0</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>exec-maven-plugin</artifactId>
+               <version>1.2.1</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>ideauidesigner-maven-plugin</artifactId>
+               <version>1.0-beta-1</version>
+            </plugin>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+               <groupId>org.eclipse.m2e</groupId>
+               <artifactId>lifecycle-mapping</artifactId>
+               <version>1.0.0</version>
+               <configuration>
+                  <lifecycleMappingMetadata>
+                     <pluginExecutions>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.apache.maven.plugins</groupId>
+                              <artifactId>maven-dependency-plugin</artifactId>
+                              <versionRange>[2.0,)</versionRange>
+                              <goals>
+                                 <goal>copy</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.apache.maven.plugins</groupId>
+                              <artifactId>maven-javadoc-plugin</artifactId>
+                              <versionRange>[2.8,)</versionRange>
+                              <goals>
+                                 <goal>javadoc</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.apache.maven.plugins</groupId>
+                              <artifactId>maven-antrun-plugin</artifactId>
+                              <versionRange>[1.7,)</versionRange>
+                              <goals>
+                                 <goal>run</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.codehaus.mojo</groupId>
+                              <artifactId>exec-maven-plugin</artifactId>
+                              <versionRange>[1.2.1,)</versionRange>
+                              <goals>
+                                 <goal>java</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.scala-tools</groupId>
+                              <artifactId>maven-scala-plugin</artifactId>
+                              <versionRange>[2.15.2,)</versionRange>
+                              <goals>
+                                 <goal>testCompile</goal>
+                                 <goal>compile</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.codehaus.mojo</groupId>
+                              <artifactId>ideauidesigner-maven-plugin</artifactId>
+                              <versionRange>[1.0-beta-1,)</versionRange>
+                              <goals>
+                                 <goal>javac2</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                     </pluginExecutions>
+                  </lifecycleMappingMetadata>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.jboss.maven.plugins</groupId>
+               <artifactId>maven-injection-plugin</artifactId>
+               <version>1.0.2</version>
+            </plugin>
+            <plugin>
+               <groupId>org.mortbay.jetty</groupId>
+               <artifactId>jetty-maven-plugin</artifactId>
+               <version>8.0.0.M3</version>
+            </plugin>
+            <plugin>
+               <groupId>org.scala-tools</groupId>
+               <artifactId>maven-scala-plugin</artifactId>
+               <version>2.15.2</version>
+               <executions>
+                  <execution>
+                     <id>compile</id>
+                     <phase>compile</phase>
+                     <goals>
+                        <goal>compile</goal>
+                     </goals>
+                  </execution>
+                  <execution>
+                     <id>test-compile</id>
+                     <phase>test-compile</phase>
+                     <goals>
+                        <goal>testCompile</goal>
+                     </goals>
+                  </execution>
+                  <execution>
+                     <phase>process-resources</phase>
+                     <goals>
+                        <goal>compile</goal>
+                     </goals>
+                  </execution>
+               </executions>
+               <configuration>
+                  <scalaVersion>${version.scala}</scalaVersion>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
       <plugins>
-         <!-- enforce java 1.6 and maven 2.1.0 -->
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.0-beta-1</version>
+            <artifactId>maven-remote-resources-plugin</artifactId>
+            <version>1.1</version>
             <executions>
                <execution>
-                  <id>enforce-java</id>
+                  <id>attach-license</id>
                   <goals>
-                     <goal>enforce</goal>
+                     <goal>process</goal>
+                  </goals>
+                  <inherited>true</inherited>
+                  <configuration>
+                     <resourceBundles>
+                        <resourceBundle>org.infinispan:infinispan-license:1</resourceBundle>
+                     </resourceBundles>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <extensions>true</extensions>
+            <configuration>
+               <instructions>
+                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                  <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+         <!-- Copy the resulting persisted metadata into the build directory for packaging into the jar -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+               <execution>
+                  <id>copy_serialized_metadata</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>run</goal>
                   </goals>
                   <configuration>
-                     <rules>
-                        <requireJavaVersion>
-                           <version>[1.6,)</version>
-                        </requireJavaVersion>
-                        <requireMavenVersion>
-                           <version>[2.1.0,)</version>
-                        </requireMavenVersion>
-                     </rules>
+                     <skip>${module.skipComponentMetaDataProcessing}</skip>
+                     <tasks>
+                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"></copy>
+                     </tasks>
                   </configuration>
                </execution>
             </executions>
@@ -225,79 +1110,12 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>2.3.1</version>
+            <version>2.3.2</version>
             <configuration>
                <source>1.6</source>
                <target>1.6</target>
                <encoding>UTF-8</encoding>
-            </configuration>
-         </plugin>
-         
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>2.1</version>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>2.4.3</version>
-            <configuration>
-               <encoding>UTF-8</encoding>
-            </configuration>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <version>2.0.1</version>
-            <extensions>true</extensions>
-            <configuration>
-               <instructions>
-                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
-                  <Export-Package>
-                     ${project.groupId}.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-
-         <!-- ensure parallel test execution -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.4.3-JBOSS</version>
-            <configuration>
-               <parallel>tests</parallel>
-               <threadCount>10</threadCount>
-               <forkMode>none</forkMode>
-               <systemProperties>
-                  <property>
-                     <name>infinispan.test.jgroups.protocol</name>
-                     <value>${infinispan.test.jgroups.protocol}</value>
-                  </property>
-                  <property>
-                     <name>bind.address</name>
-                     <value>127.0.0.1</value>
-                  </property>
-                  <property>
-                     <name>java.net.preferIPv4Stack</name>
-                     <value>true</value>
-                  </property>
-                  <property>
-                     <name>infinispan.test.marshaller.class</name>
-                     <value>${infinispan.test.marshaller.class}</value>
-                  </property>
-               </systemProperties>
-               <trimStackTrace>false</trimStackTrace>
-               <properties>
-                  <property>
-                     <name>listener</name>
-                     <value>${testNGListener}</value>
-                  </property>
-               </properties>
-               <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
+               <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
             </configuration>
          </plugin>
          <!-- eclipse project file generation -->
@@ -319,40 +1137,10 @@
                <downloadSources>true</downloadSources>
             </configuration>
          </plugin>
-         <!-- Make sure we generate src jars too -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>2.1.1</version>
-            <inherited>true</inherited>
-            <executions>
-               <execution>
-                  <id>attach-sources</id>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <version>2.3</version>
-            <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                     <mainClass>org.infinispan.Version</mainClass>
-                  </manifest>
-               </archive>
-               <excludes>
-                  <exclude>**/log4j.xml</exclude>
-                  <exclude>**/*.bat</exclude>
-                  <exclude>**/*.sh</exclude>
-                  <exclude>**/*.txt</exclude>
-               </excludes>
-            </configuration>
             <executions>
                <execution>
                   <id>build-test-jar</id>
@@ -372,13 +1160,107 @@
                   </configuration>
                </execution>
             </executions>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <mainClass>org.infinispan.Version</mainClass>
+                  </manifest>
+               </archive>
+               <excludes>
+                  <exclude>**/log4j.xml</exclude>
+                  <exclude>**/*.bat</exclude>
+                  <exclude>**/*.sh</exclude>
+                  <exclude>**/*.txt</exclude>
+               </excludes>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.1</version>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.4.3</version>
+            <configuration>
+               <encoding>UTF-8</encoding>
+            </configuration>
+         </plugin>
+         <!-- ensure parallel test execution -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>tests</parallel>
+               <threadCount>${infinispan.test.parallel.threads}</threadCount>
+               <forkMode>none</forkMode>
+               <groups>${defaultTestGroup}</groups>
+               <systemProperties>
+                  <property>
+                     <name>infinispan.test.jgroups.protocol</name>
+                     <value>${infinispan.test.jgroups.protocol}</value>
+                  </property>
+                  <property>
+                     <name>jgroups.bind_addr</name>
+                     <value>127.0.0.1</value>
+                  </property>
+                  <property>
+                     <name>java.net.preferIPv4Stack</name>
+                     <value>true</value>
+                  </property>
+               </systemProperties>
+               <trimStackTrace>false</trimStackTrace>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>${testNGListener}</value>
+                  </property>
+               </properties>
+               <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
+            </configuration>
+         </plugin>
+         <!-- Scan module for components and persist these into a data file, for use at runtime -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>serialize_component_metadata</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${module.skipComponentMetaDataProcessing}</skip>
+                     <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+                     <arguments>
+                        <argument>${project.build.outputDirectory}</argument>
+                        <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
+                     </arguments>
+                     <systemProperties>
+                        <systemProperty>
+                           <key>infinispan.isCoreModule</key>
+                           <value>${module.metadata.isCoreModule}</value>
+                        </systemProperty>
+                     </systemProperties>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
-      <finalName>${project.artifactId}</finalName>
    </build>
-
    <reporting>
       <plugins>
+         <!-- PMD report -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
+            <!-- Needs to be re-defined and configured in pluginManagement section -->
+            <version>2.6</version>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
@@ -395,51 +1277,62 @@
                <xmlOutputDirectory>target</xmlOutputDirectory>
             </configuration>
          </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-pmd-plugin</artifactId>
-            <configuration>
-               <minimumTokens>100</minimumTokens>
-               <targetJdk>1.6</targetJdk>
-            </configuration>
-         </plugin>
       </plugins>
    </reporting>
-
-   <distributionManagement>
-      <repository>
-         <id>jboss-releases-repository</id>
-         <name>JBoss Release Repository</name>
-         <url>${jboss.releases.repo.url}</url>
-      </repository>
-      <snapshotRepository>
-         <id>jboss-snapshots-repository</id>
-         <name>JBoss Snapshot Repository</name>
-         <url>${jboss.snapshots.repo.url}</url>
-      </snapshotRepository>
-   </distributionManagement>
-
-   <repositories>
-      <repository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-         <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-         </snapshots>
-      </repository>
-   </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-      </pluginRepository>
-   </pluginRepositories>
-
    <profiles>
+      <profile>
+         <id>extras</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <!-- enforce java 1.6 and maven 2.1.0 -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-enforcer-plugin</artifactId>
+                  <version>1.0-beta-1</version>
+                  <executions>
+                     <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                           <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                           <rules>
+                              <requireJavaVersion>
+                                 <version>[1.6,)</version>
+                              </requireJavaVersion>
+                              <requireMavenVersion>
+                                 <version>[2.1.0,)</version>
+                              </requireMavenVersion>
+                           </rules>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <!-- Make sure we generate src jars too -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <version>${version.maven.source}</version>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <inherited>true</inherited>
+               </plugin>
+            </plugins>
+         </build>
+         <properties>
+            <!-- By default create OSGI bundles -->
+            <packaging>bundle</packaging>
+         </properties>
+      </profile>
       <profile>
          <id>test-hudson</id>
          <activation>
@@ -483,24 +1376,75 @@
          </properties>
       </profile>
       <profile>
-         <!-- Used to start the tests using the latest stable version of Lucene, use: -->
-         <!-- mvn clean test -P useLatestLuceneVersion,test-functional -->
-         <id>useLatestLuceneVersion</id>
+         <!-- we are still likely compatible with the 2.9.x Lucene version: test for that -->
+         <id>useOlderLuceneVersion</id>
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <version.lucene>3.0.2</version.lucene>
+            <version.lucene>2.9.4</version.lucene>
          </properties>
       </profile>
       <profile>
-         <!-- define the Lucene version used in release package, and as reference target -->
-         <id>useReferenceLuceneVersion</id>
+         <id>nonParallel</id>
          <activation>
-            <activeByDefault>true</activeByDefault>
+            <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <version.lucene>2.9.3</version.lucene>
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
+         <id>traceTests</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <!-- Redefine surefire plugin to avoid external log4j settings
+               not being discovered when passed as command line arguments -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <version>2.4.3-JBOSS</version>
+                  <configuration>
+                     <parallel>tests</parallel>
+                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
+                     <forkMode>none</forkMode>
+                     <groups>${defaultTestGroup}</groups>
+                     <systemProperties>
+                        <property>
+                           <name>infinispan.test.jgroups.protocol</name>
+                           <value>${infinispan.test.jgroups.protocol}</value>
+                        </property>
+                        <property>
+                           <name>jgroups.bind_addr</name>
+                           <value>127.0.0.1</value>
+                        </property>
+                        <property>
+                           <name>java.net.preferIPv4Stack</name>
+                           <value>true</value>
+                        </property>
+                        <property>
+                           <name>log4j.configuration</name>
+                           <value>log4j-trace.xml</value>
+                        </property>
+                     </systemProperties>
+                     <trimStackTrace>false</trimStackTrace>
+                     <properties>
+                        <property>
+                           <name>listener</name>
+                           <value>${testNGListener}</value>
+                        </property>
+                     </properties>
+                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+         <properties>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
    </profiles>

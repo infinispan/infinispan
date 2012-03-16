@@ -1,14 +1,37 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.eviction;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,28 +49,27 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    protected abstract EvictionStrategy getEvictionStrategy();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setEvictionStrategy(getEvictionStrategy());
-      cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(128); // 128 max entries
-      cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      EmbeddedCacheManager cm = new DefaultCacheManager(builder.eviction().maxEntries(CACHE_SIZE)
+               .strategy(getEvictionStrategy()).expiration().wakeUpInterval(100L).locking()
+               .useLockStriping(false) // to minimize chances of deadlock in the unit test
+               .invocationBatching().build());
       cache = cm.getCache();
       cache.addListener(new EvictionListener());
       return cm;
    }
 
    public void testSimpleEvictionMaxEntries() throws Exception {
-      for (int i = 0; i < 512; i++) {
+      for (int i = 0; i < CACHE_SIZE*2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
       assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
    }
-
+   
    public void testSimpleExpirationMaxIdle() throws Exception {
 
-      for (int i = 0; i < 512; i++) {
+      for (int i = 0; i < CACHE_SIZE*2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MILLISECONDS);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up and purge all expired entries
@@ -117,12 +139,13 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    }
    
    @Listener
-   public class EvictionListener {
+   public static class EvictionListener {
       
-      @CacheEntryEvicted
-      public void nodeEvicted(CacheEntryEvictedEvent e){
+      @CacheEntriesEvicted
+      public void nodeEvicted(CacheEntriesEvictedEvent e){
          assert e.isPre() || !e.isPre();
-         assert e.getKey() != null;
+         Object key = e.getEntries().keySet().iterator().next();
+         assert key != null;
          assert e.getCache() != null;
          assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;         
       }

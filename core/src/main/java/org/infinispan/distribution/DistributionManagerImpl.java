@@ -1,39 +1,42 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
-import org.infinispan.distribution.ch.TopologyInfo;
-import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.MembershipArithmetic;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -41,33 +44,21 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
 /**
  * The default distribution manager implementation
@@ -75,6 +66,8 @@ import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsiste
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @author Mircea.Markus@jboss.com
+ * @author Bela Ban
+ * @author Dan Berindei <dan@infinispan.org>
  * @since 4.0
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
@@ -82,305 +75,74 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   // Injected components
    private Configuration configuration;
-   private volatile ConsistentHash consistentHash, oldConsistentHash;
-   private Address self;
-   private CacheLoaderManager cacheLoaderManager;
-   RpcManager rpcManager;
-   private CacheManagerNotifier notifier;
-
-   private ViewChangeListener listener;
+   private RpcManager rpcManager;
    private CommandsFactory cf;
+   private CacheNotifier cacheNotifier;
+   private StateTransferManager stateTransferManager;
 
-   private final ExecutorService rehashExecutor;
-
-   private TransactionLogger transactionLogger;
-
-   TopologyInfo topologyInfo = new TopologyInfo();
-
-   /**
-    * Rehash flag set by a rehash task associated with this DistributionManager
-    */
-   volatile boolean rehashInProgress = false;
-   /**
-    * https://issues.jboss.org/browse/ISPN-925 This makes sure that leavers list and consistent hash is updated
-    * atomically.
-    */
-   private final ReentrantReadWriteLock chSwitchLock = new ReentrantReadWriteLock(true);
-   /**
-    * Address of a joiner node requesting to join Infinispan cluster. Each node in the cluster is aware of joiner's
-    * identity. After joiner successfully joins (or fails to join), joiner field is nullified
-    */
-   private volatile Address joiner;
-
-   private static final AtomicReferenceFieldUpdater<DistributionManagerImpl, Address> JOINER_CAS =
-         AtomicReferenceFieldUpdater.newUpdater(DistributionManagerImpl.class, Address.class, "joiner");
-
-   private DataContainer dataContainer;
-   private InterceptorChain interceptorChain;
-   private InvocationContextContainer icc;
-
-   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
-   @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
-   private volatile boolean joinComplete = false;
-
-   private Future<Void> joinFuture;
-   final List<Address> leavers = new CopyOnWriteArrayList<Address>();
-   private volatile Future<Void> leaveTaskFuture;
-   private final ReclosableLatch startLatch = new ReclosableLatch(false);
-
-   private final Lock leaveAcksLock = new ReentrantLock();
-   private final Condition acksArrived = leaveAcksLock.newCondition();
-   private final Set<Address> leaveRehashAcks = new CopyOnWriteArraySet<Address>(); // this needs to be threadsafe!
-
-   final CountDownLatch finalJoinPhaseLatch = new CountDownLatch(1);
-   volatile boolean enteredFinalJoinPhase = false;
-   InboundInvocationHandler inboundInvocationHandler;
+   private volatile ConsistentHash consistentHash;
 
    /**
     * Default constructor
     */
    public DistributionManagerImpl() {
-      super();
-      LinkedBlockingQueue<Runnable> rehashQueue = new LinkedBlockingQueue<Runnable>();
-      ThreadFactory tf = new ThreadFactory() {
-         public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            t.setPriority(Thread.MIN_PRIORITY);
-            t.setName("Rehasher-" + rpcManager.getTransport().getAddress());
-            return t;
-         }
-      };
-      rehashExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, rehashQueue, tf);
    }
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
-                    DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
-                    CacheLoaderManager cacheLoaderManager, InboundInvocationHandler inboundInvocationHandler) {
-      this.cacheLoaderManager = cacheLoaderManager;
+   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf, CacheNotifier cacheNotifier,
+                    StateTransferManager stateTransferManager) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
-      this.notifier = notifier;
       this.cf = cf;
-      this.transactionLogger = new TransactionLoggerImpl(cf);
-      this.dataContainer = dataContainer;
-      this.interceptorChain = interceptorChain;
-      this.icc = icc;
-      this.inboundInvocationHandler = inboundInvocationHandler;
+      this.cacheNotifier = cacheNotifier;
+      this.stateTransferManager = stateTransferManager;
    }
 
-   // needs to be AFTER the RpcManager
-
+   // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
-   public void start() throws Exception {
-      if (trace) log.trace("Starting distribution manager on " + getMyAddress());
-      listener = new ViewChangeListener();
-      notifier.addListener(listener);
-      GlobalConfiguration gc = configuration.getGlobalConfiguration();
-      if (gc.hasTopologyInfo()) {
-         Address address = rpcManager.getTransport().getAddress();
-         NodeTopologyInfo nti = new NodeTopologyInfo(gc.getMachineId(), gc.getRackId(), gc.getSiteId(), address);
-         topologyInfo.addNodeTopologyInfo(address, nti);
-      }
-      join();
+   private void start() throws Exception {
+      if (trace) log.tracef("starting distribution manager on %s", getAddress());
+      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, Collections.singleton(rpcManager.getAddress()));
    }
 
    private int getReplCount() {
       return configuration.getNumOwners();
    }
 
-   private Address getMyAddress() {
-      return rpcManager != null ? rpcManager.getAddress() : null;
+   private Address getAddress() {
+      return rpcManager.getAddress();
    }
 
-   // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
-
-   @Start(priority = 1000)
-   public void waitForJoinToComplete() throws Throwable {
-      if (joinFuture != null) {
-         try {
-            joinFuture.get();
-         } catch (InterruptedException e) {
-            throw e;
-         } catch (ExecutionException e) {
-            if (e.getCause() != null) throw e.getCause();
-            else throw e;
-         }
-      }
-   }
-
-   private void join() throws Exception {
-      startLatch.close();
-      setJoinComplete(false);
-      Transport t = rpcManager.getTransport();
-      List<Address> members = t.getMembers();
-      consistentHash = createConsistentHash(configuration, members, topologyInfo);
-      self = t.getAddress();
-      if (members.size() > 1 && !t.getCoordinator().equals(self)) {
-         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, dataContainer, this, inboundInvocationHandler);
-         joinFuture = rehashExecutor.submit(joinTask);
-         //task will set joinComplete flag
-      } else {
-         setJoinComplete(true);
-      }
-      startLatch.open();
-   }
-
-   @Stop(priority = 20)
-   public void stop() {
-      notifier.removeListener(listener);
-      rehashExecutor.shutdownNow();
-      setJoinComplete(false);
-   }
-
-   public void rehash(List<Address> newMembers, List<Address> oldMembers) {
-      boolean join = oldMembers.size() < newMembers.size();
-      // on view change, we should update our view
-      log.info("Detected a view change.  Member list changed from %s to %s", oldMembers, newMembers);
-
-      if (join) {
-         Address joiner = MembershipArithmetic.getMemberJoined(oldMembers, newMembers);
-         log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
-      } else {
-         Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
-         log.info("This is a LEAVE event!  Node %s has just left", leaver);
-
-
-         try {
-            if (!(consistentHash instanceof UnionConsistentHash)) {
-               oldConsistentHash = consistentHash;
-            } else {
-               oldConsistentHash = ((UnionConsistentHash) consistentHash).getNewConsistentHash();
-            }
-            addLeaverAndUpdatedConsistentHash(leaver);
-         } catch (Exception e) {
-            log.fatal("Unable to process leaver!!", e);
-            throw new CacheException(e);
-         }
-
-         List<Address> stateProviders = holdersOfLeaversState(leaver);
-         List<Address> receiversOfLeaverState = receiversOfLeaverState(stateProviders);
-         boolean willReceiveLeaverState = receiversOfLeaverState.contains(self);
-         boolean willProvideState = stateProviders.contains(self);
-         if (willReceiveLeaverState || willProvideState) {
-            log.info("I %s am participating in rehash, state providers %s, state receivers %s",
-                     rpcManager.getTransport().getAddress(), stateProviders, receiversOfLeaverState);
-
-            transactionLogger.enable();
-
-            if (leaveTaskFuture != null
-                  && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
-               if (trace) log.trace("Canceling running leave task!");
-               leaveTaskFuture.cancel(true);
-            }
-
-            InvertedLeaveTask task = new InvertedLeaveTask(this, rpcManager, configuration, cf, dataContainer,
-                                                           stateProviders, receiversOfLeaverState, willReceiveLeaverState);
-            leaveTaskFuture = rehashExecutor.submit(task);
-         } else {
-            log.info("Not in same subspace, so ignoring leave event");
-            topologyInfo.removeNodeInfo(leaver);
-            removeLeaver(leaver);
-         }
-      }
-   }
-
-   public List<Address> getLeavers() {
-      chSwitchLock.readLock().lock();
-      try {
-         return Collections.unmodifiableList(leavers);
-      } finally {
-         chSwitchLock.readLock().unlock();
-      }
-   }
-
-   private void addLeaverAndUpdatedConsistentHash(Address leaver) {
-      chSwitchLock.writeLock().lock();
-      try {
-         leavers.add(leaver);
-         if (trace) log.trace("Added new leaver %s, leavers list is %s", leaver, leavers);
-         consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration, topologyInfo);
-      } finally {
-         chSwitchLock.writeLock().unlock();
-      }
-   }
-
-   public boolean removeLeaver(Address leaver) {
-      chSwitchLock.writeLock().lock();
-      try {
-         //if we are affected by the rehash then levers are removed within the InvertedLeaveTask
-         return leavers.remove(leaver);
-      } finally {
-         if (trace) log.trace("After removing leaver[ %s ] leavers list is %s", leaver, leavers);
-         chSwitchLock.writeLock().unlock();
-      }
-   }
-
-   List<Address> holdersOfLeaversState(Address leaver) {
-      List<Address> result = new ArrayList<Address>();
-      for (Address addr : oldConsistentHash.getCaches()) {
-         List<Address> backups = oldConsistentHash.getBackupsForNode(addr, getReplCount());
-         if (addr.equals(leaver)) {
-            if (backups.size() > 1) {
-               Address mainBackup = backups.get(1);
-               result.add(mainBackup);
-               if (trace)
-                  log.trace("Leaver %s main backup %s is looking for another backup as well.", leaver, mainBackup);
-            }
-         } else if (backups.contains(leaver)) {
-            if (trace) log.trace("%s is looking for a new backup to replace leaver %s", addr, leaver);
-            result.add(addr);
-         }
-      }
-      if (trace) log.trace("Nodes that need new backups are: %s", result);
-      return result;
-   }
-
-   List<Address> receiversOfLeaverState(List<Address> stateProviders) {
-      List<Address> result = new ArrayList<Address>();
-      for (Address addr : stateProviders) {
-         List<Address> addressList = consistentHash.getBackupsForNode(addr, getReplCount());
-         result.add(addressList.get(addressList.size() - 1));
-      }
-      if (trace) log.trace("This node won't receive state");
-      return result;
-   }
-
+   @Deprecated
    public boolean isLocal(Object key) {
       return getLocality(key).isLocal();
    }
 
    public DataLocality getLocality(Object key) {
-      chSwitchLock.readLock().lock();
-      try {
-         if (consistentHash == null) return DataLocality.LOCAL;
-
-         boolean local = consistentHash.isKeyLocalToAddress(self, key, getReplCount());
-         if (isRehashInProgress()) {
-            if (local) {
-               return DataLocality.LOCAL_UNCERTAIN;
-            } else {
-               return DataLocality.NOT_LOCAL_UNCERTAIN;
-            }
+      boolean local = getConsistentHash().isKeyLocalToAddress(getAddress(), key, getReplCount());
+      if (isRehashInProgress()) {
+         if (local) {
+            return DataLocality.LOCAL_UNCERTAIN;
          } else {
-            if (local) {
-               return DataLocality.LOCAL;
-            } else {
-               return DataLocality.NOT_LOCAL;
-            }
+            return DataLocality.NOT_LOCAL_UNCERTAIN;
          }
-
-      } finally {
-         chSwitchLock.readLock().unlock();
+      } else {
+         if (local) {
+            return DataLocality.LOCAL;
+         } else {
+            return DataLocality.NOT_LOCAL;
+         }
       }
    }
 
-
    public List<Address> locate(Object key) {
-      if (consistentHash == null) return Collections.singletonList(self);
-      return consistentHash.locate(key, getReplCount());
+      return getConsistentHash().locate(key, getReplCount());
+   }
+
+   public Address getPrimaryLocation(Object key) {
+      return getConsistentHash().primaryLocation(key);
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
@@ -388,13 +150,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
-      if (consistentHash == null) {
-         Map<Object, List<Address>> m = new HashMap<Object, List<Address>>(keys.size());
-         List<Address> selfList = Collections.singletonList(self);
-         for (Object k : keys) m.put(k, selfList);
-         return m;
-      }
-      return consistentHash.locateAll(keys, numOwners);
+      return getConsistentHash().locateAll(keys, numOwners);
    }
 
    public void transformForL1(CacheEntry entry) {
@@ -402,12 +158,16 @@ public class DistributionManagerImpl implements DistributionManager {
          entry.setLifespan(configuration.getL1Lifespan());
    }
 
-   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception {
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags());
+   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception {
+      GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
 
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
-      Map<Address, Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
-                                                                   configuration.getSyncReplTimeout(), false, filter);
+      List<Address> targets = locate(key);
+      // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
+      targets.retainAll(rpcManager.getTransport().getMembers());
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, getAddress());
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
+                                                                   configuration.getSyncReplTimeout(), true, filter);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
@@ -425,278 +185,45 @@ public class DistributionManagerImpl implements DistributionManager {
       return consistentHash;
    }
 
-   public void setConsistentHash(ConsistentHash consistentHash) {
-      if (trace) log.trace("Installing new consistent hash %s", consistentHash);
-      this.consistentHash = consistentHash;
+   public ConsistentHash setConsistentHash(ConsistentHash newCH) {
+      if (trace) log.tracef("Installing new consistent hash %s", newCH);
+      ConsistentHash oldCH = consistentHash;
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
+      this.consistentHash = newCH;
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
+      return oldCH;
    }
 
-   public void setOldConsistentHash(ConsistentHash oldConsistentHash) {
-      this.oldConsistentHash = oldConsistentHash;
-   }
 
+   // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
-      return transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, getReplCount()).contains(self);
+      return stateTransferManager.isLocationInDoubt(key);
    }
 
-   public TransactionLogger getTransactionLogger() {
-      return transactionLogger;
-   }
-
-   public List<Address> requestPermissionToJoin(Address a) {
-      try {
-         if (!startLatch.await(5, TimeUnit.MINUTES)) {
-            log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
-            return null;
-         }
-      } catch (InterruptedException e) {
-         // Nothing to do here
-         Thread.currentThread().interrupt();
-      }
-
-      if (JOINER_CAS.compareAndSet(this, null, a)) {
-         if (trace) log.trace("Allowing %s to join", a);
-         return new LinkedList<Address>(consistentHash.getCaches());
-      } else {
-         if (trace)
-            log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner);
-         return null;
-      }
-   }
-
-   public NodeTopologyInfo informRehashOnJoin(Address a, boolean starting, NodeTopologyInfo nodeTopologyInfo) {
-      if (trace) log.trace("Informed of a JOIN by %s.  Starting? %s", a, starting);
-      if (!starting) {
-         if (consistentHash instanceof UnionConsistentHash) {
-            UnionConsistentHash uch = (UnionConsistentHash) consistentHash;
-            consistentHash = uch.getNewConsistentHash();
-            oldConsistentHash = null;
-         }
-         joiner = null;
-      } else {
-         topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
-         if (trace) log.trace("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
-         ConsistentHash chOld = consistentHash;
-         if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
-         oldConsistentHash = chOld;
-         joiner = a;
-         ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
-         consistentHash = new UnionConsistentHash(chOld, chNew);
-      }
-      if (trace) log.trace("New CH is %s", consistentHash);
-      return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
+   /**
+    * Tests whether a rehash is in progress
+    * @return true if a rehash is in progress, false otherwise
+    */
+   public boolean isRehashInProgress() {
+      return stateTransferManager.isStateTransferInProgress();
    }
 
    @Override
-   public void informRehashOnLeave(Address sender) {
-      leaveAcksLock.lock();
-      try {
-         leaveRehashAcks.add(sender);
-         if (trace)
-            log.trace("%s has been informed that %s has completed applying state sent from %s as a part of a LEAVE_REHASH.", self, sender, self);
-         acksArrived.signalAll();
-      } finally {
-         leaveAcksLock.unlock();
-      }
-   }
-
-   private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
-      Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
-      for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
-         if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(self)) {
-            InternalCacheValue v = e.getValue();
-            InvocationContext ctx = icc.createInvocationContext();
-            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING); // locking not necessary in the case of a join since the node isn't doing anything else.
-
-            try {
-               PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
-               interceptorChain.invoke(ctx, put);
-            } catch (Exception ee) {
-               if (withRetry) {
-                  if (trace)
-                     log.trace("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
-                  retry.put(e.getKey(), e.getValue());
-               } else {
-                  log.warn("Problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
-               }
-            }
-         }
-      }
-      return retry;
-   }
-
-   public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, RemoteTransactionLogger tlog, boolean forLeave) {
-      if (trace) log.trace("Applying the following keys: %s", state.keySet());
-
-      int retryCount = 3; // in case we have issues applying state.
-      Map<Object, InternalCacheValue> pendingApplications = state;
-      for (int i = 0; i < retryCount; i++) {
-         pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
-         if (pendingApplications.isEmpty()) break;
-      }
-      // one last go
-      if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);
-
-      if (!forLeave) drainLocalTransactionLog(tlog);
-
-      if (trace) log.trace("%s has completed applying state", self);
-   }
-
-   public void setRehashInProgress(boolean value) {
-      rehashInProgress = value;
-   }
-
-   @Listener
-   public class ViewChangeListener {
-
-      @ViewChanged
-      public void handleViewChange(ViewChangedEvent e) {
-         if (trace) log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
-         boolean started;
-         // how long do we wait for a startup?
-         if (e.isNeedsToRejoin()) {
-            try {
-               join();
-            } catch (Exception e1) {
-               log.fatal("Unable to recover from a partition merge!", e1);
-            }
-         } else {
-
-            try {
-               started = startLatch.await(5, TimeUnit.MINUTES);
-               if (started) rehash(e.getNewMembers(), e.getOldMembers());
-               else log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
-            } catch (InterruptedException ie) {
-               log.warn("View change interrupted; not rehashing!");
-            }
-         }
-      }
-   }
-
-   public CacheStore getCacheStoreForRehashing() {
-      if (cacheLoaderManager == null || !cacheLoaderManager.isEnabled() || cacheLoaderManager.isShared())
-         return null;
-      return cacheLoaderManager.getCacheStore();
-   }
-
-   @ManagedAttribute(description = "Checks whether the node is involved in a rehash.")
-   @Metric(displayName = "Is rehash in progress?", dataType = DataType.TRAIT)
-   public boolean isRehashInProgress() {
-      chSwitchLock.readLock().lock();
-      boolean nodeLeaving;
-      try {
-         nodeLeaving = !leavers.isEmpty();
-         if (trace)
-            log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
-      } finally {
-         chSwitchLock.readLock().unlock();
-      }
-      return nodeLeaving || rehashInProgress;
-   }
-
-   public void markLeaverAsHandled(Address leaver) {
-      chSwitchLock.writeLock().lock();
-      try {
-         leavers.remove(leaver);
-         topologyInfo.removeNodeInfo(leaver);
-      } finally {
-         chSwitchLock.writeLock().unlock();
-      }
-
-   }
-
    public boolean isJoinComplete() {
-      return joinComplete;
+      return stateTransferManager.isJoinComplete();
    }
 
-   public void waitForFinalJoin() {
-      if (enteredFinalJoinPhase) {
-         try {
-            finalJoinPhaseLatch.await();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
-      }
-   }
-
-   public boolean isInFinalJoinPhase() {
-      return enteredFinalJoinPhase;
-   }
-
-   public void setJoinComplete(boolean joinComplete) {
-      this.joinComplete = joinComplete;
-      if (joinComplete) this.finalJoinPhaseLatch.countDown();
-   }
-
-   void drainLocalTransactionLog(RemoteTransactionLogger tlog) {
-      List<WriteCommand> c;
-      while (tlog.shouldDrainWithoutLock()) {
-         c = tlog.drain();
-         if (trace) log.trace("Draining %s entries from transaction log", c.size());
-         applyRemoteTxLog(c);
-      }
-
-      boolean unlock = acquireDistSyncLock();
-      try {
-         this.enteredFinalJoinPhase = true;
-         c = tlog.drainAndLock(null);
-         if (trace) log.trace("Locked and draining %s entries from transaction log", c.size());
-         applyRemoteTxLog(c);
-
-         Collection<PrepareCommand> pendingPrepares = tlog.getPendingPrepares();
-         if (trace) log.trace("Applying %s pending prepares", pendingPrepares.size());
-         for (PrepareCommand pc : pendingPrepares) {
-            // this is a remotely originating call.
-            cf.initializeReplicableCommand(pc, true);
-            try {
-               pc.perform(null);
-            } catch (Throwable throwable) {
-               log.warn("Unable to apply prepare " + pc, throwable);
-            }
-         }
-      } finally {
-         tlog.unlockAndDisable(null);
-         if (unlock) rpcManager.getTransport().getDistributedSync().releaseProcessingLock(true);
-      }
-   }
-
-   private boolean acquireDistSyncLock() {
-      try {
-         rpcManager.getTransport().getDistributedSync().acquireProcessingLock(true, 100, TimeUnit.DAYS);
-         return true;
-      } catch (TimeoutException e) {
-         log.info("Couldn't acquire shared lock");
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      }
-      return false;
-   }
-
-   public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
+   public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
-         if (log.isTraceEnabled()) log.trace("Affected keys are empty");
+         if (trace) log.trace("affected keys are empty");
          return Collections.emptyList();
       }
 
       Set<Address> an = new HashSet<Address>();
       for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
-      return new ArrayList<Address>(an);
-   }
-
-   public void applyRemoteTxLog(List<WriteCommand> commands) {
-      for (WriteCommand cmd : commands) {
-         try {
-            // this is a remotely originating tx
-            cf.initializeReplicableCommand(cmd, true);
-            InvocationContext ctx = icc.createInvocationContext();
-            ctx.setFlags(SKIP_REMOTE_LOOKUP, CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING);
-            interceptorChain.invoke(ctx, cmd);
-         } catch (Exception e) {
-            log.warn("Caught exception replaying %s", e, cmd);
-         }
-      }
-
+      return Immutables.immutableListConvert(an);
    }
 
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
@@ -715,33 +242,6 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public String toString() {
-      return "DistributionManagerImpl[rehashInProgress=" + rehashInProgress + ", consistentHash=" + consistentHash + "]";
-   }
-
-   public TopologyInfo getTopologyInfo() {
-      return topologyInfo;
-   }
-
-   public boolean awaitLeaveRehashAcks(Set<Address> stateReceivers, long timeout) throws InterruptedException {
-      long start = System.currentTimeMillis();
-      boolean timeoutReached = false;
-      boolean receivedAcks;
-
-      leaveAcksLock.lock();
-      try {
-         while (!timeoutReached) {
-            receivedAcks = stateReceivers.equals(leaveRehashAcks);
-            if (receivedAcks)
-               break;
-            else
-               acksArrived.await(1000, TimeUnit.MILLISECONDS);
-
-            timeoutReached = (System.currentTimeMillis() - start) > timeout;
-         }
-      } finally {
-         leaveRehashAcks.clear();
-         leaveAcksLock.unlock();
-      }
-      return !timeoutReached;
+      return "DistributionManagerImpl[consistentHash=" + consistentHash + "]";
    }
 }

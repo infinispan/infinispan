@@ -1,15 +1,38 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.affinity;
 
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -34,22 +56,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 4.1
  */
 @ThreadSafe
-public class KeyAffinityServiceImpl implements KeyAffinityService {
+public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
-   private final float THRESHOLD = 0.5f;
+   public final static float THRESHOLD = 0.5f;
    
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
 
    private final Set<Address> filter;
 
    @GuardedBy("maxNumberInvariant")
-   private final Map<Address, BlockingQueue> address2key = new ConcurrentHashMap<Address, BlockingQueue>();
+   private final Map<Address, BlockingQueue<K>> address2key = ConcurrentMapFactory.makeConcurrentMap();
    private final Executor executor;
-   private final Cache cache;
-   private final KeyGenerator keyGenerator;
+   private final Cache<? extends K, ?> cache;
+   private final KeyGenerator<? extends K> keyGenerator;
    private final int bufferSize;
    private final AtomicInteger maxNumberOfKeys = new AtomicInteger(); //(nr. of addresses) * bufferSize;
-   private final AtomicInteger exitingNumberOfKeys = new AtomicInteger();
+   final AtomicInteger existingKeyCount = new AtomicInteger();
 
    private volatile boolean started;
 
@@ -66,7 +88,8 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private volatile ListenerRegistration listenerRegistration;
 
 
-   public KeyAffinityServiceImpl(Executor executor, Cache cache, KeyGenerator keyGenerator, int bufferSize, Collection<Address> filter, boolean start) {
+   public KeyAffinityServiceImpl(Executor executor, Cache<? extends K, ?> cache, KeyGenerator<? extends K> keyGenerator,
+                                 int bufferSize, Collection<Address> filter, boolean start) {
       this.executor = executor;
       this.cache = cache;
       this.keyGenerator = keyGenerator;
@@ -84,34 +107,46 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    }
 
    @Override
-   public Object getCollocatedKey(Object otherKey) {
+   public K getCollocatedKey(K otherKey) {
       Address address = getAddressForKey(otherKey);
       return getKeyForAddress(address);
    }
 
    @Override
-   public Object getKeyForAddress(Address address) {
+   public K getKeyForAddress(Address address) {
       if (!started) {
          throw new IllegalStateException("You have to start the service first!");
       }
       if (address == null)
          throw new NullPointerException("Null address not supported!");
-      BlockingQueue queue = address2key.get(address);
+      BlockingQueue<K> queue = address2key.get(address);
+      if (queue == null)
+         throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+
       try {
-         maxNumberInvariant.readLock().lock();
-         Object result;
-         try {
-            result = queue.take();
-         } finally {
-            maxNumberInvariant.readLock().unlock();
+         K result = null;
+         while (result == null && !keyGenWorker.isStopped()) {
+            // obtain the read lock inside the loop, otherwise a topology change will never be able
+            // to obtain the write lock
+            maxNumberInvariant.readLock().lock();
+            try {
+               // first try to take an element without waiting
+               result = queue.poll();
+               if (result == null) {
+                  // there are no elements in the queue, make sure the producer is started
+                  keyProducerStartLatch.open();
+                  // our address might have been removed from the consistent hash
+                  if (!isNodeInConsistentHash(address))
+                     throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+               }
+            } finally {
+               maxNumberInvariant.readLock().unlock();
+            }
          }
-         exitingNumberOfKeys.decrementAndGet();
+         existingKeyCount.decrementAndGet();
          return result;
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return null;
       } finally {
-         if (queue.size() < maxNumberOfKeys.get() * THRESHOLD + 1) {
+         if (queue.size() < bufferSize * THRESHOLD + 1) {
             keyProducerStartLatch.open();
          }
       }
@@ -120,7 +155,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    @Override
    public void start() {
       if (started) {
-         log.info("Service already started, ignoring call to start!");
+         log.debug("Service already started, ignoring call to start!");
          return;
       }
       List<Address> existingNodes = getExistingNodes();
@@ -134,7 +169,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       keyGenWorker = new KeyGeneratorWorker();
       executor.execute(keyGenWorker);
       listenerRegistration = new ListenerRegistration(this);
-      ((EmbeddedCacheManager)cache.getCacheManager()).addListener(listenerRegistration);
+      cache.getCacheManager().addListener(listenerRegistration);
       cache.addListener(listenerRegistration);
       keyProducerStartLatch.open();
       started = true;
@@ -143,11 +178,11 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    @Override
    public void stop() {
       if (!started) {
-         log.info("Ignoring call to stop as service is not started.");
+         log.debug("Ignoring call to stop as service is not started.");
          return;
       }
       started = false;
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager cacheManager = cache.getCacheManager();
       if (cacheManager.getListeners().contains(listenerRegistration)) {
          cacheManager.removeListener(listenerRegistration);
       } else {
@@ -160,14 +195,15 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       keyGenWorker.stop();
    }
 
-   public void handleViewChange(ViewChangedEvent vce) {
-      if (log.isTraceEnabled()) {
-         log.trace("ViewChange received: " + vce);
-      }
+   public void handleViewChange(TopologyChangedEvent vce) {
+      if (vce.isPre())
+         return;
+
+      log.tracef("TopologyChangedEvent received: %s", vce);
       maxNumberInvariant.writeLock().lock();
       try {
          address2key.clear(); //wee need to drop everything as key-mapping data is stale due to view change
-         addQueuesForAddresses(vce.getNewMembers());
+         addQueuesForAddresses(vce.getConsistentHashAtEnd().getCaches());
          resetNumberOfKeys();
          keyProducerStartLatch.open();
       } finally {
@@ -176,13 +212,11 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    }
 
    public boolean isKeyGeneratorThreadAlive() {
-      return keyGenWorker.isAlive() ;
+      return !keyGenWorker.isStopped();
    }
 
    public void handleCacheStopped(CacheStoppedEvent cse) {
-      if (log.isTraceEnabled()) {
-         log.trace("Cache stopped, stopping the service: " + cse);
-      }
+      log.tracef("Cache stopped, stopping the service: %s", cse);
       stop();
    }
 
@@ -190,40 +224,53 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    public class KeyGeneratorWorker implements Runnable {
 
       private volatile boolean isActive;
-      private boolean isAlive;
+      private volatile boolean  isStopped = false;
       private volatile Thread runner;
 
       @Override
       public void run() {
          this.runner = Thread.currentThread();
-         isAlive = true;
-         while (true) {
-            if (waitToBeWakenUp()) break;
-            isActive = true;
-            if (log.isTraceEnabled()) {
+         try {
+            while (true) {
+               if (waitToBeWakenUp()) break;
+               isActive = true;
                log.trace("KeyGeneratorWorker marked as ACTIVE");
-            }
-            generateKeys();
-            
-            isActive = false;
-            if (log.isTraceEnabled()) {
+               generateKeys();
+
+               isActive = false;
                log.trace("KeyGeneratorWorker marked as INACTIVE");
             }
+         } finally {
+            isStopped = true;
          }
-         isAlive = false;
+      }
+
+      public boolean isStopped() {
+         return isStopped;
       }
 
       private void generateKeys() {
          maxNumberInvariant.readLock().lock();
          try {
-            while (maxNumberOfKeys.get() != exitingNumberOfKeys.get()) {
-               Object key = keyGenerator.getKey();
+            // if there's a topology change, some queues will stop receiving keys
+            // so we want to establish an upper bound on how many extra keys to generate
+            // in order to fill all the queues
+            int maxMisses = maxNumberOfKeys.get();
+            int missCount = 0;
+            while (!Thread.currentThread().isInterrupted() && existingKeyCount.get() < maxNumberOfKeys.get()
+                  && missCount < maxMisses) {
+               K key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
                if (interestedInAddress(addressForKey)) {
-                  tryAddKey(addressForKey, key);
+                  boolean added = tryAddKey(addressForKey, key);
+                  if (!added) missCount++;
                }
             }
-            keyProducerStartLatch.close();
+
+            // if we had too many misses, just release the lock and try again
+            if (missCount < maxMisses) {
+               keyProducerStartLatch.close();
+            }
          } finally {
             maxNumberInvariant.readLock().unlock();
          }
@@ -233,32 +280,27 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          try {
             keyProducerStartLatch.await();
          } catch (InterruptedException e) {
-            if (log.isInfoEnabled()) {
-               log.info("Shutting down KeyAffinity service for key set: " + filter);
+            if (log.isDebugEnabled()) {
+               log.debugf("Shutting down KeyAffinity service for key set: %s", filter);
             }
             return true;
          }
          return false;
       }
 
-      private void tryAddKey(Address address, Object key) {
-         BlockingQueue queue = address2key.get(address);
+      private boolean tryAddKey(Address address, K key) {
+         BlockingQueue<K> queue = address2key.get(address);
+         // on node stop the distribution manager might still return the dead server for a while after we have already removed its queue
+         if (queue == null)
+            return false;
+
          boolean added = queue.offer(key);
-         if (added) {
-            exitingNumberOfKeys.incrementAndGet();
-         }
-         if (log.isTraceEnabled()) {
-            log.trace((added ? "Successfully" : "Not") + " added key(" + key + ") to the address(" + address + ").");
-            if (added) log.trace("maxNumberOfKeys==" + maxNumberOfKeys + ", exitingNumberOfKeys==" + exitingNumberOfKeys);
-         }
+         if (added) existingKeyCount.incrementAndGet();
+         return added;
       }
 
       public boolean isActive() {
          return isActive;
-      }
-
-      public boolean isAlive() {
-         return isAlive;
       }
 
       public void stop() {
@@ -271,10 +313,10 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
     */
    private void resetNumberOfKeys() {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
-      exitingNumberOfKeys.set(0);
+      existingKeyCount.set(0);
       if (log.isTraceEnabled()) {
-         log.trace("resetNumberOfKeys ends with: maxNumberOfKeys=" + maxNumberOfKeys +
-               ", exitingNumberOfKeys=" + exitingNumberOfKeys);
+         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, existingKeyCount=%s",
+                    maxNumberOfKeys.get(), existingKeyCount.get());
       }
    }
 
@@ -284,10 +326,9 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private void addQueuesForAddresses(Collection<Address> addresses) {
       for (Address address : addresses) {
          if (interestedInAddress(address)) {
-            address2key.put(address, new ArrayBlockingQueue(bufferSize));
+            address2key.put(address, new ArrayBlockingQueue<K>(bufferSize));
          } else {
-            if (log.isTraceEnabled())
-               log.trace("Skipping address: " + address);
+            log.tracef("Skipping address: %s", address);
          }
       }
    }
@@ -303,13 +344,14 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    private Address getAddressForKey(Object key) {
       DistributionManager distributionManager = getDistributionManager();
       ConsistentHash hash = distributionManager.getConsistentHash();
-      List<Address> addressList = hash.locate(key, 1);
-      if (addressList.size() == 0) {
-         throw new IllegalStateException("Empty address list returned by consistent hash " + hash + " for key " + key);
-      }
-      return addressList.get(0);
+      return hash.primaryLocation(key);
    }
 
+   private boolean isNodeInConsistentHash(Address address) {
+      DistributionManager distributionManager = getDistributionManager();
+      ConsistentHash hash = distributionManager.getConsistentHash();
+      return hash.getCaches().contains(address);
+   }
    private DistributionManager getDistributionManager() {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if (distributionManager == null) {
@@ -318,16 +360,12 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       return distributionManager;
    }
 
-   public Map<Address, BlockingQueue> getAddress2KeysMapping() {
+   public Map<Address, BlockingQueue<K>> getAddress2KeysMapping() {
       return Collections.unmodifiableMap(address2key);
    }
 
    public int getMaxNumberOfKeys() {
       return maxNumberOfKeys.intValue();
-   }
-
-   public int getExitingNumberOfKeys() {
-      return exitingNumberOfKeys.intValue();
    }
 
    public boolean isKeyGeneratorThreadActive() {

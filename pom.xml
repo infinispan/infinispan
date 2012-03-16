@@ -1,4 +1,26 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -7,7 +29,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
+      <version>5.2.0-SNAPSHOT</version>
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
@@ -21,6 +43,7 @@
    <modules>
       <module>parent</module>
       <module>core</module>
+      <module>tools</module>
       <module>query</module>
       <module>tree</module>
       <module>lucene-directory</module>
@@ -38,14 +61,19 @@
       <module>server/websocket</module>
       <module>server/rest</module>
       <module>client/hotrod-client</module>
-      <module>jopr-plugin</module>
+      <module>rhq-plugin</module>
+      <module>spring</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
+      <module>demos/distexec</module>
       <module>demos/ec2-ui</module>
       <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
-      <module>tools</module>
+      <module>demos/nearcache</module>
+      <module>demos/nearcache-client</module>
+      <module>cdi/extension</module>
+      <module>cdi/tck-runner</module>
    </modules>
 
    <profiles>
@@ -62,7 +90,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-javadoc-plugin</artifactId>
-                  <version>2.6.1</version>
                   <executions>
                      <execution>
                         <id>javadoc</id>
@@ -72,6 +99,9 @@
                         </goals>
                         <configuration>
                            <quiet>true</quiet>
+                           <!-- In case you anyone needs to trace javadoc issues
+                           <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
+                           -->
                            <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
                            <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
                            <docfilessubdirs>true</docfilessubdirs>
@@ -80,7 +110,9 @@
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
                            <footer><![CDATA[
+-->
                       <!-- Google Analytics -->
+<!--
 <script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
@@ -95,7 +127,6 @@ pageTracker._trackPageview();
                      </execution>
                   </executions>
                </plugin>
-
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-jar-plugin</artifactId>
@@ -109,7 +140,6 @@ pageTracker._trackPageview();
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-assembly-plugin</artifactId>
-                  <version>2.2-beta-3</version>
                   <executions>
                      <execution>
                         <id>assemble</id>
@@ -126,9 +156,12 @@ pageTracker._trackPageview();
                         <descriptor>src/main/resources/assemblies/src.xml</descriptor>
                          <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
                      </descriptors>
-                     <finalName>${artifactId}-${project.version}</finalName>
-                     <outputDirectory>target/distribution</outputDirectory>
-                     <workDirectory>target/assembly/work</workDirectory>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+
+                     <!-- Do not attach ZIP files to the Maven repository -->
+                     <attach>false</attach>
                   </configuration>
                </plugin>
             </plugins>
@@ -160,7 +193,6 @@ pageTracker._trackPageview();
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-assembly-plugin</artifactId>
-                  <version>2.2-beta-3</version>
                   <executions>
                      <execution>
                         <id>assemble</id>
@@ -174,9 +206,9 @@ pageTracker._trackPageview();
                      <descriptors>
                         <descriptor>src/main/resources/assemblies/all.xml</descriptor>
                      </descriptors>
-                     <finalName>${artifactId}-${project.version}</finalName>
-                     <outputDirectory>target/distribution</outputDirectory>
-                     <workDirectory>target/assembly/work</workDirectory>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
                   </configuration>
                </plugin>
             </plugins>
@@ -247,6 +279,13 @@ pageTracker._trackPageview();
                   <artifactId>maven-javadoc-plugin</artifactId>
                   <configuration>
                      <doclet>org.infinispan.tools.doclet.config.ConfigDoclet</doclet>
+                     <!-- To debug config generation, simply uncomment this line
+                     and when the build hangs in the config generation while
+                     building the distribution, add a remote debugger for port 8000.
+
+                     <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y</additionalJOption>
+
+                     -->
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
                         <artifactId>infinispan-tools</artifactId>
@@ -278,7 +317,6 @@ pageTracker._trackPageview();
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.3</version>
                   <executions>
                      <execution>
                         <id>copy_css</id>
@@ -288,7 +326,7 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              <copy file="tools/src/main/resources/stylesheet2.css" todir="target/site/apidocs"/>
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs"/>
                            </tasks>
                         </configuration>
                      </execution>

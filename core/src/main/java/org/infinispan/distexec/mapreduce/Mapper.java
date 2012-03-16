@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,11 +22,14 @@
  */
 package org.infinispan.distexec.mapreduce;
 
+import java.io.Serializable;
+
 /**
  * Implementation of a Mapper class is a component of a MapReduceTask invoked once for each input
  * entry K,V. Every Mapper instance migrated to an Infinispan node, given a cache entry K,V input
- * pair transforms that input pair into a result T. Intermediate result T is further reduced using a
- * Reducer.
+ * pair transforms that input pair into intermediate keys and emits them into Collector provided by
+ * Infinispan execution environment. Intermediate results are further reduced using a
+ * {@link Reducer}.
  * 
  * 
  * @see Reducer
@@ -33,20 +37,14 @@ package org.infinispan.distexec.mapreduce;
  * 
  * @author Manik Surtani
  * @author Vladimir Blagojevic
+ * @author Sanne Grinovero
  * 
  * @since 5.0
  */
-public interface Mapper<K, V, T> {
+public interface Mapper<KIn, VIn, KOut, VOut> extends Serializable {
 
    /**
-    * Invoked once for each input cache entry K,V transforms that input into a result T.
-    * 
-    * @param key
-    *           the kay
-    * @param value
-    *           the value
-    * @return result T
+    * Invoked once for each input cache entry KIn,VOut pair.
     */
-   T map(K key, V value);
-
+   void map(KIn key, VIn value, Collector<KOut, VOut> collector);
 }

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
@@ -88,7 +110,7 @@ public class SingletonStore extends AbstractDelegatingStore {
 
    public SingletonStore(CacheStore delegate, Cache cache, SingletonStoreConfig config) {
       super(delegate);
-      this.cacheManager = cache == null ? null : (EmbeddedCacheManager)cache.getCacheManager();
+      this.cacheManager = cache == null ? null : cache.getCacheManager();
       this.cache = cache;
       this.config = config;
 
@@ -106,9 +128,9 @@ public class SingletonStore extends AbstractDelegatingStore {
    @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       if (active) {
-         if (trace) log.trace("Storing key %s.  Instance: %s", ed.getKey(), this);
+         if (trace) log.tracef("Storing key %s.  Instance: %s", ed.getKey(), this);
          super.store(ed);
-      } else if (trace) log.trace("Not storing key %s.  Instance: %s", ed.getKey(), this);
+      } else if (trace) log.tracef("Not storing key %s.  Instance: %s", ed.getKey(), this);
    }
 
    @Override
@@ -231,7 +253,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     */
    protected void activeStatusChanged(boolean newActiveState) throws PushStateException {
       active = newActiveState;
-      log.debug("changed mode %s", this);
+      log.debugf("changed mode %s", this);
       if (active && config.isPushStateWhenCoordinator()) doPushState();
    }
 
@@ -334,7 +356,7 @@ public class SingletonStore extends AbstractDelegatingStore {
                activeStatusChanged(tmp);
             }
             catch (PushStateException e) {
-               log.error("exception reported changing cache active status", e);
+               log.errorChangingSingletonStoreStatus(e);
             }
 
          }

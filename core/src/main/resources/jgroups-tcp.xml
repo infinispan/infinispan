@@ -1,3 +1,25 @@
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
@@ -6,20 +28,22 @@
         bind_port="${jgroups.tcp.port:7800}"
         loopback="true"
         port_range="30"
-        recv_buf_size="20000000"
-        send_buf_size="640000"
+        recv_buf_size="20m"
+        send_buf_size="640k"
         discard_incompatible_packets="true"
         max_bundle_size="64000"
         max_bundle_timeout="30"
         enable_bundling="true"
         use_send_queues="true"
-        sock_conn_timeout="300"
         enable_diagnostics="false"
+        bundler_type="old"
+
+        thread_naming_pattern="pl"
 
         thread_pool.enabled="true"
         thread_pool.min_threads="2"
         thread_pool.max_threads="30"
-        thread_pool.keep_alive_time="5000"
+        thread_pool.keep_alive_time="60000"
         thread_pool.queue_enabled="false"
         thread_pool.queue_max_size="100"
         thread_pool.rejection_policy="Discard"
@@ -27,7 +51,7 @@
         oob_thread_pool.enabled="true"
         oob_thread_pool.min_threads="2"
         oob_thread_pool.max_threads="30"
-        oob_thread_pool.keep_alive_time="5000"
+        oob_thread_pool.keep_alive_time="60000"
         oob_thread_pool.queue_enabled="false"
         oob_thread_pool.queue_max_size="100"
         oob_thread_pool.rejection_policy="Discard"        
@@ -47,21 +71,35 @@
       mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}" mcast_port="${jgroups.udp.mcast_port:46655}" ip_ttl="${jgroups.udp.ip_ttl:2}"
       num_initial_members="3"/>
 
-   <MERGE2 max_interval="30000"
-           min_interval="10000"/>
+   <MERGE2 max_interval="30000" min_interval="10000"/>
    <FD_SOCK/>
    <FD timeout="3000" max_tries="3"/>
    <VERIFY_SUSPECT timeout="1500"/>
+   <pbcast.NAKACK2 use_mcast_xmit="false"
+                   xmit_interval="1000"
+                   xmit_table_num_rows="100"
+                   xmit_table_msgs_per_row="10000"
+                   xmit_table_max_compaction_time="10000"
+                   max_msg_batch_size="100"/>
+   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)  
    <pbcast.NAKACK
-         use_mcast_xmit="false" gc_lag="0"
+         use_mcast_xmit="false"
          retransmit_timeout="300,600,1200,2400,4800"
-         discard_delivered_msgs="false"/>
-   <UNICAST timeout="300,600,1200"/>
-   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
-                  max_bytes="400000"/>
-   <pbcast.GMS print_local_addr="false" join_timeout="7000" view_bundling="true"/>
-   <UFC max_credits="2000000" min_threshold="0.10"/>
-   <MFC max_credits="2000000" min_threshold="0.10"/>
+         discard_delivered_msgs="false"/>  -->
+         
+   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually) 
+   <UNICAST timeout="300,600,1200"/>  -->
+   <UNICAST2 stable_interval="5000"
+             xmit_interval="500"
+             max_bytes="20M"
+             xmit_table_num_rows="20"
+             xmit_table_msgs_per_row="10000"
+             xmit_table_max_compaction_time="10000"
+             max_msg_batch_size="100"/>
+   <RSVP />
+   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
+   <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
+   <UFC max_credits="200k" min_threshold="0.20"/>
+   <MFC max_credits="200k" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
-   <pbcast.STREAMING_STATE_TRANSFER/>   
 </config>

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.AdvancedCache;
@@ -13,6 +35,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
@@ -27,7 +50,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.AbstractInfinispanTest")
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.NonStringKeyPreloadTest")
 public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
    public void testPreloadWithKey2StringMapper() throws Exception {
@@ -63,6 +86,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          assert cache.containsKey(mircea);
          assert cache.containsKey(dan);
       } finally {
+         TestingUtil.clearCacheLoader(cache);
          cache.stop();
          cm.stop();
       }
@@ -70,7 +94,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       Configuration config = createCacheStoreConfig(mapperName, true, true);
-      config.setEvictionStrategy(EvictionStrategy.FIFO);
+      config.setEvictionStrategy(EvictionStrategy.LRU);
       config.setEvictionMaxEntries(3);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
@@ -122,10 +146,11 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       static boolean started = false;
 
       @Override
-      public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
+      public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
          if (!started) {
             sharedFactory = new PooledConnectionFactory();
-            sharedFactory.start(config);
+            sharedFactory.start(config, classLoader);
+            started = true;
          }
       }
 

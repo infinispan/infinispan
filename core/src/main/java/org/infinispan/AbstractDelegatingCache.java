@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan;
 
 import org.infinispan.config.Configuration;
@@ -25,6 +47,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public AbstractDelegatingCache(Cache<K, V> cache) {
       this.cache = cache;
+      if (cache == null) throw new IllegalArgumentException("Delegate cache cannot be null!");
    }
 
    public void putForExternalRead(K key, V value) {
@@ -37,6 +60,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public Configuration getConfiguration() {
       return cache.getConfiguration();
+   }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
+      return cache.getCacheConfiguration();
    }
 
    public boolean startBatch() {
@@ -61,6 +89,14 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       return cache.put(key, value, lifespan, unit);
+   }
+
+   /**
+    * Don't remove.
+    * @see {@link org.infinispan.CacheSupport#set(Object, Object)}
+    */
+   protected void set(K key, V value) {
+      cache.put(key, value);
    }
 
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
@@ -270,5 +306,10 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public NotifyingFuture<V> getAsync(K key) {
       return cache.getAsync(key);
+   }
+   
+   @Override
+   public String toString() {
+      return cache.toString();
    }
 }

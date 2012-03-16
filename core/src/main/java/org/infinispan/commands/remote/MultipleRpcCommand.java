@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -50,19 +51,24 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
 
    private ReplicableCommand[] commands;
 
+   private MultipleRpcCommand() {
+      super(null); // For command id uniqueness test
+   }
+
    public MultipleRpcCommand(List<ReplicableCommand> modifications, String cacheName) {
       super(cacheName);
       commands = modifications.toArray(new ReplicableCommand[modifications.size()]);
    }
 
-   public MultipleRpcCommand() {
+   public MultipleRpcCommand(String cacheName) {
+      super(cacheName);
    }
 
    /**
     * Executes commands replicated to the current cache instance by other cache instances.
     */
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (trace) log.trace("Executing remotely originated commands: " + commands.length);
+      if (trace) log.tracef("Executing remotely originated commands: %d", commands.length);
       for (ReplicableCommand command : commands) {
          if (command instanceof TransactionBoundaryCommand) {
             command.perform(null);
@@ -83,18 +89,16 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
 
    public Object[] getParameters() {
       int numCommands = commands.length;
-      Object[] retval = new Object[numCommands + 1];
-      retval[0] = cacheName;
-      System.arraycopy(commands, 0, retval, 1, numCommands);
+      Object[] retval = new Object[numCommands];
+      System.arraycopy(commands, 0, retval, 0, numCommands);
       return retval;
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
-      cacheName = (String) args[0];
-      int numCommands = args.length - 1;
+      int numCommands = args.length;
       commands = new ReplicableCommand[numCommands];
-      System.arraycopy(args, 1, commands, 0, numCommands);
+      System.arraycopy(args, 0, commands, 0, numCommands);
    }
 
    @Override
@@ -126,5 +130,10 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
             "commands=" + (commands == null ? null : Arrays.asList(commands)) +
             ", cacheName='" + cacheName + '\'' +
             '}';
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 }

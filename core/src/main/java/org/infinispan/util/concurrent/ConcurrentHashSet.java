@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,7 +26,7 @@ import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A simple Set implementation backed by a {@link java.util.concurrent.ConcurrentHashMap} to deal with the fact that the
@@ -41,13 +42,13 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
    /** The serialVersionUID */
    private static final long serialVersionUID = 5312604953511379869L;
    
-   protected final ConcurrentHashMap<E, Object> map;
+   protected final ConcurrentMap<E, Object> map;
    
    /** any Serializable object will do, Integer.valueOf(0) is known cheap **/
    private static final Serializable DUMMY = 0;
 
    public ConcurrentHashSet() {
-      map = new ConcurrentHashMap<E, Object>();
+      map = ConcurrentMapFactory.makeConcurrentMap();
    }
 
    /**
@@ -55,7 +56,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     *                         float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int concurrencyLevel) {
-      map = new ConcurrentHashMap<E, Object>(16, 0.75f, concurrencyLevel);
+      map = ConcurrentMapFactory.makeConcurrentMap(16, concurrencyLevel);
    }
 
    /**
@@ -63,7 +64,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     * float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int initSize, float loadFactor, int concurrencyLevel) {
-      map = new ConcurrentHashMap<E, Object>(initSize, loadFactor, concurrencyLevel);
+      map = ConcurrentMapFactory.makeConcurrentMap(initSize, loadFactor, concurrencyLevel);
    }
 
 

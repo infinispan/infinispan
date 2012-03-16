@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * DistSyncSharedTest.
@@ -81,9 +83,31 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assert owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
       assert nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
       assert value.equals(nonOwner.get(key));
-      assertOnAllCachesAndOwnership(key, value);
+      // need to do the get() on all the owners first to load the values, otherwise assertOwnershipAndNonOwnership might fail
+      assertOnAllCaches(key, value);
+      assertOwnershipAndNonOwnership(key, true);
    }
    
+   public void testAsyncGetCleansContextFlags() throws Exception {
+      String key = "k2", value = "value2";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+
+      Cache<Object, String> nonOwner = getFirstNonOwner(key);
+      Cache<Object, String> owner = getFirstOwner(key);
+      owner.put(key, value);
+
+      owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+
+      Future<String> async = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).getAsync(key);
+      assert async != null;
+      assert async.get() == null;
+
+      async = nonOwner.getAdvancedCache().getAsync(key);
+      assert async != null;
+      String returnedValue = async.get();
+      assert value.equals(returnedValue);
+   }
+
    public void testPutFromNonOwnerWithFlags() throws Exception {
       String key = "k2", value = "value2";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
@@ -312,7 +336,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       prepareClearTest();
       c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
       for (Cache<Object, String> c : caches) {
-         assert c.isEmpty();
+         assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
@@ -335,7 +359,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
    }
    
    private void prepareClearTest() throws CacheLoaderException {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      for (Cache<Object, String> c : caches) assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
       for (int i = 0; i < 5; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
       }
@@ -347,7 +371,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
             if (isOwner(c, key)) {
-               assert store.containsKey(key);
+               assert store.containsKey(key) : "Cache store " + c + " does not contain key " + key;
             }
          }
       }

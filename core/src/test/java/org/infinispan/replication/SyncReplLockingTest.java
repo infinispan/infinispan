@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -29,13 +30,14 @@ import org.infinispan.test.TestingUtil;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.assertNoLocks;
 
 /**
  * Tests for lock API
@@ -59,8 +61,10 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
+      cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC);
       cfg.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "testcache", cfg);
+      waitForClusterToForm("testcache");
    }
 
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
@@ -98,8 +102,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.get(k);
       mgr.commit();
 
-      assertNoLocks(cache1);
-      assertNoLocks(cache2);
+      assertNotLocked(cache1, "testcache");
+      assertNotLocked(cache2, "testcache");
 
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -128,8 +132,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		assertNull("Should be null", cache1.get(k));
 		mgr.commit();
 
-		assertNoLocks(cache1);
-		assertNoLocks(cache2);
+		assertNotLocked(cache1, "testcache");
+		assertNotLocked(cache2, "testcache");
 
 		assert cache1.isEmpty();
 		assert cache2.isEmpty();
@@ -137,8 +141,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		cache2.clear();
 	}
    
-   private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
-         throws Exception {
+   private void concurrentLockingHelper(final boolean sameNode, final boolean useTx) throws Exception {
       final Cache cache1 = cache(0, "testcache");
       final Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -152,16 +155,22 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
                   + (sameNode ? "on same node..." : "on a different node..."));
-            TransactionManager mgr = null;
+            DummyTransactionManager mgr = null;
             try {
                if (useTx) {
-                  mgr = TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
+                  mgr = (DummyTransactionManager) TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
                   mgr.begin();
                }
                if (sameNode) {
                   cache1.put(k, "JBC");
                } else {
                   cache2.put(k, "JBC");
+               }
+               if (useTx) {
+                  if (!mgr.getTransaction().runPrepare()) { //couldn't prepare
+                     latch.countDown();
+                     mgr.rollback();
+                  }
                }
             } catch (Exception e) {
                if (useTx) {
@@ -178,6 +187,9 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
+
+      log.trace("Here is where the fun starts...Here is where the fun starts...");
+
       // lock node and start other thread whose write should now block
       cache1.getAdvancedCache().lock(k);
       t.start();
@@ -188,7 +200,9 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.put(k, name);
       mgr.commit();
 
+      assertNotLocked("testcache", k);
       t.join();
+
 
       cache2.remove(k);
       assert cache1.isEmpty();

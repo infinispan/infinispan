@@ -1,7 +1,28 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
@@ -34,7 +55,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
 
    private static final Log log = LogFactory.getLog(CacheManagerNotifierImpl.class);
 
-   private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>();
+   private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>(4);
 
    static {
       allowedListeners.put(CacheStarted.class, CacheStartedEvent.class);
@@ -62,29 +83,29 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       this.cacheManager = cacheManager;
    }
 
-   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin) {
+   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
+         e.setMergeView(false);
          e.setViewId(viewId);
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
-         e.setNeedsToRejoin(needsToRejoin);
          e.setType(Event.Type.VIEW_CHANGED);
          for (ListenerInvocation listener : viewChangedListeners) listener.invoke(e);
       }
    }
 
-   public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin, List<List<Address>> subgroupsMerged) {
+   public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
       if (!mergeListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
          e.setViewId(viewId);
+         e.setMergeView(true);
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
-         e.setNeedsToRejoin(needsToRejoin);
          e.setSubgroupsMerged(subgroupsMerged);
          e.setType(Event.Type.MERGED);
          for (ListenerInvocation listener : mergeListeners) listener.invoke(e);
@@ -109,12 +130,6 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
          e.setType(Event.Type.CACHE_STOPPED);
          for (ListenerInvocation listener : cacheStoppedListeners) listener.invoke(e);
       }
-   }
-
-   @Stop
-   void stop() {
-      if (syncProcessor != null) syncProcessor.shutdownNow();
-      if (asyncProcessor != null) asyncProcessor.shutdownNow();
    }
 
    protected Log getLog() {

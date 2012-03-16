@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.bdbje;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -10,16 +32,15 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.util.RuntimeExceptionWrapper;
-import static org.easymock.classextension.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -31,6 +52,8 @@ import java.io.ObjectInput;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Properties;
+
+import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Adrian Cole
@@ -53,7 +76,7 @@ public class BdbjeCacheStoreTest {
 
    private PreparableTransactionRunner runner;
    private CurrentTransaction currentTransaction;
-   private GlobalTransactionFactory gtf;
+   private TransactionFactory gtf;
 
    private class MockBdbjeResourceFactory extends BdbjeResourceFactory {
 
@@ -117,7 +140,8 @@ public class BdbjeCacheStoreTest {
       cacheMap = createMock(StoredMap.class);
       expiryMap = createMock(StoredSortedMap.class);
       currentTransaction = createMock(CurrentTransaction.class);
-      gtf = new GlobalTransactionFactory();
+      gtf = new TransactionFactory();
+      gtf.init(false, false, true);
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();
@@ -287,7 +311,7 @@ public class BdbjeCacheStoreTest {
       replayAll();
       cs.start();
       try {
-         cs.applyModifications(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))));
+         cs.applyModifications(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))));
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -312,7 +336,7 @@ public class BdbjeCacheStoreTest {
       try {
          txn = currentTransaction.beginTransaction(null);
          GlobalTransaction t = gtf.newGlobalTransaction(null, false);
-         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), t, false);
+         cs.prepare(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))), t, false);
          cs.commit(t);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
@@ -333,7 +357,7 @@ public class BdbjeCacheStoreTest {
       cs.start();
       try {
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
-         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), tx, false);
+         cs.prepare(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))), tx, false);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -346,7 +370,7 @@ public class BdbjeCacheStoreTest {
 
    public void testClearOnAbortFromStream() throws Exception {
       start();
-      InternalCacheEntry entry = InternalEntryFactory.create("key", "value");
+      InternalCacheEntry entry = TestInternalCacheEntryFactory.create("key", "value");
       expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
       ObjectInput ois = createMock(ObjectInput.class);
       expect(ois.readLong()).andReturn((long) 1);

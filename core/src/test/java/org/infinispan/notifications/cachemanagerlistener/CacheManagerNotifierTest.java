@@ -1,6 +1,26 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications.cachemanagerlistener;
-
-import static org.easymock.EasyMock.*;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
@@ -13,12 +33,14 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.xa.TransactionTable.StaleTransactionCleanup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+
+import static org.easymock.EasyMock.*;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
@@ -50,7 +72,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt(), anyBoolean());
+         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
          replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");
@@ -62,41 +84,15 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testMockCacheStartedAndStopped() {
-      cm1 = TestCacheManagerFactory.createLocalCacheManager();
-      cm1.getCache();
-      CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
-      CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
-      try {
-         cm1.defineConfiguration("testCache", new Configuration());
-         mockNotifier.notifyCacheStarted("testCache");
-         mockNotifier.addListener(isA(StaleTransactionCleanup.class));
-         replay(mockNotifier);
-         // start a second cache.
-         Cache testCache = cm1.getCache("testCache");
-         verify(mockNotifier);
-
-         reset(mockNotifier);
-         mockNotifier.removeListener(isA(StaleTransactionCleanup.class));
-         mockNotifier.notifyCacheStopped("testCache");
-         replay(mockNotifier);
-         testCache.stop();
-         verify(mockNotifier);
-      } finally {
-         TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
-      }
-   }
-
    public void testViewChange() throws Exception {
       EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager();
       cmA.getCache();
-      CyclicBarrier barrier = new CyclicBarrier(2);
+      CountDownLatch barrier = new CountDownLatch(1);
       GetCacheManagerCheckListener listener = new GetCacheManagerCheckListener(barrier);
       cmA.addListener(listener);
       CacheContainer cmB = TestCacheManagerFactory.createClusteredCacheManager();
       cmB.getCache();
       try {
-         barrier.await();
          barrier.await();
          assert listener.cacheContainer != null;
       } finally {
@@ -105,21 +101,19 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class GetCacheManagerCheckListener {
+   static public class GetCacheManagerCheckListener {
       CacheContainer cacheContainer;
-      CyclicBarrier barrier;
+      CountDownLatch barrier;
       
-      public GetCacheManagerCheckListener(CyclicBarrier barrier) {
+      public GetCacheManagerCheckListener(CountDownLatch barrier) {
          this.barrier = barrier;
       }
 
       @ViewChanged
-      public void onViewChange(ViewChangedEvent e) throws Exception {
-         barrier.await();
+      public void onViewChange(ViewChangedEvent e) throws Exception {         
          cacheContainer = e.getCacheManager();
-         barrier.await();
+         barrier.countDown();
       }
-
    }
 
 }

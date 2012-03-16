@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
@@ -17,13 +39,18 @@ import java.util.Set;
  * @since 4.0
  */
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
-   private TransientCacheValue cacheValue;
+   protected TransientCacheValue cacheValue;
 
-   TransientCacheEntry(Object key, Object value, long maxIdle) {
+   protected TransientCacheEntry(Object key, TransientCacheValue value) {
+      super(key);
+      this.cacheValue = value;
+   }
+
+   public TransientCacheEntry(Object key, Object value, long maxIdle) {
       this(key, value, maxIdle, System.currentTimeMillis());
    }
 
-   TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
+   public TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
       super(key);
       cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
    }
@@ -40,12 +67,21 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       cacheValue.lastUsed = System.currentTimeMillis();
    }
 
+   public final void touch(long currentTimeMillis) {
+      cacheValue.lastUsed = currentTimeMillis;
+   }
+
+
    public final void reincarnate() {
       // no-op
    }
 
    public final boolean canExpire() {
       return true;
+   }
+
+   public boolean isExpired(long now) {
+      return cacheValue.isExpired(now);
    }
 
    public boolean isExpired() {
@@ -144,7 +180,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "TransientCacheEntry{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 }

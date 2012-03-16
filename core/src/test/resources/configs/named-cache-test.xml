@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd"
-      xmlns="urn:infinispan:config:5.0">
+      xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+      xmlns="urn:infinispan:config:5.2">
 
    <global>
 
@@ -41,14 +63,14 @@
       </transport>
 
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
-         <externalizers>
-            <externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>
-            <externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>
-            <externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>
-         </externalizers>
+         <advancedExternalizers>
+            <advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
+            <advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+            <advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
+         </advancedExternalizers>
       </serialization>
 
-      <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
+      <globalJmxStatistics enabled="true" jmxDomain="funky_domain"
                            mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
                            allowDuplicateDomains="true"/>
                            
@@ -57,18 +79,27 @@
 
    <default>
       <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
+      <transaction transactionMode="NON_TRANSACTIONAL"/>
       <jmxStatistics enabled="false"/>
    </default>
 
    <namedCache name="transactional">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true"/>
+      <transaction useEagerLocking="true" eagerLockSingleNode="true"
+                   transactionMode="TRANSACTIONAL" autoCommit="true" />
    </namedCache>
 
    <namedCache name="transactional2">
-      <transaction transactionManagerLookupClass="org.something.Lookup"
-                   cacheStopTimeout="10000"/>
+      <transaction transactionManagerLookupClass="org.infinispan.test.tx.TestLookup"
+                   cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
+                   autoCommit="false" />
    </namedCache>
 
+   <namedCache name="testCache1">
+      <locking lockAcquisitionTimeout="20000"/>
+      <clustering mode="invalidation">
+         <async useReplQueue="false" asyncMarshalling="false"/>
+      </clustering>
+   </namedCache>
 
    <namedCache name="syncRepl">
       <clustering mode="repl">
@@ -92,7 +123,7 @@
    </namedCache>
 
    <namedCache name="txSyncRepl">
-      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL"/>
       <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
@@ -103,9 +134,9 @@
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
    </namedCache>
 
-   <namedCache name="lazyDeserialization">
+   <namedCache name="storeAsBinary">
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
-      <lazyDeserialization enabled="true"/>
+      <storeAsBinary enabled="true"/>
    </namedCache>
 
    <namedCache name="withLoader">
@@ -120,9 +151,21 @@
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
                <property name="location" value="/tmp/FileCacheStore-Location"/>
+               <property name="fsyncMode" value="periodic"/>
+               <property name="fsyncInterval" value="2000"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
+            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
+         </loader>
+      </loaders>
+   </namedCache>
+
+   <namedCache name="withLoaderDefaults">
+      <loaders>
+         <loader class="org.infinispan.loaders.file.FileCacheStore">
+            <properties>
+               <property name="location" value="/tmp/Another-FileCacheStore-Location"/>
+            </properties>
          </loader>
       </loaders>
    </namedCache>
@@ -130,24 +173,54 @@
    <namedCache name="dist">
       <clustering mode="distribution">
          <sync/>
-         <hash numOwners="3" rehashWait="120000"/>
+         <hash numOwners="3" rehashRpcTimeout="120000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
-   
-   <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
+
+   <namedCache name="dist_with_vnodes">
+      <clustering mode="distribution">
+         <sync/>
+         <hash numOwners="3" rehashRpcTimeout="120000" numVirtualNodes="1000"/>
+         <l1 enabled="true" lifespan="600000"/>
+      </clustering>
+   </namedCache>
+
+   <namedCache name="groups">
+      <clustering mode="distribution">
+         <hash>
+            <groups enabled="true">
+               <grouper class="org.infinispan.distribution.groups.KXGrouper" />
+            </groups>
+         </hash>
+      </clustering>
+   </namedCache>
+
+    <namedCache name="chunkSize">
+        <clustering mode="distribution">
+            <sync/>
+            <hash numOwners="3"/>
+            <l1 enabled="true" lifespan="600000"/>
+            <stateTransfer fetchInMemoryState="true" timeout="120000" chunkSize="1000"/>
+        </clustering>
+    </namedCache>
+
+    <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
    <namedCache name="evictionCache">
 
       <!--
-         Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
-         the eviction thread will never run.  A separate executor is used for eviction in each cache.
+         Eviction configuration.
       -->
-      <eviction wakeUpInterval="500" maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="FIFO"/>
-      <expiration lifespan="60000" maxIdle="1000"/>
+      <eviction maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="LRU"/>
+      <!--
+         Expiration wakeUpInterval defines the interval between successive runs
+         to purge expired entries from memory and any cache stores.
+      -->
+      <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000"/>
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">
-      <clustering mode="r" >
+      <clustering mode="repl" >
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
       <jmxStatistics enabled="false"/>
@@ -167,6 +240,7 @@
       </clustering>
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
+      <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
       	<loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                         ignoreModifications="true" purgeOnStartup="true"> 
@@ -180,7 +254,7 @@
    </namedCache>
 
    <namedCache name="withReplicationQueue">
-      <clustering mode="r">
+      <clustering mode="repl">
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
    </namedCache>
@@ -198,6 +272,10 @@
          <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
       </customInterceptors>
+   </namedCache>
+
+   <namedCache name="storeKeyValueBinary">
+      <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" />
    </namedCache>
 
 </infinispan>

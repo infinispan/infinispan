@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,9 +22,9 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.CacheLoaderException;
@@ -31,14 +32,13 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -63,7 +63,7 @@ public class JdbcMixedCacheStoreTest {
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
-   @BeforeTest
+   @BeforeMethod
    public void createCacheStore() throws CacheLoaderException {
       stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
@@ -75,27 +75,24 @@ public class JdbcMixedCacheStoreTest {
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
+      cacheStore.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
       cacheStore.start();
    }
 
    @AfterMethod
-   public void clearStore() throws Exception {
+   public void destroyStore() throws Exception {
       cacheStore.clear();
       assertBinaryRowCount(0);
       assertStringsRowCount(0);
-   }
 
-   @AfterTest
-   public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
    }
 
    public void testMixedStore() throws Exception {
-      cacheStore.store(InternalEntryFactory.create("String", "someValue"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("String", "someValue"));
       assertStringsRowCount(1);
       assertBinaryRowCount(0);
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value"));
       assertStringsRowCount(1);
       assertStringsRowCount(1);
       assert cacheStore.load(MIRCEA).getValue().equals("value");
@@ -107,10 +104,10 @@ public class JdbcMixedCacheStoreTest {
       Person two = new Person("Manik", "Surtani", 28);
       one.setHashCode(100);
       two.setHashCode(100);
-      cacheStore.store(InternalEntryFactory.create(one, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(one, "value"));
       assertBinaryRowCount(1);
       assertStringsRowCount(0);
-      cacheStore.store(InternalEntryFactory.create(two, "otherValue"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(two, "otherValue"));
       assertBinaryRowCount(1); //both go to same bucket
       assertStringsRowCount(0);
       assert cacheStore.load(one).getValue().equals("value");
@@ -118,23 +115,23 @@ public class JdbcMixedCacheStoreTest {
    }
 
    public void testClear() throws Exception {
-      cacheStore.store(InternalEntryFactory.create("String", "someValue"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("String", "someValue"));
       assertRowCounts(0, 1);
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value"));
       assertRowCounts(1, 1);
       cacheStore.clear();
       assertRowCounts(0, 0);
    }
 
    public void testMixedFromAndToStream() throws Exception {
-      cacheStore.store(InternalEntryFactory.create("String", "someValue"));
-      cacheStore.store(InternalEntryFactory.create("String2", "someValue"));
-      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value1"));
-      cacheStore.store(InternalEntryFactory.create(MANIK, "value2"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("String", "someValue"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("String2", "someValue"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MIRCEA, "value1"));
+      cacheStore.store(TestInternalCacheEntryFactory.create(MANIK, "value2"));
       assertRowCounts(2, 2);
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cacheStore.toStream(new UnclosableObjectOutputStream(oo));
       } finally {
@@ -160,10 +157,10 @@ public class JdbcMixedCacheStoreTest {
    }
 
    public void testLoadAll() throws Exception {
-      InternalCacheEntry first = InternalEntryFactory.create("String", "someValue");
-      InternalCacheEntry second = InternalEntryFactory.create("String2", "someValue");
-      InternalCacheEntry third = InternalEntryFactory.create(MIRCEA, "value1");
-      InternalCacheEntry forth = InternalEntryFactory.create(MANIK, "value2");
+      InternalCacheEntry first = TestInternalCacheEntryFactory.create("String", "someValue");
+      InternalCacheEntry second = TestInternalCacheEntryFactory.create("String2", "someValue");
+      InternalCacheEntry third = TestInternalCacheEntryFactory.create(MIRCEA, "value1");
+      InternalCacheEntry forth = TestInternalCacheEntryFactory.create(MANIK, "value2");
       cacheStore.store(first);
       cacheStore.store(second);
       cacheStore.store(third);
@@ -178,8 +175,8 @@ public class JdbcMixedCacheStoreTest {
    }
 
    public void testPurgeExpired() throws Exception {
-      InternalCacheEntry first = InternalEntryFactory.create("String", "someValue", 1000);
-      InternalCacheEntry second = InternalEntryFactory.create(MIRCEA, "value1", 1000);
+      InternalCacheEntry first = TestInternalCacheEntryFactory.create("String", "someValue", 1000);
+      InternalCacheEntry second = TestInternalCacheEntryFactory.create(MIRCEA, "value1", 1000);
       cacheStore.store(first);
       cacheStore.store(second);
       assertRowCounts(1, 1);
@@ -189,10 +186,10 @@ public class JdbcMixedCacheStoreTest {
    }
 
    public void testPurgeExpiredWithRemainingEntries() throws Exception {
-      InternalCacheEntry first = InternalEntryFactory.create("String", "someValue", 1000);
-      InternalCacheEntry second = InternalEntryFactory.create("String2", "someValue");
-      InternalCacheEntry third = InternalEntryFactory.create(MIRCEA, "value1", 1000);
-      InternalCacheEntry forth = InternalEntryFactory.create(MANIK, "value1");
+      InternalCacheEntry first = TestInternalCacheEntryFactory.create("String", "someValue", 1000);
+      InternalCacheEntry second = TestInternalCacheEntryFactory.create("String2", "someValue");
+      InternalCacheEntry third = TestInternalCacheEntryFactory.create(MIRCEA, "value1", 1000);
+      InternalCacheEntry forth = TestInternalCacheEntryFactory.create(MANIK, "value1");
       cacheStore.store(first);
       cacheStore.store(second);
       cacheStore.store(third);

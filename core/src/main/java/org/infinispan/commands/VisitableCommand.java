@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +22,10 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 
 
 /**
@@ -45,5 +49,13 @@ public interface VisitableCommand extends ReplicableCommand {
     * Used by the InboundInvocationHandler to determine whether the command should be invoked or not.
     * @return true if the command should be invoked, false otherwise.
     */
-   boolean shouldInvoke(InvocationContext ctx);   
+   boolean shouldInvoke(InvocationContext ctx);
+
+   /**
+    * Similar to {@link #shouldInvoke(InvocationContext)} but evaluated by {@link InvocationContextInterceptor}.
+    * Commands can opt to be discarded in case the cache status is not suited (as {@link InvalidateCommand})
+    * @return true if the command should NOT be invoked.
+    */
+   boolean ignoreCommandOnStatus(ComponentStatus status);
+
 }

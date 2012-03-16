@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -112,7 +113,7 @@ public class StringPropertyReplacer {
     */
    public static String replaceProperties(final String string, final Properties props) {
       final char[] chars = string.toCharArray();
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       boolean properties = false;
       int state = NORMAL;
       int start = 0;
@@ -141,7 +142,7 @@ public class StringPropertyReplacer {
                buffer.append("${}"); // REVIEW: Correct?
             } else // Collect the system property
             {
-               String value = null;
+               String value;
 
                String key = string.substring(start + 2, i);
 
@@ -155,7 +156,7 @@ public class StringPropertyReplacer {
                   if (props != null)
                      value = props.getProperty(key);
                   else
-                     value = System.getProperty(key);
+                     value = SysPropertyActions.getProperty(key);
 
                   if (value == null) {
                      // Check for a default value ${key:default}
@@ -165,7 +166,7 @@ public class StringPropertyReplacer {
                         if (props != null)
                            value = props.getProperty(realKey);
                         else
-                           value = System.getProperty(realKey);
+                           value = SysPropertyActions.getProperty(realKey);
 
                         if (value == null) {
                            // Check for a composite key, "key1,key2"
@@ -198,7 +199,7 @@ public class StringPropertyReplacer {
       }
 
       // No properties
-      if (properties == false)
+      if (!properties)
          return string;
 
       // Collect the trailing characters
@@ -233,7 +234,7 @@ public class StringPropertyReplacer {
             if (props != null)
                value = props.getProperty(key1);
             else
-               value = System.getProperty(key1);
+               value = SysPropertyActions.getProperty(key1);
          }
          // Check the second part, if there is one and first lookup failed
          if (value == null && comma < key.length() - 1) {
@@ -241,7 +242,7 @@ public class StringPropertyReplacer {
             if (props != null)
                value = props.getProperty(key2);
             else
-               value = System.getProperty(key2);
+               value = SysPropertyActions.getProperty(key2);
          }
       }
       // Return whatever we've found or null

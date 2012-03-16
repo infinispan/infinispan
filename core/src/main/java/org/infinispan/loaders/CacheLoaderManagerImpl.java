@@ -1,16 +1,36 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
-
-import static org.infinispan.context.Flag.*;
-
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -27,21 +47,26 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.context.Flag.*;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    Configuration configuration;
    CacheLoaderManagerConfig clmConfig;
-   Cache<Object, Object> cache;
+   AdvancedCache<Object, Object> cache;
    StreamingMarshaller m;
    CacheLoader loader;
    InvocationContextContainer icc;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
-   public void inject(Cache cache, StreamingMarshaller marshaller, Configuration configuration, InvocationContextContainer icc) {
+   public void inject(AdvancedCache<Object, Object> cache,
+                      @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+                      Configuration configuration, InvocationContextContainer icc) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -123,8 +148,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             long start = 0;
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
-               start = System.currentTimeMillis();
-               log.debug("Preloading transient state from cache loader %s", loader);
+               start = System.nanoTime();
+               log.debugf("Preloading transient state from cache loader %s", loader);
             }
             Set<InternalCacheEntry> state;
             try {
@@ -136,18 +161,18 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             for (InternalCacheEntry e : state) {
                if (clmConfig.isShared() || !(loader instanceof ChainingCacheStore)) {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP)
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                } else {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP)
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                }
             }
 
             if (debugTiming) {
-               long stop = System.currentTimeMillis();
-               log.debug("Preloaded %s keys in %s milliseconds", state.size(), stop - start);
+               final long stop = System.nanoTime();
+               log.debugf("Preloaded %s keys in %s", state.size(), Util.prettyPrintTime(stop - start, TimeUnit.NANOSECONDS));
             }
          }
       }
@@ -177,9 +202,9 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          try {
             CacheStore store = getCacheStore();
             if (store != null) {
-               InvocationContext ctx = icc.createInvocationContext();
-               if (ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
-                  if (log.isTraceEnabled()) log.trace("Requested removal of data on stop, so clear cache store");
+               InvocationContext ctx = icc.getInvocationContext(false);
+               if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
+                  log.trace("Requested removal of data on stop, so clear cache store");
                   store.clear();
                }
             }
@@ -197,7 +222,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       // if we only have a single cache loader configured in the chaining cacheloader then
       // don't use a chaining cache loader at all.
       // also if we are using passivation then just directly use the first cache loader.
-      if (clmConfig.useChainingCacheLoader()) {
+      if (clmConfig.usingChainingCacheLoader()) {
          // create chaining cache loader.
          ChainingCacheStore ccl = new ChainingCacheStore();
          tmpLoader = ccl;
@@ -232,8 +257,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return tmpLoader;
    }
 
-   CacheLoader createCacheLoader(CacheLoaderConfig cfg, Cache cache) throws Exception {
-      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName());
+   CacheLoader createCacheLoader(CacheLoaderConfig cfg, AdvancedCache<Object, Object> cache) throws Exception {
+      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName(), cache.getClassLoader());
 
       if (tmpLoader != null) {
          if (cfg instanceof CacheStoreConfig) {

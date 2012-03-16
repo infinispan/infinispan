@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,6 +22,8 @@
  */
 package org.infinispan.transaction.lookup;
 
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -47,24 +50,30 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    /**
     * JNDI lookups performed?
     */
-   private static boolean lookupDone = false;
+   private boolean lookupDone = false;
 
    /**
     * No JNDI available?
     */
-   private static boolean lookupFailed = false;
+   private boolean lookupFailed = false;
 
    /**
-    * The JVM TransactionManager found.
+    * No JBoss TM embedded jars found?
     */
-   private static TransactionManager tm = null;
+   private boolean noJBossTM = false;
+
+   /**
+    * The JTA TransactionManager found.
+    */
+   private TransactionManager tm = null;
 
    /**
     * JNDI locations for TransactionManagers we know of
     */
    private static String[][] knownJNDIManagers =
          {
-               {"java:/TransactionManager", "JBoss, JRun4"},
+               {"java:jboss/TransactionManager", "JBoss AS 7"},
+               {"java:/TransactionManager", "JBoss AS 4 ~ 6, JRun4"},
                {"java:comp/TransactionManager", "Resin 3.x"},
                {"java:appserver/TransactionManager", "Sun Glassfish"},
                {"java:pm/TransactionManager", "Borland, Sun"},
@@ -86,6 +95,13 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     * WebSphere 4.0 TransactionManagerFactory
     */
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
+   
+   private Configuration configuration;
+   
+   @Inject
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+   }
 
    /**
     * Get the systemwide used TransactionManager
@@ -94,69 +110,98 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    public TransactionManager getTransactionManager() {
       if (!lookupDone)
-         doLookups();
+         doLookups(configuration.getClassLoader());
       if (tm != null)
          return tm;
       if (lookupFailed) {
-         //fall back to a dummy from Infinispan
-         tm = DummyTransactionManager.getInstance();
-         log.warn("Falling back to DummyTransactionManager from Infinispan");
+         if (!noJBossTM) {
+            // First try an embedded JBossTM instance
+            tryEmbeddedJBossTM();
+         }
+
+         if (noJBossTM) {
+            //fall back to a dummy from Infinispan
+            useDummyTM();
+         }
       }
       return tm;
+   }
+   
+   private void useDummyTM() {
+      tm = DummyTransactionManager.getInstance();
+      log.fallingBackToDummyTm();
+   }
+   
+   private void tryEmbeddedJBossTM() {
+      try {
+         JBossStandaloneJTAManagerLookup jBossStandaloneJTAManagerLookup = new JBossStandaloneJTAManagerLookup();
+         jBossStandaloneJTAManagerLookup.init(configuration);
+         tm = jBossStandaloneJTAManagerLookup.getTransactionManager();
+      } catch (Exception e) {
+         noJBossTM = true;
+      }
    }
 
    /**
     * Try to figure out which TransactionManager to use
     */
-   private static void doLookups() {
+   private void doLookups(ClassLoader cl) {
       if (lookupFailed)
          return;
-      InitialContext ctx;
+      InitialContext ctx = null;
       try {
          ctx = new InitialContext();
       }
       catch (NamingException e) {
-         log.error("Failed creating initial JNDI context", e);
+         log.failedToCreateInitialCtx(e);
          lookupFailed = true;
+         Util.close(ctx);
          return;
       }
-      //probe jndi lookups first
-      for (String[] knownJNDIManager : knownJNDIManagers) {
-         Object jndiObject;
-         try {
-            if (log.isDebugEnabled())
-               log.debug("Trying to lookup TransactionManager for " + knownJNDIManager[1]);
-            jndiObject = ctx.lookup(knownJNDIManager[0]);
+
+      try {
+         //probe jndi lookups first
+         for (String[] knownJNDIManager : knownJNDIManagers) {
+            Object jndiObject;
+            try {
+               log.debugf("Trying to lookup TransactionManager for %s", knownJNDIManager[1]);
+               jndiObject = ctx.lookup(knownJNDIManager[0]);
+            }
+            catch (NamingException e) {
+               log.debugf("Failed to perform a lookup for [%s (%s)]",
+                         knownJNDIManager[0], knownJNDIManager[1]);
+               continue;
+            }
+            if (jndiObject instanceof TransactionManager) {
+               tm = (TransactionManager) jndiObject;
+               log.debugf("Found TransactionManager for %s", knownJNDIManager[1]);
+               return;
+            }
          }
-         catch (NamingException e) {
-            log.debug("Failed to perform a lookup for [" + knownJNDIManager[0] + " (" + knownJNDIManager[1]
-                  + ")]");
-            continue;
-         }
-         if (jndiObject instanceof TransactionManager) {
-            tm = (TransactionManager) jndiObject;
-            log.debug("Found TransactionManager for " + knownJNDIManager[1]);
-            return;
-         }
+         lookupDone = true;
+      } finally {
+         Util.close(ctx);
       }
+
       //try to find websphere lookups since we came here
+      // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       Class clazz;
       try {
-         log.debug("Trying WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
-         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1);
-         log.debug("Found WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
+         log.debugf("Trying WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
+         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1, cl);
+         log.debugf("Found WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
       }
       catch (ClassNotFoundException ex) {
          try {
-            log.debug("Trying WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
-            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0);
-            log.debug("Found WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
+            log.debugf("Trying WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
+            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0, cl);
+            log.debugf("Found WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
          }
          catch (ClassNotFoundException ex2) {
             try {
-               log.debug("Trying WebSphere 4: " + WS_FACTORY_CLASS_4);
-               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4);
-               log.debug("Found WebSphere 4: " + WS_FACTORY_CLASS_4);
+               log.debugf("Trying WebSphere 4: %s", WS_FACTORY_CLASS_4);
+               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4, cl);
+               log.debugf("Found WebSphere 4: %s", WS_FACTORY_CLASS_4);
             }
             catch (ClassNotFoundException ex3) {
                log.debug("Couldn't find any WebSphere TransactionManager factory class, neither for WebSphere version 5.1 nor 5.0 nor 4");
@@ -172,8 +217,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          tm = (TransactionManager) method.invoke(null, args);
       }
       catch (Exception ex) {
-         log.error("Found WebSphere TransactionManager factory class [" + clazz.getName()
-               + "], but couldn't invoke its static 'getTransactionManager' method", ex);
+         log.unableToInvokeWebsphereStaticGetTmMethod(ex, clazz.getName());
       }
    }
 

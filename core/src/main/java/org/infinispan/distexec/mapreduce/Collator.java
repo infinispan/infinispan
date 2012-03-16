@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,14 +22,15 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import org.infinispan.remoting.transport.Address;
+import java.util.Map;
 
 /**
- * Collator coordinates results from Reducers executed on Infinispan cluster and assembles a final
+ * Collator collates results from Reducers executed on Infinispan cluster and assembles a final
  * result returned to an invoker of MapReduceTask.
  * 
  * 
- * @see MapReduceTask
+ * @see MapReduceTask#execute(Collator)
+ * @see MapReduceTask#executeAsynchronously(Collator)
  * @see Reducer
  * 
  * @author Manik Surtani
@@ -36,23 +38,12 @@ import org.infinispan.remoting.transport.Address;
  * 
  * @since 5.0
  */
-public interface Collator<R> {
+public interface Collator<KOut, VOut, R> {
 
    /**
-    * Collates all results added so far and returns result R to invoker of distributed task.
+    * Collates all reduced results and returns R to invoker of distributed task.
     * 
     * @return final result of distributed task computation
     */
-   R collate();
-
-   /**
-    * Invoked by runtime every time reduced result R is received from executed Reducer on remote
-    * nodes.
-    * 
-    * @param remoteNode
-    *           address of the node where reduce phase occurred
-    * @param remoteResult
-    *           the result R of reduce phase
-    */
-   void reducedResultReceived(Address remoteNode, R remoteResult);
+   R collate(Map<KOut, VOut> reducedResults);
 }

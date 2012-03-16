@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
@@ -20,10 +42,10 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testReplicatedStateTransfer() {
       EmbeddedCacheManager cm1 = null, cm2 = null;
       try {
-         Configuration conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
-         conf.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+         Configuration conf1 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         conf1.setCacheMode(Configuration.CacheMode.REPL_SYNC);
 
-         cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
+         cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf1);
          Cache<Person, String> c1 = cm1.getCache();
          Person mircea = new Person("markus", "mircea", 30);
          Person mircea2 = new Person("markus2", "mircea2", 30);
@@ -31,7 +53,10 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          c1.put(mircea, "mircea");
          c1.put(mircea2, "mircea2");
 
-         cm2 = TestCacheManagerFactory.createClusteredCacheManager(conf);
+         Configuration conf2 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         conf2.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(conf2);
          Cache c2 = cm2.getCache();
          assertEquals("mircea", c2.get(mircea));
          assertEquals("mircea2", c2.get(mircea2));

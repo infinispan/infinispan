@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,6 +23,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -30,6 +32,7 @@ import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -75,6 +78,10 @@ public abstract class AbstractVisitor implements Visitor {
    }
 
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+   
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
@@ -149,6 +156,14 @@ public abstract class AbstractVisitor implements Visitor {
    }
 
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+   
+   public Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<?> command) throws Throwable {
       return handleDefault(ctx, command);
    }
 }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -33,6 +34,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,13 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    Transport transport;
    Address address;
 
+   private static final Log log = LogFactory.getLog(DistCacheStoreInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Inject
    public void inject(DistributionManager dm, Transport transport) {
       this.dm = dm;
@@ -79,7 +89,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry %s under key %s", se, key);
+      log.tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
       return returnValue;
    }
@@ -94,7 +104,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
          if (!skipKey(key)) {
             InternalCacheEntry se = getStoredEntry(key, ctx);
             store.store(se);
-            log.trace("Stored entry %s under key %s", se, key);
+            log.tracef("Stored entry %s under key %s", se, key);
          }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
@@ -107,7 +117,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       Object key = command.getKey();
       if (!skip(ctx, key) && !ctx.isInTxScope() && command.isSuccessful()) {
          boolean resp = store.remove(key);
-         log.trace("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
       return retval;
    }
@@ -121,7 +131,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
 
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry %s under key %s", se, key);
+      log.tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -132,26 +142,23 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
     */
    private boolean skip(InvocationContext ctx, Object key) {
-      if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      List<Address> addresses = dm.locate(key);
-      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || ctx.hasFlag(Flag.SKIP_CACHE_STORE) || isL1Put(addresses)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                  "and the caller is not the first owner of the key, or the put call is an L1 put, or the call contain a skip cache store flag");
-         return true;
-      }
-      return false;
+      return skip(ctx) || skipKey(key);
    }
 
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
    private boolean skip(InvocationContext ctx) {
-      if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the call contain a skip cache store flag");
+      if (store == null) {
+         log.trace("Skipping cache store because the cache loader does not implement CacheStore");
          return true;
+      }
+      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+         log.trace("Skipping cache store since the call contain a skip cache store flag");
+         return true;
+      }
+      if (loaderConfig.isShared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+         log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
       }
       return false;
    }
@@ -162,12 +169,18 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     */
    @Override
    protected boolean skipKey(Object key) {
-      List<Address> addresses = dm.locate(key);
-      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                  "and the caller is not the first owner of the key, or the put call is an L1 put");
-         return true;
+      if (loaderConfig.isShared()) {
+         if (!dm.getPrimaryLocation(key).equals(address)) {
+            log.trace("Skipping cache store since the cache loader is shared " +
+                  "and the caller is not the first owner of the key");
+            return true;
+         }
+      } else {
+         List<Address> addresses = dm.locate(key);
+         if (isL1Put(addresses)) {
+            log.trace("Skipping cache store since this is an L1 put");
+            return true;
+         }
       }
       return false;
    }
@@ -175,11 +188,6 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    private boolean isL1Put(List<Address> addresses) {
       if (address == null) throw new NullPointerException("Local address cannot be null!");
       return !addresses.contains(address);
-   }
-
-   private boolean isFirstOwner(List<Address> addresses) {
-      if (address == null) throw new NullPointerException("Local address cannot be null!");
-      return addresses.get(0).equals(address);
    }
 
 }

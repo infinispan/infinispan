@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,11 +22,16 @@
  */
 package org.infinispan.loaders.jdbm;
 
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * JdbmCacheStoreTest using production level marshaller.
@@ -35,11 +41,24 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "loaders.jdbm.JdbmCacheStoreVamTest")
 public class JdbmCacheStoreVamTest extends JdbmCacheStoreTest {
+
+   EmbeddedCacheManager cm;
+   StreamingMarshaller marshaller;
+
+   @BeforeClass(alwaysRun = true)
+   public void setUpClass() {
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      marshaller = extractCacheMarshaller(cm.getCache());
+   }
+
+   @AfterClass(alwaysRun = true)
+   public void tearDownClass() throws CacheLoaderException {
+      cm.stop();
+   }
+
    @Override
    protected StreamingMarshaller getMarshaller() {
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
       return marshaller;
    }
+
 }

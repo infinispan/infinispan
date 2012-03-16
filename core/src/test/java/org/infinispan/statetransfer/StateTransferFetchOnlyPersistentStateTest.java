@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package org.infinispan.statetransfer;
 
-import java.lang.reflect.Method;
-
 import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
@@ -32,6 +30,8 @@ import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+
+import java.lang.reflect.Method;
 
 /**
  * StateTransferFetchOnlyPersistentStateTest.
@@ -44,15 +44,14 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      for (int i = 0; i < 2; i++) {
-         Configuration cfg = createConfiguration(i + 1);
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-         cm.defineConfiguration("onlyFetchPersistent", cfg);
-      }
+      Configuration cfg = createConfiguration(1);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      cm.defineConfiguration("onlyFetchPersistent", cfg);
    }
 
    private Configuration createConfiguration(int id) {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      cfg.fluent().clustering().stateRetrieval().fetchInMemoryState(false);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store id: " + id);
       clmc.addCacheLoaderConfig(clc);
@@ -66,6 +65,10 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
       Cache cache1 = cache(0, "onlyFetchPersistent");
       assert !cache1.getConfiguration().isFetchInMemoryState();
       cache1.put("k-" + m.getName(), "v-" + m.getName());
+
+      Configuration cfg2 = createConfiguration(2);
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
+      cm2.defineConfiguration("onlyFetchPersistent", cfg2);
 
       Cache cache2 = cache(1, "onlyFetchPersistent");
       assert !cache2.getConfiguration().isFetchInMemoryState();

@@ -1,10 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -18,7 +40,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.L1OnRehashTest", enabled = false, description = "Invalidations happen asynchronously and it is hard to deterministically wait for such invals")
+@Test(groups = "functional", testName = "distribution.rehash.L1OnRehashTest")
 public class L1OnRehashTest extends BaseDistFunctionalTest {
    public L1OnRehashTest() {
       this.tx = false;
@@ -39,9 +61,10 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       joiner = joinerManager.getCache(cacheName);
    }
 
-   int waitForRehashCompletion() {
+   int waitForJoinCompletion() {
       // need to block until this join has completed!
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiner);
+      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(10), c1, c2, joiner);
+      waitForClusterToForm(cacheName);
 
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
@@ -63,7 +86,7 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
 
-      log.info("Initialized with keys %s", keys);
+      log.infof("Initialized with keys %s", keys);
       return keys;
    }
 
@@ -72,25 +95,10 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       List<MagicKey> keys = init();
       // add 1
       performRehashEvent();
-      int joinerPos = waitForRehashCompletion();
+      int joinerPos = waitForJoinCompletion();
 
-      // now where is joiner in relation to the other 2?
-      // we can have either
-      // 1. J, C1, C2
-      // 2. C1, J, C2
-      // 3. C1, C2, J
-      // for the purpose of CH, 1 == 3.
-
-      // invalidations happen asynchronously!  :(
-      TestingUtil.sleepThread(30000);
-
-      Cache<Object, String> cacheToCheckForInvalidation = joinerPos + 1 == caches.size() ? caches.get(0) : caches.get(joinerPos + 1);
-      MagicKey rehashedKey = keys.get(joinerPos == 1 ? 0 : 1);
-      if (l1OnRehash)
-         assertIsInL1(cacheToCheckForInvalidation, rehashedKey);
-      else
-         assertIsNotInL1(cacheToCheckForInvalidation, rehashedKey);
-
-      assertIsInContainerImmortal(joiner, rehashedKey);
+      for (MagicKey key : keys) {
+         assertOwnershipAndNonOwnership(key, l1OnRehash);
+      }
    }
 }

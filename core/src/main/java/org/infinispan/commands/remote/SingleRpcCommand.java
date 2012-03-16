@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -14,18 +36,22 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
 
    private ReplicableCommand command;
 
+   private SingleRpcCommand() {
+      super(null); // For command id uniqueness test
+   }
+
    public SingleRpcCommand(String cacheName, ReplicableCommand command) {
       super(cacheName);
       this.command = command;
    }
 
-   public SingleRpcCommand() {
+   public SingleRpcCommand(String cacheName) {
+      super(cacheName);
    }
 
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Unusupported command id:" + commandId);
-      cacheName = (String) parameters[0];
-      command = (ReplicableCommand) parameters[1];
+      command = (ReplicableCommand) parameters[0];
    }
 
    public byte getCommandId() {
@@ -33,7 +59,7 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, command};
+      return new Object[]{command};
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
@@ -73,5 +99,10 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
 
    public ReplicableCommand getCommand() {
       return command;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 }

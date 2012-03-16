@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,12 +22,18 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.Test;
+
+import java.lang.reflect.Method;
 
 @Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreFunctionalTest")
 public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
@@ -39,4 +46,7 @@ public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunct
       return config;
    }
 
+   @Test(enabled = false, description = "JdbcStringBasedCacheStore does not support ByteArrayKey yet")
+   public void testByteArrayKey(Method m) {
+   }
 }

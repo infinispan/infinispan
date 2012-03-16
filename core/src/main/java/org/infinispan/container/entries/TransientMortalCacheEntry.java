@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
@@ -20,18 +42,25 @@ import static java.lang.Math.min;
  */
 public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
-   private TransientMortalCacheValue cacheValue;
+   protected TransientMortalCacheValue cacheValue;
 
-   TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
+   public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis(), lifespan, maxIdle);
-      touch();
+      final long currentTimeMillis = System.currentTimeMillis();
+      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis, lifespan, maxIdle);
+      touch(currentTimeMillis);
    }
 
-   TransientMortalCacheEntry(Object key, Object value) {
+   protected TransientMortalCacheEntry(Object key, Object value) {
       super(key);
-      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis());
-      touch();
+      final long currentTimeMillis = System.currentTimeMillis();
+      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis);
+      touch(currentTimeMillis);
+   }
+
+   protected TransientMortalCacheEntry(Object key, TransientMortalCacheValue value) {
+      super(key);
+      this.cacheValue = value;
    }
 
    public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long lastUsed, long created) {
@@ -63,6 +92,10 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.created;
    }
 
+   public boolean isExpired(long now) {
+      return cacheValue.isExpired(now);
+   }
+
    public boolean isExpired() {
       return cacheValue.isExpired();
    }
@@ -87,6 +120,10 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       cacheValue.lastUsed = System.currentTimeMillis();
    }
 
+   public final void touch(long currentTimeMillis) {
+      cacheValue.lastUsed = currentTimeMillis;
+   }
+
    public final void reincarnate() {
       cacheValue.created = System.currentTimeMillis();
    }
@@ -96,7 +133,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public Object setValue(Object value) {
-      return cacheValue.maxIdle;
+      return cacheValue.setValue(value);
    }
 
    @Override
@@ -130,8 +167,9 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientMortalCacheEntry> {

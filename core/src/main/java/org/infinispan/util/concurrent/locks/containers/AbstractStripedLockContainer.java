@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -26,11 +27,6 @@ import net.jcip.annotations.ThreadSafe;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.util.Util.safeRelease;
-
 /**
  * A container for locks.  Used with lock striping.
  *
@@ -38,10 +34,7 @@ import static org.infinispan.util.Util.safeRelease;
  * @since 4.0
  */
 @ThreadSafe
-public abstract class AbstractStripedLockContainer implements LockContainer {
-   
-   private static final Log log = LogFactory.getLog(AbstractStripedLockContainer.class);
-   
+public abstract class AbstractStripedLockContainer<L extends Lock> extends AbstractLockContainer<L> {
    private int lockSegmentMask;
    private int lockSegmentShift;
 
@@ -69,11 +62,8 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
     * @param object the object serving as a key
     * @return the hash code
     */
-   final int hash(Object object) {
+   static final int hash(Object object) {
       int h = object.hashCode();
-//      h ^= (h >>> 20) ^ (h >>> 12);
-//      return h ^ (h >>> 7) ^ (h >>> 4);
-
       h += ~(h << 9);
       h ^= (h >>> 14);
       h += (h << 4);
@@ -84,29 +74,27 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
 
    protected abstract void initLocks(int numLocks);
 
-   public Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
-      Lock lock = getLock(key);
-      boolean locked = false;
+   public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {
+      L lock = getLock(key);
+      boolean locked;
       try {
-         locked = lock.tryLock(timeout, unit);
+         locked = tryLock(lock, timeout, unit, lockOwner);
       } catch (InterruptedException ie) {
-         safeRelease(lock);
+         safeRelease(lock, lockOwner);
          throw ie;
       } catch (Throwable th) {
-         safeRelease(lock);
+         safeRelease(lock, lockOwner);
          locked = false;
       }
       return locked ? lock : null;
    }
 
-   public void releaseLock(Object key) {
-      final Lock lock = getLock(key);
-      try {
-         lock.unlock();
-      } catch (IllegalMonitorStateException imse) {
-         // See javadoc of org.infinispan.util.concurrent.locks.LockManager.possiblyLocked(CacheEntry):
-         // it's possible that we attempt to unlock Locks which we didn't actually obtain.
-         log.debug("Attempted to unlock a lock we didn't own - swallowing an IllegalMonitorStateException");
-      }
+   public void releaseLock(Object lockOwner, Object key) {
+      final L lock = getLock(key);
+      safeRelease(lock, lockOwner);
+   }
+
+   public int getLockId(Object key) {
+      return hashToIndex(key);
    }
 }

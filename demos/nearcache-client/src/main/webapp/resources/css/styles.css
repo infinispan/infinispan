@@ -1,0 +1,90 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
+
+@import url(http://fonts.googleapis.com/css?family=Istok+Web);
+
+body {
+   color: black;
+   font-family: 'Istok Web', sans-serif;
+   font-size: 13px;
+   font-weight: lighter;
+}
+
+h2 {
+   font-size: 20px;
+}
+
+#wrapper {
+   height: 100%;
+   width: 965px;
+   position: relative;
+}
+
+#header {
+   height: 110px;
+   background-image: url("#{resource['images:infinispan-banner.png']}");
+   background-repeat: no-repeat;
+   -webkit-border-radius: 4px;
+   -moz-border-radius: 4px;
+}
+
+#content {
+  width: 100%;
+}
+
+#footer {
+  height: 45px;
+  width: 100%;
+  position: absolute;
+  bottom: 0px;
+  text-align: right;
+}
+
+input[type="text"]  {
+   color: #666;
+   border: 1px solid #B9B9B9;
+   margin: 0px;
+   padding: 0px;
+   width: 250px;
+   height: 23px;
+}
+
+input[type="text"]:hover, input[type="text"]:focus {
+   border: 1px solid #666;
+}
+
+input[type="submit"] {
+   color: #666;
+   padding: 4px 8px 4px 8px;
+   margin-left: 12px;
+   border: 1px solid #C6C6C6;
+   background-color: #F8F8F8;
+   -webkit-border-radius: 3px;
+   -moz-border-radius: 3px;
+}
+
+input[type="submit"]:hover {
+   color: #333;
+   -webkit-box-shadow: 0px 0px 2px #333;
+   -moz-box-shadow: 0px 0px 2px #333;
+}
+
+.error {
+   color: #FF6666;
+}

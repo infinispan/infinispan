@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -26,12 +26,16 @@ import org.infinispan.config.Configuration;
 import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesManualEvictionTest")
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
@@ -50,13 +54,13 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    }
    
    public void testManualEvictCustomKeyValue() {
-      MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p1 = new ManualEvictionPojo();
       p1.i = 64;
-      MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p2 = new ManualEvictionPojo();
       p2.i = 24;
-      MarshalledValueTest.Pojo p3 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p3 = new ManualEvictionPojo();
       p3.i = 97;
-      MarshalledValueTest.Pojo p4 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p4 = new ManualEvictionPojo();
       p4.i = 35;
 
       cache.put(p1, p2);
@@ -68,9 +72,9 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    }
    
    public void testEvictPrimitiveKeyCustomValue() {
-      MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p1 = new ManualEvictionPojo();
       p1.i = 51;
-      MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+      ManualEvictionPojo p2 = new ManualEvictionPojo();
       p2.i = 78;
 
       cache.put("key-isoprene", p1);
@@ -79,6 +83,34 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
       assert !interceptor.marshalledValueCreated;
+   }
+
+   static class ManualEvictionPojo implements Externalizable {
+      int i;
+
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         ManualEvictionPojo pojo = (ManualEvictionPojo) o;
+         if (i != pojo.i) return false;
+         return true;
+      }
+
+      public int hashCode() {
+         int result;
+         result = i;
+         return result;
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeInt(i);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         i = in.readInt();
+      }
    }
 
 }

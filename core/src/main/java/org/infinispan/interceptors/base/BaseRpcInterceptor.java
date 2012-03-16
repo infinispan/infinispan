@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,6 +25,7 @@ package org.infinispan.interceptors.base;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -59,6 +61,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          command.setFlags(ctx.getFlags());
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
          rpcManager.broadcastRpcCommand(command, sync, false);
       }
       return retVal;
@@ -75,15 +78,16 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected final boolean isLocalModeForced(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (trace) log.trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
+         if (getLog().isTraceEnabled()) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }
       return false;
    }
 
-   protected final boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
+   protected static boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
-      return ctx.isOriginLocal() && (ctx.hasModifications() || !ctx.getLockedKeys().isEmpty());
+      return ctx.isOriginLocal() && (ctx.hasModifications()  ||
+                                           !((LocalTxInvocationContext) ctx).getRemoteLocksAcquired().isEmpty());
    }
 }

@@ -1,65 +1,70 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
 @Test(groups = "functional", testName = "topologyaware.TopologyAwareStateTransferTest")
+@CleanupAfterTest
 public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
-   private Address a0;
-   private Address a1;
-   private Address a2;
-   private Address a3;
-   private Address a4;
+   private Address[] addresses;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration defaultConfig = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      System.out.println("defaultConfig = " + defaultConfig.getNumOwners());
+      log.debug("defaultConfig = " + defaultConfig.getNumOwners());
       defaultConfig.setL1CacheEnabled(false);
       createClusteredCaches(5, defaultConfig);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2), cache(3), cache(4));
 
       TopologyAwareConsistentHash hash =
             (TopologyAwareConsistentHash) cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
-      List<Address> addressList = hash.getCaches();
-      System.out.println("addressList = " + addressList);
-      a0 = addressList.get(0);
-      a1 = addressList.get(1);
-      a2 = addressList.get(2);
-      a3 = addressList.get(3);
-      a4 = addressList.get(4);
-      printTopologyInfo("a0", cache(a0).getConfiguration().getGlobalConfiguration());
-      printTopologyInfo("a1", cache(a1).getConfiguration().getGlobalConfiguration());
-      printTopologyInfo("a2", cache(a2).getConfiguration().getGlobalConfiguration());
-      printTopologyInfo("a3", cache(a3).getConfiguration().getGlobalConfiguration());
-      printTopologyInfo("a4", cache(a4).getConfiguration().getGlobalConfiguration());
-   }
-
-   private void printTopologyInfo(String str, GlobalConfiguration gc) {
-      System.out.println(str + ": " + gc.getRackId() + "->" + gc.getMachineId());
+      Set<Address> addressSet = hash.getCaches();
+      addresses = addressSet.toArray(new Address[addressSet.size()]);
    }
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {      
+   protected void clearContent() throws Throwable {
    }
 
    Cache cache(Address addr) {
@@ -70,109 +75,112 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    }
 
    public void testInitialState() {
-      cache(0).put(a0,"v0");
-      cache(0).put(a1,"v0");
-      cache(0).put(a2,"v0");
-      cache(0).put(a3,"v0");
-      cache(0).put(a4,"v0");
-      assertExistence(a0);
-      assertExistence(a1);
-      assertExistence(a2);
-      assertExistence(a3);
-      assertExistence(a4);
+      cache(0).put(addresses[0],"v0");
+      cache(0).put(addresses[1],"v1");
+      cache(0).put(addresses[2],"v2");
+      cache(0).put(addresses[3],"v3");
+      cache(0).put(addresses[4],"v4");
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[2], TestingUtil.printCache(cache(addresses[2])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
+      assertExistence(addresses[0]);
+      assertExistence(addresses[1]);
+      assertExistence(addresses[2]);
+      assertExistence(addresses[3]);
+      assertExistence(addresses[4]);
    }
 
    @Test (dependsOnMethods = "testInitialState")
    public void testNodeDown() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(a4).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[4]).getCacheManager();
       log.info("Here is where ST starts");
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(a0), cache(a1), cache(a2), cache(a3));
+      TestingUtil.blockUntilViewsReceived(60000, false, caches());
+      TestingUtil.waitForRehashToComplete(caches());
       log.info("Here is where ST ends");
-      List<Address> addressList = cache(a0).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
-      System.out.println("After shutting down " + a4 + " caches are " +  addressList);
+      Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+      log.debug("After shutting down " + addresses[4] + " caches are " +  addressList);
 
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[2], TestingUtil.printCache(cache(addresses[2])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
 
-      System.out.println(TestingUtil.printCache(cache(a0)));
-      System.out.println(TestingUtil.printCache(cache(a1)));
-      System.out.println(TestingUtil.printCache(cache(a2)));
-      System.out.println(TestingUtil.printCache(cache(a3)));
-
-      assertExistence(a0);
-      assertExistence(a1);
-      assertExistence(a2);
-      assertExistence(a3);
-      assertExistence(a4);      
+      assertExistence(addresses[0]);
+      assertExistence(addresses[1]);
+      assertExistence(addresses[2]);
+      assertExistence(addresses[3]);
+      assertExistence(addresses[4]);
    }
 
    @Test (dependsOnMethods = "testNodeDown")
    public void testNodeDown2() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(a2).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[2]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(a0), cache(a1), cache(a3));
-      assertExistence(a0);
-      assertExistence(a1);
-      assertExistence(a2);
-      assertExistence(a3);
-      assertExistence(a4);
+      TestingUtil.blockUntilViewsReceived(60000, false, caches());
+      TestingUtil.waitForRehashToComplete(caches());
+      Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+      log.debug("After shutting down " + addresses[2] + " caches are " +  addressList);
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
+      assertExistence(addresses[0]);
+      assertExistence(addresses[1]);
+      assertExistence(addresses[2]);
+      assertExistence(addresses[3]);
+      assertExistence(addresses[4]);
    }
 
    @Test (dependsOnMethods = "testNodeDown2")
    public void testNodeDown3() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(a1).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[1]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(a0), cache(a3));
-      assertExistence(a0);
-      assertExistence(a1);
-      assertExistence(a2);
-      assertExistence(a3);
-      assertExistence(a4);
+      TestingUtil.blockUntilViewsReceived(60000, false, caches());
+      TestingUtil.waitForRehashToComplete(caches());
+      Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+      log.debug("After shutting down " + addresses[1] + " caches are " +  addressList);
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
+      assertExistence(addresses[0]);
+      assertExistence(addresses[1]);
+      assertExistence(addresses[2]);
+      assertExistence(addresses[3]);
+      assertExistence(addresses[4]);
    }
 
 
    private void assertExistence(final Object key) {
-      ConsistentHash hash = cache(a0).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash hash = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash();
       final List<Address> addresses = hash.locate(key, 2);
-      System.out.println(key + " should be present on = " + addresses);
-      log.info(key + " should be present on = " + addresses);
+      log.debug(key + " should be present on = " + addresses);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int count = 0;
-            for (Cache c : caches()) {
-               if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                  System.out.println("It is here = " + address(c));
-                  count++;
-               }
-            }
-            System.out.println("count = " + count);
-            return count == 2;
-         }         
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache c : caches()) {
-               if (addresses.contains(address(c))) {
-                  if (!c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     System.out.println(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
-                     return false;
-                  }
-               } else {
-                  if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     System.out.println(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
-                     return false;
-                  }
-               }
-            }
-            return true;
+      int count = 0;
+      for (Cache c : caches()) {
+         if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
+            log.debug("It is here = " + address(c));
+            count++;
          }
-      });
+      }
+      log.debug("count = " + count);
+      assert count == 2;
+
+      for (Cache c : caches()) {
+         if (addresses.contains(address(c))) {
+            assert c.getAdvancedCache().getDataContainer().containsKey(key);
+         } else {
+            assert !c.getAdvancedCache().getDataContainer().containsKey(key);
+         }
+      }
    }
 
    @Override

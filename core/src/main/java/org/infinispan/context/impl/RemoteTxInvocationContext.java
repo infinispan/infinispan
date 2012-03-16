@@ -1,18 +1,40 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.transaction.xa.AbstractCacheTransaction;
+import org.infinispan.transaction.AbstractCacheTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
-import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Context to be used for transaction that originated remotelly.
+ * Context to be used for transaction that originated remotely.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -61,7 +83,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       return remoteTransaction.lookupEntry(key);
    }
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
+   public Map<Object, CacheEntry> getLookedUpEntries() {
       return remoteTransaction.getLookedUpEntries();
    }
 
@@ -78,9 +100,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
-         remoteTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
-      }
+      remoteTransaction.putLookedUpEntries(lookedUpEntries);
    }
 
    @Override
@@ -104,7 +124,17 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public AbstractCacheTransaction getCacheTrasaction() {
+   public AbstractCacheTransaction getCacheTransaction() {
       return remoteTransaction;
+   }
+
+   @Override
+   public Set<Object> getLockedKeys() {
+      return remoteTransaction.getLockedKeys();
+   }
+
+   @Override
+   public void addLockedKey(Object key) {
+      remoteTransaction.registerLockedKey(key);
    }
 }

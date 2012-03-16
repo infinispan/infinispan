@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,12 +24,14 @@ package org.infinispan.loaders.jdbc.stringbased;
 
 import static org.easymock.classextension.EasyMock.*;
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.testng.annotations.Test;
 
 /**
@@ -44,7 +47,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      CacheDelegate cache = new CacheDelegate("aName");
+      CacheImpl cache = new CacheImpl("aName");
       stringBasedCacheStore.init(config, cache, getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
@@ -54,7 +57,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      stringBasedCacheStore.init(config, new CacheDelegate("otherName"), getMarshaller());
+      stringBasedCacheStore.init(config, new CacheImpl("otherName"), getMarshaller());
       stringBasedCacheStore.start();
       assert stringBasedCacheStore.getConnectionFactory() == null;
 
@@ -76,4 +79,11 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       stringBasedCacheStore.stop();
       verify(tableManipulation, connectionFactory);
    }
+
+   @Override
+   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      super.testLoadAndStoreMarshalledValues();
+   }
+
 }

@@ -1,8 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.IClass;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
@@ -13,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author dpospisi@redhat.com
  * @author Mircea.Markus@jboss.com
  */
-public class UnitTestTestNGListener implements ITestListener {
+public class UnitTestTestNGListener implements ITestListener, IInvokedMethodListener {
 
    /**
     * Holds test classes actually running in all threads.
@@ -57,6 +81,9 @@ public class UnitTestTestNGListener implements ITestListener {
    }
 
    public void onStart(ITestContext arg0) {
+      String fullName = arg0.getName();
+      String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
+      TestCacheManagerFactory.testStarted(simpleName, fullName);
    }
 
    public void onFinish(ITestContext arg0) {
@@ -73,5 +100,16 @@ public class UnitTestTestNGListener implements ITestListener {
 
    private void printStatus() {
       System.out.println("Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
+   }
+
+   @Override
+   public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+   }
+
+   @Override
+   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
+      if (!method.isTestMethod())
+         return;
+      if (testResult.getThrowable() != null) log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
    }
 }

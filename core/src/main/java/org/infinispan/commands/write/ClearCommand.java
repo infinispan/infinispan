@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,11 +22,13 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Collections;
@@ -35,11 +38,10 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClearCommand implements WriteCommand {
+public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
    
    public static final byte COMMAND_ID = 5;
    CacheNotifier notifier;
-   private Set<Flag> flags;
 
    public ClearCommand() {
    }
@@ -112,12 +114,13 @@ public class ClearCommand implements WriteCommand {
    }
 
    @Override
-   public Set<Flag> getFlags() {
-      return flags;
+   public boolean isReturnValueExpected() {
+      return false;
    }
 
    @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
+
 }

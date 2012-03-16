@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -48,7 +49,7 @@ public final class FileReadLockKey implements Serializable {
    private final String fileName;
    private final int hashCode;
 
-   public FileReadLockKey(String indexName, String fileName) {
+   public FileReadLockKey(final String indexName, final String fileName) {
       if (indexName == null)
          throw new IllegalArgumentException("indexName shall not be null");
       if (fileName == null)
@@ -106,16 +107,16 @@ public final class FileReadLockKey implements Serializable {
       return fileName + "|RL|"+ indexName;
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileReadLockKey> {
+   public static final class Externalizer extends AbstractExternalizer<FileReadLockKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, FileReadLockKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final FileReadLockKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
       }
 
       @Override
-      public FileReadLockKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileReadLockKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
          return new FileReadLockKey(indexName, fileName);

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,6 +26,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,11 +44,11 @@ public class ClassFinder {
    
    private static final Log log = LogFactory.getLog(ClassFinder.class); 
    
-   public static final String PATH = System.getProperty("java.class.path") + File.pathSeparator
-            + System.getProperty("surefire.test.class.path");
+   public static final String PATH = SysPropertyActions.getProperty("java.class.path") + File.pathSeparator
+            + SysPropertyActions.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             clazzes.add(clazz);
@@ -56,7 +58,7 @@ public class ClassFinder {
    }
    
    public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             Annotation[] declaredAnnots = clazz.getDeclaredAnnotations();
@@ -71,7 +73,7 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> isAssignableFrom(List<Class<?>> classes, Class<?> clazz) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> c : classes) {
          if (clazz.isAssignableFrom(c)) {
             clazzes.add(c);
@@ -101,7 +103,7 @@ public class ClassFinder {
             files.add(new File(path));
          }
       }
-      log.debug("Looking for infinispan classes in " + files);     
+      log.debugf("Looking for infinispan classes in %s", files);
       if (files.isEmpty()) {
          return Collections.emptyList();
       } else {
@@ -115,7 +117,7 @@ public class ClassFinder {
 
    private static List<Class<?>> findClassesOnPath(File path) {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      Class<?> claz = null;
+      Class<?> claz;
 
       if (path.isDirectory()) {
          List<File> classFiles = new ArrayList<File>();
@@ -124,11 +126,11 @@ public class ClassFinder {
             String clazz = null;
             try {
                clazz = toClassName(cf.getAbsolutePath());
-               claz = Util.loadClassStrict(clazz);
+               claz = Util.loadClassStrict(clazz, null);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
-               log.warn(cf.getAbsolutePath() + " has reference to a class "
-                        + ncdfe.getMessage() + " that could not be loaded from classpath");
+               log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                         cf.getAbsolutePath(), ncdfe.getMessage());
             } catch (Throwable e) {
                // Catch all since we do not want skip iteration
                log.warn("On path " + cf.getAbsolutePath() + " could not load class "+ clazz, e);
@@ -136,29 +138,38 @@ public class ClassFinder {
          }
       } else {
          if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-            JarFile jar = null;
+            JarFile jar;
             try {
                jar = new JarFile(path);
             } catch (Exception ex) {
-               log.warn("Could not create jar file on path " + path);
+               log.warnf("Could not create jar file on path %s", path);
                return classes;
             }
-            Enumeration<JarEntry> en = jar.entries();
-            while (en.hasMoreElements()) {
-               JarEntry entry = en.nextElement();
-               if (entry.getName().endsWith("class")) {
-                  String clazz = null;
-                  try {
-                     clazz = toClassName(entry.getName());
-                     claz = Util.loadClassStrict(clazz);
-                     classes.add(claz);
-                  } catch (NoClassDefFoundError ncdfe) {
-                     log.warn(entry.getName() + " has reference to a class " + ncdfe.getMessage()
-                              + " that could not be loaded from classpath");
-                  } catch (Throwable e) {
-                     // Catch all since we do not want skip iteration
-                     log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
+            try {
+               Enumeration<JarEntry> en = jar.entries();
+               while (en.hasMoreElements()) {
+                  JarEntry entry = en.nextElement();
+                  if (entry.getName().endsWith("class")) {
+                     String clazz = null;
+                     try {
+                        clazz = toClassName(entry.getName());
+                        claz = Util.loadClassStrict(clazz, null);
+                        classes.add(claz);
+                     } catch (NoClassDefFoundError ncdfe) {
+                        log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                                  entry.getName(), ncdfe.getMessage());
+                     } catch (Throwable e) {
+                        // Catch all since we do not want skip iteration
+                        log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
+                     }
                   }
+               }
+            }
+            finally {
+               try {
+                  jar.close();
+               } catch (IOException e) {
+                  log.debugf(e, "error closing jar file %s", jar);
                }
             }
          }
@@ -168,16 +179,18 @@ public class ClassFinder {
 
    private static void dir(List<File> files, File dir) {
       File[] entries = dir.listFiles();
-      for (File entry : entries) {
-         if (entry.isDirectory()) {
-            dir(files, entry);
-         } else if (entry.getName().endsWith("class")) {
-            files.add(entry);
+      if (entries != null) {
+         for (File entry : entries) {
+            if (entry.isDirectory()) {
+               dir(files, entry);
+            } else if (entry.getName().endsWith("class")) {
+               files.add(entry);
+            }
          }
       }
    }
 
    private static String toClassName(String fileName) {
-      return fileName.substring(fileName.lastIndexOf("org"), fileName.length() - 6).replaceAll(File.separatorChar == '\\' ? "\\\\" : File.separator, ".");
+      return fileName.substring(fileName.lastIndexOf("org" + File.separator), fileName.length() - 6).replace(File.separator, ".");
    }
 }

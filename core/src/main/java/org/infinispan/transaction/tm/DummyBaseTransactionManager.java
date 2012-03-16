@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -35,6 +36,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @author bela
@@ -45,6 +47,8 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    private static final long serialVersionUID = -6716097342564237376l;
    private static final Log log = LogFactory.getLog(DummyBaseTransactionManager.class);
    private static final boolean trace = log.isTraceEnabled();
+   final UUID transactionManagerId = UUID.randomUUID();
+   private boolean useXaXid = false;
 
    /**
     * Starts a new transaction, and associate it with the calling thread.
@@ -187,7 +191,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    public Transaction suspend() throws SystemException {
       Transaction retval = getTransaction();
       setTransaction(null);
-      if (trace) log.trace("Suspending tx " + retval);
+      if (trace) log.tracef("Suspending tx %s", retval);
       return retval;
    }
 
@@ -202,7 +206,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     *                               If the transaction service fails in an unexpected way.
     */
    public void resume(Transaction tx) throws InvalidTransactionException, IllegalStateException, SystemException {
-      if (trace) log.trace("Resuming tx " + tx);
+      if (trace) log.tracef("Resuming tx %s", tx);
       setTransaction(tx);
    }
 
@@ -211,8 +215,15 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     *
     * @param tx
     */
-   public void setTransaction(Transaction tx) {
+   public static void setTransaction(Transaction tx) {
       thread_local.set((DummyTransaction) tx);
    }
 
+   public final boolean isUseXaXid() {
+      return useXaXid;
+   }
+
+   public final void setUseXaXid(boolean useXaXid) {
+      this.useXaXid = useXaXid;
+   }
 }

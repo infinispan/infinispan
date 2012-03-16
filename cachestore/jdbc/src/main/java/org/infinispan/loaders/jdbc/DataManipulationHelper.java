@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -36,7 +37,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -47,7 +48,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class DataManipulationHelper {
 
-   private static final Log log = LogFactory.getLog(DataManipulationHelper.class);
+   private static final Log log = LogFactory.getLog(DataManipulationHelper.class, Log.class);
 
    private final ConnectionFactory connectionFactory;
    private final TableManipulation tableManipulation;
@@ -69,10 +70,11 @@ public abstract class DataManipulationHelper {
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
          if (log.isTraceEnabled()) {
-            log.trace("Successfully removed " + result + " rows.");
+            log.tracef("Successfully removed %d rows.", result);
          }
       } catch (SQLException ex) {
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         log.failedClearingJdbcCacheStore(ex);
+         throw new CacheLoaderException("Failed clearing cache store", ex);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -98,7 +100,7 @@ public abstract class DataManipulationHelper {
             if (readCount % batchSize == 0) {
                ps.executeBatch();
                if (log.isTraceEnabled()) {
-                  log.trace("Executing batch " + readCount / batchSize + ", batch size is " + batchSize);
+                  log.tracef("Executing batch %s, batch size is %d", readCount / batchSize, batchSize);
                }
             }
             objFromStream = marshaller.objectFromObjectStream(objectInput);
@@ -107,14 +109,17 @@ public abstract class DataManipulationHelper {
             ps.executeBatch();//flush the batch
          }
          if (log.isTraceEnabled()) {
-            log.trace("Successfully inserted " + readCount + " buckets into the database, batch size is " + batchSize);
+            log.tracef("Successfully inserted %d buckets into the database, batch size is %d", readCount, batchSize);
          }
       } catch (IOException ex) {
-         logAndThrow(ex, "I/O failure while integrating state into store");
+         log.ioErrorIntegratingState(ex);
+         throw new CacheLoaderException("I/O failure while integrating state into store", ex);
       } catch (SQLException e) {
-         logAndThrow(e, "SQL failure while integrating state into store");
+         log.sqlFailureIntegratingState(e);
+         throw new CacheLoaderException("SQL failure while integrating state into store", e);
       } catch (ClassNotFoundException e) {
-         logAndThrow(e, "Unexpected failure while integrating state into store");
+         log.classNotFoundIntegratingState(e);
+         throw new CacheLoaderException("Unexpected failure while integrating state into store", e);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream"); 
          Thread.currentThread().interrupt();
@@ -133,7 +138,7 @@ public abstract class DataManipulationHelper {
       try {
          String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running sql '" + sql);
+            log.tracef("Running sql %s", sql);
          }
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
@@ -148,9 +153,11 @@ public abstract class DataManipulationHelper {
          }
          marshaller.objectToObjectStream(streamDelimiter, objectOutput);
       } catch (SQLException e) {
-         logAndThrow(e, "SQL Error while storing string keys to database");
+         log.sqlFailureStoringKeys(e);
+         throw new CacheLoaderException("SQL Error while storing string keys to database", e);
       } catch (IOException e) {
-         logAndThrow(e, "I/O Error while storing string keys to database");
+         log.ioErrorStoringKeys(e);
+         throw new CacheLoaderException("I/O Error while storing string keys to database", e);
       }
       finally {
          JdbcUtil.safeClose(rs);
@@ -166,7 +173,7 @@ public abstract class DataManipulationHelper {
       try {
          String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running sql '" + sql);
+            log.tracef("Running sql %s", sql);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
@@ -181,9 +188,8 @@ public abstract class DataManipulationHelper {
          }
          return result;
       } catch (SQLException e) {
-         String message = "SQL error while fetching all StoredEntries";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.sqlFailureFetchingAllStoredEntries(e);
+         throw new CacheLoaderException("SQL error while fetching all StoredEntries", e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
@@ -211,9 +217,8 @@ public abstract class DataManipulationHelper {
          }
          return result;
       } catch (SQLException e) {
-         String message = "SQL error while fetching all StoredEntries";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.sqlFailureFetchingAllStoredEntries(e);
+         throw new CacheLoaderException("SQL error while fetching all StoredEntries", e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
@@ -241,13 +246,12 @@ public abstract class DataManipulationHelper {
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
          while (rs.next()) {
-            loadAllProcess(rs, result);
+            loadAllProcess(rs, result, maxEntries);
          }
          return result;
       } catch (SQLException e) {
-         String message = "SQL error while fetching all StoredEntries";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.sqlFailureFetchingAllStoredEntries(e);
+         throw new CacheLoaderException("SQL error while fetching all StoredEntries", e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
@@ -263,6 +267,8 @@ public abstract class DataManipulationHelper {
 
    protected abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException;
 
+   protected abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result, int maxEntries) throws SQLException, CacheLoaderException;
+
    protected abstract void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException;
 
    protected abstract void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException;
@@ -270,8 +276,4 @@ public abstract class DataManipulationHelper {
    protected abstract boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput)
          throws SQLException, CacheLoaderException, IOException, ClassNotFoundException, InterruptedException;
 
-   public static void logAndThrow(Exception e, String message) throws CacheLoaderException {
-      log.error(message, e);
-      throw new CacheLoaderException(message, e);
-   }
 }

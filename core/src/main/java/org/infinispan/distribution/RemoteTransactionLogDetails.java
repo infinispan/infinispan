@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
@@ -10,6 +32,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +46,8 @@ public class RemoteTransactionLogDetails {
    final boolean drainNextCallWithoutLock;
    final List<WriteCommand> modifications;
    final Collection<PrepareCommand> pendingPreparesMap;
+
+   public static final RemoteTransactionLogDetails DEFAULT = new RemoteTransactionLogDetails(true, Collections.<WriteCommand>emptyList(), Collections.<PrepareCommand>emptyList());
 
    public RemoteTransactionLogDetails(boolean drainNextCallWithoutLock, List<WriteCommand> modifications, Collection<PrepareCommand> pendingPreparesMap) {
       this.drainNextCallWithoutLock = drainNextCallWithoutLock;
@@ -60,10 +85,9 @@ public class RemoteTransactionLogDetails {
 
       @Override
       public void writeObject(ObjectOutput output, RemoteTransactionLogDetails object) throws IOException {
-         RemoteTransactionLogDetails d = object;
-         output.writeBoolean(d.isDrainNextCallWithoutLock());
-         output.writeObject(d.getModifications());
-         output.writeObject(d.getPendingPreparesMap());
+         output.writeBoolean(object.isDrainNextCallWithoutLock());
+         output.writeObject(object.getModifications());
+         output.writeObject(object.getPendingPreparesMap());
 
       }
 

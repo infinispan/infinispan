@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,12 +22,15 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.transaction.tm.BatchModeTransactionManager;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Util;
-
 import javax.transaction.TransactionManager;
+
+import org.infinispan.CacheException;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Uses a number of mechanisms to retrieve a transaction manager.
@@ -37,7 +41,15 @@ import javax.transaction.TransactionManager;
  */
 @DefaultFactoryFor(classes = {TransactionManager.class})
 public class TransactionManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
+
    public <T> T construct(Class<T> componentType) {
+
+      if (!configuration.isTransactionalCache()) {
+         return null;
+      }
+
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;
       TransactionManagerLookup lookup = configuration.getTransactionManagerLookup();
@@ -45,23 +57,30 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       if (lookup == null) {
          // Nope. See if we can look it up from JNDI
          if (configuration.getTransactionManagerLookupClass() != null) {
-            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass());
+            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass(), configuration.getClassLoader());
          }
       }
 
       try {
          if (lookup != null) {
+            componentRegistry.wireDependencies(lookup);
             transactionManager = lookup.getTransactionManager();
          }
       }
       catch (Exception e) {
-         log.info("failed looking up TransactionManager, will not use transactions", e);
+         log.couldNotInstantiateTransactionManager(e);
       }
 
       if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
-         log.info("Using a batchMode transaction manager");
+         log.usingBatchModeTransactionManager();
          transactionManager = BatchModeTransactionManager.getInstance();
       }
+
+      if (transactionManager == null) {
+         throw new CacheException("This is transactional cache but no transaction manager could be found. " +
+                                        "Configure the transaction manager lookup properly.");
+      }
+
       return componentType.cast(transactionManager);
    }
 }

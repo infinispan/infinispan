@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,8 +23,6 @@
 package org.infinispan.marshall;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,9 +42,10 @@ import java.io.OutputStream;
  *
  * @see Marshaller
  */
-@Scope(Scopes.GLOBAL)
 @ThreadSafe
 public interface StreamingMarshaller extends Marshaller {
+   
+   void stop();
 
    /**
     * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data 
@@ -62,20 +62,27 @@ public interface StreamingMarshaller extends Marshaller {
     * <p>On the other hand, when a call is reentrant, i.e. startObjectOutput/startObjectOutput(reentrant)...finishObjectOutput/finishObjectOutput, 
     * the StreamingMarshaller implementation might treat it differently. An example of reentrancy would be marshalling of {@link MarshalledValue}.
     * When sending or storing a MarshalledValue, a call to startObjectOutput() would occur so that the stream is open and 
-    * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent accross. 
-    * This enables lazy deserialization on the receiver side which is performance gain. The StreamingMarshaller implementation could decide
+    * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent across. 
+    * This enables storing as binary on the receiver side which is performance gain. The StreamingMarshaller implementation could decide
     * that it needs a separate ObjectOutput or similar for the 2nd call since it's aim is only to get the raw byte array version 
     * and the close finish with it.</p>
     *
     * @param os output stream
-    * @param isReentrant whether the call is reentrant or not. 
+    * @param isReentrant whether the call is reentrant or not.
+    * @param estimatedSize estimated size in bytes of the output. Only meant as a possible performance optimization.
     * @return ObjectOutput to write to
     * @throws IOException
     */
+   ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException;
+
+   /**
+    * Use {@link #startObjectOutput(OutputStream, boolean, int)} instead
+    */
+   @Deprecated
    ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException;
 
    /**
-    * Finish using the given ObjectOutput. After opening a ObjectOutput and calling objectToObjectStream() mutliple
+    * Finish using the given ObjectOutput. After opening a ObjectOutput and calling objectToObjectStream() multiple
     * times, use this method to flush the data and close if necessary
     *
     * @param oo data output that finished using
@@ -103,14 +110,14 @@ public interface StreamingMarshaller extends Marshaller {
     * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p> 
     *  
     * @param is input stream
-    * @param isReentrant whether the call is reentrant or not. 
+    * @param isReentrant whether the call is reentrant or not.
     * @return ObjectInput to read from
     * @throws IOException
     */
    ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException;
 
    /**
-    * Finish using the given ObjectInput. After opening a ObjectInput and calling objectFromObjectStream() mutliple
+    * Finish using the given ObjectInput. After opening a ObjectInput and calling objectFromObjectStream() multiple
     * times, use this method to flush the data and close if necessary
     *
     * @param oi data input that finished using

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.affinity;
 
 import junit.framework.Assert;
@@ -7,8 +29,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -39,7 +59,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
 
 
    protected void testSingleKey() throws InterruptedException {
-      Map<Address, BlockingQueue> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
+      Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
       assertEquals(getAddresses().size(), blockingQueueMap.keySet().size());
       assertEventualFullCapacity(getAddresses());
    }
@@ -62,12 +82,12 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       assertUnaffected();
    }
 
-   protected void testShutdownOwnManager() throws InterruptedException {
+   protected void testShutdownOwnManager() {
       log.info("**** here it starts");
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
       Assert.assertEquals(1, caches.size());
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      TestingUtil.blockUntilViewsReceived(10000, false, caches.toArray(new Cache[0]));
       Assert.assertEquals(1, topology().size());
 
       eventually(new Condition() {

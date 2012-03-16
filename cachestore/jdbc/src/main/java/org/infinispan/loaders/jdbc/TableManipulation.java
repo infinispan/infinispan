@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,6 @@
 package org.infinispan.loaders.jdbc;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -32,7 +32,7 @@ import java.util.Locale;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -43,7 +43,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TableManipulation implements Cloneable {
 
-   private static final Log log = LogFactory.getLog(TableManipulation.class);
+   private static final Log log = LogFactory.getLog(TableManipulation.class, Log.class);
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 
@@ -98,52 +98,23 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-      assertNotNull(getTableName(), "table name is mandatory");
-      ResultSet rs = null;
-      try {
-         // (a j2ee spec compatible jdbc driver has to fully
-         // implement the DatabaseMetaData)
-         DatabaseMetaData dmd = connection.getMetaData();
-         String catalog = connection.getCatalog();
-         String schema = null;
-         String quote = dmd.getIdentifierQuoteString();
-         if (tableName.startsWith(quote)) {
-            if (!tableName.endsWith(quote)) {
-               throw new IllegalStateException("Mismatched quote in table name: " + tableName);
-            }
-            int quoteLength = quote.length();
-            tableName = tableName.substring(quoteLength, tableName.length() - quoteLength);
-            if (dmd.storesLowerCaseQuotedIdentifiers()) {
-               tableName = toLowerCase(tableName);
-            } else if (dmd.storesUpperCaseQuotedIdentifiers()) {
-               tableName = toUpperCase(tableName);
-            }
-         } else {
-            if (dmd.storesLowerCaseIdentifiers()) {
-               tableName = toLowerCase(tableName);
-            } else if (dmd.storesUpperCaseIdentifiers()) {
-               tableName = toUpperCase(tableName);
-            }
-         }
-
-         int dotIndex;
-         if ((dotIndex = tableName.indexOf('.')) != -1) {
-            // Yank out schema name ...
-            schema = tableName.substring(0, dotIndex);
-            tableName = tableName.substring(dotIndex + 1);
-         }
-
-         rs = dmd.getTables(catalog, schema, tableName, null);
-         return rs.next();
-      }
-      catch (SQLException e) {
-         // This should not happen. A J2EE compatible JDBC driver is
-         // required fully support meta data.
-         throw new CacheLoaderException("Error while checking if table already exists " + tableName, e);
-      }
-      finally {
-         JdbcUtil.safeClose(rs);
-      }
+     assertNotNull(getTableName(), "table name is mandatory");
+     Statement stmt = null;
+     ResultSet rs = null;
+     try {
+        stmt = connection.createStatement();
+        // Use implicit DB schema mapped to a particular user
+        // It makes environments where DBs are shared easier to support
+        rs = stmt.executeQuery("SELECT count(*) FROM " + tableName);
+        return rs.next();
+     } catch (SQLException e) {
+        if (log.isTraceEnabled())
+           log.tracef(e, "SQLException occurs while checking the table %s", tableName);
+        return false;
+     } finally {
+        JdbcUtil.safeClose(rs);
+        JdbcUtil.safeClose(stmt);
+     }
    }
 
    public void createTable(Connection conn) throws CacheLoaderException {
@@ -154,7 +125,7 @@ public class TableManipulation implements Cloneable {
             + timestampColumnName + " " + timestampColumnType +
             ", PRIMARY KEY (" + idColumnName + "))";
       if (log.isTraceEnabled()) {
-         log.trace("Creating table with following DDL: '" + createTableDdl + "'.");
+         log.tracef("Creating table with following DDL: '%s'.", createTableDdl);
       }
       executeUpdateSql(conn, createTableDdl);
    }
@@ -182,7 +153,7 @@ public class TableManipulation implements Cloneable {
          statement = conn.createStatement();
          statement.executeUpdate(sql);
       } catch (SQLException e) {
-         log.error("Error while creating table; used DDL statement: '" + sql + "'", e);
+         log.errorCreatingTable(sql, e);
          throw new CacheLoaderException(e);
       } finally {
          JdbcUtil.safeClose(statement);
@@ -194,7 +165,7 @@ public class TableManipulation implements Cloneable {
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
       if (log.isTraceEnabled()) {
-         log.trace("Dropping table with following DDL '" + dropTableDdl + "\'");
+         log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
       executeUpdateSql(conn, dropTableDdl);
    }
@@ -285,21 +256,51 @@ public class TableManipulation implements Cloneable {
 
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
-         updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+               break;
+         }
       }
       return updateRowSql;
    }
 
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
+         }
       }
       return selectRowSql;
    }
 
    public String getDeleteRowSql() {
       if (deleteRowSql == null) {
-         deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         switch(getDatabaseType()) {
+            case SYBASE:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
+         }
       }
       return deleteRowSql;
    }
@@ -430,7 +431,7 @@ public class TableManipulation implements Cloneable {
 
    public boolean isVariableLimitSupported() {
       DatabaseType type = getDatabaseType();
-      return type != DatabaseType.DB2_390;
+      return !(type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
    }
 
    public String getLoadSomeRowsSql() {
@@ -452,7 +453,11 @@ public class TableManipulation implements Cloneable {
                loadSomeRowsSql = String.format("SELECT FIRST ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             case SQL_SERVER:
+               loadSomeRowsSql = String.format("SELECT TOP (?) %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
+               break;
             case ACCESS:
+            case HSQL:
+            case SYBASE:
                loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             default:
@@ -489,19 +494,18 @@ public class TableManipulation implements Cloneable {
             log.debug("Unable to guess database type from JDBC metadata.", e);
          }
          if (databaseType == null) {
-            log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+            log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+            try {
+               String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
+               databaseType = guessDatabaseType(dbProduct);
+            } catch (Exception e) {
+               log.debug("Unable to guess database type from JDBC driver name.", e);
+            }
          }
-         try {
-            String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-            databaseType = guessDatabaseType(dbProduct);
-         } catch (Exception e) {
-            log.debug("Unable to guess database type from JDBC driver name.", e);
-         }
-
          if (databaseType == null) {
             throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
          } else {
-            log.info("Guessing database type as '" + databaseType + "'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+            log.debugf("Guessing database type as '%s'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
          }
       }
       return databaseType;
@@ -536,6 +540,8 @@ public class TableManipulation implements Cloneable {
             type = DatabaseType.ACCESS;
          } else if (name.toLowerCase().contains("oracle")) {
             type = DatabaseType.ORACLE;
+         } else if (name.toLowerCase().contains("adaptive")) {
+            type = DatabaseType.SYBASE;
          }
       }
       return type;

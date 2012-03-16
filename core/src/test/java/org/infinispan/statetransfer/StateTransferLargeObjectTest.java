@@ -1,8 +1,29 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -15,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static org.testng.Assert.assertEquals;
+
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-654.
  *
@@ -24,7 +47,7 @@ import java.util.Random;
 @Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest")
 public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
+   private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
    
    private Cache c0;
    private Cache c1;
@@ -43,8 +66,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       c1 = cache(1);
       c2 = cache(2);
       c3 = cache(3);
-      TestingUtil.blockUntilViewsReceived(10000, c0, c1, c2, c3);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c0, c1, c2, c3);
+      waitForClusterToForm();
       log.info("Rehash is complete!");
       cache = new HashMap<Integer, BigObject>();
    }
@@ -114,7 +136,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
    private void assertValue(int i, Object o) {
       String msg = " expected some value for " + i + " but got " + o;
       if (!(o instanceof BigObject)) log. error(msg);
-      assert o.equals(cache.get(i));
+      assertEquals(o, cache.get(i));
    }
 
    private BigObject createBigObject(int num, String prefix) {

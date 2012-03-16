@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.demo;
 
 import org.infinispan.Cache;
@@ -12,6 +34,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.*;
 import org.infinispan.notifications.cachemanagerlistener.event.*;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,16 +54,18 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Run it with -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true
+ *
  * @author Manik Surtani
  */
 public class InfinispanDemo {
@@ -71,7 +96,7 @@ public class InfinispanDemo {
    private String startCacheButtonLabel = "Start Cache", stopCacheButtonLabel = "Stop Cache";
    private String statusStarting = "Starting Cache ... ", statusStarted = "Cache Running.", statusStopping = "Stopping Cache ...", statusStopped = "Cache Stopped.";
    private ExecutorService asyncExecutor;
-   private final AtomicInteger updateCounter = new AtomicInteger(0);
+   private ExecutorService tableUpdateExecutor;
    private JTable dataTable;
    private JSlider generateSlider;
    private JSpinner lifespanSpinner;
@@ -85,7 +110,11 @@ public class InfinispanDemo {
    private DefaultCacheManager cacheManager;
 
    public static void main(String[] args) {
-      String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
+      String cfgFileName = null;
+      if(args.length > 0)
+         cfgFileName=args[0];
+      else
+         cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
       frame = new JFrame("Infinispan GUI Demo (STOPPED)");
       frame.setContentPane(new InfinispanDemo(cfgFileName).panel1);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -96,6 +125,8 @@ public class InfinispanDemo {
 
    public InfinispanDemo(String cfgFileName) {
       asyncExecutor = Executors.newFixedThreadPool(1);
+      tableUpdateExecutor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue(1),
+            new ThreadPoolExecutor.DiscardPolicy());
 
       cacheConfigFile = cfgFileName;
       cacheStatusProgressBar.setVisible(false);
@@ -144,8 +175,8 @@ public class InfinispanDemo {
                   processAction(goButton, false);
 
                   // reset these values
-                  lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
-                  maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+                  lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
+                  maxIdleSpinner.setValue(cache.getCacheConfiguration().expiration().maxIdle());
                   // now switch to the data pane
                   mainPane.setSelectedIndex(1);
                }
@@ -155,7 +186,7 @@ public class InfinispanDemo {
                      String s = lifespanSpinner.getValue().toString();
                      return Long.parseLong(s);
                   } catch (Exception e) {
-                     return cache.getConfiguration().getExpirationLifespan();
+                     return cache.getCacheConfiguration().expiration().lifespan();
                   }
                }
 
@@ -164,7 +195,7 @@ public class InfinispanDemo {
                      String s = maxIdleSpinner.getValue().toString();
                      return Long.parseLong(s);
                   } catch (Exception e) {
-                     return cache.getConfiguration().getExpirationMaxIdle();
+                     return cache.getCacheConfiguration().expiration().maxIdle();
                   }
                }
             });
@@ -216,9 +247,18 @@ public class InfinispanDemo {
                public void run() {
                   int entries = generateSlider.getValue();
 
+                  if (entries > 1000) {
+                     for (int i = 0; i < entries / 1000; i++) {
+                        Map<String, String> rand = new HashMap<String, String>();
+                        while (rand.size() < 1000) rand.put(randomString(), randomString());
+                        cache.putAll(rand);
+                     }
+                     // generate the rest of the entries
+                     entries = entries % 1000;
+                  }
+
                   Map<String, String> rand = new HashMap<String, String>();
                   while (rand.size() < entries) rand.put(randomString(), randomString());
-
                   cache.putAll(rand);
 
                   processAction(randomGeneratorButton, false);
@@ -318,7 +358,12 @@ public class InfinispanDemo {
 
                if (cacheManager == null) {
                   // update config file display
-                  cacheManager = new DefaultCacheManager(resource.openStream());                                    
+                  InputStream stream = resource.openStream();
+                  try {
+                     cacheManager = new DefaultCacheManager(stream);
+                  } finally {
+                     Util.close(stream);
+                  }
                } 
                cache = cacheManager.getCache();    
                cache.start();
@@ -327,24 +372,28 @@ public class InfinispanDemo {
                configFileName.setText(resource.toString());
                configFileName.repaint();
 
+               InputStream is = null;
                try {
-                  configFileContents.setText(readContents(resource.openStream()));
+                  is = resource.openStream();
+                  configFileContents.setText(readContents(is));
                   configFileContents.setEditable(false);
                }
                catch (Exception e) {
                   log.warn("Unable to open config file [" + cacheConfigFile + "] for display", e);
+               } finally {
+                  Util.close(is);
                }
                configFileContents.repaint();
 
 
                CacheListener cl = new CacheListener();
                cache.addListener(cl);
-               EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+               EmbeddedCacheManager cacheManager = cache.getCacheManager();
                cacheManager.addListener(cl);
                updateClusterTable(cacheManager.getMembers());
 
-               lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
-               maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+               lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
+               maxIdleSpinner.setValue(cache.getCacheConfiguration().expiration().maxIdle());
                cacheContentsSizeLabel.setText("Cache contains " + cache.size() + " entries");
 
                moveCacheToState(ComponentStatus.RUNNING);
@@ -448,7 +497,7 @@ public class InfinispanDemo {
       }
    }
 
-   @Listener
+   @Listener(sync = true)
    public class CacheListener {
       @ViewChanged
       @Merged
@@ -458,17 +507,16 @@ public class InfinispanDemo {
 
       @CacheEntryModified
       @CacheEntryRemoved
-      @CacheEntryEvicted
+      @CacheEntriesEvicted
       public void removed(Event e) {
          if (!e.isPre()) updateCachedDataTable();
       }
    }
 
    private void updateCachedDataTable() {
-      updateCounter.incrementAndGet();
-      asyncExecutor.execute(new Runnable() {
+      tableUpdateExecutor.execute(new Runnable() {
          public void run() {
-            if (updateCounter.decrementAndGet() == 0) cachedDataTableModel.update();
+            cachedDataTableModel.update();
          }
       });
    }
@@ -530,7 +578,7 @@ public class InfinispanDemo {
 
    public class CachedDataTableModel extends AbstractTableModel {
 
-      List<InternalCacheEntry> data = new LinkedList<InternalCacheEntry>();
+      List<InternalCacheEntry> data = new ArrayList<InternalCacheEntry>();
       private static final long serialVersionUID = -7109980678271415778L;
 
       public int getRowCount() {
@@ -576,8 +624,9 @@ public class InfinispanDemo {
       public void update() {
          // whew - expensive stuff.
          data.clear();
+         long currentTimeMillis = System.currentTimeMillis();
          for (InternalCacheEntry ice : cache.getAdvancedCache().getDataContainer()) {
-            if (!ice.isExpired()) data.add(ice);
+            if (!ice.isExpired(currentTimeMillis)) data.add(ice);
          }
          cacheContentsSizeLabel.setText("Cache contains " + data.size() + " entries");
          fireTableDataChanged();

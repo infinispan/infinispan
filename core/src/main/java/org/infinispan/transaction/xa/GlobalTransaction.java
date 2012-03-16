@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Uniquely identifies a transaction that spans all JVMs in a cluster. This is used when replicating all modifications
  * in a transaction; the PREPARE and COMMIT (or ROLLBACK) messages have to have a unique identifier to associate the
- * changes with<br>. GlobalTransaction should be instantiated thorough {@link org.infinispan.transaction.xa.GlobalTransactionFactory} class, 
+ * changes with<br>. GlobalTransaction should be instantiated thorough {@link TransactionFactory} class,
  * as their type depends on the runtime configuration.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a> Apr 12, 2003
@@ -50,7 +51,7 @@ public class GlobalTransaction implements Cloneable {
 
    private static AtomicLong sid = new AtomicLong(0);
 
-   private long id = -1;
+   long id = -1;
 
    protected transient Address addr = null;
    private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
@@ -59,10 +60,10 @@ public class GlobalTransaction implements Cloneable {
    /**
     * empty ctor used by externalization.
     */
-   GlobalTransaction() {
+   protected GlobalTransaction() {
    }
 
-   GlobalTransaction(Address addr, boolean remote) {
+   protected GlobalTransaction(Address addr, boolean remote) {
       this.id = sid.incrementAndGet();
       this.addr = addr;
       this.remote = remote;
@@ -83,6 +84,7 @@ public class GlobalTransaction implements Cloneable {
    public void setRemote(boolean remote) {
       this.remote = remote;
    }
+
 
    @Override
    public int hashCode() {
@@ -128,29 +130,33 @@ public class GlobalTransaction implements Cloneable {
       }
    }
 
-   public static class Externalizer extends AbstractExternalizer<GlobalTransaction> {
-      protected GlobalTransactionFactory gtxFactory;
-
-      public Externalizer(GlobalTransactionFactory gtxFactory) {
-         this.gtxFactory = gtxFactory;
-      }
-
-      public Externalizer() {
-         gtxFactory = new GlobalTransactionFactory();
-      }
-
+   protected abstract static class AbstractGlobalTxExternalizer<T extends GlobalTransaction> extends AbstractExternalizer<T> {
       @Override
-      public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
+      public void writeObject(ObjectOutput output, T gtx) throws IOException {
          output.writeLong(gtx.id);
-         output.writeObject(gtx.addr);      
+         output.writeObject(gtx.addr);
       }
 
+      /**
+       * Factory method for GlobalTransactions
+       * @return a newly constructed instance of GlobalTransaction or one of its subclasses
+       **/
+      protected abstract T createGlobalTransaction();
+
       @Override
-      public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
+      public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         T gtx = createGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();
          return gtx;
+      }
+   }
+
+   public static class Externalizer extends AbstractGlobalTxExternalizer<GlobalTransaction> {
+      @Override
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends GlobalTransaction>> getTypeClasses() {
+         return Util.<Class<? extends GlobalTransaction>>asSet(GlobalTransaction.class);
       }
 
       @Override
@@ -159,8 +165,8 @@ public class GlobalTransaction implements Cloneable {
       }
 
       @Override
-      public Set<Class<? extends GlobalTransaction>> getTypeClasses() {
-         return Util.<Class<? extends GlobalTransaction>>asSet(GlobalTransaction.class);
+      protected GlobalTransaction createGlobalTransaction() {
+         return TransactionFactory.TxFactoryEnum.NODLD_NORECOVERY_XA.newGlobalTransaction();
       }
    }
 }

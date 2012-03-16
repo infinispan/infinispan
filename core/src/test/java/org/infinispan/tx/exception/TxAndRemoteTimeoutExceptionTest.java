@@ -1,15 +1,33 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.tx.exception;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.xa.TransactionTable;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,22 +53,22 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.TestTxAndRemoteTimeoutException")
+@Test(groups = "functional", testName = "tx.TxAndRemoteTimeoutExceptionTest")
 public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(TxAndRemoteTimeoutExceptionTest.class);
+   private static final Log log = LogFactory.getLog(TxAndRemoteTimeoutExceptionTest.class);
 
    private LockManager lm1;
    private LockManager lm0;
    private TransactionTable txTable0;
    private TransactionTable txTable1;
    private TransactionManager tm;
-   private TxStatusInterceptor txStatus = new TxStatusInterceptor();
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration defaultConfig = getDefaultConfig();
       defaultConfig.setLockAcquisitionTimeout(500);
+      defaultConfig.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       defaultConfig.setUseLockStriping(false);
       addClusterEnabledCacheManager(defaultConfig);
       addClusterEnabledCacheManager(defaultConfig);
@@ -59,7 +77,6 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       txTable0 = TestingUtil.getTransactionTable(cache(0));
       txTable1 = TestingUtil.getTransactionTable(cache(1));
       tm = cache(0).getAdvancedCache().getTransactionManager();
-      cache(1).getAdvancedCache().addInterceptor(txStatus, 0);
       TestingUtil.blockUntilViewReceived(cache(0), 2, 10000);
    }
 
@@ -118,16 +135,15 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
 
    private void runAssertion(CacheOperation operation) throws NotSupportedException, SystemException, HeuristicMixedException, HeuristicRollbackException, InvalidTransactionException, RollbackException {
-      txStatus.reset();
       tm.begin();
       cache(1).put("k1", "v1");
-      Transaction k1LockOwner = tm.suspend();
-      assert lm1.isLocked("k1");
+      DummyTransaction k1LockOwner = (DummyTransaction) tm.suspend();
+      assert !lm1.isLocked("k1");
 
       assertEquals(1, txTable1.getLocalTxCount());
       tm.begin();
       cache(0).put("k2", "v2");
-      assert lm0.isLocked("k2");
+      assert !lm0.isLocked("k2");
       assert !lm1.isLocked("k2");
 
       operation.execute();
@@ -135,6 +151,12 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       assertEquals(1, txTable1.getLocalTxCount());
       assertEquals(1, txTable0.getLocalTxCount());
 
+      final Transaction tx2 = tm.suspend();
+
+      tm.resume(k1LockOwner);
+      k1LockOwner.runPrepare();
+      tm.suspend();
+      tm.resume(tx2);
 
       try {
          tm.commit();
@@ -142,10 +164,6 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       } catch (RollbackException re) {
          //expected
       }
-      assert txStatus.teReceived;
-      assert txStatus.isTxInTableAfterTeOnPrepare;
-      //expect 1 as k1 is locked by the other tx
-      assertEquals(txStatus.numLocksAfterTeOnPrepare, 1, "This would make sure that locks are being released quickly, not waiting for a remote rollback to happen");
 
       assertEquals(0, txTable0.getLocalTxCount());
       assertEquals(1, txTable1.getLocalTxCount());
@@ -157,40 +175,8 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       assertEquals("v1", cache(1).get("k1"));
       assertEquals(0, txTable1.getLocalTxCount());
       assertEquals(0, txTable1.getLocalTxCount());
-      assertEquals(0, lm0.getNumberOfLocksHeld());
-      assertEquals(0, lm1.getNumberOfLocksHeld());
-   }
-
-   private class TxStatusInterceptor extends CommandInterceptor {
-
-      private boolean teReceived;
-
-      private boolean isTxInTableAfterTeOnPrepare;
-
-      private int numLocksAfterTeOnPrepare;
-
-      @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } catch (TimeoutException te) {
-            numLocksAfterTeOnPrepare = lm1.getNumberOfLocksHeld();
-            isTxInTableAfterTeOnPrepare = txTable1.containRemoteTx(ctx.getGlobalTransaction());
-            teReceived = true;
-            throw te;
-         }
-      }
-
-      @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         return super.handleDefault(ctx, command);
-      }
-
-      public void reset() {
-         this.teReceived = false;
-         this.isTxInTableAfterTeOnPrepare = false;
-         this.numLocksAfterTeOnPrepare = -1;
-      }
+      assertNotLocked("k1");
+      assertNotLocked("k2");
    }
 
    public interface CacheOperation {

@@ -1,13 +1,35 @@
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
    <head>
-      <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-      <meta content="Infinispan is a highly scalable platform for distributed data grids." name="description">
-      <meta content="Scalable, jsr107, cache, caching, distributed, grid, data grid, infinispan, nosql" name="keywords">
-      <meta content="all" name="robots">
-      <meta content="no-cache" http-equiv="cache-control">
-      <meta content="no-cache" http-equiv="pragma">
-      <link href="http://jboss.org/infinispan/orgLayoutBody/favicon/favicon.png" rel="Shortcut Icon">
+      <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+      <meta content="Infinispan is a highly scalable platform for distributed data grids." name="description" />
+      <meta content="Scalable, jsr107, cache, caching, distributed, grid, data grid, infinispan, nosql" name="keywords" />
+      <meta content="all" name="robots" />
+      <meta content="no-cache" http-equiv="cache-control" />
+      <meta content="no-cache" http-equiv="pragma" />
+      <link href="http://jboss.org/infinispan/orgLayoutBody/favicon/favicon.png" rel="Shortcut Icon" />
       <title>I N F I N I S P A N:  REST Server</title>
       <style type="text/css">
          body{
@@ -55,103 +77,18 @@
    </head>
 
    <body>
-   <p align="center">
-      <a href="http://www.infinispan.org"><img src="banner.png" border="0"></a>
-        </p>
+     <p align="center">
+       <a href="http://www.infinispan.org"><img src="banner.png" border="0" /></a>
+     </p>
      <div class="main">
       <h1>Welcome to the Infinispan REST Server</h1>
       <p>This server provides easy to use <a href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTful</a>
-         access to the Infinispan data grid. See below for usage details.</p>
-
-      <h4>1. Configuration</h4>
-      <p>Out of the box, Infinispan will use its local mode cache. To set a custom configuration, create an Infinispan
-         XML configuration file and set the PATH to it in your <tt>web.xml</tt> file, under the key <tt>infinispan.config</tt>.
-         See the sample <tt>web.xml</tt> file for details.  The value should be a path to your config file.</p>
-
-         <p>Please note that the REST server
-         only allows interaction with either the default cache, named <tt>___defaultcache</tt> or one of the named caches
-         in the configuration file. This is because the REST server starts default and pre-defined caches on startup in
-         order to provide a more consistent behaivour. So, if you don't pass any configuration file, you'll only be able
-         to interact with the default cache. To interact with more caches, pass a configuration file with the desired
-         named caches.</p>
-
-        <p><a href="http://community.jboss.org/wiki/InfinispanRESTserver">This chapter</a> in the Infinispan user guide has more details.</p>
-
-    <h4>2. Putting data in</h4>
-      <p>HTTP PUT and POST methods are used to place data in the cache - the data being the body of the request (the data
-         can be anything you like).  It is important that a <tt>Content-Type</tt> header is set.</p>
-    <h6>PUT /{cacheName}/{cacheKey}</h6>
-      <p>A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (if the
-         cache name is new, it will be automatically initialised).  For example <tt>http://someserver/hr/payRoll/3</tt>
-         (in which case <tt>hr</tt> is the cache name, and <tt>payRoll/3</tt> is the key).  Any existing data will be replaced, and
-         <tt>Time-To-Live</tt> and <tt>Last-Modified</tt> values will updated (if applicable).</p>
-    <h6>POST /{cacheName}/{cacheKey}</h6>
-      <p>Exactly the same as PUT, only if a value in a cache/key already exists, it will return a HTTP <tt>CONFLICT</tt> status
-         (and the content will not be updated).</p>
-
-    <h6>Headers:</h6>
-      <p>The following HTTP headers are supported:</p>
-        <table cellpadding="0" cellspacing="0">
-           <tr>
-              <th>Header Name</th>
-              <th>Required?</th>
-              <th>Description</th>
-           </tr>
-           <tr>
-              <td><tt>Content-Type</tt></td>
-              <td>Yes</td>
-              <td>Use <a href="http://www.iana.org/assignments/media-types/">media/mime-types</a>,
-               for example "application/json"</td>
-           </tr>
-           <tr>
-              <td><tt>timeToLiveSeconds</tt></td>
-              <td>No</td>
-              <td>The number of seconds before this entry will automatically be deleted</td>
-           </tr>
-           <tr>
-              <td><tt>maxIdleTimeSeconds</tt></td>
-              <td>No</td>
-              <td>The number of seconds after last usage of this entry when it will automatically be deleted</td>
-           </tr>
-           <tr>
-              <td><tt>performAsync</tt></td>
-              <td>No</td>
-              <td>If true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.</td>
-           </tr>
-        </table>
-
-    <h4>3. Getting data back out</h4>
-      <p>HTTP GET and HEAD are used to retrieve data from entries.</p>
-
-    <h6>GET /{cacheName}/{cacheKey}</h6>
-      <p>This will return the data found in the given cache name, under the given key - as the body of the response. A
-         <tt>Content-Type</tt> header will be supplied which matches what the data was inserted as. Browsers can use the cache
-         directly of course (e.g., as a <a href="http://en.wikipedia.org/wiki/Content_delivery_network">CDN</a>).</p>
-      <p>An <a href="http://en.wikipedia.org/wiki/HTTP_ETag">ETag</a> will be returned unique for each entry, as will
-         the <tt>Last-Modified</tt> header field indicating the state of the data at the given URL.  ETags allow browsers (and
-         other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard
-         HTTP and is honored by Infinispan.
+         access to the Infinispan data grid. Check the documentation on
+         <a href="https://docs.jboss.org/author/display/ISPN/Accessing+data+in+Infinispan+via+RESTful+interface">
+         accessing Infinispan via RESTful</a> to figure out how to store data into Infinispan REST server, how to retrieve it,
+         and how to delete it. Information on how to configure the Infinispan REST server and sample code on accessing
+         Infinispan REST server can be found <a href="https://docs.jboss.org/author/display/ISPN/Infinispan+REST+Server">here</a>
       </p>
-      <h6>HEAD /{cacheName}/{cacheKey}</h6>
-        <p>The same as GET, only no content is returned (only the header fields).</p>
-
-    <h4>4. Removing data</h4>
-    Data can be removed at the cache key/element level, or via a whole cache name using the HTTP delete method.
-      <h6>DELETE /{cacheName}/{cacheKey}</h6>
-        <p>Removes the given key name from the cache.</p>
-      <h6>DELETE /{cacheName}</h6>
-        <p>Removes ALL the entries in the given cache name (ie everything from that path down).</p>
-        <p>OPTIONAL: Set the header <tt>performAsync</tt> to <tt>true</tt> to return immediately and let the removal happen in the background.</p>
-
-   <h4>5. Clients</h4>
-    Any HTTP client will do - from any language.  See <a href="http://www.jboss.org/community/wiki/InfinispanRESTserver">here</a> for more details.
-
-    <h4>6. Deployment</h4>
-    As Infinispan is a distributed data grid, it shouldn't matter how many or which instance of the Server you access,
-    as long as it is part of the Infinispan cluster, it will find your data, and manage it. You can have as many
-    instances (including the one you are looking at) as you need.
-
-   <h4>6. Further reading</h4>
-   <p>Please visit Infinispan's <a href="http://community.jboss.org/wiki/Infinispan">public wiki</a> for more information including a full user guide, frequently asked questions,
-      tutorials, demos and examples, and other resources.</p>
-</div></body></html>
+     </div>
+   </body>
+</html>

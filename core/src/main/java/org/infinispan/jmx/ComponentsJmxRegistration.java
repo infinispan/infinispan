@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,10 +25,10 @@ package org.infinispan.jmx;
 import org.infinispan.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.ArrayList;
@@ -81,22 +82,8 @@ public class ComponentsJmxRegistration {
    public void registerMBeans() throws CacheException {
       try {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
-         boolean trace = log.isTraceEnabled();
-         for (ResourceDMBean resource : resourceDMBeans) {
-            ObjectName objectName = getObjectName(resource);
-            if (!mBeanServer.isRegistered(objectName)) {
-               try {
-                  mBeanServer.registerMBean(resource, objectName);
-                  if (trace) log.trace("Registered %s under %s", resource, objectName);
-               } catch (InstanceAlreadyExistsException e) {
-                  //this might happen if multiple instances are trying to concurrently register same objectName
-                  log.info("Could not register object with name:" + objectName + "(" + e.getMessage() + ")");
-               }
-            } else {
-               if (log.isDebugEnabled())
-                  log.debug("Object name %s already registered", objectName);
-            }
-         }
+         for (ResourceDMBean resource : resourceDMBeans)
+            JmxUtil.registerMBean(resource, getObjectName(resource), mBeanServer);
       }
       catch (Exception e) {
          throw new CacheException("Failure while registering mbeans", e);
@@ -110,13 +97,8 @@ public class ComponentsJmxRegistration {
       log.trace("Unregistering jmx resources..");
       try {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
-         boolean trace = log.isTraceEnabled();
          for (ResourceDMBean resource : resourceDMBeans) {
-            ObjectName objectName = getObjectName(resource);
-            if (mBeanServer.isRegistered(objectName)) {
-               mBeanServer.unregisterMBean(objectName);
-               if (trace) log.trace("Unregistered " + objectName);
-            }
+            JmxUtil.unregisterMBean(getObjectName(resource), mBeanServer);
          }
       }
       catch (Exception e) {
@@ -124,11 +106,12 @@ public class ComponentsJmxRegistration {
       }
    }
 
-   private List<ResourceDMBean> getResourceDMBeansFromComponents() {
-      List<ResourceDMBean> resourceDMBeans = new ArrayList<ResourceDMBean>();
+   private List<ResourceDMBean> getResourceDMBeansFromComponents() throws NoSuchFieldException, ClassNotFoundException {
+      List<ResourceDMBean> resourceDMBeans = new ArrayList<ResourceDMBean>(components.size());
       for (ComponentRegistry.Component component : components) {
-         ResourceDMBean resourceDMBean = new ResourceDMBean(component.getInstance());
-         if (resourceDMBean.isManagedResource()) {
+         ComponentMetadata md = component.getMetadata();
+         if (md.isManageable()) {
+            ResourceDMBean resourceDMBean = new ResourceDMBean(component.getInstance(), md.toManageableComponentMetadata());
             resourceDMBeans.add(resourceDMBean);
          }
       }

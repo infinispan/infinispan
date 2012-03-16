@@ -1,8 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -30,6 +54,12 @@ public interface CacheLoaderConfig extends Cloneable, Serializable {
    String getCacheLoaderClassName();
 
    void setCacheLoaderClassName(String s);
+   
+   /**
+    * Get the classloader that should be used to load resources from the classpath
+    * @return
+    */
+   ClassLoader getClassLoader();
 }
 
 class CacheLoaderInvocationHandler implements InvocationHandler {
@@ -61,7 +91,7 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
 
       CacheLoaderConfig clc;
       try {
-         clc = instantiateCacheLoaderConfig(clClass);
+         clc = instantiateCacheLoaderConfig(clClass, storeConfig.getClassLoader());
       } catch (Exception e) {
          throw new ConfigurationException("Unable to instantiate cache loader or configuration", e);
       }
@@ -74,19 +104,35 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
       
       if (clc instanceof CacheStoreConfig) {
          CacheStoreConfig csc = (CacheStoreConfig) clc;
-         csc.setFetchPersistentState(storeConfig.isFetchPersistentState());
-         csc.setIgnoreModifications(storeConfig.isIgnoreModifications());
-         csc.setPurgeOnStartup(storeConfig.isPurgeOnStartup());
-         csc.setPurgeSynchronously(storeConfig.isPurgeSynchronously());
-         csc.setSingletonStoreConfig(storeConfig.getSingletonStoreConfig());
-         csc.setAsyncStoreConfig(storeConfig.getAsyncStoreConfig());         
+         csc
+               .fetchPersistentState(storeConfig.isFetchPersistentState())
+               .ignoreModifications(storeConfig.isIgnoreModifications())
+               .purgeOnStartup(storeConfig.isPurgeOnStartup())
+               .purgeSynchronously(storeConfig.isPurgeSynchronously())
+               .purgerThreads(storeConfig.getPurgerThreads());
+
+         SingletonStoreConfig singletonStoreConfig = storeConfig.getSingletonStoreConfig();
+         if (singletonStoreConfig != null) {
+            csc.singletonStore()
+               .enabled(singletonStoreConfig.isSingletonStoreEnabled())
+               .pushStateTimeout(singletonStoreConfig.getPushStateTimeout());
+         }
+
+         AsyncStoreConfig asyncStoreConfig = storeConfig.getAsyncStoreConfig();
+         if (asyncStoreConfig != null && asyncStoreConfig.isEnabled()) {
+            csc.asyncStore()
+                  .flushLockTimeout(asyncStoreConfig.getFlushLockTimeout())
+                  .shutdownTimeout(asyncStoreConfig.getShutdownTimeout())
+                  .threadPoolSize(asyncStoreConfig.getThreadPoolSize())
+                  .modificationQueueSize(asyncStoreConfig.getModificationQueueSize());
+         }
       }
       return clc;
    }
 
-   private CacheLoaderConfig instantiateCacheLoaderConfig(String cacheLoaderImpl) throws Exception {
+   private CacheLoaderConfig instantiateCacheLoaderConfig(String cacheLoaderImpl, ClassLoader classLoader) throws Exception {
       // first see if the type is annotated
-      Class<? extends CacheLoaderConfig> clazz = Util.loadClass(cacheLoaderImpl);
+      Class<? extends CacheLoaderConfig> clazz = Util.loadClass(cacheLoaderImpl, classLoader);
       Class<? extends CacheLoaderConfig> cacheLoaderConfigType;
       CacheLoaderMetadata metadata = clazz.getAnnotation(CacheLoaderMetadata.class);
       if (metadata == null) {

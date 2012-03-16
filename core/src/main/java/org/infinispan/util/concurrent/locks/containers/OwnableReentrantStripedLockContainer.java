@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,10 +23,10 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A LockContainer that holds {@link org.infinispan.util.concurrent.locks.OwnableReentrantLock}s.
@@ -36,9 +37,8 @@ import java.util.Arrays;
  * @since 4.0
  */
 @ThreadSafe
-public class OwnableReentrantStripedLockContainer extends AbstractStripedLockContainer {
+public class OwnableReentrantStripedLockContainer extends AbstractStripedLockContainer<OwnableReentrantLock> {
    OwnableReentrantLock[] sharedLocks;
-   InvocationContextContainer icc;
 
    /**
     * Creates a new LockContainer which uses a certain number of shared locks across all elements that need to be
@@ -46,16 +46,14 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
     *
     * @param concurrencyLevel concurrency level for number of stripes to create.  Stripes are created in powers of two,
     *                         with a minimum of concurrencyLevel created.
-    * @param icc              invocation context container to use
     */
-   public OwnableReentrantStripedLockContainer(int concurrencyLevel, InvocationContextContainer icc) {
-      this.icc = icc;
+   public OwnableReentrantStripedLockContainer(int concurrencyLevel) {
       initLocks(calculateNumberOfSegments(concurrencyLevel));
    }
 
    protected void initLocks(int numLocks) {
       sharedLocks = new OwnableReentrantLock[numLocks];
-      for (int i = 0; i < numLocks; i++) sharedLocks[i] = new OwnableReentrantLock(icc);
+      for (int i = 0; i < numLocks; i++) sharedLocks[i] = new OwnableReentrantLock();
    }
 
    public final OwnableReentrantLock getLock(Object object) {
@@ -86,5 +84,15 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
 
    public int size() {
       return sharedLocks.length;
+   }
+
+   @Override
+   protected boolean tryLock(OwnableReentrantLock lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException {
+      return lock.tryLock(lockOwner, timeout, unit);
+   }
+
+   @Override
+   protected void unlock(OwnableReentrantLock l, Object owner) {
+      l.unlock(owner);
    }
 }

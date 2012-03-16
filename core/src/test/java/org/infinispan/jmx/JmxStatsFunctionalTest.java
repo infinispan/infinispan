@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.jmx;
 
 import org.infinispan.config.Configuration;
@@ -6,19 +28,19 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
  * Functional test for checking jmx statistics exposure.
@@ -38,16 +60,16 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
    @AfterMethod(alwaysRun = true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
-      cm = null;
-      cm2 = null;
-      cm3 = null;
-      server = null;
       if (cm != null)
          assert !existsDomains(cm.getGlobalConfiguration().getJmxDomain());
       if (cm2 != null)
          assert !existsDomains(cm2.getGlobalConfiguration().getJmxDomain());
       if (cm3 != null)
          assert !existsDomains(cm3.getGlobalConfiguration().getJmxDomain());
+      cm = null;
+      cm2 = null;
+      cm3 = null;
+      server = null;
    }
 
    /**

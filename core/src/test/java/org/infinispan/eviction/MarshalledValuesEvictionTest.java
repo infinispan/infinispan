@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -22,21 +22,24 @@
  */
 package org.infinispan.eviction;
 
-import java.io.NotSerializableException;
-
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.util.Util;
 import org.testng.annotations.Test;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest", enabled = false, description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container!")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
@@ -46,12 +49,12 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setEvictionStrategy(EvictionStrategy.FIFO);
-      cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(CACHE_SIZE); // CACHE_SIZE max entries
-      cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
-      cfg.setUseLazyDeserialization(true);
+      Configuration cfg = new Configuration().fluent()
+         .eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
+         .expiration().wakeUpInterval(100L)
+         .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
+         .storeAsBinary()
+         .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
@@ -62,9 +65,9 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    
    public void testEvictCustomKeyValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
-         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
-         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          cache.put(p1, p2);         
       }   
@@ -85,9 +88,9 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    public void testEvictPrimitiveKeyCustomValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
-         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
-         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          cache.put(p1, p2);         
       }
@@ -109,12 +112,11 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       boolean marshalledValueCreated;
       
       MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
-         injectMarshaller(marshaller);
+         injectMarshaller(marshaller, new InternalEntryFactoryImpl());
       }
 
       @Override
-      protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx)
-               throws NotSerializableException {
+      protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
          marshalledValueCreated = true;
          return super.createMarshalledValue(toWrap, ctx);
       }
@@ -127,4 +129,31 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
    }
 
+   static class EvictionPojo implements Externalizable {
+      int i;
+
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         EvictionPojo pojo = (EvictionPojo) o;
+         return i == pojo.i;
+      }
+
+      public int hashCode() {
+         int result;
+         result = i;
+         return result;
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeInt(i);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         i = in.readInt();
+      }
+
+   }
 }

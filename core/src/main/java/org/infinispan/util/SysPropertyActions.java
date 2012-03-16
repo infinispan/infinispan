@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -32,13 +33,28 @@ import java.security.PrivilegedAction;
  * @since 4.2
  */
 public class SysPropertyActions {
+
    interface SysProps {
+
       SysProps NON_PRIVILEDGED = new SysProps() {
+         @Override
          public String getProperty(final String name, final String defaultValue) {
             return System.getProperty(name, defaultValue);
          }
+
+         @Override
+         public String getProperty(final String name) {
+            return System.getProperty(name);
+         }
+
+         @Override
+         public String setProperty(String key, String value) {
+            return System.setProperty(key, value);
+         }
       };
+
       SysProps PRIVILEDGED = new SysProps() {
+         @Override
          public String getProperty(final String name, final String defaultValue) {
             PrivilegedAction action = new PrivilegedAction() {
                public Object run() {
@@ -47,17 +63,54 @@ public class SysPropertyActions {
             };
             return (String) AccessController.doPrivileged(action);
          }
+
+         @Override
+         public String getProperty(final String name) {
+            PrivilegedAction action = new PrivilegedAction() {
+               public Object run() {
+                  return System.getProperty(name);
+               }
+            };
+            return (String) AccessController.doPrivileged(action);
+         }
+
+         @Override
+         public String setProperty(final String name, final String value) {
+            PrivilegedAction action = new PrivilegedAction() {
+               public Object run() {
+                  return System.setProperty(name, value);
+               }
+            };
+            return (String) AccessController.doPrivileged(action);
+         }
       };
 
       String getProperty(String name, String defaultValue);
+
+      String getProperty(String name);
+
+      String setProperty(String name, String value);
    }
 
    public static String getProperty(String name, String defaultValue) {
-      String prop;
       if (System.getSecurityManager() == null)
-         prop = SysProps.NON_PRIVILEDGED.getProperty(name, defaultValue);
-      else
-         prop = SysProps.PRIVILEDGED.getProperty(name, defaultValue);
-      return prop;
+         return SysProps.NON_PRIVILEDGED.getProperty(name, defaultValue);
+
+      return SysProps.PRIVILEDGED.getProperty(name, defaultValue);
    }
+
+   public static String getProperty(String name) {
+      if (System.getSecurityManager() == null)
+         return SysProps.NON_PRIVILEDGED.getProperty(name);
+
+      return SysProps.PRIVILEDGED.getProperty(name);
+   }
+
+   public static String setProperty(String name, String value) {
+      if (System.getSecurityManager() == null)
+         return SysProps.NON_PRIVILEDGED.setProperty(name, value);
+
+      return SysProps.PRIVILEDGED.setProperty(name, value);
+   }
+
 }

@@ -1,23 +1,45 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.CacheException;
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,8 +57,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -61,22 +87,24 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private volatile Address currentStateTransferSource;
    private boolean stateTransferEnabled;
    private Configuration configuration;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
+   private CacheViewsManager cvm;
 
 
    @Inject
    public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+                                  CacheViewsManager cvm) {
       this.t = t;
       this.configuration = configuration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
+      this.cvm = cvm;
    }
 
    @Start(priority = 9)
@@ -90,32 +118,47 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
-      List<Address> members = t.getMembers();
-      if (members.size() < 2) {
-         if (log.isDebugEnabled())
-            log.debug("We're the only member in the cluster; Don't invoke remotely.");
+      if (!configuration.getCacheMode().isClustered())
+         throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+
+      List<Address> clusterMembers = t.getMembers();
+      if (clusterMembers.size() < 2) {
+         log.tracef("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
-         long startTime = 0;
-         if (statisticsEnabled) startTime = System.currentTimeMillis();
+         long startTimeNanos = 0;
+         if (statisticsEnabled) startTimeNanos = System.nanoTime();
          try {
+            // add a response filter that will ensure we don't wait for replies from non-members
+            // but only if the target is the whole cluster and the call is synchronous
+            // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
+            if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
+               List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
+               // the filter won't work if there is no other member in the cache, so we have to 
+               if (cacheMembers.size() < 2) {
+                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
+                  return Collections.emptyMap();
+               }
+               // if there is already a response filter attached it means it must have its own way of dealing with non-members
+               // so skip installing the filter
+               if (responseFilter == null) {
+                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
+               }
+            }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
-            if (isStatisticsEnabled()) replicationCount.incrementAndGet();
+            if (statisticsEnabled) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
-            if (log.isTraceEnabled()) {
-               log.trace("replication exception: ", e);
-            }
-
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            log.trace("replication exception: ", e);
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
-            log.error("unexpected error while replicating", th);
-            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            log.unexpectedErrorReplicating(th);
+            if (statisticsEnabled) replicationFailures.incrementAndGet();
             throw new CacheException(th);
          } finally {
             if (statisticsEnabled) {
-               long timeTaken = System.currentTimeMillis() - startTime;
+               long timeTaken = TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos, TimeUnit.NANOSECONDS);
                totalReplicationTime.getAndAdd(timeTaken);
             }
          }
@@ -126,68 +169,8 @@ public class RpcManagerImpl implements RpcManager {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null);
    }
 
-   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null);
-   }
-
-   public void retrieveState(String cacheName, long timeout) throws StateTransferException {
-      if (t.isSupportStateTransfer()) {
-         long initialWaitTime = configuration.getStateRetrievalInitialRetryWaitTime();
-         int waitTimeIncreaseFactor = configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
-         int numRetries = configuration.getStateRetrievalNumRetries();
-         List<Address> members = t.getMembers();
-         if (members.size() < 2) {
-            if (log.isDebugEnabled())
-               log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
-            return;
-         }
-
-         boolean success = false;
-
-         try {
-            long wait = initialWaitTime;
-            outer:
-            for (int i = 0; i < numRetries; i++) {
-               for (Address member : members) {
-                  if (!member.equals(t.getAddress())) {
-                     try {
-                        if (log.isInfoEnabled()) log.info("Trying to fetch state from %s", member);
-                        currentStateTransferSource = member;
-                        if (t.retrieveState(cacheName, member, timeout)) {
-                           if (log.isInfoEnabled())
-                              log.info("Successfully retrieved and applied state from %s", member);
-                           success = true;
-                           break outer;
-                        }
-                     } catch (StateTransferException e) {
-                        if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, e);
-                     } finally {
-                        currentStateTransferSource = null;
-                     }
-                  }
-               }
-
-               if (!success) {
-                  if (log.isWarnEnabled())
-                     log.warn("Could not find available peer for state, backing off and retrying");
-
-                  try {
-                     Thread.sleep(wait *= waitTimeIncreaseFactor);
-                  }
-                  catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                  }
-               }
-
-            }
-         } finally {
-            currentStateTransferSource = null;
-         }
-
-         if (!success) throw new StateTransferException("Unable to fetch state on startup");
-      } else {
-         throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
-      }
    }
 
    public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException {
@@ -219,7 +202,12 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws RpcException {
-      if (trace) log.trace("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      ResponseMode responseMode = getResponseMode(sync);
+      return invokeRemotely(recipients, rpc, sync, usePriorityQueue, timeout, responseMode);
+   }
+
+   private Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout, ResponseMode responseMode) {
+      if (trace) log.tracef("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
@@ -228,8 +216,8 @@ public class RpcManagerImpl implements RpcManager {
          if (!(rpc instanceof CacheRpcCommand)) {
             rpc = cf.buildSingleRpcCommand(rpc);
          }
-         Map<Address, Response> rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
-         if (trace) log.trace("Response(s) to %s is %s", rpc, rsps);
+         Map<Address, Response> rsps = invokeRemotely(recipients, rpc, responseMode, timeout, usePriorityQueue);
+         if (trace) log.tracef("Response(s) to %s is %s", rpc, rsps);
          if (sync) checkResponses(rsps);
          return rsps;
       }
@@ -244,23 +232,39 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
-      if (trace) log.trace("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, timeout, false);
+   }
+
+   @Override
+   public void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc,
+                                      final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l,
+                                      final long timeout, final boolean ignoreLeavers) {
+      if (trace) log.tracef("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      final ResponseMode responseMode = ignoreLeavers ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.SYNCHRONOUS;
+      final CountDownLatch futureSet = new CountDownLatch(1);
       Callable<Object> c = new Callable<Object>() {
-         public Object call() {
-            invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
-            l.notifyDone();
-            return null;
+         public Object call() throws Exception {
+            Object result = null;
+            try {
+               result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout, responseMode);
+            } finally {
+               try {
+                  futureSet.await();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               } finally {
+                  l.notifyDone();
+               }
+            }
+            return result;
          }
       };
       l.setNetworkFuture(asyncExecutor.submit(c));
+      futureSet.countDown();
    }
 
    public Transport getTransport() {
       return t;
-   }
-
-   public Address getCurrentStateTransferSource() {
-      return currentStateTransferSource;
    }
 
    private ResponseMode getResponseMode(boolean sync) {
@@ -273,16 +277,17 @@ public class RpcManagerImpl implements RpcManager {
    private void checkResponses(Map<Address, Response> rsps) {
       if (rsps != null) {
          for (Map.Entry<Address, Response> rsp : rsps.entrySet()) {
+            // TODO Double-check this logic, rsp.getValue() is a Response so it's 100% not Throwable
             if (rsp != null && rsp.getValue() instanceof Throwable) {
                Throwable throwable = (Throwable) rsp.getValue();
                if (trace)
-                  log.trace("Received Throwable from remote node %s", throwable, rsp.getKey());
+                  log.tracef("Received Throwable from remote node %s", throwable, rsp.getKey());
                throw new RpcException(throwable);
             }
          }
       }
    }
-
+   
    // -------------------------------------------- JMX information -----------------------------------------------
 
    @ManagedOperation(description = "Resets statistics gathered by this component")

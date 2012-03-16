@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
@@ -14,8 +36,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ViewChangeListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -30,7 +50,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = "functional", testName = "loaders.decorators.SingletonStoreTest")
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+@Test(groups = "functional", testName = "loaders.decorators.SingletonStoreTest", enabled = false, description = "See ISPN-1123")
 public class SingletonStoreTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(SingletonStoreTest.class);
    private static final AtomicInteger storeCounter = new AtomicInteger(0);
@@ -47,7 +70,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStore("Store-" + storeCounter.getAndIncrement());
+      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
       CacheLoaderManagerConfig pushingCfg = new CacheLoaderManagerConfig();
       pushingCfg.addCacheLoaderConfig(cfg);
       SingletonStoreConfig ssc = new SingletonStoreConfig();
@@ -58,14 +81,14 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
       cm0.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm1.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm2.defineConfiguration("pushing", conf);
 
       conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStore("Store-" + storeCounter.getAndIncrement());
+      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
       CacheLoaderManagerConfig nonPushingCfg = new CacheLoaderManagerConfig();
       nonPushingCfg.addCacheLoaderConfig(cfg);
       ssc = new SingletonStoreConfig();
@@ -76,9 +99,9 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
       cm0.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm1.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm2.defineConfiguration("nonPushing", conf);
    }
 
@@ -227,6 +250,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       f2.get();
 
       assertEquals(1, mscl.getNumberCreatedTasks());
+      executor.shutdownNow();
    }
 
    public void testPushStateTimedOut() throws Throwable {
@@ -261,7 +285,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       return new ActiveStatusModifier(mscl);
    }
 
-   class TestingSingletonStore extends SingletonStore {
+   static class TestingSingletonStore extends SingletonStore {
       private int numberCreatedTasks = 0;
       private CountDownLatch pushStateCanFinish;
       private CountDownLatch secondActiveStatusChangerCanStart;
@@ -307,7 +331,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ActiveStatusModifier implements Callable {
+   static class ActiveStatusModifier implements Callable {
       private SingletonStore scl;
 
       public ActiveStatusModifier(SingletonStore singleton) {

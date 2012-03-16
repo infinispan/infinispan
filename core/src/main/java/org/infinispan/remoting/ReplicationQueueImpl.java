@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.remoting;
 
 import org.infinispan.commands.CommandsFactory;
@@ -50,6 +72,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    private boolean enabled;
    private CommandsFactory commandsFactory;
    private volatile ScheduledFuture<?> scheduledFuture;
+   private boolean trace;
 
    /**
     * @return true if this replication queue is enabled, false otherwise.
@@ -74,14 +97,22 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Start
    public void start() {
       long interval = configuration.getReplQueueInterval();
-      log.trace("Starting replication queue, with interval %s and maxElements %s", interval, maxElements);
+      trace = log.isTraceEnabled();
+      if (trace)
+         log.tracef("Starting replication queue, with interval %d and maxElements %s", interval, maxElements);
+
       this.maxElements = configuration.getReplQueueMaxElements();
       // check again
       enabled = configuration.isUseReplQueue();
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
-               flush();
+               LogFactory.pushNDC(configuration.getName(), trace);
+               try {
+                  flush();
+               } finally {
+                  LogFactory.popNDC(trace);
+               }
             }
          }, interval, interval, TimeUnit.MILLISECONDS);
       }
@@ -117,17 +148,17 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Override
    public synchronized int flush() {
       List<ReplicableCommand> toReplicate = drainReplQueue();
-      if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements=%s)", toReplicate.size());
+      if (trace) log.tracef("flush(): flushing repl queue (num elements=%s)", toReplicate.size());
 
       int toReplicateSize = toReplicate.size();
       if (toReplicateSize > 0) {
          try {
-            log.trace("Flushing %s elements", toReplicateSize);
+            log.tracef("Flushing %s elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
             rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());
          } catch (Throwable t) {
-            log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);
+            log.failedReplicatingQueue(toReplicate.size(), t);
          }
       }
 

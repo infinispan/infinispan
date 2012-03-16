@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.marshall;
 
 import net.jcip.annotations.ThreadSafe;
@@ -11,10 +33,6 @@ import java.io.IOException;
  * This interface is used to marshall {@link org.infinispan.commands.ReplicableCommand}s, their parameters and their
  * response values, as well as any other arbitraty Object <--> byte[] conversions, such as those used in client/server
  * communications.
- * <p/>
- * The interface is also used by the {@link org.infinispan.loaders.CacheStore} framework to efficiently serialize data
- * to be persisted, as well as the {@link org.infinispan.statetransfer.StateTransferManager} when serializing the cache
- * for transferring state en-masse.
  * <p/>
  * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
  * and preferably immutable.
@@ -89,7 +107,8 @@ public interface Marshaller {
     * 
     * @param o object to verify whether it's marshallable or not
     * @return true if the object is marshallable, otherwise false
+    * @throws Exception if while checking whether the object was serializable or not, an exception arose
     */
-   boolean isMarshallable(Object o);
+   boolean isMarshallable(Object o) throws Exception;
 }
 

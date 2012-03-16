@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@ public class SingleClusterMemberTransportInvokeTest extends MultipleCacheManager
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       createClusteredCaches(1, "replSync", c);
       
    }

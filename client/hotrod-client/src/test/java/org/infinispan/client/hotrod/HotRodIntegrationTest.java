@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
@@ -9,25 +31,30 @@ import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayKey;            
+import org.infinispan.util.ByteArrayKey;
+import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-import static junit.framework.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 
 /**
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional" )
+@Test (testName = "client.hotrod.HotRodIntegrationTest", groups = "functional" )
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
@@ -45,7 +72,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration standaloneConfig = getDefaultStandaloneConfig(false);
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.defineConfiguration(CACHE_NAME, standaloneConfig);
       defaultCache = cacheManager.getCache();
       cache = cacheManager.getCache(CACHE_NAME);
@@ -104,7 +131,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    public void testGetVersionedCacheEntry() {
       VersionedValue value = remoteCache.getVersioned("aKey");
-      assertNull(remoteCache.getVersioned("aKey"), "expected null but received: " + value);
+      assertNull("expected null but received: " + value, remoteCache.getVersioned("aKey"));
       remoteCache.put("aKey", "aValue");
       assert remoteCache.get("aKey").equals("aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
@@ -148,6 +175,63 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertEquals(entry2.getValue(), "aNewValue");
 
       assert !remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
+   }
+
+   public void testReplaceIfUnmodifiedWithExpiry(Method m) throws InterruptedException {
+      final int key = 1;
+      remoteCache.put(key, v(m));
+      VersionedValue valueBinary = remoteCache.getVersioned(key);
+      int lifespanSecs = 3; // seconds
+      long lifespan = TimeUnit.SECONDS.toMillis(lifespanSecs);
+      long startTime = System.currentTimeMillis();
+      String newValue = v(m, 2);
+      assert remoteCache.replaceWithVersion(key, newValue, valueBinary.getVersion(), lifespanSecs);
+
+      while (true) {
+         Object value = remoteCache.get(key);
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assertEquals(v(m, 2), value);
+         Thread.sleep(100);
+      }
+
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+         if (remoteCache.get(key) == null) break;
+         Thread.sleep(50);
+      }
+
+      assertNull(remoteCache.get(key));
+   }
+
+   public void testReplaceWithVersionWithLifespanAsync(Method m) throws Exception {
+      int lifespanInSecs = 1; //seconds
+      final String k = k(m), v = v(m), newV = v(m, 2);
+      assertNull(remoteCache.replace(k, v));
+
+      remoteCache.put(k, v);
+      VersionedValue valueBinary = remoteCache.getVersioned(k);
+      long lifespan = TimeUnit.SECONDS.toMillis(lifespanInSecs);
+      long startTime = System.currentTimeMillis();
+      NotifyingFuture<Boolean> future = remoteCache.replaceWithVersionAsync(
+            k, newV, valueBinary.getVersion(), lifespanInSecs);
+      assert future.get();
+
+      while (true) {
+         VersionedValue entry2 = remoteCache.getVersioned(k);
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         // version should have changed; value should have changed
+         assert entry2.getVersion() != valueBinary.getVersion();
+         assertEquals(newV, entry2.getValue());
+         Thread.sleep(100);
+      }
+
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+         if (remoteCache.get(k) == null) break;
+         Thread.sleep(50);
+      }
+
+      assertNull(remoteCache.getVersioned(k));
    }
 
    public void testRemoveIfUnmodified() {

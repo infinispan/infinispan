@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,6 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.lucene;
 
 import org.infinispan.config.GlobalConfiguration;
@@ -27,7 +29,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.Externalizer} implementations to be registered.
+ * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
  * 
  * @author Galder Zamarreño
  * @author Sanne Grinovero
@@ -36,13 +38,15 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr) {
-      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-      globalCfg.addExternalizer(new ChunkCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileListCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileMetadata.Externalizer());
-      globalCfg.addExternalizer(new FileReadLockKey.Externalizer());
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      globalCfg.fluent()
+         .serialization()
+            .addAdvancedExternalizer(new ChunkCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileListCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileMetadata.Externalizer())
+            .addAdvancedExternalizer(new FileReadLockKey.Externalizer())
+         .build();
    }
 
 }

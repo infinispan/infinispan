@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,11 +26,12 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,24 +48,23 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
-   protected String cacheName;
+   protected final String cacheName;
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
    protected Configuration configuration;
-   protected ComponentRegistry componentRegistry;
+   private Address origin;
 
-   public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
+   public AbstractTransactionBoundaryCommand(String cacheName) {
+      this.cacheName = cacheName;
+   }
+
+   public void injectComponents(Configuration configuration) {
       this.configuration = configuration;
-      this.componentRegistry = componentRegistry;
    }
 
    public Configuration getConfiguration() {
       return configuration;
-   }
-
-   public ComponentRegistry getComponentRegistry() {
-      return componentRegistry;
    }
 
    public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {
@@ -74,10 +75,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    public String getCacheName() {
       return cacheName;
-   }
-
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
    }
 
    public GlobalTransaction getGlobalTransaction() {
@@ -104,20 +101,16 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       if (ctx != null) throw new IllegalStateException("Expected null context!");
       markGtxAsRemote();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
-      if (transaction == null) {
-         if (trace) log.trace("Did not find a RemoteTransaction for %s", globalTx);
+      if (transaction == null || transaction.isMissingModifications()) {
+         if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
          return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
-      ctxt.setRemoteTransaction(transaction);
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(
+            transaction, getOrigin());
 
-      try {
-         if (trace) log.trace("About to execute tx command " + this);
-         return invoker.invoke(ctxt, this);
-      } finally {
-         txTable.removeRemoteTransaction(globalTx);
-      }
+      if (trace) log.tracef("About to execute tx command %s", this);
+      return invoker.invoke(ctxt, this);
    }
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {
@@ -125,16 +118,20 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName};
+      return new Object[]{globalTx};
    }
 
    public void setParameters(int commandId, Object[] args) {
       globalTx = (GlobalTransaction) args[0];
-      cacheName = (String) args[1];
    }
 
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 
    public boolean equals(Object o) {
@@ -158,5 +155,18 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    private void markGtxAsRemote() {
       globalTx.setRemote(true);
+   }
+   
+   public Address getOrigin() {
+	   return origin;
+   }
+   
+   public void setOrigin(Address origin) {
+	   this.origin = origin;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 }

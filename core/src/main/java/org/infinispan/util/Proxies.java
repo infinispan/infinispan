@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,10 +22,10 @@
  */
 package org.infinispan.util;
 
-import java.lang.reflect.Method;
-
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.lang.reflect.Method;
 
 /**
  * Proxies is a collection of useful dynamic profixes. Internal use only.
@@ -33,8 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class Proxies {
-
-    public static Object newCatchThrowableProxy(Object obj) {
+   public static Object newCatchThrowableProxy(Object obj) {
         return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
                         getInterfaces(obj.getClass()), new CatchThrowableProxy(obj));
     }
@@ -56,7 +56,7 @@ public class Proxies {
       Class superclass = clazz.getSuperclass();
       if (!superclass.equals(Object.class))
          return superclass.getInterfaces();
-      return new Class[]{};
+      return ReflectionUtil.EMPTY_CLASS_ARRAY;
    }
     
    /**
@@ -86,7 +86,7 @@ public class Proxies {
             try {
                 result = m.invoke(obj, args);
             } catch (Throwable t) {
-                log.warn("Invocation of " + m.getName() + " threw an exception " + t.getCause() + ". Exception is ignored.");
+                log.ignoringException(m.getName(), t.getMessage(), t.getCause());
             } finally {
             }
             return result;

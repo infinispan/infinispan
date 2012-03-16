@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -75,13 +76,13 @@ import java.lang.annotation.Target;
  * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent}</td> <td valign="top">A
  * cache entry was visited</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent}</td> <td valign="top">A
- * cache entry was loaded</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted}</td>
- * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent}</td> <td valign="top">A
- * cache entry was evicted</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}</td>
+ * cache entry was loaded</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}</td>
+ * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}</td> <td valign="top">A
+ * cache entries were evicted</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}</td> <td
  * valign="top">A cache entry was activated</td> </tr> <tr> <td valign="top">{@link
  * org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated}</td> <td valign="top">{@link
- * org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}</td> <td valign="top">A cache entry was
+ * org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}</td> <td valign="top">One or more cache entries were
  * passivated</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent}</td> <td
  * valign="top">A view change event was detected</td> </tr> <tr> <td valign="top">{@link
@@ -200,13 +201,15 @@ import java.lang.annotation.Target;
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded
- * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted
+ * @see org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated
  * @see org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionCompleted
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionRegistered
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated
+ * @see org.infinispan.notifications.cachelistener.annotation.DataRehashed
+ * @see org.infinispan.notifications.cachelistener.annotation.TopologyChanged
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)

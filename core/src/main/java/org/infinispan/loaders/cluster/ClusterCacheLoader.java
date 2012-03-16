@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.cluster;
 
 import org.infinispan.AdvancedCache;
@@ -51,19 +73,29 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
-      Collection<Response> response = doRemoteCall(clusteredGetCommand);
-      if (response.isEmpty()) return null;
-      if (response.size() > 1)
-         throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
-      for (Response r : response) {
-         if (r.isSuccessful() && r instanceof SuccessfulResponse) {
-            InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
-            return value.toInternalCacheEntry(key);
-         }
+      Collection<Response> responses = doRemoteCall(clusteredGetCommand);
+      if (responses.isEmpty()) return null;
+
+      Response response;
+      if (responses.size() > 1) {
+         // Remove duplicates before deciding if multiple responses were received
+         Set<Response> setResponses = new HashSet<Response>(responses);
+         if (setResponses.size() > 1)
+            throw new CacheLoaderException(String.format(
+                  "Responses contains more than 1 element and these elements are not equal, so can't decide which one to use: %s",
+                  setResponses));
+         response = setResponses.iterator().next();
+      } else {
+         response = responses.iterator().next();
       }
-      String message = "Unknown response from remote cache: " + response;
-      log.error(message);
-      throw new CacheLoaderException(message);
+
+      if (response.isSuccessful() && response instanceof SuccessfulResponse) {
+         InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
+         return value.toInternalCacheEntry(key);
+      }
+
+      log.unknownResponsesFromRemoteCache(responses);
+      throw new CacheLoaderException("Unknown responses");
    }
 
    @SuppressWarnings(value = "unchecked")
@@ -93,19 +125,19 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    }
 
    private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
-      Set<Address> validMembers = new HashSet<Address>(rpcManager.getTransport().getMembers());
-      validMembers.remove(rpcManager.getTransport().getAddress());
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(validMembers);
+      Set<Address> members = new HashSet<Address>(rpcManager.getTransport().getMembers());
+      Address self = rpcManager.getTransport().getAddress();
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
       try {
          return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter).values();
       } catch (Exception e) {
-         log.error("error while doing remote call", e);
+         log.errorDoingRemoteCall(e);
          throw new CacheLoaderException(e);
       }
    }
 
    private boolean isLocalCall() {
-      InvocationContext invocationContext = cache.getInvocationContextContainer().getInvocationContext();
+      InvocationContext invocationContext = cache.getInvocationContextContainer().getInvocationContext(false);
       return invocationContext.isOriginLocal();
    }
 

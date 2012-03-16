@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,6 +25,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
@@ -48,7 +50,7 @@ import static org.infinispan.test.TestingUtil.v;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsWitTxTest")
+@Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsWithTxTest")
 public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest {
 
    public SingleOwnerAndAsyncMethodsWithTxTest() {
@@ -58,6 +60,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       tx = true;
       l1CacheEnabled = true;
       lockTimeout = 5;
+      lockingMode = LockingMode.PESSIMISTIC;
    }
 
    public void testAsyncGetsWithinTx(Method m) throws Exception {
@@ -81,6 +84,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
    }
 
    public void testAsyncGetToL1AndConcurrentModification(final Method m) throws Throwable {
+      // The storage to L1 should fail "silently" and not affect other transactions.
       modifyConcurrently(m, getNonOwner(k(m)), false);
    }
 
@@ -129,7 +133,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
                // and put() should timeout
                cache.put(k, v(m, 1));
                getAsynclatch.countDown();
-               assert false : "Put operation should have timed out";
+               assert !withFlag : "Put operation should have timed out if the get operation acquires a write lock";
             } catch (TimeoutException e) {
                tm.setRollbackOnly();
                getAsynclatch.countDown();
@@ -150,7 +154,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       f1.get();
       try {
          f2.get();
-         assert false : "Should throw a TimeoutException";
+         assert !withFlag : "Should throw a TimeoutException if the get operation acquired a lock";
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
          if (cause instanceof AssertionError)

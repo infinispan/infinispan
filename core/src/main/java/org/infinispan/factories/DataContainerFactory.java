@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -45,7 +46,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    public <T> T construct(Class<T> componentType) {
       if (configuration.getDataContainer() != null) {
          return (T) configuration.getDataContainer();
-      } else if (configuration.getDataContainerClass() == DefaultDataContainer.class.getName()) {
+      } else if (DefaultDataContainer.class.getName().equals(configuration.getDataContainerClass())) {
          EvictionStrategy st = configuration.getEvictionStrategy();
          int level = configuration.getConcurrencyLevel();
         
@@ -68,7 +69,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                         + configuration.getEvictionStrategy());
          }
       } else {
-         DataContainer dataContainer = DataContainer.class.cast(Util.getInstance(configuration.getDataContainerClass()));
+         DataContainer dataContainer = DataContainer.class.cast(Util.getInstance(configuration.getDataContainerClass(), configuration.getClassLoader()));
          XmlConfigHelper.setValues(dataContainer, configuration.getDataContainerProperties(), false, true);
          return (T) dataContainer;
       }

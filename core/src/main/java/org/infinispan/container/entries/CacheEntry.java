@@ -1,6 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.versioned.Versioned;
+import org.infinispan.container.versioning.EntryVersion;
 
 import java.util.Map;
 
@@ -11,7 +35,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry extends Map.Entry<Object, Object> {
+public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.
@@ -34,6 +58,12 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     * @return true if this entry has been removed since being read from the container, false otherwise.
     */
    boolean isRemoved();
+
+
+   /**
+    * @return true if this entry has been evicted since being read from the container, false otherwise.
+    */
+   boolean isEvicted();
 
    /**
     * @return true if this entry is still valid, false otherwise.
@@ -79,7 +109,7 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
    void setLifespan(long lifespan);
 
    /**
-    * Sets the value of the entry, returing the previous value
+    * Sets the value of the entry, returning the previous value
     *
     * @param value value to set
     * @return previous value
@@ -91,7 +121,7 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     *
     * @param container data container to commit to
     */
-   void commit(DataContainer container);
+   void commit(DataContainer container, EntryVersion newVersion);
 
    /**
     * Rolls back changes
@@ -102,10 +132,18 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
 
    void setRemoved(boolean removed);
 
+   void setEvicted(boolean evicted);
+
    void setValid(boolean valid);
 
    /**
     * @return true if this entry is a placeholder for the sake of acquiring a lock; and false if it is a real entry. 
     */
    boolean isLockPlaceholder();
+
+   /**
+    * If the entry is marked as removed and doUndelete==true then the "valid" flag is set to true and "removed"
+    * flag is set to false.
+    */
+   boolean undelete(boolean doUndelete);
 }

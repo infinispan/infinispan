@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -13,6 +35,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Collection;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -68,10 +92,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));
 
-      manager(0).getCache();
-      manager(1).getCache();
-
-      waitForClusterToForm(2);
+      waitForClusterToForm();
 
       manager(0).getCache().put("k_test", "v");
       manager(0).getCache().get("k_test").equals("v");
@@ -104,7 +125,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       manager(2).getCache();
 
-      waitForClusterToForm(3);
+      waitForClusterToForm();
 
       try {
          expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
@@ -122,7 +143,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       manager(2).stop();
       log.trace("Just stopped server 2");
 
-      waitForClusterToForm(2);
+      waitForServerToDie(2);
 
       InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
 
@@ -144,13 +165,11 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
          remoteCache.put("k" + i, "v" + i);         
          if (added == tcpConnectionFactory.getServers().contains(server1Address)) break;
       }
-      assertEquals(server1Address + " not found", added, tcpConnectionFactory.getServers().contains(server1Address));
+      Collection<SocketAddress> addresses = tcpConnectionFactory.getServers();
+      assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
    
-   protected void waitForClusterToForm(int memberCount) {
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000);
-      for (int i = 0; i < memberCount; i++) {
-         TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 30000);
-      }
+   protected void waitForServerToDie(int memberCount) {
+      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }
 }

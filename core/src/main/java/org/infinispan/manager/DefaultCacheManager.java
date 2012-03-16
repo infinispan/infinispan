@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,16 +22,22 @@
  */
 package org.infinispan.manager;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.ConfigurationValidatingVisitor;
+import org.infinispan.config.DelegatingConfigurationVisitor;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.config.TimeoutConfigurationValidatingVisitor;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -45,11 +52,13 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -60,17 +69,17 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -83,7 +92,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * finite number of instances).
  * <p/>
  * Constructing a <tt>CacheManager</tt> is done via one of its constructors, which optionally take in a {@link
- * org.infinispan.config.Configuration} or a path or URL to a configuration XML file.
+ * org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file.
  * <p/>
  * Lifecycle - <tt>CacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and the default constructors
  * also call {@link #start()}. Overloaded versions of the constructors are available, that do not start the
@@ -101,48 +110,55 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * When the system shuts down, it should call {@link #stop()} on the <tt>CacheManager</tt>. This will ensure all caches
  * within its scope are properly stopped as well.
  * <p/>
- * Sample usage: <code> CacheManager manager = CacheManager.getInstance("my-config-file.xml"); Cache entityCache =
- * manager.getCache("myEntityCache"); entityCache.put("aPerson", new Person());
- * <p/>
- * Configuration myNewConfiguration = new Configuration(); myNewConfiguration.setCacheMode(Configuration.CacheMode.LOCAL);
- * manager.defineConfiguration("myLocalCache", myNewConfiguration); Cache localCache = manager.getCache("myLocalCache");
+ * Sample usage:
+ * <code>
+ *    CacheManager manager = CacheManager.getInstance("my-config-file.xml");
+ *    Cache&lt;String, Person&gt; entityCache = manager.getCache("myEntityCache");
+ *    entityCache.put("aPerson", new Person());
+ *
+ *    ConfigurationBuilder confBuilder = new ConfigurationBuilder();
+ *    confBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
+ *    manager.defineConfiguration("myReplicatedCache", confBuilder.build());
+ *    Cache&lt;String, String&gt; replicatedCache = manager.getCache("myReplicatedCache");
  * </code>
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
-@SuppressWarnings("deprecated")
+@SuppressWarnings("deprecation")
 public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
+   private final DelegatingConfigurationVisitor configurationValidator = new DelegatingConfigurationVisitor(new ConfigurationBeanVisitor[] {
+            new ConfigurationValidatingVisitor(), new TimeoutConfigurationValidatingVisitor() });
    protected final GlobalConfiguration globalConfiguration;
    protected final Configuration defaultConfiguration;
-   private final ConcurrentMap<String, CacheWrapper> caches = new ConcurrentHashMap<String, CacheWrapper>();
-   private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
+   private final ConcurrentMap<String, CacheWrapper> caches = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, Configuration> configurationOverrides = ConcurrentMapFactory.makeConcurrentMap();
    private final GlobalComponentRegistry globalComponentRegistry;
-   private final ReentrantPerEntryLockContainer cacheNameLockContainer;
-   private final ReflectionCache reflectionCache = new ReflectionCache();
+   private final ReentrantLock cacheCreateLock;
+   private volatile boolean stopping;
 
    /**
-    * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link
-    * Configuration} and {@link GlobalConfiguration} for details of these defaults.
+    * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
+    * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
     */
    public DefaultCacheManager() {
-      this(null, null, true);
+      this((GlobalConfiguration) null, null, true);
    }
 
    /**
-    * Constructs a default instance of the CacheManager, using configuration defaults.  See {@link Configuration} and
-    * {@link GlobalConfiguration} for details of these defaults.
+    * Constructs a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
+    * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
     *
     * @param start if true, the cache manager is started
     */
    public DefaultCacheManager(boolean start) {
-      this(null, null, start);
+      this((GlobalConfiguration) null, null, start);
    }
 
    /**
@@ -150,8 +166,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * for a {@link GlobalConfiguration}.  See {@link GlobalConfiguration} for details of these defaults.
     *
     * @param defaultConfiguration configuration to use as a template for all caches created
+    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    public DefaultCacheManager(Configuration defaultConfiguration) {
+      this(null, defaultConfiguration, true);
+   }
+   
+   /**
+    * Constructs and starts a new instance of the CacheManager, using the default configuration passed in.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
+    * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
+    *
+    * @param defaultConfiguration configuration to use as a template for all caches created
+    */
+   public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
    }
 
@@ -162,8 +190,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @param defaultConfiguration configuration file to use as a template for all caches created
     * @param start                if true, the cache manager is started
+    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.cache.Configuration, boolean)} instead
     */
+   @Deprecated
    public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
+      this(null, defaultConfiguration, start);
+   }
+   
+   /**
+    * Constructs a new instance of the CacheManager, using the default configuration passed in.  See
+    * {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
+    *
+    * @param defaultConfiguration configuration file to use as a template for all caches created
+    * @param start                if true, the cache manager is started
+    */
+   public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration, boolean start) {
       this(null, defaultConfiguration, start);
    }
 
@@ -172,9 +213,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * defaults for the default named cache configuration.  See {@link Configuration} for details of these defaults.
     *
     * @param globalConfiguration GlobalConfiguration to use for all caches created
+    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration)} instead
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration) {
       this(globalConfiguration, null, true);
+   }
+   
+   /**
+    * Constructs and starts a new instance of the CacheManager, using the global configuration passed in, and system
+    * defaults for the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
+    * for details of these defaults.
+    *
+    * @param globalConfiguration GlobalConfiguration to use for all caches created
+    */
+   public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration) {
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, true);
    }
 
    /**
@@ -183,9 +237,23 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     * @param start               if true, the cache manager is started.
+    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, boolean)} instead
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, boolean start) {
       this(globalConfiguration, null, start);
+   }
+   
+   /**
+    * Constructs a new instance of the CacheManager, using the global configuration passed in, and system defaults for
+    * the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
+    * for details of these defaults.
+    *
+    * @param globalConfiguration GlobalConfiguration to use for all caches created
+    * @param start               if true, the cache manager is started.
+    */
+   public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, boolean start) {
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, start);
    }
 
    /**
@@ -194,9 +262,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @param globalConfiguration  global configuration to use. If null, a default instance is created.
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
+    * Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
       this(globalConfiguration, defaultConfiguration, true);
+   }
+   
+   /**
+    * Constructs and starts a new instance of the CacheManager, using the global and default configurations passed in.
+    * If either of these are null, system defaults are used.
+    *
+    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
+    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
+    */
+   public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration) {
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), true);
    }
 
    /**
@@ -206,18 +287,32 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param globalConfiguration  global configuration to use. If null, a default instance is created.
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     * @param start                if true, the cache manager is started
+    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, org.infinispan.configuration.cache.Configuration, boolean)} instead
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
                               boolean start) {
       this.globalConfiguration = globalConfiguration == null ? new GlobalConfiguration() : globalConfiguration
               .clone();
-      this.globalConfiguration.accept(new ConfigurationValidatingVisitor());
+      this.globalConfiguration.accept(configurationValidator);
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
-      this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
-      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
-      this.cacheNameLockContainer = new ReentrantPerEntryLockContainer(this.defaultConfiguration.getConcurrencyLevel());
+      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
+      this.cacheCreateLock = new ReentrantLock();
       if (start)
          start();
+   }
+   
+   /**
+    * Constructs a new instance of the CacheManager, using the global and default configurations passed in. If either of
+    * these are null, system defaults are used.
+    *
+    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
+    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
+    * @param start                if true, the cache manager is started
+    */
+   public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, org.infinispan.configuration.cache.Configuration defaultConfiguration,
+                              boolean start) {
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), start);
    }
 
    /**
@@ -243,25 +338,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @throws java.io.IOException if there is a problem with the configuration file.
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
-      try {
-         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-                 configurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 new ConfigurationValidatingVisitor());
-
-         globalConfiguration = configuration.parseGlobalConfiguration();
-         defaultConfiguration = configuration.parseDefaultConfiguration();
-         for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
-            Configuration c = defaultConfiguration.clone();
-            c.applyOverrides(entry.getValue());
-            configurationOverrides.put(entry.getKey(), c);
-         }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
-      } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
-      }
-      if (start)
-         start();
+      this(FileLookupFactory.newInstance().lookupFileStrict(configurationFile, Thread.currentThread().getContextClassLoader()), start);
    }
 
    /**
@@ -289,18 +366,50 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       try {
-         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-                 configurationStream, InfinispanConfiguration.findSchemaInputStream(),
-                 new ConfigurationValidatingVisitor());
-         globalConfiguration = configuration.parseGlobalConfiguration();
-         defaultConfiguration = configuration.parseDefaultConfiguration();
-         for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
-            Configuration c = defaultConfiguration.clone();
-            c.applyOverrides(entry.getValue());
-            configurationOverrides.put(entry.getKey(), c);
+         ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
+         
+         globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
+         globalConfiguration.accept(configurationValidator);
+         defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
+         
+         for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+            org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
+            Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
+            configurationOverrides.put(entry.getKey(), legacy);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
+         
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
+         cacheCreateLock = new ReentrantLock();
+      } catch (ConfigurationException ce) {
+         throw ce;
+      } catch (RuntimeException re) {
+         throw new ConfigurationException(re);
+      }
+      if (start)
+         start();
+   }
+   
+   /**
+    * Constructs a new instance of the CacheManager, using the holder passed in to read configuration settings.
+    *
+    * @param holder holder containing configuration settings, to use as a template for all caches
+    *                            created
+    * @param start               if true, the cache manager is started
+    */
+   public DefaultCacheManager(ConfigurationBuilderHolder holder, boolean start) {
+      try {
+         globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
+         globalConfiguration.accept(configurationValidator);
+         defaultConfiguration = LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
+         
+         for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+            org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
+            Configuration legacy = LegacyConfigurationAdaptor.adapt(c);
+            configurationOverrides.put(entry.getKey(), legacy);
+         }
+         
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
+         cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -325,47 +434,44 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(String globalConfigurationFile, String defaultConfigurationFile, String namedCacheFile,
                               boolean start) throws IOException {
-      try {
-         InfinispanConfiguration gconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                 globalConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 new ConfigurationValidatingVisitor());
-
-         globalConfiguration = gconfiguration.parseGlobalConfiguration();
-
-         InfinispanConfiguration dconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                 defaultConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 new ConfigurationValidatingVisitor());
-
-         defaultConfiguration = dconfiguration.parseDefaultConfiguration();
-
-         if (namedCacheFile != null) {
-            InfinispanConfiguration NCconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
-                    namedCacheFile, InfinispanConfiguration.resolveSchemaPath(),
-                    new ConfigurationValidatingVisitor());
-
-            for (Map.Entry<String, Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
-               Configuration c = defaultConfiguration.clone();
-               c.applyOverrides(entry.getValue());
-               configurationOverrides.put(entry.getKey(), c);
-            }
-         }
-
-         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
-      } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
+      Parser parser = new Parser(Thread.currentThread().getContextClassLoader());
+      
+      ConfigurationBuilderHolder globalConfigurationBuilderHolder = parser.parseFile(globalConfigurationFile);
+      ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parser.parseFile(defaultConfigurationFile);
+      
+      globalConfiguration = LegacyGlobalConfigurationAdaptor.adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+      defaultConfiguration = LegacyConfigurationAdaptor.adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+      
+      if (namedCacheFile != null) {
+         ConfigurationBuilderHolder namedConfigurationBuilderHolder = parser.parseFile(namedCacheFile);
+         Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
+         defineConfiguration(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
       }
 
-      if (start)
-         start();
+      globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
+      cacheCreateLock = new ReentrantLock();
+
+   if (start)
+      start();
    }
 
+
+   @Override
+   public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
+         org.infinispan.configuration.cache.Configuration configuration) {
+      defineConfiguration(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
+      return configuration;
+   }
+   
    /**
     * {@inheritDoc}
     */
    public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
       return defineConfiguration(cacheName, configurationOverride, defaultConfiguration, true);
    }
+   
+   
+   
 
    /**
     * {@inheritDoc}
@@ -397,6 +503,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       Configuration configuration = defaultConfigIfNotPresent.clone();
       configuration.applyOverrides(configOverride.clone());
       configurationOverrides.put(cacheName, configuration);
+      setConfigurationName(cacheName, configuration);
       return configuration;
    }
 
@@ -436,21 +543,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return cw.getCache();
       }
 
-      boolean acquired = false;
-      try {
-         if (cacheNameLockContainer.acquireLock(cacheName, defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS) != null) {
-            acquired = true;
-            return createCache(cacheName);
-         } else {
-            throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
-         }
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
-      } finally {
-         if (acquired)
-            cacheNameLockContainer.releaseLock(cacheName);
-      }
+      return createCache(cacheName);
    }
 
    @Override
@@ -468,10 +561,34 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    @Override
+   public EmbeddedCacheManager startCaches(final String... cacheNames) {
+      List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
+      for (final String cacheName : cacheNames) {
+
+         String threadName = "CacheStartThread," + globalConfiguration.getClusterName() + "," + cacheName;
+         Thread thread = new Thread(threadName) {
+            @Override
+            public void run() {
+               createCache(cacheName);
+            }
+         };
+         thread.start();
+         threads.add(thread);
+      }
+      try {
+         for (Thread thread : threads) {
+            thread.join(defaultConfiguration.getLockAcquisitionTimeout());
+         }
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted while waiting for the caches to start");
+      }
+
+      return this;
+   }
+
+   @Override
    public void removeCache(String cacheName) {
-      RemoveCacheCommand cmd = new RemoveCacheCommand(this, globalComponentRegistry);
-      cmd.injectComponents(null, globalComponentRegistry.getNamedComponentRegistry(cacheName));
-      cmd.setCacheName(cacheName);
+      RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry);
       Transport transport = getTransport();
       try {
          if (transport != null) {
@@ -525,28 +642,68 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return t != null && t.isCoordinator();
    }
 
-   @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
-   private Cache createCache(String cacheName) {
-      CacheWrapper existingCache = caches.get(cacheName);
-      if (existingCache != null)
-         return existingCache.getCache();
-
-      Configuration c = getConfiguration(cacheName);
-
-      c.setGlobalConfiguration(globalConfiguration);
-      c.assertValid();
-      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
-      CacheWrapper cw = new CacheWrapper(cache);
+   private <K, V> Cache<K, V> createCache(String cacheName) {
+      final boolean trace = log.isTraceEnabled();
+      LogFactory.pushNDC(cacheName, trace);
       try {
-         existingCache = caches.putIfAbsent(cacheName, cw);
+         Cache<K, V> cache = wireCache(cacheName);
+         // a null return value means the cache was created by someone else before we got the lock
+         if (cache == null)
+            return caches.get(cacheName).getCache();
+
+         // start the cache-level components
+         try {
+            cache.start();
+         } finally {
+            // allow other threads to access the cache
+            caches.get(cacheName).latch.countDown();
+         }
+
+         return cache;
+      } finally {
+         LogFactory.popNDC(trace);
+      }
+   }
+
+   /**
+    * @return a null return value means the cache was created by someone else before we got the lock
+    */
+   private <K, V> Cache<K, V> wireCache(String cacheName) {
+      boolean acquired = false;
+      try {
+         if (!cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS)) {
+            throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
+         }
+         acquired = true;
+         CacheWrapper existingCache = caches.get(cacheName);
+         if (existingCache != null)
+            return null;
+
+         // start the global components here, while we have the global lock
+         // do it before we have created the CacheWrapper, so that we don't have to clean it up in case of a failure
+         globalComponentRegistry.start();
+
+         Configuration c = getConfiguration(cacheName);
+         setConfigurationName(cacheName, c);
+
+         c.setGlobalConfiguration(globalConfiguration);
+         c.accept(configurationValidator);
+         c.assertValid();
+         Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+         CacheWrapper cw = new CacheWrapper(cache);
+         existingCache = caches.put(cacheName, cw);
          if (existingCache != null) {
             throw new IllegalStateException("attempt to initialize the cache twice");
          }
-         cache.start();
+
+         return cache;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
       } finally {
-         cw.latch.countDown();
+         if (acquired)
+            cacheCreateLock.unlock();
       }
-      return cache;
    }
 
    private Configuration getConfiguration(String cacheName) {
@@ -560,36 +717,49 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
+      log.debugf("Started cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
    }
 
    public void stop() {
-      // make sure we stop the default cache LAST!
-      Cache defaultCache = null;
-      for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
-         if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
-            defaultCache = entry.getValue().cache;
-         } else {
-            Cache c = entry.getValue().cache;
-            if (c != null) {
-               unregisterCacheMBean(c);
-               c.stop();
+      if (!stopping) {
+         synchronized (this) {
+            // DCL to make sure that only one thread calls stop at one time,
+            // and any other calls by other threads are ignored.
+            if (!stopping) {
+               log.debugf("Stopping cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
+               stopping = true;
+               // make sure we stop the default cache LAST!
+               Cache<?, ?> defaultCache = null;
+               for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
+                  if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
+                     defaultCache = entry.getValue().cache;
+                  } else {
+                     Cache<?, ?> c = entry.getValue().cache;
+                     if (c != null) {
+                        unregisterCacheMBean(c);
+                        c.stop();
+                     }
+                  }
+               }
+
+               if (defaultCache != null) {
+                  unregisterCacheMBean(defaultCache);
+                  defaultCache.stop();
+               }
+               globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+               globalComponentRegistry.stop();
+
+            } else {
+               log.trace("Ignore call to stop as the cache manager is stopping");
             }
          }
+      } else {
+         log.trace("Ignore call to stop as the cache manager is stopping");
       }
-
-      if (defaultCache != null) {
-         unregisterCacheMBean(defaultCache);
-         defaultCache.stop();
-      }
-      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-      globalComponentRegistry.stop();
-
-      // Clear the reflection cache to avoid leaks
-      reflectionCache.stop();
    }
 
-   private void unregisterCacheMBean(Cache cache) {
-      if (cache.getStatus().allowInvocations() && cache.getConfiguration().isExposeJmxStatistics()) {
+   private void unregisterCacheMBean(Cache<?, ?> cache) {
+      if (cache.getConfiguration().isExposeJmxStatistics()) {
          cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class)
                  .unregisterCacheMBean();
       }
@@ -617,13 +787,34 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
+   
+   public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
+      return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
+   }
 
    public Configuration getDefaultConfiguration() {
       return defaultConfiguration;
    }
+   
+   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
+      return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
+   }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name) {
+      Configuration c = configurationOverrides.get(name);
+      if (c == null)
+         return null;
+      else
+         return LegacyConfigurationAdaptor.adapt(c);
+   }
 
    public Set<String> getCacheNames() {
+      // Get the XML/programmatically defined caches
       Set<String> names = new HashSet<String>(configurationOverrides.keySet());
+      // Add the caches created dynamically without explicit config
+      // Since caches could be modified dynamically, make a safe copy of keys
+      names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
       if (names.isEmpty())
          return Collections.emptySet();
@@ -679,7 +870,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public String getRunningCacheCount() {
       int running = 0;
       for (CacheWrapper cachew : caches.values()) {
-         Cache cache = cachew.cache;
+         Cache<?, ?> cache = cachew.cache;
          if (cache != null && cache.getStatus() == ComponentStatus.RUNNING)
             running++;
       }
@@ -751,7 +942,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
-   private Transport getTransport() {
+   @Override
+   public Transport getTransport() {
       if (globalComponentRegistry == null) return null;
       return globalComponentRegistry.getComponent(Transport.class);
    }
@@ -761,22 +953,30 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public String toString() {
       return super.toString() + "@Address:" + getAddress();
    }
-}
 
-class CacheWrapper {
-   Cache cache;
-   CountDownLatch latch = new CountDownLatch(1);
-
-   CacheWrapper(Cache cache) {
-      this.cache = cache;
+   /**
+    * Use reflection for this as we don't want to expose setName on Configuration.
+    */
+   private void setConfigurationName(String cacheName, Configuration configuration) {
+      ReflectionUtil.setValue(configuration, "name", cacheName);
    }
 
-   Cache getCache() {
-      try {
-         latch.await();
-      } catch (InterruptedException ie) {
-         Thread.currentThread().interrupt();
+   private final static class CacheWrapper {
+      private final Cache<?, ?> cache;
+      private final CountDownLatch latch = new CountDownLatch(1);
+
+      private CacheWrapper(Cache<?, ?> cache) {
+         this.cache = cache;
       }
-      return cache;
+
+      @SuppressWarnings("unchecked")
+      private <K, V> Cache<K, V> getCache() {
+         try {
+            latch.await();
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+         }
+         return (Cache<K, V>) cache;
+      }
    }
 }

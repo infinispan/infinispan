@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,22 +22,23 @@
  */
 package org.infinispan.query;
 
+import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
+import org.hibernate.search.query.engine.spi.FacetManager;
 
 import java.util.List;
 
 /**
- * A cache-query is what will be returned when the getQuery() method is run on {@link QueryFactory}. This object can
+ * A cache-query is what will be returned when the getQuery() method is run on {@link SearchManagerImpl}. This object can
  * have methods such as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
- * <p/>
  * <p/>
  *
  * @author Manik Surtani
  * @author Navin Surtani
- * @see QueryFactory#getQuery(org.apache.lucene.search.Query)
- * @see QueryFactory#getBasicQuery(String, String)
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @see SearchManagerImpl#getQuery(org.apache.lucene.search.Query)
  */
 public interface CacheQuery extends Iterable {
   
@@ -85,14 +87,19 @@ public interface CacheQuery extends Iterable {
     * @param index of result to be set to the first.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
-   void setFirstResult(int index);
+   CacheQuery firstResult(int index);
 
    /**
     * Sets the maximum number of results to the number passed in as a parameter.
     *
     * @param numResults that are to be set to the maxResults.
     */
-   void setMaxResults(int numResults);
+   CacheQuery maxResults(int numResults);
+   
+   /**
+    * @return return the manager for all faceting related operations
+    */
+   FacetManager getFacetManager();
 
    /**
     * Gets the integer number of results.
@@ -100,13 +107,37 @@ public interface CacheQuery extends Iterable {
     * @return integer number of results.
     */
    int getResultSize();
+   
+   /**
+    * Return the Lucene {@link org.apache.lucene.search.Explanation}
+    * object describing the score computation for the matching object/document
+    * in the current query
+    *
+    * @param documentId Lucene Document id to be explain. This is NOT the object key
+    * @return Lucene Explanation
+    */
+   Explanation explain(int documentId);
 
    /**
     * Allows lucene to sort the results. Integers are sorted in descending order.
     *
     * @param s - lucene sort object
     */
-   void setSort(Sort s);
+   CacheQuery sort(Sort s);
+   
+   /**
+    * Defines the Lucene field names projected and returned in a query result
+    * Each field is converted back to it's object representation, an Object[] being returned for each "row"
+    * <p/>
+    * A projectable field must be stored in the Lucene index and use a {@link org.hibernate.search.bridge.TwoWayFieldBridge}
+    * Unless notified in their JavaDoc, all built-in bridges are two-way. All @DocumentId fields are projectable by design.
+    * <p/>
+    * If the projected field is not a projectable field, null is returned in the object[]
+    *
+    * @param fields the projected field names
+    * @return {@code this}  to allow for method chaining
+    */
+   CacheQuery projection(String... fields);
 
    /**
     * Enable a given filter by its name.
@@ -121,13 +152,13 @@ public interface CacheQuery extends Iterable {
     *
     * @param name of filter.
     */
-   public void disableFullTextFilter(String name);
+   public CacheQuery disableFullTextFilter(String name);
 
    /**
     * Allows lucene to filter the results.
     *
     * @param f - lucene filter
     */
-   public void setFilter(Filter f);
+   public CacheQuery filter(Filter f);
 
 }

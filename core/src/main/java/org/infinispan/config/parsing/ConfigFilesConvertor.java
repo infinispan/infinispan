@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +22,7 @@
  */
 package org.infinispan.config.parsing;
 
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -70,43 +71,50 @@ public class ConfigFilesConvertor {
       TRANSFORMATIONS.put(COHERENCE_35X, "xslt/coherence35x2infinispan4x.xslt");
    }
 
-   public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
-      InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
+   public void parse(InputStream is, OutputStream os, String xsltFile, ClassLoader cl) throws Exception {
+      InputStream xsltInStream = FileLookupFactory.newInstance().lookupFile(xsltFile, cl);
       if (xsltInStream == null) {
          throw new IllegalStateException("Cold not find xslt file! : " + xsltFile);
       }
 
-      Document document = getInputDocument(is);
+      try {
+         Document document = getInputDocument(is);
 
-      // Use a Transformer for output
-      Transformer transformer = getTransformer(xsltInStream);
+         // Use a Transformer for output
+         Transformer transformer = getTransformer(xsltInStream);
 
-      DOMSource source = new DOMSource(document);
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      StreamResult result = new StreamResult(byteArrayOutputStream);
-      transformer.transform(source, result);
+         DOMSource source = new DOMSource(document);
+         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+         StreamResult result = new StreamResult(byteArrayOutputStream);
+         transformer.transform(source, result);
 
-      InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt");
-      // Use a Transformer for output
-      transformer = getTransformer(indentation);
-      StreamResult finalResult = new StreamResult(os);
-      StreamSource rawResult = new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-      transformer.transform(rawResult, finalResult);
-      xsltInStream.close();
+         InputStream indentation = FileLookupFactory.newInstance().lookupFile("xslt/indent.xslt", cl);
+         try {
+            // Use a Transformer for output
+            transformer = getTransformer(indentation);
+            StreamResult finalResult = new StreamResult(os);
+            StreamSource rawResult = new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+            transformer.transform(rawResult, finalResult);
+         } finally {
+            Util.close(indentation);
+         }
+      } finally {
+         Util.close(xsltInStream);
+      }
    }
 
    /**
     * Writes to the <b>os</b> the infinispan 4.x configuration file resulted by transforming configuration file passed
     * in as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
-    * xslt file are looked up using a {@link org.jboss.cache.util.FileLookup}
+    * xslt file are looked up using a {@link org.infinispan.util.DefaultFileLookup}
     */
-   public void parse(String inputFile, OutputStream os, String xsltFile) throws Exception {
-      InputStream stream = new FileLookup().lookupFile(inputFile);
+   public void parse(String inputFile, OutputStream os, String xsltFile, ClassLoader cl) throws Exception {
+      InputStream stream = FileLookupFactory.newInstance().lookupFileStrict(inputFile, cl);
       try {
-         parse(stream, os, xsltFile);
+         parse(stream, os, xsltFile, cl);
       }
       finally {
-         stream.close();
+         Util.close(stream);
       }
    }
 
@@ -147,9 +155,9 @@ public class ConfigFilesConvertor {
       }
 
       if (type.equals(JBOSS_CACHE3X)) {
-         transformFromJbossCache3x(sourceName, destinationName);
+         transformFromJbossCache3x(sourceName, destinationName, ConfigFilesConvertor.class.getClassLoader());
       } else {
-         transformFromNonJBoss(sourceName, destinationName, TRANSFORMATIONS.get(type));
+         transformFromNonJBoss(sourceName, destinationName, TRANSFORMATIONS.get(type), ConfigFilesConvertor.class.getClassLoader());
       }
 
       System.out.println("---");
@@ -163,7 +171,7 @@ public class ConfigFilesConvertor {
       return supported.toString();
    }
 
-   private static void transformFromNonJBoss(String sourceName, String destinationName, String xslt) throws Exception {
+   private static void transformFromNonJBoss(String sourceName, String destinationName, String xslt, ClassLoader cl) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -184,7 +192,7 @@ public class ConfigFilesConvertor {
          }
 
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, xslt);
+         convertor.parse(is, fos, xslt, cl);
       } finally {
          Util.flushAndCloseStream(fos);
          Util.close(is);
@@ -199,7 +207,7 @@ public class ConfigFilesConvertor {
       }
    }
 
-   private static void transformFromJbossCache3x(String sourceName, String destinationName) throws Exception {
+   private static void transformFromJbossCache3x(String sourceName, String destinationName, ClassLoader cl) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -218,7 +226,7 @@ public class ConfigFilesConvertor {
             }
          }
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt");
+         convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt", cl);
          fos.close();
          is.close();
 
@@ -233,7 +241,7 @@ public class ConfigFilesConvertor {
          is = new FileInputStream(oldConfig);
          fos = new FileOutputStream(jgroupsConfigFile);
          convertor = new ConfigFilesConvertor();
-         convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
+         convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt", cl);
       } finally {
          Util.close(is);
          Util.flushAndCloseStream(fos);

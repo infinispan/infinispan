@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -30,7 +31,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
-import java.io.IOException;
 
 /**
  * <p>Factory for locks obtained in <code>InfinispanDirectory</code>,
@@ -96,7 +96,7 @@ public class TransactionalLockFactory extends LockFactory {
          lock = new TransactionalSharedLuceneLock(cache, indexName, lockName, tm);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Lock prepared, not acquired: %s for index %s", lockName, indexName);
+         log.tracef("Lock prepared, not acquired: %s for index %s", lockName, indexName);
       }
       return lock;
    }
@@ -104,7 +104,7 @@ public class TransactionalLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
-   public void clearLock(String lockName) throws IOException {
+   public void clearLock(String lockName) {
       //Same special care as above for locks named DEF_LOCK_NAME:
       if (DEF_LOCK_NAME.equals(lockName)) {
          defLock.clearLockSuspending();
@@ -113,7 +113,7 @@ public class TransactionalLockFactory extends LockFactory {
          new TransactionalSharedLuceneLock(cache, indexName, lockName, tm).clearLockSuspending();
       }
       if (log.isTraceEnabled()) {
-         log.trace("Removed lock: %s for index %s", lockName, indexName);
+         log.tracef("Removed lock: %s for index %s", lockName, indexName);
       }
    }
    

@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -35,7 +36,7 @@ import org.infinispan.config.ConfigurationException;
 public abstract class AutoBatchSupport {
    protected BatchContainer batchContainer;
 
-   protected void assertBatchingSupported(Configuration c) {
+   protected static void assertBatchingSupported(Configuration c) {
       if (!c.isInvocationBatchingEnabled())
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
    }

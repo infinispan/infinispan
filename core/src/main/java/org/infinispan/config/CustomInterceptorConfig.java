@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -41,7 +42,7 @@ import java.util.Properties;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlType(name="interceptor")
 @ConfigurationDoc(name="interceptor")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
@@ -52,37 +53,27 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    @XmlTransient
    protected CommandInterceptor interceptor;
 
-   @XmlTransient
-   protected boolean isFirst;
-
-   @XmlTransient
-   protected boolean isLast;
-
-   @XmlAttribute
    @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setIndex")
    protected Integer index = -1;
    
-   @XmlAttribute
    @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setAfterInterceptor")
    protected String after;
 
-   @XmlAttribute
    @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setBeforeInterceptor")
    protected String before;
 
-   @XmlAttribute
    @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setPosition")
-   protected Position position;   
-   
-   @XmlAttribute(name="class")
+   protected Position position = Position.OTHER_THAN_FIRST_OR_LAST;   
+      
    @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setClassName")
    protected String className;
 
    @XmlElement
-   private TypedProperties properties = EMPTY_PROPERTIES;
+   private TypedProperties properties = new TypedProperties();
 
    public CustomInterceptorConfig() {
       super();
+      overriddenConfigurationElements.add("isFirst");
    }
 
    /**
@@ -97,51 +88,31 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     */
    public CustomInterceptorConfig(CommandInterceptor interceptor, boolean first, boolean last, int index,
                                   String after, String before) {
-      this.interceptor = interceptor;
-      isFirst = first;
-      isLast = last;
+      this.interceptor = interceptor;     
       this.index = index;
       this.after = after;
       this.before = before;
-      overriddenConfigurationElements.add("interceptor");
+      if (interceptor != null) overriddenConfigurationElements.add("interceptor");
+
+      if (first && last)
+         throw new IllegalArgumentException("Interceptor " + interceptor
+                  + " can not be both first and last!");
+      if (first) {
+         position = Position.FIRST;
+      }
+      if (last) {
+         position = Position.LAST;
+      }
+      // No way to tell here, unfortunately...
       overriddenConfigurationElements.add("isFirst");
       overriddenConfigurationElements.add("isLast");
-      overriddenConfigurationElements.add("index");
-      overriddenConfigurationElements.add("after");
-      overriddenConfigurationElements.add("before");
+
+      if (index > -1) overriddenConfigurationElements.add("index");
+
+      if (after != null && after.length() > 0) overriddenConfigurationElements.add("after");
+      if (before != null && before.length() > 0) overriddenConfigurationElements.add("before");
    }
 
-   /**
-    * Builds a custom interceptor configuration.
-    *
-    * @param interceptor interceptor instance, already initialized with all attributes specified in the configuration
-    * @param first       true if you wan this to be the first interceptor in the chain
-    * @param last        true if you wan this to be the last interceptor in the chain
-    * @param index       an absolute position within the interceptor chain
-    * @param after       if you want this interceptor immediately after the specified class in the chain
-    * @param before      immediately before the specified class in the chain
-    */
-   public CustomInterceptorConfig(CommandInterceptor interceptor, boolean first, boolean last, int index,
-                                  Class<? extends CommandInterceptor> after, Class<? extends CommandInterceptor> before) {
-      this.interceptor = interceptor;
-      isFirst = first;
-      isLast = last;
-      this.index = index;
-      overriddenConfigurationElements.add("interceptor");
-      overriddenConfigurationElements.add("isFirst");
-      overriddenConfigurationElements.add("isLast");
-      overriddenConfigurationElements.add("index");
-
-      if (after != null) {
-         this.after = after.getName();
-         overriddenConfigurationElements.add("after");
-      }
-
-      if (before != null) {
-         this.before = before.getName();
-         overriddenConfigurationElements.add("before");
-      }
-   }
 
    /**
     * Constructs an interceptor config based on the supplied interceptor instance.
@@ -149,6 +120,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * @param interceptor
     */
    public CustomInterceptorConfig(CommandInterceptor interceptor) {
+      this();
       this.interceptor = interceptor;
       overriddenConfigurationElements.add("interceptor");
    }
@@ -157,6 +129,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return properties;
    }
    
+   @XmlTransient
    public void setProperties(Properties properties) {
       this.properties = toTypedProperties(properties);
       testImmutability("properties");
@@ -164,6 +137,10 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
 
    public Position getPosition() {
       return position;
+   }
+   
+   public String getPositionAsString() {
+      return position.toString();
    }
 
    /**
@@ -174,6 +151,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param position
     */
+   @XmlTransient
    public void setPosition(Position position) {
       this.position = position;
       testImmutability("position");
@@ -187,6 +165,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Fully qualified interceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor.
     * @param className
     */
+   @XmlAttribute(name="class")
    public void setClassName(String className) {
       this.className = className;
       testImmutability("className");
@@ -195,18 +174,19 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    /**
     * Shall this interceptor be the first one in the chain?
     */
-
+   @XmlTransient
    public void setFirst(boolean first) {
       testImmutability("first");
-      isFirst = first;
+      setPosition(Position.FIRST);
    }
 
    /**
     * Shall this interceptor be the last one in the chain?
     */
+   @XmlTransient
    public void setLast(boolean last) {
       testImmutability("last");
-      isLast = last;
+      setPosition(Position.LAST);
    }
    
    /**
@@ -217,7 +197,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param pos
     */
-   public void setPosition(String pos) {
+   @XmlAttribute(name="position")
+   public void setPositionAsString(String pos) {
       setPosition(Position.valueOf(uc(pos)));
    }
 
@@ -228,7 +209,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param index
     */
-   public void setIndex(int index) {
+   @XmlAttribute(name="index")
+   public void setIndex(Integer index) {
       testImmutability("index");
       this.index = index;
    }
@@ -241,6 +223,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param afterClass
     */
+   @XmlAttribute(name="after")
    public void setAfterInterceptor(String afterClass) {
       testImmutability("after");
       this.after = afterClass;
@@ -253,6 +236,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param interceptorClass
     */
+   @XmlTransient
    public void setAfterInterceptor(Class<? extends CommandInterceptor> interceptorClass) {
       setAfterInterceptor(interceptorClass.getName());
    }
@@ -264,6 +248,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param beforeClass
     */
+   @XmlAttribute(name="before")
    public void setBeforeInterceptor(String beforeClass) {
       testImmutability("before");
       this.before = beforeClass;
@@ -276,6 +261,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * 
     * @param interceptorClass
     */
+   @XmlTransient
    public void setBeforeInterceptor(Class<? extends CommandInterceptor> interceptorClass) {
       setBeforeInterceptor(interceptorClass.getName());
    }
@@ -290,6 +276,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    /**
     * Returns a the interceptor that we want to add to the chain.
     */
+   @XmlTransient
    public void setInterceptor(CommandInterceptor interceptor) {
       testImmutability("interceptor");
       this.interceptor = interceptor;
@@ -299,20 +286,20 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * @see #setFirst(boolean)
     */
    public boolean isFirst() {
-      return isFirst;
+      return getPosition() == Position.FIRST;
    }
 
    /**
     * @see #setLast(boolean)
     */
    public boolean isLast() {
-      return isLast;
+      return getPosition() == Position.LAST;
    }
 
    /**
     * @see #getIndex()
     */
-   public int getIndex() {
+   public Integer getIndex() {
       return index;
    }
 
@@ -322,6 +309,14 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    public String getAfter() {
       return after;
    }
+   
+   /**
+    * @see #getAfter()
+    */
+   public String getAfterInterceptor() {
+      //DO NOT remove this method as it is needed for proper marshalling
+      return getAfter();
+   }
 
    /**
     * @see #getBefore()
@@ -329,15 +324,22 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    public String getBefore() {
       return before;
    }
+   
+   public String getBeforeInterceptor() {
+      //DO NOT remove this method as it is needed for proper marshalling
+      return getBefore();
+   }
 
    public String toString() {
       return "CustomInterceptorConfig{" +
             "interceptor='" + interceptor + '\'' +
-            ", isFirst=" + isFirst +
-            ", isLast=" + isLast +
+            ", isFirst=" + isFirst() +
+            ", isLast=" + isLast() +
             ", index=" + index +
             ", after='" + after + '\'' +
             ", before='" + before + '\'' +
+            ", position='" + position + '\'' +
+            ", class='" + className + '\'' +
             '}';
    }
 
@@ -348,10 +350,9 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       CustomInterceptorConfig that = (CustomInterceptorConfig) o;
 
       if (index != null && !index.equals(that.index)) return false;
-      if (isFirst != that.isFirst) return false;
-      if (isLast != that.isLast) return false;
       if (after != null ? !after.equals(that.after) : that.after != null) return false;
       if (before != null ? !before.equals(that.before) : that.before != null) return false;
+      if (position != null ? !position.equals(that.position) : that.position != null) return false;
       if (interceptor != null ? !interceptor.equals(that.interceptor) : that.interceptor != null)
          return false;
       return true;
@@ -360,11 +361,10 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    public int hashCode() {
       int result;
       result = (interceptor != null ? interceptor.hashCode() : 0);
-      result = 31 * result + (isFirst ? 1 : 0);
-      result = 31 * result + (isLast ? 1 : 0);
       result = 31 * result + index;
       result = 31 * result + (after != null ? after.hashCode() : 0);
       result = 31 * result + (before != null ? before.hashCode() : 0);
+      result = 31 * result + (position != null ? position.hashCode() : 0);
       return result;
    }
 
@@ -380,7 +380,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
    
    enum Position {
-      FIRST,LAST
+      FIRST,LAST, OTHER_THAN_FIRST_OR_LAST
    }
 
    public void accept(ConfigurationBeanVisitor v) {

@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,19 +22,23 @@
  */
 package org.infinispan.query.impl;
 
-import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
-import org.easymock.IAnswer;
-import org.infinispan.Cache;
-import org.infinispan.query.QueryIterator;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.getCurrentArguments;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.infinispan.AdvancedCache;
+import org.infinispan.query.QueryIterator;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Navin Surtani
@@ -47,7 +52,7 @@ public class EagerIteratorTest {
    Map<String, String> dummyResults;
    QueryIterator iterator;
    int fetchSize = 1;
-   Cache<String, String> cache;
+   AdvancedCache<String, String> cache;
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -64,7 +69,7 @@ public class EagerIteratorTest {
       }
 
       // create the instance of the iterator.
-      cache = createMock(Cache.class);
+      cache = createMock(AdvancedCache.class);
 
       expect(cache.get(anyObject())).andAnswer(new IAnswer<String>() {
          public String answer() throws Throwable {
@@ -101,7 +106,6 @@ public class EagerIteratorTest {
    public void testFirst() {
       assert iterator.isFirst() : "We should be pointing at the first element";
       Object next = iterator.next();
-      System.out.println(next);
 
       assert next == dummyResults.get(keys.get(0));
 
@@ -203,7 +207,6 @@ public class EagerIteratorTest {
    public void testNextAndHasNext() {
       iterator.first();
       for (int i = 0; i < keys.size(); i++) {
-         System.out.println("Loop number count: - " + (i + 1));
          Object expectedValue = dummyResults.get(keys.get(i));
          assert iterator.hasNext(); // should have next as long as we are less than the number of elements.
          assert expectedValue == iterator.next(); // tests next()

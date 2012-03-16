@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.context.InvocationContext;
@@ -12,20 +34,21 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Lock manager in charge with processing deadlock detections.
  * Implementation notes: if a deadlock is detected, then one of the transactions has to rollback. The transaction that
  * rollbacks is determined by comparing the coin toss from {@link org.infinispan.transaction.xa.DldGlobalTransaction}.
- * A thread calling {@link DeadlockDetectingLockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext)}
+ * A thread calling {@link LockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext, long)}
  * would run the deadlock detection algorithm only if all of the following take place:
  * - the call is made in the scope of a transaction (either locally originated or remotely originated)
  * - it cannot acquire lock on the given key and the lock owner is another transaction
  * - when comparing coin toss, this thread would loose against the other one - so it's always the potential loser that runs DLD.
- * If deadlock is detected then {@link #lockAndRecord(Object, org.infinispan.context.InvocationContext)} would throw an
+ * If deadlock is detected then {@link LockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext, long)} would throw an
  * {@link org.infinispan.util.concurrent.locks.DeadlockDetectedException}. This is subsequently handled in
  * in the interceptor chain - locks owned by this tx are released.
  *
@@ -52,41 +75,43 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       exposeJmxStats = configuration.isExposeJmxStatistics();
    }
 
-   public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
-      long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
+   public boolean lockAndRecord(Object key, InvocationContext ctx, long lockTimeout) throws InterruptedException {
+      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
 
       if (ctx.isInTxScope()) {
          if (trace) log.trace("Using early dead lock detection");
-         final long start = System.currentTimeMillis();
+         final long startNanos = System.nanoTime();
+         final long timeoutNanoTime = TimeUnit.NANOSECONDS.convert(lockTimeout, MILLISECONDS) + startNanos;
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
          thisTx.setLockIntention(key);
-         if (trace) log.trace("Setting lock intention to: " + key);
+         if (trace) log.tracef("Setting lock intention to %s for %s (%s)", key, thisTx, System.identityHashCode(thisTx));
 
-         while (System.currentTimeMillis() < (start + lockTimeout)) {
-            if (lockContainer.acquireLock(key, spinDuration, MILLISECONDS) != null) {
+         while (System.nanoTime() < timeoutNanoTime) {
+            if (lockContainer.acquireLock(ctx.getLockOwner(), key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
-               if (trace) log.trace("successfully acquired lock on " + key + ", returning ...");
+               if (trace) log.tracef("successfully acquired lock on %s on behalf of %s, returning ...", key, ctx.getLockOwner());
                return true;
             } else {
                Object owner = getOwner(key);
                if (!(owner instanceof DldGlobalTransaction)) {
-                  if (trace) log.trace("Not running DLD as lock owner( " + owner + ") is not a transaction");
+                  if (trace) log.tracef("Not running DLD as lock owner(%s) is not a transaction", owner);
                   cannotRunDld.incrementAndGet();
                   continue;
                }
                DldGlobalTransaction lockOwnerTx = (DldGlobalTransaction) owner;
+               if (trace) log.tracef("Could not acquire lock as %s is locked by %s (%s)", key, owner, System.identityHashCode(owner));
                if (isDeadlockAndIAmLoosing(lockOwnerTx, thisTx, key)) {
                   updateStats(thisTx);
-                  String message = "Deadlock found and we " + thisTx + " shall not continue. Other tx is " + lockOwnerTx;
+                  String message = String.format("Deadlock found and we %s shall not continue. Other tx is %s",
+                                                 thisTx, lockOwnerTx);
                   if (trace) log.trace(message);
                   throw new DeadlockDetectedException(message);
                }
             }
          }
       } else {
-         if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
+         if (lockContainer.acquireLock(ctx.getLockOwner(), key, lockTimeout, MILLISECONDS) != null) {
             return true;
          }
       }
@@ -98,7 +123,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       //run the lose check first as it is cheaper
       boolean wouldWeLoose = thisTx.wouldLose(lockOwnerTx);
       if (!wouldWeLoose) {
-         if (trace) log.trace("We (" + thisTx + ") wouldn't lose against the other(" + lockOwnerTx + ") transaction, so no point running rest of DLD");
+         if (trace) log.tracef("We (%s) win against the other (%s) transaction, so no point running rest of DLD", thisTx, lockOwnerTx);
          return false;
       }
       //do we have lock on what other tx intends to acquire?
@@ -111,7 +136,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
       //if we are here then 1) the other tx has a lock on this local key AND 2) I have a lock on the same key remotely
       if (iHaveRemoteLock && otherHasLocalLock) {
-         if (trace) log.trace("Same key deadlock between %s and %s on key %s.", thisTx, lockOwnerTx, key);
+         if (trace) log.tracef("Same key deadlock between %s and %s on key %s.", thisTx, lockOwnerTx, key);
          return true;
       }
       return false;
@@ -127,18 +152,18 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          // if trying to acquire a remote lock, a tx first acquires a local lock. 
          if (thisTx.hasLockAtOrigin(lockOwnerTx.getRemoteLockIntention())) {
             if (trace)
-               log.trace("Same key deadlock detected: lock owner tries to acquire lock remotely on " + key + " but we have it!");
+               log.tracef("Same key deadlock detected: lock owner tries to acquire lock remotely on %s but we have it!", key);
             return true;
          }
       } else {
-         if (trace) log.trace("Lock owner is remote: " + lockOwnerTx);
+         if (trace) log.tracef("Lock owner is remote: %s", lockOwnerTx);
       }
       return false;
    }
 
    private boolean ownsLocalIntention(DldGlobalTransaction thisTx, Object lockOwnerTxIntention) {
       boolean result = lockOwnerTxIntention != null && ownsLock(lockOwnerTxIntention, thisTx);
-      if (trace) log.trace("Local intention is '" + lockOwnerTxIntention + "'. Do we own lock for it? " + result + " We == " + thisTx);
+      if (trace) log.tracef("Local intention is '%s'. Do we own lock for it? %s, We == %s", lockOwnerTxIntention, result, thisTx);
       return result;
    }
 
@@ -194,7 +219,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected")
    @Metric(displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
    @Deprecated
-   public long getLocallyInterruptedTransactions() {
+   public static long getLocallyInterruptedTransactions() {
       return -1;
    }
 

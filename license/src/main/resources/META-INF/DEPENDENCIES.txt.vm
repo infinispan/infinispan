@@ -1,0 +1,30 @@
+#if($preDepListText)
+$preDepListText
+#else
+// ------------------------------------------------------------------
+// Transitive dependencies of this project determined from the
+// maven pom organized by organization.
+// ------------------------------------------------------------------
+
+#if ($projectName)$projectName#else${project.name}#end
+
+#end
+
+
+#foreach ( $organizationName in $projectsSortedByOrganization.keySet() )
+From: '$organizationName.name'#if($organizationName.url) ($organizationName.url)#end
+
+#foreach ( $project in $projectsSortedByOrganization.get( $organizationName ) )
+  - $project.name #if ($project.url)($project.url)#end $project.artifact
+#foreach ( $license in $project.licenses)
+    License: $license.name #if ($license.url) ($license.url)#end
+#end
+
+#end
+
+#end
+
+
+#if($postDepListText)
+$postDepListText
+#end

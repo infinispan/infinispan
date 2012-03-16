@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,8 +24,8 @@ package org.infinispan.loaders.jdbc.binary;
 
 import static org.easymock.classextension.EasyMock.*;
 
-import org.infinispan.CacheDelegate;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.CacheImpl;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -51,7 +52,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;
@@ -61,7 +62,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), new TestObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), new TestObjectStreamMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 
@@ -87,11 +88,11 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
    public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
-      cs.store(InternalEntryFactory.create(k1, "value"));
-      cs.store(InternalEntryFactory.create(k2, "value", 60000)); // will expire
+      cs.store(TestInternalCacheEntryFactory.create(k1, "value"));
+      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 60000)); // will expire
       for (int i = 0; i < 120; i++) {
-         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
-         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
       }
       assert cs.containsKey(k1);
       assert cs.containsKey(k2);

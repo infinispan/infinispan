@@ -1,3 +1,1 @@
-This document is now maintained on Infinispan's wiki system:
-
-http://community.jboss.org/wiki/InfinispanandMaven
+You can read more about how to build Infinispan using Maven in the documentation: https://docs.jboss.org/author/display/ISPN/Contributing+to+Infinispan#ContributingtoInfinispan-BuildingInfinispan

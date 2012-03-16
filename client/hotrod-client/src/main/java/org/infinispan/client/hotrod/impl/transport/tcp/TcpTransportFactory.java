@@ -1,24 +1,50 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.ThreadSafe;
+
+import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -27,81 +53,109 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 public class TcpTransportFactory implements TransportFactory {
 
-   private static final Log log = LogFactory.getLog(TcpTransportFactory.class);
+   private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
-    * These are declared volatile as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(java.util.Properties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger)}
+    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
     * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
     */
-   private volatile GenericKeyedObjectPool connectionPool;
-   private volatile RequestBalancingStrategy balancer;
-   private volatile Collection<InetSocketAddress> servers;
-   private volatile ConsistentHash consistentHash;
-   private volatile boolean tcpNoDelay;
+   private Object lock = new Object();
+   // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
+   private GenericKeyedObjectPool connectionPool;
+   private RequestBalancingStrategy balancer;
+   private Collection<SocketAddress> servers;
+   private ConsistentHash consistentHash;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
+   
+   // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
+   private volatile boolean tcpNoDelay;
+   private volatile int soTimeout;
+   private volatile int connectTimeout;
 
    @Override
-   public void start(ConfigurationProperties cfg, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
-      hashFactory.init(cfg);
-      boolean pingOnStartup = cfg.getPingOnStartup();
-      servers = staticConfiguredServers;
-      String balancerClass = cfg.getRequestBalancingStrategy();
-      balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
-      tcpNoDelay = cfg.getTcpNoDelay();
-      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, pingOnStartup), cfg.getProperties());
-      createAndPreparePool(staticConfiguredServers, poolFactory);
-      balancer.setServers(servers);
+   public void start(Codec codec, ConfigurationProperties cfg,
+                     Collection<SocketAddress> staticConfiguredServers,
+                     AtomicInteger topologyId, ClassLoader classLoader) {
+      synchronized (lock) {
+         hashFactory.init(cfg, classLoader);
+         boolean pingOnStartup = cfg.getPingOnStartup();
+         servers = Collections.unmodifiableCollection(new ArrayList(staticConfiguredServers));
+         String balancerClass = cfg.getRequestBalancingStrategy();
+         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, classLoader);
+         tcpNoDelay = cfg.getTcpNoDelay();
+         soTimeout = cfg.getSoTimeout();
+         connectTimeout = cfg.getConnectTimeout();
+         if (log.isDebugEnabled()) {
+            log.debugf("Statically configured servers: %s", staticConfiguredServers);
+            log.debugf("Load balancer class: %s", balancerClass);
+            log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
+                       tcpNoDelay, soTimeout, connectTimeout);
+         }
+         PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(
+               new TransportObjectFactory(codec, this, topologyId, pingOnStartup), cfg.getProperties());
+         createAndPreparePool(staticConfiguredServers, poolFactory);
+         balancer.setServers(servers);
+      }
    }
 
    /**
     * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
     * as this is the user.
     */
-   private void createAndPreparePool(Collection<InetSocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
+   private void createAndPreparePool(Collection<SocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
-      for (InetSocketAddress addr: staticConfiguredServers) {
+      for (SocketAddress addr: staticConfiguredServers) {
          connectionPool.preparePool(addr, false);
       }
    }
 
    @Override
    public void destroy() {
-      connectionPool.clear();
-      try {
-         connectionPool.close();
-      } catch (Exception e) {
-         log.warn("Exception while shutting down the connection pool.", e);
+      synchronized (lock) {
+         connectionPool.clear();
+         try {
+            connectionPool.close();
+         } catch (Exception e) {
+            log.warn("Exception while shutting down the connection pool.", e);
+         }
       }
    }
 
    @Override
-   public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
-      ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
-      if (hash == null) {
-         log.warn("No hash function configured for version: " + hashFunctionVersion);
-      } else {
-         hash.init(servers2HashCode, numKeyOwners, hashSpace);
+   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
+       synchronized (lock) {
+         ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
+         if (hash == null) {
+            log.noHasHFunctionConfigured(hashFunctionVersion);
+         } else {
+            hash.init(servers2Hash, numKeyOwners, hashSpace);
+         }
+         consistentHash = hash;
       }
-      consistentHash = hash;
    }
 
    @Override
    public Transport getTransport() {
-      InetSocketAddress server = balancer.nextServer();
+      SocketAddress server;
+      synchronized (lock) {
+         server = balancer.nextServer();
+      }
       return borrowTransportFromPool(server);
    }
 
    public Transport getTransport(byte[] key) {
-      InetSocketAddress server;
-      if (consistentHash != null) {
-         server = consistentHash.getServer(key);
-         if (log.isTraceEnabled()) {
-            log.trace("Using consistent hash for determining the server: " + server);
-         }
-      } else {
-         server = balancer.nextServer();
-         if (log.isTraceEnabled()) {
-            log.trace("Using the balancer for determining the server: " + server);
+      SocketAddress server;
+      synchronized (lock) {
+         if (consistentHash != null) {
+            server = consistentHash.getServer(key);
+            if (log.isTraceEnabled()) {
+               log.tracef("Using consistent hash for determining the server: " + server);
+            }
+         } else {
+            server = balancer.nextServer();
+            if (log.isTraceEnabled()) {
+               log.tracef("Using the balancer for determining the server: %s", server);
+            }
          }
       }
       return borrowTransportFromPool(server);
@@ -109,21 +163,23 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void releaseTransport(Transport transport) {
+      // The invalidateObject()/returnObject() calls could take a long time, so we hold the lock only until we get the connection pool reference
+      KeyedObjectPool pool = getConnectionPool();
       TcpTransport tcpTransport = (TcpTransport) transport;
       if (!tcpTransport.isValid()) {
          try {
             if (log.isTraceEnabled()) {
-               log.info("Dropping connection as it is no longer valid: " + tcpTransport);
+               log.tracef("Dropping connection as it is no longer valid: %s", tcpTransport);
             }
-            connectionPool.invalidateObject(tcpTransport.getServerAddress(), tcpTransport);
+            pool.invalidateObject(tcpTransport.getServerAddress(), tcpTransport);
          } catch (Exception e) {
-            log.warn("Could not invalidate connection: " + tcpTransport, e);
+            log.couldNoInvalidateConnection(tcpTransport, e);
          }
       } else {
          try {
-            connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
+            pool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
          } catch (Exception e) {
-            log.warn("Could not release connection: " + tcpTransport, e);
+            log.couldNotReleaseConnection(tcpTransport, e);
          } finally {
             logConnectionInfo(tcpTransport.getServerAddress());
          }
@@ -131,30 +187,30 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateServers(Collection<InetSocketAddress> newServers) {
-      synchronized (this) {//only one updateServers at a time. 
-         Set<InetSocketAddress> addedServers = new HashSet<InetSocketAddress>(newServers);
+   public void updateServers(Collection<SocketAddress> newServers) {
+      synchronized (lock) {
+         Set<SocketAddress> addedServers = new HashSet<SocketAddress>(newServers);
          addedServers.removeAll(servers);
-         Set<InetSocketAddress> failedServers = new HashSet<InetSocketAddress>(servers);
+         Set<SocketAddress> failedServers = new HashSet<SocketAddress>(servers);
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
-            log.trace("Current list: " + servers);
-            log.trace("New list: " + newServers);
-            log.trace("Added servers: " + addedServers);
-            log.trace("Removed servers: " + failedServers);
+            log.tracef("Current list: %s", servers);
+            log.tracef("New list: ", newServers);
+            log.tracef("Added servers: ", addedServers);
+            log.tracef("Removed servers: ", failedServers);
          }
          if (failedServers.isEmpty() && newServers.isEmpty()) {
-            log.info("Same list of servers, not changing the pool");
+            log.debug("Same list of servers, not changing the pool");
             return;
          }
 
          //1. first add new servers. For servers that went down, the returned transport will fail for now
-         for (InetSocketAddress server : newServers) {
-            log.info("New server added(" + server + "), adding to the pool.");
+         for (SocketAddress server : addedServers) {
+            log.newServerAdded(server);
             try {
                connectionPool.addObject(server);
             } catch (Exception e) {
-               log.warn("Failed adding new server " + server, e);
+               log.failedAddingNewServer(server, e);
             }
          }
 
@@ -165,40 +221,54 @@ public class TcpTransportFactory implements TransportFactory {
 
 
          //3. Now just remove failed servers
-         for (InetSocketAddress server : failedServers) {
-            log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
+         for (SocketAddress server : failedServers) {
+            log.removingServer(server);
             connectionPool.clear(server);
          }
 
-         servers.clear();
-         servers.addAll(newServers);
+         servers = Collections.unmodifiableList(new ArrayList(newServers));
       }
    }
 
-   public Collection<InetSocketAddress> getServers() {
-      return servers;
+   public Collection<SocketAddress> getServers() {
+      synchronized (lock) {
+         return servers;
+      }
    }
 
-   private void logConnectionInfo(InetSocketAddress server) {
+   private void logConnectionInfo(SocketAddress server) {
+      KeyedObjectPool pool = getConnectionPool();
       if (log.isTraceEnabled()) {
-         log.trace("For server " + server + ": active = " + connectionPool.getNumActive(server) + "; idle = " + connectionPool.getNumIdle(server));
+         log.tracef("For server %s: active = %d; idle = %d", server, pool.getNumActive(server), pool.getNumIdle(server));
       }
    }
 
-   private Transport borrowTransportFromPool(InetSocketAddress server) {
+   private Transport borrowTransportFromPool(SocketAddress server) {
+      // The borrowObject() call could take a long time, so we hold the lock only until we get the connection pool reference
+      KeyedObjectPool pool = getConnectionPool();
       try {
-         return (Transport) connectionPool.borrowObject(server);
+         return (Transport) pool.borrowObject(server);
       } catch (Exception e) {
          String message = "Could not fetch transport";
-         log.error(message, e);
+         log.couldNotFetchTransport(e);
          throw new TransportException(message, e);
       } finally {
          logConnectionInfo(server);
       }
    }
 
+   /**
+    * Note that the returned <code>ConsistentHash</code> may not be thread-safe.
+    */
    public ConsistentHash getConsistentHash() {
-      return consistentHash;
+      synchronized (lock) {
+         return consistentHash;
+      }
+   }
+
+   @Override
+   public ConsistentHashFactory getConsistentHashFactory() {
+      return hashFactory;
    }
 
    public boolean isTcpNoDelay() {
@@ -210,18 +280,37 @@ public class TcpTransportFactory implements TransportFactory {
       if (Thread.currentThread().isInterrupted()) { 
          return -1;
       }
-      if (connectionPool.getMaxActive() > 0) {
-         return connectionPool.getMaxActive() * servers.size();
-      } else {
-         return 10 * servers.size();
+      synchronized (lock) {
+         if (connectionPool.getMaxActive() > 0) {
+            return Math.max(connectionPool.getMaxActive() * servers.size(), connectionPool.getMaxActive()); //to avoid int overflow when maxActive is very high!
+         } else {
+            return 10 * servers.size();
+         }
       }
    }
 
+   @Override
+   public int getSoTimeout() {
+      return soTimeout;
+   }
+
+   @Override
+   public int getConnectTimeout() {
+      return connectTimeout;
+   }
+
+   /**
+    * Note that the returned <code>RequestBalancingStrategy</code> may not be thread-safe.
+    */
    public RequestBalancingStrategy getBalancer() {
-      return balancer;
+      synchronized (lock) {
+         return balancer;
+      }
    }
 
    public GenericKeyedObjectPool getConnectionPool() {
-      return connectionPool;
+      synchronized (lock) {
+         return connectionPool;
+      }
    }
 }

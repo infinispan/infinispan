@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
@@ -31,7 +53,7 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
          barrier.await // wait for all threads to be ready
          barrier.await // wait for all threads to finish
 
-         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported", null)
+         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported")
          for (future <- futures) future.get
       }
       finally {
@@ -41,17 +63,17 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
    class Operator(barrier: CyclicBarrier, m: Method, clientId: Int, numOpsPerClient: Int) extends Callable[Unit] {
 
-      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60)
+      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60, 10)
 
       override def call {
-         log.debug("Wait for all executions paths to be ready to perform calls", null)
+         log.debug("Wait for all executions paths to be ready to perform calls")
          barrier.await
          try {
             for (i <- 0 until numOpsPerClient) {
                client.assertPut(m, "k" + clientId + "-" + i + "-", "v" + clientId + "-" + i + "-")
             }
          } finally {
-            log.debug("Wait for all execution paths to finish", null)
+            log.debug("Wait for all execution paths to finish")
             barrier.await
          }
       }

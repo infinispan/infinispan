@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,8 +23,6 @@
 package org.infinispan.loaders.decorators;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
@@ -50,7 +49,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
-@Test(groups = "functional", testName = "loaders.AsyncCacheStoreTest")
+@Test(groups = "functional", testName = "loaders.BatchAsyncCacheStoreTest")
 public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
 
    private final HashMap cacheCopy = new HashMap();
@@ -82,7 +81,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void sequantialOvewritingInBatches() throws IOException, ClassNotFoundException, SQLException, InterruptedException {
+   public void sequantialOvewritingInBatches() {
       cache = cacheManager.getCache();
       AdvancedCache<Object,Object> advancedCache = cache.getAdvancedCache();
       for (int i = 0; i < 2000;) {
@@ -103,7 +102,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    }
 
    @Test(dependsOnMethods = "sequantialOvewritingInBatches")
-   public void indexWasStored() throws IOException {
+   public void indexWasStored() {
       cache = cacheManager.getCache();
       assert cache.isEmpty();
       boolean failed = false;
@@ -111,7 +110,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
          Object expected = cacheCopy.get(key);
          Object actual = cache.get(key);
          if (!expected.equals(actual)) {
-            System.out.println("Failure on key '" + key.toString() + "' expected value: '" + expected + "' actual value: '" + actual + "'");
+            log.errorf("Failure on key '%s' expected value: '%s' actual value: '%s'", key.toString(), expected, actual);
             failed = true;
          }
       }

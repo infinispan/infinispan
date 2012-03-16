@@ -1,12 +1,34 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod.impl.transport.tcp;
+
+import java.util.Properties;
 
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPoolFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -27,6 +49,7 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
       _testOnReturn = booleanProp(props, "testOnReturn", false);
       _timeBetweenEvictionRunsMillis = intProp(props, "timeBetweenEvictionRunsMillis", 2 * 60 * 1000);
       _minEvictableIdleTimeMillis = longProp(props, "minEvictableIdleTimeMillis", 5 * 60 * 1000);
+      _numTestsPerEvictionRun = intProp(props, "numTestsPerEvictionRun", 3);
       _testWhileIdle = booleanProp(props, "testWhileIdle", true);
       _minIdle = intProp(props, "minIdle", 1);
       _lifo = booleanProp(props, "lifo", true);
@@ -47,12 +70,10 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
    public Object getValue(Properties p, String name, Object defaultValue) {
       Object propValue = p.get(name);
       if (propValue == null) {
-         if (log.isTraceEnabled()) {
-            log.trace(name + " property not specified, using default value(" + defaultValue + ")");
-         }
+         log.tracef("%s property not specified, using default value (%s)", name, defaultValue);
          return defaultValue;
       } else {
-         log.trace(name + " = " + propValue);
+         log.tracef("%s = %s", name, propValue);
          if (defaultValue instanceof Integer) {
             return Integer.parseInt(propValue.toString());
          } else if (defaultValue instanceof Boolean) {

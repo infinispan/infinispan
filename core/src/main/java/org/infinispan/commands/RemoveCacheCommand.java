@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,15 +23,12 @@
 
 package org.infinispan.commands;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.Util;
 
 /**
  * Command to stop a cache and remove all its contents from both
@@ -46,23 +44,19 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    private EmbeddedCacheManager cacheManager;
    private GlobalComponentRegistry registry;
 
-   RemoveCacheCommand() {
-      // For command id uniqueness test
+   private RemoveCacheCommand() {
+      super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+      super(cacheName);
       this.cacheManager = cacheManager;
       this.registry = registry;
    }
 
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
-   }
-
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      Cache cache = cacheManager.getCache(cacheName);
-      cache.getAdvancedCache().withFlags(Flag.REMOVE_DATA_ON_STOP).stop();
+      cacheManager.getCache(cacheName).getAdvancedCache().withFlags(Flag.REMOVE_DATA_ON_STOP).stop();
       registry.removeCache(cacheName);
       return null;
    }
@@ -74,11 +68,16 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{cacheName};
+      return Util.EMPTY_OBJECT_ARRAY;
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
-      cacheName = (String) parameters[0];
+      // No parameters
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 }

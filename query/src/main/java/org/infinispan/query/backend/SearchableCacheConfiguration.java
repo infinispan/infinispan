@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,8 +24,11 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.impl.SearchMappingBuilder;
+import org.hibernate.search.impl.SimpleInitializer;
+import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.spi.ServiceProvider;
 
 import java.util.Collections;
@@ -32,31 +36,46 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Class that implements {@link org.hibernate.search.cfg.SearchConfiguration} so that within Infinispan-Query, there is
  * no need for a Hibernate Core configuration object.
  *
  * @author Navin Surtani
+ * @author Sanne Grinovero
  */
 public class SearchableCacheConfiguration implements SearchConfiguration {
-   protected Map<String, Class<?>> classes;
-   private Properties properties;
+
+   private final Map<String, Class<?>> classes;
+   private final Properties properties;
+   private final SearchMapping searchMapping;
 
    public SearchableCacheConfiguration(Class[] classArray, Properties properties) {
-      // null chks
-      if (classArray == null) throw new NullPointerException("Classes provided are null");
-      this.properties = properties;
-      if (this.properties == null) this.properties = new Properties();
+      if (properties == null) {
+         this.properties = new Properties();
+      }
+      else {
+         this.properties = properties;
+      }
 
       classes = new HashMap<String, Class<?>>();
-
-      // loop thru your classArray
-      // populate your Map
 
       for (Class c : classArray) {
          String classname = c.getName();
          classes.put(classname, c);
+      }
+
+      //deal with programmatic mapping:
+      searchMapping = SearchMappingBuilder.getSearchMapping(this);
+
+      //if we have a SearchMapping then we can predict at least those entities specified in the mapping
+      //and avoid further SearchFactory rebuilds triggered by new entity discovery during cache events
+      if ( searchMapping != null ) {
+         Set<Class<?>> mappedEntities = searchMapping.getMappedEntities();
+         for (Class<?> entity : mappedEntities) {
+            classes.put(entity.getName(), entity);
+         }
       }
    }
 
@@ -82,12 +101,22 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
 
    @Override
    public SearchMapping getProgrammaticMapping() {
-      // TODO What does Hibernate Search expect here?
-      return null;
+      return searchMapping;
    }
 
    @Override
    public Map<Class<? extends ServiceProvider<?>>, Object> getProvidedServices() {
       return Collections.emptyMap();
    }
+
+   @Override
+   public boolean isTransactionManagerExpected() {
+      return false;
+   }
+
+   @Override
+   public InstanceInitializer getInstanceInitializer() {
+      return SimpleInitializer.INSTANCE;
+   }
+
 }

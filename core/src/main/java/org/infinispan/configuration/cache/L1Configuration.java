@@ -1,0 +1,117 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
+package org.infinispan.configuration.cache;
+
+/**
+ * Configures the L1 cache behavior in 'distributed' caches instances. In any other cache modes,
+ * this element is ignored.
+ */
+
+public class L1Configuration {
+
+   private final boolean enabled;
+   private final int invalidationThreshold;
+   private final long lifespan;
+   private final boolean onRehash;
+   // For use by the LegacyConfigurationAdapter
+   final boolean activated;
+
+   L1Configuration(boolean enabled, int invalidationThreshold, long lifespan, boolean onRehash, boolean activated) {
+      this.enabled = enabled;
+      this.invalidationThreshold = invalidationThreshold;
+      this.lifespan = lifespan;
+      this.onRehash = onRehash;
+      this.activated = activated;
+   }
+
+   public boolean enabled() {
+      return enabled;
+   }
+
+   /**
+    * <p>
+    * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
+    * </p>
+    * 
+    * <p>
+    * By default multicast will be used.
+    * </p>
+    * 
+    * <p>
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * will be always be used.
+    * </p> 
+    */
+   public int invalidationThreshold() {
+      return invalidationThreshold;
+   }
+
+   /**
+    * Maximum lifespan of an entry placed in the L1 cache. Default 10 minutes.
+    */
+   public long lifespan() {
+      return lifespan;
+   }
+
+   /**
+    * If true, entries removed due to a rehash will be moved to L1 rather than being removed
+    * altogether. Enabled by default.
+    */
+   public boolean onRehash() {
+      return onRehash;
+   }
+
+   @Override
+   public String toString() {
+      return "L1Configuration{" +
+            "activated=" + activated +
+            ", enabled=" + enabled +
+            ", invalidationThreshold=" + invalidationThreshold +
+            ", lifespan=" + lifespan +
+            ", onRehash=" + onRehash +
+            '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      L1Configuration that = (L1Configuration) o;
+
+      if (activated != that.activated) return false;
+      if (enabled != that.enabled) return false;
+      if (invalidationThreshold != that.invalidationThreshold) return false;
+      if (lifespan != that.lifespan) return false;
+      if (onRehash != that.onRehash) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = (enabled ? 1 : 0);
+      result = 31 * result + invalidationThreshold;
+      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
+      result = 31 * result + (onRehash ? 1 : 0);
+      result = 31 * result + (activated ? 1 : 0);
+      return result;
+   }
+
+}

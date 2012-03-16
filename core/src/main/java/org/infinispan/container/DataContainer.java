@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -69,7 +71,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param lifespan lifespan in milliseconds.  -1 means immortal.
     * @param maxIdle max idle time for which to store entry.  -1 means forever.
     */
-   void put(Object k, Object v, long lifespan, long maxIdle);
+   void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle);
 
    /**
     * Tests whether an entry exists in the container

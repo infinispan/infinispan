@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
-      xmlns="urn:infinispan:config:4.0">
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<infinispan>
 
    <global>
 
@@ -90,9 +109,9 @@
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
    </namedCache>
 
-   <namedCache name="lazyDeserialization">
+   <namedCache name="storeAsBinary">
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
-      <lazyDeserialization enabled="true"/>
+      <storeAsBinary enabled="true"/>
    </namedCache>
 
    <namedCache name="withLoader">
@@ -126,11 +145,14 @@
    <namedCache name="evictionCache">
 
       <!--
-         Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
-         the eviction thread will never run.  A separate executor is used for eviction in each cache.
+         Eviction configuration.
       -->
-      <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO"/>
-      <expiration lifespan="60000" maxIdle="1000"/>
+      <eviction maxEntries="5000" strategy="FIFO"/>
+      <!--
+         Expiration wakeUpInterval defines the interval between successive runs
+         to purge expired entries from memory and any cache stores.
+      -->
+      <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000"/>
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">

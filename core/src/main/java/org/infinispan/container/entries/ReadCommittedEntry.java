@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,12 +24,12 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -50,7 +51,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       setValid(true);
    }
 
-   public ReadCommittedEntry(Object key, Object value, long lifespan) {
+   public ReadCommittedEntry(Object key, Object value, EntryVersion version, long lifespan) {
       setValid(true);
       this.key = key;
       this.value = value;
@@ -65,7 +66,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
-      LOCK_PLACEHOLDER(1 << 4);      
+      LOCK_PLACEHOLDER(1 << 4),
+      EVICTED(1 << 5);
 
       final byte mask;
 
@@ -85,7 +87,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    /**
-    * Unility method that sets the value of the given flag to true.
+    * Utility method that sets the value of the given flag to true.
     *
     * @param flag flag to set
     */
@@ -154,21 +156,27 @@ public class ReadCommittedEntry implements MVCCEntry {
          unsetFlag(LOCK_PLACEHOLDER);
    }
 
-   @SuppressWarnings("unchecked")
-   public final void commit(DataContainer container) {
+   @Override
+   public final void commit(DataContainer container, EntryVersion newVersion) {
+      // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
+
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
-            log.trace("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s]", getKey(),
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s]", getKey(),
                       isRemoved(), isValid(), isChanged(), isCreated(), value);
 
          // Ugh!
-         if (value instanceof AtomicHashMap) ((AtomicHashMap) value).commit();
+         if (value instanceof AtomicHashMap) {
+            AtomicHashMap ahm = (AtomicHashMap) value;
+            ahm.commit();
+            if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
+         }
 
          if (isRemoved()) {
             container.remove(key);
          } else if (value != null) {
-            container.put(key, value, lifespan, maxIdle);
+            container.put(key, value, newVersion, lifespan, maxIdle);
          }
          reset();
       }
@@ -211,6 +219,15 @@ public class ReadCommittedEntry implements MVCCEntry {
       return isFlagSet(LOCK_PLACEHOLDER);
    }
 
+   @Override
+   public EntryVersion getVersion() {
+      return null;
+   }
+
+   @Override
+   public void setVersion(EntryVersion version) {
+   }
+
    public final boolean isCreated() {
       return isFlagSet(CREATED);
    }
@@ -226,11 +243,22 @@ public class ReadCommittedEntry implements MVCCEntry {
       return isFlagSet(REMOVED);
    }
 
+   public boolean isEvicted() {
+      return isFlagSet(EVICTED);
+   }
+
    public final void setRemoved(boolean removed) {
       if (removed)
          setFlag(REMOVED);
       else
          unsetFlag(REMOVED);
+   }
+
+   public void setEvicted(boolean evicted) {
+      if (evicted)
+         setFlag(EVICTED);
+      else
+         unsetFlag(EVICTED);
    }
 
    @Override
@@ -244,5 +272,16 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isRemoved=" + isRemoved() +
             ", isValid=" + isValid() +
             '}';
+   }
+
+   @Override
+   public boolean undelete(boolean doUndelete) {
+      if (isRemoved() && doUndelete) {
+         if (trace) log.trace("Entry is deleted in current scope.  Un-deleting.");
+         setRemoved(false);
+         setValid(true);
+         return true;
+      }
+      return false;
    }
 }

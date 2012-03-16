@@ -1,8 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.cloud;
 
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.BaseCacheStoreTest;
@@ -45,7 +67,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       // TODO remove compress = false once ISPN-409 is closed.
       cfg.setCompress(false);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
+      cs.init(cfg, new CacheImpl("aName"), getMarshaller());
       return cs;
    }
 
@@ -91,14 +113,14 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @SuppressWarnings("unchecked")
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
-   public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
-      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
-      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
+   public void testStreamingAPI() throws CacheLoaderException, IOException {
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", -1, -1));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } finally {
@@ -127,7 +149,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
 
    public void testNegativeHashCodes() throws CacheLoaderException {
       ObjectWithNegativeHashcode objectWithNegativeHashcode = new ObjectWithNegativeHashcode();
-      cs.store(InternalEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
       InternalCacheEntry ice = cs.load(objectWithNegativeHashcode);
       assert ice.getKey().equals(objectWithNegativeHashcode);
       assert ice.getValue().equals("hello");
@@ -161,16 +183,16 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @SuppressWarnings("unchecked")
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
-   public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
-      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
-      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
+   public void testStreamingAPIReusingStreams() throws CacheLoaderException, IOException {
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", -1, -1));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, dummyStartBytes.length);
       try {
          oo.write(dummyStartBytes);
          cs.toStream(new UnclosableObjectOutputStream(oo));

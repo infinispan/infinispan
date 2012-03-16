@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -27,20 +28,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
- * An Executor that provides methods to submit tasks for an execution on a cluster Infinispan nodes.
+ * An ExecutorService that provides methods to submit tasks for execution on a cluster of Infinispan
+ * nodes.
  * <p>
  * 
- * Every DistributedExecutorService is bound to one particular cache and the tasks submitted will
- * have access to key/value pairs on that cache if the task submitted is an instance of
- * <code>DistributedCallable<code>
+ * Every DistributedExecutorService is bound to one particular cache. Tasks submitted will have
+ * access to key/value pairs from that particular cache if and only if the task submitted is an
+ * instance of {@link DistributedCallable}. Also note that there is nothing preventing a user from
+ * submitting a familiar {@link Runnable} or {@link Callable} just like to any other
+ * {@link ExecutorService}. However, DistributedExecutorService, as it name implies, will likely
+ * migrate submitted Callable or Runnable to another JVM in Infinispan cluster, execute it and
+ * return a result to task invoker.
  * <p>
  * 
- * DistributedExecutorService will use default distributed execution policies which can be tuned for each 
- * DistributedExecutorService instance.
  * 
- * 
- * 
- * 
+ * @see DefaultExecutorService
  * @see DistributedCallable
  * 
  * @author Manik Surtani
@@ -51,34 +53,39 @@ import java.util.concurrent.Future;
 public interface DistributedExecutorService extends ExecutorService {
 
    /**
-    * Submits given Callable task for an execution on a single Infinispan node
+    * Submits given Callable task for an execution on a single Infinispan node.
+    * <p>
     * 
-    * @param <T>
-    * @param <K>
-    * @param task
-    * @param input
-    * @return
+    * Execution environment will chose an arbitrary node N hosting some or all of the keys specified
+    * as input. If all keys are not available locally at node N they will be retrieved from the
+    * cluster.
+    * 
+    * @param task a task to execute across Infinispan cluster
+    * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable} 
+    * @return a Future representing pending completion of the task
     */
    public <T, K> Future<T> submit(Callable<T> task, K... input);
 
    /**
-    * Submits the given Callable task for an execution on all available Infinispan nodes
+    * Submits the given Callable task for an execution on all available Infinispan nodes.
     * 
-    * @param <T>
-    * @param task
-    * @return
+    * @param task a task to execute across Infinispan cluster
+    * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
    public <T> List<Future<T>> submitEverywhere(Callable<T> task);
 
    /**
     * Submits the given Callable task for an execution on all available Infinispan nodes using input
-    * keys specified by K input
+    * keys specified by K input.
+    * <p>
     * 
-    * @param <T>
-    * @param <K>
-    * @param task
-    * @param input
-    * @return
+    * Execution environment will chose all nodes in Infinispan cluster where input keys are local,
+    * migrate given Callable instance to those nodes, execute it and return result as a list of
+    * Futures
+    * 
+    * @param task a task to execute across Infinispan cluster
+    * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable} 
+    * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   public <T, K> List<Future<T>> submitEverywhere(Callable<T> task, K... input);
+   public <T, K > List<Future<T>> submitEverywhere(Callable<T> task, K... input);
 }

@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,9 +22,6 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -31,6 +29,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Set;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
@@ -78,7 +78,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       }
       if (entry.isRemoved()) {
          if (trace) {
-            log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+            log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
          }
          return null;
       }
@@ -87,7 +87,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       notifier.notifyCacheEntryVisited(key, value, true, ctx);
       final Object result = returnCacheEntry ? entry : value;
       if (trace) {
-         log.trace("Found value " + result);
+         log.tracef("Found value %s", result);
       }
       notifier.notifyCacheEntryVisited(key, value, false, ctx);
       return result;
@@ -99,10 +99,11 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
-      flags = (Set<Flag>) (parameters.length>1 ? parameters[1] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      flags = (Set<Flag>) parameters[1];
    }
 
    @Override

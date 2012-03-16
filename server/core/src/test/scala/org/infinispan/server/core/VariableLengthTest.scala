@@ -1,9 +1,31 @@
-package org.infinispan.server.hotrod
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+package org.infinispan.server.core
 
 import org.testng.annotations.Test
 import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
-import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
+import transport.ExtendedChannelBuffer._
 
 /**
  * Variable length number test.
@@ -82,38 +104,32 @@ class VariableLengthTest {
       writeReadLong(9223372036854775807L, 9)
    }
 
+   @Test(expectedExceptions = Array(classOf[IllegalStateException]))
+   def testTooLongInt {
+      val buffer = ChannelBuffers.directBuffer(1024)
+      assert(buffer.writerIndex == 0)
+      writeUnsignedLong(9223372036854775807L, buffer)
+      readUnsignedInt(buffer)
+   }
+
 //   def test2pow63() {
 //      writeReadLong(9223372036854775808L, 10)
 //   }
 
    private def writeReadInt(num: Int, expected: Int) {
-      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
+      val buffer = ChannelBuffers.directBuffer(1024)
       assert(buffer.writerIndex == 0)
-//      VInt.write(buffer, num)
-      buffer.writeUnsignedInt(num)
+      writeUnsignedInt(num, buffer)
       assertEquals(buffer.writerIndex, expected)
-//      assertEquals(VInt.read(buffer), num)
-      assertEquals(buffer.readUnsignedInt, num)
+      assertEquals(readUnsignedInt(buffer), num)
    }
 
    private def writeReadLong(num: Long, expected: Int) {
-      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
+      val buffer = ChannelBuffers.directBuffer(1024)
       assert(buffer.writerIndex == 0)
-//      VLong.write(buffer, num)
-      buffer.writeUnsignedLong(num)
+      writeUnsignedLong(num, buffer)
       assertEquals(buffer.writerIndex, expected)
-//      assertEquals(VLong.read(buffer), num)
-      assertEquals(buffer.readUnsignedLong, num)
+      assertEquals(readUnsignedLong(buffer), num)
    }
 
-//   def testEquals128Old() {
-//      val baos = new ByteArrayOutputStream(1024);
-//      val oos = new ObjectOutputStream(baos);
-//      UnsignedNumeric.writeUnsignedInt(oos, 128);
-//      oos.flush();
-//      assertEquals(baos.size() - 6, 2);
-//      val bais = new ByteArrayInputStream(baos.toByteArray());
-//      val ois = new ObjectInputStream(bais);
-//      assertEquals(UnsignedNumeric.readUnsignedInt(ois), 128);
-//   }
 }

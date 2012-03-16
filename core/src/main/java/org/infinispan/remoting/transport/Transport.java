@@ -1,8 +1,29 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -16,13 +37,14 @@ import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * An interface that provides a communication link with remote caches.  Also allows remote caches to invoke commands on
@@ -48,8 +70,8 @@ public interface Transport extends Lifecycle {
     * @param notifier      notifier to use
     */
    @Inject
-   void initialize(StreamingMarshaller marshaller,
-                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+   void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                    InboundInvocationHandler handler, CacheManagerNotifier notifier);
 
    /**
@@ -105,31 +127,11 @@ public interface Transport extends Lifecycle {
    List<Address> getMembers();
 
    /**
-    * Initiates a state retrieval from a specific cache (by typically invoking {@link
-    * org.infinispan.remoting.InboundInvocationHandler#generateState(String, java.io.OutputStream)}), and applies this
-    * state to the current cache via the  {@link InboundInvocationHandler#applyState(String, java.io.InputStream)}
-    * callback.
-    *
-    * @param cacheName name of cache for which to retrieve state
-    * @param address   address of remote cache from which to retrieve state
-    * @param timeout   state retrieval timeout in milliseconds
-    * @return true if state was transferred and applied successfully, false if it timed out.
-    * @throws org.infinispan.statetransfer.StateTransferException
-    *          if state cannot be retrieved from the specific cache
+    * Tests whether the transport supports true multicast
+    * 
+    * @return true if the transport supports true multicast
     */
-   boolean retrieveState(String cacheName, Address address, long timeout) throws StateTransferException;
-
-   /**
-    * @return an instance of a DistributedSync that can be used to wait for synchronization events across a cluster.
-    */
-   DistributedSync getDistributedSync();
-
-   /**
-    * Tests whether the transport supports state transfer
-    *
-    * @return true if the implementation supports state transfer, false otherwise.
-    */
-   boolean isSupportStateTransfer();
+   boolean isMulticastCapable();
 
    @Start(priority = 10)
    void start();
@@ -137,6 +139,9 @@ public interface Transport extends Lifecycle {
    @Stop
    void stop();
 
+   /**
+    * @throws org.infinispan.CacheException if the transport has been stopped.
+    */
    int getViewId();
 
    Log getLog();

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,8 +23,7 @@
 package org.infinispan.util.concurrent.locks;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -31,8 +31,9 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * A lock that supports reentrancy based on owner (and not on current thread).  For this to work, the lock needs to be
- * constructed with a reference to the {@link org.infinispan.context.InvocationContextContainer}, so it is able to determine whether the
- * caller's "owner" reference is the current thread or a {@link org.infinispan.transaction.xa.GlobalTransaction} instance.
+ * constructed with a reference to the {@link org.infinispan.context.InvocationContextContainer}, so it is able to
+ * determine whether the caller's "owner" reference is the current thread or a {@link
+ * org.infinispan.transaction.xa.GlobalTransaction} instance.
  * <p/>
  * This makes this lock implementation very closely tied to Infinispan internals, but it provides for a very clean,
  * efficient and moreover familiar interface to work with, since it implements {@link java.util.concurrent.locks.Lock}.
@@ -47,42 +48,45 @@ import java.util.concurrent.locks.Lock;
 public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements Lock {
 
    private static final long serialVersionUID = 4932974734462848792L;
-
-   /**
-    * Current owner
-    */
-   transient Object owner;
-   /**
-    * Invocation context to consult when testing the current requestor
-    */
-   transient InvocationContextContainer icc;
-
-   /**
-    * Creates a new lock instance.
-    *
-    * @param icc InvocationContextContainer instance to consult for the invocation context of the
-    *                                   call.
-    */
-   public OwnableReentrantLock(InvocationContextContainer icc) {
-      if (icc == null)
-         throw new IllegalArgumentException("Invocation context container cannot be null!");
-      this.icc = icc;
-   }
+   private transient Object owner;
+   private final ThreadLocal<Object> requestorOnStack = new ThreadLocal<Object>();
 
    /**
     * @return a GlobalTransaction instance if the current call is participating in a transaction, or the current thread
     *         otherwise.
     */
    protected final Object currentRequestor() {
-      InvocationContext invocationContext = icc.getInvocationContext();
-      return invocationContext.getLockOwner();
+      Object cr = requestorOnStack.get();
+      if (cr == null) throw new IllegalStateException("Should never get to this state!");
+      return cr;
+   }
+
+   private void setCurrentRequestor(Object requestor) {
+      requestorOnStack.set(requestor);
+   }
+
+   public void unsetCurrentRequestor() {
+      requestorOnStack.remove();
    }
 
    public void lock() {
-      if (compareAndSetState(0, 1))
-         owner = currentRequestor();
-      else
-         acquire(1);
+      throw new UnsupportedOperationException();
+   }
+
+   public void unlock() {
+      throw new UnsupportedOperationException();
+   }
+
+   public void lock(GlobalTransaction requestor) {
+      setCurrentRequestor(requestor);
+      try {
+         if (compareAndSetState(0, 1))
+            owner = requestor;
+         else
+            acquire(1);
+      } finally {
+         unsetCurrentRequestor();
+      }
    }
 
    public void lockInterruptibly() throws InterruptedException {
@@ -94,15 +98,26 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    }
 
    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-      return tryAcquireNanos(1, unit.toNanos(time));
+      throw new UnsupportedOperationException("Should never get here");
    }
 
-   public void unlock() {
+   public boolean tryLock(Object requestor, long time, TimeUnit unit) throws InterruptedException {
+      setCurrentRequestor(requestor);
+      try {
+         return tryAcquireNanos(1, unit.toNanos(time));
+      } finally {
+         unsetCurrentRequestor();
+      }
+   }
+
+   public void unlock(Object requestor) {
+      setCurrentRequestor(requestor);
       try {
          release(1);
-      }
-      catch (IllegalMonitorStateException imse) {
+      } catch (IllegalMonitorStateException imse) {
          // ignore?
+      } finally {
+         unsetCurrentRequestor();
       }
    }
 
@@ -160,10 +175,10 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    /**
     * @return the hold count of the current lock, or 0 if it is not locked.
     */
-   public final int getHoldCount() {
+   public final int getHoldCount(Object requestor) {
       int c = getState();
       Object o = owner;
-      return (currentRequestor().equals(o)) ? c : 0;
+      return (requestor.equals(o)) ? c : 0;
    }
 
    /**
@@ -194,7 +209,7 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    public String toString() {
       Object owner = getOwner();
       return super.toString() + ((owner == null) ?
-            "[Unlocked]" :
-            "[Locked by " + owner + "]");
+                                       "[Unlocked]" :
+                                       "[Locked by " + owner + "]");
    }
 }

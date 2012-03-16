@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +22,11 @@
  */
 package org.infinispan.transaction.lookup;
 
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.util.Util;
+
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
 
 
@@ -34,7 +39,25 @@ import javax.transaction.TransactionManager;
 public class JBossTransactionManagerLookup implements TransactionManagerLookup {
 
    public TransactionManager getTransactionManager() throws Exception {
-      return (TransactionManager) new InitialContext().lookup("java:/TransactionManager");
-   }
+      String as7Location = "java:jboss/TransactionManager";
 
+      InitialContext initialContext = new InitialContext();
+      try {
+         // Check for JBoss AS 7
+         return (TransactionManager) initialContext.lookup(as7Location);
+      } catch (NamingException ne) {
+         // Fall back and try for AS 4 ~ 6
+         String legacyAsLocation = "java:/TransactionManager";
+
+         try {
+            // Check for JBoss AS 4 ~ 6
+            return (TransactionManager) initialContext.lookup(legacyAsLocation);
+         } catch (NamingException neAgain) {
+            throw new ConfigurationException("Unable to locate a transaction manager in JNDI, either in " + as7Location + " or " + legacyAsLocation);
+         }
+
+      } finally {
+         Util.close(initialContext);
+      }
+  }
 }

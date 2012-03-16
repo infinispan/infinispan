@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,19 +25,20 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.util.SysPropertyActions;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.StringPropertyReplacer;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.ValidationEventHandler;
+import javax.xml.bind.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -44,14 +46,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,13 +58,15 @@ import java.util.Map;
  * InfinispanConfiguration encapsulates root component of Infinispan XML configuration. Can be empty
  * for sensible defaults throughout, however that would only give you the most basic of local,
  * non-clustered caches.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
+ * @deprecated Use {@link Parser} instead
  */
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ConfigurationDoc(name="infinispan")
+@ConfigurationDoc(name = "infinispan")
+@Deprecated
 public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnmarshallable {
 
    private static final Log log = LogFactory.getLog(InfinispanConfiguration.class);
@@ -85,6 +83,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
 
    private static final String DEFAULT_SCHEMA_URL = String.format("http://www.infinispan.org/schemas/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
 
+   private static SoftReference<JAXBContext> jaxbContextReference;
+
    @XmlElement
    private final GlobalConfiguration global = new GlobalConfiguration();
 
@@ -100,7 +100,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Both configuration file and schema file are looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using the specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
@@ -109,8 +109,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-                                                                    String schemaFileName) throws IOException {
-      return newInfinispanConfiguration(configFileName, schemaFileName, null);
+                                                                    String schemaFileName, ClassLoader cl) throws IOException {
+      return newInfinispanConfiguration(configFileName, schemaFileName, null, cl);
    }
 
    /**
@@ -119,7 +119,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Both configuration file and schema file are looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
@@ -129,11 +129,15 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-                                                                    String schemaFileName, ConfigurationBeanVisitor cbv) throws IOException {
+                                                                    String schemaFileName, ConfigurationBeanVisitor cbv, ClassLoader cl) throws IOException {
 
-      InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
+      InputStream inputStream = configFileName != null ? findInputStream(configFileName, cl) : null;
       InputStream schemaIS = schemaFileName != null ? findSchemaInputStream(schemaFileName) : null;
-      return newInfinispanConfiguration(inputStream, schemaIS, cbv);
+      try {
+         return newInfinispanConfiguration(inputStream, schemaIS, cbv);
+      } finally {
+         Util.close(inputStream, schemaIS);
+      }
    }
 
    /**
@@ -141,16 +145,16 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Configuration file is looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using the specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
     * @return returns infinispan configuration
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
-   public static InfinispanConfiguration newInfinispanConfiguration(String configFileName)
+   public static InfinispanConfiguration newInfinispanConfiguration(String configFileName, ClassLoader cl)
            throws IOException {
-      return newInfinispanConfiguration(configFileName, null);
+      return newInfinispanConfiguration(configFileName, null, cl);
    }
 
    /**
@@ -218,8 +222,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    public static InfinispanConfiguration newInfinispanConfiguration(Reader config,
                                                                     InputStream schema, ConfigurationBeanVisitor cbv) throws IOException {
       try {
-         JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
-         Unmarshaller u = jc.createUnmarshaller();
+         Unmarshaller u = getJAXBContext().createUnmarshaller();
          NamespaceFilter nf = new NamespaceFilter();
          XMLReader reader = XMLReaderFactory.createXMLReader();
          nf.setParent(reader);
@@ -236,7 +239,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
             });
          }
 
-         SAXSource source = null;
+         SAXSource source;
          if (skipTokenReplacement()) {
             source = new SAXSource(nf, new InputSource(config));
          } else {
@@ -282,6 +285,46 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       return newInfinispanConfiguration(new InputStreamReader(config), schema, cbv);
    }
 
+   /**
+    * Returns the JAXB context that may be used to read and write Infinispan configurations.
+    *
+    * @return the JAXB context that may be used to read and write Infinispan configurations.
+    * @throws JAXBException In case of the creation of the context failed.
+    */
+   protected static synchronized JAXBContext getJAXBContext() throws JAXBException {
+      JAXBContext context = jaxbContextReference != null ? jaxbContextReference.get() : null;
+      if (context == null) {
+         context = JAXBContext.newInstance(InfinispanConfiguration.class);
+         jaxbContextReference = new SoftReference<JAXBContext>(context);
+      }
+
+      return context;
+   }
+
+   /**
+    * Converts an instance of GlobalConfiguration, Configuration or InfinispanConfiguration to
+    * its XML representation.
+    *
+    * @param compatibleConfigurationInstance
+    *         a configuration instance that support XML marshaling.
+    * @return a string containing the formatted XML representation of the given instance.
+    */
+   protected static String toXmlString(Object compatibleConfigurationInstance) {
+      try {
+         StringWriter writer = new StringWriter(1024);
+         try {
+            Marshaller m = getJAXBContext().createMarshaller();
+            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            m.marshal(compatibleConfigurationInstance, writer);
+            return writer.toString();
+         } finally {
+            writer.close();
+         }
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    private static SAXSource replaceProperties(Reader config, XMLFilter filter) throws Exception {
       BufferedReader br = new BufferedReader(config);
       StringBuilder w = new StringBuilder();
@@ -291,7 +334,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          if (dollar > 0 && line.indexOf('{', dollar) > 0 && line.indexOf('}', dollar) > 0) {
             String replacedLine = StringPropertyReplacer.replaceProperties(line);
             if (line.equals(replacedLine)) {
-               log.warn("Property " + line.substring(line.indexOf('{') + 1, line.indexOf('}')) + " could not be replaced as intended!");
+               log.propertyCouldNotBeReplaced(line.substring(line.indexOf('{') + 1, line.indexOf('}')));
             }
             w.append(replacedLine);
          } else {
@@ -303,12 +346,12 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    private static boolean skipSchemaValidation() {
-      String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
+      String s = SysPropertyActions.getProperty(VALIDATING_SYSTEM_PROPERTY);
       return s != null && !Boolean.parseBoolean(s);
    }
 
    private static boolean skipTokenReplacement() {
-      String s = System.getProperty(SKIP_TOKEN_REPLACEMENT, "false");
+      String s = SysPropertyActions.getProperty(SKIP_TOKEN_REPLACEMENT, "false");
       return s != null && Boolean.parseBoolean(s);
    }
 
@@ -322,38 +365,41 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          return null;
 
       //1. resolve given path
-      FileLookup fileLookup = new FileLookup();
-      InputStream is = null;
+      FileLookup fileLookup = FileLookupFactory.newInstance();
+      InputStream is;
       if (localPathToSchema != null) {
-         is = fileLookup.lookupFile(localPathToSchema);
+         // Schema's are always stored in Infinispan
+         is = fileLookup.lookupFile(localPathToSchema, null);
          if (is != null) {
-            log.debug("Using schema " + localPathToSchema);
+            log.debugf("Using schema %s", localPathToSchema);
             return is;
          }
-         log.debug("Could not find schema on path " + localPathToSchema + ", resolving "
-                 + SCHEMA_SYSTEM_PROPERTY + " to " + schemaPath());
+         if (log.isDebugEnabled()) {
+            log.debugf("Could not find schema on path %s, resolving %s to %s",
+                       localPathToSchema, SCHEMA_SYSTEM_PROPERTY, schemaPath());
+         }
       }
 
       //2. resolve local schema path in infinispan distro
-      is = fileLookup.lookupFile(schemaPath());
+      is = fileLookup.lookupFile(schemaPath(), null);
       if (is != null) {
-         log.debug("Using schema " + schemaPath());
+         log.debugf("Using schema %s", schemaPath());
          return is;
       }
-      log.debug("Could not find schema on path " + schemaPath() + ", resolving "
-              + SCHEMA_URL_SYSTEM_PROPERTY + " to " + schemaURL());
+      if (log.isDebugEnabled()) {
+         log.debugf("Could not find schema on path %s, resolving %s to %s",
+                    schemaPath(), SCHEMA_SYSTEM_PROPERTY, schemaURL());
+      }
 
       //3. resolve URL
       try {
          is = new URL(schemaURL()).openStream();
-         log.debug("Using schema " + schemaURL());
+         log.debugf("Using schema %s", schemaURL());
          return is;
       } catch (Exception e) {
       }
 
-      log.warn("Infinispan schema could not be resolved locally nor fetched from URL. Local path="
-              + localPathToSchema + ", schemaPath=" + schemaPath() + ",schemaURL="
-              + schemaURL());
+      log.couldNotResolveConfigurationSchema(localPathToSchema, schemaPath(), schemaURL());
       return null;
    }
 
@@ -365,11 +411,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    private static String schemaPath() {
-      return System.getProperty(SCHEMA_SYSTEM_PROPERTY, DEFAULT_SCHEMA_LOCATION);
+      return SysPropertyActions.getProperty(SCHEMA_SYSTEM_PROPERTY, DEFAULT_SCHEMA_LOCATION);
    }
 
    private static String schemaURL() {
-      return System.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
+      return SysPropertyActions.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
    }
 
    private InfinispanConfiguration() {
@@ -386,11 +432,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       }
    }
 
-   private static InputStream findInputStream(String fileName) throws FileNotFoundException {
+   private static InputStream findInputStream(String fileName, ClassLoader cl) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");
-      FileLookup fileLookup = new FileLookup();
-      InputStream is = fileLookup.lookupFile(fileName);
+      FileLookup fileLookup = FileLookupFactory.newInstance();
+      InputStream is = fileLookup.lookupFile(fileName, cl);
       if (is == null)
          throw new FileNotFoundException("File " + fileName
                  + " could not be found, either on the classpath or on the file system!");
@@ -416,5 +462,14 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    @Override
    public void willUnmarshall(Object parent) {
       // no-op
+   }
+
+   /**
+    * Converts this configuration instance to an XML representation containing the current settings.
+    *
+    * @return a string containing the formatted XML representation of this configuration instance.
+    */
+   public String toXmlString() {
+      return toXmlString(this);
    }
 }

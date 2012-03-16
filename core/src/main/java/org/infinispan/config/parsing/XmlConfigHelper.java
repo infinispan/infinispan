@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -164,7 +165,7 @@ public class XmlConfigHelper {
          }
       }
 
-      if (log.isDebugEnabled()) log.debug("getSubElement(): Does not exist for %s", subElementName);
+      if (log.isDebugEnabled()) log.debugf("getSubElement(): Does not exist for %s", subElementName);
       return null;
    }
 
@@ -274,10 +275,9 @@ public class XmlConfigHelper {
    public static Properties readPropertiesContents(Element element, String elementName) {
       String stringContents = readStringContents(element, elementName);
       if (stringContents == null) return new Properties();
-      // JBCACHE-531: escape all backslash characters
       stringContents = escapeBackslashes(stringContents);
-      ByteArrayInputStream is = null;
-      Properties properties = null;
+      ByteArrayInputStream is;
+      Properties properties;
       try {
          is = new ByteArrayInputStream(stringContents.trim().getBytes("ISO8859_1"));
          properties = new Properties();
@@ -285,7 +285,7 @@ public class XmlConfigHelper {
          is.close();
       }
       catch (IOException e) {
-         log.warn("Unexpected", e);
+         log.errorReadingProperties(e);
          throw new ConfigurationException("Exception occured while reading properties from XML document", e);
       }
       return properties;
@@ -413,9 +413,9 @@ public class XmlConfigHelper {
       for (Map.Entry entry : attribs.entrySet()) {
          String propName = (String) entry.getKey();
          String setter = BeanUtils.setterName(propName);
-         Method method;
 
          try {
+            Method method;
             if (isXmlAttribs) {
                method = objectClass.getMethod(setter, Element.class);
                method.invoke(target, entry.getValue());
@@ -441,8 +441,7 @@ public class XmlConfigHelper {
             if (setter.equals(m.getName())) {
                Class paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
-                  if (log.isTraceEnabled())
-                     log.trace("Rejecting setter " + m + " on class " + objectClass + " due to incorrect number of parameters");
+                  log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
                   continue; // try another param with the same name.
                }
 

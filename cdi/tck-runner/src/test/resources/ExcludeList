@@ -1,0 +1,299 @@
+#
+# JBoss, Home of Professional Open Source
+# Copyright 2011 Red Hat Inc. and/or its affiliates and other
+# contributors as indicated by the @author tags. All rights reserved.
+# See the copyright.txt in the distribution for a full listing of
+# individual contributors.
+#
+# This is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this software; if not, write to the Free
+# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+#
+
+# List tests to be excluded - Only the annotation tests are executed
+# Lines beginning with a '#' are comments
+# Enter One method per line with syntax FULL_CLASS_NAME # METHOD_NAME as in the example below
+
+# Exclude CacheBuilderTest
+
+javax.cache.CacheBuilderTest#setCacheLoader_Null
+javax.cache.CacheBuilderTest#setReadThrough_NoCacheLoader
+javax.cache.CacheBuilderTest#setCacheWriter_Null
+javax.cache.CacheBuilderTest#setWriteThrough_NoCacheWriter
+javax.cache.CacheBuilderTest#testValidCacheNames
+javax.cache.CacheBuilderTest#setTransactionEnabled
+javax.cache.CacheBuilderTest#setStoreByValue_false
+javax.cache.CacheBuilderTest#setExpiry_null_good
+javax.cache.CacheBuilderTest#setExpiry_good_null
+javax.cache.CacheBuilderTest#getExpiry_default
+javax.cache.CacheBuilderTest#setExpiry_accessed
+javax.cache.CacheBuilderTest#setExpiry_modified
+javax.cache.CacheBuilderTest#setExpiry_both
+
+# Exclude CacheConfigurationTest
+
+javax.cache.CacheConfigurationTest#checkDefaults
+javax.cache.CacheConfigurationTest#notSame
+javax.cache.CacheConfigurationTest#equals
+javax.cache.CacheConfigurationTest#equalsNotEquals
+javax.cache.CacheConfigurationTest#setStatisticsEnabled
+javax.cache.CacheConfigurationTest#DurationEquals
+javax.cache.CacheConfigurationTest#durationNotEqualsAmount
+javax.cache.CacheConfigurationTest#durationNotEqualsUnit
+javax.cache.CacheConfigurationTest#durationEqualsWhenSemanticallyEqualsButExpressedDifferentUnits
+javax.cache.CacheConfigurationTest#durationEqualsWhenSemanticallyEqualsButExpressedDifferentUnitsHashCode
+javax.cache.CacheConfigurationTest#durationNotEqualsUnitEquals
+javax.cache.CacheConfigurationTest#DurationExceptions
+
+# Exclude CacheLoaderTest
+
+javax.cache.CacheLoaderTest#load_NullKey
+javax.cache.CacheLoaderTest#load_Found
+javax.cache.CacheLoaderTest#load_NoCacheLoader
+javax.cache.CacheLoaderTest#load_NullValue
+javax.cache.CacheLoaderTest#load_DefaultCacheLoader
+javax.cache.CacheLoaderTest#load_BothCacheLoader
+javax.cache.CacheLoaderTest#load_ExceptionPropagation
+javax.cache.CacheLoaderTest#loadAll_NotStarted
+javax.cache.CacheLoaderTest#loadAll_NullKeys
+javax.cache.CacheLoaderTest#loadAll_NullKey
+javax.cache.CacheLoaderTest#loadAll_NullValue
+javax.cache.CacheLoaderTest#loadAll_1Found1Not
+javax.cache.CacheLoaderTest#loadAll_NoCacheLoader
+javax.cache.CacheLoaderTest#loadAll_DefaultCacheLoader
+javax.cache.CacheLoaderTest#loadAll_BothCacheLoader
+javax.cache.CacheLoaderTest#loadAll_ExceptionPropagation
+javax.cache.CacheLoaderTest#get_Stored
+javax.cache.CacheLoaderTest#get_Exception
+javax.cache.CacheLoaderTest#getAll
+javax.cache.CacheLoaderTest#containsKey
+javax.cache.CacheLoaderTest#putIfAbsent
+javax.cache.CacheLoaderTest#getAndRemove_NotExistent
+javax.cache.CacheLoaderTest#getAndRemove_There
+javax.cache.CacheLoaderTest#replace_3arg_Missing
+javax.cache.CacheLoaderTest#replace_3arg_Different
+javax.cache.CacheLoaderTest#replace_3arg
+javax.cache.CacheLoaderTest#replace_2arg_Missing
+javax.cache.CacheLoaderTest#replace_2arg
+javax.cache.CacheLoaderTest#getAndReplace
+javax.cache.CacheLoaderTest#get_WithNonKeyKey
+
+# Exclude CacheManagerNoTransactionsTest
+
+javax.cache.CacheManagerNoTransactionsTest#transactionalStatusWhenNoUserTransaction
+javax.cache.CacheManagerNoTransactionsTest#isolationLevelForNonTransactionalCache
+javax.cache.CacheManagerNoTransactionsTest#modeForNonTransactionalCache
+
+# Exclude CacheManagerTest
+
+javax.cache.CacheManagerTest#createCacheBuilder_NullCacheName
+javax.cache.CacheManagerTest#createCache_Same
+javax.cache.CacheManagerTest#createCache_NameOK
+javax.cache.CacheManagerTest#createCache_StatusOK
+javax.cache.CacheManagerTest#createCache_Different
+javax.cache.CacheManagerTest#createCache_DifferentSameName
+javax.cache.CacheManagerTest#removeCache_Null
+javax.cache.CacheManagerTest#removeCache_There
+javax.cache.CacheManagerTest#removeCache_CacheStopped
+javax.cache.CacheManagerTest#removeCache_NotThere
+javax.cache.CacheManagerTest#removeCache_Stopped
+javax.cache.CacheManagerTest#shutdown_stopCalled
+javax.cache.CacheManagerTest#shutdown_status
+javax.cache.CacheManagerTest#shutdown_statusTwice
+javax.cache.CacheManagerTest#shutdown_cachesEmpty
+javax.cache.CacheManagerTest#getUserTransaction
+javax.cache.CacheManagerTest#getCache_Missing
+javax.cache.CacheManagerTest#getCache_There
+javax.cache.CacheManagerTest#getCache_Missing_Stopped
+javax.cache.CacheManagerTest#getCache_There_Stopped
+javax.cache.CacheManagerTest#getCaches_Empty
+javax.cache.CacheManagerTest#getCaches_NotEmpty
+javax.cache.CacheManagerTest#getCaches_MutateReturn
+javax.cache.CacheManagerTest#getCaches_MutateCacheManager
+javax.cache.CacheManagerTest#isSupported
+javax.cache.CacheManagerTest#addImmutableClass_Null
+javax.cache.CacheManagerTest#addImmutableClass_NotImmutable
+javax.cache.CacheManagerTest#testUnwrap
+
+# Exclude CacheManagerTransactionTest
+
+javax.cache.CacheManagerTransactionTest#getUserTransaction
+
+# Exclude CacheTest
+
+javax.cache.CacheTest#simpleAPI
+javax.cache.CacheTest#genericsTest
+javax.cache.CacheTest#hashcode
+javax.cache.CacheTest#getCacheName
+javax.cache.CacheTest#containsKey_NotStarted
+javax.cache.CacheTest#containsKey_Null
+javax.cache.CacheTest#containsKey
+javax.cache.CacheTest#load_NotStarted
+javax.cache.CacheTest#getStatistics
+javax.cache.CacheTest#getStatistics_NotEnabled
+javax.cache.CacheTest#getStatistics_Enabled
+javax.cache.CacheTest#registerCacheEntryListener
+javax.cache.CacheTest#unregisterCacheEntryListener
+javax.cache.CacheTest#getConfiguration_Mutation
+javax.cache.CacheTest#iterator_NotStarted
+javax.cache.CacheTest#iterator_Empty
+javax.cache.CacheTest#iterator
+javax.cache.CacheTest#initialise
+javax.cache.CacheTest#stop
+javax.cache.CacheTest#testUnwrap
+javax.cache.CacheTest#testGetCacheManager
+javax.cache.CacheTest#testAnnotations
+
+# Exclude CachingClassLoaderTest
+
+javax.cache.CachingClassLoaderTest#getCacheManager_singleton
+javax.cache.CachingClassLoaderTest#getCacheManager_name
+javax.cache.CachingClassLoaderTest#getCacheManager_named_default
+javax.cache.CachingClassLoaderTest#getCacheManager_named
+javax.cache.CachingClassLoaderTest#getCacheManager_named_name
+javax.cache.CachingClassLoaderTest#getCacheManager_named_notDefault
+javax.cache.CachingClassLoaderTest#getCacheManager_named_different
+javax.cache.CachingClassLoaderTest#shutdown_0_Empty
+javax.cache.CachingClassLoaderTest#shutdown_0_Full
+javax.cache.CachingClassLoaderTest#shutdown_1_hit
+javax.cache.CachingClassLoaderTest#shutdown_1_miss
+javax.cache.CachingClassLoaderTest#shutdown_2_hit
+javax.cache.CachingClassLoaderTest#shutdown_2_miss
+javax.cache.CachingClassLoaderTest#classLoader
+
+# Exclude CachingTest
+
+javax.cache.CachingTest#getCacheManager_singleton
+javax.cache.CachingTest#getCacheManager_name
+javax.cache.CachingTest#getCacheManager_named_default
+javax.cache.CachingTest#getCacheManager_named
+javax.cache.CachingTest#getCacheManager_named_name
+javax.cache.CachingTest#getCacheManager_named_notDefault
+javax.cache.CachingTest#getCacheManager_named_different
+javax.cache.CachingTest#release
+javax.cache.CachingTest#dummyTest
+
+# Exclude GetTest
+
+javax.cache.GetTest#get_NotStarted
+javax.cache.GetTest#get_NullKey
+javax.cache.GetTest#get_NotExisting
+javax.cache.GetTest#get_Existing
+javax.cache.GetTest#get_Existing_NotSameKey
+javax.cache.GetTest#getAll_NotStarted
+javax.cache.GetTest#getAll_Null
+javax.cache.GetTest#getAll_NullKey
+javax.cache.GetTest#getAll
+
+# Exclude PutTest
+
+javax.cache.PutTest#put_NotStarted
+javax.cache.PutTest#put_NullKey
+javax.cache.PutTest#put_NullValue
+javax.cache.PutTest#put_Existing_NotSameKey
+javax.cache.PutTest#put_Existing_DifferentKey
+javax.cache.PutTest#getAndPut_NotStarted
+javax.cache.PutTest#getAndPut_NullKey
+javax.cache.PutTest#getAndPut_NullValue
+javax.cache.PutTest#getAndPut_NotThere
+javax.cache.PutTest#getAndPut_Existing
+javax.cache.PutTest#getAndPut_Existing_NonSameKey
+javax.cache.PutTest#putIfAbsent_NotStarted
+javax.cache.PutTest#putIfAbsent_NullKey
+javax.cache.PutTest#putIfAbsent_NullValue
+javax.cache.PutTest#putIfAbsent_Missing
+javax.cache.PutTest#putIfAbsent_Same
+javax.cache.PutTest#putAll_NotStarted
+javax.cache.PutTest#putAll_Null
+javax.cache.PutTest#putAll_NullKey
+javax.cache.PutTest#putAll_NullValue
+javax.cache.PutTest#putAll
+
+# Exclude RemoveTest
+
+javax.cache.RemoveTest#remove_1arg_NotStarted
+javax.cache.RemoveTest#remove_1arg_NullKey
+javax.cache.RemoveTest#remove_1arg_NotExistent
+javax.cache.RemoveTest#remove_1arg_Existing
+javax.cache.RemoveTest#remove_1arg_EqualButNotSameKey
+javax.cache.RemoveTest#remove_2arg_NotStarted
+javax.cache.RemoveTest#remove_2arg_NullKey
+javax.cache.RemoveTest#remove_2arg_NullValue
+javax.cache.RemoveTest#remove_2arg_NotThere
+javax.cache.RemoveTest#remove_2arg_Existing_SameValue
+javax.cache.RemoveTest#remove_2arg_Existing_EqualValue
+javax.cache.RemoveTest#remove_2arg_Existing_EqualKey
+javax.cache.RemoveTest#remove_2arg_Existing_EqualKey_EqualValue
+javax.cache.RemoveTest#remove_2arg_Existing_Different
+javax.cache.RemoveTest#getAndRemove_NotStarted
+javax.cache.RemoveTest#getAndRemove_NullKey
+javax.cache.RemoveTest#getAndRemove_NotExistent
+javax.cache.RemoveTest#getAndRemove_Existing
+javax.cache.RemoveTest#getAndRemove_EqualButNotSameKey
+javax.cache.RemoveTest#removeAll_1arg_NotStarted
+javax.cache.RemoveTest#removeAll_1arg_Null
+javax.cache.RemoveTest#removeAll_1arg_NullKey
+javax.cache.RemoveTest#removeAll_1arg
+javax.cache.RemoveTest#removeAll_0arg_NotStarted
+javax.cache.RemoveTest#removeAll_0arg
+
+# Exclude ReplaceTest
+
+javax.cache.ReplaceTest#replace_3arg_NotStarted
+javax.cache.ReplaceTest#replace_3arg_NullKey
+javax.cache.ReplaceTest#replace_3arg_NullValue1
+javax.cache.ReplaceTest#replace_3arg_NullValue2
+javax.cache.ReplaceTest#replace_3arg_Missing
+javax.cache.ReplaceTest#replace_3arg
+javax.cache.ReplaceTest#replace_3arg_Equal
+javax.cache.ReplaceTest#replace_3arg_Different
+javax.cache.ReplaceTest#replace_2arg_NotStarted
+javax.cache.ReplaceTest#replace_2arg_NullKey
+javax.cache.ReplaceTest#replace_2arg_NullValue
+javax.cache.ReplaceTest#replace_2arg_Missing
+javax.cache.ReplaceTest#replace_2arg
+javax.cache.ReplaceTest#getAndReplace_NotStarted
+javax.cache.ReplaceTest#getAndReplace_NullKey
+javax.cache.ReplaceTest#getAndReplace_NullValue
+javax.cache.ReplaceTest#getAndReplace_Missing
+javax.cache.ReplaceTest#getAndReplace
+
+# Exclude StoreByReferenceTest
+
+javax.cache.StoreByReferenceTest#get_Existing
+javax.cache.StoreByReferenceTest#get_Existing_NotSameKey
+javax.cache.StoreByReferenceTest#get_Existing_MutateKey
+javax.cache.StoreByReferenceTest#put_Existing_NotSameKey
+javax.cache.StoreByReferenceTest#getAndPut_NotThere
+javax.cache.StoreByReferenceTest#getAndPut_Existing
+javax.cache.StoreByReferenceTest#getAndPut_Existing_NotSameKey
+javax.cache.StoreByReferenceTest#putAll
+javax.cache.StoreByReferenceTest#putIfAbsent_Missing
+javax.cache.StoreByReferenceTest#putIfAbsent_There
+javax.cache.StoreByReferenceTest#replace_3arg
+javax.cache.StoreByReferenceTest#getAndReplace
+
+# Exclude StoreByValueTest
+
+javax.cache.StoreByValueTest#get_Existing_MutateValue
+javax.cache.StoreByValueTest#get_Existing_MutateKey
+javax.cache.StoreByValueTest#get_DeclaredImmutable
+javax.cache.StoreByValueTest#getAndPut_NotThere
+javax.cache.StoreByValueTest#getAndPut_Existing_MutateValue
+javax.cache.StoreByValueTest#getAndPut_Existing_NonSameKey_MutateValue
+javax.cache.StoreByValueTest#getAndPut_Existing_NonSameKey_MutateKey
+
+# Exclude JMXTest
+
+javax.cache.statistics.JMXTest#testCacheStatisticsWhereStatisticsTurnedOn

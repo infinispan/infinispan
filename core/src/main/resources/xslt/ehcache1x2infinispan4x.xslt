@@ -1,12 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet xmlns="urn:infinispan:config:4.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<xsl:stylesheet xmlns="urn:infinispan:config:5.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no"/>
    <xsl:template match="/ehcache">
       <xsl:comment>
-         This XSL stylesheet is used to convert an EHCache 1.x configuration into an Infinispan 4.0.x configuration.
+         This XSL stylesheet is used to convert an EHCache 1.x configuration into an Infinispan 5.1.x configuration.
          Note that Infinispan supports JGroups only, caches are migrated to using JGroups.
-         Peer discovery will also be using JGroups. Eviction policies are translated to LRU, FIFO or NONE.
+         Peer discovery will also be using JGroups. Eviction policies are translated to LRU or NONE.
       </xsl:comment>
       <xsl:element name="infinispan">
 
@@ -62,27 +84,22 @@
       <xsl:if test="@memoryStoreEvictionPolicy">
          <xsl:element name="eviction">
             <xsl:attribute name="strategy">
-               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LRU') or contains(@memoryStoreEvictionPolicy, 'FIFO')">
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LRU')">
                   <xsl:value-of select="@memoryStoreEvictionPolicy"/>
                </xsl:if>
 
                <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LFU')">
-                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LRU instead.
+                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LIRS instead.
                   </xsl:message>
-                  <xsl:text>LRU</xsl:text>
+                  <xsl:text>LIRS</xsl:text>
                </xsl:if>
-            </xsl:attribute>
 
-            <xsl:attribute name="wakeUpInterval">
-               <xsl:choose>
-                  <xsl:when test="@diskExpiryThreadIntervalSeconds">
-                     <xsl:value-of select="concat(@diskExpiryThreadIntervalSeconds,'000')"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                     <!-- by default the value is 120 seconds in EHCache-->
-                     <xsl:value-of select="120000"/>
-                  </xsl:otherwise>
-               </xsl:choose>
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'FIFO')">
+                  <xsl:message terminate="no">WARNING!!! Infinispan does not support FIFO eviction. Using LIRS instead.
+                  </xsl:message>
+                  <xsl:text>LIRS</xsl:text>
+               </xsl:if>
+
             </xsl:attribute>
 
             <xsl:if test="@maxElementsInMemory">
@@ -106,6 +123,17 @@
                   <xsl:value-of select="@timeToLiveSeconds"/>
                </xsl:attribute>
             </xsl:if>
+            <xsl:attribute name="wakeUpInterval">
+               <xsl:choose>
+                  <xsl:when test="@diskExpiryThreadIntervalSeconds">
+                     <xsl:value-of select="concat(@diskExpiryThreadIntervalSeconds,'000')"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <!-- by default the value is 120 seconds in EHCache-->
+                     <xsl:value-of select="120000"/>
+                  </xsl:otherwise>
+               </xsl:choose>
+            </xsl:attribute>
          </xsl:element>
       </xsl:if>
 

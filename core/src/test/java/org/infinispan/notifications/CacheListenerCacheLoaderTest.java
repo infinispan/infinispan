@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications;
 
 import org.infinispan.Cache;
@@ -8,6 +30,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
+import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +50,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration c = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg("no_passivation");
@@ -36,7 +59,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       cm.defineConfiguration("no_passivation", c);
 
       c = c.clone();
-      ((DummyInMemoryCacheStore.Cfg) c.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("passivation");
+      ((DummyInMemoryCacheStore.Cfg) c.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("passivation");
       c.getCacheLoaderManagerConfig().setPassivation(true);
       cm.defineConfiguration("passivation", c);
    }
@@ -140,7 +163,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
 
    @Listener
-   public class TestListener {
+   static public class TestListener {
       List<Object> loaded = new LinkedList<Object>();
       List<Object> activated = new LinkedList<Object>();
       List<Object> passivated = new LinkedList<Object>();
@@ -156,7 +179,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       }
 
       @CacheEntryPassivated
-      public void handlePassivated(CacheEntryEvent e) {
+      public void handlePassivated(CacheEntryPassivatedEvent e) {
          if (e.isPre()) passivated.add(e.getKey());
       }
 

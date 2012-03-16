@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
@@ -7,34 +29,29 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.distribution.ch.UnionConsistentHash;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
    protected int INIT_CLUSTER_SIZE = 4;
@@ -47,15 +64,43 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
    protected boolean l1OnRehash = false;
+   protected int l1Threshold = 5;
    protected boolean performRehashing = false;
    protected boolean batchingEnabled = false;
    protected int numOwners = 2;
    protected int lockTimeout = 45;
+   protected int numVirtualNodes = 1;
+   protected boolean groupsEnabled = false;
+   protected List<Grouper<?>> groupers;
+   protected LockingMode lockingMode;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
-      configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
+      configuration = buildConfiguration();
+      // Create clustered caches with failure detection protocols on
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
+                                     new TransportFlags().withFD(true));
+
+      reorderBasedOnCHPositions();
+
+      if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
+      if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
+      if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
+      if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
+
+      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
+         cacheAddresses.add(cacheManager.getAddress());
+      }
+   }
+
+   protected Configuration buildConfiguration() {
+      Configuration configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
+      if (lockingMode != null) {
+         configuration.fluent().transaction().lockingMode(lockingMode);
+      }
       configuration.setNumOwners(numOwners);
       if (!testRetVals) {
          configuration.setUnsafeUnreliableReturnValues(true);
@@ -67,89 +112,26 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
-      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);      
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
-
-      reorderBasedOnCHPositions();
-
-      if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
-      if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
-      if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
-      if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
-
-      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
-      for (Cache cache : caches) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
-         cacheAddresses.add(cacheManager.getAddress());
+      configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
+      if (groupsEnabled) {
+          configuration.fluent().hash().groups().enabled(true);
+          configuration.fluent().hash().groups().groupers(groupers);
       }
-
-      RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
-
+      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
+      if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
+      return configuration;
    }
 
-   public static ConsistentHash createNewConsistentHash(List<Address> servers) {
+   protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
       try {
          Configuration c = new Configuration();
          c.setConsistentHashClass(DefaultConsistentHash.class.getName());
-         return ConsistentHashHelper.createConsistentHash(c, servers, new TopologyInfo());
+         return ConsistentHashHelper.createConsistentHash(c, servers);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-   }
-
-   /**
-    * This is a separate class because some tools try and run this method as a test 
-    */
-   public static class RehashWaiter {
-      private static final Log log = LogFactory.getLog(RehashWaiter.class);
-      public static void waitForInitRehashToComplete(Cache... caches) {
-         int gracetime = 60000; // 60 seconds?
-         long giveup = System.currentTimeMillis() + gracetime;
-         for (Cache c : caches) {
-            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-            while (!dmi.isJoinComplete()) {
-               if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.rpcManager.getAddress() + " !";
-                  log.error(message);
-                  throw new RuntimeException(message);
-               }
-               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-            }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
-         }
-      }
-
-      public static void waitForRehashToComplete(Cache... caches) {
-         int gracetime = 120000; // 120 seconds?
-         long giveup = System.currentTimeMillis() + gracetime;
-         for (Cache c : caches) {
-            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-            while (dmi.isRehashInProgress()) {
-               if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for rehash to complete on node " + dmi.rpcManager.getAddress() + " !";
-                  log.error(message);
-                  throw new RuntimeException(message);
-               }
-               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
-            }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
-         }
-      }
-
-      public static void waitForInitRehashToComplete(Collection<Cache> caches) {
-         Set<Cache> cachesSet = new HashSet<Cache>();
-         cachesSet.addAll(caches);
-         waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
-      }
-
-      public static void waitForRehashToComplete(Collection<Cache> caches) {
-         Set<Cache> cachesSet = new HashSet<Cache>();
-         cachesSet.addAll(caches);
-         waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
-      }
-
    }
 
    // only used if the CH impl does not order the hash ring based on the order of the view.
@@ -158,10 +140,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    // so this function orders things such that the test can predict where keys get mapped to.
    private void reorderBasedOnCHPositions() {
       // wait for all joiners to join
-      List<Cache> clist = new ArrayList<Cache>(cacheManagers.size());
-      for (CacheContainer cm : cacheManagers) clist.add(cm.getCache(cacheName));
-      assert clist.size() == INIT_CLUSTER_SIZE;
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
+      assert caches.size() == INIT_CLUSTER_SIZE;
+      waitForClusterToForm(cacheName);
 
       // seed this with an initial cache.  Any one will do.
       Cache seed = caches.get(0);
@@ -171,7 +151,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       
       for (Address a : ch.getCaches()) {
          for (Cache<Object, String> c : caches) {
-            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            EmbeddedCacheManager cacheManager = c.getCacheManager();
             if (a.equals(cacheManager.getAddress())) {
                reordered.add(c);
                break;
@@ -179,6 +159,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          }
       }
 
+      assert reordered.size() == INIT_CLUSTER_SIZE : "Reordering caches lost some caches: started with " + caches + ", ended with " + reordered;
       caches = reordered;
    }
 
@@ -203,10 +184,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       c1.put("k1", "value");
-      asyncWait("k1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("k1", addressOf(c1)));
-      for (Cache<Object, String> c : caches)
-         assert "value".equals(c.get("k1")) : "Failed on cache " + addressOf(c);
-      assertOwnershipAndNonOwnership("k1");
+      asyncWait("k1", PutKeyValueCommand.class);
+      assertOnAllCachesAndOwnership("k1", "value");
    }
 
    protected Address addressOf(Cache<?, ?> cache) {
@@ -226,8 +205,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOnAllCachesAndOwnership(Object key, String value) {
+      assertOwnershipAndNonOwnership(key, l1CacheEnabled);
+      // checking the values will bring the keys to L1, so we want to do it after checking ownership
       assertOnAllCaches(key, value);
-      if (value != null) assertOwnershipAndNonOwnership(key);
+   }
+
+   protected void assertRemovedOnAllCaches(Object key) {
+      assertOnAllCaches(key, null);
    }
 
    protected void assertOnAllCaches(Object key, String value) {
@@ -241,17 +225,24 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
                   + addressOf(c) + "] but was [" + realVal + "]";
          }
       }
+      // Allow some time for all ClusteredGetCommands to finish executing
+      TestingUtil.sleepThread(1000);
    }
 
-   protected void assertOwnershipAndNonOwnership(Object key) {
+   protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       for (Cache<Object, String> c : caches) {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
          InternalCacheEntry ice = dc.get(key);
          if (isOwner(c, key)) {
-            assert ice != null : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
-            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+            assert ice != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
+            assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+         } else {
+            if (allowL1) {
+               assert ice == null || ice instanceof MortalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+            } else {
+               assert ice == null : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice + "!";
+            }
          }
-         // Invalidation may need some time to "catch up", so this should not be strictly enforced if the node is a NON OWNER.
       }
    }
 
@@ -295,11 +286,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return DistributionTestHelper.isFirstOwner(c, key);
    }
 
-   public Cache<Object, String>[] getOwners(Object key) {
+   protected Cache<Object, String>[] getOwners(Object key) {
       return getOwners(key, 2);
    }
 
-   public Cache<Object, String>[] getOwners(Object key, int expectedNumberOwners) {
+   protected Cache<Object, String>[] getOwners(Object key, int expectedNumberOwners) {
       Cache<Object, String>[] owners = new Cache[expectedNumberOwners];
       int i = 0;
       for (Cache<Object, String> c : caches) {

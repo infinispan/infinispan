@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,6 @@
 
 package org.infinispan.jmx;
 
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheContainer;
@@ -33,8 +33,8 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Clustered cache manager MBean test
@@ -92,4 +92,12 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       assert server.getAttribute(name2, "ClusterSize").equals(2);
    }
 
+   public void testJGroupsInformation() throws Exception {
+      ObjectName jchannelName1 = getJGroupsChannelObjectName(JMX_DOMAIN, manager(0).getClusterName());
+      ObjectName jchannelName2 = getJGroupsChannelObjectName(JMX_DOMAIN2, manager(1).getClusterName());
+      assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "Address"));
+      assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "Address"));
+      assert (Boolean) server.getAttribute(jchannelName1, "Connected");
+      assert (Boolean) server.getAttribute(jchannelName2, "Connected");
+   }
 }

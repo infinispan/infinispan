@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +22,7 @@
  */
 package org.infinispan.query.impl;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.query.QueryIterator;
 
 /**
@@ -36,7 +37,7 @@ import org.infinispan.query.QueryIterator;
 public abstract class AbstractIterator implements QueryIterator {
 
    protected Object[] buffer;
-   protected Cache cache;
+   protected AdvancedCache<?, ?> cache;
 
    protected int index = 0;
    protected int bufferIndex = -1;

@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", testName = "distribution.SingleOwnerTest")
+@Test(groups = "functional", testName = "distribution.SingleOwnerTest")
 public class SingleOwnerTest extends BaseDistFunctionalTest {
    
    @Override
@@ -67,11 +67,11 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
 
       cacheAddresses = new ArrayList<Address>(2);
       for (Cache cache : caches) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
 
-      RehashWaiter.waitForInitRehashToComplete(c1, c2);
+      waitForClusterToForm(cacheName);
    }
 
    public void testPutOnKeyOwner() {
@@ -104,6 +104,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
    }
 
    public void testErrorWhenRetrievingKeyFromNonOwner() {
+      log.trace("Before test");
       Cache[] owners = getOwners("diffkey", 1);
       Cache[] nonOwners = getNonOwners("diffkey", 1);
       assert owners.length == 1;
@@ -123,7 +124,11 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          nonOwnerCache.get("diffkey");
          assert false : "Should have failed with a CacheException that contains an UnknownError";
       } catch (CacheException e) {
-         assert e.getCause() instanceof UnknownError;
+         if (e.getCause() != null) {
+            assert e.getCause() instanceof UnknownError : e.getCause();
+         } else {
+            throw e;
+         }
       }
    }
 }

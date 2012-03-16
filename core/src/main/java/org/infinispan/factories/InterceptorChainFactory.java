@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -29,7 +30,15 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
+import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
@@ -37,22 +46,19 @@ import java.util.List;
  * Factory class that builds an interceptor chain based on cache configuration.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
-   public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) {
-      CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
+   private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
+
+   private CommandInterceptor createInterceptor(CommandInterceptor interceptor, Class<? extends CommandInterceptor> interceptorType) {
+      CommandInterceptor chainedInterceptor = componentRegistry.getComponent(interceptorType);
       if (chainedInterceptor == null) {
-         chainedInterceptor = Util.getInstance(clazz);
-         try {
-            componentRegistry.registerComponent(chainedInterceptor, clazz);
-         }
-         catch (RuntimeException e) {
-            log.warn("Problems creating interceptor " + clazz);
-            throw e;
-         }
+         chainedInterceptor = interceptor;
+         register(interceptorType, chainedInterceptor);
       } else {
          // wipe next/last chaining!!
          chainedInterceptor.setNext(null);
@@ -60,87 +66,143 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return chainedInterceptor;
    }
 
-   public InterceptorChain buildInterceptorChain() throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+
+   private void register(Class<? extends CommandInterceptor> clazz, CommandInterceptor chainedInterceptor) {
+      try {
+         componentRegistry.registerComponent(chainedInterceptor, clazz);
+      } catch (RuntimeException e) {
+         log.warn("Problems creating interceptor " + clazz);
+         throw e;
+      }
+   }
+
+   private boolean isUsingMarshalledValues(Configuration c) {
+      return c.isStoreAsBinary() && (c.isStoreKeysAsBinary() || c.isStoreValuesAsBinary());
+   }
+
+   public InterceptorChain buildInterceptorChain() {
+      boolean needsVersionAwareComponents = configuration.isTransactionalCache() && configuration.isWriteSkewCheck() &&
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC && configuration.isEnableVersioning();
+
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
 
-      CommandInterceptor first = invocationBatching ? createInterceptor(BatchingInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+      CommandInterceptor first;
+      if (invocationBatching) {
+         first = createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class);
+      } else {
+         first = createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class);
+      }
 
       InterceptorChain interceptorChain = new InterceptorChain(first);
 
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
 
+      // add marshallable check interceptor for situations where we want to figure out before marshalling
+      if (isUsingMarshalledValues(configuration) || configuration.isUseAsyncMarshalling()
+            || configuration.isUseReplQueue() || hasAsyncStore())
+         interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
+
       // NOW add the ICI if we are using batching!
-      if (invocationBatching)
-         interceptorChain.appendIntereceptor(createInterceptor(InvocationContextInterceptor.class));
+      if (invocationBatching) {
+         interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
+      }
 
       // load the cache management interceptor next
       if (configuration.isExposeJmxStatistics())
-         interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
+
+      // load the state transfer lock interceptor
+      // the state transfer lock ensures that the cache member list is up-to-date
+      // so it's necessary even if state transfer is disabled
+      if (configuration.getCacheMode().isDistributed() || configuration.getCacheMode().isReplicated())
+         interceptorChain.appendInterceptor(createInterceptor(new StateTransferLockInterceptor(), StateTransferLockInterceptor.class), false);
 
       // load the tx interceptor
-      if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
-      else
-         interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
+      if (configuration.isTransactionalCache())
+         interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
-      if(configuration.isUseEagerLocking())
-         interceptorChain.appendIntereceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
+      if (isUsingMarshalledValues(configuration))
+         interceptorChain.appendInterceptor(createInterceptor(new MarshalledValueInterceptor(), MarshalledValueInterceptor.class), false);
 
-      if (configuration.isUseLazyDeserialization())
-         interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
+      interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
 
-      interceptorChain.appendIntereceptor(createInterceptor(NotificationInterceptor.class));
-
-      if (configuration.isEnableDeadlockDetection()) {
-         interceptorChain.appendIntereceptor(createInterceptor(DeadlockDetectingInterceptor.class));
+      if (configuration.isUseEagerLocking()) {
+         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
+
+      if (configuration.isTransactionalCache()) {
+         if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
+            interceptorChain.appendInterceptor(createInterceptor(new PessimisticLockingInterceptor(), PessimisticLockingInterceptor.class), false);
+         } else {
+            interceptorChain.appendInterceptor(createInterceptor(new OptimisticLockingInterceptor(), OptimisticLockingInterceptor.class), false);
+         }
+      } else {
+         interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(), NonTransactionalLockingInterceptor.class), false);
+      }
+
+      if (needsVersionAwareComponents && configuration.getCacheMode().isClustered())
+         interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
+      else
+         interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
-            interceptorChain.appendIntereceptor(createInterceptor(ActivationInterceptor.class));
-            interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
+            if (configuration.getCacheMode().isClustered())
+               interceptorChain.appendInterceptor(createInterceptor(new ClusteredActivationInterceptor(), ClusteredActivationInterceptor.class), false);
+            else
+               interceptorChain.appendInterceptor(createInterceptor(new ActivationInterceptor(), ActivationInterceptor.class), false);
+            interceptorChain.appendInterceptor(createInterceptor(new PassivationInterceptor(), PassivationInterceptor.class), false);
          } else {
-            interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
+            if (configuration.getCacheMode().isClustered())
+               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
+            else
+               interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
             switch (configuration.getCacheMode()) {
                case DIST_SYNC:
                case DIST_ASYNC:
-                  interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
+                  interceptorChain.appendInterceptor(createInterceptor(new DistCacheStoreInterceptor(), DistCacheStoreInterceptor.class), false);
                   break;
                default:
-                  interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+                  interceptorChain.appendInterceptor(createInterceptor(new CacheStoreInterceptor(), CacheStoreInterceptor.class), false);
                   break;
             }
          }
       }
 
-
-      if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
-      else
-         interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
+      if (configuration.isEnableDeadlockDetection()) {
+         interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(), DeadlockDetectingInterceptor.class), false);
+      }
 
       switch (configuration.getCacheMode()) {
          case REPL_SYNC:
+            if (needsVersionAwareComponents) {
+               interceptorChain.appendInterceptor(createInterceptor(new VersionedReplicationInterceptor(), VersionedReplicationInterceptor.class), false);
+               break;
+            }
          case REPL_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(ReplicationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(new ReplicationInterceptor(), ReplicationInterceptor.class), false);
             break;
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(InvalidationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(new InvalidationInterceptor(), InvalidationInterceptor.class), false);
             break;
          case DIST_SYNC:
+            if (needsVersionAwareComponents) {
+               interceptorChain.appendInterceptor(createInterceptor(new VersionedDistributionInterceptor(), VersionedDistributionInterceptor.class), false);
+               break;
+            }
          case DIST_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(DistributionInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(new DistributionInterceptor(), DistributionInterceptor.class), false);
             break;
          case LOCAL:
             //Nothing...
       }
 
-      CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
-      interceptorChain.appendIntereceptor(callInterceptor);
-      if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");
+      CommandInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
+      interceptorChain.appendInterceptor(callInterceptor, false);
+      log.trace("Finished building default interceptor chain.");
       buildCustomInterceptors(interceptorChain, configuration.getCustomInterceptors());
       return interceptorChain;
    }
@@ -148,42 +210,58 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    @SuppressWarnings("unchecked")
    private Class<? extends CommandInterceptor> getCustomInterceptorType(CustomInterceptorConfig cfg) {
       if (cfg.getInterceptor() != null) return cfg.getInterceptor().getClass();
-      return Util.loadClass(cfg.getClassName());
+      return Util.loadClass(cfg.getClassName(), configuration.getClassLoader());
    }
 
    private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) {
-      if (cfg.getInterceptor() != null) return cfg.getInterceptor();
-      return (CommandInterceptor) Util.getInstance(cfg.getClassName());
+      CommandInterceptor result = cfg.getInterceptor();
+      if (result == null) {
+         result = Util.getInstance(cfg.getClassName(), configuration.getClassLoader());
+      }
+      register(result.getClass(), result);
+      return result;
    }
 
    private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
-
       for (CustomInterceptorConfig config : customInterceptors) {
          if (interceptorChain.containsInterceptorType(getCustomInterceptorType(config))) continue;
+
+         CommandInterceptor customInterceptor = getOrCreateCustomInterceptor(config);
          if (config.isFirst())
-            interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), 0);
+            interceptorChain.addInterceptor(customInterceptor, 0);
          else if (config.isLast())
-            interceptorChain.appendIntereceptor(getOrCreateCustomInterceptor(config));
+            interceptorChain.appendInterceptor(customInterceptor, true);
          else if (config.getIndex() >= 0)
-            interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), config.getIndex());
+            interceptorChain.addInterceptor(customInterceptor, config.getIndex());
          else if (config.getAfter() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getAfter());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add after class: " + config.getAfter()
-                     + " as no such interceptor exists in the default chain");
+                                                      + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorAfter(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
-         }
-         else if (config.getBefore() != null) {
+            interceptorChain.addInterceptorAfter(customInterceptor, withClassName.get(0).getClass());
+         } else if (config.getBefore() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getBefore());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add before class: " + config.getAfter()
-                     + " as no such interceptor exists in the default chain");
+                                                      + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorBefore(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
+            interceptorChain.addInterceptorBefore(customInterceptor, withClassName.get(0).getClass());
          }
       }
-      
+
+   }
+
+   private boolean hasAsyncStore() {
+      List<CacheLoaderConfig> loaderConfigs = configuration.getCacheLoaderManagerConfig().getCacheLoaderConfigs();
+      for (CacheLoaderConfig loaderConfig : loaderConfigs) {
+         if (loaderConfig instanceof CacheStoreConfig) {
+            CacheStoreConfig storeConfig = (CacheStoreConfig) loaderConfig;
+            if (storeConfig.getAsyncStoreConfig().isEnabled())
+               return true;
+         }
+      }
+      return false;
    }
 
    @Override
@@ -192,8 +270,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          return componentType.cast(buildInterceptorChain());
       } catch (CacheException ce) {
          throw ce;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new ConfigurationException("Unable to build interceptor chain", e);
       }
    }

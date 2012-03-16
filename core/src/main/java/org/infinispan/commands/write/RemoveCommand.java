@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,17 +22,17 @@
  */
 package org.infinispan.commands.write;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Set;
 
 
 /**
@@ -95,10 +96,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       e.setRemoved(true);
       e.setValid(false);
 
+
       // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
       // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
       // with non-null values, so we should do the same here as an ugly workaround.
       if (this instanceof EvictCommand) {
+         e.setEvicted(true);
          notify(ctx, removedValue, false);
       } else {
          // FIXME: Do we really need to notify with null when a user can be given with more information?
@@ -168,14 +171,20 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
-      flags = (Set<Flag>) (parameters.length>1 ? parameters[1] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      flags = (Set<Flag>) parameters[1];
    }
 
    @Override
    public Object[] getParameters() {
       return new Object[]{key, flags};
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 }

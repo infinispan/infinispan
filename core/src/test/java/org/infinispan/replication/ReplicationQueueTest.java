@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
@@ -22,7 +44,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests RepliationQueue functionality.
+ * Tests ReplicationQueue's functionality.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -58,7 +80,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replicationQueueScheduledExecutor</tt> config param.
     */
    @Test(dependsOnMethods = "testReplicationBasedOnTime")
-   public void testApropriateExecutorIsUsed() {
+   public void testAppropriateExecutorIsUsed() {
       assert ReplQueueTestScheduledExecutorFactory.methodCalled;
       assert ReplQueueTestScheduledExecutorFactory.command != null;
       assert ReplQueueTestScheduledExecutorFactory.delay == REPL_QUEUE_INTERVAL;
@@ -137,7 +159,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       Cache cache1 = cache(0, "replQueue");
       Cache cache2 = cache(1, "replQueue");
       
-      //only place one element, queue size is 10.
+      //place 10 elements, queue size is 10.
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
          cache1.put("key" + i, "value" + i);
       }
@@ -185,19 +207,16 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
    public void testReplicationQueueMultipleThreads() throws Exception {
       final Cache cache1 = cache(0, "replQueue");
       Cache cache2 = cache(1, "replQueue");
-      int numThreads = 4;
-      final int numLoopsPerThread = 3;
+      // put 10 elements in the queue from 5 different threads
+      int numThreads = 5;
+      final int numLoopsPerThread = 2;
       Thread[] threads = new Thread[numThreads];
       final CountDownLatch latch = new CountDownLatch(1);
 
       for (int i = 0; i < numThreads; i++) {
          final int i1 = i;
          threads[i] = new Thread() {
-            int index;
-
-            {
-               index = i1;
-            }
+            int index = i1;
 
             public void run() {
                try {

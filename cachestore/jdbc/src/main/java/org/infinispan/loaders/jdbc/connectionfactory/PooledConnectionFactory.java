@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,7 +26,8 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.beans.PropertyVetoException;
@@ -42,40 +44,45 @@ import java.util.Properties;
  * hardcoded values will be used.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Tristan Tarrant
  */
 public class PooledConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
    private ComboPooledDataSource pooledDataSource;
 
    @Override
-   public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
-      logFileOverride();
+   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
+      logFileOverride(classLoader);
       pooledDataSource = new ComboPooledDataSource();
       pooledDataSource.setProperties(new Properties());
       try {
+         /* Since c3p0 does not throw an exception when it fails to load a driver we attempt to do so here
+          * Also, c3p0 does not allow specifying a custom classloader, so use c3p0's
+          */
+         Class.forName(config.getDriverClass(), true, ComboPooledDataSource.class.getClassLoader());
          pooledDataSource.setDriverClass(config.getDriverClass()); //loads the jdbc driver
-      } catch (PropertyVetoException e) {
-         String message = "Error while instatianting JDBC driver: '" + config.getDriverClass();
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+      } catch (Exception e) {
+         log.errorInstantiatingJdbcDriver(config.getDriverClass(), e);
+         throw new CacheLoaderException(String.format(
+               "Error while instatianting JDBC driver: '%s'", config.getDriverClass()), e);
       }
       pooledDataSource.setJdbcUrl(config.getConnectionUrl());
       pooledDataSource.setUser(config.getUserName());
       pooledDataSource.setPassword(config.getPassword());
       if (log.isTraceEnabled()) {
-         log.trace("Started connection factory with config: " + config);
+         log.tracef("Started connection factory with config: %s", config);
       }
    }
 
-   private void logFileOverride() {
-      URL propsUrl = Thread.currentThread().getContextClassLoader().getResource("c3p0.properties");
-      URL xmlUrl = Thread.currentThread().getContextClassLoader().getResource("c3p0-config.xml");
-      if (log.isInfoEnabled() && propsUrl != null) {
-         log.info("Found 'c3p0.properties' in classpath: " + propsUrl);
+   private void logFileOverride(ClassLoader classLoader) {
+      URL propsUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0.properties", classLoader);
+      URL xmlUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0-config.xml", classLoader);
+      if (log.isDebugEnabled() && propsUrl != null) {
+         log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
       }
-      if (log.isInfoEnabled() && xmlUrl != null) {
-         log.info("Found 'c3p0-config.xml' in classpath: " + xmlUrl);
+      if (log.isDebugEnabled() && xmlUrl != null) {
+         log.debugf("Found 'c3p0-config.xml' in classpath: %s", xmlUrl);
       }
    }
 
@@ -83,12 +90,12 @@ public class PooledConnectionFactory extends ConnectionFactory {
    public void stop() {
       try {
          DataSources.destroy(pooledDataSource);
-         if (log.isTraceEnabled()) {
+         if (log.isDebugEnabled()) {
             log.debug("Successfully stopped PooledConnectionFactory.");
          }
       }
       catch (SQLException sqle) {
-         log.warn("Could not destroy C3P0 connection pool: " + pooledDataSource, sqle);
+         log.couldNotDestroyC3p0ConnectionPool(pooledDataSource!=null?pooledDataSource.toString():null, sqle);
       }
    }
 
@@ -119,9 +126,10 @@ public class PooledConnectionFactory extends ConnectionFactory {
       if (log.isTraceEnabled()) {
          String operation = checkout ? "checkout" : "release";
          try {
-            log.trace("DataSource before " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
-         } catch (SQLException e) {                                                                                                                
-            log.warn("Unexpected", e);
+            log.tracef("DataSource before %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
+                       operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
+         } catch (SQLException e) {
+            log.sqlFailureUnexpected(e);
          }
       }
    }
@@ -130,11 +138,12 @@ public class PooledConnectionFactory extends ConnectionFactory {
       if (log.isTraceEnabled()) {
          String operation = checkout ? "checkout" : "release";
          try {
-            log.trace("DataSource after " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
+            log.tracef("DataSource after %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
+                      operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
          } catch (SQLException e) {
-            log.warn("Unexpected", e);
+            log.sqlFailureUnexpected(e);
          }
-         log.trace("Connection " + operation + " : " + connection);
+         log.tracef("Connection %s : %s", operation, connection);
       }
    }
 }

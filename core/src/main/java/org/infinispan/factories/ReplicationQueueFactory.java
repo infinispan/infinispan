@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,8 +22,10 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.util.Util;
 
 /**
@@ -38,10 +41,14 @@ public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory i
    public <T> T construct(Class<T> componentType) {
       if ((!configuration.getCacheMode().isSynchronous()) && configuration.isUseReplQueue()) {
          String type = configuration.getReplQueueClass();
-         if (type == null)
-            return super.construct(componentType);
+         if (type == null || type.equals(ReplicationQueueImpl.class.getName()))
+            return componentType.cast(new ReplicationQueueImpl());
          else
-            return (T) super.construct(Util.loadClass(type));
+            try {
+               return componentType.cast(Util.loadClass(type, configuration.getClassLoader()).newInstance());
+            } catch (Exception e) {
+               throw new ConfigurationException(e);
+            }
       } else {
          return null;
       }

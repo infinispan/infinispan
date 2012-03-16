@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,7 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -52,7 +53,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();
-      store.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
+      store.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
       store.start();
       assert store.getConnectionFactory() instanceof ManagedConnectionFactory;
       return store;

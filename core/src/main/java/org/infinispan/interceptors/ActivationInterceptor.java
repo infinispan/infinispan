@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -13,6 +35,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -25,11 +49,19 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    private final AtomicLong activations = new AtomicLong(0);
    private CacheStore store;
 
+   private static final Log log = LogFactory.getLog(ActivationInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Start(priority = 15)
    public void setCacheStore() {
       store = clm == null ? null : clm.getCacheStore();
       if (store == null) {
-         throw new ConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
+         throw new ConfigurationException("Passivation can only be used with a CacheLoader that implements CacheStore!");
       }
    }
 

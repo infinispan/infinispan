@@ -1,7 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
@@ -29,7 +52,7 @@ public interface TxInvocationContext extends InvocationContext {
    Set<Object> getAffectedKeys();
 
    /**
-    * Returns the id of the transaction assoctiated  with the current call.
+    * Returns the id of the transaction associated  with the current call.
     */
    GlobalTransaction getGlobalTransaction();
 
@@ -49,7 +72,9 @@ public interface TxInvocationContext extends InvocationContext {
    /**
     * Registers a new participant with the transaction.
     */
-   void addAffectedKeys(Collection<Object> keys);
+   void addAllAffectedKeys(Collection<Object> keys);
+
+   void addAffectedKey(Object key);
 
    /**
     *
@@ -57,4 +82,14 @@ public interface TxInvocationContext extends InvocationContext {
     * or false otherwise.
     */
    boolean isTransactionValid();
+
+   /**
+    * Marks this transaction as implicit; implicit transactions are started for transactional caches that have the autoCommit enabled.
+    */
+   void setImplicitTransaction(boolean implicit);
+
+
+   boolean isImplicitTransaction();
+
+   CacheTransaction getCacheTransaction();
 }

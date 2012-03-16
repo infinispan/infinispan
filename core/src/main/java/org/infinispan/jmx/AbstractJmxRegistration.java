@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -25,13 +25,8 @@ package org.infinispan.jmx;
 import java.util.Set;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.util.Util;
 
 /**
  * Parent class for top level JMX component registration.
@@ -47,7 +42,7 @@ public abstract class AbstractJmxRegistration {
    protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
 
    protected void registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
-      mBeanServer = getMBeanServer(globalConfig);
+      mBeanServer = JmxUtil.lookupMBeanServer(globalConfig);
       ComponentsJmxRegistration registrar = buildRegistrar(components);
       registrar.registerMBeans();
    }
@@ -59,28 +54,4 @@ public abstract class AbstractJmxRegistration {
       }
    }
 
-   protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {
-      MBeanServerLookup lookup = configuration.getMBeanServerLookupInstance();
-      return lookup.getMBeanServer(configuration.getMBeanServerProperties());
-   }
-
-   protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer, String groupName) {
-      int index = 2;
-      String finalName = jmxDomain;
-      boolean done = false;
-      while (!done) {
-         done = true;
-         try {
-            ObjectName targetName = new ObjectName(finalName + ':' + groupName + ",*");
-            if (mBeanServer.queryNames(targetName, null).size() > 0) {
-               finalName = jmxDomain + index++;
-               done = false;
-            }
-         } catch (MalformedObjectNameException e) {
-            throw new CacheException("Unable to check for duplicate names", e);
-         }
-      }
-
-      return finalName;
-   }
 }

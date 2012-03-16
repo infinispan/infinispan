@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -32,6 +33,10 @@ import java.lang.annotation.Target;
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
+ * <p/>
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * and any transactions in progress will be rolled back.
+ * 
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.infinispan.notifications.Listener

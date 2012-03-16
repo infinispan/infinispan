@@ -1,20 +1,42 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.interceptors.DistTxInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.InboundInvocationHandlerImpl;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -28,7 +50,11 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
@@ -39,17 +65,18 @@ import static org.infinispan.test.TestingUtil.replaceComponent;
  * 1 node exists.  Transactions running.  Some complete, some in prepare, some in commit. New node joins, rehash occurs.
  * Test that the new node is the owner and receives this state.
  */
-@Test(groups = "functional", testName = "distribution.rehash.OngoingTransactionsAndJoinTest")
+@Test(groups = "functional", testName = "distribution.rehash.OngoingTransactionsAndJoinTest", enabled = false)
 @CleanupAfterMethod
 public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
    Configuration configuration;
+   ScheduledExecutorService delayedExecutor = Executors.newScheduledThreadPool(1);
 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       configuration.setLockAcquisitionTimeout(60000);
       configuration.setUseLockStriping(false);
-      addClusterEnabledCacheManager(configuration, true);
+      addClusterEnabledCacheManager(configuration);
    }
 
    private void injectListeningHandler(CacheContainer ecm, ListeningHandler lh) {
@@ -83,36 +110,50 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       CommitDuringRehashTask ct = new CommitDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
 
       InterceptorChain ic = TestingUtil.extractComponent(firstNode, InterceptorChain.class);
-      ic.addInterceptorAfter(pt, DistTxInterceptor.class);
-      ic.addInterceptorAfter(ct, DistTxInterceptor.class);
+      ic.addInterceptorAfter(pt, TxInterceptor.class);
+      ic.addInterceptorAfter(ct, TxInterceptor.class);
 
 
       Set<Thread> threads = new HashSet<Thread>();
-      threads.add(new Thread(ut, "UnpreparedDuringRehashTask"));
-      threads.add(new Thread(pt, "PrepareDuringRehashTask"));
-      threads.add(new Thread(ct, "CommitDuringRehashTask"));
+      threads.add(new Thread(ut, "Worker-UnpreparedDuringRehashTask"));
+      threads.add(new Thread(pt, "Worker-PrepareDuringRehashTask"));
+      threads.add(new Thread(ct, "Worker-CommitDuringRehashTask"));
 
       for (Thread t : threads) t.start();
 
       txsStarted.await();
+
+      // we don't have a hook for the start of the rehash any more
+      delayedExecutor.schedule(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            rehashStarted.countDown();
+            return null;
+         }
+      }, 10, TimeUnit.MILLISECONDS);
+      
       // start a new node!
-      addClusterEnabledCacheManager(configuration, true);
+      addClusterEnabledCacheManager(configuration);
+
+      ListeningHandler listeningHandler2 = new ListeningHandler(extractComponent(firstNode, InboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
+      injectListeningHandler(cacheManagers.get(1), listeningHandler);
+
       Cache<?, ?> joiner = cache(1);
 
       for (Thread t : threads) t.join();
 
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(1));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
       for (int i = 0; i < 10; i++) {
          Object key = "OLD" + i;
          Object value = joiner.get(key);
-         log.info(" TEST: Key %s is %s", key, value);
+         log.infof(" TEST: Key %s is %s", key, value);
          assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
       }
 
       for (Object key: Arrays.asList(ut.key(), pt.key(), ct.key())) {
          Object value = joiner.get(key);
-         log.info(" TEST: Key %s is %s", key, value);
+         log.infof(" TEST: Key %s is %s", key, value);
          assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
       }
    }
@@ -126,6 +167,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          tm(cache).begin();
          cache.put(key(), "value");
          tx = tm(cache).getTransaction();
+         tx.enlistResource(new XAResourceAdapter()); // this is to force 2PC and to prevent transaction managers attempting to optimise the call to a 1PC.
          txsStarted.countDown();
       }
 
@@ -186,7 +228,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
-         if (tcx.getTransaction().equals(tx)) {
+         if (tx.equals(tcx.getTransaction())) {
             txsReady.countDown();
             rehashStarted.await();
          }
@@ -195,7 +237,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
-         if (tcx.getTransaction().equals(tx)) {
+         if (tx.equals(tcx.getTransaction())) {
             try {
                joinEnded.await();
             } catch (InterruptedException e) {
@@ -234,7 +276,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
          Object o = super.visitPrepareCommand(tcx, cc);
-         if (tcx.getTransaction().equals(tx)) {
+         if (tx.equals(tcx.getTransaction())) {
             txsReady.countDown();
          }
          return o;
@@ -242,7 +284,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
-         if (tcx.getTransaction().equals(tx)) {
+         if (tx.equals(tcx.getTransaction())) {
             try {
                rehashStarted.await();
             } catch (InterruptedException e) {
@@ -266,26 +308,26 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Response handle(CacheRpcCommand cmd) throws Throwable {
+      public Response handle(CacheRpcCommand cmd, Address origin) throws Throwable {
          boolean notifyRehashStarted = false;
-         if (cmd instanceof RehashControlCommand) {
-            RehashControlCommand rcc = (RehashControlCommand) cmd;
+         if (cmd instanceof CacheViewControlCommand) {
+            CacheViewControlCommand rcc = (CacheViewControlCommand) cmd;
+            log.debugf("Intercepted command: %s", cmd);
             switch (rcc.getType()) {
-               case JOIN_REQ:
+               case PREPARE_VIEW:
                   txsReady.await();
-                  break;
-               case PULL_STATE_JOIN:
                   notifyRehashStarted = true;
                   break;
-               case JOIN_REHASH_END:
+               case COMMIT_VIEW:
                   joinEnded.countDown();
                   break;
             }
          }
 
-         Response r = delegate.handle(cmd);
+         Response r = delegate.handle(cmd, origin);
          if (notifyRehashStarted) rehashStarted.countDown();
          return r;
       }
    }
+
 }

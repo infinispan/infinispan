@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -35,5 +36,10 @@ import java.lang.annotation.RetentionPolicy;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transformable {
-   Class<? extends Transformer> transformer() default DefaultTransformer.class;
+
+   // This should really be Class<? extends Transformer> however, since
+   // migrating to JBoss Logging and using annotation processor for generating
+   // log objects, if the previous definition is used, a compiler bug is hit.
+   // You can find more info in https://issues.jboss.org/browse/ISPN-380
+   Class transformer() default DefaultTransformer.class;
 }

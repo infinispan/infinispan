@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -53,6 +54,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
       cfg.setSyncCommitPhase(true);
       cfg.setSyncRollbackPhase(true);
+      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       createClusteredCaches(1, "timestamps", cfg);
    }
 
@@ -62,7 +64,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       try {
          cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k", "v");
       } catch (CacheException ce) {
-         assert ce.getCause() instanceof NullPointerException;
+         assert ce.getCause() instanceof RuntimeException;
       }
    }
 
@@ -96,7 +98,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
 
       for (Throwable thr : throwables) thr.printStackTrace();
       assert throwables.get(0) instanceof CacheException;
-      assert ((CacheException) throwables.get(0)).getCause() instanceof InterruptedException;
+      assert throwables.get(0).getCause() instanceof InterruptedException;
    }
 
 
@@ -159,8 +161,8 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       @CacheEntryModified
       public void entryModified(CacheEntryModifiedEvent event) {
          if (!event.isPre()) {
-            log.debug("Entry modified: %s, let's throw an NPE!!", event);
-            throw new NullPointerException();
+            log.debugf("Entry modified: %s, let's throw an exception!!", event);
+            throw new RuntimeException("Testing exception handling");
          }
       }
    }

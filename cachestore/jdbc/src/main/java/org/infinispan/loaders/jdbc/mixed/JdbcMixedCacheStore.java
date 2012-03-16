@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -87,8 +88,8 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       ConnectionFactoryConfig factoryConfig = config.getConnectionFactoryConfig();
-      sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.getConnectionFactoryClass());
-      sharedConnectionFactory.start(factoryConfig);
+      sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.getConnectionFactoryClass(), config.getClassLoader());
+      sharedConnectionFactory.start(factoryConfig, config.getClassLoader());
       binaryCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
       binaryCacheStore.start();
       stringBasedCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
@@ -98,9 +99,29 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    @Override
    public void stop() throws CacheLoaderException {
       super.stop();
-      binaryCacheStore.stop();
-      stringBasedCacheStore.stop();
-      sharedConnectionFactory.stop();
+
+      Throwable cause = null;
+      try {
+         binaryCacheStore.stop();
+      } catch (Throwable t) {
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      try {
+         stringBasedCacheStore.stop();
+      } catch (Throwable t) {
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      try {
+         sharedConnectionFactory.stop();
+      } catch (Throwable t) {
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      if (cause != null) {
+         throw new CacheLoaderException("Exceptions occurred while stopping store", cause);
+      }
    }
 
    @Override
@@ -117,8 +138,8 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
       Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
       if (log.isTraceEnabled()) {
-         log.trace("Loaded from bucket: " + fromBuckets);
-         log.trace("Loaded from string: " + fromStrings);
+         log.tracef("Loaded from bucket: %s", fromBuckets);
+         log.tracef("Loaded from string: %s", fromStrings);
       }
       fromBuckets.addAll(fromStrings);
       return fromBuckets;

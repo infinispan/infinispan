@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2006, JBoss Inc., and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -37,11 +38,13 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.transport.CustomReplayingDecoder;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
 import org.infinispan.server.websocket.handlers.RemoveHandler;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -51,8 +54,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.infinispan.server.core.transport.Encoder;
-import org.infinispan.server.core.transport.Decoder;
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 /**
  * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
@@ -70,11 +72,11 @@ public class WebSocketServer extends AbstractProtocolServer {
       super("WebSocketServerThread");
    }
 
-   public Encoder getEncoder() {
+   public OneToOneEncoder getEncoder() {
       return null;
    }
 
-   public Decoder getDecoder() {
+   public CustomReplayingDecoder getDecoder() {
       return null;
    }
 
@@ -87,19 +89,10 @@ public class WebSocketServer extends AbstractProtocolServer {
    @Override
    public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize, TypedProperties typedProps) {
       InetSocketAddress address = new InetSocketAddress(getHost(), getPort());
-      Executor masterExecutor =
-         masterThreads() == 0 ?
-            Executors.newCachedThreadPool() :
-            Executors.newFixedThreadPool(masterThreads());
-      Executor workerExecutor =
-         workerThreads() == 0 ?
-            Executors.newCachedThreadPool():
-            Executors.newFixedThreadPool(workerThreads());
+      Executor masterExecutor = Executors.newCachedThreadPool();
+      Executor workerExecutor = Executors.newCachedThreadPool();
 
-      NioServerSocketChannelFactory factory =
-         workerThreads() == 0 ?
-            new NioServerSocketChannelFactory(masterExecutor, workerExecutor) :
-            new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
+      NioServerSocketChannelFactory factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
 
       // Configure the server.
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
@@ -124,7 +117,7 @@ public class WebSocketServer extends AbstractProtocolServer {
 
       private CacheContainer cacheContainer;
       private Map<String, OpHandler> operationHandlers;
-      private Map<String, Cache> startedCaches = new ConcurrentHashMap<String, Cache>();
+      private Map<String, Cache> startedCaches = ConcurrentMapFactory.makeConcurrentMap();
 
       public WebSocketServerPipelineFactory(CacheContainer cacheContainer) {
          this.cacheContainer = cacheContainer;

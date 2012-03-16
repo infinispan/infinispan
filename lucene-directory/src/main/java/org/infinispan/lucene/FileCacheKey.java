@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -46,7 +47,7 @@ public final class FileCacheKey implements Serializable {
    private final String fileName;
    private final int hashCode;
 
-   public FileCacheKey(String indexName, String fileName) {
+   public FileCacheKey(final String indexName, final String fileName) {
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
@@ -106,16 +107,16 @@ public final class FileCacheKey implements Serializable {
       return fileName + "|M|"+ indexName;
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileCacheKey> {
+   public static final class Externalizer extends AbstractExternalizer<FileCacheKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, FileCacheKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final FileCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
       }
 
       @Override
-      public FileCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileCacheKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
          return new FileCacheKey(indexName, fileName);

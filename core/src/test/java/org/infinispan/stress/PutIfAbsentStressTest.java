@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,13 +24,11 @@ package org.infinispan.stress;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,16 +52,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PutIfAbsentStressTest {
 
    private static final int NODES_NUM = 5;
-   private static final int THREAD_PER_NODE = 20;
-   private static final long STRESS_TIME_MINUTES = 1;
-   private static final long SLEEP_MILLISECONDS = 50;
+   private static final int THREAD_PER_NODE = 12;
+   private static final long STRESS_TIME_MINUTES = 2;
    private static final String SHARED_KEY = "thisIsTheKeyForConcurrentAccess";
 
    /**
     * Purpose is not testing JDK's ConcurrentHashMap but ensuring the test is correct. It's also
     * interesting to compare performance.
     */
-   protected void testonConcurrentHashMap() throws Exception {
+   public void testonConcurrentHashMap() throws Exception {
+      System.out.println("Running test on ConcurrentHashMap:");
       ConcurrentMap<String, String> map = new ConcurrentHashMap<String, String>();
       testConcurrentLocking(map);
    }
@@ -70,38 +69,61 @@ public class PutIfAbsentStressTest {
    /**
     * Testing putIfAbsent's behaviour on a Local cache.
     */
-   protected void testonInfinispanLocal() throws Exception {
+   public void testonInfinispanLocal() throws Exception {
+      System.out.println("Running test on Infinispan, LOCAL:");
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       ConcurrentMap<String, String> map = cm.getCache();
       try {
          testConcurrentLocking(map);
       } finally {
-         TestingUtil.clearContent(cm);
+         TestingUtil.killCacheManagers(cm);
       }
    }
 
    /**
     * Testing putIfAbsent's behaviour in DIST_SYNC cache.
     */
-   protected void testonInfinispanDIST() throws Exception {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
+   public void testonInfinispanDIST_SYNC() throws Exception {
+      System.out.println("Running test on Infinispan, DIST_SYNC:");
+      Configuration c = new Configuration()
+         .fluent().mode(Configuration.CacheMode.DIST_SYNC).build();
+      testConcurrentLockingOnMultipleManagers(c);
+   }
+
+   /**
+    * Testing putIfAbsent's behaviour in DIST_SYNC cache, disabling L1
+    */
+   public void testonInfinispanDIST_NOL1() throws Exception {
+      System.out.println("Running test on Infinispan, DIST_SYNC, disabling L1:");
+      Configuration c = new Configuration()
+         .fluent().mode(Configuration.CacheMode.DIST_SYNC).l1().disable().build();
       testConcurrentLockingOnMultipleManagers(c);
    }
 
    /**
     * Testing putIfAbsent's behaviour in REPL_SYNC cache.
     */
-   protected void testonInfinispanREPL() throws Exception {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+   public void testonInfinispanREPL_SYNC() throws Exception {
+      System.out.println("Running test on Infinispan, REPL_SYNC:");
+      Configuration c = new Configuration()
+         .fluent().mode(Configuration.CacheMode.REPL_SYNC).build();
+      testConcurrentLockingOnMultipleManagers(c);
+   }
+   
+   /**
+    * Testing putIfAbsent's behaviour in REPL_ASYNC cache.
+    */
+   public void testonInfinispanREPL_ASYNC() throws Exception {
+      System.out.println("Running test on Infinispan, REPL_ASYNC:");
+      Configuration c = new Configuration()
+         .fluent().mode(Configuration.CacheMode.REPL_ASYNC).build();
       testConcurrentLockingOnMultipleManagers(c);
    }
 
    /**
     * Adapter to run the test on any configuration
     */
-   private void testConcurrentLockingOnMultipleManagers(Configuration cfg) throws IOException, InterruptedException {
+   private void testConcurrentLockingOnMultipleManagers(Configuration cfg) throws InterruptedException {
       List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>(NODES_NUM);
       List<Cache<String, String>> caches = new ArrayList<Cache<String, String>>();
       List<ConcurrentMap<String, String>> maps = new ArrayList<ConcurrentMap<String, String>>(NODES_NUM
@@ -126,7 +148,7 @@ public class PutIfAbsentStressTest {
    /**
     * Adapter for tests sharing a single Cache instance
     */
-   private void testConcurrentLocking(ConcurrentMap<String, String> map) throws IOException, InterruptedException {
+   private void testConcurrentLocking(ConcurrentMap<String, String> map) throws InterruptedException {
       int size = NODES_NUM * THREAD_PER_NODE;
       List<ConcurrentMap<String, String>> maps = new ArrayList<ConcurrentMap<String, String>>(size);
       for (int i = 0; i < size; i++) {
@@ -139,16 +161,14 @@ public class PutIfAbsentStressTest {
     * Drives the actual test on an Executor and verifies the result
     * 
     * @param maps the caches to be tested
-    * @throws IOException
-    * @throws InterruptedException
     */
-   private void testConcurrentLocking(List<ConcurrentMap<String, String>> maps) throws IOException,
-            InterruptedException {
+   private void testConcurrentLocking(List<ConcurrentMap<String, String>> maps) throws InterruptedException {
       SharedStats stats = new SharedStats();
       ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NODES_NUM);
       List<StressingThread> threads = new ArrayList<StressingThread>();
+      int i=0;
       for (ConcurrentMap<String, String> map : maps) {
-         StressingThread thread = new StressingThread(stats, map);
+         StressingThread thread = new StressingThread(stats, map, i++);
          threads.add(thread);
          executor.execute(thread);
       }
@@ -174,47 +194,34 @@ public class PutIfAbsentStressTest {
 
       private final SharedStats stats;
       private final ConcurrentMap<String, String> cache;
+      private final String ourValue;
 
-      public StressingThread(SharedStats stats, ConcurrentMap<String, String> cache) {
+      public StressingThread(SharedStats stats, ConcurrentMap<String, String> cache, int threadId) {
          this.stats = stats;
          this.cache = cache;
+         this.ourValue = "v" + threadId;
       }
 
       @Override
       public void run() {
          while (!(stats.seenFailures || stats.globalQuit || Thread.interrupted())) {
-            try {
                doCycle();
-            } catch (IOException e) {
-               checkIsTrue(false, e.getMessage());
-            }
          }
       }
 
-      private void doCycle() throws IOException {
-         String beforePut = cache.putIfAbsent(SHARED_KEY, SHARED_KEY);
+      private void doCycle() {
+         String beforePut = cache.putIfAbsent(SHARED_KEY, ourValue);
          if (beforePut != null) {
             stats.canceledPutsCounter.incrementAndGet();
-            sleep();
          } else {
-            boolean lockIsFine = stats.lockOwnersCounter.compareAndSet(0, 1);
-            System.out.print("L");
+            final String currentCacheValue = cache.get(SHARED_KEY);
+            boolean lockIsFine = stats.lockOwnersCounter.compareAndSet(0, 1) && ourValue.equals(currentCacheValue);
             stats.succesfullPutsCounter.incrementAndGet();
             checkIsTrue(lockIsFine, "I got the lock, some other thread is owning the lock AS WELL.");
-            sleep();
             lockIsFine = stats.lockOwnersCounter.compareAndSet(1, 0);
             checkIsTrue(lockIsFine, "Some other thread changed the lock count while I was having it!");
-            System.out.print("R");
             cache.remove(SHARED_KEY);
             stats.lockReleasedCounter.incrementAndGet();
-         }
-      }
-
-      private void sleep() {
-         try {
-            Thread.sleep(SLEEP_MILLISECONDS);
-         } catch (InterruptedException e) {
-            // no-op: waking up is good enough
          }
       }
 

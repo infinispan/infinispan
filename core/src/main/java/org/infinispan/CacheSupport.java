@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,6 +23,7 @@
 
 package org.infinispan;
 
+import org.infinispan.api.BasicCache;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;
@@ -33,12 +35,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public abstract class CacheSupport<K,V> implements Cache<K,V> {
+public abstract class CacheSupport<K, V> implements BasicCache<K, V> {
    protected long defaultLifespan;
    protected long defaultMaxIdleTime;
 
    protected CacheSupport() {
-      this(0,0);
+      this(0, 0);
    }
 
    protected CacheSupport(long defaultLifespan, long defaultMaxIdleTime) {
@@ -50,12 +52,22 @@ public abstract class CacheSupport<K,V> implements Cache<K,V> {
       return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
+   /**
+    * This is intentionally a non-public method meant as an integration point for bytecode manipulation. Don't remove or
+    * alter the signature even if it might look like unreachable code. Implementors should perform a put operation but
+    * optimizing it as return values are not required.
+    *
+    * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+    * @since 5.0
+    */
+   protected abstract void set(K key, V value);
+
    public final void putAll(Map<? extends K, ? extends V> map) {
       putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<V> putAsync(K key, V value) {
-      return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final V putIfAbsent(K key, V value) {
@@ -63,39 +75,39 @@ public abstract class CacheSupport<K,V> implements Cache<K,V> {
    }
 
    public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return putAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return putAllAsync(data, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putAllAsync(data, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return putAllAsync(data, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putAllAsync(data, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putIfAbsentAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return putIfAbsentAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return putIfAbsentAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return replaceAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return replaceAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return replaceAsync(key, oldValue, newValue, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return replaceAsync(key, oldValue, newValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<V> replaceAsync(K key, V value) {
-      return replaceAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return replaceAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return replaceAsync(key, oldValue, newValue, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+      return replaceAsync(key, oldValue, newValue, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public final V put(K key, V value, long lifespan, TimeUnit unit) {

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -62,12 +63,12 @@ public class InfinispanDirectoryIOTest {
    public void prepareCacheManager() {
       cacheManager = CacheTestSupport.createTestCacheManager();
    }
-   
-   @AfterTest
+
+   @AfterTest(alwaysRun=true)
    public void killCacheManager() {
-      cacheManager.stop();
+      TestingUtil.killCacheManagers(cacheManager);
    }
-   
+
    @AfterMethod(alwaysRun=true)
    public void clearCache() {
       cacheManager.getCache().clear();
@@ -328,11 +329,11 @@ public class InfinispanDirectoryIOTest {
       InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       // create file headers
-      FileMetadata file1 = new FileMetadata();
+      FileMetadata file1 = new FileMetadata(5);
       FileCacheKey key1 = new FileCacheKey(INDEXNAME, "Hello.txt");
       cache.put(key1, file1);
 
-      FileMetadata file2 = new FileMetadata();
+      FileMetadata file2 = new FileMetadata(5);
       FileCacheKey key2 = new FileCacheKey(INDEXNAME, "World.txt");
       cache.put(key2, file2);
 

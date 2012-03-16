@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
@@ -23,19 +45,21 @@ import java.util.Set;
 /**
  * A chaining cache loader that allows us to configure > 1 cache loader.
  * <p/>
- * READ operations are directed to each of the cache loaders (in the order which they were configured) until a non-null
- * (or non-empty in the case of retrieving collection objects) result is achieved.
+ * READ operations are directed to each of the cache loaders (in the order which they were
+ * configured) until a non-null (or non-empty in the case of retrieving collection objects) result
+ * is achieved.
  * <p/>
- * WRITE operations are propagated to ALL registered cache stores specified, that set ignoreModifications to false.
- *
+ * WRITE operations are propagated to ALL registered cache stores specified, except those that set
+ * ignoreModifications to false.
+ * 
  * @author Manik Surtani
  * @since 4.0
  */
 public class ChainingCacheStore implements CacheStore {
 
    // linked hash sets used since it provides fast (O(1)) iteration, maintains order and provides O(1) lookups to values as well.
-   LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>();
-   LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>();
+   LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>(2);
+   LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>(2);
 
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.store(ed);

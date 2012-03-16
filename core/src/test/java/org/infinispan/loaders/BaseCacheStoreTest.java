@@ -1,9 +1,35 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
 import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.modifications.Clear;
@@ -14,26 +40,18 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 import static java.util.Collections.emptySet;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -49,9 +67,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    protected CacheStore cs;
 
-   protected GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+   protected TransactionFactory gtf = new TransactionFactory();
 
-   @BeforeMethod
+   protected BaseCacheStoreTest() {
+      gtf.init(false, false, true);
+   }
+
+   @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       try {
          cs = createCacheStore();
@@ -62,7 +84,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws CacheLoaderException {
       try {
          if (cs != null) {
@@ -99,23 +121,26 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       return new TestObjectStreamMarshaller(false);
    }
 
-   public void testLoadAndStoreImmortal() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreImmortal() throws CacheLoaderException {
       assert !cs.containsKey("k");
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v");
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v");
       cs.store(se);
 
       assert cs.load("k").getValue().equals("v");
       assert cs.load("k").getLifespan() == -1;
       assert cs.load("k").getMaxIdle() == -1;
-      assert !cs.load("k").isExpired();
+      assert !cs.load("k").isExpired(System.currentTimeMillis());
       assert cs.containsKey("k");
+
+      boolean removed = cs.remove("k2");
+      assert !removed;
    }
 
    public void testLoadAndStoreWithLifespan() throws Exception {
       assert !cs.containsKey("k");
 
       long lifespan = 120000;
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       cs.store(se);
 
       assert cs.containsKey("k");
@@ -125,11 +150,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(ice, "v", lifespan, -1, false);
 
       lifespan = 1;
-      se = InternalEntryFactory.create("k", "v", lifespan);
+      se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -142,7 +167,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert ice.getMaxIdle() == maxIdle : ice.getMaxIdle() + " was not " + maxIdle;
       if (lifespan > -1) assert ice.getCreated() > -1 : "Created is -1 when maxIdle is set";
       if (maxIdle > -1) assert ice.getLastUsed() > -1 : "LastUsed is -1 when maxIdle is set";
-      assert expired == ice.isExpired() : "isExpired() is not " + expired;
+      assert expired == ice.isExpired(System.currentTimeMillis()) : "isExpired() is not " + expired;
    }
 
 
@@ -150,7 +175,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert !cs.containsKey("k");
 
       long idle = 120000;
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v", -1, idle);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", -1, idle);
       cs.store(se);
 
       assert cs.containsKey("k");
@@ -160,11 +185,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(ice, "v", -1, idle, false);
 
       idle = 1;
-      se = InternalEntryFactory.create("k", "v", -1, idle);
+      se = TestInternalCacheEntryFactory.create("k", "v", -1, idle);
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -183,7 +208,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       long lifespan = 200000;
       long idle = 120000;
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan, idle);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan, idle);
       cs.store(se);
 
       assert cs.containsKey("k");
@@ -193,11 +218,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(ice, "v", lifespan, idle, false);
 
       idle = 1;
-      se = InternalEntryFactory.create("k", "v", lifespan, idle);
+      se = TestInternalCacheEntryFactory.create("k", "v", lifespan, idle);
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -209,10 +234,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       long lifespan = 1;
       long idle = 1;
-      InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
-      InternalCacheEntry se3 = InternalEntryFactory.create("k3", "v3", -1, idle);
-      InternalCacheEntry se4 = InternalEntryFactory.create("k4", "v4", lifespan, idle);
+      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", "v2");
+      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", "v4", lifespan, idle);
 
       cs.store(se1);
       cs.store(se2);
@@ -223,16 +248,16 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.stop();
       cs.start();
-      assert se1.isExpired();
+      assert se1.isExpired(System.currentTimeMillis());
       assert cs.load("k1") == null;
       assert !cs.containsKey("k1");
       assert cs.load("k2") != null;
       assert cs.containsKey("k2");
       assert cs.load("k2").getValue().equals("v2");
-      assert se3.isExpired();
+      assert se3.isExpired(System.currentTimeMillis());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
-      assert se3.isExpired();
+      assert se3.isExpired(System.currentTimeMillis());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
    }
@@ -244,8 +269,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    public void testOnePhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       GlobalTransaction tx = gtf.newGlobalTransaction(null, true);
       cs.prepare(mods, tx, true);
@@ -256,9 +281,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
       cs.prepare(mods, tx, true);
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
@@ -267,8 +292,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    public void testTwoPhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
@@ -284,9 +309,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
@@ -304,11 +329,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    public void testRollback() throws CacheLoaderException {
 
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
@@ -325,10 +350,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
@@ -346,17 +371,18 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    public void testRollbackFromADifferentThreadReusingTransactionKey() throws CacheLoaderException, InterruptedException {
 
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       final GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
       Thread t = new Thread(new Runnable() {
+         @Override
          public void run() {
             cs.rollback(tx);
          }
@@ -370,14 +396,15 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
       Thread t2 = new Thread(new Runnable() {
+         @Override
          public void run() {
             cs.rollback(tx);
          }
@@ -392,19 +419,19 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.commit(tx);
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
       cs.rollback(tx);
 
       assert cs.containsKey("old");
    }
 
-   public void testPreload() throws CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2"));
-      cs.store(InternalEntryFactory.create("k3", "v3"));
+   public void testPreload() throws Exception {
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       Set<InternalCacheEntry> set = cs.loadAll();
 
@@ -418,13 +445,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testPreloadWithMaxSize() throws CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2"));
-      cs.store(InternalEntryFactory.create("k3", "v3"));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       Set<InternalCacheEntry> set = cs.load(2);
 
-      assert set.size() == 2;
+      assertEquals(2, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
@@ -434,10 +461,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testStoreAndRemoveAll() throws CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2"));
-      cs.store(InternalEntryFactory.create("k3", "v3"));
-      cs.store(InternalEntryFactory.create("k4", "v4"));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
+      cs.store(TestInternalCacheEntryFactory.create("k4", "v4"));
 
 
       Set<InternalCacheEntry> set = cs.loadAll();
@@ -467,11 +494,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       // Increased lifespan and idle timeouts to accommodate slower cache stores
       long lifespan = 6000;
       long idle = 4000;
-      cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
-      cs.store(InternalEntryFactory.create("k2", "v2", -1, idle));
-      cs.store(InternalEntryFactory.create("k3", "v3", lifespan, idle));
-      cs.store(InternalEntryFactory.create("k4", "v4", -1, -1)); // immortal entry
-      cs.store(InternalEntryFactory.create("k5", "v5", lifespan * 1000, idle * 1000)); // long life mortal entry
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", lifespan));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2", -1, idle));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3", lifespan, idle));
+      cs.store(TestInternalCacheEntryFactory.create("k4", "v4", -1, -1)); // immortal entry
+      cs.store(TestInternalCacheEntryFactory.create("k5", "v5", lifespan * 1000, idle * 1000)); // long life mortal entry
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
@@ -489,11 +516,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadKeys() throws CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v"));
-      cs.store(InternalEntryFactory.create("k2", "v"));
-      cs.store(InternalEntryFactory.create("k3", "v"));
-      cs.store(InternalEntryFactory.create("k4", "v"));
-      cs.store(InternalEntryFactory.create("k5", "v"));
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v"));
+      cs.store(TestInternalCacheEntryFactory.create("k4", "v"));
+      cs.store(TestInternalCacheEntryFactory.create("k5", "v"));
 
       Set<Object> s = cs.loadAllKeys(null);
       assert s.size() == 5 : "Expected 5 keys, was " + s;
@@ -508,14 +535,14 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert !s.contains("k3");
    }
 
-   public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2"));
-      cs.store(InternalEntryFactory.create("k3", "v3"));
+   public void testStreamingAPI() throws IOException, CacheLoaderException {
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false, 12);
       try {
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } finally {
@@ -543,16 +570,16 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert expected.isEmpty();
    }
 
-   public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(InternalEntryFactory.create("k1", "v1"));
-      cs.store(InternalEntryFactory.create("k2", "v2"));
-      cs.store(InternalEntryFactory.create("k3", "v3"));
+   public void testStreamingAPIReusingStreams() throws IOException, CacheLoaderException {
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      cs.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+      cs.store(TestInternalCacheEntryFactory.create("k3", "v3"));
 
       StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};
-      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false ,12);
       try {
          oo.write(dummyStartBytes);
          cs.toStream(new UnclosableObjectOutputStream(oo));
@@ -610,10 +637,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       final List<Exception> exceptions = new LinkedList<Exception>();
 
       final Runnable store = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               cs.store(InternalEntryFactory.create(keys[randomInt], values[randomInt]));
+               cs.store(TestInternalCacheEntryFactory.create(keys[randomInt], values[randomInt]));
             } catch (Exception e) {
                exceptions.add(e);
             }
@@ -621,6 +649,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       };
 
       final Runnable remove = new Runnable() {
+         @Override
          public void run() {
             try {
                cs.remove(keys[r.nextInt(10)]);
@@ -631,6 +660,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       };
 
       final Runnable get = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
@@ -647,6 +677,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       for (int i = 0; i < numThreads; i++) {
          threads[i] = new Thread(getClass().getSimpleName() + "-" + i) {
+            @Override
             public void run() {
                for (int i = 0; i < loops; i++) {
                   store.run();
@@ -664,11 +695,86 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testReplaceExpiredEntry() throws Exception {
-      cs.store(InternalEntryFactory.create("k1", "v1", 100));
-      Thread.sleep(200);
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 3000;
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v1", lifespan));
+      while (true) {
+         InternalCacheEntry entry = cs.load("k1");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assert entry.getValue().equals("v1");
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         if (cs.load("k1") == null) break;
+      }
+
       assert null == cs.load("k1");
-      // Increased lifespan to accommodate slower cache stores
-      cs.store(InternalEntryFactory.create("k1", "v2", 4000));
-      assert cs.load("k1").getValue().equals("v2");
+
+      cs.store(TestInternalCacheEntryFactory.create("k1", "v2", lifespan));
+      while (true) {
+         InternalCacheEntry entry = cs.load("k1");
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assert entry.getValue().equals("v2");
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         if (cs.load("k1") == null) break;
+      }
+
+      assert null == cs.load("k1");
    }
+
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), true, getMarshaller());
+      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), true, getMarshaller());
+      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), true, getMarshaller());
+
+      assert !cs.containsKey(key);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create(key, value);
+      cs.store(se);
+
+      assert cs.load(key).getValue().equals(value);
+      assert cs.load(key).getLifespan() == -1;
+      assert cs.load(key).getMaxIdle() == -1;
+      assert !cs.load(key).isExpired(System.currentTimeMillis());
+      assert cs.containsKey(key);
+
+      boolean removed = cs.remove(key2);
+      assert !removed;
+   }
+
+   public static class Pojo implements Serializable {
+
+      private String role;
+
+      public Pojo role(String role) {
+         this.role = role;
+         return this;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Pojo pojo = (Pojo) o;
+
+         if (role != null ? !role.equals(pojo.role) : pojo.role != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return role != null ? role.hashCode() : 0;
+      }
+   }
+
 }

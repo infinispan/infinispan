@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -29,6 +30,7 @@ import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -79,7 +81,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class Fqn implements Comparable<Fqn> {
+public class Fqn implements Comparable<Fqn>, Serializable {
    /**
     * Separator between FQN elements.
     */

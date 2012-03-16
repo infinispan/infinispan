@@ -1,13 +1,36 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.AbstractEnlistmentAdapter;
+import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,156 +45,120 @@ import javax.transaction.xa.Xid;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class TransactionXaAdapter implements XAResource {
+public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
    private static boolean trace = log.isTraceEnabled();
 
+   /**
+    * It is really useful only if TM and client are in separate processes and TM fails. This is because a client might
+    * call tm.begin and then the TM (running separate process) crashes. In this scenario the TM won't ever call
+    * XAResource.rollback, so these resources would be held there forever. By knowing the timeout the RM can proceed
+    * releasing the resources associated with given tx.
+    */
    private int txTimeout;
 
-   private final InvocationContextContainer icc;
-   private final InterceptorChain invoker;
-
-   private final CommandsFactory commandsFactory;
    private final Configuration configuration;
 
-   private final TransactionTable txTable;
+   private final XaTransactionTable txTable;
+
+   private final TransactionCoordinator txCoordinator;
 
    /**
     * XAResource is associated with a transaction between enlistment (XAResource.start()) XAResource.end(). It's only the
     * boundary methods (prepare, commit, rollback) that need to be "stateless".
     * Reefer to section 3.4.4 from JTA spec v.1.1
     */
-   private final LocalTransaction localTransaction;
+   private final LocalXaTransaction localTransaction;
+   private final RecoveryManager recoveryManager;
+   private volatile RecoveryManager.RecoveryIterator recoveryIterator;
+   private boolean recoveryEnabled;
 
 
-   public TransactionXaAdapter(LocalTransaction localTransaction, TransactionTable txTable, CommandsFactory commandsFactory,
-                               Configuration configuration, InterceptorChain invoker, InvocationContextContainer icc) {
+   public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               CommandsFactory commandsFactory, RpcManager rpcManager,
+                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
+      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
       this.localTransaction = localTransaction;
-      this.txTable = txTable;
-      this.commandsFactory = commandsFactory;
+      this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.invoker = invoker;
-      this.icc = icc;
+      this.recoveryManager = rm;
+      this.txCoordinator = txCoordinator;
+      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
+   }
+   public TransactionXaAdapter(TransactionTable txTable,
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               CommandsFactory commandsFactory, RpcManager rpcManager,
+                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
+      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
+      localTransaction = null;
+      this.txTable = (XaTransactionTable) txTable;
+      this.configuration = configuration;
+      this.recoveryManager = rm;
+      this.txCoordinator = txCoordinator;
+      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
    }
 
    /**
     * This can be call for any transaction object. See Section 3.4.6 (Resource Sharing) from JTA spec v1.1.
     */
-   public int prepare(Xid xid) throws XAException {
-      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      
-      validateNotMarkedForRollback(localTransaction);
-
-      if (configuration.isOnePhaseCommit()) {
-         if (trace) log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.", xid);
-         return XA_OK;
-      }
-
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
-      if (trace) log.trace("Sending prepare command through the chain: " + prepareCommand);
-
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      try {
-         invoker.invoke(ctx, prepareCommand);
-         if (localTransaction.isReadOnly()) {
-            if (trace) log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
-            // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commit(xid, false);
-            return XA_RDONLY;
-         } else {
-            return XA_OK;
-         }
-      } catch (Throwable e) {
-         log.error("Error while processing PrepareCommand", e);
-         throw new XAException(XAException.XAER_RMERR);
-      }
+   public int prepare(Xid externalXid) throws XAException {
+      Xid xid = convertXid(externalXid);
+      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      return txCoordinator.prepare(localTransaction);
    }
 
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */
-   public void commit(Xid xid, boolean isOnePhase) throws XAException {
-      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
-
-      if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
-      try {
-         LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-         ctx.setLocalTransaction(localTransaction);
-         if (configuration.isOnePhaseCommit() || isOnePhase) {
-            validateNotMarkedForRollback(localTransaction);
-
-            if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
-            try {
-               invoker.invoke(ctx, command);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
-            try {
-               invoker.invoke(ctx, commitCommand);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         }
-      } finally {
-         cleanup(localTransaction);
+   public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
+      Xid xid = convertXid(externalXid);
+      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      if (isOnePhase) {
+         //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
+         //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
+         //inconsistent state.
+         txCoordinator.prepare(localTransaction);
+         txCoordinator.commit(localTransaction, false);
+      } else {
+         txCoordinator.commit(localTransaction, false);
       }
+      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
 
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */   
-   public void rollback(Xid xid) throws XAException {
-      TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable);
+   public void rollback(Xid externalXid) throws XAException {
+      Xid xid = convertXid(externalXid);
+      LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
+      localTransaction.markForRollback(true); //ISPN-879 : make sure that locks are no longer associated to this transactions
+      txCoordinator.rollback(localTransaction1);
+      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction1);
    }
 
-   public static void rollbackImpl(Xid xid, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, TransactionTable txTable) throws XAException {
-      LocalTransaction localTransaction = getLocalTransactionAndValidateImpl(xid, txTable);
-      if (trace) log.trace("rollback transaction %s ", localTransaction.getGlobalTransaction());
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      try {
-         invoker.invoke(ctx, rollbackCommand);
-      } catch (Throwable e) {
-         log.error("Exception while rollback", e);
-         throw new XAException(XAException.XA_HEURHAZ);
-      } finally {
-         cleanupImpl(localTransaction, txTable, icc);
-      }
-   }
-
-   private LocalTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
-      return TransactionXaAdapter.getLocalTransactionAndValidateImpl(xid, txTable);
-   }
-
-   private static LocalTransaction getLocalTransactionAndValidateImpl(Xid xid, TransactionTable txTable) throws XAException {
-      LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
-      if  (localTransaction == null) {
-         if (trace) log.trace("no tx found for %s", xid);
-         throw new XAException(XAException.XAER_NOTA);
-      }
-      return localTransaction;
-   }
-
-   public void start(Xid xid, int i) throws XAException {
+   public void start(Xid externalXid, int i) throws XAException {
+      Xid xid = convertXid(externalXid);
+      //transform in our internal format in order to be able to serialize
       localTransaction.setXid(xid);
       txTable.addLocalTransactionMapping(localTransaction);
-      if (trace) log.trace("start called on tx " + this.localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("start called on tx %s", this.localTransaction.getGlobalTransaction());
    }
 
-   public void end(Xid xid, int i) throws XAException {
-      if (trace) log.trace("end called on tx " + this.localTransaction.getGlobalTransaction());
+   public void end(Xid externalXid, int i) throws XAException {
+      if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), configuration.getName());
    }
 
-   public void forget(Xid xid) throws XAException {
-      if (trace) log.trace("forget called");
+   public void forget(Xid externalXid) throws XAException {
+      Xid xid = convertXid(externalXid);
+      if (trace) log.tracef("forget called for xid %s", xid);
+      try {
+         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+      } catch (Exception e) {
+         log.warn("Exception removing recovery information: ", e);
+         throw new XAException(XAException.XAER_RMERR);
+      }
    }
 
    public int getTransactionTimeout() throws XAException {
@@ -179,35 +166,49 @@ public class TransactionXaAdapter implements XAResource {
       return txTimeout;
    }
 
+   /**
+    * the only situation in which it returns true is when the other xa resource pertains to the same cache, on
+    * the same node.
+    */
    public boolean isSameRM(XAResource xaResource) throws XAException {
       if (!(xaResource instanceof TransactionXaAdapter)) {
          return false;
       }
       TransactionXaAdapter other = (TransactionXaAdapter) xaResource;
-      return other.equals(this);
+      //there is only one tx table per cache and this is more efficient that equals.
+      return this.txTable == other.txTable;
    }
 
-   public Xid[] recover(int i) throws XAException {
-      if (trace) log.trace("recover called: " + i);
-      return null;
+   public Xid[] recover(int flag) throws XAException {
+      if (!configuration.isTransactionRecoveryEnabled()) {
+         log.recoveryIgnored();
+         return RecoveryManager.RecoveryIterator.NOTHING;
+      }
+      if (trace) log.trace("recover called: " + flag);
+
+      if (isFlag(flag, TMSTARTRSCAN)) {
+         recoveryIterator = recoveryManager.getPreparedTransactionsFromCluster();
+         if (trace) log.tracef("Fetched a new recovery iterator: %s" , recoveryIterator);
+      }
+      if (isFlag(flag, TMENDRSCAN)) {
+         if (trace) log.trace("Flushing the iterator");
+         return recoveryIterator.all();
+      } else {
+         //as per the spec: "TMNOFLAGS this flag must be used when no other flags are specified."
+         if (!isFlag(flag, TMSTARTRSCAN) && !isFlag(flag, TMNOFLAGS))
+            throw new IllegalArgumentException("TMNOFLAGS this flag must be used when no other flags are specified." +
+                                                     " Received " + flag);
+         return recoveryIterator.hasNext() ? recoveryIterator.next() : RecoveryManager.RecoveryIterator.NOTHING;
+      }
+   }
+
+   private boolean isFlag(int value, int flag) {
+      return (value & flag) != 0;
    }
 
    public boolean setTransactionTimeout(int i) throws XAException {
       this.txTimeout = i;
       return true;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TransactionXaAdapter)) return false;
-      TransactionXaAdapter that = (TransactionXaAdapter) o;
-      return this.localTransaction.equals(that.localTransaction);
-   }
-
-   @Override
-   public int hashCode() {
-      return localTransaction.getGlobalTransaction().hashCode();
    }
 
    @Override
@@ -217,19 +218,55 @@ public class TransactionXaAdapter implements XAResource {
             '}';
    }
 
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
-      if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
-         throw new XAException(XAException.XA_RBROLLBACK);
+   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
+      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
+      if (configuration.isTransactionRecoveryEnabled()) {
+         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
+         txTable.removeLocalTransaction(localTransaction);
+      } else {
+         releaseLocksForCompletedTransaction(localTransaction);
       }
    }
 
-   private void cleanup(LocalTransaction localTransaction) {
-      TransactionXaAdapter.cleanupImpl(localTransaction, txTable, icc);
+   private LocalXaTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
+      return getLocalTransactionAndValidateImpl(xid, txTable);
    }
 
-   private static void cleanupImpl(LocalTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
-      txTable.removeLocalTransaction(localTransaction);
-      icc.suspend();
-   }   
+   private static LocalXaTransaction getLocalTransactionAndValidateImpl(Xid xid, XaTransactionTable txTable) throws XAException {
+      LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
+      if  (localTransaction == null) {
+         if (trace) log.tracef("no tx found for %s", xid);
+         throw new XAException(XAException.XAER_NOTA);
+      }
+      return localTransaction;
+   }
+
+   public LocalXaTransaction getLocalTransaction() {
+      return localTransaction;
+   }
+
+   /**
+    * Only does the conversion if recovery is enabled.
+    */
+   private Xid convertXid(Xid externalXid) {
+      if (recoveryEnabled && (!(externalXid instanceof SerializableXid))) {
+         return new SerializableXid(externalXid);
+      } else {
+         return externalXid;
+      }
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TransactionXaAdapter that = (TransactionXaAdapter) o;
+
+      if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
+         return false;
+      //also include the name of the cache in comparison - needed when same tx spans multiple caches.
+      return configuration.getName() != null ?
+            configuration.getName().equals(that.configuration.getName()) : that.configuration.getName() == null;
+   }
 }

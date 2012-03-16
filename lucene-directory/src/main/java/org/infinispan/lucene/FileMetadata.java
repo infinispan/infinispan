@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -46,9 +47,10 @@ public final class FileMetadata implements Serializable {
    
    private long lastModified = 0;
    private long size = 0;
-   private int bufferSize;
+   private final int bufferSize;
 
-   public FileMetadata() {
+   public FileMetadata(int bufferSize) {
+      this.bufferSize = bufferSize;
    }
 
    private FileMetadata(long lastModified, long size, int bufferSize) {
@@ -75,10 +77,6 @@ public final class FileMetadata implements Serializable {
 
    public void setSize(long size) {
       this.size = size;
-   }
-
-   public void setBufferSize(int bufferSize) {
-      this.bufferSize = bufferSize;
    }
 
    public int getBufferSize() {
@@ -118,7 +116,7 @@ public final class FileMetadata implements Serializable {
       return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileMetadata> {
+   public static final class Externalizer extends AbstractExternalizer<FileMetadata> {
 
       @Override
       public void writeObject(ObjectOutput output, FileMetadata metadata) throws IOException {
@@ -128,7 +126,7 @@ public final class FileMetadata implements Serializable {
       }
 
       @Override
-      public FileMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileMetadata readObject(ObjectInput input) throws IOException {
          long lastModified = UnsignedNumeric.readUnsignedLong(input);
          long size = UnsignedNumeric.readUnsignedLong(input);
          int bufferSize = UnsignedNumeric.readUnsignedInt(input);

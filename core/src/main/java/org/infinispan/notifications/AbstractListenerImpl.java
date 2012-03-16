@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications;
 
 import org.infinispan.CacheException;
@@ -52,10 +74,12 @@ public abstract class AbstractListenerImpl {
     * Removes all listeners from the notifier
     */
    @Stop(priority = 99)
-   public void removeAllCacheListeners() {
+   void stop() {
       for (List<ListenerInvocation> list : listenersMap.values()) {
          if (list != null) list.clear();
       }
+
+      if (syncProcessor != null) syncProcessor.shutdownNow();
    }
 
    protected abstract Log getLog();
@@ -76,7 +100,7 @@ public abstract class AbstractListenerImpl {
    private void removeListenerInvocation(Class<? extends Annotation> annotation, Object listener) {
       if (listener == null) return;
       List<ListenerInvocation> l = getListenerCollectionForAnnotation(annotation);
-      Set<Object> markedForRemoval = new HashSet<Object>();
+      Set<Object> markedForRemoval = new HashSet<Object>(4);
       for (ListenerInvocation li : l) {
          if (listener.equals(li.target)) markedForRemoval.add(li);
       }
@@ -88,7 +112,7 @@ public abstract class AbstractListenerImpl {
    }
 
    public Set<Object> getListeners() {
-      Set<Object> result = new HashSet<Object>();
+      Set<Object> result = new HashSet<Object>(listenersMap.size());
       for (List<ListenerInvocation> list : listenersMap.values()) {
          for (ListenerInvocation li : list) result.add(li.target);
       }
@@ -120,8 +144,8 @@ public abstract class AbstractListenerImpl {
          }
       }
 
-      if (!foundMethods && getLog().isWarnEnabled())
-         getLog().warn("Attempted to register listener of class " + listener.getClass() + ", but no valid, public methods annotated with method-level event annotations found! Ignoring listener.");
+      if (!foundMethods)
+         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
    }
 
    private void addListenerInvocation(Class annotation, ListenerInvocation li) {
@@ -136,7 +160,7 @@ public abstract class AbstractListenerImpl {
     * @param listenerClass class to inspect
     * @return true if callbacks on this class should use the syncProcessor; false if it should use the asyncProcessor.
     */
-   protected boolean testListenerClassValidity(Class<?> listenerClass) {
+   protected static boolean testListenerClassValidity(Class<?> listenerClass) {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
          throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
@@ -145,7 +169,7 @@ public abstract class AbstractListenerImpl {
       return l.sync();
    }
 
-   protected void testListenerMethodValidity(Method m, Class allowedParameter, String annotationName) {
+   protected static void testListenerMethodValidity(Method m, Class allowedParameter, String annotationName) {
       if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       if (!m.getReturnType().equals(void.class))
@@ -176,10 +200,17 @@ public abstract class AbstractListenerImpl {
                }
                catch (InvocationTargetException exception) {
                   Throwable cause = getRealException(exception);
-                  throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, cause);
+                  if (sync) {
+                     throw new CacheException(String.format(
+                        "Caught exception [%s] while invoking method [%s] on listener instance: %s"
+                        , cause.getClass().getName(), method, target
+                     ), cause);
+                  } else {
+                     getLog().unableToInvokeListenerMethod(method, target, cause);
+                  }
                }
                catch (IllegalAccessException exception) {
-                  getLog().warn("Unable to invoke method " + method + " on Object instance " + target + " - removing this target object from list of listeners!", exception);
+                  getLog().unableToInvokeListenerMethod(method, target, exception);
                   removeListener(target);
                }
             }

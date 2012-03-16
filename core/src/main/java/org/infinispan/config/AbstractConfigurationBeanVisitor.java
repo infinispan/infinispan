@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -51,153 +52,202 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * AbstractConfigurationBeanVisitor is a convenience super class for ConfigurationBeanVisitor
  * classes.
- * 
+ *
  * <p>
- * 
+ *
  * Subclasses of AbstractConfigurationBeanVisitor should define the most parameter type specific
  * definitions of <code>void visit(AbstractConfigurationBean bean); </code> method. These methods
  * are going to be invoked by traverser as it comes across these types during traversal of
  * <code>InfinispanConfiguration</code> tree.
- * 
+ *
  * <p>
- * 
+ *
  * For example, method <code>public void visit(SingletonStoreConfig ssc)</code> defined in a
  * subclass of this class is going to be invoked as the traverser comes across instance(s) of
  * SingletonStoreConfig.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
 public abstract class AbstractConfigurationBeanVisitor implements ConfigurationBeanVisitor {
 
-   protected transient Log log = LogFactory.getLog(getClass());
+   private static final Log log = LogFactory.getLog(AbstractConfigurationBeanVisitor.class);
 
+   @Override
    public void visitInfinispanConfiguration(InfinispanConfiguration bean) {
    }
-   
+
+   @Override
    public void visitAsyncStoreConfig(AsyncStoreConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitAsyncType(AsyncType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitBooleanAttributeType(BooleanAttributeType bean) {
       defaultVisit(bean);
-
    }
 
+   @Override
    public void visitCacheLoaderConfig(CacheLoaderConfig bean) {
-
+      if(bean instanceof AbstractConfigurationBean)
+         defaultVisit((AbstractConfigurationBean) bean);
    }
 
+   @Override
    public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitClusteringType(ClusteringType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitConfiguration(Configuration bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitCustomInterceptorsType(CustomInterceptorsType bean) {
       defaultVisit(bean);
    }
-   
+
+   @Override
    public void visitDataContainerType(DataContainerType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitDeadlockDetectionType(DeadlockDetectionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitEvictionType(EvictionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitExpirationType(ExpirationType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitGlobalConfiguration(GlobalConfiguration bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean) {
       defaultVisit(bean);
    }
 
+   @Override
+   public void visitGroupConfig(GroupsConfiguration bean) {
+      defaultVisit(bean);
+   }
+
+   @Override
    public void visitHashType(HashType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitL1Type(L1Type bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitLockingType(LockingType bean) {
       defaultVisit(bean);
    }
-   
+
+   @Override
    public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
       defaultVisit(bean);
    }
 
-
+   @Override
    public void visitSerializationType(SerializationType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitShutdownType(ShutdownType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitStateRetrievalType(StateRetrievalType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitSyncType(SyncType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitTransactionType(TransactionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitTransportType(TransportType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitUnsafeType(UnsafeType bean) {
       defaultVisit(bean);
    }
-   
+
+   @Override
    public void visitCustomInterceptorConfig(CustomInterceptorConfig bean) {
       defaultVisit(bean);
    }
-   
-   public void visitExternalizerConfig(ExternalizerConfig bean) {
+
+   @Override
+   public void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig bean) {
       defaultVisit(bean);
    }
-   
-   public void visitExternalizersType(GlobalConfiguration.ExternalizersType bean) {
+
+   @Override
+   public void visitAdvancedExternalizersType(GlobalConfiguration.AdvancedExternalizersType bean) {
       defaultVisit(bean);
+   }
+
+   @Override
+   public void visitRecoveryType(Configuration.RecoveryType config) {
+      defaultVisit(config);
+   }
+
+   @Override
+   public void visitStoreAsBinaryType(Configuration.StoreAsBinary config) {
+      defaultVisit(config);
+   }
+
+   @Override
+   public void visitVersioningConfigurationBean(Configuration.VersioningConfigurationBean config) {
+      defaultVisit(config);
    }
 
    public void defaultVisit(AbstractConfigurationBean c) {
    }
-
 }

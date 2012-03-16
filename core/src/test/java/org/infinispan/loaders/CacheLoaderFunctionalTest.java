@@ -1,13 +1,33 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -15,8 +35,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -24,7 +47,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.Collections;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
@@ -35,26 +60,31 @@ import static org.infinispan.test.TestingUtil.v;
  */
 @Test(groups = "functional", testName = "loaders.CacheLoaderFunctionalTest")
 public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
+
+   private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
+
    Cache cache;
    CacheStore store;
    TransactionManager tm;
    Configuration cfg;
    EmbeddedCacheManager cm;
-   long lifespan = 6000000; // very large lifespan so nothing actually expires
+   long lifespan = 60000000; // very large lifespan so nothing actually expires
 
    @BeforeTest
    public void setUp() {
-      cfg = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      cfg.setCacheLoaderManagerConfig(clmc);
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cfg = new Configuration().fluent()
+         .loaders()
+            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+               .storeName(this.getClass().getName())) // in order to use the same store
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+         .build();
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterClass
+   @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cache = null;
@@ -162,7 +192,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             assertInCacheAndStore("k" + i, "v" + i, lifespan);
       }
 
+      log.info("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k1", "v1");
+      log.info("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k2").equals("v2");
 
       assertNotInCacheAndStore("k1", "k2");
@@ -230,7 +262,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testLoading() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
-      for (int i = 1; i < 5; i++) store.store(InternalEntryFactory.create("k" + i, "v" + i));
+      for (int i = 1; i < 5; i++) store.store(TestInternalCacheEntryFactory.create("k" + i, "v" + i));
       for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
       // make sure we have no stale locks!!
       assertNoLocks(cache);
@@ -263,7 +295,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    public void testPreloading() throws CacheLoaderException {
       Configuration preloadingCfg = cfg.clone();
       preloadingCfg.getCacheLoaderManagerConfig().setPreload(true);
-      ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("preloadingCache");
+      ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("preloadingCache");
       cm.defineConfiguration("preloadingCache", preloadingCfg);
       Cache preloadingCache = cm.getCache("preloadingCache");
       CacheStore preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
@@ -306,7 +338,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       Configuration purgingCfg = cfg.clone();
       CacheStoreConfig firstCacheLoaderConfig = (CacheStoreConfig) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
       firstCacheLoaderConfig.setPurgeOnStartup(true);
-      ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("purgingCache");
+      ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("purgingCache");
       cm.defineConfiguration("purgingCache", purgingCfg);
       Cache purgingCache = cm.getCache("purgingCache");
       CacheStore purgingStore = TestingUtil.extractComponent(purgingCache, CacheLoaderManager.class).getCacheStore();
@@ -431,8 +463,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testLoadingToMemory() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2");
-      store.store(InternalEntryFactory.create("k1", "v1"));
-      store.store(InternalEntryFactory.create("k2", "v2"));
+      store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+      store.store(TestInternalCacheEntryFactory.create("k2", "v2"));
 
       assertInStoreNotInCache("k1", "k2");
 
@@ -471,4 +503,10 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       tm.commit();
       assert value.equals(cache.get(key));
    }
+
+   public void testGetCacheLoadersFromConfigAfterStart() {
+      cache.getConfiguration().getCacheLoaders();
+      cache.getConfiguration().getCacheLoaders();
+   }
+
 }

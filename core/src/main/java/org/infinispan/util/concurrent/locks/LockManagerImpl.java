@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,79 +26,71 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.util.ReversibleOrderedSet;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
-import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
-import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.containers.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Handles locks for the MVCC based LockingInterceptor
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
-   protected LockContainer lockContainer;
-   private TransactionManager transactionManager;
-   private InvocationContextContainer invocationContextContainer;
+   protected volatile LockContainer<?> lockContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
    private static final String ANOTHER_THREAD = "(another thread)";
 
    @Inject
-   public void injectDependencies(Configuration configuration, TransactionManager transactionManager, InvocationContextContainer invocationContextContainer) {
+   public void injectDependencies(Configuration configuration, LockContainer<?> lockContainer) {
       this.configuration = configuration;
-      this.transactionManager = transactionManager;
-      this.invocationContextContainer = invocationContextContainer;
+      this.lockContainer = lockContainer;
    }
 
-   @Start
-   public void startLockManager() {
-      lockContainer = configuration.isUseLockStriping() ?
-      transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer) :
-      transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer);
-   }
-
-   public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
-      long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
-      if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
-         // successfully locked!
-         if (ctx instanceof TxInvocationContext) {
-            TxInvocationContext tctx = (TxInvocationContext) ctx;
-            if (!tctx.isTransactionValid()) {
-               Transaction tx = tctx.getTransaction();
-               log.debug("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
-               lockContainer.releaseLock(key);
-               throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
-            }
-         }
-         if (trace) log.trace("Successfully acquired lock!");         
+   public boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException {
+      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, timeoutMillis);
+      if (lockContainer.acquireLock(ctx.getLockOwner(), key, timeoutMillis, MILLISECONDS) != null) {
+         if (trace) log.tracef("Successfully acquired lock %s!", key);
          return true;
       }
 
       // couldn't acquire lock!
+      if (log.isDebugEnabled()) {
+         log.debugf("Failed to acquire lock %s, owner is %s", key, getOwner(key));
+         Object owner = ctx.getLockOwner();
+         Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+         List<Object> lockedKeys = new ArrayList<Object>(entries.size());
+         for (Map.Entry<Object, CacheEntry> e : entries) {
+            Object lockedKey = e.getKey();
+            if (ownsLock(lockedKey, owner)) {
+               lockedKeys.add(lockedKey);
+            }
+         }
+         log.debugf("This transaction (%s) already owned locks %s", owner, lockedKeys);
+      }
       return false;
    }
 
@@ -106,28 +99,18 @@ public class LockManagerImpl implements LockManager {
             0 : configuration.getLockAcquisitionTimeout();
    }
 
-   public void unlock(Object key) {
-      if (trace) log.trace("Attempting to unlock " + key);
-      lockContainer.releaseLock(key);
+   public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
+      log.tracef("Attempting to unlock keys %s", lockedKeys);
+      for (Object k : lockedKeys) lockContainer.releaseLock(lockOwner, k);
    }
 
    @SuppressWarnings("unchecked")
-   public void unlock(InvocationContext ctx) {
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      if (!entries.isEmpty()) {
-         // unlocking needs to be done in reverse order.
-         Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-         while (it.hasNext()) {
-            Map.Entry<Object, CacheEntry> e = it.next();
-            CacheEntry entry = e.getValue();
-            if (possiblyLocked(entry)) {
-               // has been locked!
-               Object k = e.getKey();
-               if (trace) log.trace("Attempting to unlock " + k);
-               lockContainer.releaseLock(k);
-            }
-         }
+   public void unlockAll(InvocationContext ctx) {
+      for (Object k : ctx.getLockedKeys()) {
+         if (trace) log.tracef("Attempting to unlock %s", k);
+         lockContainer.releaseLock(ctx.getLockOwner(), k);
       }
+      ctx.clearLockedKeys();
    }
 
    public boolean ownsLock(Object key, Object owner) {
@@ -159,32 +142,6 @@ public class LockManagerImpl implements LockManager {
       return entry == null || entry.isChanged() || entry.isNull() || entry.isLockPlaceholder();
    }
 
-   public void releaseLocks(InvocationContext ctx) {
-      Object owner = ctx.getLockOwner();
-      // clean up.
-      // unlocking needs to be done in reverse order.
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.trace("Number of entries in context: %s", entries.size());
-
-      while (it.hasNext()) {
-         Map.Entry<Object, CacheEntry> e = it.next();
-         CacheEntry entry = e.getValue();
-         Object key = e.getKey();
-         boolean needToUnlock = possiblyLocked(entry);
-         // could be null with read-committed
-         if (entry != null && entry.isChanged()) entry.rollback();
-         else {
-            if (trace) log.trace("Entry for key %s is null, not calling rollbackUpdate", key);
-         }
-         // and then unlock
-         if (needToUnlock) {
-            if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
-            unlock(key);
-         }
-      }
-   }
-
    @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")
    @Metric(displayName = "Concurrency level", dataType = DataType.TRAIT)
    public int getConcurrencyLevel() {
@@ -201,5 +158,60 @@ public class LockManagerImpl implements LockManager {
    @Metric(displayName = "Number of locks available")
    public int getNumberOfLocksAvailable() {
       return lockContainer.size() - lockContainer.getNumLocksHeld();
+   }
+
+   public int getLockId(Object key) {
+      return lockContainer.getLockId(key);
+   }
+
+   public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
+      return acquireLock(ctx, key, -1);
+   }
+
+   @Override
+   public boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException, TimeoutException {
+      // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
+      // lock which may be shared with another key that we have a lock for already.
+      // nothing wrong, just means that we fail to record the lock.  And that is a problem.
+      // Better to check our records and lock again if necessary.
+      if (!ctx.hasLockedKey(key) && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
+         return lock(ctx, key, timeoutMillis < 0 ? getLockAcquisitionTimeout(ctx) : timeoutMillis);
+      } else {
+         logLockNotAcquired(ctx);
+      }
+      return false;
+   }
+
+   public final boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
+         return lock(ctx, key, getLockAcquisitionTimeout(ctx));
+      } else {
+         logLockNotAcquired(ctx);
+      }
+      return false;
+   }
+
+   private boolean lock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException {
+      if (lockAndRecord(key, ctx, timeoutMillis)) {
+         ctx.addLockedKey(key);
+         return true;
+      } else {
+         Object owner = getOwner(key);
+         // if lock cannot be acquired, expose the key itself, not the marshalled value
+         if (key instanceof MarshalledValue) {
+            key = ((MarshalledValue) key).get();
+         }
+         throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
+               ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+      }
+   }
+
+   private void logLockNotAcquired(InvocationContext ctx) {
+      if (trace) {
+         if (ctx.hasFlag(Flag.SKIP_LOCKING))
+            log.trace("SKIP_LOCKING flag used!");
+         else
+            log.trace("Already own lock for entry");
+      }
    }
 }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,7 +24,9 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,7 +35,7 @@ import java.util.Collection;
 
 
 /**
- * Removes an entry from memory - never removes the entry.
+ * Removes an entry from memory.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -53,7 +56,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    public InvalidateCommand(CacheNotifier notifier, Collection<Object> keys) {
       if (keys == null || keys.isEmpty())
-         this.keys = new Object[]{};
+         this.keys = Util.EMPTY_OBJECT_ARRAY;
       else
          this.keys = keys.toArray(new Object[keys.size()]);
       this.notifier = notifier;
@@ -68,7 +71,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.trace("Invalidating keys %s", Arrays.toString(keys));
+         log.tracef("Invalidating keys %s", Arrays.toString(keys));
       }
       for (Object k : keys) {
          invalidate(ctx, k);
@@ -136,6 +139,18 @@ public class InvalidateCommand extends RemoveCommand {
 
    public Object[] getKeys() {
       return keys;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      switch (status) {
+         case FAILED:
+         case STOPPING:
+         case TERMINATED:
+            return true;
+         default:
+            return false;
+         }
    }
 
    @Override

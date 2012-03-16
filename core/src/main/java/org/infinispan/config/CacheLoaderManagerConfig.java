@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +22,7 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.config.Configuration.LoadersConfig;
+import org.infinispan.config.FluentConfiguration.LoadersConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
@@ -30,6 +31,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,7 +53,8 @@ import java.util.List;
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @ConfigurationDoc(name="loaders",desc="Holds the configuration for cache loaders and stores")
-public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean implements LoadersConfig{
+@SuppressWarnings("boxing")
+public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean implements LoadersConfig {
 
    private static final long serialVersionUID = 2210349340378984424L;
 
@@ -84,15 +88,18 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     * penalty as startup time is affected by this process.
     * 
     * @param preload
-    */  
-   @Override
+    */
    public LoadersConfig preload(Boolean preload) {
       testImmutability("preload");
       this.preload = preload;
       return this;
    }
-      
+
+   /**
+    * @deprecated The visibility of this method will be reduced. Use {@link #preload(Boolean)} instead.
+    */
    @XmlAttribute
+   @Deprecated
    public void setPreload(Boolean preload) {
       testImmutability("preload");
       this.preload = preload;
@@ -116,7 +123,11 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return this;
    }
    
+   /**
+    * @deprecated The visibility of this method will be reduced. Use {@link #passivation(Boolean)} instead.
+    */
    @XmlAttribute
+   @Deprecated
    public void setPassivation(Boolean passivation) {
       testImmutability("passivation");
       this.passivation = passivation;
@@ -145,8 +156,19 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       this.shared = shared;
       return this;
    }
-   
+
+   @Override
+   public LoadersConfig addCacheLoader(CacheLoaderConfig... configs) {
+      for (CacheLoaderConfig config : configs)
+         addCacheLoaderConfig(config);
+      return this;
+   }
+
+   /**
+    * @deprecated The visibility of this method will be reduced. Use {@link #shared(Boolean)} instead.
+    */
    @XmlAttribute
+   @Deprecated
    public void setShared(Boolean shared) {
       testImmutability("shared");
       this.shared = shared;
@@ -156,6 +178,13 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return shared;
    }
 
+   /**
+    *
+    * @param clc
+    * @return
+    * @deprecated use {@link #addCacheLoader(org.infinispan.loaders.CacheLoaderConfig...)} instead
+    */
+   @Deprecated
    public LoadersConfig addCacheLoaderConfig(CacheLoaderConfig clc) {
       testImmutability("cacheLoaderConfigs");
       cacheLoaderConfigs.add(clc);
@@ -163,11 +192,29 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    }
    
    public List<CacheLoaderConfig> getCacheLoaderConfigs() {
+      return cacheLoaderConfigs;
+   }
+
+   // JAXB method
+   private List<CacheLoaderConfig> getCacheLoaders() {
       testImmutability("cacheLoaderConfigs");
       return cacheLoaderConfigs;
    }
 
+   // JAXB method
    @XmlElement(name = "loader")
+   private LoadersConfig setCacheLoaders(List<CacheLoaderConfig> configs) {
+      testImmutability("cacheLoaderConfigs");
+      this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
+      return this;
+   }
+
+   /**
+    * @deprecated The visibility of this method will be reduced and
+    * XMLElement definition is likely to move to the getCacheLoaderConfigs().
+    */
+   @Deprecated
+   @XmlTransient // Avoid JAXB finding this method
    public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
@@ -193,7 +240,13 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return false;
    }
 
-   public boolean useChainingCacheLoader() {
+   @Override
+   protected CacheLoaderManagerConfig setConfiguration(Configuration config) {
+      super.setConfiguration(config);
+      return this;
+   }
+
+   public boolean usingChainingCacheLoader() {
       return !isPassivation() && cacheLoaderConfigs.size() > 1;
    }
 

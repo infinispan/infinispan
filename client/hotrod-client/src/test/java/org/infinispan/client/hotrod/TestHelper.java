@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.infinispan.config.Configuration;
@@ -22,13 +44,14 @@ public class TestHelper {
    /**
     * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
     */
-   private static final AtomicInteger uniquePort = new AtomicInteger(11223);
+   private static final AtomicInteger uniquePort = new AtomicInteger(15232);
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
       // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound
       HotRodServer server = null;
-      int maxTries = 5;
+      int maxTries = 10;
       int currentTries = 0;
+      ChannelException lastException = null;
       while (server == null && currentTries < maxTries) {
          try {
             server = HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet());
@@ -38,9 +61,13 @@ public class TestHelper {
             } else {
                log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
                currentTries++;
+               lastException = e;
             }
          }
       }
+      if (server == null && lastException != null)
+         throw lastException;
+
       return server;
    }
 

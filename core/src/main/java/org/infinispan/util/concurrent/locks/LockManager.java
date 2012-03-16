@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,11 +24,15 @@ package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.concurrent.TimeoutException;
+
+import java.util.Collection;
 
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface LockManager {
@@ -38,19 +43,18 @@ public interface LockManager {
     * org.infinispan.config.Configuration#getLockAcquisitionTimeout()}.
     * <p/>
     *
+    *
     * @param key key to lock
     * @param ctx invocation context associated with this invocation
     * @return true if the lock was acquired, false otherwise.
     * @throws InterruptedException if interrupted
     */
-   boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException;
+   boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException;
 
    /**
-    * Releases the lock passed in, held by the specified owner
-    *
-    * @param owner lock owner
+    * Releases the lock passed in.
     */
-   void unlock(Object key);
+   void unlock(Collection<Object> lockedKeys, Object lockOwner);
 
    /**
     * Releases locks present in an invocation context and transaction entry, if one is available.
@@ -60,7 +64,7 @@ public interface LockManager {
     *
     * @param ctx invocation context to inspect
     */
-   void unlock(InvocationContext ctx);
+   void unlockAll(InvocationContext ctx);
 
    /**
     * Tests whether a given owner owns a lock of lockType on a particular cache entry.
@@ -106,13 +110,46 @@ public interface LockManager {
    boolean possiblyLocked(CacheEntry entry);
 
    /**
-    * Cleanups the locks within the given context.
-    */
-   void releaseLocks(InvocationContext ctx);
-
-   /**
     * Retrieves the number of locks currently held.
     * @return an integer
     */
    int getNumberOfLocksHeld();
+
+   /**
+    * Returns the 'id' of the lock that will be used to guard access to a given key in the cache.  Particularly useful
+    * if Lock Striping is used and locks may guard more than one key.  This mechanism can be used to check whether
+    * keys may end up sharing the same lock.
+    * <p />
+    * If lock-striping is not used, the identity hash code of the lock created for this specific key is returned.  While
+    * this may not be of much value, it is done to maintain API compatibility of this method regardless of underlying
+    * locking scheme.
+    *
+    * @param key key to test for
+    * @return the ID of the lock.
+    */
+   int getLockId(Object key);
+
+   /**
+    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
+    * context.
+    *
+    * @param ctx context
+    * @param key Key to lock
+    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
+    *         already held)
+    * @throws InterruptedException if interrupted
+    * @throws org.infinispan.util.concurrent.TimeoutException
+    *                              if we are unable to acquire the lock after a specified timeout.
+    */
+   boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+
+   boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException, TimeoutException;
+
+   /**
+    * Same as {@link #acquireLock(org.infinispan.context.InvocationContext, Object)}, but doesn't check whether the
+    * lock is already acquired by the caller. Useful in the case of transactions that use {@link OwnableReentrantLock}s
+    * ,as these locks already perform this check internally.
+    */
+   boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+
 }

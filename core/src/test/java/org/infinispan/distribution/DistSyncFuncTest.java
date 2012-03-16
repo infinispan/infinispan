@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
@@ -31,9 +53,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       Random r = new Random();
       for (int i = 0; i < 100; i++) keys[i] = Integer.toHexString(r.nextInt());
 
-      // always expect key to be mapped to adjacent nodes!
       for (String key : keys) {
-
          List<Address> owners = new ArrayList<Address>();
          for (Cache<Object, String> c : caches) {
             boolean isOwner = isOwner(c, key);
@@ -62,28 +82,30 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public void testBasicDistribution() throws Throwable {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
-      getOwners("k1")[0].put("k1", "value");
+      final Object k1 = getKeyForCache(caches.get(1));
+      getOwners(k1)[0].put(k1, "value");
 
-      asyncWait("k1", PutKeyValueCommand.class, getNonOwners("k1"));
+      // No non-owners have requested the key, so no invalidations
+      asyncWait(k1, PutKeyValueCommand.class);
 
       for (Cache<Object, String> c : caches) {
-         if (isOwner(c, "k1")) {
-            assertIsInContainerImmortal(c, "k1");
+         if (isOwner(c, k1)) {
+            assertIsInContainerImmortal(c, k1);
          } else {
-            assertIsNotInL1(c, "k1");
+            assertIsNotInL1(c, k1);
          }
       }
 
       // should be available everywhere!
-      assertOnAllCachesAndOwnership("k1", "value");
+      assertOnAllCachesAndOwnership(k1, "value");
 
       // and should now be in L1
 
       for (Cache<Object, String> c : caches) {
-         if (isOwner(c, "k1")) {
-            assertIsInContainerImmortal(c, "k1");
+         if (isOwner(c, k1)) {
+            assertIsInContainerImmortal(c, k1);
          } else {
-            assertIsInL1(c, "k1");
+            assertIsInL1(c, k1);
          }
       }
    }
@@ -123,7 +145,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert "value".equals(retval);
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testConditionalRemoveFromNonOwner() {
@@ -142,7 +164,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       if (testRetVals) assert retval : "Should have removed entry";
 
       assert caches.get(1).get("k1") == null : "expected null but received " + caches.get(1).get("k1");
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testReplaceFromNonOwner() {
@@ -160,7 +182,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       retval = getFirstNonOwner("k1").replace("k1", "value2");
       if (testRetVals) assert retval == null;
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testConditionalReplaceFromNonOwner() {
@@ -184,7 +206,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       for (int i = 0; i < 10; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
-         asyncWait("k" + i, PutKeyValueCommand.class, getNonOwners("k" + i));
+         // There will be no caches to invalidate as this is the first command of the test
+         asyncWait("k" + i, PutKeyValueCommand.class);
       }
 
       // this will fill up L1 as well
@@ -200,13 +223,13 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public void testKeyValueEntryCollections() {
       c1.put("1", "one");
-      asyncWait("1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("1", addressOf(c1)));
+      asyncWait("1", PutKeyValueCommand.class);
       c2.put("2", "two");
-      asyncWait("2", PutKeyValueCommand.class, getNonOwnersExcludingSelf("2", addressOf(c2)));
+      asyncWait("2", PutKeyValueCommand.class);
       c3.put("3", "three");
-      asyncWait("3", PutKeyValueCommand.class, getNonOwnersExcludingSelf("3", addressOf(c3)));
+      asyncWait("3", PutKeyValueCommand.class);
       c4.put("4", "four");
-      asyncWait("4", PutKeyValueCommand.class, getNonOwnersExcludingSelf("4", addressOf(c4)));
+      asyncWait("4", PutKeyValueCommand.class);
 
       for (Cache c : caches) {
          Set expKeys = TestingUtil.getInternalKeys(c);

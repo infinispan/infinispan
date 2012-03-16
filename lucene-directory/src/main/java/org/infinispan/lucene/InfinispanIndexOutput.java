@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009-2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,13 +42,14 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.IndexInput
  */
 @SuppressWarnings("unchecked")
-public class InfinispanIndexOutput extends IndexOutput {
+public final class InfinispanIndexOutput extends IndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
-   private final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    private final int bufferSize;
-   private final AdvancedCache chunksCache;
+   private final Cache chunksCache;
+   private final Cache chunksCacheForStorage;
    private final AdvancedCache metadataCache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
@@ -63,27 +66,27 @@ public class InfinispanIndexOutput extends IndexOutput {
    private long filePosition = 0;
    private int currentChunkNumber = 0;
 
-   public InfinispanIndexOutput(AdvancedCache metadataCache, AdvancedCache chunksCache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
+   public InfinispanIndexOutput(final AdvancedCache metadataCache, final AdvancedCache chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
       this.metadataCache = metadataCache;
       this.chunksCache = chunksCache;
+      this.chunksCacheForStorage = chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
       this.buffer = new byte[this.bufferSize];
       this.firstChunkBuffer = buffer;
-      this.file = new FileMetadata();
-      this.file.setBufferSize(bufferSize);
+      this.file = new FileMetadata(bufferSize);
       if (trace) {
-         log.trace("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
+         log.tracef("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
    
-   private static byte[] getChunkById(AdvancedCache cache, FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
+   private byte[] getChunkById(FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
       if (file.getNumberOfChunks() <= chunkNumber) {
          return new byte[bufferSize];
       }
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
-      byte[] readBuffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      byte[] readBuffer = (byte[]) chunksCache.get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];
       }
@@ -97,24 +100,24 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
 
-   private static int getPositionInBuffer(long pos, int bufferSize) {
+   private static int getPositionInBuffer(final long pos, final int bufferSize) {
       return (int) (pos % bufferSize);
    }
 
-   private static int getChunkNumberFromPosition(long pos, int bufferSize) {
+   private static int getChunkNumberFromPosition(final long pos, final int bufferSize) {
       return (int) ((pos) / (bufferSize));
    }
 
-   private void newChunk() throws IOException {
+   private void newChunk() {
       storeCurrentBuffer(false);// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
-      buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize, file);
+      buffer = getChunkById(fileKey, currentChunkNumber, bufferSize, file);
       positionInBuffer = 0;
    }
 
    @Override
-   public final void writeByte(byte b) throws IOException {
+   public final void writeByte(final byte b) {
       if (isNewChunkNeeded()) {
          newChunk();
       }
@@ -123,7 +126,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public final void writeBytes(final byte[] b, final int offset, int length) throws IOException {
+   public final void writeBytes(final byte[] b, final int offset, final int length) {
       int writtenBytes = 0;
       while (writtenBytes < length) {
          if (isNewChunkNeeded()) {
@@ -142,11 +145,11 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public void flush() throws IOException {
+   public void flush() {
       storeCurrentBuffer(false);
    }
 
-   protected void storeCurrentBuffer(boolean isClose) throws IOException {
+   protected void storeCurrentBuffer(final boolean isClose) {
       if (currentChunkNumber == 0 && ! isClose) {
          //we don't store the first chunk until the close operation: this way
          //we guarantee each chunk is written only once an minimize locking needs.
@@ -175,10 +178,10 @@ public class InfinispanIndexOutput extends IndexOutput {
     * @param bufferToFlush
     * @param chunkNumber
     */
-   private void storeBufferAsChunk(byte[] bufferToFlush, int chunkNumber) {
+   private void storeBufferAsChunk(final byte[] bufferToFlush, final int chunkNumber) {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
-      if (trace) log.trace("Storing segment chunk: " + key);
-      chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+      if (trace) log.tracef("Storing segment chunk: %s", key);
+      chunksCacheForStorage.put(key, bufferToFlush);
    }
 
    private void resizeFileIfNeeded() {
@@ -188,8 +191,8 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public void close() throws IOException {
-      boolean microbatch = chunksCache.startBatch();
+   public void close() {
+      final boolean microbatch = chunksCache.startBatch();
       if (currentChunkNumber==0) {
          //store current chunk, possibly resizing it
          storeCurrentBuffer(true);
@@ -203,11 +206,11 @@ public class InfinispanIndexOutput extends IndexOutput {
       firstChunkBuffer = null;
       // override existing file header with updated accesstime
       file.touch();
-      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
+      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
       if (microbatch) chunksCache.endBatch(true);
       if (trace) {
-         log.trace("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
+         log.tracef("Closed IndexOutput for %s", fileKey);
       }
    }
 
@@ -217,8 +220,8 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public void seek(long pos) throws IOException {
-      int requestedChunkNumber = getChunkNumberFromPosition(pos, bufferSize);
+   public void seek(final long pos) throws IOException {
+      final int requestedChunkNumber = getChunkNumberFromPosition(pos, bufferSize);
       if (pos > file.getSize()) {
          resizeFileIfNeeded();
          if (pos > file.getSize()) // check again, might be fixed by the resize
@@ -227,7 +230,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (requestedChunkNumber != currentChunkNumber) {
          storeCurrentBuffer(false);
          if (requestedChunkNumber != 0) {
-            buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize, file);
+            buffer = getChunkById(fileKey, requestedChunkNumber, bufferSize, file);
          }
          else {
             buffer = firstChunkBuffer;
@@ -239,12 +242,12 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public long length() throws IOException {
+   public long length() {
       return file.getSize();
    }
    
    private boolean isWritingOnLastChunk() {
-      int lastChunkNumber = file.getNumberOfChunks() - 1;
+      final int lastChunkNumber = file.getNumberOfChunks() - 1;
       return currentChunkNumber >= lastChunkNumber;
    }
    

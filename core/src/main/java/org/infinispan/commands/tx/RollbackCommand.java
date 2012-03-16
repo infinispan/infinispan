@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,7 +26,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 
 /**
  * Command corresponding to a transaction rollback.
@@ -36,11 +37,17 @@ import org.infinispan.transaction.xa.RemoteTransaction;
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 13;
 
-   public RollbackCommand(GlobalTransaction globalTransaction) {
+   private RollbackCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public RollbackCommand(String cacheName, GlobalTransaction globalTransaction) {
+      super(cacheName);
       this.globalTx = globalTransaction;
    }
 
-   public RollbackCommand() {
+   public RollbackCommand(String cacheName) {
+      super(cacheName);
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,13 +24,17 @@
 package org.infinispan.marshall;
 
 /**
- * Base class for {@link Externalizer} implementations that offers default
- * implementations for some of its methods.
+ * Base class for {@link AdvancedExternalizer} implementations that offers default
+ * implementations for some of its methods. In particular, this base class
+ * offers a default implementation for {@link org.infinispan.marshall.AdvancedExternalizer#getId()}
+ * that returns null which is particularly useful for advanced externalizers
+ * whose id will be provided by XML or programmatic configuration rather than
+ * the externalizer implementation itself.
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
-public abstract class AbstractExternalizer<T> implements Externalizer<T> {
+public abstract class AbstractExternalizer<T> implements AdvancedExternalizer<T> {
 
    @Override
    public Integer getId() {

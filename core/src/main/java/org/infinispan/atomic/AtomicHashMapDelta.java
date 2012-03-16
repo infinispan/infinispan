@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -30,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -45,6 +47,7 @@ public class AtomicHashMapDelta implements Delta {
    private static final boolean trace = log.isTraceEnabled();
 
    private List<Operation> changeLog;
+   private boolean hasClearOperation;
 
    public DeltaAware merge(DeltaAware d) {
       AtomicHashMap other;
@@ -54,24 +57,44 @@ public class AtomicHashMapDelta implements Delta {
          other = new AtomicHashMap();
       if (changeLog != null) {
          for (Operation o : changeLog) o.replay(other.delegate);
-      }
-      other.commit();
+      }      
       return other;
    }
-
+   
    public void addOperation(Operation o) {
       if (changeLog == null) {
          // lazy init
          changeLog = new LinkedList<Operation>();
       }
+      if(o instanceof ClearOperation) {
+         hasClearOperation = true;
+      }
       changeLog.add(o);
+   }
+   
+   public Collection<Object> getKeys() {
+      List<Object> keys = new LinkedList<Object>();
+      if (changeLog != null) {
+         for (Operation o : changeLog) {
+            Object key = o.keyAffected();
+            keys.add(key);
+         }
+      }
+      return keys;
+   }
+   
+   public boolean hasClearOperation(){
+      return hasClearOperation;
    }
 
    @Override
    public String toString() {
-      return "AtomicHashMapDelta{" +
-            "changeLog=" + changeLog +
-            '}';
+      StringBuilder sb = new StringBuilder( "AtomicHashMapDelta{changeLog=");
+      sb.append(changeLog);
+      sb.append( ",hasClear=");
+      sb.append(hasClearOperation);
+      sb.append("}");
+      return sb.toString();
    }
 
    public int getChangeLogSize() {
@@ -81,7 +104,7 @@ public class AtomicHashMapDelta implements Delta {
    public static class Externalizer extends AbstractExternalizer<AtomicHashMapDelta> {
       @Override
       public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
-         if (trace) log.trace("Serializing changeLog " + delta.changeLog);
+         if (trace) log.tracef("Serializing changeLog %s", delta.changeLog);
          output.writeObject(delta.changeLog);
       }
 
@@ -89,7 +112,7 @@ public class AtomicHashMapDelta implements Delta {
       public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
          delta.changeLog = (List<Operation>) input.readObject();
-         if (trace) log.trace("Deserialized changeLog " + delta.changeLog);
+         if (trace) log.tracef("Deserialized changeLog %s", delta.changeLog);
          return delta;
       }
 

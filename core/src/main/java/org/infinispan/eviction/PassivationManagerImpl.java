@@ -1,10 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.eviction;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -16,6 +38,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
@@ -42,7 +65,7 @@ public class PassivationManagerImpl implements PassivationManager {
 
    @Start(priority = 11)
    public void start() {
-      enabled = cfg.getCacheLoaderManagerConfig().isPassivation();
+      enabled = cacheLoaderManager.isUsingPassivation();
       if (enabled) {
          cacheStore = cacheLoaderManager == null ? null : cacheLoaderManager.getCacheStore();
          if (cacheStore == null) {
@@ -60,30 +83,32 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   public void passivate(Object key, InternalCacheEntry entry, InvocationContext ctx) throws CacheLoaderException {
-      if (enabled) {
-         final Object value = entry != null ? entry.getValue() : null;
+   public void passivate(InternalCacheEntry entry) {
+      if (enabled && entry != null) {
+         Object key = entry.getKey();
          // notify listeners that this entry is about to be passivated
-         notifier.notifyCacheEntryPassivated(key, value, true, ctx);
-         if (trace) log.trace("Passivating entry %s", key);
-         cacheStore.store(entry);
-         notifier.notifyCacheEntryPassivated(key, value, false, ctx);
-         if (statsEnabled && entry != null) {
-            passivations.getAndIncrement();
+         notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ImmutableContext.INSTANCE);
+         if (trace) log.tracef("Passivating entry %s", key);
+         try {
+            cacheStore.store(entry);
+            if (statsEnabled) passivations.getAndIncrement();
+         } catch (CacheLoaderException e) {
+            log.unableToPassivateEntry(key, e);
          }
+         notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE);
       }
    }
 
    @Stop(priority = 9)
    public void passivateAll() throws CacheLoaderException {
       if (enabled) {
-         long start = System.currentTimeMillis();
-         log.info("Passivating all entries to disk");
+         long start = System.nanoTime();
+         log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
-            if (trace) log.trace("Passivating %s", e.getKey());
+            if (trace) log.tracef("Passivating %s", e.getKey());
             cacheStore.store(e);
          }
-         log.info("Passivated %s entries in %s", container.size(), Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.passivatedEntries(container.size(), Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
       }
    }
 

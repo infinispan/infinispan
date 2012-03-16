@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,8 +22,10 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 
 /**
  * A factory for the RpcManager
@@ -35,8 +38,13 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
 
    @Override
    public <T> T construct(Class<T> componentType) {
+      if (!configuration.getCacheMode().isClustered())
+         return null;
+
       // only do this if we have a transport configured!
-      if (globalConfiguration.getTransportClass() == null) return null;
-      return super.construct(componentType);
+      if (globalConfiguration.getTransportClass() == null)
+         throw new ConfigurationException("Transport should be configured in order to use clustered caches");
+
+      return componentType.cast(new RpcManagerImpl());
    }
 }

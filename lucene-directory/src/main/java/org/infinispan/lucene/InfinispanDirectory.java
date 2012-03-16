@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -116,22 +117,13 @@ public class InfinispanDirectory extends Directory {
       this.metadataCache = metadataCache.getAdvancedCache();
       this.chunksCache = chunksCache.getAdvancedCache();
       this.indexName = indexName;
-      this.setLockFactory(lf);
+      this.lockFactory = lf;
+      this.lockFactory.setLockPrefix(this.getLockID());
       this.chunkSize = chunkSize;
       this.fileOps = new FileListOperations(this.metadataCache, indexName);
       this.readLocks = readLocker;
    }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      this(cache, cache, indexName, lf, chunkSize, readLocker);
-   }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
-      this(cache, indexName, lf, chunkSize, makeDefaultSegmentReadLocker(cache, cache, cache, indexName));
-   }
-   
+
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
       this(cache, cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
    }
@@ -150,16 +142,6 @@ public class InfinispanDirectory extends Directory {
       this(metadataCache, chunksCache, indexName, makeDefaultLockFactory(distLocksCache, indexName),
                chunkSize, makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName));
    }
-   
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf) {
-      this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
-   }
-
-   @Deprecated//too many constructors, this will be removed
-   public InfinispanDirectory(Cache cache, String indexName, int chunkSize) {
-      this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize);
-   }
 
    /**
     * @param cache the cache to use to store the index
@@ -176,7 +158,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public String[] list() throws IOException {
+   public String[] list() {
       checkIsOpen();
       Set<String> filesList = fileOps.getFileList();
       String[] array = filesList.toArray(new String[0]);
@@ -186,7 +168,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public boolean fileExists(String name) throws IOException {
+   public boolean fileExists(String name) {
       checkIsOpen();
       return fileOps.getFileList().contains(name);
    }
@@ -194,7 +176,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public long fileModified(String name) throws IOException {
+   public long fileModified(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
@@ -208,7 +190,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void touchFile(String fileName) throws IOException {
+   public void touchFile(String fileName) {
       checkIsOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
       if (file == null) {
@@ -224,19 +206,19 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void deleteFile(String name) throws IOException {
+   public void deleteFile(String name) {
       checkIsOpen();
       fileOps.deleteFileName(name);
       readLocks.deleteOrReleaseReadLock(name);
       if (log.isDebugEnabled()) {
-         log.debug("Removed file: %s from index: %s", name, indexName);
+         log.debugf("Removed file: %s from index: %s", name, indexName);
       }
    }
 
    /**
     * {@inheritDoc}
     */
-   public void renameFile(String from, String to) throws IOException {
+   public void renameFile(String from, String to) {
       checkIsOpen();
 
       // preparation: copy all chunks to new keys
@@ -255,7 +237,7 @@ public class InfinispanDirectory extends Directory {
       // rename metadata first
       boolean batching = metadataCache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
+      FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
       if (batching) metadataCache.endBatch(true);
@@ -263,14 +245,14 @@ public class InfinispanDirectory extends Directory {
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);
       if (log.isTraceEnabled()) {
-         log.trace("Renamed file from: %s to: %s in index %s", from, to, indexName);
+         log.tracef("Renamed file from: %s to: %s in index %s", from, to, indexName);
       }
    }
 
    /**
     * {@inheritDoc}
     */
-   public long fileLength(String name) throws IOException {
+   public long fileLength(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
@@ -284,7 +266,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public IndexOutput createOutput(String name) throws IOException {
+   public IndexOutput createOutput(String name) {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
       return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
@@ -295,7 +277,7 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+      FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }
@@ -316,7 +298,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void close() throws IOException {
+   public void close() {
       isOpen = false;
    }
 
@@ -332,7 +314,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /** new name for list() in Lucene 3.0 **/
-   public String[] listAll() throws IOException {
+   public String[] listAll() {
       return list();
    }
 

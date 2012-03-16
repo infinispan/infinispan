@@ -1,14 +1,38 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 
 import java.util.List;
 import java.util.Set;
@@ -57,8 +81,28 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param cacheName             name of cache whose configuration is being defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
+    * @deprecated Use {@link #defineConfiguration(String, String, org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
+   
+   /**
+    * Defines a named cache's configuration using the following algorithm:
+    * <p/>
+    * Unlike previous versions of Infinispan, this method does not build on an existing configuration (default or named).
+    * If you want this behavior, then use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
+    * <p/>
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * manager.  This method enables you to override certain properties that have previously been defined via XML.
+    * <p/>
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
+    * effectively return the named cache's configuration since no overrides where passed to it.
+    *
+    * @param cacheName             name of cache whose configuration is being defined
+    * @param configurationOverride configuration overrides to use
+    * @return a cloned configuration instance
+    */
+   org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride);
 
    /**
     * Defines a named cache's configuration using the following algorithm:
@@ -82,7 +126,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *                              defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
+    * @deprecated Use {@link #defineConfiguration(String, org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
 
    /**
@@ -121,19 +167,48 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return the global configuration object associated to this CacheManager
     */
    GlobalConfiguration getGlobalConfiguration();
+   
+   /**
+    * Returns global configuration for this CacheManager
+    *
+    * @return the global configuration object associated to this CacheManager
+    */
+   org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration();
+   
+   /**
+    * Returns the configuration for the given cache.
+    *
+    * @return the configuration for the given cache or null if no such cache is defined
+    */
+   org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name);
 
    /**
     * Returns default configuration for this CacheManager
     *
     * @return the default configuration associated with this CacheManager
     */
+   @Deprecated
    Configuration getDefaultConfiguration();
+   
+   /**
+    * Returns default configuration for this CacheManager
+    *
+    * @return the default configuration associated with this CacheManager
+    */
+   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
 
    /**
-    * If no named caches are registered, this method returns an empty set.  The default cache is never included in this
+    * This method returns a collection of caches names which contains the
+    * caches that have been defined via XML or programmatically, and the
+    * caches that have been created at runtime via this cache manager
+    * instance.
+    *
+    * If no named caches are registered or no caches have been created, this
+    * method returns an empty set.  The default cache is never included in this
     * set of cache names.
     *
-    * @return an immutable set of non-default named caches registered with this cache manager.
+    * @return an immutable set of non-default named caches registered or
+    * created with this cache manager.
     */
    Set<String> getCacheNames();
 
@@ -183,6 +258,18 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
 
    /**
+    * Starts a set of caches in parallel.
+    * Infinispan doesn't yet support asymmetric clusters (that is, two nodes
+    * having different sets of caches running). Calling this method on
+    * application/application server startup with all your cache names
+    * will ensure that the cluster is symmetric.
+    *
+    * @param cacheNames the names of the caches to start
+    * @since 5.0
+    */
+   EmbeddedCacheManager startCaches(String... cacheNames);
+
+   /**
     * Removes a cache with the given name from the system. This is a cluster
     * wide operation that results not only in stopping the cache with the given
     * name in all nodes in the cluster, but also deletes its contents both in
@@ -192,4 +279,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    void removeCache(String cacheName);
 
+   /**
+    * @since 5.1
+    */
+   Transport getTransport();
 }

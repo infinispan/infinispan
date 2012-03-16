@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -33,13 +34,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +59,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    protected CacheStoreConfig csConfig;
    protected Set<String> cacheNames = new HashSet<String>();
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       try {
          csConfig = createCacheStoreConfig();
@@ -69,10 +71,10 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testTwoCachesSameCacheStore() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-         clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) csConfig));
+         clmConfig.addCacheLoader(csConfig);
          localCacheManager.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
          localCacheManager.defineConfiguration("first", new Configuration());
          localCacheManager.defineConfiguration("second", new Configuration());
@@ -132,9 +134,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreAtomicMap(Method m) {
-      Configuration cfg = new Configuration();
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -152,9 +152,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -172,6 +170,23 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       } finally {
          TestingUtil.killCacheManagers(localCacheContainer);
       }
+   }
+
+   public void testByteArrayKey(Method m) {
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
+      try {
+         Cache<ByteArrayKey, Object> cache = localCacheContainer.getCache();
+         cache.put(new ByteArrayKey(m.getName().getBytes()), "hello");
+      } finally {
+         TestingUtil.killCacheManagers(localCacheContainer);
+      }
+   }
+
+   private CacheContainer getContainerWithCacheLoader() {
+      Configuration cfg = new Configuration();
+      cfg.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {

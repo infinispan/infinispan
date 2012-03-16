@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -315,22 +316,7 @@ public class Base64 {
          return null;
       } // end catch
       finally {
-         try {
-            oos.close();
-         } catch (Exception e) {
-         }
-         try {
-            gzos.close();
-         } catch (Exception e) {
-         }
-         try {
-            b64os.close();
-         } catch (Exception e) {
-         }
-         try {
-            baos.close();
-         } catch (Exception e) {
-         }
+         Util.close(oos, gzos, b64os, baos);
       } // end finally
 
       // Return value according to relevant encoding.
@@ -573,10 +559,10 @@ public class Base64 {
 
             return 3;
          } catch (Exception e) {
-            log.error("" + source[srcOffset] + ": " + (DECODABET[source[srcOffset]]));
-            log.error("" + source[srcOffset + 1] + ": " + (DECODABET[source[srcOffset + 1]]));
-            log.error("" + source[srcOffset + 2] + ": " + (DECODABET[source[srcOffset + 2]]));
-            log.error("" + source[srcOffset + 3] + ": " + (DECODABET[source[srcOffset + 3]]));
+            log.error(String.valueOf(source[srcOffset]) + ": " + DECODABET[source[srcOffset]]);
+            log.error(String.valueOf(source[srcOffset + 1]) + ": " + DECODABET[source[srcOffset + 1]]);
+            log.error(String.valueOf(source[srcOffset + 2]) + ": " + DECODABET[source[srcOffset + 2]]);
+            log.error(String.valueOf(source[srcOffset + 3]) + ": " + DECODABET[source[srcOffset + 3]]);
             return -1;
          } //end catch
       }
@@ -600,9 +586,9 @@ public class Base64 {
 
       byte[] b4 = new byte[4];
       int b4Posn = 0;
-      int i = 0;
-      byte sbiCrop = 0;
-      byte sbiDecode = 0;
+      int i;
+      byte sbiCrop;
+      byte sbiDecode;
       for (i = off; i < off + len; i++) {
          sbiCrop = (byte) (source[i] & 0x7f); // Only the low seven bits
          sbiDecode = DECODABET[sbiCrop];
@@ -664,7 +650,7 @@ public class Base64 {
             java.util.zip.GZIPInputStream gzis = null;
             java.io.ByteArrayOutputStream baos = null;
             byte[] buffer = new byte[2048];
-            int length = 0;
+            int length;
 
             try {
                baos = new java.io.ByteArrayOutputStream();
@@ -727,21 +713,13 @@ public class Base64 {
       } // end try
       catch (java.io.IOException e) {
          e.printStackTrace();
-         obj = null;
       } // end catch
       catch (java.lang.ClassNotFoundException e) {
          e.printStackTrace();
-         obj = null;
       } // end catch
       finally {
-         try {
-            bais.close();
-         } catch (Exception e) {
-         }
-         try {
-            ois.close();
-         } catch (Exception e) {
-         }
+         Util.close(bais);
+         Util.close(ois);
       } // end finally
 
       return obj;
@@ -769,10 +747,7 @@ public class Base64 {
          success = false;
       } // end catch: IOException
       finally {
-         try {
-            bos.close();
-         } catch (Exception e) {
-         }
+         Util.close(bos);
       } // end finally
 
       return success;
@@ -799,10 +774,7 @@ public class Base64 {
          success = false;
       } // end catch: IOException
       finally {
-         try {
-            bos.close();
-         } catch (Exception e) {
-         }
+         Util.close(bos);
       } // end finally
 
       return success;
@@ -823,9 +795,9 @@ public class Base64 {
       try {
          // Set up some useful variables
          java.io.File file = new java.io.File(filename);
-         byte[] buffer = null;
+         byte[] buffer;
          int length = 0;
-         int numBytes = 0;
+         int numBytes;
 
          // Check for size of file
          if (file.length() > Integer.MAX_VALUE) {
@@ -849,10 +821,7 @@ public class Base64 {
          throw new IllegalStateException("Error decoding from file " + filename);
       } // end catch: IOException
       finally {
-         try {
-            bis.close();
-         } catch (Exception e) {
-         }
+         Util.close(bis);
       } // end finally
 
       return decodedData;
@@ -875,7 +844,7 @@ public class Base64 {
          java.io.File file = new java.io.File(filename);
          byte[] buffer = new byte[(int) (file.length() * 1.4)];
          int length = 0;
-         int numBytes = 0;
+         int numBytes;
 
          // Open a stream
          bis = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(file)), Base64.ENCODE);
@@ -892,10 +861,7 @@ public class Base64 {
          throw new IllegalStateException("Error encoding from file " + filename);
       } // end catch: IOException
       finally {
-         try {
-            bis.close();
-         } catch (Exception e) {
-         }
+         Util.close(bis);
       } // end finally
 
       return encodedData;
@@ -1006,10 +972,10 @@ public class Base64 {
             // Else decoding
             else {
                byte[] b4 = new byte[4];
-               int i = 0;
+               int i;
                for (i = 0; i < 4; i++) {
                   // Read four "meaningful" bytes:
-                  int b = 0;
+                  int b;
                   do {
                      b = in.read();
                   }

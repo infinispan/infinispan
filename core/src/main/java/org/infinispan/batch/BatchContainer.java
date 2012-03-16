@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -36,14 +37,7 @@ import javax.transaction.TransactionManager;
  */
 public class BatchContainer {
    TransactionManager transactionManager;
-   private BatchDetailsTl batchDetailsTl = new BatchDetailsTl();
-
-   private static class BatchDetailsTl extends ThreadLocal<BatchDetails> {
-      @Override
-      protected BatchDetails initialValue() {
-         return new BatchDetails();
-      }
-   }
+   private final ThreadLocal<BatchDetails> batchDetailsTl = new ThreadLocal<BatchDetails>();
 
    @Inject
    void inject(TransactionManager transactionManager) {
@@ -61,6 +55,8 @@ public class BatchContainer {
 
    public boolean startBatch(boolean autoBatch) throws CacheException {
       BatchDetails bd = batchDetailsTl.get();
+      if (bd == null) bd = new BatchDetails();
+
       try {
          if (transactionManager.getTransaction() == null && bd.tx == null) {
             transactionManager.begin();
@@ -73,18 +69,16 @@ public class BatchContainer {
                bd.tx = transactionManager.getTransaction();
             else
                bd.tx = transactionManager.suspend();
-
+            batchDetailsTl.set(bd);
             return true;
          } else {
             bd.nestedInvocationCount++;
+            batchDetailsTl.set(bd);
             return false;
          }         
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
+         batchDetailsTl.remove();
          throw new CacheException("Unable to start batch", e);
-      }
-      finally {
-         batchDetailsTl.set(bd);
       }
    }
 
@@ -94,7 +88,11 @@ public class BatchContainer {
 
    public void endBatch(boolean autoBatch, boolean success) {
       BatchDetails bd = batchDetailsTl.get();
-      if (bd.tx == null) return;
+      if (bd == null) return;
+      if (bd.tx == null) {
+         batchDetailsTl.remove();
+         return;
+      }
       if (autoBatch) bd.nestedInvocationCount--;
       if (!autoBatch || bd.nestedInvocationCount == 0) {
          Transaction existingTx = null;
@@ -105,21 +103,16 @@ public class BatchContainer {
                transactionManager.resume(bd.tx);
 
             resolveTransaction(bd, success);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             throw new CacheException("Unable to end batch", e);
-         }
-         finally {
+         } finally {
             batchDetailsTl.remove();
             try {
                if (!autoBatch && existingTx != null) transactionManager.resume(existingTx);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                throw new CacheException("Failed resuming existing transaction " + existingTx, e);
             }
          }
-      } else {
-         batchDetailsTl.set(bd);
       }
    }
 
@@ -139,11 +132,18 @@ public class BatchContainer {
    }
 
    public Transaction getBatchTransaction() {
-      return batchDetailsTl.get().tx;
+      Transaction tx = null;
+      BatchDetails bd = batchDetailsTl.get();
+      if (bd != null) {
+         tx = bd.tx;
+         if (tx == null) batchDetailsTl.remove();
+      }
+      return tx;
    }
 
    public boolean isSuspendTxAfterInvocation() {
-      return batchDetailsTl.get().suspendTxAfterInvocation;
+      BatchDetails bd = batchDetailsTl.get();
+      return bd != null && bd.suspendTxAfterInvocation;
    }
 
    private static class BatchDetails {

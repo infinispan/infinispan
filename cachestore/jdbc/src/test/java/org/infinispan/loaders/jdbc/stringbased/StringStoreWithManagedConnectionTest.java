@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,14 +23,16 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -49,7 +52,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      stringBasedCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      stringBasedCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }
@@ -79,4 +82,11 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
    public String getDatasourceLocation() {
       return "java:/StringStoreWithManagedConnectionTest/DS";
    }
+
+   @Override
+   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
+   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+      super.testLoadAndStoreMarshalledValues();
+   }
+
 }

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbm;
 
 import java.io.File;
@@ -6,7 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -48,16 +70,16 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    }
 
    @Override
-   public void testPreload() throws CacheLoaderException {
+   public void testPreload() throws Exception {
       super.testPreload();
    }
 
    @Override
    public void testPurgeExpired() throws Exception {
       long lifespan = 1000;
-      InternalCacheEntry k1 = InternalEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry k2 = InternalEntryFactory.create("k2", "v2", lifespan);
-      InternalCacheEntry k3 = InternalEntryFactory.create("k3", "v3", lifespan);
+      InternalCacheEntry k1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry k2 = TestInternalCacheEntryFactory.create("k2", "v2", lifespan);
+      InternalCacheEntry k3 = TestInternalCacheEntryFactory.create("k3", "v3", lifespan);
       cs.store(k1);
       cs.store(k2);
       cs.store(k3);
@@ -71,17 +93,17 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       assert fcs.load("k2") == null;
       assert fcs.load("k3") == null;
    }
-   
+
    public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
 
       long lifespan = 1;
       long idle = 1;
-      InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
-      InternalCacheEntry se3 = InternalEntryFactory.create("k3", "v3", -1, idle);
-      InternalCacheEntry se4 = InternalEntryFactory.create("k4", "v4", lifespan, idle);
+      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", "v2");
+      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", "v4", lifespan, idle);
 
       cs.store(se1);
       cs.store(se2);
@@ -107,11 +129,11 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    }
 
    public void testIterator() throws Exception {
-      InternalCacheEntry k1 = InternalEntryFactory.create("k1", "v1");
-      InternalCacheEntry k2 = InternalEntryFactory.create("k2", "v2");
+      InternalCacheEntry k1 = TestInternalCacheEntryFactory.create("k1", "v1");
+      InternalCacheEntry k2 = TestInternalCacheEntryFactory.create("k2", "v2");
       cs.store(k1);
       cs.store(k2);
-      
+
       Set<InternalCacheEntry> set = cs.loadAll();
       Iterator<InternalCacheEntry> i = set.iterator();
       assert i.hasNext() == true;

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,137 +22,144 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.module.ExtendedModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandExtensions;
+import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 /**
- * The <code>ModuleProperties</code> class represents Infinispan's module configuration key value
- * pairs. Each Infinispan module is required to provide accompanying infinispan-module.properties in
- * module's jar. An instance of this class represents in-memory representation of
- * infinispan-module.properties file.
- * <p>
- * 
- * 
+ * The <code>ModuleProperties</code> class represents Infinispan's module service extensions
+ *
  * @author Vladimir Blagojevic
+ * @author Sanne Grinovero
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class ModuleProperties extends Properties {
-   
-    private static final long serialVersionUID = 2558131508076199744L;
-   
-    private static final Log log = LogFactory.getLog(ModuleProperties.class);
-    public static final String MODULE_PROPERTIES_FILENAME = "infinispan-module.properties";
-    public static final String MODULE_NAME_KEY = "infinispan.module.name";
-    public static final String MODULE_CONFIGURATION_CLASS = "infinispan.module.configurationClassName";
-    public static final String MODULE_LIFECYCLE = "infinispan.module.lifecycle";
-    
-    protected static Enumeration<URL> getResources(String filename) throws IOException {
-        Enumeration<URL> result;
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        result = cl == null ? null : cl.getResources(filename);
-        if (result == null) {
-            // check system class 
-            result = ModuleProperties.class.getClassLoader().getResources(filename);
-        }
-        return result;
-    }
 
-    public static ModuleProperties loadModuleProperties(String moduleName) throws IOException {
+   private static final long serialVersionUID = 2558131508076199744L;
 
-        Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
-        if (resources == null)
-            throw new IOException("Could not find " + MODULE_PROPERTIES_FILENAME
-                            + " files on classpath for module " + moduleName);
+   private static final Log log = LogFactory.getLog(ModuleProperties.class);
 
-        while (resources.hasMoreElements()) {
-            URL url = resources.nextElement();
-            ModuleProperties props = new ModuleProperties();
-            props.load(url.openStream());
-            props.verify();
+   private Map<Byte, ModuleCommandFactory> commandFactories;
+   private Map<Byte, ModuleCommandInitializer> commandInitializers;
+   private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
-            if (props.getName().equalsIgnoreCase(moduleName)) {
-                return props;
-            }
-        }
-        return null;
-    }
-    
-   private static Map<String, ModuleProperties> loadModuleProperties() throws IOException {
-      Map<String, ModuleProperties> map = new HashMap<String, ModuleProperties>();
-      Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
-      if (resources != null) {
-         while (resources.hasMoreElements()) {
-            URL url = null;
-            try {
-               url = resources.nextElement();
-               ModuleProperties props = new ModuleProperties();
-               props.load(url.openStream());
-               props.verify();
-               map.put(props.getName(), props);
-            } catch (Exception e) {
-               log.warn("Could not load module at URL " + url, e);
-            }
+   public static List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
+      ServiceLoader<ModuleLifecycle> moduleLifecycleLoader =
+            ServiceLoader.load(ModuleLifecycle.class, cl);
+
+      if (moduleLifecycleLoader.iterator().hasNext()) {
+         List<ModuleLifecycle> lifecycles = new LinkedList<ModuleLifecycle>();
+         for (ModuleLifecycle lifecycle : moduleLifecycleLoader) {
+            log.debugf("Loading lifecycle SPI class: %s", lifecycle);
+            lifecycles.add(lifecycle);
          }
+         return lifecycles;
+      } else {
+         log.debugf("No module lifecycle SPI classes available");
+         return Collections.emptyList();
       }
-      return map;
-   }
-    
-   public static List<ModuleLifecycle> resolveModuleLifecycles() throws Exception {
-      List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
-      Map<String, ModuleProperties> p = ModuleProperties.loadModuleProperties();
-      for (Map.Entry<String, ModuleProperties> m : p.entrySet()) {
-         try {
-            String lifecycleClassName = m.getValue().getLifecycleClassName();
-            Class<?> loadClass = Util.loadClassStrict(lifecycleClassName);
-            Object proxy = Proxies.newCatchThrowableProxy((ModuleLifecycle) loadClass.newInstance());
-            ModuleLifecycle ml = (ModuleLifecycle) proxy;
-            lifecycles.add(ml);
-         } catch (Exception e) {
-            log.warn("Module " + m.getKey() + " loaded, but could not be initialized ", e);
-         }
-      }
-      return lifecycles;
    }
 
-    public String getName() {
-        return super.getProperty(MODULE_NAME_KEY);
-    }
+   /**
+    * Retrieves an Iterable containing metadata file finders declared by each module.
+    * @param cl class loader to use
+    * @return an Iterable of ModuleMetadataFileFinders
+    */
+   public static Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
+      return ServiceLoader.load(ModuleMetadataFileFinder.class, cl);
+   }
 
-    public String getConfigurationClassName() {
-        return super.getProperty(MODULE_CONFIGURATION_CLASS);
-    }
-    
-    public String getLifecycleClassName() {
-        return super.getProperty(MODULE_LIFECYCLE);
-    }
+   @SuppressWarnings("unchecked")
+   public void loadModuleCommandHandlers(ClassLoader cl) {
+      ServiceLoader<ModuleCommandExtensions> moduleCmdExtLoader =
+            ServiceLoader.load(ModuleCommandExtensions.class, cl);
 
-    protected void verify() {
-        if (getName() == null)
-            throw new ConfigurationException(
-                            "Module properties does not specify module name. Module name should be specified using key "
-                                            + MODULE_NAME_KEY);
+      if (moduleCmdExtLoader.iterator().hasNext()) {
+         commandFactories = new HashMap<Byte, ModuleCommandFactory>(1);
+         commandInitializers = new HashMap<Byte, ModuleCommandInitializer>(1);
+         moduleCommands = new HashSet<Class<? extends ReplicableCommand>>(1);
+         for (ModuleCommandExtensions extension : moduleCmdExtLoader) {
+            log.debugf("Loading module command extension SPI class: %s", extension);
+            ExtendedModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
+            ModuleCommandInitializer cmdInitializer = extension.getModuleCommandInitializer();
+            for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command :
+                  cmdFactory.getModuleCommands().entrySet()) {
+               byte id = command.getKey();
+               if (commandFactories.containsKey(id))
+                  throw new IllegalArgumentException(String.format(
+                        "Cannot use id %d for commands, as it is already in use by %s",
+                        id, commandFactories.get(id).getClass().getName()));
 
-       // we should not *require* that every module supplies these...
-       
-//        if (getConfigurationClassName() == null)
-//            throw new ConfigurationException(
-//                            "Module properties does not specify module configuration class name. Module configuration class name should be specified using key "
-//                                            + MODULE_CONFIGURATION_CLASS);
-//
-//        if (getLifecycleClassName() == null)
-//            throw new ConfigurationException(
-//                            "Module properties does not specify module lifecycle class name. Module lifecycle class name should be specified using key "
-//                                            + MODULE_LIFECYCLE);
-    }
+               commandFactories.put(id, cmdFactory);
+               moduleCommands.add(command.getValue());
+               commandInitializers.put(id, cmdInitializer);
+            }
+         }
+      } else {
+         log.debugf("No module command extensions to load");
+         commandInitializers = Collections.emptyMap();
+         commandFactories = Collections.emptyMap();
+      }
+   }
+
+   public Collection<Class<? extends ReplicableCommand>> moduleCommands() {
+      return moduleCommands;
+   }
+
+   public Map<Byte, ModuleCommandFactory> moduleCommandFactories() {
+      return commandFactories;
+   }
+
+   public Map<Byte, ModuleCommandInitializer> moduleCommandInitializers() {
+      return commandInitializers;
+   }
+
+   @SuppressWarnings("unchecked")
+   public Collection<Class<? extends CacheRpcCommand>> moduleCacheRpcCommands() {
+      Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
+      if (cmds == null || cmds.isEmpty())
+         return Collections.emptySet();
+
+      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>(2);
+      for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
+         if (CacheRpcCommand.class.isAssignableFrom(moduleCmdClass))
+            cacheRpcCmds.add((Class<? extends CacheRpcCommand>) moduleCmdClass);
+      }
+
+      return cacheRpcCmds;
+   }
+
+   public Collection<Class<? extends ReplicableCommand>> moduleOnlyReplicableCommands() {
+      Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
+      if (cmds == null || cmds.isEmpty())
+         return Collections.emptySet();
+
+      Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
+            new HashSet<Class<? extends ReplicableCommand>>(2);
+      for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
+         if (!CacheRpcCommand.class.isAssignableFrom(moduleCmdClass)) {
+            replicableOnlyCmds.add(moduleCmdClass);
+         }
+      }
+      return replicableOnlyCmds;
+   }
+
 }

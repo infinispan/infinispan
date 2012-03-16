@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,9 +22,9 @@
  */
 package org.infinispan.query.test;
 
+import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
@@ -41,7 +42,7 @@ public class Person implements Serializable {
    private String name;
    @Field(store = Store.YES)
    private String blurb;
-   @Field(store = Store.YES, index = Index.UN_TOKENIZED)
+   @Field(store = Store.YES, analyze=Analyze.NO)
    private int age;
    private static final long serialVersionUID = 8251606115293644545L;
 
@@ -96,7 +97,6 @@ public class Person implements Serializable {
       result = 31 * result + (blurb != null ? blurb.hashCode() : 0);
       return result;
    }
-
 
    public String toString() {
       return "Person{" +

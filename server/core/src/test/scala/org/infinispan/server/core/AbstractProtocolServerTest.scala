@@ -1,12 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.server.core
 
 import org.testng.annotations.Test
 import java.util.Properties
-import transport.{Decoder, Encoder}
 import org.infinispan.server.core.Main._
 import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.testng.Assert._
-import java.net.InetSocketAddress
 import java.lang.reflect.Method
 import org.infinispan.util.TypedProperties
 
@@ -180,12 +200,12 @@ class AbstractProtocolServerTest {
          super.start(properties, cacheManager, 12345)
       }
 
-      override def getEncoder: Encoder = null
+      override def getEncoder = null
 
-      override def getDecoder: Decoder = null
+      override def getDecoder = null
 
-      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int,
-                                  typedProps: TypedProperties) {
+      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
+            sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
          this.tcpNoDelay = tcpNoDelay
       }
    }

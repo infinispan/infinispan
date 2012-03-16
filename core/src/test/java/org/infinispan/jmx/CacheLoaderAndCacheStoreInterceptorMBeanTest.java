@@ -1,9 +1,31 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.jmx;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -72,7 +94,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.put("key", "value2");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       cache.put("a", "c");
       assertStoreAccess(1, 0, 3);
       assert cacheStore.load("a").getValue().equals("c");
@@ -86,7 +108,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.get("key").equals("value");
       assertStoreAccess(0, 0, 1);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.get("a").equals("b");
       assertStoreAccess(1, 0, 1);
 
@@ -108,7 +130,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.remove("no_such_key");
       assertStoreAccess(0, 1, 1);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.remove("a").equals("b");
       assertStoreAccess(1, 1, 1);
    }
@@ -121,7 +143,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.replace("key", "value2").equals("value");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(InternalEntryFactory.create("a", "b"));
+      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
       assert cache.replace("a", "c").equals("b");
       assertStoreAccess(1, 0, 3);
 

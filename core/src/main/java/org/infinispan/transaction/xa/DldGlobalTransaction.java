@@ -1,6 +1,27 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -10,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
@@ -21,30 +43,31 @@ import static java.util.Collections.emptySet;
  */
 public class DldGlobalTransaction extends GlobalTransaction {
 
-   private static Log log = LogFactory.getLog(DldGlobalTransaction.class);
+   private static final Log log = LogFactory.getLog(DldGlobalTransaction.class);
 
-   public static final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
-   private volatile long coinToss;
+   protected volatile long coinToss;
 
-   private volatile boolean isMarkedForRollback;
+   protected volatile boolean isMarkedForRollback;
 
-   private transient volatile Object localLockIntention;
+   protected transient volatile Object localLockIntention;
 
-   protected volatile Set<Object> remoteLockIntention = emptySet();
+   protected volatile Collection<Object> remoteLockIntention = emptySet();
 
-   private volatile Set<Object> locksAtOrigin = emptySet();
+   protected volatile Set<Object> locksAtOrigin = emptySet();
 
    public DldGlobalTransaction() {
    }
 
-   DldGlobalTransaction(Address addr, boolean remote) {
+   public DldGlobalTransaction(Address addr, boolean remote) {
       super(addr, remote);
    }
 
 
    /**
-    * Sets the reandom number that defines the coin toss.
+    * Sets the random number that defines the coin toss. A coin toss is a random number that is used when a deadlock is
+    * detected for deciding which transaction should commit and which should rollback.
     */
    public void setCoinToss(long coinToss) {
       this.coinToss = coinToss;
@@ -84,14 +107,6 @@ public class DldGlobalTransaction extends GlobalTransaction {
             "} " + super.toString();
    }
 
-   public synchronized boolean isMarkedForRollback() {
-      return isMarkedForRollback;
-   }
-
-   public synchronized void setMarkedForRollback(boolean markedForRollback) {
-      isMarkedForRollback = markedForRollback;
-   }
-
    /**
     * Returns the key this transaction intends to lock. 
     */
@@ -99,7 +114,8 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return localLockIntention;
    }
 
-   public void setLockIntention(Object lockIntention) {                                                                                                       
+   public void setLockIntention(Object lockIntention) {
+      if (trace) log.tracef("Setting local lock intention to %s", lockIntention);
       this.localLockIntention = lockIntention;
    }
 
@@ -107,25 +123,20 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.coinToss < other.coinToss;
    }
 
-   public boolean isAcquiringRemoteLock(Object key, Address address) {
-      boolean contains = remoteLockIntention.contains(key);
-      if (trace) log.trace("Intention check: does " + remoteLockIntention + " contain " + key + "? " + contains);
-      return contains; //this works for replication
-   }
-
-   public void setRemoteLockIntention(Set<Object> remoteLockIntention) {
+   public void setRemoteLockIntention(Collection<Object> remoteLockIntention) {
       if (trace) {
-         log.trace("Setting the remote lock intention: " + remoteLockIntention);
+         log.tracef("Setting the remote lock intention: %s", remoteLockIntention);
       }
       this.remoteLockIntention = remoteLockIntention;
    }
 
-   public Set<Object> getRemoteLockIntention() {
+   public Collection<Object> getRemoteLockIntention() {
       return remoteLockIntention;
    }
 
-   public boolean hasLockAtOrigin(Set<Object> remoteLockIntention) {
-      if (log.isTraceEnabled()) log.trace("Our(" + this + ") locks at origin are: " + locksAtOrigin + ". Others remote lock intention is: " + remoteLockIntention);
+   public boolean hasLockAtOrigin(Collection<Object> remoteLockIntention) {
+      log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
+                    this, locksAtOrigin, remoteLockIntention);
       for (Object key : remoteLockIntention) {
          if (this.locksAtOrigin.contains(key)) {
             return true;
@@ -135,7 +146,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public void setLocksHeldAtOrigin(Set<Object> locksAtOrigin) {
-      if (trace) log.trace("Setting locks at origin for (" + this + ")  to " + locksAtOrigin);
+      if (trace) log.tracef("Setting locks at origin for (%s) to %s", this, locksAtOrigin);
       this.locksAtOrigin = locksAtOrigin;
    }
 
@@ -143,12 +154,16 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
-   public static class Externalizer extends AbstractExternalizer<DldGlobalTransaction> {
-      private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new GlobalTransactionFactory(true));
+   public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<DldGlobalTransaction> {
+
+      @Override
+      protected DldGlobalTransaction createGlobalTransaction() {
+         return (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
+      }
 
       @Override
       public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
-         delegate.writeObject(output, ddGt);
+         super.writeObject(output, ddGt);
          output.writeLong(ddGt.getCoinToss());
          if (ddGt.locksAtOrigin.isEmpty()) {
             output.writeObject(null);
@@ -160,7 +175,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       @Override
       @SuppressWarnings("unchecked")
       public DldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         DldGlobalTransaction ddGt = (DldGlobalTransaction) delegate.readObject(input);
+         DldGlobalTransaction ddGt = super.readObject(input);
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {

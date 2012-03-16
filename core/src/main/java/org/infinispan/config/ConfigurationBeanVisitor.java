@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,23 +22,8 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.config.Configuration.AsyncType;
-import org.infinispan.config.Configuration.BooleanAttributeType;
-import org.infinispan.config.Configuration.ClusteringType;
-import org.infinispan.config.Configuration.CustomInterceptorsType;
-import org.infinispan.config.Configuration.DataContainerType;
-import org.infinispan.config.Configuration.DeadlockDetectionType;
-import org.infinispan.config.Configuration.EvictionType;
-import org.infinispan.config.Configuration.ExpirationType;
-import org.infinispan.config.Configuration.HashType;
-import org.infinispan.config.Configuration.L1Type;
-import org.infinispan.config.Configuration.LockingType;
-import org.infinispan.config.Configuration.QueryConfigurationBean;
-import org.infinispan.config.Configuration.StateRetrievalType;
-import org.infinispan.config.Configuration.SyncType;
-import org.infinispan.config.Configuration.TransactionType;
-import org.infinispan.config.Configuration.UnsafeType;
-import org.infinispan.config.GlobalConfiguration.ExternalizersType;
+import org.infinispan.config.Configuration.*;
+import org.infinispan.config.GlobalConfiguration.AdvancedExternalizersType;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
 import org.infinispan.config.GlobalConfiguration.SerializationType;
@@ -96,6 +82,8 @@ public interface ConfigurationBeanVisitor {
    
    void visitExpirationType(ExpirationType bean);
    
+   void visitGroupConfig(GroupsConfiguration bean);
+   
    void visitHashType(HashType bean);
    
    void visitL1Type(L1Type bean);
@@ -122,8 +110,13 @@ public interface ConfigurationBeanVisitor {
 
    void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);  
    
-   void visitExternalizersType(ExternalizersType bean);
+   void visitAdvancedExternalizersType(AdvancedExternalizersType bean);
    
-   void visitExternalizerConfig(ExternalizerConfig config);
+   void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig config);
 
+   void visitRecoveryType(Configuration.RecoveryType config);
+
+   void visitStoreAsBinaryType(Configuration.StoreAsBinary config);
+
+   void visitVersioningConfigurationBean(VersioningConfigurationBean config);
 }

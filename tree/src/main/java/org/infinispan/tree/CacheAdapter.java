@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,15 +23,13 @@
 
 package org.infinispan.tree;
 
+import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -47,328 +46,288 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.2
  */
-public class CacheAdapter implements Cache {
+public class CacheAdapter<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
-   private final Cache cache;
    private final TreeContextContainer tcc;
-   private final InvocationContextContainer icc;
 
-   public CacheAdapter(Cache cache,
-                       TreeContextContainer tcc,
-                       InvocationContextContainer icc) {
-      this.cache = cache;
+   private CacheAdapter(AdvancedCache<K, V> cache, TreeContextContainer tcc) {
+      super(cache);
       this.tcc = tcc;
-      this.icc = icc;
+   }
+
+   public static <K, V> CacheAdapter<K, V> createAdapter(AdvancedCache<K, V> advancedCache, TreeContextContainer tcc) {
+      if (advancedCache instanceof CacheAdapter)
+         return (CacheAdapter<K, V>) advancedCache;
+      else
+         return new CacheAdapter<K, V>(advancedCache, tcc);
    }
 
    @Override
-   public void putForExternalRead(Object key, Object value) {
-      withFlags().putForExternalRead(key, value);
+   public void putForExternalRead(K key, V value) {
+      cache.withFlags(getFlags()).putForExternalRead(key, value);
    }
 
    @Override
-   public void evict(Object key) {
-      withFlags().evict(key);
-   }
-
-   @Override
-   public Configuration getConfiguration() {
-      return cache.getConfiguration();
+   public void evict(K key) {
+      cache.withFlags(getFlags()).evict(key);
    }
 
    @Override
    public boolean startBatch() {
-      return cache.startBatch();
+      return cache.withFlags(getFlags()).startBatch();
    }
 
    @Override
    public void endBatch(boolean successful) {
-      cache.endBatch(successful);
+      cache.withFlags(getFlags()).endBatch(successful);
    }
 
    @Override
-   public String getName() {
-      return cache.getName();
+   public V put(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).put(key, value, lifespan, unit);
    }
 
    @Override
-   public String getVersion() {
-      return cache.getVersion();
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).putIfAbsent(key, value, lifespan, unit);
    }
 
    @Override
-   public EmbeddedCacheManager getCacheManager() {
-      return cache.getCacheManager();
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
+      cache.withFlags(getFlags()).putAll(map, lifespan, unit);
    }
 
    @Override
-   public Object put(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().put(key, value, lifespan, unit);
+   public V replace(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).replace(key, value, lifespan, unit);
    }
 
    @Override
-   public Object putIfAbsent(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().putIfAbsent(key, value, lifespan, unit);
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).replace(key, oldValue, value, lifespan, unit);
    }
 
    @Override
-   public void putAll(Map map, long lifespan, TimeUnit unit) {
-      withFlags().putAll(map, lifespan, unit);
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.withFlags(getFlags()).put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public Object replace(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().replace(key, value, lifespan, unit);
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.withFlags(getFlags()).putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public boolean replace(Object key, Object oldValue, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().replace(key, oldValue, value, lifespan, unit);
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      cache.withFlags(getFlags()).putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public Object put(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return withFlags().put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.withFlags(getFlags()).replace(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public Object putIfAbsent(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return withFlags().putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.withFlags(getFlags()).replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public void putAll(Map map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      withFlags().putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   public NotifyingFuture<V> putAsync(K key, V value) {
+      return cache.withFlags(getFlags()).putAsync(key, value);
    }
 
    @Override
-   public Object replace(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return withFlags().replace(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).putAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public boolean replace(Object key, Object oldValue, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return withFlags().replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.withFlags(getFlags()).putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
-   public NotifyingFuture putAsync(Object key, Object value) {
-      return withFlags().putAsync(key, value);
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      return cache.withFlags(getFlags()).putAllAsync(data);
    }
 
    @Override
-   public NotifyingFuture putAsync(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().putAsync(key, value, lifespan, unit);
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).putAllAsync(data, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture putAsync(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return withFlags().putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-   }
-
-   @Override
-   public NotifyingFuture<Void> putAllAsync(Map data) {
-      return withFlags().putAllAsync(data);
-   }
-
-   @Override
-   public NotifyingFuture<Void> putAllAsync(Map data, long lifespan, TimeUnit unit) {
-      return withFlags().putAllAsync(data, lifespan, unit);
-   }
-
-   @Override
-   public NotifyingFuture<Void> putAllAsync(Map data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return withFlags().putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.withFlags(getFlags()).putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
-      return withFlags().clearAsync();
+      return cache.withFlags(getFlags()).clearAsync();
    }
 
    @Override
-   public NotifyingFuture putIfAbsentAsync(Object key, Object value) {
-      return withFlags().putIfAbsentAsync(key, value);
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture putIfAbsentAsync(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().putIfAbsentAsync(key, value, lifespan, unit);
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture putIfAbsentAsync(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return withFlags().putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
-   public NotifyingFuture removeAsync(Object key) {
-      return withFlags().removeAsync(key);
+   public NotifyingFuture<V> removeAsync(Object key) {
+      return cache.withFlags(getFlags()).removeAsync(key);
    }
 
    @Override
    public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
-      return withFlags().removeAsync(key, value);
+      return cache.withFlags(getFlags()).removeAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture replaceAsync(Object key, Object value) {
-      return withFlags().replaceAsync(key, value);
+   public NotifyingFuture<V> replaceAsync(K key, V value) {
+      return cache.withFlags(getFlags()).replaceAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture replaceAsync(Object key, Object value, long lifespan, TimeUnit unit) {
-      return withFlags().replaceAsync(key, value, lifespan, unit);
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).replaceAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture replaceAsync(Object key, Object value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return withFlags().replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.withFlags(getFlags()).replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(Object key, Object oldValue, Object newValue) {
-      return withFlags().replaceAsync(key, oldValue, newValue);
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(Object key, Object oldValue, Object newValue, long lifespan, TimeUnit unit) {
-      return withFlags().replaceAsync(key, oldValue, newValue, lifespan, unit);
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(Object key, Object oldValue, Object newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return withFlags().replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-   }
-
-   @Override
-   public AdvancedCache getAdvancedCache() {
-      return cache.getAdvancedCache();
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
    public void compact() {
-      withFlags().compact();
-   }
-
-   @Override
-   public ComponentStatus getStatus() {
-      return cache.getStatus();
+      cache.withFlags(getFlags()).compact();
    }
 
    @Override
    public int size() {
-      return withFlags().size();
+      return cache.withFlags(getFlags()).size();
    }
 
    @Override
    public boolean isEmpty() {
-      return withFlags().isEmpty();
+      return cache.withFlags(getFlags()).isEmpty();
    }
 
    @Override
    public boolean containsKey(Object key) {
-      return withFlags().containsKey(key);
+      return cache.withFlags(getFlags()).containsKey(key);
    }
 
    @Override
    public boolean containsValue(Object value) {
-      return withFlags().containsValue(value);
+      return cache.withFlags(getFlags()).containsValue(value);
    }
 
    @Override
-   public Object get(Object key) {
-      return withFlags().get(key);
+   public V get(Object key) {
+      return cache.withFlags(getFlags()).get(key);
    }
 
    @Override
-   public Object put(Object key, Object value) {
-      return withFlags().put(key, value);
+   public V put(K key, V value) {
+      return cache.withFlags(getFlags()).put(key, value);
    }
 
    @Override
-   public Object remove(Object key) {
-      return withFlags().remove(key);
+   public V remove(Object key) {
+      return cache.withFlags(getFlags()).remove(key);
    }
 
    @Override
-   public void putAll(Map m) {
-      withFlags().putAll(m);
+   public void putAll(Map<? extends K, ? extends V> m) {
+      cache.withFlags(getFlags()).putAll(m);
    }
 
    @Override
    public void clear() {
-      withFlags().clear();
+      cache.withFlags(getFlags()).clear();
    }
 
    @Override
-   public Set keySet() {
-      return withFlags().keySet();
+   public Set<K> keySet() {
+      return cache.withFlags(getFlags()).keySet();
    }
 
    @Override
-   public Collection values() {
-      return withFlags().values();
+   public Collection<V> values() {
+      return cache.withFlags(getFlags()).values();
    }
 
    @Override
-   public Set entrySet() {
-      return withFlags().entrySet();
+   public Set<Entry<K, V>> entrySet() {
+      return cache.withFlags(getFlags()).entrySet();
    }
 
    @Override
-   public Object putIfAbsent(Object key, Object value) {
-      return withFlags().putIfAbsent(key, value);
+   public V putIfAbsent(K key, V value) {
+      return cache.withFlags(getFlags()).putIfAbsent(key, value);
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return withFlags().remove(key, value);
+      return cache.withFlags(getFlags()).remove(key, value);
    }
 
    @Override
-   public boolean replace(Object key, Object oldValue, Object newValue) {
-      return withFlags().replace(key, oldValue, newValue);
+   public boolean replace(K key, V oldValue, V newValue) {
+      return cache.withFlags(getFlags()).replace(key, oldValue, newValue);
    }
 
    @Override
-   public Object replace(Object key, Object value) {
-      return withFlags().replace(key, value);
+   public V replace(K key, V value) {
+      return cache.withFlags(getFlags()).replace(key, value);
    }
 
    @Override
-   public void start() {
-      cache.start();
+   public NotifyingFuture<V> getAsync(K key) {
+      return cache.withFlags(getFlags()).getAsync(key);
+   }
+
+   private Flag[] getFlags() {
+      if (tcc.getTreeContext() == null)
+         return null;
+      else {
+         EnumSet<Flag> flagSet = tcc.getTreeContext().getFlags();
+         return flagSet.toArray(new Flag[flagSet.size()]);
+      }
    }
 
    @Override
-   public void stop() {
-      cache.stop();
+   public AdvancedCache<K, V> withFlags(Flag... flags) {
+      throw new UnsupportedOperationException("Unsupported in this implementation");
    }
 
    @Override
-   public void addListener(Object listener) {
-      cache.addListener(listener);
-   }
-
-   @Override
-   public void removeListener(Object listener) {
-      cache.removeListener(listener);
-   }
-
-   @Override
-   public Set<Object> getListeners() {
-      return cache.getListeners();
-   }
-
-   @Override
-   public NotifyingFuture getAsync(Object key) {
-      return cache.getAsync(key);
-   }
-
-   private Cache withFlags() {
-      if (tcc.getTreeContext() != null)
-         icc.createInvocationContext().setFlags(tcc.getTreeContext().getFlags());
-      return cache;
+   public AdvancedCache<K, V> with(ClassLoader classLoader) {
+      throw new UnsupportedOperationException("Unsupported in this implementation");
    }
 }

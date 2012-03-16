@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.invalidation;
 
 import static org.easymock.EasyMock.*;
@@ -35,10 +57,16 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, false);
       c.setStateRetrievalTimeout(1000);
       c.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "invalidation", c);
+
+      c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+      c.setStateRetrievalTimeout(1000);
+      c.setLockAcquisitionTimeout(500);
+      defineConfigurationOnAllManagers("invalidationTx", c);
+      waitForClusterToForm("invalidationTx");
 
    }
 
@@ -97,14 +125,16 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testDeleteNonExistentEntry() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
+      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
       
       assertNull("Should be null", cache1.get("key"));
       assertNull("Should be null", cache2.get("key"));
 
+      log.info("before...");
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
+      log.info("after...");
       replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
@@ -124,8 +154,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSyncUnableToInvalidate() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
+      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
       replListener(cache2).waitForRpc();
@@ -148,11 +178,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       try {
          replListener(cache2).expect(InvalidateCommand.class);
          mgr1.commit();
-         if (isSync) {
-            assert false: "isSync should be false";
-         } else {
-            replListener(cache2).waitForRpc();
-         }
+         replListener(cache2).waitForRpc();
       } catch (RollbackException roll) {
          assert isSync : "isSync should be true";
       }

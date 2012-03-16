@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,18 +23,17 @@
 
 package org.infinispan.query.impl;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.apache.lucene.search.IndexSearcher;
-import org.hibernate.search.engine.DocumentExtractor;
-import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.query.backend.IndexSearcherCloser;
-import org.infinispan.query.backend.KeyTransformationHandler;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+
+import net.jcip.annotations.NotThreadSafe;
+
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.infinispan.AdvancedCache;
+import org.infinispan.CacheException;
+import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link
@@ -41,31 +41,24 @@ import java.util.NoSuchElementException;
  * differs from {@link EagerIterator} which is the other implementation of QueryResultIterator.
  *
  * @author Navin Surtani
+ * @author Marko Luksa
  */
-
 @NotThreadSafe
 public class LazyIterator extends AbstractIterator {
 
-   private DocumentExtractor extractor;
-   private IndexSearcher searcher;
-   private SearchFactoryImplementor searchFactory;
+   private final DocumentExtractor extractor;
+   private final KeyTransformationHandler keyTransformationHandler;
 
-
-   public LazyIterator(DocumentExtractor extractor, Cache cache,
-                       IndexSearcher searcher, SearchFactoryImplementor searchFactory, int first, int max, int fetchSize) {
+   public LazyIterator(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
-
-      this.extractor = extractor;
+      this.keyTransformationHandler = keyTransformationHandler;
+      this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
+      this.index = 0;
+      this.max = hSearchQuery.queryResultSize() - 1;
       this.cache = cache;
-      index = first;
-      this.first = first;
-      this.max = max;
       this.fetchSize = fetchSize;
-      this.searcher = searcher;
-      this.searchFactory = searchFactory;
-
       //Create an buffer with size fetchSize (which is the size of the required buffer).
       buffer = new Object[this.fetchSize];
    }
@@ -74,12 +67,12 @@ public class LazyIterator extends AbstractIterator {
       if (index < first || index > max) {
          throw new IndexOutOfBoundsException("The given index is incorrect. Please check and try again.");
       }
-
       this.index = first + index;
    }
 
+   @Override
    public void close() {
-      IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
+      extractor.close();
    }
 
    public Object next() {
@@ -100,8 +93,8 @@ public class LazyIterator extends AbstractIterator {
          // else we need to populate the buffer and get what we need.
 
          try {
-            String documentId = (String) extractor.extract(index).id;
-            toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
+            String documentId = (String) extractor.extract(index).getId();
+            toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
             Arrays.fill(buffer, null);
@@ -112,8 +105,8 @@ public class LazyIterator extends AbstractIterator {
             //now loop through bufferSize times to add the rest of the objects into the list.
 
             for (int i = 1; i < bufferSize; i++) {
-               String bufferDocumentId = (String) extractor.extract(index + i).id;
-               Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
+               String bufferDocumentId = (String) extractor.extract(index + i).getId();
+               Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
                buffer[i] = toBuffer;
             }
             bufferIndex = index;
@@ -148,15 +141,15 @@ public class LazyIterator extends AbstractIterator {
          //Wiping the buffer
          Arrays.fill(buffer, null);
 
-         String documentId = (String) extractor.extract(index).id;
-         toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
+         String documentId = (String) extractor.extract(index).getId();
+         toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
-            String bufferDocumentId = (String) extractor.extract(index - i).id;    //In this case it has to be index - i because previous() is called.
-            Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
+            String bufferDocumentId = (String) extractor.extract(index - i).getId();    //In this case it has to be index - i because previous() is called.
+            Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
             buffer[i] = toBuffer;
          }
 

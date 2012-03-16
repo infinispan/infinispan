@@ -322,37 +322,32 @@ class Git(object):
 
 class DryRun(object):
   location_root = "%s/%s" % (os.getenv("HOME"), "infinispan_release_dry_run")
-  flags = "-r"
-  
-  def __init__(self):
-    if settings['verbose']:
-      self.flags = "-rv"
   
   def find_version(self, url):
     return os.path.split(url)[1]
       
   def copy(self, src, dst):
-    prettyprint( "  DryRun: Executing %s" % ['rsync', self.flags, src, dst], Levels.DEBUG)
+    prettyprint( "  DryRun: Executing %s" % ['rsync', '-rv', '--protocol=28', src, dst], Levels.DEBUG)
     try:
       os.makedirs(dst)
     except:
       pass
-    subprocess.check_call(['rsync', self.flags, src, dst])  
+    subprocess.check_call(['rsync', '-rv', '--protocol=28', src, dst])  
 
 class Uploader(object):
   def __init__(self):
     if settings['verbose']:
       self.scp_cmd = ['scp', '-rv']
-      self.rsync_cmd = ['rsync', '-rv']
+      self.rsync_cmd = ['rsync', '-rv', '--protocol=28']
     else:
       self.scp_cmd = ['scp', '-r']
-      self.rsync_cmd = ['rsync', '-r']
+      self.rsync_cmd = ['rsync', '-r', '--protocol=28']
       
   def upload_scp(self, fr, to, flags = []):
-    self.upload(fr, to, flags, self.scp_cmd)
+    self.upload(fr, to, flags, list(self.scp_cmd))
   
   def upload_rsync(self, fr, to, flags = []):
-    self.upload(fr, to, flags, self.rsync_cmd)    
+    self.upload(fr, to, flags, list(self.rsync_cmd))    
   
   def upload(self, fr, to, flags, cmd):
     for e in flags:
@@ -373,9 +368,9 @@ class DryRunUploader(DryRun):
   def upload(self, fr, to, type):
     self.copy(fr, "%s/%s/%s" % (self.location_root, type, to))    
 
-def maven_build_distribution():
+def maven_build_distribution(version):
   """Builds the distribution in the current working dir"""
-  mvn_commands = [["install", "-Pjmxdoc"],["install", "-Pconfigdoc"], ["deploy", "-Pdistribution"]]
+  mvn_commands = [["clean"], ["install", "-Pjmxdoc"],["install", "-Pgenerate-schema-doc"], ["deploy", "-Pdistribution"]]
     
   for c in mvn_commands:
     c.append("-Dmaven.test.skip.exec=true")

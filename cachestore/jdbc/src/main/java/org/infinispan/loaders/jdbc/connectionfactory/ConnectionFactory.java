@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -37,14 +38,14 @@ public abstract class ConnectionFactory {
     * Constructs a {@link org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory} based on the supplied class
     * name.
     */
-   public static ConnectionFactory getConnectionFactory(String connectionFactoryClass) throws CacheLoaderException {
-      return (ConnectionFactory) Util.getInstance(connectionFactoryClass);
+   public static ConnectionFactory getConnectionFactory(String connectionFactoryClass, ClassLoader classLoader) throws CacheLoaderException {
+      return (ConnectionFactory) Util.getInstance(connectionFactoryClass, classLoader);
    }
 
    /**
     * Starts the connection factory. A pooled factory might be create connections here.
     */
-   public abstract void start(ConnectionFactoryConfig config) throws CacheLoaderException;
+   public abstract void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException;
 
    /**
     * Closes the connection factory, including all allocated connections etc.

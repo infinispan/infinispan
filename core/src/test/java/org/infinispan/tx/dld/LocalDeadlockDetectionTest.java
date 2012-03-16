@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.tx.dld;
 
 import org.infinispan.config.Configuration;
@@ -6,6 +28,7 @@ import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import static org.testng.Assert.assertEquals;
@@ -31,15 +54,21 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    private Object response2;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      Configuration configuration = getDefaultStandaloneConfig(true);
-      configuration.setEnableDeadlockDetection(true);
-      configuration.setUseLockStriping(false);
-      configuration.setExposeJmxStatistics(true);
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      Configuration configuration = createConfig();
+      configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache);
       return cacheManager;
+   }
+
+   protected Configuration createConfig() {
+      Configuration configuration = getDefaultStandaloneConfig(true);
+      configuration.setEnableDeadlockDetection(true);
+      configuration.setUseLockStriping(false);
+      configuration.setExposeJmxStatistics(true);
+      return configuration;
    }
 
    @BeforeMethod
@@ -147,9 +176,8 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    private void testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations firstOperation, PerCacheExecutorThread.Operations secondOperation) {
 
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      System.out.println("After begin");
+      assert PerCacheExecutorThread.OperationsResult.BEGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGIN_TX);
 
       t1.setKeyValue("k1", "value_1_t1");
       t2.setKeyValue("k2", "value_2_t2");
@@ -177,7 +205,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       assert lockManager.getOwner("k1") == lockManager.getOwner("k2");
 
       if (response1 instanceof Exception) {
-         assert PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK == t2.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
+         assertEquals(PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK, t2.execute(PerCacheExecutorThread.Operations.COMMIT_TX));
          assert t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX) instanceof RollbackException;
       } else {
          assert PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK == t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX);

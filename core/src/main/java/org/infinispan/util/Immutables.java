@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,25 +25,20 @@ package org.infinispan.util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Factory for generating immutable type wrappers.
@@ -73,18 +69,30 @@ public class Immutables {
    }
 
    /**
+    * 
     * Creates an immutable copy of the list.
     *
     * @param list the list to copy
     * @return the immutable copy
     */
-   public static <T> List<T> immutableListCopy(List<? extends T> list) {
+   public static <T> List<T> immutableListCopy(List<T> list) {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
-      if (list.size() == 1) return Collections.<T>singletonList(list.get(0));
+      if (list.size() == 1) return Collections.singletonList(list.get(0));
       return new ImmutableListCopy<T>(list);
    }
 
+   /**
+    * Creates an immutable copy of the properties.
+    *
+    * @param properties the TypedProperties to copy
+    * @return the immutable copy
+    */
+   public static TypedProperties immutableTypedPropreties(TypedProperties properties) {
+      if (properties == null) return null;
+      return new ImmutableTypedProperties(properties);
+   }
+   
    /**
     * Wraps an array with an immutable list. There is no copying involved.
     *
@@ -133,10 +141,10 @@ public class Immutables {
     * @param set the set to copy from
     * @return an immutable set copy
     */
-   public static <T> Set<T> immutableSetCopy(Set<? extends T> set) {
+   public static <T> Set<T> immutableSetCopy(Set<T> set) {
       if (set == null) return null;
       if (set.isEmpty()) return Collections.emptySet();
-      if (set.size() == 1) return Collections.<T>singleton(set.iterator().next());
+      if (set.size() == 1) return Collections.singleton(set.iterator().next());
       Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
       if (copy == null)
          // Set uses Collection copy-ctor
@@ -164,12 +172,12 @@ public class Immutables {
     * @param map the map to copy from
     * @return an immutable map copy
     */
-   public static <K, V> Map<K, V> immutableMapCopy(Map<? extends K, ? extends V> map) {
+   public static <K, V> Map<K, V> immutableMapCopy(Map<K, V> map) {
       if (map == null) return null;
       if (map.isEmpty()) return Collections.emptyMap();
       if (map.size() == 1) {
-         Map.Entry<? extends K, ? extends V> me = map.entrySet().iterator().next();
-         return Collections.<K,V>singletonMap(me.getKey(), me.getValue());
+         Map.Entry<K, V> me = map.entrySet().iterator().next();
+         return Collections.singletonMap(me.getKey(), me.getValue());
       }
 
       Map<? extends K, ? extends V> copy = ObjectDuplicator.duplicateMap(map);
@@ -188,10 +196,10 @@ public class Immutables {
     * @param collection the collection to copy
     * @return an immutable copy
     */
-   public static <T> Collection<T> immutableCollectionCopy(Collection<? extends T> collection) {
+   public static <T> Collection<T> immutableCollectionCopy(Collection<T> collection) {
       if (collection == null) return null;
       if (collection.isEmpty()) return Collections.emptySet();
-      if (collection.size() == 1) return Collections.<T>singleton(collection.iterator().next());
+      if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
 
       Collection<? extends T> copy = ObjectDuplicator.duplicateCollection(collection);
       if (copy == null)
@@ -223,17 +231,6 @@ public class Immutables {
       return null;
    }
 
-   public static <T> ReversibleOrderedSet<T> immutableReversibleOrderedSetCopy(ReversibleOrderedSet<T> set) {
-      Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
-      if (copy == null)
-         // Set uses Collection copy-ctor
-         copy = attemptCopyConstructor(set, ReversibleOrderedSet.class);
-      if (copy == null)
-         copy = new VisitableBidirectionalLinkedHashSet<T>(false, set);
-
-      return new ImmutableReversibleOrderedSetWrapper<T>(copy);
-   }
-
    /**
     * Wraps a {@link Map.Entry}} with an immutable {@link Map.Entry}}. There is no copying involved.
     *
@@ -254,7 +251,7 @@ public class Immutables {
       return new ImmutableInternalCacheEntry(entry);
    }
 
-   public interface Immutable {
+   public interface  Immutable {
    }
 
    /*
@@ -451,6 +448,10 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      public void commit(DataContainer container, EntryVersion newVersion) {
+         throw new UnsupportedOperationException();
+      }
+
       @SuppressWarnings("unchecked")
       public boolean equals(Object o) {
          if (!(o instanceof InternalCacheEntry))
@@ -484,6 +485,10 @@ public class Immutables {
          return entry.getLastUsed();
       }
 
+      public boolean isExpired(long now) {
+         return entry.isExpired(now);
+      }
+
       public boolean isExpired() {
          return entry.isExpired();
       }
@@ -504,11 +509,20 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public void touch(long currentTimeMillis) {
+         throw new UnsupportedOperationException();
+      }
+
+      public boolean undelete(boolean doUndelete) {
+         throw new UnsupportedOperationException();
+      }
+
       public void reincarnate() {
          throw new UnsupportedOperationException();
       }
 
-      public void commit(DataContainer container) {
+      public void setVersion(EntryVersion version) {
          throw new UnsupportedOperationException();
       }
 
@@ -536,6 +550,10 @@ public class Immutables {
          return entry.isRemoved();
       }
 
+      public boolean isEvicted() {
+         return entry.isEvicted();
+      }
+
       public boolean isValid() {
          return entry.isValid();
       }
@@ -552,13 +570,20 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      public void setEvicted(boolean evicted) {
+         entry.setEvicted(evicted);
+      }
+
       public void setValid(boolean valid) {
          throw new UnsupportedOperationException();
       }
 
-      @Override
       public boolean isLockPlaceholder() {
          return entry.isLockPlaceholder();
+      }
+
+      public EntryVersion getVersion() {
+         return entry.getVersion();
       }
 
       public InternalCacheEntry clone() {
@@ -595,6 +620,10 @@ public class Immutables {
 
       public Object getValue() {
          return entry.getValue();
+      }
+
+      public boolean isExpired(long now) {
+         return entry.isExpired(now);
       }
 
       public boolean isExpired() {
@@ -739,5 +768,77 @@ public class Immutables {
          return Util.<Class<? extends Map>>asSet(ImmutableMapWrapper.class);
       }
    }
+   
+   private static class ImmutableTypedProperties extends TypedProperties {
+      
+      ImmutableTypedProperties(TypedProperties properties) {
+         super();
+         if (properties != null && !properties.isEmpty()) {
+            for (Map.Entry<Object, Object> e: properties.entrySet()) super.put(e.getKey(), e.getValue());
+         }
+      }
+
+      @Override
+      public synchronized void clear() {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public Set<java.util.Map.Entry<Object, Object>> entrySet() {
+         return new ImmutableEntrySetWrapper<Object, Object>(super.entrySet());
+      }
+      
+      @Override
+      public Set<Object> keySet() {
+         return new ImmutableSetWrapper<Object>(super.keySet());
+      }
+      
+      @Override
+      public synchronized void load(InputStream inStream) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void load(Reader reader) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void loadFromXML(InputStream in) throws IOException, InvalidPropertiesFormatException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized Object put(Object key, Object value) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void putAll(Map<?, ?> t) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized Object remove(Object key) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized TypedProperties setProperty(String key, String value) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public Set<String> stringPropertyNames() {
+         return new ImmutableSetWrapper<String>(super.stringPropertyNames());
+      }
+      
+      @Override
+      public Collection<Object> values() {
+         return new ImmutableCollectionWrapper<Object>(super.values());
+      }
+
+   }
+
 
 }

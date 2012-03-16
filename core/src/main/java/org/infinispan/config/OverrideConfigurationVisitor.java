@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -48,6 +49,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private DeadlockDetectionType deadlockDetectionType = null;
    private EvictionType evictionType = null;
    private ExpirationType expirationType = null;
+   private GroupsConfiguration groupsConfiguration = null;
    private HashType hashType = null;
    private L1Type l1Type = null;
    private LockingType lockingType = null;
@@ -56,6 +58,9 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private TransactionType transactionType = null;
    private UnsafeType unsafeType = null;
    private QueryConfigurationBean indexingType = null;
+   private RecoveryType recoveryType = null;
+   private StoreAsBinary storeAsBinary = null;
+   private DataContainerType dataContainerType;
 
    public void override(OverrideConfigurationVisitor override) {
       
@@ -77,15 +82,19 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(deadlockDetectionType, override.deadlockDetectionType);
       overrideFields(evictionType, override.evictionType);
       overrideFields(expirationType, override.expirationType);
+      overrideFields(groupsConfiguration, override.groupsConfiguration);
       overrideFields(hashType, override.hashType);
       overrideFields(l1Type, override.l1Type);
       overrideFields(lockingType, override.lockingType);
       overrideFields(stateRetrievalType, override.stateRetrievalType);
       overrideFields(syncType, override.syncType);
       overrideFields(transactionType, override.transactionType);
+      overrideFields(recoveryType, override.recoveryType);
       overrideFields(unsafeType, override.unsafeType);
       overrideFields(indexingType, override.indexingType);
-      overrideFields(customInterceptorsType, override.customInterceptorsType);      
+      overrideFields(customInterceptorsType, override.customInterceptorsType);
+      overrideFields(storeAsBinary, override.storeAsBinary);
+      overrideFields(dataContainerType, override.dataContainerType);
    }
 
    private void overrideFields(AbstractConfigurationBean bean, AbstractConfigurationBean overrides) {
@@ -93,6 +102,9 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
          // does this component have overridden fields?
          for (String overridenField : overrides.overriddenConfigurationElements) {
             try {
+               // If the original configuration option has overriden fields,
+               // when overriding maintain the overriden state
+               bean.overriddenConfigurationElements.add(overridenField);
                ReflectionUtil.setValue(bean, overridenField, ReflectionUtil.getValue(overrides,overridenField));
             } catch (Exception e1) {
                throw new CacheException("Could not apply value for field " + overridenField
@@ -141,6 +153,11 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    public void visitExpirationType(ExpirationType bean) {
       expirationType = bean;
    }
+   
+   @Override
+   public void visitGroupConfig(GroupsConfiguration bean) {
+      groupsConfiguration = bean;
+   }
 
    @Override
    public void visitHashType(HashType bean) {
@@ -181,4 +198,20 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
       indexingType = bean;
    }
+
+   @Override
+   public void visitRecoveryType(RecoveryType config) {
+      this.recoveryType = config;
+   }
+
+   @Override
+   public void visitStoreAsBinaryType(StoreAsBinary config) {
+      this.storeAsBinary = config;
+   }
+
+   @Override
+   public void visitDataContainerType(DataContainerType bean) {
+      this.dataContainerType = bean;
+   }
+
 }

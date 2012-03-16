@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,12 +22,13 @@
  */
 package org.infinispan.lucene;
 
-import java.io.FileNotFoundException;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Collects operations on the existing fileList, stored as a Set<String> having key
@@ -36,31 +38,38 @@ import org.infinispan.util.concurrent.ConcurrentHashSet;
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
-class FileListOperations {
-   
+final class FileListOperations {
+
+   private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private final FileListCacheKey fileListCacheKey;
    private final AdvancedCache cache;
    private final String indexName;
+   private final AdvancedCache cacheNoRetrieve;
 
    FileListOperations(AdvancedCache cache, String indexName){
       this.cache = cache;
+      this.cacheNoRetrieve = cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }
-   
+
    /**
     * @return the current list of files being part of the index 
     */
    Set<String> getFileList() {
-      Set<String> fileList = (Set<String>) cache.withFlags(Flag.SKIP_LOCKING).get(fileListCacheKey);
+      Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
       if (fileList == null) {
          fileList = new ConcurrentHashSet<String>();
          Set<String> prev = (Set<String>) cache.putIfAbsent(fileListCacheKey, fileList);
-         return prev == null ? fileList : prev;
+         if ( prev != null ) {
+            fileList = prev;
+         }
       }
-      else {
-         return fileList;
-      }
+      if (trace)
+         log.trace("Refreshed file listing view");
+      return fileList;
    }
 
    /**
@@ -71,7 +80,9 @@ class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.remove(fileName);
       if (done) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_LOAD).put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace)
+            log.trace("Updated file listing: removed " + fileName);
       }
    }
    
@@ -83,7 +94,9 @@ class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.add(fileName);
       if (done) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace)
+            log.trace("Updated file listing: added " + fileName);
       }
    }
    
@@ -91,9 +104,9 @@ class FileListOperations {
     * @param fileName
     * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
     */
-   FileMetadata getFileMetadata(String fileName) throws FileNotFoundException {
+   FileMetadata getFileMetadata(String fileName) {
       FileCacheKey key = new FileCacheKey(indexName, fileName);
-      FileMetadata metadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      FileMetadata metadata = (FileMetadata) cache.get(key);
       return metadata;
    }
 
@@ -107,7 +120,11 @@ class FileListOperations {
       boolean doneAdd = fileList.add(toAdd);
       boolean doneRemove = fileList.remove(toRemove);
       if (doneAdd || doneRemove) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
+         if (trace) {
+            if (doneAdd) log.trace("Updated file listing: added " + toAdd);
+            if (doneRemove) log.trace("Updated file listing: removed " + toRemove);
+         }
       }
    }
 

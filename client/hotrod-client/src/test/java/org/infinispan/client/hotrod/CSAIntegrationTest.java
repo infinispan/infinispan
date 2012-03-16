@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
@@ -99,21 +121,41 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
+      setHotRodProtocolVersion(props);
       remoteCacheManager = new RemoteCacheManager(props);
       remoteCache = remoteCacheManager.getCache();
 
       tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
    }
 
-   @AfterClass
+   protected void setHotRodProtocolVersion(Properties props) {
+      // No-op, use default Hot Rod protocol version
+   }
+
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      super.destroy();
-      remoteCacheManager.stop();
+      try {
+         if (remoteCacheManager != null) remoteCacheManager.stop();
+      } finally {
+         try {
+            try {
+               if (hotRodServer1 != null) hotRodServer1.stop();
+            } finally {
+               try {
+                  if (hotRodServer2 != null) hotRodServer2.stop();
+               } finally {
+                  if (hotRodServer3 != null) hotRodServer3.stop();
+               }
+            }
+         } finally {
+            super.destroy();
+         }
+      }
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {
-      assert tcpConnectionFactory.getServers().size() == 1;
+      assert tcpConnectionFactory.getServers().size() == 3;
       for (int i = 0; i < 10; i++) {
          remoteCache.put("k", "v");
          if (tcpConnectionFactory.getServers().size() == 3) break;

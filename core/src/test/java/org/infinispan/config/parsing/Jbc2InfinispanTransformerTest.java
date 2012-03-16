@@ -1,9 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.config.parsing;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
@@ -20,7 +41,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -43,16 +63,17 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          Thread.currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName("all.xml");
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         convertor.parse(fileName, baos, XSLT_FILE);
+         convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
+
+         //System.out.println("Output file is:\n" + baos.toString());
 
          EmbeddedCacheManager ecm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()), false);
          Configuration defaultConfig = ecm.getDefaultConfiguration();
          GlobalConfiguration globalConfig = ecm.getGlobalConfiguration();
          assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
          assert defaultConfig.getLockAcquisitionTimeout() == 234000;
-         assert defaultConfig.isWriteSkewCheck();
          assert defaultConfig.getConcurrencyLevel() == 510;
-         assert defaultConfig.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
+         assert defaultConfig.getTransactionManagerLookup().getClass().getName().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
          assert !defaultConfig.isSyncCommitPhase();
          assert defaultConfig.isSyncRollbackPhase();
          assert defaultConfig.isExposeJmxStatistics();
@@ -61,7 +82,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
          assert !defaultConfig.isInvocationBatchingEnabled();
          assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
-         assert defaultConfig.isUseLazyDeserialization();
+         assert defaultConfig.isStoreAsBinary();
          assert globalConfig.getClusterName().equals("JBossCache-cluster");
          assert defaultConfig.getCacheMode().equals(Configuration.CacheMode.INVALIDATION_SYNC);
          assert defaultConfig.getStateRetrievalTimeout() == 2120000;
@@ -69,7 +90,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert defaultConfig.getEvictionStrategy().equals(EvictionStrategy.LRU);
          assert defaultConfig.getEvictionMaxEntries() == 5001;
          assert defaultConfig.getExpirationMaxIdle() == 1001 : "Received " + defaultConfig.getExpirationLifespan();
-         assert defaultConfig.getEvictionWakeUpInterval() == 50015;
+         assert defaultConfig.getExpirationWakeUpInterval() == 50015;
 
          ConcurrentMap<String, Configuration> configurationOverrides = (ConcurrentMap<String, Configuration>) TestingUtil.extractField(ecm, "configurationOverrides");
 
@@ -77,13 +98,13 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert regionOne != null;
          assert regionOne.getEvictionStrategy().equals(EvictionStrategy.LRU);
          assert regionOne.getExpirationMaxIdle() == 2002;
-         assert regionOne.getEvictionWakeUpInterval() == 50015;
+         assert regionOne.getExpirationWakeUpInterval() == 50015;
 
          Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
          assert regionTwo != null;
          assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
          assert regionTwo.getEvictionMaxEntries() == 3003;
-         assert regionTwo.getEvictionWakeUpInterval() == 50015;
+         assert regionTwo.getExpirationWakeUpInterval() == 50015;
 
 
          CacheLoaderManagerConfig loaderManagerConfig = defaultConfig.getCacheLoaderManagerConfig();
@@ -121,7 +142,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          for (String name : testFiles) {
             String fileName = getFileName(name);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            convertor.parse(fileName, baos, XSLT_FILE);
+            convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
          }
       } finally {

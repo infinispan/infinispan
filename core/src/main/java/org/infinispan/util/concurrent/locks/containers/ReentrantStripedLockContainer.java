@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,6 +25,7 @@ package org.infinispan.util.concurrent.locks.containers;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -34,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @ThreadSafe
-public class ReentrantStripedLockContainer extends AbstractStripedLockContainer {
+public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<ReentrantLock> {
    ReentrantLock[] sharedLocks;
 
    /**
@@ -70,7 +72,7 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer 
       return sharedLocks.length;
    }
 
-   public final boolean ownsLock(Object object, Object owner) {
+   public final boolean ownsLock(Object object, Object ignored) {
       ReentrantLock lock = getLock(object);
       return lock.isHeldByCurrentThread();
    }
@@ -84,5 +86,15 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer 
       return "ReentrantStripedLockContainer{" +
             "sharedLocks=" + (sharedLocks == null ? null : Arrays.asList(sharedLocks)) +
             '}';
+   }
+
+   @Override
+   protected void unlock(ReentrantLock l, Object unused) {
+      l.unlock();
+   }
+
+   @Override
+   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
+      return lock.tryLock(timeout, unit);
    }
 }

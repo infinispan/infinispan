@@ -1,14 +1,35 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.context.impl;
-
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Common features of transaction and invocation contexts
@@ -19,11 +40,14 @@ import java.util.Set;
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
 
-   protected volatile EnumSet<Flag> flags;
+   protected EnumSet<Flag> flags;
 
    // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
    // an EnumSet.
    protected byte contextFlags = 0;
+   private Address origin;
+   // Class loader associated with this invocation which supports AdvancedCache.with() functionality
+   private ClassLoader classLoader;
 
    // if this or any context subclass ever needs to store a boolean, always use a context flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
@@ -104,6 +128,14 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       else
          this.flags.addAll(flags);
    }
+   
+   public Address getOrigin() {
+	   return origin;
+   }
+   
+   public void setOrigin(Address origin) {
+	   this.origin = origin;
+   }
 
    public void reset() {
       flags = null;
@@ -115,12 +147,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    public boolean hasLockedKey(Object key) {
-      CacheEntry e = lookupEntry(key);
-      if (e == null) {
-         return getLookedUpEntries().containsKey(key); // this will chk if the key is present even if the value is null
-      } else {
-         return e.isChanged();
-      }
+      return getLockedKeys().contains(key);
    }
 
 
@@ -143,13 +170,14 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       }
    }
 
-   public Set<Object> getLockedKeys() {
-      Set<Object> result = new HashSet<Object>();
-      for (Object key : getLookedUpEntries().keySet()) {
-         if (hasLockedKey(key))
-            result.add(key);
-      }
-      return result;
+   @Override
+   public ClassLoader getClassLoader() {
+      return classLoader;
+   }
+
+   @Override
+   public void setClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
    }
 
    @Override

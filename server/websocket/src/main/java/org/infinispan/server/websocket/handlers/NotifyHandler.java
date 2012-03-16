@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2006, JBoss Inc., and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,17 +22,17 @@
  */
 package org.infinispan.server.websocket.handlers;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.CacheListener;
+import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
-import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Handler for the "notify" and "unnotify" operations.
@@ -40,7 +41,7 @@ import org.json.JSONObject;
  */
 public class NotifyHandler implements OpHandler {
 	
-	private Map<Cache, CacheListener> listeners = new ConcurrentHashMap<Cache, CacheListener>();
+	private Map<Cache, CacheListener> listeners = ConcurrentMapFactory.makeConcurrentMap();
 
 	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String opCode = (String) opPayload.get(OpHandler.OP_CODE);

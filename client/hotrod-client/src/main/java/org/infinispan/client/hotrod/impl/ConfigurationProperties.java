@@ -1,16 +1,38 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod.impl;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.util.TypedProperties;
-
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Encapsulate all config properties here
@@ -31,13 +53,21 @@ public class ConfigurationProperties {
    public static final String VALUE_SIZE_ESTIMATE = "infinispan.client.hotrod.value_size_estimate";
    public static final String FORCE_RETURN_VALUES = "infinispan.client.hotrod.force_return_values";
    public static final String HASH_FUNCTION_PREFIX = "infinispan.client.hotrod.hash_function_impl";
-   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE ="infinispan.client.hotrod.default_executor_factory.queue_size";
-   
+   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE = "infinispan.client.hotrod.default_executor_factory.queue_size";
+   public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
+   public static final String CONNECT_TIMEOUT = "infinispan.client.hotrod.connect_timeout";
+   public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
+
    // defaults
 
    private static final int DEFAULT_KEY_SIZE = 64;
    private static final int DEFAULT_VALUE_SIZE = 512;
    private static final int DEFAULT_HOTROD_PORT = 11222;
+   private static final int DEFAULT_SO_TIMEOUT = 60000;
+   private static final int DEFAULT_CONNECT_TIMEOUT = 60000;
+   public static final String PROTOCOL_VERSION_11 = "1.1";
+   public static final String PROTOCOL_VERSION_10 = "1.0";
+   private static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_11;
 
    private final TypedProperties props;
 
@@ -59,10 +89,10 @@ public class ConfigurationProperties {
       return props.getProperty(TRANSPORT_FACTORY, TcpTransportFactory.class.getName());
    }
 
-   public Collection<InetSocketAddress> getServerList() {
-      Set<InetSocketAddress> addresses = new HashSet<InetSocketAddress>();
+   public Collection<SocketAddress> getServerList() {
+      Set<SocketAddress> addresses = new HashSet<SocketAddress>();
       String servers = props.getProperty(SERVER_LIST, "127.0.0.1:" + DEFAULT_HOTROD_PORT);
-      for (String server: servers.split(";")) {
+      for (String server : servers.split(";")) {
          String[] components = server.trim().split(":");
          String host = components[0];
          int port = DEFAULT_HOTROD_PORT;
@@ -71,7 +101,7 @@ public class ConfigurationProperties {
       }
 
       if (addresses.isEmpty()) throw new IllegalStateException("No Hot Rod servers specified!");
-      
+
       return addresses;
    }
 
@@ -84,7 +114,11 @@ public class ConfigurationProperties {
    }
 
    public int getDefaultExecutorFactoryPoolSize() {
-      return 99; // TODO
+      return props.getIntProperty(DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, 99);
+   }
+
+   public int getDefaultExecutorFactoryQueueSize() {
+      return props.getIntProperty(DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE, 10000);
    }
 
    public boolean getTcpNoDelay() {
@@ -114,4 +148,17 @@ public class ConfigurationProperties {
    public Properties getProperties() {
       return props;
    }
+
+   public int getSoTimeout() {
+      return props.getIntProperty(SO_TIMEOUT, DEFAULT_SO_TIMEOUT);
+   }
+
+   public String getProtocolVersion() {
+      return props.getProperty(PROTOCOL_VERSION, DEFAULT_PROTOCOL_VERSION);
+   }
+
+   public int getConnectTimeout() {
+      return props.getIntProperty(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
+   }
+
 }

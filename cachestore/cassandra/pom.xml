@@ -1,82 +1,91 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.infinispan</groupId>
-		<artifactId>infinispan-cachestore-parent</artifactId>
-		<version>5.0.0-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
-	<artifactId>infinispan-cachestore-cassandra</artifactId>
-	<packaging>bundle</packaging>
-	<name>Infinispan CassandraCacheStore</name>
-	<description>Infinispan CassandraCacheStore module</description>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-parent</artifactId>
+      <version>5.2.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+   <artifactId>infinispan-cachestore-cassandra</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan CassandraCacheStore</name>
+   <description>Infinispan CassandraCacheStore module</description>
 
-	<properties>
-		<test.src.dir>src/test/java</test.src.dir>
-	</properties>
+   <properties>
+      <test.src.dir>src/test/java</test.src.dir>
+   </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>net.dataforte.cassandra</groupId>
-			<artifactId>cassandra-connection-pool</artifactId>
-			<version>${version.cassandra.connection.pool}</version>
-		</dependency>
+   <dependencies>
+      <dependency>
+         <groupId>net.dataforte.cassandra</groupId>
+         <artifactId>cassandra-connection-pool</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.cassandra</groupId>
+         <artifactId>cassandra-thrift</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.cassandra</groupId>
+         <artifactId>cassandra-all</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-simple</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
 
-		<dependency>
-			<groupId>org.apache.cassandra</groupId>
-			<artifactId>apache-cassandra</artifactId>
-			<version>${version.cassandra}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>${version.slf4j}</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-
-	<build>
-		<testSourceDirectory>${test.src.dir}</testSourceDirectory>
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<filtering>true</filtering>
-			</testResource>
-		</testResources>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.4.3</version>
-				<configuration>
-					<forkMode>once</forkMode>
-					<parallel>false</parallel>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Export-Package>
-							${project.groupId}.loaders.cassandra.*;version=${project.version};-split-package:=error
-						</Export-Package>
-					</instructions>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<repositories>
-		<repository>
-			<id>dataforte</id>
-			<url>http://www.dataforte.net/listing/maven/releases</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+   <build>
+      <testSourceDirectory>${test.src.dir}</testSourceDirectory>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <forkMode>pertest</forkMode>
+               <parallel>false</parallel>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.loaders.cassandra.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

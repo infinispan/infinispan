@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2006, JBoss Inc., and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -167,8 +168,6 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
             handler.handleOp(payload, cache, ctx);
          }
       } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
       }
    }
 

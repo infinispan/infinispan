@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,18 +22,17 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
+import org.infinispan.config.Configuration;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -52,57 +52,49 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
-//   private static final int VERSION_400 = 400;
-//   private static final int VERSION_410 = 410;
-   private static final int VERSION_500 = 500;
-   private static final int CUSTOM_MARSHALLER = 999;
+   private static final int VERSION_510 = 510;
 
    private final JBossMarshaller defaultMarshaller;
-   private ClassLoader loader;
-   private RemoteCommandsFactory remoteCommandsFactory;
-   private GlobalConfiguration globalCfg;
+   private String cacheName;
 
    public VersionAwareMarshaller() {
       defaultMarshaller = new JBossMarshaller();
    }
 
-   @Inject
-   public void inject(ClassLoader loader, RemoteCommandsFactory remoteCommandsFactory, GlobalConfiguration globalCfg) {
-      this.loader = loader;
-      this.remoteCommandsFactory = remoteCommandsFactory;
-      this.globalCfg = globalCfg;
+   public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc, ExternalizerTable extTable) {
+      ClassLoader myClassLoader;
+      if (cfg == null) {
+         myClassLoader = loader;
+         this.cacheName = null;
+      } else {
+         myClassLoader = cfg.getClassLoader();
+         this.cacheName = cfg.getName();
+      }
+
+      this.defaultMarshaller.inject(extTable, myClassLoader, icc);
    }
 
-   @Start(priority = 9)
-   // should start before Transport component
-   public void start() {
-      defaultMarshaller.start(loader, remoteCommandsFactory, this, globalCfg);
-   }
-
-   @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       defaultMarshaller.stop();
-   }
-
-   protected int getCustomMarshallerVersionInt() {
-      return CUSTOM_MARSHALLER;
    }
 
    @Override
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutput out = startObjectOutput(baos, false);
+      ObjectOutput out = startObjectOutput(baos, false, estimatedSize);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
       } catch (java.io.NotSerializableException nse) {
          if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
-         if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
-         if (ioe.getCause() instanceof InterruptedException)
+         if (ioe.getCause() instanceof InterruptedException) {
+            if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());
             throw (InterruptedException) ioe.getCause();
-         else
+         } else {
+            log.errorMarshallingObject(ioe);
             throw ioe;
+         }
       } finally {
          finishObjectOutput(out);
       }
@@ -123,17 +115,23 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    }
 
    @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
-      ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException {
+      ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant, estimatedSize);
       try {
-         out.writeShort(VERSION_500);
-         if (trace) log.trace("Wrote version %s", VERSION_500);
+         final int version = VERSION_510;
+         out.writeShort(version);
+         if (trace) log.tracef("Wrote version %s", version);
       } catch (Exception e) {
          finishObjectOutput(out);
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         log.unableToReadVersionId();
          throw new IOException("Unable to read version id from first two bytes of stream : " + e.getMessage());
       }
       return out;
+   }
+
+   @Deprecated @Override
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+      return startObjectOutput(os, isReentrant, 512);
    }
 
    @Override
@@ -159,11 +157,11 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       int versionId;
       try {
          versionId = in.readShort();
-         if (trace) log.trace("Read version %s", versionId);
+         if (trace) log.tracef("Read version %s", versionId);
       }
       catch (Exception e) {
          finishObjectInput(in);
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         log.unableToReadVersionId();
          throw new IOException("Unable to read version id from first two bytes of stream: " + e.getMessage());
       }
       return in;
@@ -185,6 +183,12 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
        */
       try {
          return defaultMarshaller.objectFromObjectStream(in);
+      } catch (EOFException e) {
+         IOException ee = new EOFException(
+            "The stream ended unexpectedly.  Please check whether the source of " +
+               "the stream encountered any issues generating the stream.");
+         ee.initCause(e);
+         throw ee;
       } catch (IOException ioe) {
          if (trace) log.trace("Log exception reported", ioe); 
          if (ioe.getCause() instanceof InterruptedException)
@@ -195,7 +199,11 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
+   public boolean isMarshallable(Object o) throws Exception {
       return defaultMarshaller.isMarshallable(o);
+   }
+
+   public String getCacheName() {
+      return cacheName;
    }
 }

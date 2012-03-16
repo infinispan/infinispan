@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod.retry;
 
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
@@ -12,6 +34,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 
 import java.util.Properties;
 
@@ -41,9 +64,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-
       assert cleanupAfterMethod();
-
 
       config = getCacheConfig();
       CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -60,10 +81,6 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       hrServ2CacheManager.put(getAddress(hotRodServer3), cm3);
 
-      manager(0).getCache();
-      manager(1).getCache();
-      manager(2).getCache();
-
       waitForClusterToForm();
 
       Properties clientConfig = new Properties();
@@ -78,15 +95,35 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       addInterceptors();
 
       assert super.cacheManagers.size() == 3;
+   }
 
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      // Since cleanup happens after method,
+      // make sure the rest of components are also cleaned up.
+      try {
+         if (remoteCache != null) remoteCache.stop();
+      } finally {
+         try {
+            if (remoteCacheManager != null) remoteCacheManager.stop();
+         } finally {
+            try {
+               if (hotRodServer1 != null) hotRodServer1.stop();
+            } finally {
+               try {
+                  if (hotRodServer2 != null) hotRodServer2.stop();
+               } finally {
+                  try {
+                     if (hotRodServer3 != null) hotRodServer3.stop();
+                  } finally {
+                     super.clearContent(); // Now stop the cache managers
+                  }
+               }
+            }
+         }
+      }
    }
 
    protected abstract Configuration getCacheConfig();
-
-   protected void waitForClusterToForm() {
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 3, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
-   }
 }

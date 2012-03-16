@@ -1,217 +1,194 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.transport.{Decoder, Encoder}
-import org.infinispan.config.Configuration
+import logging.Log
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
-import java.util.concurrent.TimeUnit._
-import org.infinispan.{CacheException, Cache}
-import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.{Properties, Random}
-import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
+import java.util.Properties
+import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
+import org.infinispan.util.{TypedProperties, ByteArrayKey}
 import org.infinispan.server.core.Main._
+import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
+import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
+import org.infinispan.Cache
+import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryCreated}
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
+import org.infinispan.remoting.transport.{Transport, Address}
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
  * on startup and shutdown.
  *
+ * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers
+ * This should safe some memory for the local case and the code should be cleaner
+ * TODO: In 5.2, convert the clustered hot rod server to new configuration too
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
+class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    import HotRodServer._
    private var isClustered: Boolean = _
-   private var address: TopologyAddress = _
-   private var topologyCache: Cache[String, TopologyView] = _
-   private val rand = new Random
-   private val maxWaitTime = SECONDS.toMillis(30) // TODO: Make this configurable?
+   private var clusterAddress: Address = _
+   private var address: ServerAddress = _
+   private var addressCache: Cache[Address, ServerAddress] = _
+   private var topologyUpdateTimeout: Long = _
+   private var viewId: Int = _
 
-   def getAddress: TopologyAddress = address
+   def getAddress: ServerAddress = address
 
-   override def getEncoder: Encoder = new HotRodEncoder(getCacheManager)
+   def getViewId: Int = viewId
 
-   override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
+   def setViewId(viewId: Int) {
+      trace("Set view id to %d", viewId)
+      this.viewId = viewId
+   }
+
+   override def getEncoder = new HotRodEncoder(getCacheManager, this)
+
+   override def getDecoder : HotRodDecoder = {
+      val hotRodDecoder = new HotRodDecoder(getCacheManager, transport)
+      hotRodDecoder.versionGenerator = this.versionGenerator
+      hotRodDecoder
+   }
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
+      val defaultPort = 11222
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
-      if (isClustered)
-         defineTopologyCacheConfig(cacheManager)
-         
-      super.start(properties, cacheManager, 11222)
-   }
-
-   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
-      // Start rest of the caches and self to view once we know for sure that we need to start
-      // and we know that the rank calculator listener is registered
-
-      // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
-         cacheManager.getCache(cacheName)
-
-      // If clustered, set up a cache for topology information
       if (isClustered) {
-         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST, getHost)
-         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT, getPort)
+         val typedProps = TypedProperties.toTypedProperties(properties)
+         defineTopologyCacheConfig(cacheManager, typedProps)
+         // Retrieve host and port early on to populate topology cache
+         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST,
+               typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT, true))
+         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT,
+               typedProps.getIntProperty(PROP_KEY_PORT, defaultPort, true))
          if (isDebugEnabled)
-            debug("Externally facing address is {0}:{1}", externalHost, externalPort)
+            debug("Externally facing address is %s:%d", externalHost, externalPort)
 
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
 
+      super.start(properties, cacheManager, defaultPort)
+   }
+
+   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
+         sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
+      // Start predefined caches
+      preStartCaches
+
       super.startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
    }
 
+   override def startDefaultCache = {
+      cacheManager.getCache()
+   }
+
+   private def preStartCaches {
+      // Start defined caches to avoid issues with lazily started caches
+      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
+         if (cacheName != ADDRESS_CACHE_NAME) {
+            cacheManager.getCache(cacheName)
+         }
+      }
+   }
+
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
-      topologyCache = cacheManager.getCache(TopologyCacheName)
-      address = TopologyAddress(host, port, Map.empty, cacheManager.getAddress)
-      val isDebug = isDebugEnabled
-      if (isDebug) debug("Local topology address is {0}", address)
-      cacheManager.addListener(new CrashedMemberDetectorListener)
-      val updated = updateTopologyView(false, System.currentTimeMillis()) { currentView =>
-         if (currentView != null) {
-            val newMembers = currentView.members ::: List(address)
-            val newView = TopologyView(currentView.topologyId + 1, newMembers)
-            val updated = topologyCache.replace("view", currentView, newView)
-            if (isDebug && updated) debug("Added {0} to topology, new view is {1}", address, newView)
-            updated
-         } else {
-            val newMembers = List(address)
-            val newView = TopologyView(1, newMembers)
-            val updated = topologyCache.putIfAbsent("view", newView) == null
-            if (isDebug && updated) debug("First member to start, topology view is {0}", newView)
-            updated
-         }
-      }
-      if (!updated)
-         throw new CacheException("Unable to update topology view, so aborting startup")
+      addressCache = cacheManager.getCache(ADDRESS_CACHE_NAME)
+      addressCache.addListener(new ViewIdUpdater(
+            addressCache.getAdvancedCache.getRpcManager.getTransport))
+      clusterAddress = cacheManager.getAddress
+      address = new ServerAddress(host, port)
+      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
+      // Map cluster address to server endpoint address
+      debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
+      addressCache.put(clusterAddress, address)
    }
 
-   private def updateTopologyView(replaced: Boolean, updateStartTime: Long)(f: TopologyView => Boolean): Boolean = {
-      val giveupTime = updateStartTime + maxWaitTime
-      if (replaced || System.currentTimeMillis() > giveupTime) replaced
-      else updateTopologyView(isViewUpdated(f), giveupTime)(f)
+   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
+      cacheManager.defineConfiguration(ADDRESS_CACHE_NAME,
+         createTopologyCacheConfig(typedProps,
+            cacheManager.getGlobalConfiguration.getDistributedSyncTimeout))
    }
 
-   private def isViewUpdated(f: TopologyView => Boolean): Boolean = {
-      val currentView = topologyCache.get("view")
-      val updated = f(currentView)
-      if (!updated) {
-         val minSleepTime = 500
-         val maxSleepTime = 2000 // sleep time between retries
-         var time = rand.nextInt((maxSleepTime - minSleepTime) / 10)
-         time = (time * 10) + minSleepTime;
-         if (isTraceEnabled) trace("Concurrent modification in topology view, sleeping for {0}", Util.prettyPrintTime(time))
-         Thread.sleep(time); // sleep for a while and retry
-      }
-      updated
-   }
+   protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+      val lockTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, TOPO_LOCK_TIMEOUT_DEFAULT, true)
+      val replTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, TOPO_REPL_TIMEOUT_DEFAULT, true)
+      val doStateTransfer = typedProps.getBooleanProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, TOPO_STATE_TRANSFER_DEFAULT, true)
+      topologyUpdateTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT, TOPO_UPDATE_TIMEOUT_DEFAULT, true)
 
-   override def stop {
-      super.stop
-      if (isClustered)
-         removeSelfFromTopologyView
-   }
-
-   protected def removeSelfFromTopologyView {
-      // Graceful shutdown, remove this node as member and install new view
-      val currentView = topologyCache.get("view")
-      // Comparing cluster address should be enough. Full object comparison could fail if hash id map has changed.
-      val newMembers = currentView.members.filterNot(_.clusterAddress == address.clusterAddress)
-      val isDebug = isDebugEnabled
-      if (newMembers.length != (currentView.members.length - 1)) {
-         if (isDebug) debug("Cluster member {0} was not filtered out of the current view {1}", address, currentView)
-      } else {
-         val newView = TopologyView(currentView.topologyId + 1, newMembers)
-         // TODO: Consider replace with 0 lock timeout and fail silently to avoid hold ups. Crash member detector can deal with any failures.
-         val replaced = topologyCache.replace("view", currentView, newView)
-         if (isDebug && !replaced) {
-            debug("Attempt to update topology view failed due to a concurrent modification. " +
-                  "Ignoring since logic to deal with crashed members will deal with it.")
-         } else if (isDebug) {
-            debug("Removed {0} from topology view, new view is {1}", address, newView)
-         }
-      }
-   }
-
-   protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
       val topologyCacheConfig = new Configuration
       topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
-      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+      topologyCacheConfig.setUseReplQueue(false) // Avoid getting mixed up with default config
+      topologyCacheConfig.setSyncReplTimeout(replTimeout) // Milliseconds
+      topologyCacheConfig.setLockAcquisitionTimeout(lockTimeout) // Milliseconds
       topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
       topologyCacheConfig.setExpirationLifespan(-1); // No maximum lifespan
       topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
-      cacheManager.defineConfiguration(TopologyCacheName, topologyCacheConfig)
+      if (doStateTransfer) {
+         topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+         // State transfer timeout should be bigger than the distributed lock timeout
+         topologyCacheConfig.setStateRetrievalTimeout(distSyncTimeout + replTimeout)
+      } else {
+         // Otherwise configure a cluster cache loader
+         val loaderConfigs = new CacheLoaderManagerConfig
+         val clusterLoaderConfig = new ClusterCacheLoaderConfig
+         clusterLoaderConfig.setRemoteCallTimeout(replTimeout)
+         loaderConfigs.addCacheLoaderConfig(clusterLoaderConfig)
+         topologyCacheConfig.setCacheLoaderManagerConfig(loaderConfigs)
+      }
+      topologyCacheConfig
    }
 
-   @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
-   private class CrashedMemberDetectorListener {
+   private[hotrod] def getAddressCache = addressCache
 
-      @ViewChanged
-      def handleViewChange(e: ViewChangedEvent) {
-         val isTrace = isTraceEnabled
-         val cacheManager = e.getCacheManager
-         // Only the coordinator can potentially make modifications related to crashed members.
-         // This is to avoid all nodes trying to make the same modification which would be wasteful and lead to deadlocks.
-         if (cacheManager.isCoordinator) {
-            try {
-               val newMembers = e.getNewMembers
-               val oldMembers = e.getOldMembers
-               // Someone left the cluster, verify whether it did it gracefully or crashed.
-               if (oldMembers.size > newMembers.size) {
-                  val newMembersList = asBuffer(newMembers).toList
-                  val oldMembersList = asBuffer(oldMembers).toList
-                  val goneMembers = oldMembersList.filterNot(newMembersList contains)
-                  val updated = updateTopologyView(false, System.currentTimeMillis()) { currentView =>
-                     if (currentView != null) {
-                        var tmpMembers = currentView.members
-                        for (goneMember <- goneMembers) {
-                           if (isTrace) trace("Old member {0} is not in new view {1}, did it crash?", goneMember, newMembers)
-                           // If old memmber is in topology, it means that it had an abnormal ending
-                           val (isCrashed, crashedTopologyMember) = isOldMemberInTopology(goneMember, currentView)
-                           if (isCrashed) {
-                              if (isTrace) trace("Old member {0} with topology address {1} is still present in Hot Rod topology " +
-                                    "{2}, so must have crashed.", goneMember, crashedTopologyMember, currentView)
-                              tmpMembers = tmpMembers.filterNot(_ == crashedTopologyMember)
-                              if (isTrace) trace("After removal, new Hot Rod topology is {0}", tmpMembers)
-                           }
-                        }
-                        if (tmpMembers.size < currentView.members.size) {
-                           val newView = TopologyView(currentView.topologyId + 1, tmpMembers)
-                           topologyCache.replace("view", currentView, newView)
-                        } else {
-                           true // Mark as topology updated because there was no need to do so
-                        }
-                     } else {
-                        warn("While trying to detect a crashed member, current view returned null")
-                        true
-                     }
-                  }
-                  if (!updated) {
-                     warn("Unable to update topology view after a crashed member left, wait for next view change.")
-                  }
-               }
-            } catch {
-               case t: Throwable => error("Error detecting crashed member", t)
+   /**
+    * Listener that provides guarantees for view id updates. So, a view id will
+    * only be considered to have changed once the address cache has been
+    * updated to add an address from the cache. That way, when the encoder
+    * makes the view id comparison (client provided vs server side view id),
+    * it has the guarantees that the address cache has already been updated.
+    */
+   @Listener
+   class ViewIdUpdater(transport: Transport) {
+
+      @CacheEntryCreated
+      def viewIdUpdate(event: CacheEntryEvent[Address, ServerAddress]) {
+         // Only update view id once cache has been updated
+         if (!event.isPre) {
+            val localViewId = transport.getViewId
+            setViewId(localViewId)
+            if (isTraceEnabled) {
+               log.tracef("Address cache had %s for key %s. View id is now %d",
+                          event.getType, event.getKey, localViewId)
             }
          }
-      }
-
-      private def isOldMemberInTopology(oldMember: Address, view: TopologyView): (Boolean, TopologyAddress) = {
-         // TODO: If members was stored as a map, this would be more efficient
-         for (member <- view.members) {
-            if (member.clusterAddress == oldMember) {
-               return (true, member)
-            }
-         }
-         (false, null)
       }
 
    }
@@ -219,7 +196,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 }
 
 object HotRodServer {
-   val TopologyCacheName = "___hotRodTopologyCache"
+   val ADDRESS_CACHE_NAME = "___hotRodTopologyCache"
 
    def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager): Cache[ByteArrayKey, CacheValue] = {
       if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]

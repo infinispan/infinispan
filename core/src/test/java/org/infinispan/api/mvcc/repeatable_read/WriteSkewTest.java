@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.Cache;
@@ -9,6 +31,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -32,6 +55,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -45,9 +69,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() {
       Configuration c = new Configuration();
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       c.setLockAcquisitionTimeout(200);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
    }
 
    @AfterTest
@@ -109,17 +134,29 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       int nbWriters = 10;
       CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
-      ExecutorService executorService = Executors.newCachedThreadPool();
-      for (int i = 0; i < nbWriters; i++) {
-         log.debug("Schedule execution");
-         Future<Void> future = executorService.submit(new EntryWriter(barrier));
-         futures.add(future);
-      }
-      barrier.await(); // wait for all threads to be ready
-      barrier.await(); // wait for all threads to finish
+      ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+         volatile int i = 0;
+         @Override
+         public Thread newThread(Runnable r) {
+            int ii = i++;
+            return new Thread(r, "EntryWriter-" + ii + ", WriteSkewTest");
+         }
+      });
 
-      log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
-      for (Future<Void> future : futures) future.get();
+      try {
+         for (int i = 0; i < nbWriters; i++) {
+            log.debug("Schedule execution");
+            Future<Void> future = executorService.submit(new EntryWriter(barrier));
+            futures.add(future);
+         }
+         barrier.await(); // wait for all threads to be ready
+         barrier.await(); // wait for all threads to finish
+
+         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+         for (Future<Void> future : futures) future.get();
+      } finally {
+         executorService.shutdownNow();
+      }
    }
 
 
@@ -131,7 +168,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       final CountDownLatch w2Signal = new CountDownLatch(1);
       final CountDownLatch threadSignal = new CountDownLatch(2);
 
-      Thread w1 = new Thread("Writer-1") {
+      Thread w1 = new Thread("Writer-1, WriteSkewTest") {
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -152,7 +189,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          }
       };
 
-      Thread w2 = new Thread("Writer-2") {
+      Thread w2 = new Thread("Writer-2, WriteSkewTest") {
          public void run() {
             boolean didCoundDown = false;
             try {

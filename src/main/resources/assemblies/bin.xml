@@ -1,13 +1,35 @@
 <!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<!--
    This package will build a ZIP containing the following:
 
+   - infinispan-core.jar
+   + lib (contains dependencies for core)
    + modules
-      + core
-         - infinispan-core.jar
-         + lib (contains dependencies)
       + tree
          - infinispan-tree.jar
-         + lib (excluding core)
+         + lib (dependencies for tree, excluding core)
 
       .. etc ...
 
@@ -29,6 +51,8 @@
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
+            <include>org.infinispan:infinispan-api</include>
+            <include>org.infinispan:infinispan-commons</include>
             <include>org.infinispan:infinispan-core</include>
          </includes>
          <sources>
@@ -47,6 +71,7 @@
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                      <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
                      <exclude>org/*</exclude>
                   </excludes>
                </fileSet>
@@ -61,7 +86,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -72,7 +97,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- Log4j XML -->
@@ -109,7 +134,7 @@
          </sources>
 
          <binaries>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory></outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
@@ -118,7 +143,7 @@
             <dependencySets>
                <dependencySet>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>./lib</outputDirectory>
+                  <outputDirectory>/lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -132,8 +157,7 @@
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
             <include>org.infinispan:infinispan-cachestore-jdbm</include>
             <include>org.infinispan:infinispan-cachestore-s3</include>
-            <include>org.infinispan:infinispan-gui-demo</include>
-            <include>org.infinispan:infinispan-jopr-plugin</include>
+            <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
@@ -157,7 +181,8 @@
                      <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
-                     <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
                   </excludes>
                </fileSet>
 
@@ -171,7 +196,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -191,7 +216,7 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -215,6 +240,8 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -224,6 +251,122 @@
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
                   <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
+
+      <!-- GUI demo only! -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-gui-demo</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+
+               <!-- resources -->
+               <!-- Handles the binary data for the EC2 demo -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.dat.gz</include>
+                  </includes>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources/</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <excludes>
+                     <exclude>**/*.sh</exclude>
+                     <exclude>**/*.bat</exclude>
+                     <exclude>**/*.cmd</exclude>
+                     <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
+                     <exclude>**/*.dat.gz</exclude>
+                  </excludes>
+               </fileSet>
+
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.py</include>
+                     <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0755</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/distribution</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.html</include>
+                  </includes>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0644</fileMode>
+               </fileSet>
+
+
+               <!-- EULAs and license files -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.txt</include>
+                  </includes>
+               </fileSet>
+
+            </fileSets>
+
+         </sources>
+
+         <!-- All modules except core and Webapp modules -->
+         <binaries>
+
+            <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+
+            <dependencySets>
+               <dependencySet>
+                  <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
+                     <exclude>infinispan-core*</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                     <exclude>org.infinispan:infinispan-core</exclude>
+                     <exclude>org.infinispan:infinispan-server-rest</exclude>
+                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
+                     <exclude>log4j:log4j</exclude>
+                  </excludes>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
+                  <outputDirectory>modules/demos/${module.basedir.name}/lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -275,7 +418,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -286,7 +429,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -313,6 +456,11 @@
       <fileSet>
          <directory>target/site/apidocs</directory>
          <outputDirectory>doc/apidocs</outputDirectory>
+      </fileSet>
+
+      <fileSet>
+         <directory>core/target/xsd_doc</directory>
+         <outputDirectory>doc/configdocs</outputDirectory>
       </fileSet>
 
    </fileSets>

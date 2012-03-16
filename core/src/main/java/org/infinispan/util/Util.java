@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,11 +22,13 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.Marshaller;
 
+import javax.naming.Context;
 import java.io.Closeable;
-import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.management.LockInfo;
@@ -35,17 +38,15 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.Socket;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -57,41 +58,87 @@ import java.util.concurrent.locks.Lock;
 public final class Util {
 
    private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
+   public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
    /**
-    * Loads the specified class using this class's classloader, or, if it is <code>null</code> (i.e. this class was
-    * loaded by the bootstrap classloader), the system classloader. <p/> If loadtime instrumentation via
-    * GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader. <p/>
-    * If the class is not found, the {@link ClassNotFoundException} is wrapped as a {@link ConfigurationException} and
-    * is re-thrown.
-    *
+    * <p>
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
+    * classloader.
+    * </p>
+    * 
+    * <p>
+    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
+    * classloader.
+    * </p>
+    * <p>
+    * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
+    * {@link CacheConfigurationException} and is re-thrown.
+    * </p>
+    * 
     * @param classname name of the class to load
+    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
+    *        Infinispan
     * @return the class
+    * @throws CacheConfigurationException if the class cannot be loaded
     */
-   public static Class loadClass(String classname) {
+   public static <T> Class<T> loadClass(String classname, ClassLoader cl) {
       try {
-         return loadClassStrict(classname);
-      } catch (Exception e) {
-         throw new ConfigurationException("Unable to instantiate class " + classname, e);
+         return loadClassStrict(classname, cl);
+      } catch (ClassNotFoundException e) {
+         throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
+   
+   public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
+      return new ClassLoader[] {
+            appClassLoader,  // User defined classes
+            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
+            };
+   }
 
    /**
-    * Similar to {@link #loadClass(String)} except that any {@link ClassNotFoundException}s experienced is propagated
-    * to the caller.
+    * <p>
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
+    * </p>
+    * 
+    * <p>
+    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
+    * </p>
     *
     * @param classname name of the class to load
     * @return the class
-    * @throws ClassNotFoundException
+    * @param userClassLoader the application classloader which should be used to load the class, or null if the class is always packaged with
+    *        Infinispan
+    * @throws ClassNotFoundException if the class cannot be loaded
     */
-   public static Class loadClassStrict(String classname) throws ClassNotFoundException {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      if (cl == null)
-         cl = ClassLoader.getSystemClassLoader();
-      return cl.loadClass(classname);
+   @SuppressWarnings("unchecked")
+   public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
+      ClassLoader[] cls = getClassLoaders(userClassLoader);
+         ClassNotFoundException e = null;
+         NoClassDefFoundError ne = null;
+         for (ClassLoader cl : cls)  {
+            if (cl == null)
+               continue;
+
+            try {
+               return (Class<T>) Class.forName(classname, true, cl);
+            } catch (ClassNotFoundException ce) {
+               e = ce;
+            } catch (NoClassDefFoundError ce) {
+               ne = ce;
+            }
+         }
+
+         if (e != null)
+            throw e;
+         else if (ne != null)
+            throw new ClassNotFoundException(classname, ne);
+         else
+            throw new IllegalStateException();
    }
 
-   private static Method getFactoryMethod(Class c) {
+   private static Method getFactoryMethod(Class<?> c) {
       for (Method m : c.getMethods()) {
          if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))
             return m;
@@ -103,19 +150,18 @@ public final class Util {
     * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
     * and then falling back to an empty constructor.
     * <p/>
-    * Any exceptions encountered are wrapped in a {@link ConfigurationException} and rethrown.
+    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @return an instance of the class
     */
-   @SuppressWarnings("unchecked")
    public static <T> T getInstance(Class<T> clazz) {
       try {
          return getInstanceStrict(clazz);
       } catch (IllegalAccessException iae) {
-         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
+         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
       } catch (InstantiationException ie) {
-         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
+         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
       }
    }
 
@@ -142,28 +188,27 @@ public final class Util {
       if (instance == null) {
          instance = clazz.newInstance();
       }
-      return instance == null ? null : instance;
+      return instance;
    }
 
    /**
-    * Instantiates a class based on the class name provided.  Instatiation is attempted via an appropriate, static
+    * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
     * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
     * back to an empty constructor.
     * <p />
-    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link ConfigurationException}.
+    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate
     * @return an instance of classname
     */
-   @SuppressWarnings("unchecked")
-   public static Object getInstance(String classname) {
+   public static <T> T getInstance(String classname, ClassLoader cl) {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class clazz = loadClass(classname);
+      Class<T> clazz = loadClass(classname, cl);
       return getInstance(clazz);
    }
 
    /**
-    * Similar to {@link #getInstance(String)} except that exceptions are propagated to the caller.
+    * Similar to {@link #getInstance(String, ClassLoader)} except that exceptions are propagated to the caller.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -171,11 +216,33 @@ public final class Util {
     * @throws InstantiationException
     * @throws IllegalAccessException
     */
-   @SuppressWarnings("unchecked")
-   public static Object getInstanceStrict(String classname) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+   public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class clazz = loadClassStrict(classname);
+      Class<T> clazz = loadClassStrict(classname, cl);
       return getInstanceStrict(clazz);
+   }
+   
+   /**
+    * Clones parameter x of type T with a given Marshaller reference;
+    * 
+    * 
+    * @return a deep clone of an object parameter x 
+    */
+   @SuppressWarnings("unchecked")
+   public static <T> T cloneWithMarshaller(Marshaller marshaller, T x){
+      if (marshaller == null)
+         throw new IllegalArgumentException("Cannot use null Marshaller for clone");
+      
+      byte[] byteBuffer;
+      try {
+         byteBuffer = marshaller.objectToByteBuffer(x);
+         return (T) marshaller.objectFromByteBuffer(byteBuffer);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);      
+      } catch (Exception e) {
+         throw new CacheException(e);
+      }     
    }
 
 
@@ -196,58 +263,18 @@ public final class Util {
       return (a == b) || (a != null && a.equals(b));
    }
 
-   public static InputStream loadResourceAsStream(String resource) {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      InputStream s = cl.getResourceAsStream(resource);
-      if (s == null) {
-         cl = Util.class.getClassLoader();
-         s = cl.getResourceAsStream(resource);
-      }
-      return s;
+   public static String prettyPrintTime(long time, TimeUnit unit) {
+      return prettyPrintTime(unit.toMillis(time));
    }
 
    /**
-    * Static inner class that holds 3 maps - for data added, removed and modified.
+    * {@link System#nanoTime()} is less expensive than {@link System#currentTimeMillis()} and better suited
+    * to measure time intervals. It's NOT suited to know the current time, for example to be compared
+    * with the time of other nodes.
+    * @return the value of {@link System#nanoTime()}, but converted in Milliseconds.
     */
-   public static class MapModifications {
-      public final Map<Object, Object> addedEntries = new HashMap<Object, Object>();
-      public final Map<Object, Object> removedEntries = new HashMap<Object, Object>();
-      public final Map<Object, Object> modifiedEntries = new HashMap<Object, Object>();
-
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         MapModifications that = (MapModifications) o;
-
-         if (addedEntries != null ? !addedEntries.equals(that.addedEntries) : that.addedEntries != null) return false;
-         if (modifiedEntries != null ? !modifiedEntries.equals(that.modifiedEntries) : that.modifiedEntries != null)
-            return false;
-         if (removedEntries != null ? !removedEntries.equals(that.removedEntries) : that.removedEntries != null)
-            return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         int result;
-         result = (addedEntries != null ? addedEntries.hashCode() : 0);
-         result = 31 * result + (removedEntries != null ? removedEntries.hashCode() : 0);
-         result = 31 * result + (modifiedEntries != null ? modifiedEntries.hashCode() : 0);
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return "Added Entries " + addedEntries + " Removed Entries " + removedEntries + " Modified Entries " + modifiedEntries;
-      }
-   }
-
-   public static String prettyPrintTime(long time, TimeUnit unit) {
-      return prettyPrintTime(unit.toMillis(time));
+   public static final long currentMillisFromNanotime() {
+      return TimeUnit.MILLISECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
    }
 
    /**
@@ -280,6 +307,28 @@ public final class Util {
       if (cl == null) return;
       try {
          cl.close();
+      } catch (Exception e) {
+      }
+   }
+
+   public static void close(Socket s) {
+      if (s == null) return;
+      try {
+         s.close();
+      } catch (Exception e) {
+      }
+   }
+
+   public static void close(Closeable... cls) {
+      for (Closeable cl : cls) {
+         close(cl);
+      }
+   }
+
+   public static void close(Context ctx) {
+      if (ctx == null) return;
+      try {
+         ctx.close();
       } catch (Exception e) {
       }
    }
@@ -327,19 +376,40 @@ public final class Util {
       if (withHash)
          sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
 
-      sb.append(", array=");
+      sb.append(", array=0x");
       if (isArraysDebug) {
-         sb.append(Arrays.toString(array));
+         // Convert the entire byte array
+         sb.append(toHexString(array));
       } else {
-         sb.append("[");
-         int length = array.length < 10 ? array.length : 10;
-         for (int i = 0; i < length; i++)
-            sb.append(array[i]).append(", ");
-         sb.append("..]");
+         // Pick the first 8 characters and convert that part
+         sb.append(toHexString(array, 8));
+         sb.append("..");
       }
       sb.append("}");
 
       return sb.toString();
+   }
+
+   public static String toHexString(byte input[]) {
+      return toHexString(input, input.length);
+   }
+
+   public static String toHexString(byte input[], int limit) {
+      int i = 0;
+      if (input == null || input.length <= 0)
+         return null;
+
+      char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+      char[] result = new char[(input.length < limit ? input.length : limit) * 2];
+
+      while (i < limit && i < input.length) {
+         result[2*i] = lookup[(input[i] >> 4) & 0x0F];
+         result[2*i+1] = lookup[(input[i] & 0x0F)];
+         i++;
+      }
+      return String.valueOf(result);
    }
 
    public static String padString(String s, int minWidth) {
@@ -349,22 +419,6 @@ public final class Util {
          return sb.toString();
       }
       return s;
-   }
-
-   /**
-    * Releases a lock and swallows any IllegalMonitorStateExceptions - so it is safe to call this method even if the
-    * lock is not locked, or not locked by the current thread.
-    *
-    * @param toRelease lock to release
-    */
-   public static final void safeRelease(Lock toRelease) {
-      if (toRelease != null) {
-         try {
-            toRelease.unlock();
-         } catch (IllegalMonitorStateException imse) {
-            // Perhaps the caller hadn't acquired the lock after all.
-         }
-      }
    }
 
    private static String INDENT = "    ";
@@ -428,10 +482,9 @@ public final class Util {
    private static void printLockInfo(LockInfo[] locks, StringBuilder threadDump) {
       threadDump.append(INDENT + "Locked synchronizers: count = " + locks.length);
       threadDump.append("\n");
-      for (int i = 0; i < locks.length; i++) {
-          LockInfo li = locks[i];
-          threadDump.append(INDENT + "  - " + li);
-          threadDump.append("\n");
+      for (LockInfo li : locks) {
+         threadDump.append(INDENT + "  - " + li);
+         threadDump.append("\n");
       }
       threadDump.append("\n");
    }
@@ -484,6 +537,35 @@ public final class Util {
     */
    public static String hexIdHashCode(Object o) {
       return Integer.toHexString(System.identityHashCode(o));
+   }
+
+   static final String HEX_VALUES = "0123456789ABCDEF";
+
+   public static String hexDump(byte[] buffer) {
+      StringBuilder buf = new StringBuilder(buffer.length << 1);
+      for (byte b : buffer)
+         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+            .append(HEX_VALUES.charAt((b & 0x0F)));
+
+      return buf.toString();
+   }
+
+   public static Double constructDouble(Class type, Object o) {
+      if (type.equals(Long.class) || type.equals(long.class))
+         return Double.valueOf((Long) o);
+      else if (type.equals(Double.class) || type.equals(double.class))
+         return (Double) o;
+      else if (type.equals(Integer.class) || type.equals(int.class))
+         return Double.valueOf((Integer) o);
+      else if (type.equals(String.class))
+         return Double.valueOf((String) o);
+
+      throw new IllegalStateException(String.format("Expected a value that can be converted into a double: type=%s, value=%s", type, o));
+   }
+
+   public static int getNormalizedHash(Object key, Hash hashFct) {
+      // more efficient impl
+      return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
    }
 
 }

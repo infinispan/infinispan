@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -26,7 +27,6 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
@@ -82,18 +82,7 @@ public interface RpcManager {
     * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception;
-
-   /**
-    * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,
-    * or state is retrieved and applied.
-    *
-    * @param cacheName name of cache requesting state
-    * @param timeout   length of time to try to retrieve state on each peer
-    * @throws org.infinispan.statetransfer.StateTransferException
-    *          in the event of problems
-    */
-   void retrieveState(String cacheName, long timeout) throws StateTransferException;
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout);
 
    /**
     * Broadcasts an RPC command to the entire cluster.
@@ -194,19 +183,25 @@ public interface RpcManager {
    void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> future, final long timeout);
 
    /**
+    * The same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
+    * boolean, org.infinispan.util.concurrent.NotifyingNotifiableFuture, long)} except that you can specify a response mode.
+    *
+    * @param recipients       recipients to invoke remote call on
+    * @param rpc              command to execute remotely
+    * @param usePriorityQueue if true, a priority queue is used
+    * @param future           the future which will be passed back to the user
+    * @param timeout          after which to give up (in millis)
+    * @param ignoreLeavers    if {@code true}, recipients that leave or have already left the cluster are ignored
+    *                         if {@code false}, a {@code SuspectException} is thrown when a leave is detected
+    */
+   void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc,
+                               boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future,
+                               long timeout, boolean ignoreLeavers);
+
+   /**
     * @return a reference to the underlying transport.
     */
    Transport getTransport();
-
-   /**
-    * If {@link #retrieveState(String, long)} has been invoked and hasn't yet returned (i.e., a state transfer is in
-    * progress), this method will return the current Address from which a state transfer is being attempted.  Otherwise,
-    * this method returns a null.
-    *
-    * @return the current Address from which a state transfer is being attempted, if a state transfer is in progress, or
-    *         a null otherwise.
-    */
-   Address getCurrentStateTransferSource();
 
    /**
     * Returns the address associated with this RpcManager or null if not part of the cluster.

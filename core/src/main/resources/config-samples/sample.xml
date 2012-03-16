@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
-  ~ as indicated by the @author tags. See the copyright.txt file in the
-  ~ distribution for a full listing of individual contributors.
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2010 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
   ~
   ~ This is free software; you can redistribute it and/or modify it
   ~ under the terms of the GNU Lesser General Public License as
@@ -23,8 +24,8 @@
 
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd"
-      xmlns="urn:infinispan:config:5.0">
+      xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+      xmlns="urn:infinispan:config:5.2">
 
    <!--
       ******************************************************************************************************************
@@ -147,7 +148,7 @@
 
       <!--
          Used to customize the marshaller used to serialize objects and deserialize byte streams.  Also allows you to
-         specify custom externalizers for custom user types.
+         specify custom advancedExternalizers for custom user types.
 
          See:
 
@@ -156,14 +157,14 @@
        -->
       <!--<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">-->
 
-      <!--<externalizers>-->
-      <!-- Externalizer defined as inner static class, with id set via XML configuration -->
-      <!--<externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>-->
-      <!-- Externalizer defined as inner static class, with id set via annotation -->
-      <!--<externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>-->
-      <!-- Externalizer defined as inner static class, with id set both via XML config and annotation -->
-      <!--<externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>-->
-      <!--</externalizers>-->
+      <!--<advancedExternalizers>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set via XML configuration -->
+      <!--<advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaConfigObj$AdvancedExternalizer"/>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set via annotation -->
+      <!--<advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaAnnotationObj$AdvancedExternalizer"/>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set both via XML config and annotation -->
+      <!--<advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaBothObj$AdvancedExternalizer"/>-->
+      <!--</advancedExternalizers>-->
       <!--</serialization>-->
 
       <!--
@@ -180,6 +181,7 @@
    -->
 
    <default>
+      <storeAsBinary />
       <!--
          Tunes the locking and concurrency characteristics of the cache.
 
@@ -207,9 +209,13 @@
             transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="false"
-            useEagerLocking="false"
-            eagerLockSingleNode="false"
-            cacheStopTimeout="30000" />
+            cacheStopTimeout="30000"
+            use1PcForAutoCommitTransactions="false"
+            autoCommit="true"
+            lockingMode="OPTIMISTIC"
+            useSynchronization="false"
+            transactionMode="TRANSACTIONAL"
+            />
       -->
       <!--
          Enables deadlock detection.  See:
@@ -231,7 +237,7 @@
 
          http://community.jboss.org/wiki/Marshalling#Lazy_Deserialization
       -->
-      <!--<lazyDeserialization enabled="true"/>-->
+      <!--<storeAsBinary enabled="true"/>-->
 
       <!--
          Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.
@@ -252,7 +258,7 @@
             Defines whether to retrieve state on startup.  This is only valud for 'replication' mode.
          -->
          <stateRetrieval
-            timeout="20000"
+            timeout="240000"
             fetchInMemoryState="false"
             alwaysProvideInMemoryState="false"
          />
@@ -313,8 +319,10 @@
    -->
 
    <!--
-      A cache configured with eviction.  WakeupInterval defines how often the eviction thread runs, in milliseconds.
-      0 means the eviction thread will never run.  A separate executor is used for eviction in each cache.
+      A cache configured with eviction.
+
+      Expiration wakeUpInterval defines the interval between successive runs
+      to purge expired entries from memory and any cache stores.
 
       See:
 
@@ -324,11 +332,11 @@
    <!--
    <namedCache name="evictionCache">
       <eviction
-         wakeUpInterval="500"
          maxEntries="5000"
          strategy="FIFO"
       />
       <expiration
+         wakeUpInterval="500"
          lifespan="60000"
          maxIdle="1000"
       />
@@ -386,11 +394,11 @@
    <!--
    <namedCache name="evictionAndPassivationCache">
       <eviction 
-         wakeUpInterval="500"
          maxEntries="5000"
          strategy="LIRS"
       />
       <expiration
+         wakeUpInterval="500"
          lifespan="60000"
          maxIdle="1000"
       />
@@ -549,6 +557,27 @@
             class="com.mycompany.CustomInterceptor1"
          />
       </customInterceptors>
+   </namedCache>
+   -->
+
+   <!--
+      A transactional cache configured to run in pessimistic mode.
+      See:
+         http://community.jboss.org/wiki/Infinispantransactions
+   -->
+   <!--
+   <namedCache name="pessimisticCache">
+
+      <transaction
+            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+            syncCommitPhase="false"
+            cacheStopTimeout="30000"
+            use1PcForAutoCommitTransactions="false"
+            autoCommit="true"
+            lockingMode="PESSIMISTIC"
+            useSynchronization="false"
+            transactionMode="TRANSACTIONAL"/>
+
    </namedCache>
    -->
 

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <version>2-SNAPSHOT</version>
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-license</artifactId>
+   <name>Infinispan License Bundle</name>
+   
+   <properties>
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+   </properties>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-remote-resources-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <id>generate-license-bundle</id>
+                  <goals>
+                     <goal>bundle</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+      <pluginManagement>
+         <plugins>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+               <groupId>org.eclipse.m2e</groupId>
+               <artifactId>lifecycle-mapping</artifactId>
+               <version>1.0.0</version>
+               <configuration>
+                  <lifecycleMappingMetadata>
+                     <pluginExecutions>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>
+                                 org.apache.maven.plugins
+                              </groupId>
+                              <artifactId>
+                                 maven-remote-resources-plugin
+                              </artifactId>
+                              <versionRange>[1.1,)</versionRange>
+                              <goals>
+                                 <goal>bundle</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                     </pluginExecutions>
+                  </lifecycleMappingMetadata>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
+   
+   <!-- SCM and Distribution Management -->
+
+   <scm>
+      <connection>scm:git:git://github.com/infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git://github.com/infinispan/infinispan.git</developerConnection>
+      <url>scm:git:git://github.com/infinispan/infinispan.git</url>
+   </scm>
+
+   <distributionManagement>
+      <repository>
+         <id>jboss-releases-repository</id>
+         <name>JBoss Releases Repository</name>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
+      <snapshotRepository>
+         <id>jboss-snapshots-repository</id>
+         <name>JBoss Snapshots Repository</name>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
+   
+
+</project>

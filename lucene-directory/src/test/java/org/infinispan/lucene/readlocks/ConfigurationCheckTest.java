@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -40,9 +41,9 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration configuration = new Configuration();
-      configuration.setEvictionStrategy(EvictionStrategy.FIFO);
+      configuration.setEvictionStrategy(EvictionStrategy.LRU);
       configuration.setEvictionMaxEntries(10);
-      return TestCacheManagerFactory.createCacheManager(configuration, false);
+      return TestCacheManagerFactory.createCacheManager(configuration);
    }
    
    @Test(expectedExceptions = IllegalArgumentException.class)

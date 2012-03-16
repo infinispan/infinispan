@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.container;
 
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -15,6 +37,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest extends AbstractInfinispanTest {
    DataContainer dc;
@@ -30,11 +54,13 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    protected DataContainer createContainer() {
-      return new DefaultDataContainer(16);
+      DefaultDataContainer dc = new DefaultDataContainer(16);
+      dc.initialize(null, null, new InternalEntryFactoryImpl());
+      return dc;
    }
 
    public void testExpiredData() throws InterruptedException {
-      dc.put("k", "v", -1, 6000000);
+      dc.put("k", "v", null, -1, 6000000);
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
@@ -44,10 +70,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
-      dc.put("k", "v", -1, 0);
+      dc.put("k", "v", null, -1, 0);
       dc.purgeExpired();
 
-      dc.put("k", "v", 6000000, -1);
+      dc.put("k", "v", null, 6000000, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
 
@@ -56,27 +82,38 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assert entry.getClass().equals(mortaltype()) : "Expected "+mortaltype()+", was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
-      dc.put("k", "v", 0, -1);
+      dc.put("k", "v", null, 0, -1);
       Thread.sleep(10);
       assert dc.get("k") == null;
       assert dc.size() == 0;
 
-      dc.put("k", "v", 0, -1);
+      dc.put("k", "v", null, 0, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
       dc.purgeExpired();
       assert dc.size() == 0;
    }
+   
+   public void testResetOfCreationTime() throws Exception {
+      long now = System.currentTimeMillis();
+      dc.put("k", "v", null, 1000000, -1);
+      long created1 = dc.get("k").getCreated();
+      assert created1 >= now;
+      Thread.sleep(100);
+      dc.put("k", "v", null, 1000000, -1);
+      long created2 = dc.get("k").getCreated();
+      assert created2 > created1 : "Expected " + created2 + " to be greater than " + created1;
+   }
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;
-      dc.put("k", "v", -1, -1);
+      dc.put("k", "v", null, -1, -1);
       InternalCacheEntry ice = dc.get("k");
       assert ice.getClass().equals(immortaltype());
       assert ice.getExpiryTime() == -1;
       assert ice.getMaxIdle() == -1;
       assert ice.getLifespan() == -1;
-      dc.put("k", "v", -1, idle);
+      dc.put("k", "v", null, -1, idle);
       long oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
@@ -110,33 +147,50 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       return TransientCacheEntry.class;
    }
 
+   protected Class<? extends InternalCacheEntry> transientmortaltype() {
+      return TransientMortalCacheEntry.class;
+   }
+
+
    public void testExpirableToImmortalAndBack() {
-      dc.put("k", "v", 6000000, -1);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(mortaltype());
+      String value = "v";
+      dc.put("k", value, null, 6000000, -1);
+      assertContainerEntry(mortaltype(), value);
 
-      dc.put("k", "v2", -1, -1);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(immortaltype());
+      value = "v2";
+      dc.put("k", value, null, -1, -1);
+      assertContainerEntry(immortaltype(), value);
 
-      dc.put("k", "v3", -1, 6000000);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(transienttype());
+      value = "v3";
+      dc.put("k", value, null, -1, 6000000);
+      assertContainerEntry(transienttype(), value);
 
-      dc.put("k", "v3", 6000000, 6000000);
-      assert dc.containsKey("k");
-      assert dc.get("k") instanceof TransientMortalCacheEntry;
+      value = "v4";
+      dc.put("k", value, null, 6000000, 6000000);
+      assertContainerEntry(transientmortaltype(), value);
 
-      dc.put("k", "v", 6000000, -1);
+      value = "v41";
+      dc.put("k", value, null, 6000000, 6000000);
+      assertContainerEntry(transientmortaltype(), value);
+
+      value = "v5";
+      dc.put("k", value, null, 6000000, -1);
+      assertContainerEntry(mortaltype(), value);
+   }
+
+   private void assertContainerEntry(Class<? extends InternalCacheEntry> type,
+                                     String expectedValue) {
       assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(mortaltype());
+      InternalCacheEntry entry = dc.get("k");
+      assertEquals(type, entry.getClass());
+      assertEquals(expectedValue, entry.getValue());
    }
 
    public void testKeySet() {
-      dc.put("k1", "v", 6000000, -1);
-      dc.put("k2", "v", -1, -1);
-      dc.put("k3", "v", -1, 6000000);
-      dc.put("k4", "v", 6000000, 6000000);
+      dc.put("k1", "v", null, 6000000, -1);
+      dc.put("k2", "v", null, -1, -1);
+      dc.put("k3", "v", null, -1, 6000000);
+      dc.put("k4", "v", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -150,10 +204,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testContainerIteration() {
-      dc.put("k1", "v", 6000000, -1);
-      dc.put("k2", "v", -1, -1);
-      dc.put("k3", "v", -1, 6000000);
-      dc.put("k4", "v", 6000000, 6000000);
+      dc.put("k1", "v", null, 6000000, -1);
+      dc.put("k2", "v", null, -1, -1);
+      dc.put("k3", "v", null, -1, 6000000);
+      dc.put("k4", "v", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -169,10 +223,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
    
    public void testKeys() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -186,10 +240,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testValues() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("v1");
@@ -203,10 +257,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testEntrySet() {
-      dc.put("k1", "v1", 6000000, -1);
-      dc.put("k2", "v2", -1, -1);
-      dc.put("k3", "v3", -1, 6000000);
-      dc.put("k4", "v4", 6000000, 6000000);
+      dc.put("k1", "v1", null, 6000000, -1);
+      dc.put("k2", "v2", null, -1, -1);
+      dc.put("k3", "v3", null, -1, 6000000);
+      dc.put("k4", "v4", null, 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add(Immutables.immutableInternalCacheEntry(dc.get("k1")));
@@ -221,7 +275,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testGetDuringKeySetLoop() {
-      for (int i = 0; i < 10; i++) dc.put(i, "value", -1, -1);
+      for (int i = 0; i < 10; i++) dc.put(i, "value", null, -1, -1);
 
       int i = 0;
       for (Object key : dc.keySet()) {

@@ -1,12 +1,29 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -31,20 +48,18 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(false);
-      CacheStoreConfig slowCacheStoreConfig = new SlowCacheStoreConfig();
-      AsyncStoreConfig storeConfig = new AsyncStoreConfig();
-      storeConfig.setEnabled(true);
-      storeConfig.setThreadPoolSize(1);
-      slowCacheStoreConfig.setAsyncStoreConfig(storeConfig);
-      CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-      clmConfig.getCacheLoaderConfigs().add(slowCacheStoreConfig);
-      config.setCacheLoaderManagerConfig(clmConfig);
+      Configuration config = getDefaultStandaloneConfig(false).fluent()
+         .loaders()
+            .addCacheLoader(new SlowCacheStoreConfig()
+               .storeName(this.getClass().getName())
+               .asyncStore().threadPoolSize(1)
+               .build())
+         .build();
       return TestCacheManagerFactory.createCacheManager(config);
    }
 
    @Test(timeOut = 10000)
-   public void writeOnStorage() throws IOException, ClassNotFoundException, SQLException, InterruptedException {
+   public void writeOnStorage() {
       cache = cacheManager.getCache("AsyncStoreInMemory");
       cache.put("key1", "value");
       cache.stop();
@@ -52,7 +67,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    @Test(dependsOnMethods = "writeOnStorage")
-   public void verifyStorageContent() throws IOException {
+   public void verifyStorageContent() {
       assert storeWasRun;
       cache = cacheManager.getCache("AsyncStoreInMemory");
       assert "value".equals(cache.get("key1"));

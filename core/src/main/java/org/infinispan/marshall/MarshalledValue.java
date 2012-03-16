@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,16 +24,19 @@ package org.infinispan.marshall;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -42,78 +46,120 @@ import java.util.Set;
  * The {@link org.infinispan.interceptors.MarshalledValueInterceptor} handles transparent wrapping/unwrapping of cached
  * data.
  * <p/>
+ * <b>NOTE:</b> the <t>equals()</tt> method of this class will either compare binary representations (byte arrays) or
+ * delegate to the wrapped instance's <tt>equals()</tt> method, depending on whether both instances being compared are
+ * in serialized or deserialized form.  If one of the instances being compared is in one form and the other in another
+ * form, then one instance is either serialized or deserialized, the preference will be to compare object representations,
+ * unless the instance is {@link #compact(boolean, boolean)}ed and a preference is set accordingly.
+ * <p/>
+ * Note also that this will affect the way keys stored in the cache will work, if <tt>storeAsBinary</tt> is used, since
+ * comparisons happen on the key which will be wrapped by a {@link MarshalledValue}.  Implementers of <tt>equals()</tt>
+ * methods of their keys need to be aware of this.
+ * <p />
+ *
+ * This class can be marshalled either via its externalizer or via the JVM
+ * serialization.  The reason for supporting both methods is to enable
+ * third-party libraries to be able to marshall/unmarshall them using standard
+ * JVM serialization rules.  The Infinispan marshalling layer will always
+ * chose the most performant one, aka the externalizer method.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-public class MarshalledValue {
+public class MarshalledValue implements Serializable {
    volatile protected Object instance;
    volatile protected byte[] raw;
+   volatile protected int serialisedSize = 128; //size of serialized representation: initial value is a guess
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient volatile boolean equalityPreferenceForInstance = true;
-   private final StreamingMarshaller marshaller;
+   // A marshaller is needed at construction time to handle equals/hashCode impls
+   private transient final StreamingMarshaller marshaller;
 
-   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) throws NotSerializableException {
+   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");
 
-      if (marshaller.isMarshallable(instance))
-         this.instance = instance;
-      else
-         throw new NotSerializableException("Marshalled values can only wrap Objects that can be serialized or marshalled!  Instance of " 
-               + instance.getClass() + " won't serialize or marshall.");
+      this.instance = instance;
       this.equalityPreferenceForInstance = equalityPreferenceForInstance;
       this.marshaller = marshaller;
    }
 
-   public MarshalledValue(byte[] raw, int cachedHashCode, StreamingMarshaller marshaller) {
+   private MarshalledValue(byte[] raw, int cachedHashCode, StreamingMarshaller marshaller) {
       init(raw, cachedHashCode);
       this.marshaller = marshaller;
    }
 
-   public void init(byte[] raw, int cachedHashCode) {
+   private void init(byte[] raw, int cachedHashCode) {
       // for unmarshalling
       this.raw = raw;
+      this.serialisedSize = raw.length;
       this.cachedHashCode = cachedHashCode;
    }
 
-   public synchronized void serialize() {
-      if (raw == null) {
+   public synchronized byte[] serialize() {
+      return serialize0();
+   }
+
+   /**
+    * Should only be called from a synchronized method
+    */
+   private byte[] serialize0() {
+      byte[] rawValue = raw;
+      if (rawValue == null) {
          try {
             // Do NOT set instance to null over here, since it may be used elsewhere (e.g., in a cache listener).
             // this will be compacted by the MarshalledValueInterceptor when the call returns.
-            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
-            ObjectOutput out = marshaller.startObjectOutput(baos, true);
+            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(this.serialisedSize);
+            ObjectOutput out = marshaller.startObjectOutput(baos, true, this.serialisedSize);
             try {
                marshaller.objectToObjectStream(instance, out);
             } finally {
                marshaller.finishObjectOutput(out);
             }
-            byte[] buf = baos.getRawBuffer();
-            int length = baos.size();
-            raw = new byte[length];
-            System.arraycopy(buf, 0, raw, 0, length);
+            final byte[] buf = baos.getRawBuffer();
+            final int length = baos.size();
+            if (buf.length == length) {
+               // in this case we can avoid duplicating the buffer
+               rawValue = buf;
+            }
+            else {
+               serialisedSize = length;
+               rawValue = new byte[length];
+               System.arraycopy(buf, 0, rawValue, 0, length);
+            }
+            raw = rawValue;
          } catch (Exception e) {
             throw new CacheException("Unable to marshall value " + instance, e);
-         } finally {
-            
          }
       }
+      return rawValue;
    }
 
-   public synchronized void deserialize() {
-      if (instance == null) {
+   public synchronized Object deserialize() {
+      return deserialize0();
+   }
+
+   /**
+    * Should only be called from a synchronized method
+    */
+   private Object deserialize0() {
+      Object instanceValue = instance;
+      if (instanceValue == null) {
          try {
             // StreamingMarshaller underneath deals with making sure the right classloader is set.
-            instance = marshaller.objectFromByteBuffer(raw);
+            instanceValue = marshaller.objectFromByteBuffer(raw);
+            instance = instanceValue;
+            return instanceValue;
          }
          catch (Exception e) {
             throw new CacheException("Unable to unmarshall value", e);
          }
       }
+      return instanceValue;
    }
 
    /**
@@ -129,43 +175,55 @@ public class MarshalledValue {
     * @param force                          ensures the preferred representation is maintained and the other released,
     *                                       even if this means serializing or deserializing.
     */
-   public void compact(boolean preferSerializedRepresentation, boolean force) {
+   public synchronized void compact(boolean preferSerializedRepresentation, boolean force) {
       // reset the equalityPreference
       equalityPreferenceForInstance = true;
+      Object thisInstance = this.instance;
+      byte[] thisRaw = this.raw;
       if (force) {
-         if (preferSerializedRepresentation && raw == null) serialize();
-         else if (!preferSerializedRepresentation && instance == null) deserialize();
+         if (preferSerializedRepresentation && thisRaw == null) {
+            // Accessing a synchronized method from an already synchronized
+            // method is expensive, so delegate to a private not synched method.
+            thisRaw = serialize0();
+         }
+         else if (!preferSerializedRepresentation && thisInstance == null){
+            // Accessing a synchronized method from an already synchronized
+            // method is expensive, so delegate to a private not synched method.
+            thisInstance = deserialize0();
+         }
       }
 
-      if (instance != null && raw != null) {
-         // need to lose one representation!
-
+      if (thisInstance != null && thisRaw != null) {
+         // need to loose one representation!
          if (preferSerializedRepresentation) {
-            nullifyInstance();
+            //in both branches we first set one then null the other, so that there's always one available
+            //to read from those methods not being synchronized
+            raw = thisRaw;
+            instance = null;
          } else {
+            instance = thisInstance;
             raw = null;
          }
       }
    }
 
-   private synchronized void nullifyInstance() {
-      instance = null;
-   }
-
    public byte[] getRaw() {
-      if (raw == null) serialize();
-      return raw;
+      byte[] rawValue = raw;
+      if (rawValue == null){
+         rawValue = serialize();
+      }
+      return rawValue;
    }
 
    /**
-    * Returns the 'cached' instance. Impl note: this method is synchronized so that it synchronizez with the code that
-    * nullifies the instance.
-    *
-    * @see #nullifyInstance()
+    * Returns the 'cached' instance
     */
-   public synchronized Object get() {
-      if (instance == null) deserialize();
-      return instance;
+   public Object get() {
+      Object value = instance;
+      if (value == null) {
+         value = deserialize();
+      }
+      return value;
    }
 
    @Override
@@ -174,35 +232,54 @@ public class MarshalledValue {
       if (o == null || getClass() != o.getClass()) return false;
 
       MarshalledValue that = (MarshalledValue) o;
+      final boolean preferInstanceEquality = equalityPreferenceForInstance && that.equalityPreferenceForInstance;
 
-      // if both versions are serialized or deserialized, just compare the relevant representations.
-      if (raw != null && that.raw != null) return Arrays.equals(raw, that.raw);
-      if (instance != null && that.instance != null) return instance.equals(that.instance);
+      // if both versions are serialized or deserialized, just compare the relevant representations,
+      // but attempt the operations in order to respect the value of equalityPreferenceForInstance
+      Object thisInstance = this.instance;
+      Object thatInstance = that.instance;
+      //test the default equality first so we might skip some work:
+      if (preferInstanceEquality && thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
+      
+      byte[] thisRaw = this.raw;
+      byte[] thatRaw = that.raw;
+      if (thisRaw != null && thatRaw != null) return Arrays.equals(thisRaw, thatRaw);
+      if (thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
 
       // if conversion of one representation to the other is necessary, then see which we prefer converting.
-      if (equalityPreferenceForInstance && that.equalityPreferenceForInstance) {
-         if (instance == null) deserialize();
-         if (that.instance == null) that.deserialize();
-         return instance.equals(that.instance);
+      if (preferInstanceEquality) {
+         if (thisInstance == null) {
+            thisInstance = this.deserialize();
+         }
+         if (thatInstance == null) {
+            thatInstance = that.deserialize();
+         }
+         return thisInstance.equals(thatInstance);
       } else {
-         if (raw == null) serialize();
-         if (that.raw == null) that.serialize();
-         return Arrays.equals(raw, that.raw);
+         if (thisRaw == null) {
+            thisRaw = this.serialize();
+         }
+         if (thatRaw == null) {
+            thatRaw = that.serialize();
+         }
+         return Arrays.equals(thisRaw, thatRaw);
       }
    }
 
    @Override
    public int hashCode() {
-      if (cachedHashCode == 0) {
-         // always calculate the hashcode based on the instance since this is where we're getting the equals()
-         if (instance == null) deserialize();
-         cachedHashCode = instance.hashCode();
-         if (cachedHashCode == 0) // degenerate case
+      //make a local copy to avoid multiple read/writes on the volatile field
+      int value = cachedHashCode;
+      if (value == 0) {
+         Object localInstance = deserialize();
+         value = localInstance.hashCode();
+         if (value == 0) // degenerate case
          {
-            cachedHashCode = 0xFEED;
+            value = 0xFEED;
          }
+         cachedHashCode = value;
       }
-      return cachedHashCode;
+      return value;
    }
 
    @Override
@@ -237,10 +314,10 @@ public class MarshalledValue {
    }
 
    public static class Externalizer extends AbstractExternalizer<MarshalledValue> {
-      private StreamingMarshaller marshaller;
-      
-      public void inject(StreamingMarshaller marshaller) {
-         this.marshaller = marshaller;
+      private GlobalComponentRegistry gcr;
+
+      public void inject(GlobalComponentRegistry gcr) {
+         this.gcr = gcr;
       }
 
       @Override
@@ -248,16 +325,35 @@ public class MarshalledValue {
          byte[] raw = mv.getRaw();
          UnsignedNumeric.writeUnsignedInt(output, raw.length);
          output.write(raw);
-         output.writeInt(mv.hashCode());      
+         output.writeInt(mv.hashCode());
       }
 
       @Override
-      public MarshalledValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MarshalledValue readObject(ObjectInput input) throws IOException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          byte[] raw = new byte[length];
          input.readFully(raw);
          int hc = input.readInt();
+
+         // A better way of sending down context information is needed in the future
+         StreamingMarshaller marshaller;
+         if (input instanceof ExtendedRiverUnmarshaller) {
+            StreamingMarshaller ispnMarshaller =
+                  ((ExtendedRiverUnmarshaller) input).getInfinispanMarshaller();
+            if (ispnMarshaller != null)
+               marshaller = ispnMarshaller;
+            else
+               marshaller = getGlobalMarshaller();
+         } else {
+            marshaller = getGlobalMarshaller();
+         }
+
          return new MarshalledValue(raw, hc, marshaller);
+      }
+
+      private StreamingMarshaller getGlobalMarshaller() {
+         return gcr.getComponent(
+               StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
       }
 
       @Override
@@ -269,5 +365,6 @@ public class MarshalledValue {
       public Set<Class<? extends MarshalledValue>> getTypeClasses() {
          return Util.<Class<? extends MarshalledValue>>asSet(MarshalledValue.class);
       }
+
    }
 }

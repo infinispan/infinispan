@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -29,8 +30,8 @@ import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.DefaultCacheManager;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
@@ -39,7 +40,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test
+@Test(groups = "functional", testName = "lucenedemo.CacheConfigurationTest")
 public class CacheConfigurationTest {
    
    private DefaultCacheManager cacheManager1;
@@ -49,7 +50,7 @@ public class CacheConfigurationTest {
    private Cache cache1;
    private Cache cache2;
 
-   @BeforeClass
+   @BeforeTest
    public void init() throws IOException {
       cacheManager1 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager1.start();
@@ -63,8 +64,8 @@ public class CacheConfigurationTest {
       directoryNodeTwo = new InfinispanDirectory(cache2);
    }
    
-   @AfterClass
-   public void cleanup() throws IOException {
+   @AfterTest
+   public void cleanup() {
       directoryNodeOne.close();
       directoryNodeTwo.close();
       cacheManager1.stop();

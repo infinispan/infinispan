@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -18,7 +19,6 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- *
  */
 
 package org.infinispan.tree;
@@ -29,6 +29,7 @@ import static org.infinispan.tree.NodeKey.Type.STRUCTURE;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Set;
 
 import org.infinispan.marshall.AbstractExternalizer;
@@ -40,7 +41,7 @@ import org.infinispan.util.Util;
  * @author Manik Surtani
  * @since 4.0
  */
-public class NodeKey {
+public class NodeKey implements Serializable {
    final Fqn fqn;
    final Type contents;
 

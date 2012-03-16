@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.bdbje;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -20,11 +42,12 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.bdbje.logging.Log;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.logging.Log;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -36,7 +59,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An Oracle SleepyCat JE implementation of a {@link org.infinispan.loaders.CacheStore}.  <p/>This implementation uses
@@ -65,7 +87,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @CacheLoaderMetadata(configurationClass = BdbjeCacheStoreConfig.class)
 public class BdbjeCacheStore extends AbstractCacheStore {
 
-   private static final Log log = LogFactory.getLog(BdbjeCacheStore.class);
+   private static final Log log =
+         LogFactory.getLog(BdbjeCacheStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private BdbjeCacheStoreConfig cfg;
@@ -124,11 +147,11 @@ public class BdbjeCacheStore extends AbstractCacheStore {
       openTransactionServices();
       super.start();
 
-      log.debug("started cache store %s", this);
+      log.debugf("started cache store %s", this);
    }
 
    private void openTransactionServices() {
-      txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>(64, 0.75f, getConcurrencyLevel());
+      txnMap = ConcurrentMapFactory.makeConcurrentMap(64, getConcurrencyLevel());
       currentTransaction = factory.createCurrentTransaction(env);
       transactionRunner = factory.createPreparableTransactionRunner(env);
    }
@@ -138,7 +161,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * CacheStore.
     */
    private void openSleepyCatResources() throws CacheLoaderException {
-      if (trace) log.trace("creating je environment with home dir %s", cfg.getLocation());
+      if (trace) log.tracef("creating je environment with home dir %s", cfg.getLocation());
 
       cfg.setCacheName(cache.getName());
       if (cfg.getCatalogDbName() == null)
@@ -182,7 +205,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
       super.stop();
       closeTransactionServices();
       closeSleepyCatResources();
-      log.debug("started cache store %s", this);
+      log.debugf("started cache store %s", this);
    }
 
    private void closeTransactionServices() {
@@ -207,17 +230,17 @@ public class BdbjeCacheStore extends AbstractCacheStore {
       try {
          cacheDb.close();
       } catch (Exception e) {
-         log.error("Error closing database", e);
+         log.errorClosingDatabase(e);
       }
       try {
          expiryDb.close();
       } catch (Exception e) {
-         log.error("Error closing database", e);
+         log.errorClosingDatabase(e);
       }
       try {
          catalog.close();
       } catch (Exception e) {
-         log.error("Error closing catalog", e);
+         log.errorClosingCatalog(e);
       }
       catalog = null;
       cacheDb = null;
@@ -277,11 +300,11 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * @throws CacheLoaderException in the event of problems writing to the store
     */
    protected void prepare(List<? extends Modification> mods, GlobalTransaction tx) throws CacheLoaderException {
-      if (trace) log.trace("preparing transaction %s", tx);
+      if (trace) log.tracef("preparing transaction %s", tx);
       try {
          transactionRunner.prepare(new ModificationsTransactionWorker(this, mods));
          Transaction txn = currentTransaction.getTransaction();
-         if (trace) log.trace("transaction %s == sleepycat transaction %s", tx, txn);
+         if (trace) log.tracef("transaction %s == sleepycat transaction %s", tx, txn);
          txnMap.put(tx, txn);
          ReflectionUtil.setValue(currentTransaction, "localTrans", new ThreadLocal());
       } catch (Exception e) {
@@ -300,7 +323,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
       try {
          completeTransaction(tx, false);
       } catch (Exception e) {
-         log.error("Error rolling back transaction", e);
+         log.rollingBackAfterError(e);
       }
    }
 
@@ -325,7 +348,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    protected void completeTransaction(GlobalTransaction tx, boolean commit) throws CacheLoaderException {
       Transaction txn = txnMap.remove(tx);
       if (txn != null) {
-         if (trace) log.trace("%s sleepycat transaction %s", commit ? "committing" : "aborting", txn);
+         if (trace) log.tracef("%s sleepycat transaction %s", commit ? "committing" : "aborting", txn);
          try {
             if (commit)
                txn.commit();
@@ -335,7 +358,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
             throw convertToCacheLoaderException("Problem completing transaction", caught);
          }
       } else {
-         if (trace) log.trace("no sleepycat transaction associated  transaction %s", tx);
+         if (trace) log.tracef("no sleepycat transaction associated  transaction %s", tx);
       }
    }
 
@@ -348,7 +371,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    private void completeCurrentTransaction(boolean commit) throws CacheLoaderException {
       try {
          if (trace)
-            log.trace("%s current sleepycat transaction %s", commit ? "committing" : "aborting", currentTransaction.getTransaction());
+            log.tracef("%s current sleepycat transaction %s", commit ? "committing" : "aborting", currentTransaction.getTransaction());
          if (commit)
             currentTransaction.commitTransaction();
          else
@@ -380,7 +403,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry s = cacheMap.get(key);
-         if (s != null && s.isExpired()) {
+         if (s != null && s.isExpired(System.currentTimeMillis())) {
             s = null;
          }
          return s;
@@ -475,7 +498,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
          currentTransaction.beginTransaction(null);
          for (Database db : new Database[]{cacheDb, expiryDb}) {
             long recordCount = ois.readLong();
-            log.debug("clearing and reading %s records from stream", recordCount);
+            log.debugf("clearing and reading %s records from stream", recordCount);
             Cursor cursor = null;
             try {
                cursor = db.openCursor(currentTransaction.getTransaction(), null);
@@ -511,7 +534,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
          for (Database db : new Database[]{cacheDb, expiryDb}) {
             long recordCount = db.count();
             oos.writeLong(recordCount);
-            if (trace) log.trace("writing %s records to stream", recordCount);
+            if (trace) log.tracef("writing %s records to stream", recordCount);
             Cursor cursor = null;
             try {
                cursor = db.openCursor(currentTransaction.getTransaction(), null);
@@ -524,9 +547,9 @@ public class BdbjeCacheStore extends AbstractCacheStore {
                   oos.writeObject(data.getData());
                   recordsWritten++;
                }
-               if (trace) log.trace("wrote %s records to stream", recordsWritten);
+               if (trace) log.tracef("wrote %s records to stream", recordsWritten);
                if (recordsWritten != recordCount)
-                  log.warn("expected to write %s records, but wrote %s", recordCount, recordsWritten);
+                  log.unexpectedNumberRecordsWritten(recordCount, recordsWritten);
             } finally {
                if (cursor != null) cursor.close();
             }

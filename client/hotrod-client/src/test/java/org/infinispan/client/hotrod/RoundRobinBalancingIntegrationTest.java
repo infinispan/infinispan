@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
@@ -14,6 +36,7 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +46,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.RoundRobinBalancingTest")
+@Test(testName = "client.hotrod.RoundRobinBalancingIntegrationTest")
 public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingIntegrationTest.class);
@@ -48,9 +71,9 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c1 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c2 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c3 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      c1 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c3 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager(), c3.getCacheManager());
 
       hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
@@ -101,11 +124,11 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Test(dependsOnMethods = "testRoundRobinLoadBalancing")
    public void testAddNewHotrodServer() {
-      c4 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      c4 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 
-      List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+      List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer1.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer2.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer3.getPort()));
@@ -175,7 +198,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Test(dependsOnMethods = "testStopServer")
    public void testRemoveServers() {
-      List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+      List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer1.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer2.getPort()));
 

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -122,7 +123,7 @@ public final class ChunkCacheKey implements Serializable {
       return fileName + "|" + chunkId + "|" + indexName;
    }
 
-   public static class Externalizer extends AbstractExternalizer<ChunkCacheKey> {
+   public static final class Externalizer extends AbstractExternalizer<ChunkCacheKey> {
 
       @Override
       public void writeObject(ObjectOutput output, ChunkCacheKey key) throws IOException {
@@ -132,7 +133,7 @@ public final class ChunkCacheKey implements Serializable {
       }
 
       @Override
-      public ChunkCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ChunkCacheKey readObject(ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
          int chunkId = UnsignedNumeric.readUnsignedInt(input);

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
@@ -7,6 +29,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -30,6 +53,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       tx = false;
       testRetVals = true;
       shared = true;
+      performRehashing = true;
    }
 
    private CacheStore getCacheStore(Cache<?,?> cache) {
@@ -48,7 +72,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       c1.put(k, "v");
 
       Cache<Object, String>[] owners = getOwners(k);
-      log.info("Initial owners list for key %s: %s", k, Arrays.asList(owners));
+      log.infof("Initial owners list for key %s: %s", k, Arrays.asList(owners));
 
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
@@ -63,20 +87,20 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
          assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
       }
 
-      log.info("Stopping node %s", primaryOwner);
+      log.infof("Stopping node %s", primaryOwner);
 
       caches.remove(primaryOwner);
       primaryOwner.stop();
       primaryOwner.getCacheManager().stop();
 
 
-      RehashWaiter.waitForRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE - 1]));
-
+      TestingUtil.blockUntilViewsReceived(60000, false, caches);
+      TestingUtil.waitForRehashToComplete(caches);
 
 
       owners = getOwners(k);
 
-      log.info("After shutting one node down, owners list for key %s: %s", k, Arrays.asList(owners));
+      log.infof("After shutting one node down, owners list for key %s: %s", k, Arrays.asList(owners));
 
       assert owners.length == 2;
 

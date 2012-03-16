@@ -1,8 +1,30 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -13,7 +35,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -48,11 +70,9 @@ public class AsyncTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() throws CacheLoaderException {
       underlying = new DummyInMemoryCacheStore();
-      asyncConfig = new AsyncStoreConfig();
-      asyncConfig.setThreadPoolSize(10);
+      asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg("AsyncStoreTests",false);
-      dummyCfg.setStore(AsyncTest.class.getName());
+      dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncTest.class.getName());
       store.init(dummyCfg, null, null);
       store.start();
       asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
@@ -125,13 +145,13 @@ public class AsyncTest extends AbstractInfinispanTest {
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
          store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
-         store.store(InternalEntryFactory.create(key, "v1"));
+         store.store(TestInternalCacheEntryFactory.create(key, "v1"));
          v2Latch.await();
-         store.store(InternalEntryFactory.create(key, "v2"));
+         store.store(TestInternalCacheEntryFactory.create(key, "v2"));
          endLatch.await();
 
          assert store.load(key).getValue().equals("v2");
@@ -144,7 +164,8 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    public void testTransactionalModificationsHappenInDiffThread(Method m) throws Exception {
       try {
-         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final TransactionFactory gtf = new TransactionFactory();
+         gtf.init(false, false, true);
          final String k1 = k(m, 1), k2 = k(m, 2), v1 = v(m, 1), v2 = v(m, 2);
          final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
          final CyclicBarrier barrier = new CyclicBarrier(2);
@@ -166,13 +187,13 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
          };
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
-         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
-         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v1)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k2, v2)));
          mods.add(new Remove(k1));
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
@@ -196,7 +217,8 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    public void testTransactionalModificationsAreCoalesced(Method m) throws Exception {
       try {
-         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final TransactionFactory gtf = new TransactionFactory();
+         gtf.init(false, false, true);
          final String k1 = k(m, 1), k2 = k(m, 2), k3 = k(m, 3), v1 = v(m, 1), v2 = v(m, 2), v3 = v(m, 3);
          final AtomicInteger storeCount = new AtomicInteger();
          final AtomicInteger removeCount = new AtomicInteger();
@@ -236,15 +258,15 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
          };
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
-         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
-         mods.add(new Store(InternalEntryFactory.create(k1, v2)));
-         mods.add(new Store(InternalEntryFactory.create(k2, v1)));
-         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v1)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v2)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k2, v1)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k2, v2)));
          mods.add(new Remove(k1));
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
@@ -262,10 +284,10 @@ public class AsyncTest extends AbstractInfinispanTest {
          removeCount.set(0);
          clearCount.set(0);
          mods = new ArrayList<Modification>();
-         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v1)));
          mods.add(new Remove(k1));
          mods.add(new Clear());
-         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k2, v2)));
          mods.add(new Remove(k2));
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
@@ -283,11 +305,11 @@ public class AsyncTest extends AbstractInfinispanTest {
          removeCount.set(0);
          clearCount.set(0);
          mods = new ArrayList<Modification>();
-         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v1)));
          mods.add(new Remove(k1));
-         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k2, v2)));
          mods.add(new Remove(k2));
-         mods.add(new Store(InternalEntryFactory.create(k3, v3)));         
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k3, v3)));
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
          Thread.sleep(200);
@@ -323,7 +345,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          clearCount.set(0);
          mods = new ArrayList<Modification>();
          mods.add(new Clear());
-         mods.add(new Store(InternalEntryFactory.create(k1, v1)));         
+         mods.add(new Store(TestInternalCacheEntryFactory.create(k1, v1)));
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
          Thread.sleep(200);
@@ -344,7 +366,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    private void doTestPut(int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++) {
-         InternalCacheEntry cacheEntry = InternalEntryFactory.create(key + i, value + i);
+         InternalCacheEntry cacheEntry = TestInternalCacheEntryFactory.create(key + i, value + i);
          store.store(cacheEntry);
       }
 
@@ -366,7 +388,7 @@ public class AsyncTest extends AbstractInfinispanTest {
                if (entry != null) {
                   assert entry.getValue().equals(value + i);
                } else {
-                  TestingUtil.sleepThread(20, "still waiting for key to appear: " + key + i);
+                  TestingUtil.sleepThreadInt(20, "still waiting for key to appear: " + key + i);
                }
             }
          }
@@ -375,7 +397,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    private void doTestSameKeyPut(int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++) {
-         store.store(InternalEntryFactory.create(key, value + i));
+         store.store(TestInternalCacheEntryFactory.create(key, value + i));
       }
 
       store.stop();
@@ -383,7 +405,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       InternalCacheEntry entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
-         TestingUtil.sleepThread(20);
+         TestingUtil.sleepThreadInt(20, null);
          entry = store.load(key);
          success = entry.getValue().equals(value + (number - 1));
          if (success) break;
@@ -405,7 +427,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
+            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
@@ -415,7 +437,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       store.remove(key);
       InternalCacheEntry entry;
       do {
-         TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key);
+         TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key);
          entry = store.load(key);
       } while (entry != null);
    }
@@ -433,13 +455,13 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
+            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
    }
 
-   class MockAsyncStore extends AsyncStore {
+   static class MockAsyncStore extends AsyncStore {
       volatile boolean block = true;
       final CountDownLatch v1Latch;
       final CountDownLatch v2Latch;
@@ -458,7 +480,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       @Override
       protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
          if (mods.get(key) != null && block) {
-            if (log.isTraceEnabled()) log.trace("Wait for v1 latch");
+            log.trace("Wait for v1 latch");
             try {
                v2Latch.countDown();
                block = false;
@@ -467,7 +489,7 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
             super.applyModificationsSync(mods);
          } else if (mods.get(key) != null && !block) {
-            if (log.isTraceEnabled()) log.trace("Do v2 modification and unleash v1 latch");
+            log.trace("Do v2 modification and unleash v1 latch");
             super.applyModificationsSync(mods);
             v1Latch.countDown();
             endLatch.countDown();

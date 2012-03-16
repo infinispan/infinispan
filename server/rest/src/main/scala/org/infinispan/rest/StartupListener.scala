@@ -1,10 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.rest
 
+import logging.Log
 import scala.collection.JavaConversions._
 import javax.servlet.http.HttpServlet
 import org.infinispan.manager.{EmbeddedCacheManager, DefaultCacheManager}
-import org.infinispan.server.core.Logging
-import javax.servlet.{ServletContext, ServletConfig}
+import javax.servlet.ServletConfig
 
 /**
  * To init the cache manager. Nice to do this on startup as any config problems will be picked up before any
@@ -14,7 +36,7 @@ import javax.servlet.{ServletContext, ServletConfig}
  * @author Galder Zamarreño
  * @since 4.0
  */
-class StartupListener extends HttpServlet with Logging {
+class StartupListener extends HttpServlet with Log {
    override def init(cfg: ServletConfig) {
       super.init(cfg)
 
@@ -24,7 +46,9 @@ class StartupListener extends HttpServlet with Logging {
       //    setting ManagerInstance.instance
       // 2. Doing it here makes it a lot easier rather than needing to have a separate module
       //    within app server build system
-      ManagerInstance.instance = getMcInjectedCacheManager(cfg)
+      if (ManagerInstance.instance == null) {
+         ManagerInstance.instance = getMcInjectedCacheManager(cfg)
+      }
 
       // If cache manager is still null, create one for REST server's own usage
       if (ManagerInstance.instance == null) {
@@ -35,11 +59,14 @@ class StartupListener extends HttpServlet with Logging {
             ManagerInstance.instance = new DefaultCacheManager(cfgFile)
       }
 
+      val cm = ManagerInstance.instance
+
       // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asIterator(ManagerInstance.instance.getCacheNames.iterator))
-         ManagerInstance.instance.getCache(cacheName)
+      for (cacheName <- asScalaIterator(cm.getCacheNames.iterator))
+         cm.getCache(cacheName)
+
       // Finally, start default cache as well
-      ManagerInstance.instance.getCache[String, Any]
+      cm.getCache[String, Any]()
    }
 
    /**

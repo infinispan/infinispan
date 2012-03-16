@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,10 +22,7 @@
  */
 package org.infinispan.lucene.locking;
 
-import java.io.IOException;
-
 import org.apache.lucene.store.Lock;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
@@ -44,15 +42,14 @@ import org.infinispan.util.logging.LogFactory;
 class BaseLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
-   private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
-   private final AdvancedCache cache;
+   private final Cache noCacheStoreCache;
    private final String lockName;
    private final String indexName;
    private final FileCacheKey keyOfLock;
 
    BaseLuceneLock(Cache cache, String indexName, String lockName) {
-      this.cache = cache.getAdvancedCache();
+      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
       this.keyOfLock = new FileCacheKey(indexName, lockName);
@@ -62,17 +59,17 @@ class BaseLuceneLock extends Lock {
     * {@inheritDoc}
     */
    @Override
-   public boolean obtain() throws IOException {
-      Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
+   public boolean obtain() {
+      Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: %s acquired for index: %s", lockName, indexName);
+            log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
          }
          // we own the lock:
          return true;
       } else {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
+            log.tracef("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
       }
@@ -82,7 +79,7 @@ class BaseLuceneLock extends Lock {
     * {@inheritDoc}
     */
    @Override
-   public void release() throws IOException {
+   public void release() {
       clearLock();
    }
 
@@ -90,15 +87,15 @@ class BaseLuceneLock extends Lock {
     * Used by Lucene at Directory creation: we expect the lock to not exist in this case.
     */
    public void clearLock() {
-      Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
+      Object previousValue = noCacheStoreCache.remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
-         log.trace("Lock removed for index: %s", indexName);
+         log.tracef("Lock removed for index: %s", indexName);
       }
    }
    
    @Override
    public boolean isLocked() {
-      boolean locked = cache.withFlags(lockFlags).containsKey(keyOfLock);
+      boolean locked = noCacheStoreCache.containsKey(keyOfLock);
       return locked;
    }
    

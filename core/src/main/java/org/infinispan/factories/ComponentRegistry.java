@@ -1,21 +1,49 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.ScopeDetector;
-import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.ReflectionCache;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Collections.emptyMap;
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
 /**
  * Named cache specific components
@@ -23,15 +51,18 @@ import java.util.Map;
  * @author Manik Surtani
  * @since 4.0
  */
-public class ComponentRegistry extends AbstractComponentRegistry {
+public final class ComponentRegistry extends AbstractComponentRegistry {
 
-   // cached component scopes
-   static final Map<Class, Scopes> componentScopeLookup = new HashMap<Class, Scopes>();
+   private final GlobalComponentRegistry globalComponents;
+   private final String cacheName;
+   private static final Log log = LogFactory.getLog(ComponentRegistry.class);
+   private CacheManagerNotifier cacheManagerNotifier;
 
-   GlobalComponentRegistry globalComponents;
-   String cacheName;
-   Log log = LogFactory.getLog(ComponentRegistry.class);
-   CacheManagerNotifier cacheManagerNotifier;
+   //Cached fields:
+   private StreamingMarshaller cacheMarshaler;
+   private StateTransferManager stateTransferManager;
+   private ResponseGenerator responseGenerator;
+   private CommandsFactory commandsFactory;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -46,18 +77,26 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * @param globalComponents Shared Component Registry to delegate to
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache,
-                            GlobalComponentRegistry globalComponents, ReflectionCache reflectionCache) {
-      super(reflectionCache);
+                            GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
+      super(defaultClassLoader); // registers the default classloader
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
          if (globalComponents == null) throw new NullPointerException("GlobalComponentRegistry cannot be null!");
          this.globalComponents = globalComponents;
 
-         registerDefaultClassLoader(null);
          registerComponent(this, ComponentRegistry.class);
          registerComponent(configuration, Configuration.class);
          registerComponent(new BootstrapFactory(cache, configuration, this), BootstrapFactory.class);
+
+         // register any module-specific command initializers
+         // Modules are on the same classloader as Infinispan
+         Map<Byte, ModuleCommandInitializer> initializers = globalComponents.getModuleCommandInitializers();
+         if (initializers != null && !initializers.isEmpty()) {
+            registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
+            for (ModuleCommandInitializer mci: initializers.values()) registerNonVolatileComponent(mci, mci.getClass());
+         } else
+            registerNonVolatileComponent(emptyMap(), MODULE_COMMAND_INITIALIZERS);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a ComponentRegistry!", e);
@@ -69,43 +108,37 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public final <T> T getComponent(Class<T> componentType, String name) {
-      if (isGlobal(componentType)) {
-         return globalComponents.getComponent(componentType, name);
+   @SuppressWarnings("unchecked")
+   public final <T> T getComponent(String componentTypeName, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentTypeName)) {
+         return (T) globalComponents.getComponent(componentTypeName, name, nameIsFQCN);
       } else {
-         return getLocalComponent(componentType, name);
+         return (T) getLocalComponent(componentTypeName, name, nameIsFQCN);
       }
    }
 
    @SuppressWarnings("unchecked")
-   public final <T> T getLocalComponent(Class<T> componentType, String name) {
-      Component wrapper = lookupLocalComponent(componentType, name);
-      if (wrapper == null) return null;
-
-      return (T) (wrapper.instance == NULL_COMPONENT ? null : wrapper.instance);
+   public final <T> T getLocalComponent(String componentTypeName, String name, boolean nameIsFQCN) {
+      return (T) super.getComponent(componentTypeName, name, nameIsFQCN);
    }
 
+   @SuppressWarnings("unchecked")
    public final <T> T getLocalComponent(Class<T> componentType) {
-      return getLocalComponent(componentType, componentType.getName());
+      String componentTypeName = componentType.getName();
+      return (T) getLocalComponent(componentTypeName, componentTypeName, true);
    }
 
    @Override
-   protected final Map<Class, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
-      // delegate to parent.  No sense maintaining multiple copies of this map.
-      return globalComponents.getDefaultFactoryMap();
-   }
-
-   @Override
-   protected final Component lookupComponent(Class componentClass, String name) {
-      if (isGlobal(componentClass)) {
-         return globalComponents.lookupComponent(componentClass, name);
+   protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentClassName)) {
+         return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
-         return lookupLocalComponent(componentClass, name);
+         return lookupLocalComponent(componentClassName, name, nameIsFQCN);
       }
    }
 
-   protected final Component lookupLocalComponent(Class componentClass, String name) {
-      return super.lookupComponent(componentClass, name);
+   protected final Component lookupLocalComponent(String componentClassName, String name, boolean nameIsFQCN) {
+      return super.lookupComponent(componentClassName, name, nameIsFQCN);
    }
 
    public final GlobalComponentRegistry getGlobalComponentRegistry() {
@@ -113,46 +146,43 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public final void registerComponent(Object component, String name) {
-      if (isGlobal(component.getClass())) {
-         globalComponents.registerComponent(component, name);
+   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
+         globalComponents.registerComponentInternal(component, name, nameIsFQCN);
       } else {
-         super.registerComponent(component, name);
+         super.registerComponentInternal(component, name, nameIsFQCN);
       }
    }
 
-   private boolean isGlobal(Class clazz) {
-      Scopes componentScope = componentScopeLookup.get(clazz);
-      if (componentScope == null) {
-         componentScope = ScopeDetector.detectScope(clazz);
-         componentScopeLookup.put(clazz, componentScope);
-      }
-
-      return componentScope == Scopes.GLOBAL;
+   private boolean isGlobal(String className) {
+      ComponentMetadata m = ComponentMetadataRepo.findComponentMetadata(className);
+      return m != null && m.isGlobalScope();
    }
 
    @Override
    public void start() {
-      if (globalComponents.getStatus() != ComponentStatus.RUNNING || globalComponents.getStatus() != ComponentStatus.INITIALIZING) {
-         globalComponents.start();
-      }
+      globalComponents.start();
       boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
 
       // set this up *before* starting the components since some components - specifically state transfer - needs to be
       // able to locate this registry via the InboundInvocationHandler
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
-      if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheStarting(this, cacheName);
-         }
-      }
+      // Cache starting notification happens earlier in the call stack trace
+
       super.start();
+
       if (needToNotify && state == ComponentStatus.RUNNING) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStarted(this, cacheName);
          } 
          cacheManagerNotifier.notifyCacheStarted(cacheName);
+      }
+   }
+
+   void notifyCacheStarting(Configuration configuration) {
+      for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
+         l.cacheStarting(this, configuration, cacheName);
       }
    }
 
@@ -161,13 +191,13 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       if (state.stopAllowed())globalComponents.unregisterNamedComponentRegistry(cacheName);
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStopping(this, cacheName);
          }
       }
       super.stop();
       if (state == ComponentStatus.TERMINATED && needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStopped(this, cacheName);
          }
          cacheManagerNotifier.notifyCacheStopped(cacheName);
@@ -176,6 +206,44 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+    */
+   public StreamingMarshaller getCacheMarshaller() {
+      return cacheMarshaler;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public StateTransferManager getStateTransferManager() {
+      return stateTransferManager;
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StateTransferManager.class);
+    */
+   public ResponseGenerator getResponseGenerator() {
+      return responseGenerator;
+   }
+
+   /**
+    * Caching shortcut for #getLocalComponent(CommandsFactory.class);
+    */
+   public CommandsFactory getCommandsFactory() {
+      return commandsFactory;
+   }
+
+   /**
+    * Invoked last after all services are wired
+    */
+   public void prepareWiringCache() {
+      cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      stateTransferManager = getComponent(StateTransferManager.class);
+      responseGenerator = getComponent(ResponseGenerator.class);
+      commandsFactory = getLocalComponent(CommandsFactory.class);
    }
 
 }

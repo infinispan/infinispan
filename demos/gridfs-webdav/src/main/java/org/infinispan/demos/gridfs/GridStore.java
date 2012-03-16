@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.demos.gridfs;
 
 
@@ -80,14 +102,14 @@ public class GridStore implements IWebdavStore {
    }
 
    public void createFolder(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.createFolder(" + uri + ")");
+      log.tracef("GridStore.createFolder(%s)", uri);
       File file = fs.getFile(root, uri);
       if (!file.mkdir())
          throw new WebdavException("cannot create folder: " + uri);
    }
 
    public void createResource(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.createResource(" + uri + ")");
+      log.tracef("GridStore.createResource(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
          if (!file.createNewFile())
@@ -103,7 +125,7 @@ public class GridStore implements IWebdavStore {
                                   InputStream is, String contentType, String characterEncoding)
            throws WebdavException {
 
-      log.trace("GridStore.setResourceContent(" + uri + ")");
+      log.tracef("GridStore.setResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
          OutputStream os = fs.getOutput((GridFile) file);
@@ -137,11 +159,13 @@ public class GridStore implements IWebdavStore {
    }
 
    public String[] getChildrenNames(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getChildrenNames(" + uri + ")");
+      log.tracef("GridStore.getChildrenNames(%s)", uri);
       File file = fs.getFile(root, uri);
       String[] childrenNames = null;
       if (file.isDirectory()) {
          File[] children = file.listFiles();
+         if (children != null)
+            throw new WebdavException("IO error while listing files for " + file);
          List<String> childList = new ArrayList<String>();
          String name = null;
          for (int i = 0; i < children.length; i++) {
@@ -158,13 +182,13 @@ public class GridStore implements IWebdavStore {
    public void removeObject(ITransaction transaction, String uri) throws WebdavException {
       File file = fs.getFile(root, uri);
       boolean success = file.delete();
-      log.trace("GridStore.removeObject(" + uri + ")=" + success);
+      log.tracef("GridStore.removeObject(%s)=%s", uri, success);
       if (!success)
          throw new WebdavException("cannot delete object: " + uri);
    }
 
    public InputStream getResourceContent(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getResourceContent(" + uri + ")");
+      log.tracef("GridStore.getResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
 
       InputStream in;
@@ -180,7 +204,7 @@ public class GridStore implements IWebdavStore {
    }
 
    public long getResourceLength(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getResourceLength(" + uri + ")");
+      log.tracef("GridStore.getResourceLength(%s)", uri);
       File file = fs.getFile(root, uri);
       return file.length();
    }

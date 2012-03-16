@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.client.hotrod;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
@@ -19,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -59,8 +82,11 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c1 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c2 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      // The caches are not configured to form a cluster
+      // so the client will have to use round-robin for balancing.
+      // This means requests will alternate between server 1 and server 2.
+      c1 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
       hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
@@ -99,15 +125,24 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
    }
 
    @AfterTest(alwaysRun = true)
-   public void tearDown() {
+   public void tearDown() throws ExecutionException, InterruptedException {
       hotRodServer1.stop();
       hotRodServer2.stop();
-      workerThread1.stopThread();
-      workerThread2.stopThread();
-      workerThread3.stopThread();
-      workerThread4.stopThread();
-      workerThread5.stopThread();
-      workerThread6.stopThread();
+
+      workerThread1.stop();
+      workerThread2.stop();
+      workerThread3.stop();
+      workerThread4.stop();
+      workerThread5.stop();
+      workerThread6.stop();
+
+      workerThread1.awaitTermination();
+      workerThread2.awaitTermination();
+      workerThread3.awaitTermination();
+      workerThread4.awaitTermination();
+      workerThread5.awaitTermination();
+      workerThread6.awaitTermination();
+
       remoteCacheManager.stop();
    }
 
@@ -129,7 +164,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       workerThread1.put("k1", "v1");
       workerThread1.put("k2", "v2");
 
-
+      // verify that each cache got a request
       assertEquals(1, c1.size());
       assertEquals(1, c2.size());
 
@@ -138,51 +173,64 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertEquals("v2", remoteCache.get("k2"));
       assertEquals(1, c2.size());
 
+      // there should be no active connections to any server
+      assertEquals(0, connectionPool.getNumActive(hrServ1Addr));
+      assertEquals(0, connectionPool.getNumActive(hrServ2Addr));
       assertEquals(1, connectionPool.getNumIdle(hrServ1Addr));
       assertEquals(1, connectionPool.getNumIdle(hrServ2Addr));
 
+      // install an interceptor that will block all requests on the server until the allow() call
       DelayTransportInterceptor dt1 = new DelayTransportInterceptor(true);
       DelayTransportInterceptor dt2 = new DelayTransportInterceptor(true);
       c1.getAdvancedCache().addInterceptor(dt1, 0);
       c2.getAdvancedCache().addInterceptor(dt2, 0);
-      log.info("Interceptors added");
+      log.info("Cache operations blocked");
 
-      workerThread1.putAsync("k3", "v3");
-      workerThread2.putAsync("k4", "v4");
-      log.info("Async calls for k3 and k4 is done.");
-      for (int i = 0; i < 10; i++) {
-         log.trace("Active for server " + hrServ1Addr + " are:" + connectionPool.getNumActive(hrServ1Addr));
-         log.trace("Active for server " + hrServ2Addr + " are:" + connectionPool.getNumActive(hrServ2Addr));
-         if (connectionPool.getNumActive(hrServ1Addr) == 1 && connectionPool.getNumActive(hrServ2Addr) == 1) break;
-         Thread.sleep(1000);
+      try {
+         // start one operation on each server, using the existing connections
+         workerThread1.putAsync("k3", "v3");
+         workerThread2.putAsync("k4", "v4");
+         log.info("Async calls for k3 and k4 is done.");
+         // give the worker thread some time to start their requests
+         Thread.sleep(100);
+         assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
+         assertEquals(1, connectionPool.getNumActive(hrServ2Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+
+         // another operation for each server, creating new connections
+         workerThread3.putAsync("k5", "v5");
+         workerThread4.putAsync("k6", "v6");
+         Thread.sleep(100);
+         assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
+         assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+
+         // we've reached the connection pool limit, the new operations will block
+         // until a connection is released
+         workerThread5.putAsync("k7", "v7");
+         workerThread6.putAsync("k8", "v8");
+         Thread.sleep(100);
+         assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
+         assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
+         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
       }
-      log.info("Connection pool is " + connectionPool);
-      assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
-      assertEquals(1, connectionPool.getNumActive(hrServ2Addr));
-      assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
-
-      workerThread3.putAsync("k5", "v5");
-      workerThread4.putAsync("k6", "v6");
-      for (int i = 0; i < 10; i++) {
-         log.trace("Active for server " + hrServ1Addr + " are:" + connectionPool.getNumActive(hrServ1Addr));
-         log.trace("Active for server " + hrServ2Addr + " are:" + connectionPool.getNumActive(hrServ2Addr));
-         if (connectionPool.getNumActive(hrServ1Addr) == 2 && connectionPool.getNumActive(hrServ2Addr) == 2) break;
-         Thread.sleep(1000);
+      catch (Exception e) {
+         log.error(e);
+      } finally {
+         //now allow
+         dt1.allow();
+         dt2.allow();
       }
-      assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
 
-      workerThread5.putAsync("k7", "v7");
-      workerThread6.putAsync("k8", "v8");
-      assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
-      assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
-      assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
-
-      //now allow
-      dt1.allow();
-      dt2.allow();
+      // give the servers some time to process the operations
+      eventually(new Condition() {
+         public boolean isSatisfied() throws Exception {
+            return connectionPool.getNumActive() == 0;
+         }
+      }, 1000);
 
       assertExistKeyValue("k3", "v3");
       assertExistKeyValue("k4", "v4");
@@ -191,13 +239,9 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertExistKeyValue("k7", "v7");
       assertExistKeyValue("k8", "v8");
 
+      // all the connections have been released to the pool, but haven't been closed
       assertEquals(0, connectionPool.getNumActive(hrServ1Addr));
       assertEquals(0, connectionPool.getNumActive(hrServ2Addr));
-
-      assertEquals(2, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(2, connectionPool.getNumIdle(hrServ2Addr));
-
-
       assertEquals(2, connectionPool.getNumIdle(hrServ1Addr));
       assertEquals(2, connectionPool.getNumIdle(hrServ2Addr));
    }

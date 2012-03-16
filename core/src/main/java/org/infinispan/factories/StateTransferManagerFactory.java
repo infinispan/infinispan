@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,20 +23,30 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.statetransfer.StateTransferManagerImpl;
+import org.infinispan.statetransfer.DistributedStateTransferManagerImpl;
+import org.infinispan.statetransfer.DummyInvalidationStateTransferManagerImpl;
+import org.infinispan.statetransfer.ReplicatedStateTransferManagerImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 
 /**
  * Constructs {@link org.infinispan.statetransfer.StateTransferManager} instances.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = StateTransferManager.class)
 public class StateTransferManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
-      if (configuration.getCacheMode().isClustered() && !configuration.getCacheMode().isDistributed())
-         return componentType.cast(new StateTransferManagerImpl());
+      if (!configuration.getCacheMode().isClustered())
+         return null;
+
+      if (configuration.getCacheMode().isDistributed())
+         return componentType.cast(new DistributedStateTransferManagerImpl());
+      else if (configuration.getCacheMode().isReplicated())
+         return componentType.cast(new ReplicatedStateTransferManagerImpl());
+      else if (configuration.getCacheMode().isInvalidation())
+         return componentType.cast(new DummyInvalidationStateTransferManagerImpl());
       else
          return null;
    }

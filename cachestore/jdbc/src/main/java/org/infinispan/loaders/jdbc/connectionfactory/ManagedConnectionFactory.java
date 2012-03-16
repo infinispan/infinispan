@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,7 +23,7 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.sql.DataSource;
@@ -44,28 +45,28 @@ import java.sql.SQLException;
  */
 public class ManagedConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private DataSource dataSource;
 
-   public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
       InitialContext ctx = null;
       String datasourceName = config.getDatasourceJndiLocation();
       try {
          ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);
          if (trace) {
-            log.trace("Datasource lookup for " + datasourceName + " succeeded: " + dataSource);
+            log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
          }
          if (dataSource == null) {
-            String msg = "Could not find a connection in jndi under the name '" + datasourceName + "'";
-            log.error(msg);
-            throw new CacheLoaderException(msg);
+            log.connectionInJndiNotFound(datasourceName);
+            throw new CacheLoaderException(String.format(
+                  "Could not find a connection in jndi under the name '%s'", datasourceName));
          }
       }
       catch (NamingException e) {
-         log.error("Could not lookup connection with datasource " + datasourceName, e);
+         log.namingExceptionLookingUpConnection(datasourceName, e);
          throw new CacheLoaderException(e);
       }
       finally {
@@ -74,7 +75,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
                ctx.close();
             }
             catch (NamingException e) {
-               log.warn("Failed to close naming context.", e);
+               log.failedClosingNamingCtx(e);
             }
          }
       }
@@ -88,11 +89,11 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       try {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
-         log.error(e);
+         log.sqlFailureRetrievingConnection(e);
          throw new CacheLoaderException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
       }
       if (trace) {
-         log.trace("Connection checked out: " + connection);
+         log.tracef("Connection checked out: %s", connection);
       }
       return connection;
 
@@ -103,7 +104,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          if (conn != null) // Could be null if getConnection failed
             conn.close();
       } catch (SQLException e) {
-         log.warn("Issues while closing connection " + conn, e);
+         log.sqlFailureClosingConnection(conn, e);
       }
    }
 }

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -117,7 +118,7 @@ public class IndexReadingStressTest {
    }
 
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
-      SharedState state = fillDirectory(dir);
+      SharedState state = fillDirectory(dir, TERMS_NUMBER);
       ExecutorService e = Executors.newFixedThreadPool(THREADS);
       for (int i = 0; i < THREADS; i++) {
          e.execute(new IndependentLuceneReaderThread(dir, state, i, 1, TERMS_NUMBER));
@@ -133,11 +134,11 @@ public class IndexReadingStressTest {
                + writerTaskCount);
    }
 
-   private SharedState fillDirectory(Directory directory) throws CorruptIndexException, LockObtainFailedException, IOException {
+   static SharedState fillDirectory(Directory directory, int termsNumber) throws CorruptIndexException, LockObtainFailedException, IOException {
       CacheTestSupport.initializeDirectory(directory);
       SharedState state = new SharedState(0);
       IndexWriter iwriter = LuceneSettings.openWriter(directory, 100000);
-      for (int i = 0; i <= TERMS_NUMBER; i++) {
+      for (int i = 0; i <= termsNumber; i++) {
          Document doc = new Document();
          String term = String.valueOf(i);
          //For even values of i we add to "main" field

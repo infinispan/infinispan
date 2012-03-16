@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,14 +22,12 @@
  */
 package org.infinispan.interceptors;
 
-import java.util.concurrent.atomic.AtomicLong;
-
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -44,9 +43,13 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -56,13 +59,18 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheLoaderManager clm;
    protected CacheNotifier notifier;
    protected CacheLoader loader;
-   private DataContainer dataContainer;
    private EntryFactory entryFactory;
 
+   private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, DataContainer dataContainer, EntryFactory entryFactory, CacheNotifier notifier) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
       this.clm = clm;
-      this.dataContainer = dataContainer;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
    }
@@ -76,7 +84,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeeded(ctx, key);
+         loadIfNeeded(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -86,7 +94,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, true, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -96,7 +104,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       Object[] keys;
       if ((keys = command.getKeys()) != null && keys.length > 0) {
          for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key);
+            loadIfNeeded(ctx, key, false, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -106,7 +114,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -115,68 +123,50 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key);
+         loadIfNeededAndUpdateStats(ctx, key, false, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
-   private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE) || ctx.hasFlag(Flag.SKIP_CACHE_LOAD)) {
+   protected boolean isPrimaryOwner(Object key) {
+      return false;
+   }
+
+   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)) {
          return false; //skip operation
       }
+
+      // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
+      // are using eviction or write skew checking.
+      if (!isRetrieval && !ctx.isOriginLocal() && !isPrimaryOwner(key)) return false;
+
       // first check if the container contains the key we need.  Try and load this into the context.
-      CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
-      if (e == null || e.isNull()) {
-
-         // Obtain a temporary lock to verify the key is not being concurrently added
-         boolean keyLocked = entryFactory.acquireLock(ctx, key);
-         boolean unlockOnWayOut = false;
-         try {
-            // check again, in case there is a concurrent addition
-            if (dataContainer.containsKey(key)) {
-               log.trace("No need to load.  Key exists in the data container.");
-               unlockOnWayOut = true;
-               return true;
-            }
-         } finally {
-            if (keyLocked && unlockOnWayOut) {
-               entryFactory.releaseLock(key);
-            }
-         }
-
-         // we *may* need to load this.
+      CacheEntry e = ctx.lookupEntry(key);
+      if (e == null || e.isNull() || e.getValue() == null) {
          InternalCacheEntry loaded = loader.load(key);
-         if (loaded == null) {
-            if (log.isTraceEnabled()) {
-               log.trace("No need to load.  Key doesn't exist in the loader.");
-            }
-            if (keyLocked) {
-               entryFactory.releaseLock(key);
-            }
+         if (loaded != null) {
+            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false);
+            recordLoadedEntry(ctx, key, mvccEntry, loaded);
+            return true;
+         } else {
             return false;
          }
-
-         // Reuse the lock and create a new entry for loading
-         MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false, true);
-         recordLoadedEntry(ctx, key, n, loaded);
-         return true;
       } else {
          return true;
       }
    }
 
    /**
-    * This method records a loaded entry, performing the following steps:
-    * <ol>
-    * <li>Increments counters for reporting via JMX</li>
-    * <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents of
-    * 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the DataContainer
-    * when the call returns (in the LockingInterceptor, when locks are released)</li>
-    * <li>Notifies listeners</li>
-    * </ol>
-    * @param ctx the current invocation's context
-    * @param key key to record
-    * @param entry the appropriately locked entry in the caller's context
+    * This method records a loaded entry, performing the following steps: <ol> <li>Increments counters for reporting via
+    * JMX</li> <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents
+    * of 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the
+    * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li> <li>Notifies
+    * listeners</li> </ol>
+    *
+    * @param ctx         the current invocation's context
+    * @param key         key to record
+    * @param entry       the appropriately locked entry in the caller's context
     * @param loadedEntry the internal entry loaded from the cache store.
     */
    private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
@@ -213,8 +203,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx);
    }
 
-   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key) throws Throwable {
-      boolean found = loadIfNeeded(ctx, key);
+   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
       if (!found && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }

@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -116,7 +116,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
          otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
-         assert e.getCause().getCause() instanceof JmxDomainConflictException;
+         assert e.getCause() instanceof JmxDomainConflictException;
       } finally {
          otherContainer.stop();
       }

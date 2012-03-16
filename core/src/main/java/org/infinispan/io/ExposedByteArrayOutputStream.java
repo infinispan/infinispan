@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -39,7 +40,7 @@ import java.io.ByteArrayOutputStream;
  * @since 4.0
  */
 @NotThreadSafe
-public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
     */
@@ -77,7 +78,7 @@ public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    }
 
    @Override
-   public void write(byte[] b, int off, int len) {
+   public final void write(byte[] b, int off, int len) {
       if ((off < 0) || (off > b.length) || (len < 0) ||
             ((off + len) > b.length) || ((off + len) < 0)) {
          throw new IndexOutOfBoundsException();
@@ -97,7 +98,7 @@ public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    }
 
    @Override
-   public void write(int b) {
+   public final void write(int b) {
       int newcount = count + 1;
       if (newcount > buf.length) {
          byte newbuf[] = new byte[getNewBufferSize(buf.length, newcount)];
@@ -128,5 +129,13 @@ public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
          return Math.max(curSize << 1, minNewSize);
       else
          return Math.max(curSize + (curSize >> 2), minNewSize);
+   }
+   
+   /**
+    * Overriden only to avoid unneeded synchronization
+    */
+   @Override
+   public final int size() {
+      return count;
    }
 }

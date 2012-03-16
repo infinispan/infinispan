@@ -1,4 +1,26 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
@@ -6,7 +28,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
+      <version>5.2.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -19,19 +41,16 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-core</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <version>${project.version}</version>
          <optional>true</optional>
       </dependency>
 
@@ -46,15 +65,19 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <version>${project.version}</version>
          <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>c3p0</groupId>
+         <artifactId>c3p0</artifactId>
          <scope>test</scope>
       </dependency>
       
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
-         <version>${version.h2.driver}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -64,11 +87,39 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.4.3-JBOSS</version>
             <configuration>
-               <excludes>
-                  <exclude>**/*StressTest.java</exclude>
-               </excludes>
+              <excludes>
+                <exclude>**/*StressTest.java</exclude>
+              </excludes>
+              <parallel>tests</parallel>
+              <threadCount>${infinispan.test.parallel.threads}</threadCount>
+              <groups>${defaultTestGroup}</groups>
+              <systemProperties>
+                <property>
+                  <name>infinispan.test.jgroups.protocol</name>
+                  <value>tcp</value>
+                </property>
+                <property>
+                  <name>jgroups.bind_addr</name>
+                  <value>127.0.0.1</value>
+                </property>
+                <property>
+                  <name>java.net.preferIPv4Stack</name>
+                  <value>true</value>
+                </property>
+                <property>
+                  <name>log4j.configuration</name>
+                  <value>custom-lucene-log4j.xml</value>
+                </property>
+              </systemProperties>
+              <trimStackTrace>false</trimStackTrace>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>${testNGListener}</value>
+                </property>
+              </properties>
+              <argLine>-Xmx2048m -XX:MaxPermSize=256m</argLine>
             </configuration>
          </plugin>
          <plugin>
@@ -82,7 +133,6 @@
                </instructions>
             </configuration>
          </plugin>
-
       </plugins>
    </build>
 

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
@@ -6,6 +28,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,7 +38,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -64,7 +86,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
             }
          });
       }
-      transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, getConcurrencyLevel());
+      transactions = ConcurrentMapFactory.makeConcurrentMap(64, getConcurrencyLevel());
    }
 
    protected boolean supportsMultiThreadedPurge() {
@@ -83,7 +105,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
             try {
                purgeInternal();
             } catch (CacheLoaderException e) {
-               log.error("Problems encountered while purging expired", e);
+               log.problemPurgingExpired(e);
             }
          }
       });
@@ -138,7 +160,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   protected final void safeClose(InputStream stream) throws CacheLoaderException {
+   protected static void safeClose(InputStream stream) throws CacheLoaderException {
       if (stream == null) return;
       try {
          stream.close();
@@ -147,7 +169,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   protected final void safeClose(OutputStream stream) throws CacheLoaderException {
+   protected static void safeClose(OutputStream stream) throws CacheLoaderException {
       if (stream == null) return;
       try {
          stream.close();

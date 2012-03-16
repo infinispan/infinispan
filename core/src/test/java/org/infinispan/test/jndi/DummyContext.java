@@ -1,23 +1,39 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test.jndi;
 
-import javax.naming.Context;
-import javax.naming.Name;
-import javax.naming.NameClassPair;
-import javax.naming.NameParser;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.Binding;
-import java.util.Hashtable;
-import java.util.HashMap;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
+import javax.naming.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DummyContext implements Context {
 
 
-   HashMap<String, Object> bindings = new HashMap<String, Object>();
+   ConcurrentHashMap<String, Object> bindings = new ConcurrentHashMap<String, Object>();
    boolean serializing;
 
    public DummyContext() {
@@ -539,11 +555,11 @@ public class DummyContext implements Context {
    private void deserialize() {
       if (serializing) {
          if (bytes == null)
-            bindings = new HashMap<String, Object>();
+            bindings = new ConcurrentHashMap<String, Object>();
          else {
             try {
                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-               bindings = (HashMap<String, Object>) ois.readObject();
+               bindings = (ConcurrentHashMap<String, Object>) ois.readObject();
                ois.close();
                bytes = null;
             }

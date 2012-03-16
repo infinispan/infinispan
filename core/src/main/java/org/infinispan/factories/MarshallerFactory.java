@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,9 +22,16 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.marshall.CacheMarshaller;
+import org.infinispan.marshall.GlobalMarshaller;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.util.Util;
+
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * MarshallerFactory.
@@ -31,10 +39,29 @@ import org.infinispan.util.Util;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@DefaultFactoryFor(classes = StreamingMarshaller.class)
-public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
+@DefaultFactoryFor(classes = {StreamingMarshaller.class, Marshaller.class})
+public class MarshallerFactory extends NamedComponentFactory implements AutoInstantiableFactory {
+
    @Override
-   public <T> T construct(Class<T> componentType) {
-      return componentType.cast(Util.getInstance(globalConfiguration.getMarshallerClass()));
+   public <T> T construct(Class<T> componentType, String componentName) {
+      Object comp;
+      if (componentName.equals(GLOBAL_MARSHALLER))
+         comp = new GlobalMarshaller(createMarshaller());
+      else if (componentName.equals(CACHE_MARSHALLER))
+         comp = new CacheMarshaller(createMarshaller());
+      else
+         throw new CacheException("Don't know how to handle type " + componentType);
+
+      try {
+         return componentType.cast(comp);
+      } catch (Exception e) {
+         throw new CacheException("Problems casting bootstrap component " + comp.getClass() + " to type " + componentType, e);
+      }
    }
+
+   protected VersionAwareMarshaller createMarshaller() {
+      return (VersionAwareMarshaller) Util.getInstance(
+            globalConfiguration.getMarshallerClass(), globalConfiguration.getClassLoader());
+   }
+
 }

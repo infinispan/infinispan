@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.notifications.IncorrectListenerException;
@@ -175,7 +197,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestControlListener {
+   static public class TestControlListener {
       @CacheEntryVisited
       @CacheEntryRemoved
       public void callback(Event e) {
@@ -183,34 +205,34 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestCacheListenerNoMethodsListener {
+   static public class TestCacheListenerNoMethodsListener {
       public String toString() {
          return "Hello";
       }
    }
 
-   public class TestNonAnnotatedListener {
+   static public class TestNonAnnotatedListener {
       public String toString() {
          return "Hello";
       }
    }
 
    @Listener
-   protected class TestNonPublicListener {
+   static protected class TestNonPublicListener {
       @CacheEntryVisited
       public void callback() {
       }
    }
 
    @Listener
-   public class TestNonPublicListenerMethodListener {
+   static public class TestNonPublicListenerMethodListener {
       @CacheEntryVisited
       protected void callback(Event e) {
       }
    }
 
    @Listener
-   public class TestNonVoidReturnTypeMethodListener {
+   static public class TestNonVoidReturnTypeMethodListener {
       @CacheEntryVisited
       public String callback(Event e) {
          return "Hello";
@@ -218,35 +240,35 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestIncorrectMethodSignature1Listener {
+   static public class TestIncorrectMethodSignature1Listener {
       @CacheEntryVisited
       public void callback() {
       }
    }
 
    @Listener
-   public class TestIncorrectMethodSignature2Listener {
+   static public class TestIncorrectMethodSignature2Listener {
       @CacheEntryVisited
       public void callback(Event e, String s) {
       }
    }
 
    @Listener
-   public class TestIncorrectMethodSignature3Listener {
+   static public class TestIncorrectMethodSignature3Listener {
       @CacheEntryVisited
       public void callback(Event e, String... s) {
       }
    }
 
    @Listener
-   public class TestUnassignableMethodSignatureListener {
+   static public class TestUnassignableMethodSignatureListener {
       @CacheEntryVisited
       public void callback(CacheEntryRemovedEvent e) {
       }
    }
 
    @Listener
-   public class TestPartlyUnassignableMethodSignatureListener {
+   static public class TestPartlyUnassignableMethodSignatureListener {
       @CacheEntryVisited
       @CacheEntryRemoved
       public void callback(CacheEntryRemovedEvent e) {
@@ -254,7 +276,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestMultipleMethodsListener {
+   static public class TestMultipleMethodsListener {
       @CacheEntryVisited
       public void callback1(Event e) {
       }
@@ -265,7 +287,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestMultipleAnnotationsOneMethodListener {
+   static public class TestMultipleAnnotationsOneMethodListener {
       @CacheEntryRemoved
       @CacheEntryVisited
       public void callback(Event nme) {
@@ -273,7 +295,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   public class TestMultipleMethodsOneAnnotationListener {
+   static public class TestMultipleMethodsOneAnnotationListener {
       @CacheEntryVisited
       public void callback1(Event e) {
       }

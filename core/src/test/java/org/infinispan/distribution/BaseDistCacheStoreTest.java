@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,8 +25,6 @@ package org.infinispan.distribution;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
  * DistSyncCacheStoreTest.
@@ -35,18 +34,20 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  */
 public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
    protected boolean shared;
-   static int id;
+   protected boolean preload;
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      Configuration cfg = new Configuration();
+   protected Configuration buildConfiguration() {
+      Configuration cfg = super.buildConfiguration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setShared(shared);
-      int idToUse = shared ? 999 : id++;
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + idToUse));
+      if (shared) {
+         clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName()));
+      } else {
+         clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
+      }
+      clmc.setPreload(preload);
       cfg.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      cacheManagers.add(cm);
-      return cm;
+      return cfg;
    }
 }

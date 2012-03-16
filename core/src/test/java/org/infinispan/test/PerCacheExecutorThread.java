@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.test;
 
 import org.infinispan.Cache;
@@ -72,16 +94,16 @@ public final class PerCacheExecutorThread extends Thread {
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
-         log.trace("about to process operation " + operation);
+         log.tracef("about to process operation %s", operation);
          switch (operation) {
-            case BEGGIN_TX: {
+            case BEGIN_TX: {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
                try {
                   txManager.begin();
                   ongoingTransaction = txManager.getTransaction();
-                  setResponse(OperationsResult.BEGGIN_TX_OK);
+                  setResponse(OperationsResult.BEGIN_TX_OK);
                } catch (Exception e) {
-                  log.trace("Failure on beggining tx", e);
+                  log.trace("Failure on beginning tx", e);
                   setResponse(e);
                }
                break;
@@ -157,7 +179,7 @@ public final class PerCacheExecutorThread extends Thread {
    }
 
    private void setResponse(Object e) {
-      log.trace("setResponse to " + e);
+      log.tracef("setResponse to %s", e);
       response = e;
    }
 
@@ -197,11 +219,11 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum Operations {
-      BEGGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD, FORCE2PC;
+      BEGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD, FORCE2PC;
       public OperationsResult getCorrespondingOkResult() {
          switch (this) {
-            case BEGGIN_TX:
-               return OperationsResult.BEGGIN_TX_OK;
+            case BEGIN_TX:
+               return OperationsResult.BEGIN_TX_OK;
             case COMMIT_TX:
                return OperationsResult.COMMIT_TX_OK;
             case PUT_KEY_VALUE:
@@ -227,7 +249,7 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum OperationsResult {
-      BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK , FORCE2PC_OK
+      BEGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK , FORCE2PC_OK
    }
 
    public Transaction getOngoingTransaction() {

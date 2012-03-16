@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
@@ -5,6 +27,8 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.NotSupportedException;
@@ -25,6 +49,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       c.setLockAcquisitionTimeout(500);
       List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
       c1 = caches.get(0);
@@ -46,8 +71,9 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       assertLocked(c2, "k");
 
       cacheManagers.get(0).stop();
+      TestingUtil.blockUntilViewReceived(c2, 1, 1000);
 
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c2.getCacheManager();
+      EmbeddedCacheManager cacheManager = c2.getCacheManager();
       assert cacheManager.getMembers().size() == 1;
 
       // may take a while from when the view change is seen through to when the lock is cleared
@@ -62,8 +88,8 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       try {
          c.put(key, "dummy"); // should time out
          assert false : "Should have been locked!";
-      } catch (Exception e) {
-
+      } catch (TimeoutException e) {
+         // ignoring timeout exception
       } finally {
          tm.rollback();
       }
@@ -74,7 +100,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       tm.begin();
       try {
          c.put(key, "dummy"); // should time out
-      } catch (Exception e) {
+      } catch (TimeoutException e) {
          assert false : "Should not have been locked!";
       } finally {
          tm.rollback();

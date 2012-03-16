@@ -1,11 +1,33 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.RequestParameters
-import org.infinispan.server.core.CacheValue
-import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
 import org.infinispan.util.ByteArrayKey
+import org.jboss.netty.buffer.ChannelBuffer
+import org.infinispan.server.core.{RequestParameters, CacheValue}
+import org.infinispan.server.core.transport.NettyTransport
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -18,22 +40,22 @@ abstract class AbstractVersionedDecoder {
    /**
     * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it.
     */
-   def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader
+   def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long): (HotRodHeader, Boolean)
 
    /**
     * Read the key to operate on from the message.
     */
-   def readKey(buffer: ChannelBuffer): ByteArrayKey
+   def readKey(header: HotRodHeader, buffer: ChannelBuffer): (ByteArrayKey, Boolean)
 
    /**
     * Read the parameters of the operation, if present.
     */
-   def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters]
+   def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean)
 
    /**
     * Read the value part of the operation.
     */
-   def createValue(params: RequestParameters, nextVersion: Long): CacheValue
+   def createValue(params: RequestParameters, nextVersion: Long, rawValue: Array[Byte]): CacheValue
 
    /**
     * Create a successful response.
@@ -53,17 +75,27 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for get a request.
     */
-   def createGetResponse(header: HotRodHeader, v: CacheValue, op: Enumeration#Value): AnyRef
+   def createGetResponse(header: HotRodHeader, v: CacheValue): AnyRef
 
    /**
-    * Handle a protocol specific message.
+    * Handle a protocol specific header reading.
     */
-   def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+
+   /**
+    * Handle a protocol specific key reading.
+    */
+   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+
+   /**
+    * Handle a protocol specific value reading.
+    */
+   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
 
    /**
     * Create a response for the stats command.
     */
-   def createStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
+   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): AnyRef
 
    /**
     * Create an error response based on the Throwable instance received.

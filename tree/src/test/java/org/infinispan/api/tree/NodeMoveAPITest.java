@@ -1,16 +1,42 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.api.tree;
 
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
+import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCacheImpl;
 import org.infinispan.tree.TreeStructureSupport;
 import org.infinispan.util.Util;
@@ -19,6 +45,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -49,11 +76,12 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
    DataContainer dc;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      Configuration c = new Configuration();
-      c.setFetchInMemoryState(false);
-      c.setInvocationBatchingEnabled(true);
-      c.setLockAcquisitionTimeout(1000);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      Configuration c = new Configuration().fluent()
+            .stateRetrieval().fetchInMemoryState(false)
+            .invocationBatching()
+            .locking().lockAcquisitionTimeout(1000L)
+            .build();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);
@@ -207,11 +235,12 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       assertEquals(nodeB, nodeA.getChildren().iterator().next());
 
       tm.begin();
+      System.out.println("Before: " + TreeStructureSupport.printTree(treeCache, true));
       // move node B up to hang off the root
       treeCache.move(nodeB.getFqn(), Fqn.ROOT);
-
+      System.out.println("After: " + TreeStructureSupport.printTree(treeCache, true));
       tm.commit();
-
+      System.out.println("Committed: " + TreeStructureSupport.printTree(treeCache, true));
       nodeB = rootNode.getChild(B);
 
       assertEquals(rootNode, nodeA.getParent());
@@ -369,6 +398,8 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
          }
       }
 
+      log.fatal("Tree: " + TreeStructureSupport.printTree(treeCache, true));
+
       assertTrue("Should have found x", found_x);
       assertTrue("Should have found y", found_y);
       assertFalse("Should have only found x once", found_x_again);
@@ -394,20 +425,45 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       assertNoLocks();
    }
 
+   /**
+    * Looks up the CacheEntry stored in transactional context corresponding to this AtomicMap.  If this AtomicMap
+    * has yet to be touched by the current transaction, this method will return a null.
+    * @return
+    */
+   protected CacheEntry lookupEntryFromCurrentTransaction(TransactionTable transactionTable, TransactionManager transactionManager, Object key) {
+      // Prior to 5.1, this used to happen by grabbing any InvocationContext in ThreadLocal.  Since ThreadLocals
+      // can no longer be relied upon in 5.1, we need to grab the TransactionTable and check if an ongoing
+      // transaction exists, peeking into transactional state instead.
+      try {
+         LocalTransaction localTransaction = transactionTable.getLocalTransaction(transactionManager.getTransaction());
+
+         // The stored localTransaction could be null, if this is the first call in a transaction.  In which case
+         // we know that there is no transactional state to refer to - i.e., no entries have been looked up as yet.
+         return localTransaction == null ? null : localTransaction.lookupEntry(key);
+      } catch (SystemException e) {
+         return null;
+      }
+   }
+
+   protected boolean isNodeLocked(Fqn fqn) {
+      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      TransactionTable tt = cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
+      CacheEntry structure = lookupEntryFromCurrentTransaction(tt, tm, new NodeKey(fqn, NodeKey.Type.STRUCTURE));
+      CacheEntry data = lookupEntryFromCurrentTransaction(tt, tm, new NodeKey(fqn, NodeKey.Type.DATA));
+      return structure != null && data != null && structure.isChanged() && data.isChanged();
+   }
+
    protected void checkLocks() {
-      LockManager lm = TestingUtil.extractLockManager(cache);
-      assert TreeStructureSupport.isLocked(lm, C);
-      assert TreeStructureSupport.isLocked(lm, A_B_C);
+      assert isNodeLocked(C) : "Node " + C + " is not locked!";
+      assert isNodeLocked(A_B_C) : "Node " + A_B_C + " is not locked!";
    }
 
    protected void checkLocksDeep() {
-      LockManager lm = TestingUtil.extractLockManager(cache);
-
       // /a/b, /c, /c/e, /a/b/c and /a/b/c/e should all be locked.
-      assert TreeStructureSupport.isLocked(lm, C);
-      assert TreeStructureSupport.isLocked(lm, C_E);
-      assert TreeStructureSupport.isLocked(lm, A_B_C);
-      assert TreeStructureSupport.isLocked(lm, A_B_C_E);
+      assert isNodeLocked(C);
+      assert isNodeLocked(C_E);
+      assert isNodeLocked(A_B_C);
+      assert isNodeLocked(A_B_C_E);
    }
 
    protected void assertNoLocks() {

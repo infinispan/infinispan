@@ -1,7 +1,28 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.jmx;
 
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
@@ -16,9 +37,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 import javax.management.Attribute;
@@ -32,20 +50,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static org.easymock.EasyMock.*;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.testng.Assert.assertEquals;
+
 /**
- * TODO: For some reason, if you add to any of the methods below 'assert false;'
- * Eclipse 3.5 and org.testng.eclipse_5.9.0.4.jar combination will indicate that 
- * the test passes correctly. Command line mvn execution does show the failure.
- * Need to show this to Max either in the office or via a screencast to see how 
- * to debug it.
- * 
- * More information: Seems to be a problem with enabling java assertion. If no -ea is
- * passed, the command line does show '-ea' but no assertions are checked. If -ear is 
- * explicitly passed, you see '-ea -ea' in the command line and then assertions are 
- * enabled.
- * 
- * A workaround in Eclipse is to add -ea to the default VM parameters used.
- * 
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
@@ -95,13 +104,16 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled").equals(Boolean.TRUE);
       assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.TRUE);
 
+      // The initial state transfer uses cache commands, so it also increases the ReplicationCount value
+      long initialReplicationCount1 = (Long) mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 1) : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(initialReplicationCount1 + 1)
+            : "Expected " + (initialReplicationCount1 + 1) + ", was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
-      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
 
-      // now resume statistics
+      // now reset statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
@@ -123,7 +135,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
-      
+
+      // the previous test has reset the statistics
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
@@ -165,9 +178,12 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       }
    }
 
-   private static class SlowToSerialize implements Externalizable {
+   public static class SlowToSerialize implements Externalizable {
       String val;
       transient long delay;
+
+      public SlowToSerialize() {
+      }
 
       private SlowToSerialize(String val, long delay) {
          this.val = val;

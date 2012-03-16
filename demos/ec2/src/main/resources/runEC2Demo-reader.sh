@@ -1,92 +1,31 @@
 #!/bin/bash
 
-DIRNAME=`dirname $0`
+source "`dirname "$0"`/functions.sh"
 
-# OS specific support.
-cygwin=false;
-darwin=false;
-mingw=false
-case "`uname`" in
-  CYGWIN*) cygwin=true ;;
-  MINGW*) mingw=true;;
-  Darwin*) darwin=true
-           if [ -z "$JAVA_VERSION" ] ; then
-             JAVA_VERSION="CurrentJDK"
-           else
-             echo "Using Java version: $JAVA_VERSION"
-           fi
-           if [ -z "$JAVA_HOME" ] ; then
-             JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
-           fi
-           ;;
-esac
+add_classpath "${ISPN_HOME}"/*.jar
+add_classpath "${ISPN_HOME}/etc"
+add_classpath "${ISPN_HOME}/etc/config-samples/ec2-demo"
+add_classpath "${ISPN_HOME}/lib"
+add_classpath "${ISPN_HOME}/modules"
 
-if [ -z "$JAVA_HOME" ] ; then
-  if [ -r /etc/gentoo-release ] ; then
-    JAVA_HOME=`java-config --jre-home`
-  fi
-fi
+add_jvm_args '-Xmx512m'
+add_jvm_args $JVM_PARAMS
+add_jvm_args '-Djava.net.preferIPv4Stack=true'
+add_jvm_args "-DCFGPath=${ISPN_HOME}/etc/config-samples/ec2-demo/"
 
-# For Cygwin, ensure paths are in UNIX format before anything is touched
-if $cygwin ; then
-  [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
-fi
+# RHQ monitoring options
+add_jvm_args '-Dcom.sun.management.jmxremote.ssl=false'
+add_jvm_args '-Dcom.sun.management.jmxremote.authenticate=false'
+add_jvm_args -Dcom.sun.management.jmxremote.port=$(find_tcp_port)
 
-# For Migwn, ensure paths are in UNIX format before anything is touched
-if $mingw ; then
-  [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME="`(cd "$JAVA_HOME"; pwd)`"
-fi
+# Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
+add_jvm_args '-Dsun.nio.ch.bugLevel=""'
 
-if [ -z "$JAVACMD" ] ; then
-  if [ -n "$JAVA_HOME"  ] ; then
-    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
-      # IBM's JDK on AIX uses strange locations for the executables
-      JAVACMD="$JAVA_HOME/jre/sh/java"
-    else
-      JAVACMD="$JAVA_HOME/bin/java"
-    fi
-  else
-    JAVACMD="`which java`"
-  fi
-fi
+# Sample JPDA settings for remote socket debugging
+#add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-if [ ! -x "$JAVACMD" ] ; then
-  echo "Error: JAVA_HOME is not defined correctly."
-  echo "  We cannot execute $JAVACMD"
-  exit 1
-fi
+add_program_args -c "${ISPN_HOME}/etc/config-samples/ec2-demo/infinispan-ec2-config.xml"
+add_program_args -r
 
-# Setup ISPN_HOME
-if [ "x$ISPN_HOME" = "x" ]; then
-    # get the full path (without any relative bits)
-    ISPN_HOME=`cd $DIRNAME/..; pwd`
-fi
-export ISPN_HOME
+start org.infinispan.ec2demo.InfinispanFluDemo
 
-CP=${CP}:${ISPN_HOME}/etc:${ISPN_HOME}/etc/config-samples/ec2-demo
-
-for i in `find ${ISPN_HOME}/modules -name "*.jar"` ; do
-  CP=${CP}:${i}
-done
-
-for i in `find ${ISPN_HOME}/lib -name "*.jar"` ; do
-  CP=${CP}:${i}
-done
-
-CP=${ISPN_HOME}/infinispan-core.jar:$CP
-
-JVM_PARAMS="-Xmx512m ${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
-JVM_PARAMS="${JVM_PARAMS} -DCFGPath=${ISPN_HOME}/etc/config-samples/ec2-demo/"
-
-DEMO_ARGS=" -c ${ISPN_HOME}/etc/config-samples/ec2-demo/infinispan-ec2-config.xml"
-DEMO_ARGS="${DEMO_ARGS} -r "
-DEMO_ARGS="${DEMO_ARGS} -i ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat"
-
-if $cygwin; then
-   # Turn paths into Windows style for Cygwin
-   CP=`cygpath -wp ${CP}`
-fi
-
-${JAVACMD} -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS}

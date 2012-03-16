@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -49,10 +50,9 @@ public class TreeCacheFactory {
       }
 
       // If invocationBatching is not enabled, throw a new configuration exception.
-
-      if (!cache.getConfiguration().isInvocationBatchingEnabled()) {
+      if (!cache.getCacheConfiguration().invocationBatching().enabled()) {
          throw new ConfigurationException("invocationBatching is not enabled. Make sure this is enabled by" +
-               " calling config.setInvocationBatchingEnabled(true)");
+               " calling configurationBuilder.invocationBatching().enable()");
       }
 
       return new TreeCacheImpl<K, V>(cache);

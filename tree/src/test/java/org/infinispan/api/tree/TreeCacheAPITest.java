@@ -1,29 +1,55 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransactionSetup;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCache;
+import org.infinispan.tree.TreeCacheFactory;
 import org.infinispan.tree.TreeCacheImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.*;
-
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests the {@link TreeCache} public API at a high level
@@ -42,13 +68,27 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       // start a single cache instance
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl(flatcache);
 
       tm = TestingUtil.getTransactionManager(flatcache);
       return cm;
+   }
+
+   public void testGetData() {
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key1","TRADE1");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key2","TRADE2");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key3","TRADE3");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key4","TRADE4");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key5","TRADE5");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key6","TRADE6");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7","TRADE7");
+      Object object = cache.get(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7");
+      assertNotNull(object);
+      Map<String, String> data = cache.getData(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")));
+      assertNotNull(data);
    }
 
    public void testConvenienceMethods() {
@@ -166,4 +206,26 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       assertEquals("CacheMode.LOCAL cache has no address", null, manager(cache.getCache()).getAddress());
       assertEquals("CacheMode.LOCAL cache has no members list", null, manager(cache.getCache()).getMembers());
    }
+
+   public void testTreeCacheFactory() throws Exception {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().invocationBatching().enable().build())) {
+         @Override
+         public void call() throws Exception {
+            TreeCacheFactory tcf = new TreeCacheFactory();
+            tcf.createTreeCache(cm.getCache());
+         }
+      });
+   }
+
+   @Test(expectedExceptions=ConfigurationException.class)
+   public void testFactoryNoBatching() throws Exception {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().build())) {
+         @Override
+         public void call() throws Exception {
+            TreeCacheFactory tcf = new TreeCacheFactory();
+            tcf.createTreeCache(cm.getCache());
+         }
+      });
+   }
+
 }

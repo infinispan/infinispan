@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -32,37 +34,106 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
- * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
- * rollback() messages which are received 'side-ways' (see docs/design/Refactoring.txt).
+ * Takes care of replicating modifications to other caches in a cluster.
  *
  * @author Bela Ban
  * @since 4.0
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
+   private StateTransferLock stateTransferLock;
+   CommandsFactory cf;
+
+   private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
+   @Inject
+   public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
+      this.stateTransferLock = stateTransferLock;
+      this.cf = cf;
+   }
+
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.broadcastRpcCommand(command, configuration.isSyncCommitPhase(), true);
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+
+         sendCommitCommand(ctx, command);
       }
       return invokeNextInterceptor(ctx, command);
+   }
+
+   /**
+    * If the response to a commit is a request to resend the prepare, respond accordingly *
+    */
+   private boolean needToResendPrepare(Response r) {
+      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
+   }
+
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
+         throws TimeoutException, InterruptedException {
+      // may need to resend, so make the commit command synchronous
+      // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
+      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
+      if (!responses.isEmpty()) {
+         List<Address> resendTo = new LinkedList<Address>();
+         for (Map.Entry<Address, Response> r : responses.entrySet()) {
+            if (needToResendPrepare(r.getValue()))
+               resendTo.add(r.getKey());
+         }
+
+         if (!resendTo.isEmpty()) {
+            getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
+            rpcManager.invokeRemotely(resendTo, pc, true, true);
+         }
+      }
+   }
+
+   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
+      // Make sure this is 1-Phase!!
+      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
-         rpcManager.broadcastRpcCommand(command, !async, false);
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+
+         broadcastPrepare(ctx, command);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
       }
       return retVal;
+   }
+
+   protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
+      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+      rpcManager.broadcastRpcCommand(command, !async, false);
    }
 
    @Override
@@ -107,6 +178,8 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       final Object returnValue = invokeNextInterceptor(ctx, command);
       populateCommandFlags(command, ctx);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
+
          if (ctx.isUseFutureReturnType()) {
             NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
             rpcManager.broadcastRpcCommandInFuture(command, future);

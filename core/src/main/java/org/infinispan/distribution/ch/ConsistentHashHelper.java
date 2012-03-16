@@ -1,15 +1,38 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
-import org.infinispan.util.hash.Hash;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.GroupManagerImpl;
 
 /**
  * A helper class that handles the construction of consistent hash instances based on configuration.
@@ -26,35 +49,39 @@ public class ConsistentHashHelper {
     * @param ch       consistent hash to start with
     * @param toRemove address to remove
     * @param c        configuration
-    * @param topologyInfo
     * @return a new consistent hash instance of the same type
     */
-   public static ConsistentHash removeAddress(ConsistentHash ch, Address toRemove, Configuration c, TopologyInfo topologyInfo) {
+   public static ConsistentHash removeAddress(ConsistentHash ch, Address toRemove, Configuration c) {
       if (ch instanceof UnionConsistentHash)
-         return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c, topologyInfo);
+         return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c);
       else {
          ConsistentHash newCH = constructConsistentHashInstance(c);
-         List<Address> caches = new ArrayList<Address>(ch.getCaches());
+         Set<Address> caches = new HashSet<Address>(ch.getCaches());
          caches.remove(toRemove);
          newCH.setCaches(caches);
-         newCH.setTopologyInfo(topologyInfo);
          return newCH;
       }
    }
 
    private static ConsistentHash constructConsistentHashInstance(Configuration c) {
-      ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
-      if (ch instanceof AbstractWheelConsistentHash) {
-         Hash h = (Hash) Util.getInstance(c.getHashFunctionClass());
-         ((AbstractWheelConsistentHash) ch).setHashFunction(h);
-      }
-      return ch;
+      Class<? extends ConsistentHash> chClass = Util.loadClass(c.getConsistentHashClass(), c.getClassLoader());
+      Hash h = (Hash) Util.getInstance(c.getHashFunctionClass(), c.getClassLoader());
+      return constructConsistentHashInstance(chClass, h, c.getNumVirtualNodes(), new GroupManagerImpl(c.getGroupers()));
    }
 
-   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash) {
+   private static ConsistentHash constructConsistentHashInstance(
+            Class<? extends ConsistentHash> clazz, Hash hashFunction,
+            int numVirtualNodes, GroupManager groupManager) {
       ConsistentHash ch = Util.getInstance(clazz);
       if (ch instanceof AbstractWheelConsistentHash) {
-         ((AbstractWheelConsistentHash) ch).setHashFunction(hash);
+         AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
+         wch.setHashFunction(hashFunction);
+         wch.setNumVirtualNodes(numVirtualNodes);
+      }
+      if (ch instanceof AbstractConsistentHash) {
+          AbstractConsistentHash ach = (AbstractConsistentHash) ch;
+          if (groupManager != null)
+              ach.setGroupManager(groupManager);
       }
       return ch;
    }
@@ -66,12 +93,11 @@ public class ConsistentHashHelper {
     * @param uch      union consistent hash instance
     * @param toRemove address to remove
     * @param c        configuration
-    * @param topologyInfo
     * @return a new UnionConsistentHash instance
     */
-   public static UnionConsistentHash removeAddressFromUnionConsistentHash(UnionConsistentHash uch, Address toRemove, Configuration c, TopologyInfo topologyInfo) {
-      ConsistentHash newFirstCH = removeAddress(uch.getOldConsistentHash(), toRemove, c, topologyInfo);
-      ConsistentHash newSecondCH = removeAddress(uch.getNewConsistentHash(), toRemove, c, topologyInfo);
+   public static UnionConsistentHash removeAddressFromUnionConsistentHash(UnionConsistentHash uch, Address toRemove, Configuration c) {
+      ConsistentHash newFirstCH = removeAddress(uch.getOldConsistentHash(), toRemove, c);
+      ConsistentHash newSecondCH = removeAddress(uch.getNewConsistentHash(), toRemove, c);
       return new UnionConsistentHash(newFirstCH, newSecondCH);
    }
 
@@ -81,13 +107,11 @@ public class ConsistentHashHelper {
     *
     * @param c         configuration
     * @param addresses with which to populate the consistent hash
-    * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, TopologyInfo topologyInfo) {
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses) {
       ConsistentHash ch = constructConsistentHashInstance(c);
-      ch.setCaches(addresses);
-      ch.setTopologyInfo(topologyInfo);
+      ch.setCaches(toSet(addresses));
       return ch;
    }
 
@@ -97,13 +121,12 @@ public class ConsistentHashHelper {
     *
     * @param c             configuration
     * @param addresses     with which to populate the consistent hash
-    * @param topologyInfo
     *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(c, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, Address... moreAddresses) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(Arrays.asList(moreAddresses));
+      return createConsistentHash(c, caches);
    }
 
    /**
@@ -113,13 +136,12 @@ public class ConsistentHashHelper {
     * @param c             configuration
     * @param addresses     with which to populate the consistent hash
     * @param moreAddresses to add to the list of addresses
-    * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, Collection<Address> moreAddresses, TopologyInfo topologyInfo) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(moreAddresses);
-      return createConsistentHash(c, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, Collection<Address> moreAddresses) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(moreAddresses);
+      return createConsistentHash(c, caches);
    }
 
    /**
@@ -128,17 +150,20 @@ public class ConsistentHashHelper {
     *
     * @param template An older consistent hash instance to clone
     * @param addresses with which to populate the consistent hash
-    * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo) {
+   public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses) {
       Hash hf = null;
+      int numVirtualNodes = 1;
+      GroupManager groupManager = null;
       if (template instanceof AbstractWheelConsistentHash) {
-         hf = ((AbstractWheelConsistentHash) template).hashFunction;
+         AbstractWheelConsistentHash wTemplate = (AbstractWheelConsistentHash) template;
+         hf = wTemplate.hashFunction;
+         numVirtualNodes = wTemplate.numVirtualNodes;
+         groupManager = wTemplate.groupManager;
       }
-      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf);
-      if (addresses != null && !addresses.isEmpty())  ch.setCaches(addresses);
-      ch.setTopologyInfo(topologyInfo);
+      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes, groupManager);
+      if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       return ch;
    }
 
@@ -148,12 +173,17 @@ public class ConsistentHashHelper {
     *
     * @param template  An older consistent hash instance to clone
     * @param addresses     with which to populate the consistent hash
-    * @param topologyInfo
-    *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
+    * @param moreAddresses to add to the list of addresses
+    * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(template, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses, Address... moreAddresses) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(Arrays.asList(moreAddresses));
+      return createConsistentHash(template, caches);
+   }
+
+   private static Set<Address> toSet(Collection<Address> c) {
+      if (c instanceof Set) return (Set<Address>) c;
+      return new HashSet<Address>(c);
    }
 }

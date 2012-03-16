@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.notifications.cachemanagerlistener.event;
 
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,8 +42,8 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    List<Address> newMembers, oldMembers;
    Address localAddress;
    int viewId;
-   private boolean needsToRejoin;
    private List<List<Address>> subgroupsMerged;
+   private boolean mergeView;
 
    public EventImpl() {
    }
@@ -99,7 +121,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
       EventImpl event = (EventImpl) o;
 
-      if (needsToRejoin != event.needsToRejoin) return false;
       if (viewId != event.viewId) return false;
       if (cacheName != null ? !cacheName.equals(event.cacheName) : event.cacheName != null) return false;
       if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
@@ -119,8 +140,8 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + (oldMembers != null ? oldMembers.hashCode() : 0);
       result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
       result = 31 * result + viewId;
-      result = 31 * result + (needsToRejoin ? 1 : 0);
       result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
+      result = 31 * result + (mergeView ? 1 : 0);
       return result;
    }
 
@@ -132,17 +153,9 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
               ", oldMembers=" + oldMembers +
               ", localAddress=" + localAddress +
               ", viewId=" + viewId +
-              ", needsToRejoin=" + needsToRejoin +
               ", subgroupsMerged=" + subgroupsMerged +
+              ", mergeView=" + mergeView +
               '}';
-   }
-
-   public void setNeedsToRejoin(boolean needsToRejoin) {
-      this.needsToRejoin = needsToRejoin;
-   }
-
-   public boolean isNeedsToRejoin() {
-      return needsToRejoin;
    }
 
    public void setSubgroupsMerged(List<List<Address>> subgroupsMerged) {
@@ -152,5 +165,13 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    public List<List<Address>> getSubgroupsMerged() {
       return this.subgroupsMerged;
    }
+
+   public boolean isMergeView() {
+      return mergeView;
+   }
+
+   public void setMergeView(boolean b) {
+        mergeView = b;
+     }
 
 }

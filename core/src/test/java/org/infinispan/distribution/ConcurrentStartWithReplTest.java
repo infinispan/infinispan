@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
@@ -39,15 +61,15 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       distCfg.setRehashEnabled(true);
    }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
       /*
 
       Sequence 1:
 
          C1 (repl) (becomes coord)
-         C2 (repl)
-         C1 (dist)
+         C2 (dist)
+         C1 (repl)
          C2 (dist)
 
          in the same thread.
@@ -58,8 +80,8 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    }
 
-   @Test(timeOut = 30000, enabled = false, description = "This will probably always be an unsupported sequence of startup, in a single thread.")
-   public void testSequence2() throws ExecutionException, InterruptedException {
+   // ****** This will probably always be an unsupported sequence of startup, in a single thread
+//   public void testSequence2() throws ExecutionException, InterruptedException {
       /*
 
       Sequence 2:
@@ -73,10 +95,10 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
        */
 
-      doTest(false, false);
-   }
+//      doTest(false, false);
+//   }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
       /*
 
@@ -93,7 +115,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       doTest(true, true);
    }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
       /*
 
@@ -123,6 +145,8 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
          Cache<String, String> c1r = startCache(cm1, "r", false).get();
          c1r.put("key", "value");
          Cache<String, String> c2r = startCache(cm2, "r", false).get();
+         TestingUtil.blockUntilViewsReceived(10000, c1r, c2r);
+         TestingUtil.waitForRehashToComplete(c1r, c2r);
          assert "value".equals(c2r.get("key"));
 
          // now the dist ones
@@ -149,7 +173,9 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       };
       if (nonBlockingStartup) {
          final ExecutorService e = Executors.newFixedThreadPool(1);
-         return e.submit(cacheCreator);
+         Future<Cache<String, String>> future = e.submit(cacheCreator);
+         e.shutdown();
+         return future;
       } else {
          return new AbstractInProcessFuture<Cache<String, String>>() {
             @Override

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -129,8 +130,8 @@ public class Streams {
    public static boolean close(final InputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (InputStream stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -147,8 +148,8 @@ public class Streams {
    public static boolean close(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -170,8 +171,8 @@ public class Streams {
    public static boolean close(final Object[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = close(streams[i]);
+      for (Object stream : streams) {
+         boolean rv = close(stream);
          if (!rv) success = false;
       }
 
@@ -199,8 +200,8 @@ public class Streams {
    public static boolean fclose(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = fclose(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = fclose(stream);
          if (!rv) success = false;
       }
 
@@ -246,8 +247,8 @@ public class Streams {
    public static boolean flush(final OutputStream[] streams) {
       boolean success = true;
 
-      for (int i = 0; i < streams.length; i++) {
-         boolean rv = flush(streams[i]);
+      for (OutputStream stream : streams) {
+         boolean rv = flush(stream);
          if (!rv) success = false;
       }
 
@@ -282,7 +283,7 @@ public class Streams {
 
       boolean trace = log.isTraceEnabled();
       if (trace) {
-         log.trace("copying " + input + " to " + output + " with buffer size: " + buffer.length);
+         log.tracef("copying %s to %s with buffer size: %d", input, output, buffer.length);
       }
 
       while ((read = input.read(buffer)) != -1) {
@@ -290,7 +291,7 @@ public class Streams {
          total += read;
 
          if (trace) {
-            log.trace("bytes read: " + read + "; total bytes read: " + total);
+            log.tracef("bytes read: %d; total bytes read: %d", read, total);
          }
       }
 
@@ -380,18 +381,18 @@ public class Streams {
       // size, then we only want to read that much
       readLength = Math.min((int) length, buffer.length);
       if (trace) {
-         log.trace("initial read length: " + readLength);
+         log.tracef("initial read length: %d", readLength);
       }
 
       while (readLength != 0 && (read = input.read(buffer, 0, readLength)) != -1) {
-         if (trace) log.trace("read bytes: " + read);
+         if (trace) log.tracef("read bytes: %d", read);
          output.write(buffer, 0, read);
          total += read;
-         if (trace) log.trace("total bytes read: " + total);
+         if (trace) log.tracef("total bytes read: %d", total);
 
          // update the readLength
          readLength = Math.min((int) (length - total), buffer.length);
-         if (trace) log.trace("next read length: " + readLength);
+         if (trace) log.tracef("next read length: %d", readLength);
       }
 
       return total;

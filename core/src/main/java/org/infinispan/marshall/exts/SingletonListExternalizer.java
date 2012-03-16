@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,7 +26,6 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class SingletonListExternalizer extends AbstractExternalizer<List> {
+public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
    public void writeObject(ObjectOutput output, List list) throws IOException {
@@ -50,7 +50,7 @@ public class SingletonListExternalizer extends AbstractExternalizer<List> {
    }
 
    @Override
-   public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public List<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       return Collections.singletonList(input.readObject());
    }
 
@@ -60,8 +60,9 @@ public class SingletonListExternalizer extends AbstractExternalizer<List> {
    }
 
    @Override
-   public Set<Class<? extends List>> getTypeClasses() {
-      return Util.<Class<? extends List>>asSet(Util.loadClass("java.util.Collections$SingletonList"));
+   public Set<Class<? extends List<?>>> getTypeClasses() {
+      // This is loadable from any classloader
+      return Util.<Class<? extends List<?>>>asSet(Util.<List<?>>loadClass("java.util.Collections$SingletonList", null));
    }
 
 }

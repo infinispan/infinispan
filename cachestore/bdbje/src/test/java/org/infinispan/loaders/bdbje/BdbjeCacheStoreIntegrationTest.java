@@ -1,6 +1,28 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.bdbje;
 
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -10,10 +32,9 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -30,7 +51,11 @@ import java.util.List;
 public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String tmpDirectory;
-   private GlobalTransactionFactory gts = new GlobalTransactionFactory();
+   private TransactionFactory gts = new TransactionFactory();
+
+   public BdbjeCacheStoreIntegrationTest() {
+      gts.init(false, false, true);
+   }
 
    @BeforeClass
    @Parameters({"basedir"})
@@ -61,8 +86,8 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testTwoPhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       GlobalTransaction tx = gts.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
@@ -74,10 +99,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.commit(tx);
@@ -93,11 +118,11 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testRollback() throws CacheLoaderException {
 
-      cs.store(InternalEntryFactory.create("old", "old"));
+      cs.store(TestInternalCacheEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       GlobalTransaction tx = gts.newGlobalTransaction(null, false);
@@ -109,10 +134,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.rollback(tx);

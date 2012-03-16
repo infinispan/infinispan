@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.stress;
 
 import org.infinispan.container.*;
@@ -71,7 +93,7 @@ public class DataContainerStressTest {
             while (use_time && run.get() || runs < actual_num_loops) {
                if (runs % 100000 == 0) log.info("PUT run # " + runs);
 //               TestingUtil.sleepThread(10);
-               dc.put(key + R.nextInt(NUM_KEYS), "value", -1, -1);
+               dc.put(key + R.nextInt(NUM_KEYS), "value", null, -1, -1);
                runs++;
             }
             perf.put("PUT", opsPerMS(System.nanoTime() - start, runs));
@@ -101,7 +123,7 @@ public class DataContainerStressTest {
       Thread.sleep(warmup ? WARMUP_TIME_MILLIS : RUN_TIME_MILLIS);
       run.set(false);
       for (Thread t : threads) t.join();
-      if (!warmup) log.warn("%s: Performance: %s", dc.getClass().getSimpleName(), perf);
+      if (!warmup) log.warnf("%s: Performance: %s", dc.getClass().getSimpleName(), perf);
    }
 
    private void waitForStart() {

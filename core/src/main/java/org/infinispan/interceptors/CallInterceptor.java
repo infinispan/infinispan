@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -30,6 +31,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -41,6 +44,15 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * @since 4.0
  */
 public class CallInterceptor extends CommandInterceptor {
+
+   private static final Log log = LogFactory.getLog(CallInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handlePrepareCommand.");

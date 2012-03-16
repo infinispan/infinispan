@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -22,8 +22,9 @@
  */
 package org.infinispan.marshall;
 
+import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -38,17 +39,22 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.commons.hash.MurmurHash2;
+import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.context.Flag;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.remoting.MIMECacheEntry;
@@ -61,9 +67,11 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
-import org.infinispan.transaction.TransactionLog;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -71,34 +79,61 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+   private AbstractDelegatingMarshaller marshaller;
+   private EmbeddedCacheManager cm;
 
-   private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+   private final TransactionFactory gtf = new TransactionFactory();
+
+   public VersionAwareMarshallerTest() {
+      gtf.init(false, false, true);
+   }
 
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
+      // Use a clustered cache manager to be able to test global marshaller interaction too
+      cm = TestCacheManagerFactory.createClusteredCacheManager();
+      cm.getDefaultConfiguration().fluent().clustering().mode(Configuration.CacheMode.DIST_SYNC);
+      marshaller = extractCacheMarshaller(cm.getCache());
    }
 
    @AfterClass
    public void tearDown() {
-      marshaller.stop();
+      cm.stop();
    }
 
    public void testJGroupsAddressMarshalling() throws Exception {
@@ -183,25 +218,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(l);
    }
 
-   public void testTransactionLogMarshalling() throws Exception {
-      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
-      PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.EMPTY_SET);
-      TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
-      byte[] bytes = marshaller.objectToByteBuffer(entry);
-      TransactionLog.LogEntry readObj = (TransactionLog.LogEntry) marshaller.objectFromByteBuffer(bytes);
-      assert Arrays.equals(readObj.getModifications(), entry.getModifications()) :
-            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
-      assert readObj.getTransaction().equals(entry.getTransaction()) :
-            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
-   }
-
    public void testImmutableResponseMarshalling() throws Exception {
       marshallAndAssertEquality(RequestIgnoredResponse.INSTANCE);
       marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);
    }
 
    public void testExtendedResponseMarshalling() throws Exception {
-      SuccessfulResponse sr = new SuccessfulResponse("Blah");
+      SuccessfulResponse sr = SuccessfulResponse.create("Blah");
       ExtendedResponse extended = new ExtendedResponse(sr, false);
       byte[] bytes = marshaller.objectToByteBuffer(extended);
       ExtendedResponse readObj = (ExtendedResponse) marshaller.objectFromByteBuffer(bytes);
@@ -212,27 +235,22 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testReplicableCommandsMarshalling() throws Exception {
-      StateTransferControlCommand c1 = new StateTransferControlCommand(true);
-      byte[] bytes = marshaller.objectToByteBuffer(c1);
-      StateTransferControlCommand rc1 = (StateTransferControlCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc1.getCommandId() == c1.getCommandId() : "Writen[" + c1.getCommandId() + "] and read[" + rc1.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc1.getParameters(), c1.getParameters()) : "Writen[" + c1.getParameters() + "] and read[" + rc1.getParameters() + "] objects should be the same";
-
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", "mycache", Collections.EMPTY_SET);
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
-      GetKeyValueCommand c4 = new GetKeyValueCommand("key", null, Collections.EMPTY_SET);
-      bytes = marshaller.objectToByteBuffer(c4);
+      GetKeyValueCommand c4 = new GetKeyValueCommand("key", null, Collections.<Flag>emptySet());
+      byte[] bytes = marshaller.objectToByteBuffer(c4);
       GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc4.getParameters(), c4.getParameters()) : "Writen[" + c4.getParameters() + "] and read[" + rc4.getParameters() + "] objects should be the same";
 
-      PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.EMPTY_SET);
+      PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c5);
 
-      RemoveCommand c6 = new RemoveCommand("key", null, null, Collections.EMPTY_SET);
+      RemoveCommand c6 = new RemoveCommand("key", null, null, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c6);
 
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -268,62 +286,102 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       Address local = new JGroupsAddress(new IpAddress(12345));
       GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
-      PrepareCommand c11 = new PrepareCommand(gtx, true, c5, c6, c8, c10);
+      PrepareCommand c11 = new PrepareCommand(cacheName, gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
 
-      CommitCommand c12 = new CommitCommand(gtx);
+      CommitCommand c12 = new CommitCommand(cacheName, gtx);
       marshallAndAssertEquality(c12);
 
-      RollbackCommand c13 = new RollbackCommand(gtx);
+      RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
 
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), "mycache");
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
+      marshallAndAssertEquality(c99);
+   }
+
+   public void testStateTransferControlCommand() throws Exception {
+      Cache<Object,Object> cache = cm.getCache();
+
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+      state.add(entry1);
+      Address a1 = new JGroupsAddress(UUID.randomUUID());
+      Address a2 = new JGroupsAddress(UUID.randomUUID());
+      Address a3 = new JGroupsAddress(UUID.randomUUID());
+      Set<Address> oldAddresses = new LinkedHashSet();
+      oldAddresses.add(a1);
+      oldAddresses.add(a2);
+      DefaultConsistentHash oldCh = new DefaultConsistentHash(new MurmurHash3());
+      oldCh.setCaches(oldAddresses);
+      Set<Address> newAddresses = new LinkedHashSet();
+      newAddresses.add(a1);
+      newAddresses.add(a2);
+      newAddresses.add(a3);
+      DefaultConsistentHash newCh = new DefaultConsistentHash(new MurmurHash2());
+      newCh.setCaches(newAddresses);
+      StateTransferControlCommand c14 = new StateTransferControlCommand(cacheName, StateTransferControlCommand.Type.APPLY_STATE, a1, 99, state, null);
+      byte[] bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+
+      bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+
+      bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+   }
+
+   public void testMultiRpcCommand() throws Exception {
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet());
+      PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
       marshallAndAssertEquality(c99);
    }
 
    public void testInternalCacheEntryMarshalling() throws Exception {
-      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       marshallAndAssertEquality(entry1);
 
-      MortalCacheEntry entry2 = (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+      MortalCacheEntry entry2 = (MortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
       marshallAndAssertEquality(entry2);
 
-      TransientCacheEntry entry3 = (TransientCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
+      TransientCacheEntry entry3 = (TransientCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
       marshallAndAssertEquality(entry3);
 
-      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
+      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       marshallAndAssertEquality(entry4);
    }
 
    public void testInternalCacheValueMarshalling() throws Exception {
-      ImmortalCacheValue value1 = (ImmortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      ImmortalCacheValue value1 = (ImmortalCacheValue) TestInternalCacheEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       byte[] bytes = marshaller.objectToByteBuffer(value1);
       ImmortalCacheValue rvalue1 = (ImmortalCacheValue) marshaller.objectFromByteBuffer(bytes);
       assert rvalue1.getValue().equals(value1.getValue()) : "Writen[" + rvalue1.getValue() + "] and read[" + value1.getValue() + "] objects should be the same";
 
-      MortalCacheValue value2 = (MortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+      MortalCacheValue value2 = (MortalCacheValue) TestInternalCacheEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
       bytes = marshaller.objectToByteBuffer(value2);
       MortalCacheValue rvalue2 = (MortalCacheValue) marshaller.objectFromByteBuffer(bytes);
       assert rvalue2.getValue().equals(value2.getValue()) : "Writen[" + rvalue2.getValue() + "] and read[" + value2.getValue() + "] objects should be the same";
 
-      TransientCacheValue value3 = (TransientCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
+      TransientCacheValue value3 = (TransientCacheValue) TestInternalCacheEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
       bytes = marshaller.objectToByteBuffer(value3);
       TransientCacheValue rvalue3 = (TransientCacheValue) marshaller.objectFromByteBuffer(bytes);
       assert rvalue3.getValue().equals(value3.getValue()) : "Writen[" + rvalue3.getValue() + "] and read[" + value3.getValue() + "] objects should be the same";
 
-      TransientMortalCacheValue value4 = (TransientMortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
+      TransientMortalCacheValue value4 = (TransientMortalCacheValue) TestInternalCacheEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       bytes = marshaller.objectToByteBuffer(value4);
       TransientMortalCacheValue rvalue4 = (TransientMortalCacheValue) marshaller.objectFromByteBuffer(bytes);
       assert rvalue4.getValue().equals(value4.getValue()) : "Writen[" + rvalue4.getValue() + "] and read[" + value4.getValue() + "] objects should be the same";
    }
 
    public void testBucketMarshalling() throws Exception {
-      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
-      MortalCacheEntry entry2 = (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
-      TransientCacheEntry entry3 = (TransientCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
-      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
+      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      MortalCacheEntry entry2 = (MortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+      TransientCacheEntry entry3 = (TransientCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
+      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       Bucket b = new Bucket();
-      b.setBucketName("mybucket");
+      b.setBucketId(0);
       b.addEntry(entry1);
       b.addEntry(entry2);
       b.addEntry(entry3);
@@ -335,7 +393,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testLongPutKeyValueCommand() throws Exception {
-      PutKeyValueCommand c = new PutKeyValueCommand("SESSION_173", "@TSXMHVROYNOFCJVEUJQGBCENNQDEWSCYSOHECJOHEICBEIGJVTIBB@TVNCWLTQCGTEJ@NBJLTMVGXCHXTSVE@BCRYGWPRVLXOJXBRJDVNBVXPRTRLBMHPOUYQKDEPDSADUAWPFSIOCINPSSFGABDUXRMTMMJMRTGBGBOAMGVMTKUDUAJGCAHCYW@LAXMDSFYOSXJXLUAJGQKPTHUKDOXRWKEFIVRTH@VIMQBGYPKWMS@HPOESTPIJE@OTOTWUWIOBLYKQQPTNGWVLRRCWHNIMWDQNOO@JHHEVYVQEODMWKFKKKSWURVDLXPTFQYIHLIM@GSBFWMDQGDQIJONNEVHGQTLDBRBML@BEWGHOQHHEBRFUQSLB@@CILXEAVQQBTXSITMBXHMHORHLTJF@MKMHQGHTSENWILTAKCCPVSQIPBVRAFSSEXIOVCPDXHUBIBUPBSCGPRECXEPMQHRHDOHIHVBPNDKOVLPCLKAJMNOTSF@SRXYVUEMQRCXVIETXVHOVNGYERBNM@RIMGHC@FNTUXSJSKALGHAFHGTFEANQUMBPUYFDSGLUYRRFDJHCW@JBWOBGMGTITAICRC@TPVCRKRMFPUSRRAHI@XOYKVGPHEBQD@@APEKSBCTBKREWAQGKHTJ@IHJD@YFSRDQPA@HKKELIJGFDYFEXFCOTCQIHKCQBLVDFHMGOWIDOWMVBDSJQOFGOIAPURRHVBGEJWYBUGGVHE@PU@NMQFMYTNYJDWPIADNVNCNYCCCPGODLAO@YYLVITEMNNKIFSDXKORJYWMFGKNYFPUQIC@AIDR@IWXCVALQBDOXRWIBXLKYTWDNHHSCUROAU@HVNENDAOP@RPTRIGLLLUNDQIDXJDDNF@P@PA@FEIBQKSKFQITTHDYGQRJMWPRLQC@NJVNVSKGOGYXPYSQHKPALKLFWNAOSQFTLEPVOII@RPDNRCVRDUMMFIVSWGIASUBMTGQSDGB@TBBYECFBRBGILJFCJ@JIQIQRVJXWIPGNVXKYATSPJTIPGCMCNPOKNEHBNUIAEQFQTYVLGAR@RVWVA@RMPBX@LRLJUEBUWO@PKXNIP@FKIQSVWKNO@FOJWDSIOLXHXJFBQPPVKKP@YKXPOOMBTLXMEHPRLLSFSVGMPXXNBCYVVSPNGMFBJUDCVOVGXPKVNTOFKVJUJOSDHSCOQRXOKBVP@WCUUFGMJAUQ@GRAGXICFCFICBSNASUBPAFRIPUK@OXOCCNOGTTSFVQKBQNB@DWGVEFSGTAXAPLBJ@SYHUNXWXPMR@KPFAJCIXPDURELFYPMUSLTJSQNDHHKJTIWCGNEKJF@CUWYTWLPNHYPHXNOGLSICKEFDULIXXSIGFMCQGURSRTUJDKRXBUUXIDFECMPXQX@CVYLDABEMFKUGBTBNMNBPCKCHWRJKSOGJFXMFYLLPUVUHBCNULEFAXPVKVKQKYCEFRUYPBRBDBDOVYLIQMQBLTUK@PRDCYBOKJGVUADFJFAFFXKJTNAJTHISWOSMVAYLIOGIORQQWFAKNU@KHPM@BYKTFSLSRHBATQTKUWSFAQS@Y@QIKCUWQYTODBRCYYYIAFMDVRURKVYJXHNGVLSQQFCXKLNUPCTEJSWIJUBFELSBUHANELHSIWLVQSSAIJRUEDOHHX@CKEBPOJRLRHEPLENSCDGEWXRTVUCSPFSAJUXDJOIUWFGPKHBVRVDMUUCPUDKRKVAXPSOBOPKPRRLFCKTLH@VGWKERASJYU@JAVWNBJGQOVF@QPSGJVEPAV@NAD@@FQRYPQIOAURILWXCKINPMBNUHPUID@YDQBHWAVDPPWRFKKGWJQTI@@OPSQ@ROUGHFNHCJBDFCHRLRTEMTUBWVCNOPYXKSSQDCXTOLOIIOCXBTPAUYDICFIXPJRB@CHFNXUCXANXYKXAISDSSLJGQOLBYXWHG@@KPARPCKOXAYVPDGRW@LDCRQBNMJREHWDYMXHEXAJQKHBIRAVHJQIVGOIXNINYQMJBXKM@DXESMBHLKHVSFDLVPOSOVMLHPSHQYY@DNMCGGGAJMHPVDLBGJP@EVDGLYBMD@NWHEYTBPIBPUPYOPOJVV@IVJXJMHIWWSIRKUWSR@U@@TDVMG@GRXVLCNEIISEVIVPOMJHKOWMRMITYDUQASWJIKVNYUFQVDT@BHTOMFXVFRKAARLNOGX@ADWCKHOVEMIGBWXINCUXEMVHSJJQDU@INTHDJQPSAQNAYONDBBFYGBTNGUSJHRKLCPHQMNLDHUQJPLLCDVTYLXTHJCBUXCRDY@YI@IQDCLJBBJC@NXGANXFIWPPNFVTDJWQ@@BIYJONOFP@RHTQEYPVHPPUS@UUENSNNF@WVGTSAVKDSQNMHP@VJORGTVWXVBPWKQNRWLSQFSBMXQKWRYMXPAYREXYGONKEWJMBCSLB@KSHXMIWMSBDGQWPDMUGVNMEWKMJKQECIRRVXBPBLGAFTUFHYSHLF@TGYETMDXRFAXVEUBSTGLSMWJMXJWMDPPDAFGNBMTQEMBDLRASMUMU@QTCDCPEGODHESDQVEIQYBJJPFXDLWPUNFAREYCY@YDDSTMKWCANNPXF@@WLMEXRPUNTWNOX@YKFNNTGMXIBBDA@TYLPJFNFHPQKMSNCLBME@FBPOIYNSDFBLHITKIFEFNXXOJAAFMRTGPALOANXF@YPY@RYTVOW@AKNM@C@LJKGBJMUYGGTXRHQCPOLNOGPPS@YSKAJSTQHLRBXUACXJYBLJSEHDNMLLUBSOIHQUI@VUNF@XAVRXUCYNCBDDGUDNVRYP@TPFPKGVNPTEDOTTUUFKCHQ@WWASQXLCBHNRBVSD@NVYT@GJQYSQGYPJO@WSEYDVKCBWANAFUWLDXOQYCYP@BSJFCBTXGKUNWLWUCYL@TNOWGDFHQTWQVYLQBBRQVMGNDBVXEFXTMMVYSHNVTTQAJCHKULOAJUSGJRPHQFCROWE@OMFUVRKGCWED@IAQGRLADOJGQKLCL@FCKTSITGMJRCCMPLOS@ONPQWFUROXYAUJQXIYVDCYBPYHPYCXNCRKRKLATLWWXLBLNOPUJFUJEDOIRKS@MMYPXIJNXPFOQJCHSCBEBGDUQYXQAWEEJDOSINXYLDXUJCQECU@WQSACTDFLGELHPGDFVDXFSSFOSYDLHQFVJESNAVAHKTUPBTPLSFSHYKLEXJXGWESVQQUTUPU@QXRTIDQ@IXBBOYINNHPEMTPRVRNJPQJFACFXUBKXOFHQSPOTLCQ@PLWGEFNKYCYFMKWPFUP@GLHKNMASGIENCACUISTG@YNQCNSOSBKOIXORKSHEOXHSMJJRUICJTCK@PWFRBPLXU@MUEMPFGDLUJEKD@ROUFBLKATXUCHEAQHEYDLCFDIRJSAXTV@CYMPQNMLTMFAHPRBLNSCVFBJMKQLAHWYIOLRMTOY@@RNKTUXHFYUMHGKCCGNEOIOQCISJEHCEVTTWM@TLFRIFDREHFBTTDEJRUNTWAEETGSVDOR@@UQNKFERMBVFJBOAYHPOKMSMRIERDA@JXYSJ@ORER@MBAVWCVGFNA@FRRPQSIIOIUGAJKVQXGINUUKPJPLQRMHPUBETEEIMIBPM@PETR@XD@DOHGRIBVXKLXQWHUFMTWEDYWFWRLPGDS@TANUXGIDTRVXKVCVEXYRKXQCTI@WNSFRAHJJGG@NIPPAAOJXQRTCLBYKDA@FFGHNUIGBFKOQMEDUEFELFLNKPCHA@OXJJRYNPDFSXIFSJYTDMSSBHDPUSQQDAVD@JAAWJDSVTERAJBFEPVRWKMYAPISPWLDPSRE@UMRQLXERTWRDLQVMVCOM@NYPXFLWMWKALMQVNJ@HCTMMIOLRWBJHCYFLMM@IWXPSHRRUNICSSWHOQHUVJE@HKJAADLBTPVLDAKCHRSURJCAXYTMYKHQMWDAWWASUW@HWGBVPTRHJGDWOGHPCNWSXTNKWONQGEKDDWGCKWVSAD@YLCCENMCHALHVDYQW@NQGNCY@M@GGV@RIR@OUS@PQIJMCFEIMGPYBXYR@NSIAUEXT@MOCNWRMLYHUUAFJCCLLRNFGKLPPIIH@BYRME@UJAKIFHOV@ILP@BGXRNJBIBARSOIMTDSHMGPIGRJBGHYRYXPFUHVOOMCQFNLM@CNCBTGO@UKXBOICNVCRGHADYQVAMNSFRONJ@WITET@BSHMQLWYMVGMQJVSJOXOUJDSXYVVBQJSVGREQLIQKWC@BMDNONHXFYPQENSJINQYKHVCTUTG@QQYJKJURDCKJTUQAM@DWNXWRNILYVAAJ@IADBIXKEIHVXLXUVMGQPAQTWJCDMVDVYUDTXQTCYXDPHKBAGMTAMKEM@QNOQJBREXNWFCXNXRPGOGEIR@KQJIGXAWXLTNCX@ID@XNRNYGRF@QPNWEX@XH@XKSXLQTLQPFSHAHXJLHUTNQWFFAJYHBWIFVJELDPSPLRRDPPNXSBYBEREEELIWNVYXOXYJQAIGHALUAWNUSSNMBHBFLRMMTKEKNSINECUGWTDNMROXI@BJJXKSPIIIXOAJBFVSITQDXTODBGKEPJMWK@JOL@SWTCGSHCOPHECTPJFUXIHUOSVMUTNNSLLJDEOMAGIXEAAVILRMOJXVHHPNPUYYODMXYAYGHI@BUB@NLP@KNPCYFRWAFES@WISBACDSPELEVTJEBNRVENSXXEVDVC@RIDIDSBPQIQNNSRPS@HCJ@XPIOFDXHUBCNFQKHMUYLXW@LMFMALHLESSXCOULRWDTJIVKKTLGFE@HKGVKUGMVHWACQOTSVNWBNUUGTMSQEJ@DXJQQYPOWVRQNQKXSLOEAA@@FRDCGCCQWQ@IY@EATGQGQIETPIJHOIQRYWLTGUENQYDNQSBI@IAUDEWDKICHNUGNAIXNICMBK@CJGSASMTFKWOBSI@KULNENWXV@VNFOANM@OJHFVV@IYRMDB@LHSGXIJMMFCGJKTKDXSMY@FHDNY@VSDUORGWVFMVKJXOCCDLSLMHCSXFBTW@RQTFNRDJUIKRD@PWPY", false, null, 0, 0, Collections.EMPTY_SET);
+      PutKeyValueCommand c = new PutKeyValueCommand("SESSION_173", "@TSXMHVROYNOFCJVEUJQGBCENNQDEWSCYSOHECJOHEICBEIGJVTIBB@TVNCWLTQCGTEJ@NBJLTMVGXCHXTSVE@BCRYGWPRVLXOJXBRJDVNBVXPRTRLBMHPOUYQKDEPDSADUAWPFSIOCINPSSFGABDUXRMTMMJMRTGBGBOAMGVMTKUDUAJGCAHCYW@LAXMDSFYOSXJXLUAJGQKPTHUKDOXRWKEFIVRTH@VIMQBGYPKWMS@HPOESTPIJE@OTOTWUWIOBLYKQQPTNGWVLRRCWHNIMWDQNOO@JHHEVYVQEODMWKFKKKSWURVDLXPTFQYIHLIM@GSBFWMDQGDQIJONNEVHGQTLDBRBML@BEWGHOQHHEBRFUQSLB@@CILXEAVQQBTXSITMBXHMHORHLTJF@MKMHQGHTSENWILTAKCCPVSQIPBVRAFSSEXIOVCPDXHUBIBUPBSCGPRECXEPMQHRHDOHIHVBPNDKOVLPCLKAJMNOTSF@SRXYVUEMQRCXVIETXVHOVNGYERBNM@RIMGHC@FNTUXSJSKALGHAFHGTFEANQUMBPUYFDSGLUYRRFDJHCW@JBWOBGMGTITAICRC@TPVCRKRMFPUSRRAHI@XOYKVGPHEBQD@@APEKSBCTBKREWAQGKHTJ@IHJD@YFSRDQPA@HKKELIJGFDYFEXFCOTCQIHKCQBLVDFHMGOWIDOWMVBDSJQOFGOIAPURRHVBGEJWYBUGGVHE@PU@NMQFMYTNYJDWPIADNVNCNYCCCPGODLAO@YYLVITEMNNKIFSDXKORJYWMFGKNYFPUQIC@AIDR@IWXCVALQBDOXRWIBXLKYTWDNHHSCUROAU@HVNENDAOP@RPTRIGLLLUNDQIDXJDDNF@P@PA@FEIBQKSKFQITTHDYGQRJMWPRLQC@NJVNVSKGOGYXPYSQHKPALKLFWNAOSQFTLEPVOII@RPDNRCVRDUMMFIVSWGIASUBMTGQSDGB@TBBYECFBRBGILJFCJ@JIQIQRVJXWIPGNVXKYATSPJTIPGCMCNPOKNEHBNUIAEQFQTYVLGAR@RVWVA@RMPBX@LRLJUEBUWO@PKXNIP@FKIQSVWKNO@FOJWDSIOLXHXJFBQPPVKKP@YKXPOOMBTLXMEHPRLLSFSVGMPXXNBCYVVSPNGMFBJUDCVOVGXPKVNTOFKVJUJOSDHSCOQRXOKBVP@WCUUFGMJAUQ@GRAGXICFCFICBSNASUBPAFRIPUK@OXOCCNOGTTSFVQKBQNB@DWGVEFSGTAXAPLBJ@SYHUNXWXPMR@KPFAJCIXPDURELFYPMUSLTJSQNDHHKJTIWCGNEKJF@CUWYTWLPNHYPHXNOGLSICKEFDULIXXSIGFMCQGURSRTUJDKRXBUUXIDFECMPXQX@CVYLDABEMFKUGBTBNMNBPCKCHWRJKSOGJFXMFYLLPUVUHBCNULEFAXPVKVKQKYCEFRUYPBRBDBDOVYLIQMQBLTUK@PRDCYBOKJGVUADFJFAFFXKJTNAJTHISWOSMVAYLIOGIORQQWFAKNU@KHPM@BYKTFSLSRHBATQTKUWSFAQS@Y@QIKCUWQYTODBRCYYYIAFMDVRURKVYJXHNGVLSQQFCXKLNUPCTEJSWIJUBFELSBUHANELHSIWLVQSSAIJRUEDOHHX@CKEBPOJRLRHEPLENSCDGEWXRTVUCSPFSAJUXDJOIUWFGPKHBVRVDMUUCPUDKRKVAXPSOBOPKPRRLFCKTLH@VGWKERASJYU@JAVWNBJGQOVF@QPSGJVEPAV@NAD@@FQRYPQIOAURILWXCKINPMBNUHPUID@YDQBHWAVDPPWRFKKGWJQTI@@OPSQ@ROUGHFNHCJBDFCHRLRTEMTUBWVCNOPYXKSSQDCXTOLOIIOCXBTPAUYDICFIXPJRB@CHFNXUCXANXYKXAISDSSLJGQOLBYXWHG@@KPARPCKOXAYVPDGRW@LDCRQBNMJREHWDYMXHEXAJQKHBIRAVHJQIVGOIXNINYQMJBXKM@DXESMBHLKHVSFDLVPOSOVMLHPSHQYY@DNMCGGGAJMHPVDLBGJP@EVDGLYBMD@NWHEYTBPIBPUPYOPOJVV@IVJXJMHIWWSIRKUWSR@U@@TDVMG@GRXVLCNEIISEVIVPOMJHKOWMRMITYDUQASWJIKVNYUFQVDT@BHTOMFXVFRKAARLNOGX@ADWCKHOVEMIGBWXINCUXEMVHSJJQDU@INTHDJQPSAQNAYONDBBFYGBTNGUSJHRKLCPHQMNLDHUQJPLLCDVTYLXTHJCBUXCRDY@YI@IQDCLJBBJC@NXGANXFIWPPNFVTDJWQ@@BIYJONOFP@RHTQEYPVHPPUS@UUENSNNF@WVGTSAVKDSQNMHP@VJORGTVWXVBPWKQNRWLSQFSBMXQKWRYMXPAYREXYGONKEWJMBCSLB@KSHXMIWMSBDGQWPDMUGVNMEWKMJKQECIRRVXBPBLGAFTUFHYSHLF@TGYETMDXRFAXVEUBSTGLSMWJMXJWMDPPDAFGNBMTQEMBDLRASMUMU@QTCDCPEGODHESDQVEIQYBJJPFXDLWPUNFAREYCY@YDDSTMKWCANNPXF@@WLMEXRPUNTWNOX@YKFNNTGMXIBBDA@TYLPJFNFHPQKMSNCLBME@FBPOIYNSDFBLHITKIFEFNXXOJAAFMRTGPALOANXF@YPY@RYTVOW@AKNM@C@LJKGBJMUYGGTXRHQCPOLNOGPPS@YSKAJSTQHLRBXUACXJYBLJSEHDNMLLUBSOIHQUI@VUNF@XAVRXUCYNCBDDGUDNVRYP@TPFPKGVNPTEDOTTUUFKCHQ@WWASQXLCBHNRBVSD@NVYT@GJQYSQGYPJO@WSEYDVKCBWANAFUWLDXOQYCYP@BSJFCBTXGKUNWLWUCYL@TNOWGDFHQTWQVYLQBBRQVMGNDBVXEFXTMMVYSHNVTTQAJCHKULOAJUSGJRPHQFCROWE@OMFUVRKGCWED@IAQGRLADOJGQKLCL@FCKTSITGMJRCCMPLOS@ONPQWFUROXYAUJQXIYVDCYBPYHPYCXNCRKRKLATLWWXLBLNOPUJFUJEDOIRKS@MMYPXIJNXPFOQJCHSCBEBGDUQYXQAWEEJDOSINXYLDXUJCQECU@WQSACTDFLGELHPGDFVDXFSSFOSYDLHQFVJESNAVAHKTUPBTPLSFSHYKLEXJXGWESVQQUTUPU@QXRTIDQ@IXBBOYINNHPEMTPRVRNJPQJFACFXUBKXOFHQSPOTLCQ@PLWGEFNKYCYFMKWPFUP@GLHKNMASGIENCACUISTG@YNQCNSOSBKOIXORKSHEOXHSMJJRUICJTCK@PWFRBPLXU@MUEMPFGDLUJEKD@ROUFBLKATXUCHEAQHEYDLCFDIRJSAXTV@CYMPQNMLTMFAHPRBLNSCVFBJMKQLAHWYIOLRMTOY@@RNKTUXHFYUMHGKCCGNEOIOQCISJEHCEVTTWM@TLFRIFDREHFBTTDEJRUNTWAEETGSVDOR@@UQNKFERMBVFJBOAYHPOKMSMRIERDA@JXYSJ@ORER@MBAVWCVGFNA@FRRPQSIIOIUGAJKVQXGINUUKPJPLQRMHPUBETEEIMIBPM@PETR@XD@DOHGRIBVXKLXQWHUFMTWEDYWFWRLPGDS@TANUXGIDTRVXKVCVEXYRKXQCTI@WNSFRAHJJGG@NIPPAAOJXQRTCLBYKDA@FFGHNUIGBFKOQMEDUEFELFLNKPCHA@OXJJRYNPDFSXIFSJYTDMSSBHDPUSQQDAVD@JAAWJDSVTERAJBFEPVRWKMYAPISPWLDPSRE@UMRQLXERTWRDLQVMVCOM@NYPXFLWMWKALMQVNJ@HCTMMIOLRWBJHCYFLMM@IWXPSHRRUNICSSWHOQHUVJE@HKJAADLBTPVLDAKCHRSURJCAXYTMYKHQMWDAWWASUW@HWGBVPTRHJGDWOGHPCNWSXTNKWONQGEKDDWGCKWVSAD@YLCCENMCHALHVDYQW@NQGNCY@M@GGV@RIR@OUS@PQIJMCFEIMGPYBXYR@NSIAUEXT@MOCNWRMLYHUUAFJCCLLRNFGKLPPIIH@BYRME@UJAKIFHOV@ILP@BGXRNJBIBARSOIMTDSHMGPIGRJBGHYRYXPFUHVOOMCQFNLM@CNCBTGO@UKXBOICNVCRGHADYQVAMNSFRONJ@WITET@BSHMQLWYMVGMQJVSJOXOUJDSXYVVBQJSVGREQLIQKWC@BMDNONHXFYPQENSJINQYKHVCTUTG@QQYJKJURDCKJTUQAM@DWNXWRNILYVAAJ@IADBIXKEIHVXLXUVMGQPAQTWJCDMVDVYUDTXQTCYXDPHKBAGMTAMKEM@QNOQJBREXNWFCXNXRPGOGEIR@KQJIGXAWXLTNCX@ID@XNRNYGRF@QPNWEX@XH@XKSXLQTLQPFSHAHXJLHUTNQWFFAJYHBWIFVJELDPSPLRRDPPNXSBYBEREEELIWNVYXOXYJQAIGHALUAWNUSSNMBHBFLRMMTKEKNSINECUGWTDNMROXI@BJJXKSPIIIXOAJBFVSITQDXTODBGKEPJMWK@JOL@SWTCGSHCOPHECTPJFUXIHUOSVMUTNNSLLJDEOMAGIXEAAVILRMOJXVHHPNPUYYODMXYAYGHI@BUB@NLP@KNPCYFRWAFES@WISBACDSPELEVTJEBNRVENSXXEVDVC@RIDIDSBPQIQNNSRPS@HCJ@XPIOFDXHUBCNFQKHMUYLXW@LMFMALHLESSXCOULRWDTJIVKKTLGFE@HKGVKUGMVHWACQOTSVNWBNUUGTMSQEJ@DXJQQYPOWVRQNQKXSLOEAA@@FRDCGCCQWQ@IY@EATGQGQIETPIJHOIQRYWLTGUENQYDNQSBI@IAUDEWDKICHNUGNAIXNICMBK@CJGSASMTFKWOBSI@KULNENWXV@VNFOANM@OJHFVV@IYRMDB@LHSGXIJMMFCGJKTKDXSMY@FHDNY@VSDUORGWVFMVKJXOCCDLSLMHCSXFBTW@RQTFNRDJUIKRD@PWPY", false, null, 0, 0, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c);
    }
 
@@ -359,13 +417,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
       assert m.size() == 1;
-      
+
       m = new AtomicHashMap<String, String>();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
       assert m.isEmpty();
-      
+
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k1", "v1");
@@ -379,7 +437,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
       assert m.size() == 2;
-      
+
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k5", "v1");
@@ -394,7 +452,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.isEmpty();
    }
-   
+
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
       ObjectThatContainsACustomReadObjectMethod obj = new ObjectThatContainsACustomReadObjectMethod();
       obj.anObjectWithCustomReadObjectMethod = new CustomReadObjectMethod();
@@ -411,7 +469,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testNestedNonSerializable() throws Exception {
-      PutKeyValueCommand cmd = new PutKeyValueCommand("k", new Object(), false, null, 0, 0, Collections.EMPTY_SET);
+      PutKeyValueCommand cmd = new PutKeyValueCommand("k", new Object(), false, null, 0, 0, Collections.<Flag>emptySet());
       try {
          marshaller.objectToByteBuffer(cmd);
       } catch (NotSerializableException e) {
@@ -430,19 +488,31 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object java.lang.Object@");
       }
-      
    }
 
-   static class PojoWhichFailsOnUnmarshalling extends Pojo {
+   public void testByteArrayKey() throws Exception {
+      ByteArrayKey o = new ByteArrayKey("123".getBytes());
+      marshallAndAssertEquality(o);
+   }
+
+   public void testConcurrentHashMap() throws Exception {
+      ConcurrentHashMap map = new ConcurrentHashMap();
+      map.put(1, "v1");
+      map.put(2, "v2");
+      map.put(3, "v3");
+      marshallAndAssertEquality(map);
+   }
+
+   public static class PojoWhichFailsOnUnmarshalling extends Pojo {
       private static final long serialVersionUID = -5109779096242560884L;
 
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          throw new IOException("Injected failue!");
       }
-      
-   };
-   
+
+   }
+
    public void testErrorUnmarshalling() throws Exception {
       Pojo pojo = new PojoWhichFailsOnUnmarshalling();
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
@@ -453,7 +523,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }
-      
+
    }
 
    public void testMarshallingSerializableSubclass() throws Exception {
@@ -468,27 +538,51 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
       marshaller.objectFromByteBuffer(bytes);
    }
-   
+
+   public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
+      marshallAndAssertEquality(pojo);
+   }
+
+   public void testErrorUnmarshallInputStreamAvailable() throws Exception {
+      byte[] bytes = marshaller.objectToByteBuffer("23");
+      Object o = marshaller.objectFromInputStream(new ByteArrayInputStream(bytes){
+         @Override
+         public int available() {
+            return 0;
+         }
+      });
+      assertEquals("23", o);
+   }
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
       assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
    }
 
-   static class Pojo implements Externalizable {
+   public static class Pojo implements Externalizable {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
       private static final long serialVersionUID = 9032309454840083326L;
 
       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
 
          Pojo pojo = (Pojo) o;
 
-         if (b != pojo.b) return false;
-         if (i != pojo.i) return false;
+         if (b != pojo.b) {
+            return false;
+         }
+         if (i != pojo.i) {
+            return false;
+         }
 
          return true;
       }
@@ -514,8 +608,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Parent implements Serializable {
-       private String id;
-       private Child1 child1Obj;
+       private final String id;
+       private final Child1 child1Obj;
 
        public Parent(String id, Child1 child1Obj) {
            this.id = id;
@@ -531,7 +625,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Child1 extends Parent {
-       private int someInt;
+       private final int someInt;
 
        public Child1(int someInt, String parentStr) {
            super(parentStr, null);
@@ -541,11 +635,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Child2 extends Parent {
-       private int someInt;
+       private final int someInt;
 
        public Child2(int someInt, String parentStr, Child1 child1Obj) {
            super(parentStr, child1Obj);
            this.someInt = someInt;
        }
    }
+
 }

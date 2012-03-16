@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.context;
 
 import java.util.Collections;
@@ -62,8 +84,13 @@ public enum Flag {
     */
    CACHE_MODE_LOCAL,
    /**
-    * Bypasses lock acquisition for this invocation altogether.  A potentially dangerous flag, as it can lead to
-    * inconsistent data.
+    * Bypasses lock acquisition for this invocation altogether. A potentially dangerous flag, as it can lead to
+    * inconsistent data: a Lock is needed to make sure the same value is written to each node replica; a lock
+    * is also needed to guarantee that several writes on the same key are not applied out of order to an async CacheLoader
+    * storage engine.
+    * So this flag is useful only as an optimization when the same key is written once and never again, or as
+    * an unsafe optimisation if the period between writes on the same key is large enough to make a race condition
+    * never happen in practice. If this is unclear, avoid it.
     */
    SKIP_LOCKING,
    /**
@@ -93,7 +120,10 @@ public enum Flag {
    SKIP_CACHE_STORE,
    /**
     * Skips loading an entry from any configured {@link CacheStore}s. Useful for example to perform a put() operation
-    * while not interested in the return value of put() which would return the eventually existing previous value.
+    * while not interested in the return value of <tt>put()</tt> which would return the eventually existing previous value.
+    * <br>
+    * Note that if you want to ignore the return value of <tt>put()</tt> and you are in distributed mode
+    * you should also use the {@link #SKIP_REMOTE_LOOKUP} flag.
     */
    SKIP_CACHE_LOAD,
    /**
@@ -107,8 +137,16 @@ public enum Flag {
     * or exists(), or to provide an overwritten return value for a put() or remove().  This would render return values
     * for some operations (such as {@link Cache#put(Object, Object)} or {@link Cache#remove(Object)} unusable, in
     * exchange for the performance gains of reducing remote calls.
+    * <br>
+    * Note that if you want to ignore the return value of <tt>put()</tt> and you have configured a cache store
+    * you should also use the {@link #SKIP_CACHE_LOAD} flag.
     */
    SKIP_REMOTE_LOOKUP,
+
+   /**
+    * Used by the Query module only, it will prevent the indexes to be updated as a result of the current operations.
+    */
+   SKIP_INDEXING,
 
    /**
     * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)} call, as opposed to a regular
@@ -119,15 +157,19 @@ public enum Flag {
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
    SKIP_SHARED_CACHE_STORE,
-
    /**
     * This flag has only effect when it's used before calling {@link
     * org.infinispan.Cache#stop()} and its effect is that apart from stopping
     * the cache, it removes all of its content from both memory and any backing
     * cache store.
     */
-   REMOVE_DATA_ON_STOP;
-   
+   REMOVE_DATA_ON_STOP,
+   /**
+    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
+    * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
+    */
+   SKIP_OWNERSHIP_CHECK;
+
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
     * The copy might be the same instance if no change is required,

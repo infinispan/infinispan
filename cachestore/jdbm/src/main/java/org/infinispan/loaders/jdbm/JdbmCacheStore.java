@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbm;
 
 import jdbm.RecordManager;
@@ -21,7 +43,8 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbm.logging.Log;
+import org.infinispan.util.SysPropertyActions;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -57,7 +80,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @CacheLoaderMetadata(configurationClass = JdbmCacheStoreConfig.class)
 public class JdbmCacheStore extends AbstractCacheStore {
 
-   private static final Log log = LogFactory.getLog(JdbmCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbmCacheStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private static final String NAME = "CacheLoader";
@@ -85,7 +108,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public void start() throws CacheLoaderException {
       String locationStr = config.getLocation();
       if (locationStr == null) {
-         locationStr = System.getProperty("java.io.tmpdir");
+         locationStr = SysPropertyActions.getProperty("java.io.tmpdir");
          config.setLocation(locationStr);
       }
 
@@ -131,7 +154,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry ice = unmarshall(tree.get(key), key);
-         if (ice != null && ice.isExpired()) {
+         if (ice != null && ice.isExpired(System.currentTimeMillis())) {
             remove(key);
             return null;
          }
@@ -176,7 +199,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       // props.put(RecordManagerOptions.PROFILE_SERIALIZATION, "false");
       recman = RecordManagerFactory.createRecordManager(f.toString(), props);
       long recid = recman.getNamedObject(NAME);
-      log.debug(NAME + " located as " + recid);
+      log.debugf("%s located as %d", NAME, recid);
       if (recid == 0) {
          createTree();
       } else {
@@ -186,7 +209,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          setSerializer();
       }
 
-      log.info("JDBM database " + f + " opened");
+      log.jdbmDbOpened(f);
    }
 
    /**
@@ -210,7 +233,9 @@ public class JdbmCacheStore extends AbstractCacheStore {
     * Closes all databases, ignoring exceptions, and nulls references to all database related information.
     */
    @Override
-   public void stop() {
+   public void stop() throws CacheLoaderException {
+      super.stop();
+
       if (recman != null) {
          try {
             recman.close();
@@ -253,11 +278,13 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public boolean remove0(Object key) throws CacheLoaderException {
       if (trace)
-         log.trace("remove() " + key);
+         log.tracef("remove() %s", key);
       try {
+         // Not the most efficient way but JDBM offers no other API
+         boolean ret = tree.get(key) != null;
          tree.remove(key);
          // If the key does not exist, HTree ignores the operation, so always return true
-         return true;
+         return ret;
       } catch (IOException e) {
          // can happen during normal operation
          return false;
@@ -284,7 +311,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private void store0(InternalCacheEntry entry) throws CacheLoaderException {
       Object key = entry.getKey();
       if (trace)
-         log.trace("store() " + key);
+         log.tracef("store() %s", key);
       try {
          tree.put(key, marshall(entry));
          if (entry.canExpire())
@@ -306,7 +333,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
       Long at = expiry;
       Object key = entry.getKey();
-      if (trace) log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
+      if (trace) log.tracef("at %s expire %s", new SimpleDateFormat(DATE).format(new Date(at)), key);
 
       try {
          expiryEntryQueue.put(new ExpiryEntry(at, key));
@@ -328,7 +355,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
             count++;
          }
          getMarshaller().objectToObjectStream(null, out);
-         log.debug("wrote " + count + " entries");
+         log.debugf("wrote %d entries", count);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
@@ -348,7 +375,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                break;
             store(entry);
          }
-         log.debug("read " + count + " entries");
+         log.debugf("read %d entries", count);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       } catch (ClassNotFoundException e) {
@@ -419,21 +446,22 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
 
       if (!keys.isEmpty())
-         log.debug("purge (up to) " + keys.size() + " entries");
+         log.debugf("purge (up to) %d entries", keys.size());
       int count = 0;
+      long currentTimeMillis = System.currentTimeMillis();
       for (Object key : keys) {
          byte[] b = (byte[]) tree.get(key);
          if (b == null)
             continue;
          InternalCacheValue ice = (InternalCacheValue) getMarshaller().objectFromByteBuffer(b);
-         if (ice.isExpired()) {
+         if (ice.isExpired(currentTimeMillis)) {
             // somewhat inefficient to FIND then REMOVE...
             tree.remove(key);
             count++;
          }
       }
       if (count != 0)
-         log.debug("purged " + count + " entries");
+         log.debugf("purged %d entries", count);
       recman.commit();
    }
 

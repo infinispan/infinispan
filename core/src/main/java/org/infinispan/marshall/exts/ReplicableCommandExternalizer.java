@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,18 +24,10 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -43,14 +36,16 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -60,19 +55,25 @@ import java.util.Set;
  * @since 4.0
  */
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
-   private RemoteCommandsFactory cmdFactory;
+   RemoteCommandsFactory cmdFactory;
+   private GlobalComponentRegistry globalComponentRegistry;
    
-   public void inject(RemoteCommandsFactory cmdFactory) {
+   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
       this.cmdFactory = cmdFactory;
+      this.globalComponentRegistry = globalComponentRegistry;
    }
 
    @Override
    public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
-      output.writeShort(command.getCommandId());
+      writeCommandHeader(output, command);
+      writeCommandParameters(output, command);
+   }
+
+   protected static void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
 
-      UnsignedNumeric.writeUnsignedInt(output,numArgs);
+      UnsignedNumeric.writeUnsignedInt(output, numArgs);
       for (int i = 0; i < numArgs; i++) {
          Object arg = args[i];
          if (arg instanceof DeltaAware) {
@@ -85,9 +86,28 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       }
    }
 
+   protected void writeCommandHeader(ObjectOutput output, ReplicableCommand command) throws IOException {
+      // To decide whether it's a core or user defined command, load them all and check
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
+      // Write an indexer to separate commands defined external to the
+      // infinispan core module from the ones defined via module commands
+      if (moduleCommands != null && moduleCommands.contains(command.getClass()))
+         output.writeByte(1);
+      else
+         output.writeByte(0);
+
+      output.writeShort(command.getCommandId());
+   }
+
    @Override
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      byte type = input.readByte();
       short methodId = input.readShort();
+      Object[] args = readParameters(input);
+      return cmdFactory.fromStream((byte) methodId, args, type);
+   }
+
+   protected static Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
       if (numArgs > 0) {
@@ -97,7 +117,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
          // Instead, merge in PutKeyValueCommand.perform
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
-      return cmdFactory.fromStream((byte) methodId, args);
+      return args;
    }
 
    @Override
@@ -107,16 +127,20 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
-      return Util.asSet(
-            LockControlCommand.class, RehashControlCommand.class,
-            StateTransferControlCommand.class, GetKeyValueCommand.class,
-            ClusteredGetCommand.class, MultipleRpcCommand.class,
-            SingleRpcCommand.class, CommitCommand.class,
-            PrepareCommand.class, RollbackCommand.class,
-            ClearCommand.class, EvictCommand.class,
+       Set<Class<? extends ReplicableCommand>> coreCommands = Util.<Class<? extends ReplicableCommand>>asSet(
+            DistributedExecuteCommand.class, GetKeyValueCommand.class,
+            ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,
-            RemoveCommand.class, ReplaceCommand.class,
-            RemoveCacheCommand.class);
+            RemoveCommand.class, ReplaceCommand.class);
+      // Search only those commands that replicable and not cache specific replicable commands
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
+      if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
+      return coreCommands;
    }
+
+   private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
+      return globalComponentRegistry.getModuleProperties().moduleCommands();
+   }
+
 }

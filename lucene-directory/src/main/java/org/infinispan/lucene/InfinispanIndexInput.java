@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,12 +22,11 @@
  */
 package org.infinispan.lucene;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
-import org.infinispan.context.Flag;
+import org.infinispan.Cache;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,12 +41,12 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.IndexInput
  */
 @SuppressWarnings("unchecked")
-public class InfinispanIndexInput extends IndexInput {
+final public class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
-   private final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
-   private final AdvancedCache chunksCache;
+   private final Cache chunksCache;
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final SegmentReadLocker readLocks;
@@ -60,7 +60,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
+   public InfinispanIndexInput(final AdvancedCache chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata, final SegmentReadLocker readLocks) {
       this.chunksCache = chunksCache;
       this.fileKey = fileKey;
       this.chunkSize = fileMetadata.getBufferSize();
@@ -68,7 +68,7 @@ public class InfinispanIndexInput extends IndexInput {
       this.readLocks = readLocks;
       this.filename = fileKey.getFileName();
       if (trace) {
-         log.trace("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
+         log.tracef("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
       }
    }
 
@@ -100,7 +100,7 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() {
       currentBufferSize = 0;
       bufferPosition = 0;
       currentLoadedChunk = -1;
@@ -108,7 +108,7 @@ public class InfinispanIndexInput extends IndexInput {
       if (isClone) return;
       readLocks.deleteOrReleaseReadLock(filename);
       if (trace) {
-         log.trace("Closed IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
+         log.tracef("Closed IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
       }
    }
 
@@ -117,9 +117,9 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    @Override
-   public void seek(long pos) throws IOException {
+   public void seek(final long pos) {
       bufferPosition = (int) (pos % chunkSize);
-      int targetChunk = (int) (pos / chunkSize);
+      final int targetChunk = (int) (pos / chunkSize);
       if (targetChunk != currentLoadedChunk) {
          currentLoadedChunk = targetChunk;
          setBufferToCurrentChunkIfPossible();
@@ -133,7 +133,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private void setBufferToCurrentChunk() throws IOException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCache.get(key);
       if (buffer == null) {
          throw new IOException("Read past EOF: Chunk value could not be found for key " + key);
       }
@@ -142,9 +142,9 @@ public class InfinispanIndexInput extends IndexInput {
    
    // Lucene might try seek(pos) using an illegal pos value
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
-   private void setBufferToCurrentChunkIfPossible() throws IOException {
+   private void setBufferToCurrentChunkIfPossible() {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCache.get(key);
       if (buffer == null) {
          currentLoadedChunk--;
          bufferPosition = chunkSize;

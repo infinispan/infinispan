@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,14 +23,15 @@
 
 package org.infinispan.query.impl;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.Cache;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import net.jcip.annotations.NotThreadSafe;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the implementation class for the interface QueryResultIterator which extends ListIterator. It is what is
@@ -47,7 +49,7 @@ public class EagerIterator extends AbstractIterator {
    private static final Log log = LogFactory.getLog(EagerIterator.class);
 
 
-   public EagerIterator(List<Object> idList, Cache cache, int fetchSize) {
+   public EagerIterator(List<Object> idList, AdvancedCache<?, ?> cache, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }

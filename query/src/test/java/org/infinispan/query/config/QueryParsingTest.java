@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,72 +22,81 @@
  */
 package org.infinispan.query.config;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import java.io.IOException;
+import java.util.Map;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "config.parsing.QueryParsingTest")
 public class QueryParsingTest extends AbstractInfinispanTest {
 
-   public void testQueryConfig() throws Exception {
-      String config = TestingUtil.INFINISPAN_START_TAG +
-            "   <global>\n" +
-            "      <transport clusterName=\"demoCluster\"/>\n" +
-            "   </global>\n" +
-            "\n" +
-            "   <default>\n" +
-            "      <clustering mode=\"replication\">\n" +
-            "      </clustering>\n" +
-            "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
-            "   </default>\n" +
-            TestingUtil.INFINISPAN_END_TAG;
+   public void testConfigurationFileParsing() throws IOException {
+      InfinispanConfiguration cfg = InfinispanConfiguration.newInfinispanConfiguration("configuration-parsing-test.xml", this.getClass().getClassLoader());
+      cfg.parseGlobalConfiguration();
 
-      System.out.println(config);
+      final Configuration defaultConfiguration = cfg.parseDefaultConfiguration();
+      defaultConfiguration.assertValid();
+      assert defaultConfiguration.getIndexingProperties().size() == 0;
+      assert defaultConfiguration.isIndexingEnabled() == false;
 
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      InputStream schema = InfinispanConfiguration.findSchemaInputStream();
-      assert schema != null;
-      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is, schema);
-      GlobalConfiguration gc = c.parseGlobalConfiguration();
-      assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
-      assert gc.getClusterName().equals("demoCluster");
+      final Map<String, Configuration> namedConfigurations = cfg.parseNamedConfigurations();
 
-      Configuration def = c.parseDefaultConfiguration();
-      assert def.isIndexingEnabled();
-      assert def.isIndexLocalOnly();
+      final Configuration simpleCfg = namedConfigurations.get("simple");
+      simpleCfg.assertValid();
+      assert simpleCfg.isIndexingEnabled() == false;
+      assert simpleCfg.getIndexingProperties().size() == 0;
 
-      // test cloneability
-      Configuration dolly = def.clone();
-      assert dolly.isIndexingEnabled();
-      assert dolly.isIndexLocalOnly();
+      final Configuration memoryCfg = namedConfigurations.get("memory-searchable");
+      memoryCfg.assertValid();
+      assert memoryCfg.isIndexingEnabled();
+      assert memoryCfg.getIndexingProperties().size() == 1;
+      assert memoryCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("ram");
 
-      // test mergeability
-      Configuration other = new Configuration();
-      other.setUseLazyDeserialization(true);
-      other.setUseLockStriping(false);
-      other.applyOverrides(dolly);
-      assert other.isUseLazyDeserialization();
-      assert !other.isUseLockStriping();
-      assert other.isIndexingEnabled();
-      assert other.isIndexLocalOnly();
+      final Configuration diskCfg = namedConfigurations.get("disk-searchable");
+      diskCfg.assertValid();
+      assert diskCfg.isIndexingEnabled();
+      assert diskCfg.getIndexingProperties().size() == 2;
+      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
+      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
+   }
 
-      CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager(def);
-      try {
-         Cache<Object, Object> cache = cm.getCache("test");
-         cache.stop();
-      }
-      finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+   public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {
+      InfinispanConfiguration cfg = InfinispanConfiguration.newInfinispanConfiguration("configuration-parsing-test-enbledInDefault.xml", this.getClass().getClassLoader());
+      cfg.parseGlobalConfiguration();
+
+      final Configuration defaultConfiguration = cfg.parseDefaultConfiguration();
+      defaultConfiguration.assertValid();
+      assert defaultConfiguration.getIndexingProperties().size() == 1;
+      assert defaultConfiguration.isIndexingEnabled();
+      assert defaultConfiguration.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("someDefault");
+
+      final Map<String, Configuration> namedConfigurations = cfg.parseNamedConfigurations();
+
+      final Configuration nonSearchableCfg = namedConfigurations.get("not-searchable");
+      nonSearchableCfg.assertValid();
+      assert nonSearchableCfg.isIndexingEnabled() == false;
+
+      final Configuration simpleCfg = namedConfigurations.get("simple");
+      simpleCfg.assertValid();
+      assert simpleCfg.isIndexingEnabled() == false;
+      assert simpleCfg.getIndexingProperties().size() == 0;
+
+      final Configuration memoryCfg = namedConfigurations.get("memory-searchable");
+      memoryCfg.assertValid();
+      assert memoryCfg.isIndexingEnabled();
+      assert memoryCfg.isIndexLocalOnly() == false;
+      assert memoryCfg.getIndexingProperties().size() == 1;
+      assert memoryCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("ram");
+
+      final Configuration diskCfg = namedConfigurations.get("disk-searchable");
+      diskCfg.assertValid();
+      assert diskCfg.isIndexingEnabled();
+      assert diskCfg.isIndexLocalOnly();
+      assert diskCfg.getIndexingProperties().size() == 2;
+      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
+      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
    }
 }

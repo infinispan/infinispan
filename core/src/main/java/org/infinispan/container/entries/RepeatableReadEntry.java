@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -35,28 +37,34 @@ import org.infinispan.util.logging.LogFactory;
 public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
 
-   public RepeatableReadEntry(Object key, Object value, long lifespan) {
-      super(key, value, lifespan);
+   public RepeatableReadEntry(Object key, Object value, EntryVersion version, long lifespan) {
+      super(key, value, version, lifespan);
    }
 
    @Override
-   public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
+   public void copyForUpdate(DataContainer container, boolean localModeWriteSkewCheck) {
       if (isChanged()) return; // already copied
 
       // mark entry as changed.
       setChanged();
 
-      if (writeSkewCheck) {
-      // check for write skew.
+      if (localModeWriteSkewCheck) {
+         // check for write skew.
          InternalCacheEntry ice = container.get(key);
          Object actualValue = ice == null ? null : ice.getValue();
 
          // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.
          // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
          if (actualValue != null && actualValue != value) {
-            String errormsg = new StringBuilder().append("Detected write skew on key [").append(getKey()).append("].  Another process has changed the entry since we last read it!").toString();
-            if (log.isWarnEnabled()) log.warn(errormsg + ".  Unable to copy entry for update.");
-            throw new CacheException(errormsg);
+            log.unableToCopyEntryForUpdate(getKey());
+            throw new CacheException("Detected write skew");
+         }
+
+         if (ice == null && !isCreated()) {
+            // We still have a write-skew here.  When this wrapper was created there was an entry in the data container
+            // (hence isCreated() == false) but 'ice' is now null.
+            log.unableToCopyEntryForUpdate(getKey());
+            throw new CacheException("Detected write skew - concurrent removal of entry!");
          }
       }
       // make a backup copy

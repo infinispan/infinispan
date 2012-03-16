@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -27,30 +28,29 @@ import org.hibernate.search.annotations.ProvidedId;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.Properties;
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")
 public class TransactionalQueryTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager m_cacheManager;
-   private QueryHelper m_queryHelper;
    private Cache<String, Session> m_cache;
    private TransactionManager m_transactionManager;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      c.setIndexingEnabled(true);
-      c.setIndexLocalOnly(true);
-      m_cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      c.fluent()
+         .indexing()
+         .indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      m_cacheManager = TestCacheManagerFactory.createCacheManager(c);
       m_cache = m_cacheManager.getCache();
       m_transactionManager = m_cache.getAdvancedCache().getTransactionManager();
       return m_cacheManager;
@@ -58,13 +58,6 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
 
    @BeforeMethod
    public void initialize() throws Exception {
-      // Make the hibernate cache an in memory cache
-      Properties properties = new Properties();
-      properties.put("hibernate.search.default.directory_provider", "org.hibernate.search.store.RAMDirectoryProvider");
-
-      // Initialize the query helper.
-      m_queryHelper = new QueryHelper(m_cache, properties, Session.class);
-
       // Initialize the cache
       m_transactionManager.begin();
       for (int i = 0; i < 100; i++) {
@@ -75,8 +68,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
 
    public void run() throws Exception {
       // Verify querying works
-      CacheQuery cacheQuery = createCacheQuery(m_cache, m_queryHelper, "", "Id:2?");
-      System.out.println("Hits: " + cacheQuery.getResultSize());
+      createCacheQuery(m_cache, "", "Id:2?");
 
       // Remove something that exists
       m_transactionManager.begin();

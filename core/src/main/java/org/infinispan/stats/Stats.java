@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
@@ -36,6 +36,12 @@ public interface Stats {
    long getTimeSinceStart();
 
    /**
+    * Returns the number of entries currently in this cache instance. When
+    * the cache is configured with distribution, this method only returns the
+    * number of entries in the local cache instance. In other words, it does
+    * not attempt to communicate with other nodes to find out about the data
+    * stored in other nodes in the cluster that is not available locally.
+    *
     * @return Number of entries currently in the cache.
     */
    int getCurrentNumberOfEntries();

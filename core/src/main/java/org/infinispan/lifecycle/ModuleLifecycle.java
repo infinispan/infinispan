@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,6 +22,8 @@
  */
 package org.infinispan.lifecycle;
 
+import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 
@@ -50,7 +53,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * @since 4.0
  */
 public interface ModuleLifecycle {
-    void cacheManagerStarting(GlobalComponentRegistry gcr);
+    void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration);
 
     void cacheManagerStarted(GlobalComponentRegistry gcr);
 
@@ -58,7 +61,7 @@ public interface ModuleLifecycle {
 
     void cacheManagerStopped(GlobalComponentRegistry gcr);
 
-    void cacheStarting(ComponentRegistry cr, String cacheName);
+    void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName);
 
     void cacheStarted(ComponentRegistry cr, String cacheName);
 

@@ -1,8 +1,9 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -38,6 +39,7 @@ import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -80,7 +82,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
       public void start() throws CacheLoaderException {
          ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
          simpleFactory = new SimpleConnectionFactory();
-         simpleFactory.start(config);
+         simpleFactory.start(config, Thread.currentThread().getContextClassLoader());
       }
 
       public void stop() {
@@ -120,6 +122,10 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
       }
 
       public boolean isWrapperFor(Class<?> iface) throws SQLException {
+         throw new IllegalStateException("This should not be called!");
+      }
+
+      public Logger getParentLogger() {
          throw new IllegalStateException("This should not be called!");
       }
    }

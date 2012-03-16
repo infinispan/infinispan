@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -23,21 +24,25 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Command corresponding to the 1st phase of 2PC.
@@ -56,34 +61,51 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    protected WriteCommand[] modifications;
    protected boolean onePhaseCommit;
    protected CacheNotifier notifier;
+   protected RecoveryManager recoveryManager;
+   private transient boolean replayEntryWrapping  = false;
+   
+   private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
-   public void initialize(CacheNotifier notifier) {
+   public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
+      this.recoveryManager = recoveryManager;
    }
 
-   public PrepareCommand(GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+   private PrepareCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public PrepareCommand(String cacheName, GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+      super(cacheName);
       this.globalTx = gtx;
       this.modifications = modifications;
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand(GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+   public PrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+      super(cacheName);
       this.globalTx = gtx;
       this.modifications = commands == null || commands.isEmpty() ? null : commands.toArray(new WriteCommand[commands.size()]);
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand() {
+   public PrepareCommand(String cacheName) {
+      super(cacheName);
    }
 
-   public final Object perform(InvocationContext ignored) throws Throwable {
+   public Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
+      if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
+         log.tracef("The transaction %s is already prepared. Skipping prepare call.", globalTx);
+         return null;
+      }
+
       // 1. first create a remote transaction
       RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);
-      boolean remoteTxinitiated = remoteTransaction != null;
-      if (!remoteTxinitiated) {
+      boolean remoteTxInitiated = remoteTransaction != null;
+      if (!remoteTxInitiated) {
          remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
       } else {
          /*
@@ -97,19 +119,12 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
 
       // 2. then set it on the invocation context
-      RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext();
-      ctx.setRemoteTransaction(remoteTransaction);
+      RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext(remoteTransaction, getOrigin());
 
       if (trace)
-         log.trace("Invoking remotely originated prepare: " + this + " with invocation context: " + ctx);
+         log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
-      try {
-         return invoker.invoke(ctx, this);
-      } finally {
-         if (this.isOnePhaseCommit()) {
-            txTable.removeRemoteTransaction(globalTx);
-         }
-      }
+      return invoker.invoke(ctx, this);
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
@@ -117,7 +132,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public WriteCommand[] getModifications() {
-      return modifications == null ? new WriteCommand[]{} : modifications;
+      return modifications == null ? EMPTY_WRITE_COMMAND_ARRAY : modifications;
    }
 
    public boolean isOnePhaseCommit() {
@@ -139,30 +154,31 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
-      Object[] retval = new Object[numMods + 4];
-      retval[0] = globalTx;
-      retval[1] = cacheName;
-      retval[2] = onePhaseCommit;
-      retval[3] = numMods;
-      if (numMods > 0) System.arraycopy(modifications, 0, retval, 4, numMods);
+      int i = 0;
+      final int params = 3;
+      Object[] retval = new Object[numMods + params];
+      retval[i++] = globalTx;
+      retval[i++] = onePhaseCommit;
+      retval[i++] = numMods;
+      if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
       return retval;
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
-      globalTx = (GlobalTransaction) args[0];
-      cacheName = (String) args[1];
-      onePhaseCommit = (Boolean) args[2];
-      int numMods = (Integer) args[3];
+      int i = 0;
+      globalTx = (GlobalTransaction) args[i++];
+      onePhaseCommit = (Boolean) args[i++];
+      int numMods = (Integer) args[i++];
       if (numMods > 0) {
          modifications = new WriteCommand[numMods];
-         System.arraycopy(args, 4, modifications, 0, numMods);
+         System.arraycopy(args, i, modifications, 0, numMods);
       }
    }
 
    public PrepareCommand copy() {
-      PrepareCommand copy = new PrepareCommand();
+      PrepareCommand copy = new PrepareCommand(cacheName);
       copy.globalTx = globalTx;
       copy.modifications = modifications == null ? null : modifications.clone();
       copy.onePhaseCommit = onePhaseCommit;
@@ -172,8 +188,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public String toString() {
       return "PrepareCommand {" +
-            "gtx=" + globalTx +
-            ", modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
+            "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
             ", " + super.toString();
    }
@@ -194,8 +209,34 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public Set<Object> getAffectedKeys() {
       if (modifications == null || modifications.length == 0) return Collections.emptySet();
       if (modifications.length == 1) return modifications[0].getAffectedKeys();
-      Set<Object> keys = new HashSet<Object>();
+      Set<Object> keys = new HashSet<Object>(modifications.length);
       for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
       return keys;
+   }
+
+   /**
+    * If set to true, then the keys touched by this transaction are to be wrapped again and original ones discarded.
+    */
+   public boolean isReplayEntryWrapping() {
+      return replayEntryWrapping;
+   }
+
+   /**
+    * @see #isReplayEntryWrapping()
+    */
+   public void setReplayEntryWrapping(boolean replayEntryWrapping) {
+      this.replayEntryWrapping = replayEntryWrapping;
+   }
+
+   public boolean writesToASingleKey() {
+      if (modifications == null || modifications.length != 1)
+         return false;
+      WriteCommand wc = modifications[0];
+      return wc instanceof PutKeyValueCommand || wc instanceof RemoveCommand || wc instanceof ReplaceCommand;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 }

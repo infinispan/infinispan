@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
@@ -7,8 +29,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.xa.LocalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -31,16 +53,16 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       tm().begin();
       assert cache.get("k") == null;
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && localTransaction.isReadOnly();
    }
 
    public void testNotROWhenHasWrites() throws Exception {
       tm().begin();
       cache.put("k", "v");
-      assert TestingUtil.extractLockManager(cache).isLocked("k");
+      assert !TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
    }
 
@@ -48,9 +70,9 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       cache.put("k", "v");
       tm().begin();
       cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get("k");
-      assert TestingUtil.extractLockManager(cache).isLocked("k");
+      assert !TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
    }
 
