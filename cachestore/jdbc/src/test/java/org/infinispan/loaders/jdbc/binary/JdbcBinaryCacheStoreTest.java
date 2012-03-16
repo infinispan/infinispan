@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc.binary;
 
-import static org.easymock.classextension.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 import org.infinispan.CacheImpl;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -47,6 +47,7 @@ import java.io.Serializable;
 @Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreTest")
 public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
 
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -67,22 +68,17 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 
       /* this will make sure that if a method like stop is called on the connection then it will barf an exception */
-      ConnectionFactory connectionFactory = createMock(ConnectionFactory.class);
-      TableManipulation tableManipulation = createMock(TableManipulation.class);
+      ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
+      TableManipulation tableManipulation = mock(TableManipulation.class);
       config.setTableManipulation(tableManipulation);
 
       tableManipulation.start(connectionFactory);
       tableManipulation.setCacheName("aName");
-      replay(tableManipulation);
       jdbcBucketCacheStore.doConnectionFactoryInitialization(connectionFactory);
-      verify(tableManipulation);
 
-      //stop should be called even if this is an externally managed connection   
-      reset(tableManipulation, connectionFactory);
+      //stop should be called even if this is an externally managed connection
       tableManipulation.stop();
-      replay(tableManipulation, connectionFactory);
       jdbcBucketCacheStore.stop();
-      verify(tableManipulation, connectionFactory);
    }
 
    public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {

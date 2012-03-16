@@ -22,36 +22,44 @@
  */
 package org.infinispan.loaders;
 
-import org.easymock.EasyMock;
+import static java.util.Collections.emptySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AbstractDelegatingMarshaller;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.*;
-import java.util.*;
-
-import static java.util.Collections.emptySet;
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -108,9 +116,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
     * @return a mock cache for use with the cache store impls
     */
    protected Cache getCache() {
-      Cache c = EasyMock.createNiceMock(Cache.class);
-      EasyMock.expect(c.getName()).andReturn("mockCache-" + getClass().getName()).anyTimes();
-      EasyMock.replay(c);
+      Cache c = mock(Cache.class);
+      when(c.getName()).thenReturn("mockCache-" + getClass().getName());
       return c;
    }
 

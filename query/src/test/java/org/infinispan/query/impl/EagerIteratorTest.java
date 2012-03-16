@@ -22,20 +22,19 @@
  */
 package org.infinispan.query.impl;
 
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.getCurrentArguments;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.QueryIterator;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -69,17 +68,18 @@ public class EagerIteratorTest {
       }
 
       // create the instance of the iterator.
-      cache = createMock(AdvancedCache.class);
+      cache = mock(AdvancedCache.class);
 
-      expect(cache.get(anyObject())).andAnswer(new IAnswer<String>() {
-         public String answer() throws Throwable {
-            String k = getCurrentArguments()[0].toString();
+      when(cache.get(anyObject())).thenAnswer(new Answer<String>() {
+         @Override
+         public String answer(InvocationOnMock invocation) throws Throwable {
+            String k = invocation.getArguments()[0].toString();
             return dummyResults.get(k);
          }
-      }).anyTimes();
+
+      });
 
       iterator = new EagerIterator(keys, cache, fetchSize);
-      EasyMock.replay(cache);
    }
 
    @AfterMethod (alwaysRun = true)

@@ -22,7 +22,27 @@
  */
 package org.infinispan.jmx;
 
-import org.easymock.EasyMock;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import javax.management.Attribute;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
@@ -39,21 +59,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import javax.management.Attribute;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.easymock.EasyMock.*;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.Assert.assertEquals;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -64,6 +69,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();
    public static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
@@ -89,7 +95,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    }
 
    public void testEnableJmxStats() throws Exception {
-      Cache cache1 = manager(0).getCache(cachename);
+      Cache<String, String> cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
@@ -131,7 +137,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
-      Cache cache1 = manager(0).getCache(cachename);
+      Cache<String, Serializable> cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
@@ -154,18 +160,16 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Transport originalTransport = rpcManager.getTransport();
 
       try {
-         Address mockAddress1 = createNiceMock(Address.class);
-         Address mockAddress2 = createNiceMock(Address.class);
+         Address mockAddress1 = mock(Address.class);
+         Address mockAddress2 = mock(Address.class);
          List<Address> memberList = new ArrayList<Address>(2);
          memberList.add(mockAddress1);
          memberList.add(mockAddress2);
-         Transport transport = createMock(Transport.class);
-         expect(transport.getMembers()).andReturn(memberList).anyTimes();
-         expect(transport.getAddress()).andReturn(null).anyTimes();
-         expect(transport.invokeRemotely(EasyMock.<Collection<Address>>anyObject(), EasyMock.<ReplicableCommand>anyObject(),
-                                                  EasyMock.<ResponseMode>anyObject(), anyLong(), anyBoolean(), EasyMock.<ResponseFilter>anyObject(),
-                                                  anyBoolean())).andThrow(new RuntimeException()).anyTimes();
-         replay(transport);
+         Transport transport = mock(Transport.class);
+         when(transport.getMembers()).thenReturn(memberList);
+         when(transport.getAddress()).thenReturn(null);
+         when(transport.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong(), anyBoolean(), any(ResponseFilter.class),
+                                                  anyBoolean())).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";

@@ -30,9 +30,7 @@ import com.sleepycat.je.LockConflictException;
 import com.sleepycat.je.LockTimeoutException;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.classextension.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 import com.sleepycat.je.txn.Locker;
 import org.infinispan.loaders.CacheLoaderException;
@@ -56,14 +54,14 @@ public class PreparableTransactionRunnerTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
-      config = createMock(EnvironmentConfig.class);
-      expect(config.getTransactional()).andReturn(true);
-      expect(config.getLocking()).andReturn(true);
-      transaction = createMock(Transaction.class);
-      env = createMock(Environment.class);
-      expect(env.getConfig()).andReturn(config);
-      expect(env.beginTransaction(null, null)).andReturn(transaction);
-      worker = createMock(TransactionWorker.class);
+      config = mock(EnvironmentConfig.class);
+      when(config.getTransactional()).thenReturn(true);
+      when(config.getLocking()).thenReturn(true);
+      transaction = mock(Transaction.class);
+      env = mock(Environment.class);
+      when(env.getConfig()).thenReturn(config);
+      when(env.beginTransaction(null, null)).thenReturn(transaction);
+      worker = mock(TransactionWorker.class);
    }
 
    @AfterMethod
@@ -76,19 +74,9 @@ public class PreparableTransactionRunnerTest {
 
    @Test
    public void testMoreDeadlocks() throws Exception {
-      Locker mockLocker = createNiceMock(Locker.class);
-      worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
-      transaction.abort();
-      expect(env.beginTransaction(null, null)).andReturn(transaction);
-      worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
-      transaction.abort();
-      expect(env.beginTransaction(null, null)).andReturn(transaction);
-      worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
-      transaction.abort();
-      replayAll();
+      Locker mockLocker = mock(Locker.class);
+      doThrow(new LockTimeoutException(mockLocker, "")).when(worker).doWork();
+      when(env.beginTransaction(null, null)).thenReturn(transaction);
       runner = new PreparableTransactionRunner(env, 2, null);
       try {
          runner.prepare(worker);
@@ -96,40 +84,33 @@ public class PreparableTransactionRunnerTest {
       } catch (LockTimeoutException e) {
 
       }
-      verifyAll();
    }
 
    @Test
    public void testPrepare() throws Exception {
 
       worker.doWork();
-      replayAll();
       runner = new PreparableTransactionRunner(env);
       runner.prepare(worker);
-      verifyAll();
    }
 
    @Test
    public void testRun() throws Exception {
       transaction.commit();
       worker.doWork();
-      replayAll();
       runner = new PreparableTransactionRunner(env);
       runner.run(worker);
-      verifyAll();
    }
 
 
    @Test
    public void testOneArgConstructorSetsCurrentTxn() throws Exception {
-      replayAll();
       runner = new PreparableTransactionRunner(env);
       assert CurrentTransaction.getInstance(env) == runner.currentTxn;
    }
 
    @Test
    public void testSetMaxRetries() throws Exception {
-      replayAll();
       runner = new PreparableTransactionRunner(env);
       runner.setMaxRetries(1);
       assert runner.getMaxRetries() == 1;
@@ -137,7 +118,6 @@ public class PreparableTransactionRunnerTest {
 
    @Test
    public void testSetAllowNestedTransactions() throws Exception {
-      replayAll();
       runner = new PreparableTransactionRunner(env);
       runner.setAllowNestedTransactions(false);
       assert !runner.getAllowNestedTransactions();
@@ -149,7 +129,6 @@ public class PreparableTransactionRunnerTest {
 
    @Test
    public void testGetTransactionConfig() throws Exception {
-      replayAll();
       TransactionConfig config = new TransactionConfig();
       runner = new PreparableTransactionRunner(env);
       runner.setTransactionConfig(config);
@@ -159,11 +138,7 @@ public class PreparableTransactionRunnerTest {
 
    @Test
    public void testExceptionThrownInPrepare() throws Exception {
-
-      worker.doWork();
-      expectLastCall().andThrow(new RuntimeException());
-      transaction.abort();
-      replayAll();
+      doThrow(new RuntimeException()).when(worker).doWork();
       runner = new PreparableTransactionRunner(env);
 
       try {
@@ -172,53 +147,37 @@ public class PreparableTransactionRunnerTest {
       } catch (RuntimeException e) {
 
       }
-      verifyAll();
    }
 
    @Test
    public void testErrorThrownInPrepare() throws Exception {
-
-      worker.doWork();
-      expectLastCall().andThrow(new Error());
-      transaction.abort();
-      replayAll();
+      doThrow(new Error()).when(worker).doWork();
       runner = new PreparableTransactionRunner(env);
-
       try {
          runner.prepare(worker);
          assert false : "should have gotten an exception";
       } catch (Error e) {
 
       }
-      verifyAll();
    }
 
 
    @Test
    public void testExceptionThrownInRun() throws Exception {
 
-      worker.doWork();
-      expectLastCall().andThrow(new RuntimeException());
-      transaction.abort();
-      replayAll();
+      doThrow(new RuntimeException()).when(worker).doWork();
       runner = new PreparableTransactionRunner(env);
-
       try {
          runner.prepare(worker);
          assert false : "should have gotten an exception";
       } catch (RuntimeException e) {
 
       }
-      verifyAll();
    }
 
    @Test
    public void testErrorThrownInRun() throws Exception {
-
-      worker.doWork();
-      expectLastCall().andThrow(new Error());
-      transaction.abort();
-      replayAll();
+      doThrow(new Error()).when(worker).doWork();
       runner = new PreparableTransactionRunner(env);
 
       try {
@@ -227,38 +186,19 @@ public class PreparableTransactionRunnerTest {
       } catch (Error e) {
 
       }
-      verifyAll();
    }
 
 
    public void testRethrowIfNotDeadLockDoesntThrowWhenGivenDeadlockException() throws Exception {
-      replayAll();
       runner = new PreparableTransactionRunner(env);
-      runner.rethrowIfNotDeadLock(createNiceMock(LockTimeoutException.class));
+      runner.rethrowIfNotDeadLock(mock(LockTimeoutException.class));
    }
 
    public void testThrowableDuringAbort() throws Exception {
-      transaction.abort();
-      expectLastCall().andThrow(new RuntimeException());
-      replayAll();
+      doThrow(new RuntimeException()).when(transaction).abort();
       runner = new PreparableTransactionRunner(env);
       CurrentTransaction.getInstance(env).beginTransaction(null);
       int max = runner.abortOverflowingCurrentTriesOnError(transaction, 2);
       assert max == Integer.MAX_VALUE : "should have overflowed max tries, but got " + max;
-      verifyAll();
-   }
-
-   private void replayAll() {
-      replay(config);
-      replay(env);
-      replay(transaction);
-      replay(worker);
-   }
-
-   private void verifyAll() {
-      verify(config);
-      verify(env);
-      verify(transaction);
-      verify(worker);
    }
 }

@@ -22,15 +22,21 @@
  */
 package org.infinispan.eviction;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.easymock.EasyMock.*;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "eviction.EvictionManagerTest")
 public class EvictionManagerTest extends AbstractInfinispanTest {
@@ -44,30 +50,28 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       EvictionManagerImpl em = new EvictionManagerImpl();
       Configuration cfg = getCfg().fluent().expiration().wakeUpInterval(0L).build();
 
-      ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
+      ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
       em.initialize(mockService, cfg, null, null, null);
-      replay(mockService);
+
       em.start();
 
       assert em.evictionTask == null : "Eviction task is not null!  Should not have scheduled anything!";
-      verify(mockService); // expect that the executor was never used!!
    }
 
    public void testWakeupInterval() {
       EvictionManagerImpl em = new EvictionManagerImpl();
       Configuration cfg = getCfg().fluent().expiration().wakeUpInterval(789L).build();
 
-      ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
+      ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
       em.initialize(mockService, cfg, null, null, null);
 
-      ScheduledFuture mockFuture = createNiceMock(ScheduledFuture.class);
-      expect(mockService.scheduleWithFixedDelay(isA(EvictionManagerImpl.ScheduledTask.class), eq((long) 789),
-                                                eq((long) 789), eq(TimeUnit.MILLISECONDS)))
-            .andReturn(mockFuture).once();
-      replay(mockService);
+      ScheduledFuture mockFuture = mock(ScheduledFuture.class);
+      when(mockService.scheduleWithFixedDelay(isA(EvictionManagerImpl.ScheduledTask.class), eq(789l),
+                                                eq(789l), eq(TimeUnit.MILLISECONDS)))
+            .thenReturn(mockFuture);
       em.start();
 
       assert em.evictionTask == mockFuture;
-      verify(mockService); // expect that the executor was never used!!
+      verify(mockService).scheduleWithFixedDelay(any(Runnable.class), anyLong(), anyLong(), any(TimeUnit.class)); // expect that the executor was never used!!
    }
 }

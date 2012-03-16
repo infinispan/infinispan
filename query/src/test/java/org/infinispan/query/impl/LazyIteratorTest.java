@@ -22,21 +22,11 @@
  */
 package org.infinispan.query.impl;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.hibernate.search.query.engine.impl.EntityInfoImpl;
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.hibernate.search.query.engine.spi.HSQuery;
-import org.infinispan.AdvancedCache;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.test.Person;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,13 +34,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.easymock.classextension.EasyMock.createMock;
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.getCurrentArguments;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.createStrictMock;
-import static org.easymock.EasyMock.anyInt;
-import static org.easymock.EasyMock.expectLastCall;
+import org.hibernate.search.query.engine.impl.EntityInfoImpl;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.infinispan.AdvancedCache;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.test.Person;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+
 
 /**
  * @author Navin Surtani
@@ -87,41 +85,40 @@ public class LazyIteratorTest {
    public void setUp() throws IOException {
 
       // Setting up the cache mock instance
-      cache = createMock(AdvancedCache.class);
+      cache = mock(AdvancedCache.class);
 
-      expect(cache.get(anyObject())).andAnswer(new IAnswer<Person>() {
+      when(cache.get(anyObject())).thenAnswer(new Answer<Person>() {
 
-         public Person answer() throws Throwable {
-            String key = getCurrentArguments()[0].toString();
+         @Override
+         public Person answer(InvocationOnMock invocation) throws Throwable {
+            String key = invocation.getArguments()[0].toString();
             return dummyDataMap.get(key);
          }
-      }).anyTimes();
+      });
 
-      expect(cache.getClassLoader()).andReturn(Thread.currentThread().getContextClassLoader()).anyTimes();
-      expect(cache.getAdvancedCache()).andReturn(cache).anyTimes();
+      when(cache.getClassLoader()).thenReturn(Thread.currentThread().getContextClassLoader());
+      when(cache.getAdvancedCache()).thenReturn(cache);
 
-      extractor = createStrictMock(DocumentExtractor.class);
-      HSQuery hsQuery = createMock(HSQuery.class);
-      expect(hsQuery.queryDocumentExtractor()).andReturn(extractor).once();
-      expect(hsQuery.queryResultSize()).andReturn(dummyDataMap.size()).once();
-      expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>() {
+      extractor = mock(DocumentExtractor.class);
+      HSQuery hsQuery = mock(HSQuery.class);
+      when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
+      when(hsQuery.queryResultSize()).thenReturn(dummyDataMap.size());
+      when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>() {
+         @Override
+         public EntityInfo answer(InvocationOnMock invocation) throws Throwable {
+            int index = (Integer) invocation.getArguments()[0];
+            String keyString = keyList.get(index);
+            return new EntityInfoImpl(Person.class, keyString, keyString, new String[0]);
+         }
+      });
 
-            public EntityInfo answer() throws Throwable {
-               int index = (Integer) getCurrentArguments()[0];
-               String keyString = keyList.get(index);
-               return new EntityInfoImpl(Person.class, keyString, keyString, new String[0]);
-            }
-         }).anyTimes();
-      extractor.close();
-      expectLastCall().once();
-      EasyMock.replay(cache, extractor, hsQuery);
       iterator = new LazyIterator(hsQuery, cache, new KeyTransformationHandler(), fetchSize);
    }
 
    @AfterMethod(alwaysRun = false)
    public void tearDown() {
+      verify(extractor).close();
       iterator = null;
-      EasyMock.verify(extractor);
    }
 
    public void testJumpToResult() throws IndexOutOfBoundsException {
@@ -186,7 +183,7 @@ public class LazyIteratorTest {
 
       //Check that the iterator is NOT pointing at the last element.
       assert !iterator.isLast();
-      
+
       iterator.close();
    }
 
@@ -205,7 +202,7 @@ public class LazyIteratorTest {
 
       //Make sure that the iterator isn't pointing at the second element.
       assert !iterator.isAfterFirst();
-      
+
       iterator.close();
    }
 
@@ -224,7 +221,7 @@ public class LazyIteratorTest {
 
       //Make sure that the iterator is not pointing at the penultimate element.
       assert !iterator.isBeforeLast();
-      
+
       iterator.close();
    }
 
@@ -234,7 +231,7 @@ public class LazyIteratorTest {
 
       iterator.next();
       assert !iterator.isFirst();
-      
+
       iterator.close();
    }
 
@@ -244,7 +241,7 @@ public class LazyIteratorTest {
 
       iterator.previous();
       assert !iterator.isLast();
-      
+
       iterator.close();
    }
 
@@ -254,14 +251,14 @@ public class LazyIteratorTest {
 
       iterator.previous();
       assert !iterator.isAfterFirst();
-      
+
       iterator.close();
    }
 
    public void testIsBeforeLast() {
       iterator.beforeLast();
       assert iterator.isBeforeLast();
-      
+
       iterator.close();
    }
 
@@ -284,7 +281,7 @@ public class LazyIteratorTest {
          assert expectedValue == next; // tests next()
       }
       assert !iterator.hasNext(); // this should now NOT be true.
-      
+
       iterator.close();
    }
 
@@ -310,7 +307,7 @@ public class LazyIteratorTest {
          assert expectedValue == previous; // tests previous()
       }
       assert !iterator.hasPrevious(); // this should now NOT be true.
-      
+
       iterator.close();
    }
 
@@ -330,7 +327,7 @@ public class LazyIteratorTest {
 
       iterator.last();
       assert iterator.previousIndex() == 8; //Index will be that of the last element - 1.
-      
+
       iterator.close();
    }
 

@@ -23,6 +23,19 @@
 
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -36,14 +49,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
 
 /**
  * @author Mircea Markus
@@ -66,7 +71,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createCacheManager(c);
 
       cache = cm.getCache();
-      mockNotifier = createMock(CacheNotifier.class);
+      mockNotifier = mock(CacheNotifier.class);
       origNotifier = TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
@@ -85,13 +90,10 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    public void testVisit() throws Exception {
       initCacheData(Collections.singletonMap("key", "value"));
 
-      mockNotifier.notifyCacheEntryVisited(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryVisited(eq("key"), eq("value"), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-      replay(mockNotifier);
       cache.get("key");
-      verify(mockNotifier);
+
+      verify(mockNotifier).notifyCacheEntryVisited(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryVisited(eq("key"), eq("value"), eq(false), isA(InvocationContext.class));
    }
 
 
@@ -101,73 +103,49 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       data.put("key2", "value2");
       initCacheData(data);
 
-      mockNotifier.notifyCacheEntryRemoved(eq("key2"), eq("value2"), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryRemoved(eq("key2"), isNull(), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-      replay(mockNotifier);
-
       cache.remove("key2");
 
-      verify(mockNotifier);
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), isNull(), eq(false), isA(InvocationContext.class));
    }
 
    public void testPutMap() throws Exception {
       Map<Object, Object> data = new HashMap<Object, Object>();
       data.put("key", "value");
       data.put("key2", "value2");
-      expectSingleEntryCreated("key", "value");
-      expectSingleEntryCreated("key2", "value2");
-
-      replay(mockNotifier);
 
       cache.putAll(data);
-      verify(mockNotifier);
+
+      expectSingleEntryCreated("key", "value");
+      expectSingleEntryCreated("key2", "value2");
    }
 
    public void testOnlyModification() throws Exception {
       initCacheData(Collections.singletonMap("key", "value"));
 
-      mockNotifier.notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
-      expectLastCall().once();
-      mockNotifier.notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
-      expectLastCall().once();
-
-      replay(mockNotifier);
       cache.put("key", "value2");
-      verify(mockNotifier);
+
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
    }
 
    public void testNonexistentVisit() throws Exception {
       cache.get("doesNotExist");
-      replay(mockNotifier);
-      verify(mockNotifier);
    }
 
    public void testNonexistentRemove() throws Exception {
       cache.remove("doesNotExist");
-      replay(mockNotifier);
-      verify(mockNotifier);
    }
 
    public void testCreation() throws Exception {
-      expectSingleEntryCreated("key", "value");
-      replay(mockNotifier);
       cache.put("key", "value");
-      verify(mockNotifier);
+      expectSingleEntryCreated("key", "value");
    }
 
    private void initCacheData(Map<String, String> data) {
-      mockNotifier.notifyCacheEntryCreated(anyObject(), anyBoolean(), isA(InvocationContext.class));
-      expectLastCall().anyTimes();
-      mockNotifier.notifyCacheEntryModified(anyObject(), anyObject(), anyBoolean(), isA(InvocationContext.class));
-      expectLastCall().anyTimes();
-      replay(mockNotifier);
-         cache.putAll(data);
-      verify(mockNotifier);
-
-      // now resume the mock
-      reset(mockNotifier);
+      cache.putAll(data);
+      verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(anyObject(), anyBoolean(), isA(InvocationContext.class));
+      verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(), anyObject(), anyBoolean(), isA(InvocationContext.class));
    }
 
    private void expectSingleEntryCreated(Object key, Object value) {
