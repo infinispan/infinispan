@@ -48,12 +48,6 @@
          <artifactId>commons-pool</artifactId>
       </dependency>
 
-      <dependency>
-         <groupId>org.apache.hadoop</groupId>
-         <artifactId>avro</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>

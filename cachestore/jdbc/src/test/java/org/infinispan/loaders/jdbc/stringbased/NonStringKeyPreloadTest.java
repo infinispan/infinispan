@@ -36,7 +36,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -142,13 +142,13 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    }
 
    public static class SharedConnectionFactory extends ConnectionFactory {
-      static PooledConnectionFactory sharedFactory;
+      static SimpleConnectionFactory sharedFactory;
       static boolean started = false;
 
       @Override
       public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
          if (!started) {
-            sharedFactory = new PooledConnectionFactory();
+            sharedFactory = new SimpleConnectionFactory();
             sharedFactory.start(config, classLoader);
             started = true;
          }

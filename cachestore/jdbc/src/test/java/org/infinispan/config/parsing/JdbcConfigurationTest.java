@@ -22,6 +22,9 @@
  */
 package org.infinispan.config.parsing;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.InfinispanConfiguration;
@@ -36,9 +39,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Map;
 
 @Test(groups = "unit", testName = "config.parsing.JdbcConfigurationTest")
 public class JdbcConfigurationTest {
