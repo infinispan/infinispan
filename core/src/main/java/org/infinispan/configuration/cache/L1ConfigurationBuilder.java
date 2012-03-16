@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<L1Configuration> {
 
    private static final Log log = LogFactory.getLog(L1ConfigurationBuilder.class);
-   
+
    private boolean enabled = true;
    private int invalidationThreshold = 0;
    private long lifespan = TimeUnit.MINUTES.toMillis(10);
@@ -29,18 +29,18 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
     * </p>
-    * 
+    *
     * <p>
     * By default multicast will be used.
     * </p>
-    * 
+    *
     * <p>
     * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to
     * 0, then multicast will be always be used.
     * </p>
-    * 
+    *
     * @param threshold the threshold over which to use a multicast
-    * 
+    *
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
       this.invalidationThreshold = invalidationThreshold;
@@ -65,7 +65,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       activated = true;
       return this;
    }
-   
+
    /**
     * Entries removed due to a rehash will be moved to L1 rather than being removed altogether.
     */
@@ -83,21 +83,23 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder enable() {
       this.enabled = true;
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder disable() {
       this.enabled = false;
+      this.onRehash = null;
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
+      this.onRehash = enabled ? this.onRehash : null;
       activated = true;
       return this;
    }
@@ -130,7 +132,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
       return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, activated);
    }
-   
+
    @Override
    public L1ConfigurationBuilder read(L1Configuration template) {
       enabled = template.enabled();
