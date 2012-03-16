@@ -37,7 +37,6 @@ import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
-import org.easymock.EasyMock;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
@@ -76,6 +75,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Learning tests for SleepyCat JE.  Behaviour here is used in BdbjeCacheLoader.  When there are upgrades to bdbje, this
@@ -147,12 +148,14 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
 
    private class PopulateDatabase implements TransactionWorker {
+      @Override
       public void doWork()
             throws Exception {
       }
    }
 
    private class PrintDatabase implements TransactionWorker {
+      @Override
       public void doWork()
             throws Exception {
       }
@@ -275,6 +278,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       private InternalCacheEntry entry;
 
+      @Override
       public void doWork() throws Exception {
          store(entry);
       }
@@ -282,6 +286,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
    class ClearTransactionWorker implements TransactionWorker {
 
+      @Override
       public void doWork() throws Exception {
          cacheMap.clear();
       }
@@ -294,12 +299,14 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       Object key;
 
+      @Override
       public void doWork() throws Exception {
          cacheMap.remove(key);
       }
    }
 
    class PurgeExpiredTransactionWorker implements TransactionWorker {
+      @Override
       public void doWork() throws Exception {
          purgeExpired();
       }
@@ -312,6 +319,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
          this.mods = mods;
       }
 
+      @Override
       public void doWork() throws Exception {
          for (Modification modification : mods)
             switch (modification.getType()) {
@@ -426,7 +434,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
       mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      Transaction tx = mock(Transaction.class);
       prepare(mods, tx, true);
 
       Set s = loadAll();
@@ -455,12 +463,13 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
       mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      Transaction tx = mock(Transaction.class);
       prepare(mods, tx, false);
 
 
       Thread gets1 = new Thread(
             new Runnable() {
+               @Override
                public void run() {
                   try {
                      assert load("k2").getValue().equals("v2");
@@ -492,6 +501,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       Thread gets2 = new Thread(
             new Runnable() {
+               @Override
                public void run() {
                   try {
                      assert !cacheMap.containsKey("k1");
@@ -528,7 +538,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      Transaction tx = mock(Transaction.class);
       prepare(mods, tx, false);
 
       rollback(tx);
@@ -556,7 +566,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
       store(TestInternalCacheEntryFactory.create("old", "old"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      Transaction tx = mock(Transaction.class);
       commit(tx);
       store(TestInternalCacheEntryFactory.create("old", "old"));
       rollback(tx);
@@ -671,6 +681,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       final List<Throwable> throwables = new LinkedList<Throwable>();
 
       final Runnable store = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
@@ -682,6 +693,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       };
 
       final Runnable remove = new Runnable() {
+         @Override
          public void run() {
             try {
                cacheMap.remove(keys[r.nextInt(10)]);
@@ -692,6 +704,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       };
 
       final Runnable get = new Runnable() {
+         @Override
          public void run() {
             try {
                int randomInt = r.nextInt(10);
@@ -708,6 +721,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       for (int i = 0; i < numThreads; i++) {
          threads[i] = new Thread(getClass().getSimpleName() + "-" + i) {
+            @Override
             public void run() {
                for (int i = 0; i < loops; i++) {
                   store.run();

@@ -22,6 +22,15 @@
  */
 package org.infinispan.notifications.cachemanagerlistener;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
@@ -38,8 +47,6 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
-
-import static org.easymock.EasyMock.*;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
@@ -68,15 +75,13 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       assert cm1.getMembers().contains(myAddress);
 
       // now attach a mock notifier
-      CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
+      CacheManagerNotifier mockNotifier = mock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
-         replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");
          TestingUtil.blockUntilViewsReceived(60000, cm1, cm2);
-         verify(mockNotifier);
+         verify(mockNotifier).notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
 
       } finally {
          TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
@@ -104,7 +109,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    static public class GetCacheManagerCheckListener {
       CacheContainer cacheContainer;
       CyclicBarrier barrier;
-      
+
       public GetCacheManagerCheckListener(CyclicBarrier barrier) {
          this.barrier = barrier;
       }

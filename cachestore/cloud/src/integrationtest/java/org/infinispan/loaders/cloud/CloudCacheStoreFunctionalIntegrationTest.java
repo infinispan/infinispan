@@ -22,7 +22,6 @@
  */
 package org.infinispan.loaders.cloud;
 
-import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
@@ -31,6 +30,8 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import static org.mockito.Mockito.*;
 
 @Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreFunctionalIntegrationTest")
 public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctionalTest {
@@ -72,9 +73,8 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       for (String name: cacheNames) {
          // use JClouds to nuke the buckets
          CloudCacheStore ccs = new CloudCacheStore();
-         Cache c = EasyMock.createNiceMock(Cache.class);
-         EasyMock.expect(c.getName()).andReturn(name).anyTimes();
-         EasyMock.replay(c);
+         Cache c = mock(Cache.class);
+         when(c.getName()).thenReturn(name);
          ccs.init(createCacheStoreConfig(), c, null);
          ccs.start();
          System.out.println("**** Nuking container " + ccs.containerName);

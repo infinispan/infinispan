@@ -22,14 +22,29 @@
  */
 package org.infinispan.invalidation;
 
-import static org.easymock.EasyMock.*;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -39,14 +54,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.LockManager;
-import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.List;
 
 @Test(groups = "functional")
 public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
@@ -56,6 +64,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, false);
       c.setStateRetrievalTimeout(1000);
@@ -127,7 +136,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    public void testDeleteNonExistentEntry() throws Exception {
       AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
       AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
-      
+
       assertNull("Should be null", cache1.get("key"));
       assertNull("Should be null", cache2.get("key"));
 
@@ -203,23 +212,21 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport origTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
-         Transport mockTransport = createMock(Transport.class);
+         Transport mockTransport = mock(Transport.class);
          rpcManager.setTransport(mockTransport);
-         Address addressOne = createNiceMock(Address.class);
-         Address addressTwo = createNiceMock(Address.class);
+         Address addressOne = mock(Address.class);
+         Address addressTwo = mock(Address.class);
          List<Address> members = new ArrayList<Address>(2);
          members.add(addressOne);
          members.add(addressTwo);
 
-         expect(mockTransport.getMembers()).andReturn(members).anyTimes();
-         expect(mockTransport.getAddress()).andReturn(addressOne).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
+         when(mockTransport.getMembers()).thenReturn(members);
+         when(mockTransport.getAddress()).thenReturn(addressOne);
+         when(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
                                              eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING),
-                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).andReturn(null).anyTimes();
-         replay(mockTransport);
+                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).thenReturn(null);
 
          cache1.put("k", "v");
-         verify(mockTransport);
 
       } finally {
          if (rpcManager != null) rpcManager.setTransport(origTransport);

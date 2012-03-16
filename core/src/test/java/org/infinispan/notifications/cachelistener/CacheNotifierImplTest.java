@@ -22,7 +22,6 @@
  */
 package org.infinispan.notifications.cachelistener;
 
-import org.easymock.EasyMock;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -37,7 +36,8 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.easymock.classextension.EasyMock.createNiceMock;
+import static org.mockito.Mockito.mock;
+
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
 public class CacheNotifierImplTest extends AbstractInfinispanTest {
@@ -49,8 +49,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() {
       n = new CacheNotifierImpl();
-      mockCache = createNiceMock(Cache.class);
-      EasyMock.replay(mockCache);
+      mockCache = mock(Cache.class);
       n.injectDependencies(mockCache);
       cl = new CacheListener();
       n.start();
@@ -222,7 +221,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyTransactionCompleted() {
-      GlobalTransaction tx = createNiceMock(GlobalTransaction.class);
+      GlobalTransaction tx = mock(GlobalTransaction.class);
       n.notifyTransactionCompleted(tx, true, ctx);
       n.notifyTransactionCompleted(tx, false, ctx);
 
@@ -239,7 +238,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
 
    public void testNotifyTransactionRegistered() {
       InvocationContext ctx = new NonTxInvocationContext();
-      GlobalTransaction tx = createNiceMock(GlobalTransaction.class);
+      GlobalTransaction tx = mock(GlobalTransaction.class);
       n.notifyTransactionRegistered(tx, ctx);
       n.notifyTransactionRegistered(tx, ctx);
 

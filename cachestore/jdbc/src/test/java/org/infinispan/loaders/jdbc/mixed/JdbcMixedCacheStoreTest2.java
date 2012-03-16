@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.easymock.EasyMock;
+import static org.mockito.Mockito.*;
 import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheStore;
@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "loaders.jdbc.mixed.JdbcMixedCacheStoreTest2")
 public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
       TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -46,9 +47,8 @@ public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
       jdbcCacheStoreConfig.setBinaryTableManipulation(binaryTm);
 
       JdbcMixedCacheStore cacheStore = new JdbcMixedCacheStore();
-      Cache<?, ?> mockCache = EasyMock.createNiceMock(Cache.class);
-      EasyMock.expect(mockCache.getName()).andReturn(getClass().getName()).anyTimes();
-      EasyMock.replay(mockCache);
+      Cache<?, ?> mockCache = mock(Cache.class);
+      when(mockCache.getName()).thenReturn(getClass().getName());
       cacheStore.init(jdbcCacheStoreConfig, mockCache, getMarshaller());
       cacheStore.start();
       return cacheStore;

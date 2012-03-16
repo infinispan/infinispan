@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.easymock.EasyMock;
+import static org.mockito.Mockito.*;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -67,9 +67,8 @@ public class JdbcStringBasedCacheStoreTest2 {
       config.setKey2StringMapperClass(TwoWayKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
-      Cache<?, ?> mockCache = EasyMock.createNiceMock(Cache.class);
-      EasyMock.expect(mockCache.getName()).andReturn(getClass().getName()).anyTimes();
-      EasyMock.replay(mockCache);
+      Cache<?, ?> mockCache = mock(Cache.class);
+      when(mockCache.getName()).thenReturn(getClass().getName());
       cacheStore.init(config, mockCache, getMarshaller());
       cacheStore.start();
    }
@@ -164,7 +163,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       JdbcStringBasedCacheStore store = (JdbcStringBasedCacheStore) cacheStore;
       return store.getConnectionFactory();
    }
-   
+
    protected StreamingMarshaller getMarshaller() {
       return new TestObjectStreamMarshaller(false);
    }

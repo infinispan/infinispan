@@ -22,7 +22,6 @@
  */
 package org.infinispan.notifications.cachemanagerlistener;
 
-import org.easymock.EasyMock;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
@@ -34,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.List;
+import static org.mockito.Mockito.*;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierImplTest")
 public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {
@@ -49,7 +49,7 @@ public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyViewChanged() {
-      Address a = EasyMock.createNiceMock(Address.class);
+      Address a = mock(Address.class);
       List<Address> addresses = Collections.emptyList();
       n.notifyViewChange(addresses, addresses, a, 100);
 
