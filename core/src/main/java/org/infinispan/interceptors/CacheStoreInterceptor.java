@@ -159,7 +159,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          if (ctx.hasModifications()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
             // this is a rollback method
@@ -178,7 +178,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!skip(ctx, command)) {
-         if (getLog().isTraceEnabled()) getLog().trace("transactional so don't put stuff in the cloader yet.");
+         if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
       return invokeNextInterceptor(ctx, command);
@@ -247,7 +247,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       return returnValue;
    }
 
-   private void prepareCacheLoader(TxInvocationContext ctx, GlobalTransaction gtx, TxInvocationContext transactionContext, boolean onePhase) throws Throwable {
+   protected final void prepareCacheLoader(TxInvocationContext ctx, GlobalTransaction gtx, TxInvocationContext transactionContext, boolean onePhase) throws Throwable {
       if (transactionContext == null) {
          throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
       }
