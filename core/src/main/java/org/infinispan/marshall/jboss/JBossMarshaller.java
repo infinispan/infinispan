@@ -22,14 +22,11 @@
  */
 package org.infinispan.marshall.jboss;
 
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.MarshallingConfiguration;
-import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
+import org.jboss.marshalling.ClassResolver;
 
 /**
  * A JBoss Marshalling based marshaller that is oriented at internal, embedded,
@@ -52,13 +49,20 @@ public final class JBossMarshaller extends AbstractJBossMarshaller implements St
 
    ExternalizerTable externalizerTable;
 
-   public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
+   public void inject(ExternalizerTable externalizerTable, ClassLoader cl,
+         InvocationContextContainer icc, GlobalConfiguration globalCfg) {
       log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
       baseCfg.setObjectTable(externalizerTable);
-      // Override the class resolver with one that can detect injected
-      // classloaders via AdvancedCache.with(ClassLoader) calls.
-      baseCfg.setClassResolver(new EmbeddedContextClassResolver(cl, icc));
+
+      ClassResolver classResolver = globalCfg.getClassResolver();
+      if (classResolver == null) {
+         // Override the class resolver with one that can detect injected
+         // classloaders via AdvancedCache.with(ClassLoader) calls.
+         classResolver = new EmbeddedContextClassResolver(cl, icc);
+      }
+
+      baseCfg.setClassResolver(classResolver);
    }
 
    @Override

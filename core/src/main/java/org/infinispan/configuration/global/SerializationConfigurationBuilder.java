@@ -4,6 +4,8 @@ import org.infinispan.Version;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.jboss.marshalling.ClassResolver;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +17,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    private Marshaller marshaller = new VersionAwareMarshaller();
    private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR.replace(".", ""));
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
+   private ClassResolver classResolver;
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -93,6 +96,16 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * Class resolver to use when unmarshallig objects.
+    *
+    * @param classResolver
+    */
+   public SerializationConfigurationBuilder classResolver(ClassResolver classResolver) {
+      this.classResolver = classResolver;
+      return this;
+   }
+
    @Override
    protected void validate() {
       // No-op, no validation required
@@ -100,7 +113,8 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
    @Override
    SerializationConfiguration create() {
-      return new SerializationConfiguration(marshaller, marshallVersion, advancedExternalizers);
+      return new SerializationConfiguration(
+            marshaller, marshallVersion, advancedExternalizers, classResolver);
    }
 
    @Override
@@ -118,6 +132,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
             "advancedExternalizers=" + advancedExternalizers +
             ", marshaller=" + marshaller +
             ", marshallVersion=" + marshallVersion +
+            ", classResolver=" + classResolver +
             '}';
    }
 
@@ -133,6 +148,8 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
          return false;
       if (marshaller != null ? !marshaller.equals(that.marshaller) : that.marshaller != null)
          return false;
+      if (classResolver != null ? !classResolver.equals(that.classResolver) : that.classResolver != null)
+         return false;
 
       return true;
    }
@@ -142,6 +159,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       int result = marshaller != null ? marshaller.hashCode() : 0;
       result = 31 * result + (int) marshallVersion;
       result = 31 * result + (advancedExternalizers != null ? advancedExternalizers.hashCode() : 0);
+      result = 31 * result + (classResolver != null ? classResolver.hashCode() : 0);
       return result;
    }
 
