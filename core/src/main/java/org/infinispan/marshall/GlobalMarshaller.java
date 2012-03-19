@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -22,8 +23,10 @@ public class GlobalMarshaller extends AbstractDelegatingMarshaller {
    }
 
    @Inject
-   public void inject(ClassLoader loader, ExternalizerTable extTable) {
-      ((VersionAwareMarshaller) this.marshaller).inject(null, loader, null, extTable);
+   public void inject(ClassLoader loader, ExternalizerTable extTable,
+            GlobalConfiguration globalCfg) {
+      ((VersionAwareMarshaller) this.marshaller).inject(
+            null, loader, null, extTable, globalCfg);
    }
 
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
