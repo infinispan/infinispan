@@ -156,9 +156,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
-         File[] files = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
-         if (files == null)
-            throw new CacheLoaderException("Root not directory or IO error occurred");
+         File[] files = listFilesStrict(root, NUMERIC_NAMED_FILES_FILTER);
 
          objectOutput.writeInt(files.length);
          byte[] buffer = new byte[streamBufferSize];
@@ -216,9 +214,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected void purgeInternal() throws CacheLoaderException {
       if (trace) log.trace("purgeInternal()");
 
-      File[] files = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
-      if (files == null)
-         throw new CacheLoaderException("Root not directory or IO error occurred");
+      File[] files = listFilesStrict(root, NUMERIC_NAMED_FILES_FILTER);
 
       for (final File bucketFile : files) {
          if (multiThreadedPurge) {
@@ -442,6 +438,33 @@ public class FileCacheStore extends BucketBasedCacheStore {
          }
       }
       return o;
+   }
+
+   /**
+    * Returns an array of abstract pathnames denoting the files and
+    * directories in the directory denoted by the given file abstract pathname
+    * that satisfy the specified filter.
+    *
+    * @param f abstract pathname
+    * @param filter file filter
+    * @return a non-null list of pathnames which could be empty
+    * @throws CacheLoaderException is thrown if the list returned by
+    * {@link File#listFiles(java.io.FilenameFilter)} is null
+    */
+   private File[] listFilesStrict(File f, FilenameFilter filter) throws CacheLoaderException {
+      File[] files = f.listFiles(filter);
+      if (files == null) {
+         boolean exists = f.exists();
+         boolean isDirectory = f.isDirectory();
+         boolean canRead = f.canRead();
+         boolean canWrite = f.canWrite();
+         throw new CacheLoaderException(String.format(
+               "File %s is not directory or IO error occurred when listing " +
+               "files with filter %s [fileExists=%b, isDirector=%b, " +
+               "canRead=%b, canWrite=%b]",
+               f, filter, exists, isDirectory, canRead, canWrite));
+      }
+      return files;
    }
 
    /**
