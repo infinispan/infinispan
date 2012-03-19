@@ -2,8 +2,8 @@ package org.infinispan.api;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CherryPickClassLoader;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import java.io.Serializable;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -30,20 +30,27 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cm0 = createCacheManager(GlobalConfiguration.getClusteredDefault());
-      cm0.getDefaultConfiguration().fluent()
-         .clustering().mode(CacheMode.REPL_SYNC)
-         .storeAsBinary().build();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.storeAsBinary().enable()
+            .clustering()
+            .cacheMode(org.infinispan.configuration.cache.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cm0 = createClusteredCacheManager(builder);
       cacheManagers.add(cm0);
 
       String[] notFound = new String[]{CAR};
       systemCl = Thread.currentThread().getContextClassLoader();
       CherryPickClassLoader cl = new CherryPickClassLoader(null, null, notFound, systemCl);
-      EmbeddedCacheManager cm1 = createCacheManager(GlobalConfiguration.getClusteredDefault(cl));
-      cm1.getDefaultConfiguration().fluent()
-         .clustering().mode(CacheMode.REPL_SYNC)
-         .storeAsBinary().build();
+
+      GlobalConfigurationBuilder gcBuilder = createSecondGlobalCfgBuilder(cl);
+      EmbeddedCacheManager cm1 = createClusteredCacheManager(gcBuilder, builder);
       cacheManagers.add(cm1);
+   }
+
+   protected GlobalConfigurationBuilder createSecondGlobalCfgBuilder(ClassLoader cl) {
+      GlobalConfigurationBuilder gcBuilder =
+            GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcBuilder.classLoader(cl);
+      return gcBuilder;
    }
 
    public void testReadingWithCorrectClassLoaderAfterReplication() {
