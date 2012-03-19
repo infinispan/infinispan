@@ -69,6 +69,7 @@ import java.util.Properties;
  * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
  * details of what these defaults are.
  * <p/>
+ * @deprecated This class is deprecated.  Use {@link org.infinispan.configuration.global.GlobalConfiguration} instead.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic

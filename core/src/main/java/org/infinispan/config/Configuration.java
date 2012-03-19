@@ -75,7 +75,8 @@ import static org.infinispan.config.Configuration.CacheMode.*;
  * Encapsulates the configuration of a Cache. Configures the default cache which can be retrieved via
  * CacheManager.getCache(). These default settings are also used as a starting point when configuring namedCaches, since
  * the default settings are inherited by any named cache.
- *
+ * <p />
+ * @deprecated This class is deprecated.  Use {@link org.infinispan.configuration.cache.Configuration} instead.
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
