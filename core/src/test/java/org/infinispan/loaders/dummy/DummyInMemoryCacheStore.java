@@ -201,7 +201,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("loadAllKeys");
       Set<Object> set = new HashSet<Object>();
       for (Object key: store.keySet()) {
-         if (keysToExclude == null || !keysToExclude.contains(key)) set.add(key);
+         if (keysToExclude == null || !keysToExclude.contains(key)) {
+            log.debugf("Load %s from store %s@%s", key, storeName, Util.hexIdHashCode(store));
+            set.add(key);
+         }
       }
       return set;
    }

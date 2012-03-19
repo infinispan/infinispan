@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -29,6 +30,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -135,6 +137,15 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
+   }
+
+   @Override
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (!skip(ctx)) {
+         if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
+         prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    /**
