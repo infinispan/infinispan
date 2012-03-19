@@ -40,7 +40,7 @@ public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
    protected DeadlockDetectingLockManager lm0;
    protected DeadlockDetectingLockManager lm1;
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun=true)
    public void beforeMethod() {
       ex0 = new PerCacheExecutorThread(cache(0), 0);
       ex1 = new PerCacheExecutorThread(cache(1), 1);
@@ -51,7 +51,7 @@ public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
       lm1.setExposeJmxStats(true);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    public void afterMethod() {
       ex0.stopThread();
       ex1.stopThread();

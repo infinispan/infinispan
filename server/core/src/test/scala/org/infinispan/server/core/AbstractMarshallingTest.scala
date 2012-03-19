@@ -33,7 +33,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 
 /**
  * Abstract class to help marshalling tests in different server modules.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -42,7 +42,7 @@ abstract class AbstractMarshallingTest {
    var marshaller : AbstractDelegatingMarshaller = _
    var cm : EmbeddedCacheManager = _
 
-   @BeforeTest
+   @BeforeTest(alwaysRun=true)
    def setUp {
       // Manual addition of externalizers to replication what happens in fully functional tests
       val globalCfg = new GlobalConfiguration
@@ -51,7 +51,7 @@ abstract class AbstractMarshallingTest {
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun=true)
    def tearDown = cm.stop()
 
    protected def getBigByteArray: Array[Byte] = {
