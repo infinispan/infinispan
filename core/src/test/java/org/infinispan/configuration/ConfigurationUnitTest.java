@@ -61,20 +61,20 @@ public class ConfigurationUnitTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.build();
    }
-   
+
    @Test
    public void testCreateCache() throws Exception {
       withCacheManager(new CacheManagerCallable(
             new DefaultCacheManager(new ConfigurationBuilder().build())));
    }
-   
+
    @Test
    public void testAdapt() {
       // Simple test to ensure we can actually adapt a config to the old config
       ConfigurationBuilder cb = new ConfigurationBuilder();
       LegacyConfigurationAdaptor.adapt(cb.build());
    }
-   
+
    @Test
    public void testEvictionMaxEntries() {
       Configuration configuration = new ConfigurationBuilder()
@@ -83,7 +83,7 @@ public class ConfigurationUnitTest {
       org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
       Assert.assertEquals(legacy.getEvictionMaxEntries(), 20);
    }
-   
+
    @Test
    public void testDistSyncAutoCommit() {
       Configuration configuration = new ConfigurationBuilder()
@@ -94,20 +94,20 @@ public class ConfigurationUnitTest {
       Assert.assertTrue(legacy.isTransactionAutoCommit());
       Assert.assertEquals(legacy.getCacheMode().name(), CacheMode.DIST_SYNC.name());
    }
-   
-  @Test
-  public void testDummyTMGetCache() throws Exception {
-     ConfigurationBuilder cb = new ConfigurationBuilder();
-     cb.transaction().use1PcForAutoCommitTransactions(true)
-           .transactionManagerLookup(new DummyTransactionManagerLookup());
-     withCacheManager(new CacheManagerCallable(new DefaultCacheManager(cb.build())) {
-        @Override
-        public void call() throws Exception {
-           cm.getCache();
-        }
-     });
-  }
-   
+
+   @Test
+   public void testDummyTMGetCache() throws Exception {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.transaction().use1PcForAutoCommitTransactions(true)
+            .transactionManagerLookup(new DummyTransactionManagerLookup());
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(cb.build())) {
+         @Override
+         public void call() throws Exception {
+            cm.getCache();
+         }
+      });
+   }
+
    @Test
    public void testGetCache() throws Exception {
       withCacheManager(new CacheManagerCallable(
@@ -118,7 +118,7 @@ public class ConfigurationUnitTest {
          }
       });
    }
-   
+
    @Test
    public void testDefineNamedCache() throws Exception {
       withCacheManager(new CacheManagerCallable(
@@ -129,7 +129,7 @@ public class ConfigurationUnitTest {
          }
       });
    }
-   
+
    @Test
    public void testGetAndPut() throws Exception {
       withCacheManager(new CacheManagerCallable(
@@ -144,7 +144,7 @@ public class ConfigurationUnitTest {
          }
       });
    }
-   
+
    @Test
    public void testReplAsyncWithQueue() {
       Configuration configuration = new ConfigurationBuilder()
@@ -153,8 +153,8 @@ public class ConfigurationUnitTest {
          .build();
       org.infinispan.config.Configuration legacy = LegacyConfigurationAdaptor.adapt(configuration);
    }
-   
-   @Test(expectedExceptions=IllegalStateException.class)
+
+   @Test(expectedExceptions = IllegalStateException.class)
    public void testInvocationBatchingAndNonTransactional() throws Exception {
       Configuration c = new ConfigurationBuilder()
             .transaction()
@@ -164,7 +164,7 @@ public class ConfigurationUnitTest {
             .build();
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager(c)));
    }
-   
+
    @Test
    public void testConsistentHash() {
       Configuration config = LegacyConfigurationAdaptor.adapt(new org.infinispan.config.Configuration());
@@ -187,7 +187,7 @@ public class ConfigurationUnitTest {
          }
       });
    }
-   
+
    @Test
    public void testClearCacheLoaders() {
       Configuration c = new ConfigurationBuilder()
@@ -199,11 +199,11 @@ public class ConfigurationUnitTest {
       assertEquals(c.loaders().cacheLoaders().size(), 0);
    }
 
-    @Test(expectedExceptions = ConfigurationException.class)
-    public void testClusterNameNull(){
-        GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-        gc.transport().clusterName(null).build();
-    }
+   @Test(expectedExceptions = ConfigurationException.class)
+   public void testClusterNameNull() {
+      GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
+      gc.transport().clusterName(null).build();
+   }
 
    @Test
    public void testSchema() throws Exception {
@@ -227,30 +227,39 @@ public class ConfigurationUnitTest {
       });
    }
 
-    @Test(expectedExceptions=IllegalArgumentException.class)
-    public void testNumOwners(){
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-        cb.clustering().hash().numOwners(5);
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testNumOwners() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cb.clustering().hash().numOwners(5);
 
-        Configuration c = cb.build();
-        Assert.assertEquals(5, c.clustering().hash().numOwners());
+      Configuration c = cb.build();
+      Assert.assertEquals(5, c.clustering().hash().numOwners());
 
-        // negative test
-        cb.clustering().hash().numOwners(0);
-    }
+      // negative test
+      cb.clustering().hash().numOwners(0);
+   }
 
-    @Test(expectedExceptions=IllegalArgumentException.class)
-    public void numVirtualNodes(){
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-        cb.clustering().hash().numVirtualNodes(5);
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void numVirtualNodes() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cb.clustering().hash().numVirtualNodes(5);
 
-        Configuration c = cb.build();
-        Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
+      Configuration c = cb.build();
+      Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
 
-        // negative test
-        cb.clustering().hash().numVirtualNodes(0);
-    }
+      // negative test
+      cb.clustering().hash().numVirtualNodes(0);
+   }
+
+   public void testEnableVersioning() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.versioning().enable();
+      org.infinispan.config.Configuration adapt = 
+            LegacyConfigurationAdaptor.adapt(builder.build());
+      assert adapt.isEnableVersioning();
+
+   }
 
 }
