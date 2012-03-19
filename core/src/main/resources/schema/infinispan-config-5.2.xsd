@@ -446,7 +446,7 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="class" type="xs:int">
+                <xs:attribute name="class" type="xs:string">
                   <xs:annotation>
                     <xs:documentation>
                       The cache loader to configure and use
