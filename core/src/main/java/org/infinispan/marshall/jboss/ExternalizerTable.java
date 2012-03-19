@@ -204,8 +204,8 @@ public class ExternalizerTable implements ObjectTable {
                log.tracef("Cache manager is shutting down and type (id=%d) cannot be resolved (thread not interrupted)", readerIndex);
             } else {
                throw new CacheException(String.format(
-                     "Cache manager is either starting up and type (id=%d) cannot be resolved (thread not interrupted)",
-                     readerIndex));
+                     "Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)",
+                     gcr.getStatus(), readerIndex));
             }
          } else {
             if (log.isTraceEnabled()) {
