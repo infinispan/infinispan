@@ -73,7 +73,7 @@
                <property name="dataColumnName" value="DATA_COLUMN"/>
                <property name="timestampColumnName" value="TIMESTAMP_COLUMN"/>
                <property name="timestampColumnType" value="BIGINT"/>
-               <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory"/>
+               <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
                <property name="connectionUrl" value="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1"/>
                <property name="userName" value="sa"/>
                <property name="driverClass" value="org.h2.Driver"/>
