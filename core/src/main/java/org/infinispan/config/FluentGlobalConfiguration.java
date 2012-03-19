@@ -32,6 +32,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
+import org.jboss.marshalling.ClassResolver;
 
 import java.util.Properties;
 
@@ -108,6 +109,13 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
        * @param advancedExternalizers
        */
       <T> SerializationConfig addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers);
+
+      /**
+       * Class resolver to use when unmarshallig objects.
+       *
+       * @param classResolver
+       */
+      SerializationConfig classResolver(ClassResolver classResolver);
    }
 
    /**

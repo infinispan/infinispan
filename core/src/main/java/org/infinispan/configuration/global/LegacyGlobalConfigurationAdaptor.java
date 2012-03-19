@@ -73,6 +73,8 @@ public class LegacyGlobalConfigurationAdaptor {
       for (Entry<Integer, AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
          legacy.serialization().addAdvancedExternalizer(entry.getKey(), entry.getValue());
       }
+
+      legacy.serialization().classResolver(config.serialization().classResolver());
       
       legacy.asyncTransportExecutor()
          .factory(config.asyncTransportExecutor().factory().getClass())
@@ -134,6 +136,8 @@ public class LegacyGlobalConfigurationAdaptor {
       for (AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {
          builder.serialization().addAdvancedExternalizer(externalizerConfig.getId(), externalizerConfig.getAdvancedExternalizer());
       }
+
+      builder.serialization().classResolver(legacy.getClassResolver());
       
       builder.asyncTransportExecutor()
          .factory(Util.<ExecutorFactory>getInstance(legacy.getAsyncTransportExecutorFactoryClass(), legacy.getClassLoader()))

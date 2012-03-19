@@ -1,6 +1,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -22,8 +23,10 @@ public class CacheMarshaller extends AbstractDelegatingMarshaller {
    }
 
    @Inject
-   public void inject(Configuration cfg, InvocationContextContainer icc, ExternalizerTable extTable) {
-      ((VersionAwareMarshaller) this.marshaller).inject(cfg, null, icc, extTable);
+   public void inject(Configuration cfg, InvocationContextContainer icc,
+            ExternalizerTable extTable, GlobalConfiguration globalCfg) {
+      ((VersionAwareMarshaller) this.marshaller).inject(
+            cfg, null, icc, extTable, globalCfg);
    }
 
    @Stop(priority = 11) // Stop after RPCManager to avoid send/receive and marshaller not being ready
