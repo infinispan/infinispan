@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.Properties;
 
 import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -119,7 +120,8 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
       async.validate();
       singletonStore.validate();
       if (!getLoadersBuilder().shared() && !fetchPersistentState && !purgeOnStartup
-            && getBuilder().clustering().cacheMode().isClustered())
+            && getBuilder().clustering().cacheMode().isClustered()
+            && cacheLoader instanceof CacheStore)
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
    }
 

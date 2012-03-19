@@ -34,12 +34,14 @@ import java.util.Set;
 
 /**
  * ConfigurationValidatingVisitor checks semantic validity of InfinispanConfiguration instance.
- * 
- * 
+ *
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
+ * @deprecated Belongs to old configuration and so will dissapear in future releases
  */
 @SuppressWarnings("boxing")
+@Deprecated
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
 
    private static final Log log = LogFactory.getLog(ConfigurationValidatingVisitor.class);
