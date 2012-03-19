@@ -22,11 +22,15 @@ public class ConfigurationOverridesTest extends AbstractInfinispanTest {
    public void testConfigOverrides() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
-         Configuration c = new Configuration().fluent().clustering().hash()
-               .consistentHashClass(TopologyAwareConsistentHash.class).build();
+         Configuration c = new Configuration().fluent()
+               .clustering().hash()
+                  .consistentHashClass(TopologyAwareConsistentHash.class)
+               .versioning().enable()
+               .build();
          Configuration c2 = cm.defineConfiguration("a", c);
          assert c2.getConsistentHashClass().equals(
                TopologyAwareConsistentHash.class.getName());
+         assert c2.isEnableVersioning();
 
          c = new Configuration().fluent().dataContainer()
                .dataContainerClass(QueryableDataContainer.class).build();
