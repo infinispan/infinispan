@@ -768,8 +768,6 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
    public final void springEmbeddedCacheManagerFactoryBeanShouldUseMarshallVersionPropIfExplicitlySet()
             throws Exception {
       final short setMarshallVersion = 1234;
-      final short expectedMarshallVersion = Version.getVersionShort(Version
-               .decodeVersionForSerialization(setMarshallVersion));
 
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallVersion(setMarshallVersion);
@@ -778,7 +776,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
-               expectedMarshallVersion, springEmbeddedCacheManager.getNativeCacheManager()
+               setMarshallVersion, springEmbeddedCacheManager.getNativeCacheManager()
                         .getGlobalConfiguration().getMarshallVersion());
       springEmbeddedCacheManager.stop();
    }

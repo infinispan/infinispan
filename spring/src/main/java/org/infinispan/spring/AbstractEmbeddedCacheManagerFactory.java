@@ -24,6 +24,12 @@
 package org.infinispan.spring;
 
 import org.infinispan.config.*;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -108,10 +114,11 @@ public class AbstractEmbeddedCacheManagerFactory {
             throws ConfigurationException, IOException {
       final InputStream configFileInputStream = configFileLocation.getInputStream();
       try {
-         final InfinispanConfiguration infinispanConfiguration = InfinispanConfiguration
-                  .newInfinispanConfiguration(configFileInputStream);
+         ConfigurationBuilderHolder parsed = 
+               new Parser(Thread.currentThread().getContextClassLoader())
+                     .parse(configFileInputStream);
 
-         return new ConfigurationContainer(infinispanConfiguration);
+         return new ConfigurationContainer(parsed);
       } finally {
          configFileInputStream.close();
       }
@@ -836,9 +843,18 @@ public class AbstractEmbeddedCacheManagerFactory {
          this.namedCaches = Collections.unmodifiableMap(namedCaches);
       }
 
-      ConfigurationContainer(final InfinispanConfiguration infinispanConfiguration) {
-         this(infinispanConfiguration.parseGlobalConfiguration(), infinispanConfiguration
-                  .parseDefaultConfiguration(), infinispanConfiguration.parseNamedConfigurations());
+      ConfigurationContainer(ConfigurationBuilderHolder parsed) {
+         this(LegacyGlobalConfigurationAdaptor.adapt(parsed.getGlobalConfigurationBuilder().build()),
+               LegacyConfigurationAdaptor.adapt(parsed.getDefaultConfigurationBuilder().build()),
+               extractNamedCfgs(parsed));
+      }
+
+      private static Map<String, Configuration> extractNamedCfgs(ConfigurationBuilderHolder parsed) {
+         Map<String, ConfigurationBuilder> ncbs = parsed.getNamedConfigurationBuilders();
+         Map<String, Configuration> namedCfgs = new HashMap(ncbs.size());
+         for (Map.Entry<String, ConfigurationBuilder> entry : ncbs.entrySet())
+            namedCfgs.put(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
+         return namedCfgs;
       }
    }
 
@@ -1052,7 +1068,7 @@ public class AbstractEmbeddedCacheManagerFactory {
          if (this.marshallVersion != null) {
             this.logger.debug("Overriding property [marshallVersion] with new value ["
                      + this.marshallVersion + "]");
-            globalConfigurationToOverride.setMarshallVersion(this.marshallVersion);
+            globalConfigurationToOverride.fluent().serialization().version(this.marshallVersion);
          }
 
          this.logger.debug("Finished applying configuration overrides to GlobalConfiguration ["
