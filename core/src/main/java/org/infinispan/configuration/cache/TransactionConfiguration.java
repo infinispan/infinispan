@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -27,6 +28,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  * Defines transactional (JTA) characteristics of the cache.
  * 
  * @author pmuir
+ * @author Pedro Ruivo
  * 
  */
 public class TransactionConfiguration {
@@ -44,12 +46,14 @@ public class TransactionConfiguration {
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
    private final boolean use1PcForAutoCommitTransactions;
+   private final TransactionProtocol transactionProtocol; //2PC or Total order protocol
+   private final boolean use1PCInTotalOrder; //One phase to commit transaction
 
    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
          boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
          TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
          boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
-         RecoveryConfiguration recovery) {
+         RecoveryConfiguration recovery, TransactionProtocol transactionProtocol, boolean use1PCInTotalOrder) {
       this.autoCommit = autoCommit;
       this.cacheStopTimeout = cacheStopTimeout;
       this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -63,6 +67,8 @@ public class TransactionConfiguration {
       this.useSynchronization = useSynchronization;
       this.recovery = recovery;
       this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
+      this.transactionProtocol = transactionProtocol;
+      this.use1PCInTotalOrder = use1PCInTotalOrder;
    }
 
    /**
@@ -280,6 +286,12 @@ public class TransactionConfiguration {
       if (transactionMode != that.transactionMode) return false;
       if (transactionSynchronizationRegistryLookup != null ? !transactionSynchronizationRegistryLookup.equals(that.transactionSynchronizationRegistryLookup) : that.transactionSynchronizationRegistryLookup != null)
          return false;
+      if (use1PCInTotalOrder != that.use1PCInTotalOrder) {
+         return false;
+      }
+      if (transactionProtocol != that.transactionProtocol) {
+         return false;
+      }
 
       return true;
    }
@@ -299,7 +311,22 @@ public class TransactionConfiguration {
       result = 31 * result + (useSynchronization ? 1 : 0);
       result = 31 * result + (recovery != null ? recovery.hashCode() : 0);
       result = 31 * result + (use1PcForAutoCommitTransactions ? 1 : 0);
+      result = 31 * result + (transactionProtocol != null ? transactionProtocol.hashCode() : 0);
+      result = 31 * result + (use1PCInTotalOrder ? 1 : 0);
       return result;
    }
 
+   /**
+    * @return the transaction protocol in use (2PC or Total Order)
+    */
+   public TransactionProtocol transactionProtocol() {
+      return transactionProtocol;
+   }
+
+   /**
+    * @return true if total order protocol is committing transactions in one phase
+    */
+   public boolean use1PCInTotalOrder() {
+      return use1PCInTotalOrder;
+   }
 }

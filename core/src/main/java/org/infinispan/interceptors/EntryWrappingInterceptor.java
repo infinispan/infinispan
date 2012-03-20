@@ -47,6 +47,7 @@ import java.util.Set;
  * Interceptor in charge with wrapping entries and add them in caller's context.
  *
  * @author Mircea Markus
+ * @author Pedro Ruivo
  * @since 5.1
  */
 public class EntryWrappingInterceptor extends CommandInterceptor {
@@ -78,7 +79,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
       }
       Object result = invokeNextInterceptor(ctx, command);
-      if (command.isOnePhaseCommit()) {
+      //new commit conditions for total order
+      if (shouldCommitEntries(command, ctx)) {
          commitContextEntries(ctx);
       }
       return result;
@@ -273,5 +275,18 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return true;
       }
       return false;
+   }
+
+   /**
+    * total order condition: only commits when it is remote context and the prepare has the flag 1PC set
+    * 2PC condition: only commits if the prepare has the flag 1PC set
+    *
+    * @param command the prepare command
+    * @param ctx the invocation context
+    * @return true if the modification should be committed, false otherwise
+    */
+   protected boolean shouldCommitEntries(PrepareCommand command, TxInvocationContext ctx) {
+      return (configuration.isTotalOrder() && command.isOnePhaseCommit() && !ctx.isOriginLocal()) ||
+            (!configuration.isTotalOrder() && command.isOnePhaseCommit());
    }
 }

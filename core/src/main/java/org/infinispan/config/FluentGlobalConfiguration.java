@@ -41,6 +41,7 @@ import java.util.Properties;
  *
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
+ * @author Pedro Ruivo
  * @since 5.0
  */
 @Deprecated
@@ -388,5 +389,9 @@ abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBea
    @Override
    public GlobalConfiguration build() {
       return globalConfig;
+   }
+
+   public FluentGlobalConfiguration.ExecutorFactoryConfig<ExecutorFactory> totalOrderExecutor() {
+      return globalConfig.totalOrderExecutor;
    }
 }

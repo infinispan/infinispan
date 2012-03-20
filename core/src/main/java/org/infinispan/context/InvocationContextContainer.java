@@ -127,4 +127,11 @@ public interface InvocationContextContainer {
     * Must be called as each thread exists the interceptor chain.
     */
    void clearThreadLocal();
+
+   /**
+    * set the context in the Thread Local. It is needed for the total order protocol because it uses a executor
+    * service to validate transactions
+    * @param ctx the invocation context
+    */
+   void setContext(InvocationContext ctx);
 }

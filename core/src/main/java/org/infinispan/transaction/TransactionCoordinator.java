@@ -51,6 +51,7 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
  * through {@link org.infinispan.transaction.synchronization.SynchronizationAdapter}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 5.0
  */
 public class TransactionCoordinator {
@@ -65,6 +66,10 @@ public class TransactionCoordinator {
    private volatile boolean shuttingDown = false;
 
    boolean trace;
+
+   //Indicates if the versioning is enabled, ie, is repeatable read with write skew, optimistic locking
+   //and versioning
+   private boolean versioningEnabled;
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
@@ -89,8 +94,11 @@ public class TransactionCoordinator {
 
    @Start
    public void start() {
-      if (configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC
-            && configuration.isEnableVersioning()) {
+      versioningEnabled = configuration.isWriteSkewCheck() &&
+            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC &&
+            configuration.isEnableVersioning();
+
+      if (versioningEnabled) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
          commandCreator = new CommandCreator() {
             @Override
@@ -125,7 +133,8 @@ public class TransactionCoordinator {
    public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
-      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction)) {
+      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction) ||
+            isOnePhaseTotalOrder()) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
@@ -165,11 +174,25 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction)) {
+      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction) ||
+            isOnePhaseTotalOrder()) {
          validateNotMarkedForRollback(localTransaction);
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+         PrepareCommand command;
+
+         //If the versioning scheme is enabled, then create a versioned prepare command. in 2PC this must not happen!
+         if (versioningEnabled) {
+            command = commandsFactory.buildVersionedPrepareCommand(localTransaction.getGlobalTransaction(),
+                  localTransaction.getModifications(), true);
+            if(!configuration.isTotalOrder()) {
+               throw new IllegalStateException("Cannot create versioned prepare command with one phase commit in 2PC");
+            }
+         } else {
+            command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),
+                  localTransaction.getModifications(), true);
+         }
+
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
@@ -238,6 +261,16 @@ public class TransactionCoordinator {
 
    private boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
       return configuration.isUse1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
+   }
+
+   /**
+    * a transaction can commit in one phase, in total order protocol, when the write skew is disable or the one phase
+    * configuration parameter is set to true.
+    *
+    * @return true if it can use 1PC false otherwise
+    */
+   private boolean isOnePhaseTotalOrder() {
+      return configuration.isTotalOrder() && (!versioningEnabled || configuration.isUse1PCInTotalOrder());
    }
 
    private static interface CommandCreator {

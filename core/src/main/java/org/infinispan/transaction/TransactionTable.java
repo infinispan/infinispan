@@ -72,6 +72,7 @@ import static org.infinispan.util.Util.currentMillisFromNanotime;
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Pedro Ruivo
  * @since 4.0
  */
 @Listener(sync = false)
@@ -469,4 +470,27 @@ public class TransactionTable {
       }
    }
 
+   /**
+    * This method is used when Total Order protocol is enabled. The commit/rollback command can be deliver before the
+    * prepare command. In total order, it allows the processing the commit/rollback without the remote transaction and
+    * this can originate a race condition to create a remote transaction.
+    *
+    * This method creates only one transaction per global transaction, resolving the race condition
+    *
+    * @param globalTransaction the global transaction
+    * @return the remote transaction. This remote transaction implements the interface
+    *         {@link org.infinispan.transaction.totalOrder.TotalOrderRemoteTransaction}
+    */
+   public RemoteTransaction getOrCreateIfAbsentRemoteTransaction(GlobalTransaction globalTransaction) {
+      RemoteTransaction remoteTransaction = remoteTransactions.get(globalTransaction);
+      if (remoteTransaction == null) {
+         remoteTransaction = txFactory.newRemoteTransaction(globalTransaction, currentViewId);
+         RemoteTransaction existing = remoteTransactions.putIfAbsent(globalTransaction, remoteTransaction);
+         if (existing != null) {
+            remoteTransaction = existing;
+         }
+      }
+
+      return remoteTransaction;
+   }
 }

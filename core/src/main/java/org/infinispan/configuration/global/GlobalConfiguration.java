@@ -34,6 +34,7 @@ import org.infinispan.Version;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @author Pete Muir
+ * @author Pedro Ruivo
  * @since 5.1
  *
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
@@ -54,13 +55,15 @@ public class GlobalConfiguration {
    private final TransportConfiguration transport;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
+   private final ExecutorFactoryConfiguration totalOrderExecutor;
    
    private final ClassLoader cl;
    
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, ClassLoader cl) {
+         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, ClassLoader cl,
+                       ExecutorFactoryConfiguration totalOrderExecutor) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -70,6 +73,7 @@ public class GlobalConfiguration {
       this.serialization = serialization;
       this.shutdown = shutdown;
       this.cl = cl;
+      this.totalOrderExecutor = totalOrderExecutor;
    }
    
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
@@ -125,9 +129,13 @@ public class GlobalConfiguration {
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
             ", cl=" + cl +
+            ", totalOrderExecutor=" + totalOrderExecutor +
             '}';
    }
 
+   public ExecutorFactoryConfiguration totalOrderExecutor() {
+      return totalOrderExecutor;
+   }
 }
 
 

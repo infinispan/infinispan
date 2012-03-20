@@ -34,6 +34,7 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -56,6 +57,7 @@ import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAn
  * the <b>Implementor</b> and various LockingInterceptors are the <b>Abstraction</b>.
  *
  * @author Mircea Markus
+ * @author Pedro Ruivo
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -215,6 +217,76 @@ public interface ClusteringDependentLogic {
          }
          cacheTransaction.setUpdatedEntryVersions(uv);
          return (uv.isEmpty()) ? null : uv;
+      }
+   }
+
+   /**
+    * Logic for total order protocol in replicated mode
+    */
+   public static final class TotalOrderAllNodesLogic implements ClusteringDependentLogic {
+
+      private DataContainer dataContainer;
+      private RpcManager rpcManager;
+      private static final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+         @Override
+         public boolean performCheckOnKey(Object key) {
+            return true;
+         }
+      };
+
+      @Inject
+      public void init(DataContainer dc, RpcManager rpcManager) {
+         this.dataContainer = dc;
+         this.rpcManager = rpcManager;
+      }
+
+
+      @Override
+      public boolean localNodeIsOwner(Object key) {
+         return true;
+      }
+
+      @Override
+      public boolean localNodeIsPrimaryOwner(Object key) {
+         //no lock acquisition in total order
+         return false;
+      }
+
+      @Override
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck) {
+         entry.commit(dataContainer, newVersion);
+      }
+
+      @Override
+      public Collection<Address> getOwners(Collection<Object> keys) {
+         return null;
+      }
+
+      @Override
+      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator,
+                                                                     TxInvocationContext context,
+                                                                     VersionedPrepareCommand prepareCommand) {
+         if (context.isOriginLocal()) {
+            throw new IllegalStateException("This must not be reached");
+         }
+
+         EntryVersionsMap updatedVersionMap = new EntryVersionsMap();
+
+         if (!context.hasFlag(Flag.SKIP_WRITE_SKEW_CHECK)) {
+            updatedVersionMap = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
+                  versionGenerator, context,
+                  keySpecificLogic);
+            context.getCacheTransaction().setUpdatedEntryVersions(updatedVersionMap);
+         } else {
+            updatedVersionMap.putAll(context.getCacheTransaction().getUpdatedEntryVersions());
+         }
+
+         return updatedVersionMap;
+      }
+
+      @Override
+      public Address getAddress() {
+         return rpcManager.getAddress();
       }
    }
 }

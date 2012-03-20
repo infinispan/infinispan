@@ -42,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
-   private VersionGenerator versionGenerator;
+   protected VersionGenerator versionGenerator;
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
 
    @Override

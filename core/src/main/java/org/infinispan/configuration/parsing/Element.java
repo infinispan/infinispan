@@ -78,7 +78,8 @@ public enum Element {
     TRANSACTION("transaction"),
     TRANSPORT("transport"),
     UNSAFE("unsafe"),
-    VERSIONING("versioning")
+    VERSIONING("versioning"),
+   TOTAL_ORDER_EXECUTOR("totalOrderExecutor")
     ;
 
     private final String name;

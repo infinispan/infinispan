@@ -27,7 +27,11 @@ import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -72,6 +76,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 4.0
  */
 @MBean(objectName = "RpcManager", description = "Manages all remote calls to remote cache instances in the cluster.")
@@ -111,6 +116,10 @@ public class RpcManagerImpl implements RpcManager {
    private void start() {
       stateTransferEnabled = configuration.isStateTransferEnabled();
       statisticsEnabled = configuration.isExposeJmxStatistics();
+
+      if (configuration.isTotalOrder() && !t.hasCommunicationWithTotalOrderProperties()) {
+         throw new ConfigurationException("The Total Order needs a transport with total order deliver properties");
+      }
    }
 
    private boolean useReplicationQueue(boolean sync) {
@@ -121,8 +130,22 @@ public class RpcManagerImpl implements RpcManager {
       if (!configuration.getCacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
+      //In total order protocol, we should invoke remotely even if we are the only members in the cache
+      //the sequencer will order the local transactions.
+      boolean sendInTotalOrder = false;
+      //force the OOB for the Commit and Rollback when using Total Order protocol
+      boolean forceOOB = false;
+      if (rpcCommand instanceof PrepareCommand) {
+         sendInTotalOrder = configuration.isTotalOrder();
+      }
+      if (rpcCommand instanceof CommitCommand || rpcCommand instanceof RollbackCommand) {
+         forceOOB = configuration.isTotalOrder();
+      }
+
+      usePriorityQueue = usePriorityQueue || forceOOB;
+
       List<Address> clusterMembers = t.getMembers();
-      if (clusterMembers.size() < 2) {
+      if (!sendInTotalOrder && clusterMembers.size() < 2) {
          log.tracef("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
@@ -134,8 +157,8 @@ public class RpcManagerImpl implements RpcManager {
             // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
             if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
                List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
-               // the filter won't work if there is no other member in the cache, so we have to 
-               if (cacheMembers.size() < 2) {
+               // the filter won't work if there is no other member in the cache, so we have to
+               if (!sendInTotalOrder && cacheMembers.size() < 2) {
                   log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
                   return Collections.emptyMap();
                }
@@ -145,7 +168,7 @@ public class RpcManagerImpl implements RpcManager {
                   responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
                }
             }
-            Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+            Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled, sendInTotalOrder);
             if (statisticsEnabled) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {

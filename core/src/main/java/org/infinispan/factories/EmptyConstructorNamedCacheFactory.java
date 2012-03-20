@@ -42,6 +42,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.totalorder.TotalOrderManager;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
@@ -56,13 +57,14 @@ import static org.infinispan.util.Util.getInstance;
  * Simple factory that just uses reflection and an empty constructor of the component type.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Pedro Ruivo
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
                               CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
-                              ClusteringDependentLogic.class, LockContainer.class})
+                              ClusteringDependentLogic.class, LockContainer.class, TotalOrderManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -71,7 +73,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       Class componentImpl;
       if (componentType.equals(ClusteringDependentLogic.class)) {
          if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
-            return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+            if (configuration.isTotalOrder()) {
+               return componentType.cast(new ClusteringDependentLogic.TotalOrderAllNodesLogic());
+            } else {
+               return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+            }
          } else {
             return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
          }
@@ -103,6 +109,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                notTransactional ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel()) :
                notTransactional ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel());
          return (T) lockContainer;
+      } else if (componentType.equals(TotalOrderManager.class)) {
+         return (T) new TotalOrderManager();
       }
 
 

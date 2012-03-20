@@ -26,8 +26,10 @@ package org.infinispan.transaction;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,11 +42,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 5.0
  */
 public abstract class LocalTransaction extends AbstractCacheTransaction {
@@ -60,6 +64,10 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private final Transaction transaction;
 
    private final boolean implicitTransaction;
+
+   //total order result -- has the result and behaves like a synchronization point between the remote and local
+   // prepare commands
+   private final PrepareResult prepareResult = new PrepareResult();
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
       super(tx, viewId);
@@ -168,5 +176,60 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public void setModifications(List<WriteCommand> modifications) {
       this.modifications = modifications;
+   }
+
+   /**
+    * Total order result
+    */
+   private class PrepareResult extends CountDownLatch {
+      //modifications are applied?
+      private volatile boolean modificationsApplied;
+      //is the result an exception?
+      private volatile boolean exception;
+      //the validation result
+      private volatile Object result;
+
+      public PrepareResult() {
+         super(1);
+      }
+   }
+
+   /**
+    * waits until the modification are applied
+    * @return the validation return value
+    * @throws Throwable throw the validation result if it is an exception
+    */
+   public Object awaitUntilModificationsApplied() throws Throwable {
+
+      try {
+         prepareResult.await();
+      } catch (InterruptedException e) {
+         //do nothing
+      }
+      if(!prepareResult.modificationsApplied) {
+         throw new TimeoutException("Unable to wait until modifications are applied");
+      }
+      if(prepareResult.exception) {
+         throw (Throwable) prepareResult.result;
+      }
+      return prepareResult.result;
+   }
+
+
+   /**
+    * add the transaction result and notify
+    * @param object the validation result
+    * @param exception is it an exception?
+    */
+   public void addPrepareResult(Object object, boolean exception) {
+      prepareResult.modificationsApplied = true;
+      prepareResult.result = object;
+      prepareResult.exception = exception;
+
+      if (!exception && object != null && object instanceof EntryVersionsMap) {
+         this.setUpdatedEntryVersions(((EntryVersionsMap) object).merge(this.getUpdatedEntryVersions()));
+      }
+
+      prepareResult.countDown();
    }
 }

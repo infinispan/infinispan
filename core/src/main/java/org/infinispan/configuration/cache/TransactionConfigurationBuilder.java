@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * Defines transactional (JTA) characteristics of the cache.
  * 
  * @author pmuir
+ * @author Pedro Ruivo
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
@@ -53,6 +55,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
+   private TransactionProtocol transactionProtocol = TransactionProtocol.TWO_PHASE_COMMIT;
+   private boolean use1PCInTotalOrder = true;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -67,6 +71,23 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    public TransactionConfigurationBuilder autoCommit(boolean b) {
       this.autoCommit = b;
+      return this;
+   }
+
+   /**
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+    * remote and local transactions to finish. The amount of time to wait for is defined by the
+    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+    * because even if a new transaction was started just before the cache was stopped, this could
+    * only last as long as the transaction timeout allows it.
+    * <p/>
+    * This configuration property may be adjusted at runtime
+    *
+    * @deprecated use {@link #cacheStopTimeout(long)} instead
+    */
+   @Deprecated
+   public TransactionConfigurationBuilder cacheStopTimeout(int i) {
+      this.cacheStopTimeout = i;
       return this;
    }
 
@@ -235,6 +256,30 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             useSynchronization = true;
          }
       }
+
+      if(transactionProtocol != TransactionProtocol.TOTAL_ORDER) {
+         //no total order => no validation needed
+         return;
+      }
+
+      //total order only supports transactional caches
+      if(transactionMode == TransactionMode.NON_TRANSACTIONAL) {
+         log.tracef("Non transactional cache is not supported in Total Order protocol. Total Order protocol will" +
+               " be ignored.");
+         return ;
+      }
+
+      //for now, only supports full replication
+      if(!clustering().cacheMode().isReplicated()) {
+         log.cacheModeNotSupportedByTOProtocol(clustering().cacheMode().friendlyCacheModeString());
+         transactionProtocol = TransactionProtocol.TWO_PHASE_COMMIT;
+         return;
+      }
+
+      //eager locking is no longer needed
+      if(useEagerLocking) {
+         log.tracef("Eager locking will be ignore with Total Order protocol");
+      }
    }
 
    @Override
@@ -248,7 +293,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          transactionMode = TransactionMode.NON_TRANSACTIONAL;
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase,
             syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode,
-            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, recovery.create());
+            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, recovery.create(), transactionProtocol,
+            use1PCInTotalOrder);
    }
 
    @Override
@@ -266,6 +312,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       this.useSynchronization = template.useSynchronization();
       this.use1PcForAutoCommitTransactions = template.use1PcForAutoCommitTransactions();
       this.recovery.read(template.recovery());
+      this.transactionProtocol = template.transactionProtocol();
+      this.use1PCInTotalOrder = template.use1PCInTotalOrder();
 
       return this;
    }
@@ -286,7 +334,17 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             ", useSynchronization=" + useSynchronization +
             ", recovery=" + recovery +
             ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
+            ", use1PCInTotalOrder=" + use1PCInTotalOrder +
             '}';
    }
 
+   public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
+      this.transactionProtocol = transactionProtocol;
+      return this;
+   }
+
+   public TransactionConfigurationBuilder use1PCInTotalOrder(boolean b) {
+      this.use1PCInTotalOrder = b;
+      return this;
+   }
 }
