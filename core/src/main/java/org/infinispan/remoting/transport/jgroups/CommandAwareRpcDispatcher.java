@@ -25,6 +25,8 @@ package org.infinispan.remoting.transport.jgroups;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.control.CacheViewControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
@@ -223,7 +225,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
 
-   private static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode) {
+   private static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {
       Message msg = new Message();
       msg.setBuffer(buf);
       if (oob) msg.setFlag(Message.OOB);
@@ -232,6 +234,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // This is removed since this optimisation is no longer valid.  See ISPN-1878
          // msg.setFlag(Message.NO_FC);
       }
+      if (rsvp) msg.setFlag(Message.RSVP);
       if (recipient != null) msg.setDest(recipient);
       return msg;
    }
@@ -253,10 +256,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (trace) log.tracef("Replication task sending %s to single recipient %s", command, destination);
 
       // Replay capability requires responses from all members!
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache view control command.
+      boolean rsvp = command instanceof StateTransferControlCommand || command instanceof CacheViewControlCommand;
+
       Response retval;
       Buffer buf;
       buf = marshallCall(marshaller, command);
-      retval = card.sendMessage(constructMessage(buf, destination, oob, mode),
+      retval = card.sendMessage(constructMessage(buf, destination, oob, mode, rsvp),
                                 new RequestOptions(mode, timeout));
 
       // we only bother parsing responses if we are not in ASYNC mode.
@@ -279,11 +285,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
 
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache view control command.
+      boolean rsvp = command instanceof CacheViewControlCommand;
+
       RspList<Object> retval = null;
       Buffer buf;
       if (broadcast || FORCE_MCAST) {
          buf = marshallCall(marshaller, command);
-         retval = card.castMessage(dests, constructMessage(buf, null, oob, mode),
+         retval = card.castMessage(dests, constructMessage(buf, null, oob, mode, rsvp),
                                    new RequestOptions(mode, timeout, false, filter));
       } else {
          RequestOptions opts = new RequestOptions(mode, timeout);
@@ -298,7 +307,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // (see FutureCollator) and the first successful response is used.
             FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout);
             for (Address a : dests) {
-               NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, oob, mode), opts);
+               NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, oob, mode, rsvp), opts);
                futureCollator.watchFuture(f, a);
             }
             retval = futureCollator.getResponseList();
@@ -307,7 +316,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             Map<Address, Future<Object>> futures = new HashMap<Address, Future<Object>>(dests.size());
 
             for (Address dest : dests)
-               futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, oob, mode), opts));
+               futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, oob, mode, rsvp), opts));
 
             retval = new RspList<Object>();
 
@@ -322,7 +331,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
          } else if (mode == ResponseMode.GET_NONE) {
             // An ASYNC call.  We don't care about responses.
-            for (Address dest : dests) card.sendMessage(constructMessage(buf, dest, oob, mode), opts);
+            for (Address dest : dests) card.sendMessage(constructMessage(buf, dest, oob, mode, rsvp), opts);
          }
       }
 
