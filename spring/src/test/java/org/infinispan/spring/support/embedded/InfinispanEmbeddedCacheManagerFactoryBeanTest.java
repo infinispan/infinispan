@@ -751,8 +751,6 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseMarshallVersionPropIfExplicitlySet()
             throws Exception {
       final short setMarshallVersion = 1234;
-      final short expectedMarshallVersion = Version.getVersionShort(Version
-               .decodeVersionForSerialization(setMarshallVersion));
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallVersion(setMarshallVersion);
@@ -761,7 +759,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
 
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
-               expectedMarshallVersion, embeddedCacheManager.getGlobalConfiguration()
+               setMarshallVersion, embeddedCacheManager.getGlobalConfiguration()
                         .getMarshallVersion());
       embeddedCacheManager.stop();
    }
