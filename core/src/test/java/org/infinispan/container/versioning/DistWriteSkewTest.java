@@ -23,19 +23,14 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
@@ -289,4 +284,16 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       assert cache2.get(hello).equals("world 2");
       assert cache3.get(hello).equals("world 2");
    }
+
+   public void testLocalOnlyPut() {
+      localOnlyPut(this.<Integer, String>cache(0), 1, "v1");
+      localOnlyPut(this.<Integer, String>cache(1), 2, "v2");
+      localOnlyPut(this.<Integer, String>cache(2), 3, "v3");
+      localOnlyPut(this.<Integer, String>cache(3), 4, "v4");
+   }
+
+   private void localOnlyPut(Cache<Integer, String> cache, Integer k, String v) {
+      cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put(k, v);
+   }
+
 }
