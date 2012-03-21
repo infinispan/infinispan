@@ -33,7 +33,6 @@ import java.util.Properties;
 import javax.management.MBeanServer;
 
 import org.infinispan.Cache;
-import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
@@ -41,9 +40,11 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockTransport;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -97,7 +98,13 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
                getClass());
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
+         @Override
+         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+            return TestCacheManagerFactory.createCacheManager(
+                  template.globalConfiguration, template.defaultConfiguration);
+         }
+      };
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
       objectUnderTest.afterPropertiesSet();
 
@@ -191,7 +198,13 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedExposeGlobalJmxStatistics = true;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
+         @Override
+         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+            return TestCacheManagerFactory.createCacheManager(
+                  template.globalConfiguration, template.defaultConfiguration);
+         }
+      };
       objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
       objectUnderTest.afterPropertiesSet();
       final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
@@ -751,8 +764,6 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseMarshallVersionPropIfExplicitlySet()
             throws Exception {
       final short setMarshallVersion = 1234;
-      final short expectedMarshallVersion = Version.getVersionShort(Version
-               .decodeVersionForSerialization(setMarshallVersion));
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallVersion(setMarshallVersion);
@@ -761,7 +772,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
 
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
-               expectedMarshallVersion, embeddedCacheManager.getGlobalConfiguration()
+               setMarshallVersion, embeddedCacheManager.getGlobalConfiguration()
                         .getMarshallVersion());
       embeddedCacheManager.stop();
    }
