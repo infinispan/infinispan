@@ -67,7 +67,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       configuration = new Configuration();
       TransactionCoordinator txCoordinator = new TransactionCoordinator();
       txCoordinator.init(null, null, null, null, configuration);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, configuration, null, txCoordinator, null, null,
+      xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
                                            new ClusteringDependentLogic.AllNodesLogic(), configuration);
    }
 

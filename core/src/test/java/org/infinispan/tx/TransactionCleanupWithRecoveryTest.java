@@ -7,14 +7,15 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-
 import javax.transaction.Transaction;
+
+import java.util.Collection;
 
 import static org.testng.Assert.assertEquals;
 
@@ -73,8 +74,15 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
 
    private void assertNoTx() {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
-      assertEquals(tt0.getLocalTxCount(), 0);
-      assertEquals(tt0.getRemoteTxCount(), 0);
+      // Message to forget transactions is sent asynchronously
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            int localTxCount = tt0.getLocalTxCount();
+            int remoteTxCount = tt0.getRemoteTxCount();
+            return localTxCount == 0 && remoteTxCount == 0;
+         }
+      });
 
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
       eventually(new Condition() {
