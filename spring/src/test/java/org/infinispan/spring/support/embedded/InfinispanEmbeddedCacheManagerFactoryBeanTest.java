@@ -44,6 +44,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockTransport;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -97,7 +98,13 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
                getClass());
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
+         @Override
+         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+            return TestCacheManagerFactory.createCacheManager(
+                  template.globalConfiguration, template.defaultConfiguration);
+         }
+      };
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
       objectUnderTest.afterPropertiesSet();
 
