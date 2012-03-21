@@ -54,7 +54,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
    private RemoteCache<Object, Object> remoteCache;
    private GenericKeyedObjectPool connectionPool;
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    @Override
    protected void clearContent() {
    }
@@ -84,7 +84,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun=true)
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();
@@ -92,6 +92,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotRodServer.stop();
    }
 
+   @Test(enabled=false)
    public void testHeavyLoad() throws InterruptedException, ExecutionException {
       List<WorkerThread> workers = new ArrayList<WorkerThread>();
 
