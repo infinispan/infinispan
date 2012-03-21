@@ -81,10 +81,13 @@
          use_mcast_xmit="false"
          retransmit_timeout="300,600,1200,2400,4800"
          discard_delivered_msgs="false"/>
-   <UNICAST2 timeout="300,600,1200"/>
+   <UNICAST2 timeout="300,600,1200"
+             stable_interval="5000"
+             max_bytes="1m"/>
    <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <UFC max_credits="200k" min_threshold="0.20"/>
    <MFC max_credits="200k" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
+   <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 </config>
