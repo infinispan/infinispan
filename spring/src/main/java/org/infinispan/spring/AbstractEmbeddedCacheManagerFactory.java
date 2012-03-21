@@ -76,9 +76,7 @@ public class AbstractEmbeddedCacheManagerFactory {
       this.globalConfigurationOverrides.applyOverridesTo(templateConfiguration.globalConfiguration);
       this.configurationOverrides.applyOverridesTo(templateConfiguration.defaultConfiguration);
 
-      final EmbeddedCacheManager nativeEmbeddedCacheManager = new DefaultCacheManager(
-               templateConfiguration.globalConfiguration,
-               templateConfiguration.defaultConfiguration);
+      final EmbeddedCacheManager nativeEmbeddedCacheManager = createCacheManager(templateConfiguration);
       for (final Map.Entry<String, Configuration> namedCacheConfig : templateConfiguration.namedCaches
                .entrySet()) {
          nativeEmbeddedCacheManager.defineConfiguration(namedCacheConfig.getKey(),
@@ -86,6 +84,12 @@ public class AbstractEmbeddedCacheManagerFactory {
       }
 
       return nativeEmbeddedCacheManager;
+   }
+
+   protected EmbeddedCacheManager createCacheManager(ConfigurationContainer templateConfiguration) {
+      return new DefaultCacheManager(
+               templateConfiguration.globalConfiguration,
+               templateConfiguration.defaultConfiguration);
    }
 
    // ------------------------------------------------------------------------

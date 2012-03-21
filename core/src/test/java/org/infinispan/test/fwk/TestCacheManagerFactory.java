@@ -27,6 +27,8 @@ import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -84,12 +86,22 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, gc, c);
    }
 
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder, boolean keepJmxDomain) {
+      if (!keepJmxDomain) {
+         holder.getGlobalConfigurationBuilder().globalJmxStatistics().jmxDomain(
+               "infinispan" + jmxDomainPostfix.incrementAndGet());
+      }
+      return newDefaultCacheManager(start, holder);
+   }
+
    public static EmbeddedCacheManager fromXml(String xmlFile) throws IOException {
       return new DefaultCacheManager(xmlFile);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
-      return new DefaultCacheManager(is);
+      ConfigurationBuilderHolder holder = new Parser(
+            Thread.currentThread().getContextClassLoader()).parse(is);
+      return createClusteredCacheManager(holder);
    }
 
    /**
@@ -178,16 +190,34 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultCacheConfig);
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilderHolder holder) {
+      TransportFlags flags = new TransportFlags();
+      amendGlobalConfiguration(holder.getGlobalConfigurationBuilder(), flags);
+      amendJTA(holder.getDefaultConfigurationBuilder());
+      for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values())
+         amendJTA(builder);
+
+      return newDefaultCacheManager(true, holder, false);
+   }
+
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
-      amendMarshaller(gcb);
-      minimizeThreads(gcb);
-      amendTransport(gcb, flags);
+      amendGlobalConfiguration(gcb, flags);
       amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, gcb, defaultCacheConfig, false);
    }
-   
-   public static EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {      
-      return newDefaultCacheManager(true, new GlobalConfigurationBuilder().nonClusteredDefault(), builder, false);
+
+   private static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
+      amendMarshaller(gcb);
+      minimizeThreads(gcb);
+      amendTransport(gcb, flags);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
+      return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return newDefaultCacheManager(true, globalBuilder, builder, false);
    }
 
    /**
@@ -365,7 +395,7 @@ public class TestCacheManagerFactory {
          }
 
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
-            getJGroupsConfig(fullTestName, flags));
+               getJGroupsConfig(fullTestName, flags));
 
          configuration.setTransportProperties(newTransportProps);
          configuration.setTransportNodeName(nextCacheName);
@@ -396,8 +426,8 @@ public class TestCacheManagerFactory {
 
          builder
                .transport()
-                  .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(fullTestName, flags))
-                  .nodeName(nextCacheName);
+               .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(fullTestName, flags))
+               .nodeName(nextCacheName);
       }
    }
 
@@ -441,22 +471,26 @@ public class TestCacheManagerFactory {
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c) {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, start);
-      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
-      String methodName = extractMethodName();
-      log.trace("Adding DCM (" + defaultCacheManager.getAddress() + ") for method: '" + methodName + "'");
-      threadCacheManagers.add(methodName, defaultCacheManager);
-      return defaultCacheManager;
+      return addThreadCacheManager(defaultCacheManager);
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc.build(), c.build(), start);
-      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
-      String methodName = extractMethodName();
-      log.trace("Adding DCM (" + defaultCacheManager.getAddress() + ") for method: '" + methodName + "'");
-      threadCacheManagers.add(methodName, defaultCacheManager);
-      return defaultCacheManager;
+      return addThreadCacheManager(defaultCacheManager);
    }
 
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
+      return addThreadCacheManager(defaultCacheManager);
+   }
+
+   private static DefaultCacheManager addThreadCacheManager(DefaultCacheManager cm) {
+      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
+      String methodName = extractMethodName();
+      log.trace("Adding DCM (" + cm.getAddress() + ") for method: '" + methodName + "'");
+      threadCacheManagers.add(methodName, cm);
+      return cm;
+   }
 
    private static String extractMethodName() {
       StackTraceElement[] stack = Thread.currentThread().getStackTrace();

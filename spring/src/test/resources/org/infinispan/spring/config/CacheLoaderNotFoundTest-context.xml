@@ -27,9 +27,4 @@
    <infinispan:embedded-cache-manager id="cacheManager"
        configuration="classpath:org/infinispan/spring/support/embedded/classloader-not-found.xml"/>
 
-   <!--<bean-->
-      <!--id="cacheManager"-->
-      <!--class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"-->
-      <!--p:configurationFileLocation="classpath:/infinispan.xml"/>-->
-
 </beans>
