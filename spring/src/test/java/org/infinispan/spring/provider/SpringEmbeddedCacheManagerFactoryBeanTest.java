@@ -202,7 +202,13 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedExposeGlobalJmxStatistics = true;
 
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
+      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean() {
+         @Override
+         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+            return TestCacheManagerFactory.createCacheManager(
+                  template.globalConfiguration, template.defaultConfiguration);
+         }
+      };
       objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
       objectUnderTest.afterPropertiesSet();
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
