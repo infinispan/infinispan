@@ -39,6 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.Message;
+import org.jgroups.SuspectedException;
 import org.jgroups.UpHandler;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
@@ -132,6 +133,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                     req_marshaller, this, oob, anycasting);
          } catch (InterruptedException e) {
             throw e;
+         } catch (SuspectedException e) {
+            throw new SuspectException("One of the nodes " + recipients + " was suspected", e);
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
@@ -163,6 +166,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                          req_marshaller, this, oob, transport);
          } catch (InterruptedException e) {
             throw e;
+         } catch (SuspectedException e) {
+            throw new SuspectException("Node " + recipient + " was suspected", e);
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
