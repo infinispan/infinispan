@@ -33,7 +33,6 @@ import java.util.Properties;
 import javax.management.MBeanServer;
 
 import org.infinispan.Cache;
-import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
@@ -41,6 +40,7 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockTransport;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
@@ -198,7 +198,13 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedExposeGlobalJmxStatistics = true;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
+         @Override
+         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+            return TestCacheManagerFactory.createCacheManager(
+                  template.globalConfiguration, template.defaultConfiguration);
+         }
+      };
       objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
       objectUnderTest.afterPropertiesSet();
       final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
