@@ -47,7 +47,7 @@ public abstract class AbstractEnlistmentAdapter {
    private final TransactionTable txTable;
    private final ClusteringDependentLogic clusteringLogic;
    private final int hashCode;
-   private final Configuration config;
+   protected final Configuration config;
 
    public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction, CommandsFactory commandsFactory, RpcManager rpcManager, TransactionTable txTable, ClusteringDependentLogic clusteringLogic, Configuration configuration) {
       this.commandsFactory = commandsFactory;

@@ -642,7 +642,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter(txTable, config, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config);
+      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config);
    }
 
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
