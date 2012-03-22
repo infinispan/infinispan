@@ -295,6 +295,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().l1().lifespan() == 600000;
       assert c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
+      assert c.clustering().l1().cleanupTaskFrequency() == 1200;
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
       assert c.clustering().hash().numOwners() == 3;
       assert c.clustering().l1().enabled();

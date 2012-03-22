@@ -66,6 +66,7 @@ public enum Attribute {
     ISOLATION_LEVEL("isolationLevel"),
     JMX_DOMAIN("jmxDomain"),
     LIFESPAN("lifespan"),
+    INVALIDATION_CLEANUP_TASK_FREQUENCY("cleanupTaskFrequency"),
     LOCK_ACQUISITION_TIMEOUT("lockAcquisitionTimeout"),
     LOCKING_MODE("lockingMode"),
     LOG_FLUSH_TIMEOUT("logFlushTimeout"),

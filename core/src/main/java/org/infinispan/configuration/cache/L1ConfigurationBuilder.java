@@ -37,6 +37,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    private int invalidationThreshold = 0;
    private long lifespan = TimeUnit.MINUTES.toMillis(10);
    private Boolean onRehash = null;
+   private long cleanupTaskFrequency = TimeUnit.MINUTES.toMillis(10);
    boolean activated = false;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
@@ -69,8 +70,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    /**
     * Maximum lifespan of an entry placed in the L1 cache.
     */
-   public L1ConfigurationBuilder lifespan(long livespan) {
-      this.lifespan = livespan;
+   public L1ConfigurationBuilder lifespan(long lifespan) {
+      this.lifespan = lifespan;
+      activated = true;
+      return this;
+   }
+
+   /**
+    * How often the L1 requestors map is cleaned up of stale items
+    */
+   public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis) {
+      this.cleanupTaskFrequency = frequencyMillis;
       activated = true;
       return this;
    }
@@ -130,6 +140,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
          if (lifespan < 1)
             throw new ConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+
       } else {
          // If L1 is disabled, L1ForRehash should also be disabled
          if (onRehash != null && onRehash)
@@ -148,7 +159,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
          onRehash = false;
       }
 
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, activated);
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, cleanupTaskFrequency, activated);
    }
 
    @Override
@@ -157,6 +168,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       invalidationThreshold = template.invalidationThreshold();
       lifespan = template.lifespan();
       onRehash = template.onRehash();
+      cleanupTaskFrequency = template.cleanupTaskFrequency();
       activated = template.activated;
       return this;
    }
@@ -168,8 +180,8 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
             ", enabled=" + enabled +
             ", invalidationThreshold=" + invalidationThreshold +
             ", lifespan=" + lifespan +
+            ", cleanupTaskFrequency=" + cleanupTaskFrequency +
             ", onRehash=" + onRehash +
             '}';
    }
-
 }
