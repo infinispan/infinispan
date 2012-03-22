@@ -149,19 +149,19 @@ public class L1ManagerImpl implements L1Manager {
    }
 
    @Override
-   public Future<Object> flushCacheWithSimpleFuture(Collection<Object> keys, Object retval, Address origin) {
-      return flushCache(keys, retval, origin, false);
+   public Future<Object> flushCacheWithSimpleFuture(Collection<Object> keys, Object retval, Address origin, boolean assumeOriginKeptEntryInL1) {
+      return flushCache(keys, retval, origin, assumeOriginKeptEntryInL1, false);
    }
 
    @Override
-   public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin) {
-      return (NotifyingNotifiableFuture<Object>) flushCache(keys, retval, origin, true);
+   public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin, boolean assumeOriginKeptEntryInL1) {
+      return (NotifyingNotifiableFuture<Object>) flushCache(keys, retval, origin, assumeOriginKeptEntryInL1, true);
    }
 
-   private Future<Object> flushCache(Collection<Object> keys, final Object retval, Address origin, boolean useNotifyingFuture) {
+   private Future<Object> flushCache(Collection<Object> keys, final Object retval, Address origin, boolean assumeOriginKeptEntryInL1, boolean useNotifyingFuture) {
       if (trace) log.tracef("Invalidating L1 caches for keys %s", keys);
 
-      final Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin);
+      final Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin, assumeOriginKeptEntryInL1);
 
       int nodes = invalidationAddresses.size();
 
@@ -212,7 +212,7 @@ public class L1ManagerImpl implements L1Manager {
       }
    }
 
-   private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin) {
+   private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin, boolean assumeOriginKeptEntryInL1) {
       Collection<Address> addresses = new HashSet<Address>(2);
       boolean originIsInRequestorsList = false;
       for (Object key : keys) {
@@ -220,7 +220,7 @@ public class L1ManagerImpl implements L1Manager {
          if (as != null) {
             Set<Address> requestorAddresses = as.keySet();
             addresses.addAll(requestorAddresses);
-            if (origin != null && requestorAddresses.contains(origin)) {
+            if (assumeOriginKeptEntryInL1 && origin != null && requestorAddresses.contains(origin)) {
                originIsInRequestorsList = true;
                // re-add the origin as a requestor since the key will still be in the origin's L1 cache
                addRequestor(key, origin);
