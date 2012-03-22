@@ -29,14 +29,13 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -50,7 +49,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.ClientConnectionPoolingTest")
+@Test(testName = "client.hotrod.ClientConnectionPoolingTest", groups="functional")
 public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(ClientConnectionPoolingTest.class);
@@ -89,8 +88,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
-      hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
-      hotRodServer2 = TestHelper.startHotRodServer((EmbeddedCacheManager) c2.getCacheManager());
+      hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());
+      hotRodServer2 = TestHelper.startHotRodServer(c2.getCacheManager());
 
       String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2);
       Properties hotrodClientConf = new Properties();
@@ -124,7 +123,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hrServ2Addr = new InetSocketAddress("localhost", hotRodServer2.getPort());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws ExecutionException, InterruptedException {
       hotRodServer1.stop();
       hotRodServer2.stop();
@@ -146,6 +145,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       remoteCacheManager.stop();
    }
 
+   @Test
    public void testPropsCorrectlySet() {
       assertEquals(2, connectionPool.getMaxActive());
       assertEquals(8, connectionPool.getMaxTotal());

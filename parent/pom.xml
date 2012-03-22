@@ -129,7 +129,7 @@
       <version.h2.driver>1.1.117</version.h2.driver>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.1.0.Beta1</version.hibernate.search>
+      <version.hibernate.search>4.1.0.CR2</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
@@ -155,6 +155,7 @@
       <version.lucene>3.5.0</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
+      <version.mockito>1.8.5</version.mockito>
       <version.mysql.driver>5.1.9</version.mysql.driver>
       <version.netty>3.2.6.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
@@ -166,7 +167,7 @@
       <version.solder>3.1.0.Final</version.solder>
       <version.spring>3.1.0.RELEASE</version.spring>
       <version.spymemcached>2.5</version.spymemcached>
-      <version.testng>5.11</version.testng>
+      <version.testng>5.14.10</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.4.Final</version.weld>
       <version.xsom>20081112</version.xsom>
@@ -405,6 +406,11 @@
          </dependency>
          <dependency>
             <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>${version.jackson}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${version.jackson}</version>
          </dependency>
@@ -637,15 +643,9 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.easymock</groupId>
-         <artifactId>easymock</artifactId>
-         <version>${version.easymock}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.easymock</groupId>
-         <artifactId>easymockclassextension</artifactId>
-         <version>${version.easymockclassext}</version>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <version>${version.mockito}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -828,7 +828,6 @@
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <version>${version.testng}</version>
-         <classifier>jdk15</classifier>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -898,7 +897,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
-               <version>2.4.3-JBOSS</version>
+               <version>2.12</version>
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>

@@ -142,7 +142,9 @@ public class Codec10 implements Codec {
             String msgFromServer = transport.readString();
             if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
                localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
-            } if (msgFromServer.contains("SuspectException")) {
+            } if (msgFromServer.contains("SuspectException")
+                  || msgFromServer.contains("SuspectedException")) {
+               // Handle both Infinispan's and JGroups' suspicions
                if (isTrace)
                   localLog.tracef("A remote node was suspected while executing messageId=%d. " +
                      "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);

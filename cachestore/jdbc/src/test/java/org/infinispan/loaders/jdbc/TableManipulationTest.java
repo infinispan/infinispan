@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -62,11 +62,9 @@ public class TableManipulationTest {
    }
 
    public void testInsufficientConfigParams() throws Exception {
-      Connection mockConnection = createNiceMock(Connection.class);
-      Statement mockStatement = createNiceMock(Statement.class);
-      expect(mockConnection.createStatement()).andReturn(mockStatement);
-      expectLastCall().anyTimes();
-      replay(mockConnection, mockStatement);
+      Connection mockConnection = mock(Connection.class);
+      Statement mockStatement = mock(Statement.class);
+      when(mockConnection.createStatement()).thenReturn(mockStatement);
       TableManipulation other = tableManipulation.clone();
       try {
          other.createTable(mockConnection);

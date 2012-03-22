@@ -23,6 +23,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -61,7 +62,9 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       defaultMarshaller = new JBossMarshaller();
    }
 
-   public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc, ExternalizerTable extTable) {
+   public void inject(Configuration cfg, ClassLoader loader,
+         InvocationContextContainer icc, ExternalizerTable extTable,
+         GlobalConfiguration globalCfg) {
       ClassLoader myClassLoader;
       if (cfg == null) {
          myClassLoader = loader;
@@ -71,7 +74,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
          this.cacheName = cfg.getName();
       }
 
-      this.defaultMarshaller.inject(extTable, myClassLoader, icc);
+      this.defaultMarshaller.inject(extTable, myClassLoader, icc, globalCfg);
    }
 
    public void stop() {

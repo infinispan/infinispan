@@ -53,7 +53,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Properties;
 
-import static org.easymock.classextension.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Adrian Cole
@@ -130,23 +130,23 @@ public class BdbjeCacheStoreTest {
    public void setUp() throws Exception {
       cfg = new BdbjeCacheStoreConfig();
       factory = new MockBdbjeResourceFactory(cfg);
-      cache = createMock(Cache.class);
+      cache = mock(Cache.class);
       cs = new BdbjeCacheStore();
-      env = createMock(Environment.class);
-      cacheDb = createMock(Database.class);
-      catalogDb = createMock(Database.class);
-      expiryDb = createMock(Database.class);
-      catalog = createMock(StoredClassCatalog.class);
-      cacheMap = createMock(StoredMap.class);
-      expiryMap = createMock(StoredSortedMap.class);
-      currentTransaction = createMock(CurrentTransaction.class);
+      env = mock(Environment.class);
+      cacheDb = mock(Database.class);
+      catalogDb = mock(Database.class);
+      expiryDb = mock(Database.class);
+      catalog = mock(StoredClassCatalog.class);
+      cacheMap = mock(StoredMap.class);
+      expiryMap = mock(StoredSortedMap.class);
+      currentTransaction = mock(CurrentTransaction.class);
       gtf = new TransactionFactory();
       gtf.init(false, false, true);
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();
       ReflectionUtil.setValue(currentTransaction, "localTrans", localTrans);
-      runner = createMock(PreparableTransactionRunner.class);
+      runner = mock(PreparableTransactionRunner.class);
    }
 
    @AfterMethod
@@ -167,89 +167,41 @@ public class BdbjeCacheStoreTest {
 
    void start() throws DatabaseException, CacheLoaderException {
       cs.init(cfg, factory, cache, new TestObjectStreamMarshaller());
-      expect(cache.getName()).andReturn("cache");
-      expect(cache.getConfiguration()).andReturn(null).anyTimes();
+      when(cache.getName()).thenReturn("cache");
+      when(cache.getConfiguration()).thenReturn(null);
    }
 
    public void testGetConfigurationClass() throws Exception {
-      replayAll();
       assert cs.getConfigurationClass().equals(BdbjeCacheStoreConfig.class);
-      verifyAll();
-   }
-
-   void replayAll() throws Exception {
-      replay(runner);
-      replay(currentTransaction);
-      replay(cacheMap);
-      replay(expiryMap);
-      replay(catalog);
-      replay(catalogDb);
-      replay(expiryDb);
-      replay(cacheDb);
-      replay(env);
-      replay(cache);
-   }
-
-   void verifyAll() throws Exception {
-      verify(runner);
-      verify(currentTransaction);
-      verify(cacheMap);
-      verify(expiryMap);
-      verify(catalog);
-      verify(catalogDb);
-      verify(expiryDb);
-      verify(env);
-      verify(cache);
    }
 
    public void testInitNoMock() throws Exception {
-      replayAll();
       cs.init(cfg, cache, null);
       assert cfg.equals(ReflectionUtil.getValue(cs, "cfg"));
       assert cache.equals(ReflectionUtil.getValue(cs, "cache"));
       assert ReflectionUtil.getValue(cs, "factory") instanceof BdbjeResourceFactory;
-      verifyAll();
    }
 
    public void testExceptionClosingCacheDatabaseDoesNotPreventEnvironmentFromClosing() throws Exception {
       start();
-      cacheDb.close();
-      expiryDb.close();
-      expectLastCall().andThrow(new DatabaseException("Dummy"){});
-      catalog.close();
-      env.close();
-      replayAll();
+      doThrow(new DatabaseException("Dummy") {}).when(expiryDb).close();
       cs.start();
       cs.stop();
-
-      verifyAll();
    }
 
    public void testExceptionClosingCatalogDoesNotPreventEnvironmentFromClosing() throws Exception {
       start();
-      cacheDb.close();
-      expiryDb.close();
-      catalog.close();
-      expectLastCall().andThrow(new DatabaseException("Dummy"){});
-      env.close();
-      replayAll();
+      doThrow(new DatabaseException("Dummy") {}).when(catalog).close();
       cs.start();
       cs.stop();
-      verifyAll();
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
    public void testExceptionClosingEnvironment() throws Exception {
       start();
-      cacheDb.close();
-      expiryDb.close();
-      catalog.close();
-      env.close();
-      expectLastCall().andThrow(new DatabaseException("Dummy"){});
-      replayAll();
+      doThrow(new DatabaseException("Dummy") {}).when(env).close();
       cs.start();
       cs.stop();
-      verifyAll();
    }
 
 
@@ -262,60 +214,51 @@ public class BdbjeCacheStoreTest {
          }
       };
       start();
-      replayAll();
       cs.start();
 
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
    public void testEnvironmentDirectoryExistsButNotAFile() throws Exception {
-      File file = createMock(File.class);
-      expect(file.exists()).andReturn(true);
-      expect(file.isDirectory()).andReturn(false);
-      replay(file);
+      File file = mock(File.class);
+      when(file.exists()).thenReturn(true);
+      when(file.isDirectory()).thenReturn(false);
       cs.verifyOrCreateEnvironmentDirectory(file);
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
    public void testCantCreateEnvironmentDirectory() throws Exception {
-      File file = createMock(File.class);
-      expect(file.exists()).andReturn(false);
-      expect(file.mkdirs()).andReturn(false);
-      replay(file);
+      File file = mock(File.class);
+      when(file.exists()).thenReturn(false);
+      when(file.mkdirs()).thenReturn(false);
       cs.verifyOrCreateEnvironmentDirectory(file);
    }
 
    public void testCanCreateEnvironmentDirectory() throws Exception {
-      File file = createMock(File.class);
-      expect(file.exists()).andReturn(false);
-      expect(file.mkdirs()).andReturn(true);
-      expect(file.isDirectory()).andReturn(true);
-      replay(file);
+      File file = mock(File.class);
+      when(file.exists()).thenReturn(false);
+      when(file.mkdirs()).thenReturn(true);
+      when(file.isDirectory()).thenReturn(true);
       assert file.equals(cs.verifyOrCreateEnvironmentDirectory(file));
    }
 
    public void testNoExceptionOnRollback() throws Exception {
       start();
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
-      replayAll();
       cs.start();
       cs.rollback(tx);
-      verifyAll();
    }
 
    public  void testApplyModificationsThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException("Dummy"){};
-      runner.run(isA(TransactionWorker.class));
-      expectLastCall().andThrow(new RuntimeExceptionWrapper(ex));
-      replayAll();
+      doThrow(new RuntimeExceptionWrapper(ex)).when(runner).run(isA(TransactionWorker.class));
       cs.start();
       try {
          cs.applyModifications(Collections.singletonList(new Store(TestInternalCacheEntryFactory.create("k", "v"))));
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
-         verifyAll();
          return;
       }
       assert false : "should have returned";
@@ -325,13 +268,10 @@ public class BdbjeCacheStoreTest {
    public void testCommitThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException("Dummy"){};
-      com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
-      expect(currentTransaction.beginTransaction(null)).andReturn(txn);
+      com.sleepycat.je.Transaction txn = mock(com.sleepycat.je.Transaction.class);
+      when(currentTransaction.beginTransaction(null)).thenReturn(txn);
       runner.prepare(isA(TransactionWorker.class));
-      txn.commit();
-      expectLastCall().andThrow(new RuntimeExceptionWrapper(ex));
-      replayAll();
-      replay(txn);
+      doThrow(new RuntimeExceptionWrapper(ex)).when(txn).commit();
       cs.start();
       try {
          txn = currentTransaction.beginTransaction(null);
@@ -341,7 +281,6 @@ public class BdbjeCacheStoreTest {
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
-         verifyAll();
          return;
       }
       assert false : "should have returned";
@@ -351,9 +290,7 @@ public class BdbjeCacheStoreTest {
    public void testPrepareThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException("Dummy"){};
-      runner.prepare(isA(TransactionWorker.class));
-      expectLastCall().andThrow(new RuntimeExceptionWrapper(ex));
-      replayAll();
+      doThrow(new RuntimeExceptionWrapper(ex)).when(runner).prepare(isA(TransactionWorker.class));
       cs.start();
       try {
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
@@ -361,7 +298,6 @@ public class BdbjeCacheStoreTest {
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
-         verifyAll();
          return;
       }
       assert false : "should have returned";
@@ -371,22 +307,17 @@ public class BdbjeCacheStoreTest {
    public void testClearOnAbortFromStream() throws Exception {
       start();
       InternalCacheEntry entry = TestInternalCacheEntryFactory.create("key", "value");
-      expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
-      ObjectInput ois = createMock(ObjectInput.class);
-      expect(ois.readLong()).andReturn((long) 1);
-      com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
-      expect(currentTransaction.beginTransaction(null)).andReturn(txn);
-      Cursor cursor = createMock(Cursor.class);
-      expect(cacheDb.openCursor(txn, null)).andReturn(cursor);
+      when(cacheMap.put(entry.getKey(), entry)).thenReturn(null);
+      ObjectInput ois = mock(ObjectInput.class);
+      when(ois.readLong()).thenReturn((long) 1);
+      com.sleepycat.je.Transaction txn = mock(com.sleepycat.je.Transaction.class);
+      when(currentTransaction.beginTransaction(null)).thenReturn(txn);
+      Cursor cursor = mock(Cursor.class);
+      when(cacheDb.openCursor(txn, null)).thenReturn(cursor);
       IOException ex = new IOException();
-      expect(ois.readObject()).andReturn(new byte[0]);
-      expectLastCall().andThrow(ex);
-      txn.abort();
+      when(ois.readObject()).thenThrow(ex);
       cacheMap.clear();
       expiryMap.clear();
-      replay(ois);
-      replay(txn);
-      replayAll();
       cs.start();
       try {
          cs.store(entry);
@@ -394,9 +325,6 @@ public class BdbjeCacheStoreTest {
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
-         verifyAll();
-         verify(ois);
-         verify(txn);
          return;
       }
       assert false : "should have returned";

@@ -33,6 +33,7 @@ import java.util.Collection;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.Test;
 
@@ -70,7 +71,7 @@ public class SpringEmbeddedCacheManagerTest {
     */
    @Test
    public final void getCacheShouldReturnTheCacheHavingTheProvidedName() throws IOException {
-      final EmbeddedCacheManager nativeCacheManager = new DefaultCacheManager(
+      final EmbeddedCacheManager nativeCacheManager = TestCacheManagerFactory.fromStream(
                SpringEmbeddedCacheManagerTest.class
                         .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
@@ -98,7 +99,7 @@ public class SpringEmbeddedCacheManagerTest {
             throws IOException {
       final String nameOfInfinispanCacheAddedLater = "infinispan.cache.addedLater";
 
-      final EmbeddedCacheManager nativeCacheManager = new DefaultCacheManager(
+      final EmbeddedCacheManager nativeCacheManager = TestCacheManagerFactory.fromStream(
                SpringEmbeddedCacheManagerTest.class
                         .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
@@ -128,9 +129,9 @@ public class SpringEmbeddedCacheManagerTest {
    @Test
    public final void getCacheNamesShouldReturnAllCachesDefinedInConfigurationFile()
             throws IOException {
-      final EmbeddedCacheManager nativeCacheManager = new DefaultCacheManager(
-               SpringEmbeddedCacheManagerTest.class
-                        .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
+      final EmbeddedCacheManager nativeCacheManager = TestCacheManagerFactory.fromStream(
+            SpringEmbeddedCacheManagerTest.class
+                  .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
                nativeCacheManager);
 

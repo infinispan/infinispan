@@ -32,11 +32,12 @@ import java.util.concurrent.TimeUnit;
 public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<L1Configuration> {
 
    private static final Log log = LogFactory.getLog(L1ConfigurationBuilder.class);
-   
+
    private boolean enabled = true;
    private int invalidationThreshold = 0;
    private long lifespan = TimeUnit.MINUTES.toMillis(10);
    private Boolean onRehash = null;
+   private long cleanupTaskFrequency = TimeUnit.MINUTES.toMillis(10);
    boolean activated = false;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
@@ -47,18 +48,18 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
     * </p>
-    * 
+    *
     * <p>
     * By default multicast will be used.
     * </p>
-    * 
+    *
     * <p>
     * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to
     * 0, then multicast will be always be used.
     * </p>
-    * 
+    *
     * @param threshold the threshold over which to use a multicast
-    * 
+    *
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
       this.invalidationThreshold = invalidationThreshold;
@@ -69,8 +70,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    /**
     * Maximum lifespan of an entry placed in the L1 cache.
     */
-   public L1ConfigurationBuilder lifespan(long livespan) {
-      this.lifespan = livespan;
+   public L1ConfigurationBuilder lifespan(long lifespan) {
+      this.lifespan = lifespan;
+      activated = true;
+      return this;
+   }
+
+   /**
+    * How often the L1 requestors map is cleaned up of stale items
+    */
+   public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis) {
+      this.cleanupTaskFrequency = frequencyMillis;
       activated = true;
       return this;
    }
@@ -83,7 +93,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       activated = true;
       return this;
    }
-   
+
    /**
     * Entries removed due to a rehash will be moved to L1 rather than being removed altogether.
     */
@@ -101,21 +111,23 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder enable() {
       this.enabled = true;
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder disable() {
       this.enabled = false;
+      this.onRehash = null;
       activated = true;
       return this;
    }
-   
+
    public L1ConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
+      this.onRehash = enabled ? this.onRehash : null;
       activated = true;
       return this;
    }
@@ -128,6 +140,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
          if (lifespan < 1)
             throw new ConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+
       } else {
          // If L1 is disabled, L1ForRehash should also be disabled
          if (onRehash != null && onRehash)
@@ -146,15 +159,16 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
          onRehash = false;
       }
 
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, activated);
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, cleanupTaskFrequency, activated);
    }
-   
+
    @Override
    public L1ConfigurationBuilder read(L1Configuration template) {
       enabled = template.enabled();
       invalidationThreshold = template.invalidationThreshold();
       lifespan = template.lifespan();
       onRehash = template.onRehash();
+      cleanupTaskFrequency = template.cleanupTaskFrequency();
       activated = template.activated;
       return this;
    }
@@ -166,8 +180,8 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
             ", enabled=" + enabled +
             ", invalidationThreshold=" + invalidationThreshold +
             ", lifespan=" + lifespan +
+            ", cleanupTaskFrequency=" + cleanupTaskFrequency +
             ", onRehash=" + onRehash +
             '}';
    }
-
 }

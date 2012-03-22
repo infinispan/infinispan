@@ -77,6 +77,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invokes an RPC call on other caches in the cluster.
     *
+    *
     * @param recipients       a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
     *                         entire cluster.
     * @param rpcCommand       the cache command to invoke
@@ -85,12 +86,11 @@ public interface Transport extends Lifecycle {
     * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
     *                         implementations.
     * @param responseFilter   a response filter with which to filter out failed/unwanted/invalid responses.
-    * @param supportReplay    whether replays of missed messages is supported
     * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                 boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
+                                         boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception;
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

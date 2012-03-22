@@ -180,7 +180,7 @@
       	<loader class="org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
                         ignoreModifications="true" purgeOnStartup="true">
            <properties>
-             <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory"/>
+             <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
              <property name="connectionUrl" value="jdbc://some-url"/>
              <property name="userName" value="root"/>
              <property name="driverClass" value="org.dbms.Driver"/>

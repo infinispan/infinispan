@@ -18,6 +18,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -207,9 +208,11 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
             return invokeNextInterceptor(ctx, command);
          } catch (StateTransferInProgressException e) {
             newCacheViewId = e.getNewCacheViewId();
+            log.debugf("Caught StateTransferInProgressException, waiting for the state transfer %d to start", newCacheViewId);
          } catch (SuspectException e) {
             // a node has left, that means the coordinator will soon install a new cache view
             newCacheViewId = newCacheViewId + 1;
+            log.debugf("Caught SuspectException, waiting for the state transfer %d to start", newCacheViewId);
          }
          if (endNanos < System.nanoTime()) {
             throw new TimeoutException("Timed out waiting for the state transfer to end");

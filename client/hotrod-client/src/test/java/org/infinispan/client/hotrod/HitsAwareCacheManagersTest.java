@@ -47,7 +47,8 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    protected Map<InetSocketAddress, CacheContainer> hrServ2CacheManager = new HashMap<InetSocketAddress, CacheContainer>();
    protected Map<InetSocketAddress, HotRodServer> addr2hrServer = new HashMap<InetSocketAddress, HotRodServer>();
 
-   @BeforeMethod
+   @Override
+   @BeforeMethod(alwaysRun=true)
    public void createBeforeMethod() throws Throwable {
       if (cleanupAfterMethod()) {
          hrServ2CacheManager.clear();

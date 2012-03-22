@@ -1107,6 +1107,9 @@ public class Parser {
             case LIFESPAN:
                builder.clustering().l1().lifespan(Long.parseLong(value));
                break;
+            case INVALIDATION_CLEANUP_TASK_FREQUENCY:
+               builder.clustering().l1().cleanupTaskFrequency(Long.parseLong(value));
+               break;
             case ON_REHASH:
                if (Boolean.parseBoolean(value))
                   builder.clustering().l1().enableOnRehash();

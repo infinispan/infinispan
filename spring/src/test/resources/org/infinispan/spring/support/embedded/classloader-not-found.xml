@@ -1,0 +1,64 @@
+<!--
+  ~ Copyright 2012 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this library; if not, write to the Free Software
+  ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA
+  -->
+
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns="urn:infinispan:config:5.1"
+      xsi:schemaLocation="
+    urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd
+  "
+      >
+   <global>
+      <!--<transport clusterName="infinispan-ws">-->
+         <!--<properties>-->
+            <!--<property name="configurationFile" value="jgroups_mcast.xml"/>-->
+         <!--</properties>-->
+      <!--</transport>-->
+   </global>
+
+   <default>
+      <loaders preload="true" shared="false">
+         <loader class="PerstCacheStore"
+                 fetchPersistentState="true"
+                 ignoreModifications="false"
+                 purgeOnStartup="false"
+               >
+            <properties>
+               <property name="flushInterval" value="10000" />
+               <property name="location" value="${java.io.tmpdir}/infinispan" />
+               <property name="lockAcquistionTimeout" value="600000" />
+               <property name="pagePoolSize" value="16000000" />
+            </properties>
+         </loader>
+      </loaders>
+
+      <storeAsBinary />
+   </default>
+
+   <namedCache name="testCache">
+      <clustering mode="replication">
+         <stateRetrieval fetchInMemoryState="true"/>
+         <sync/>
+      </clustering>
+
+      <expiration lifespan="300000" wakeUpInterval="5000"/>
+
+      <eviction maxEntries="100" strategy="LRU"/>
+   </namedCache>
+</infinispan>

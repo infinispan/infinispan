@@ -97,7 +97,7 @@ public class XaTransactionTable extends TransactionTable {
       LocalXaTransaction localTransaction = (LocalXaTransaction) ltx;
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, configuration, recoveryManager,
+            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, recoveryManager,
                                                                 txCoordinator, commandsFactory, rpcManager,
                                                                 clusteringLogic, configuration));
          } catch (Exception e) {

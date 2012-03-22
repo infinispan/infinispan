@@ -58,8 +58,6 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    private int txTimeout;
 
-   private final Configuration configuration;
-
    private final XaTransactionTable txTable;
 
    private final TransactionCoordinator txCoordinator;
@@ -76,28 +74,26 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               RecoveryManager rm, TransactionCoordinator txCoordinator,
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
       super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
-      this.configuration = configuration;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
-      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
+      recoveryEnabled = config.isTransactionRecoveryEnabled();
    }
    public TransactionXaAdapter(TransactionTable txTable,
-                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               RecoveryManager rm, TransactionCoordinator txCoordinator,
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
       super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
       localTransaction = null;
       this.txTable = (XaTransactionTable) txTable;
-      this.configuration = configuration;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
-      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
+      recoveryEnabled = config.isTransactionRecoveryEnabled();
    }
 
    /**
@@ -147,7 +143,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    }
 
    public void end(Xid externalXid, int i) throws XAException {
-      if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), configuration.getName());
+      if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), config.getName());
    }
 
    public void forget(Xid externalXid) throws XAException {
@@ -180,7 +176,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    }
 
    public Xid[] recover(int flag) throws XAException {
-      if (!configuration.isTransactionRecoveryEnabled()) {
+      if (!config.isTransactionRecoveryEnabled()) {
          log.recoveryIgnored();
          return RecoveryManager.RecoveryIterator.NOTHING;
       }
@@ -220,7 +216,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
-      if (configuration.isTransactionRecoveryEnabled()) {
+      if (config.isTransactionRecoveryEnabled()) {
          recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
          txTable.removeLocalTransaction(localTransaction);
       } else {
@@ -266,7 +262,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
          return false;
       //also include the name of the cache in comparison - needed when same tx spans multiple caches.
-      return configuration.getName() != null ?
-            configuration.getName().equals(that.configuration.getName()) : that.configuration.getName() == null;
+      return config.getName() != null ?
+            config.getName().equals(that.config.getName()) : that.config.getName() == null;
    }
 }

@@ -638,6 +638,12 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * 
        */
       L1Config invalidationThreshold(Integer threshold);
+
+      /**
+       * Determines how often a cleanup thread runs to clean up an internal log of requestors for a specific key
+       * @param frequencyMillis frequency in milliseconds
+       */
+      L1Config cleanupTaskFrequency(Long frequencyMillis);
    }
 
    /**
