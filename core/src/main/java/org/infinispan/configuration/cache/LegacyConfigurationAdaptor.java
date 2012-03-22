@@ -80,7 +80,8 @@ public class LegacyConfigurationAdaptor {
             .l1()
                .invalidationThreshold(config.clustering().l1().invalidationThreshold())
                .lifespan(config.clustering().l1().lifespan())
-               .onRehash(config.clustering().l1().onRehash());
+               .onRehash(config.clustering().l1().onRehash())
+               .cleanupTaskFrequency(config.clustering().l1().cleanupTaskFrequency());
       } else {
          legacy.clustering()
             .l1()
@@ -315,7 +316,8 @@ public class LegacyConfigurationAdaptor {
             .l1().enable()
                .invalidationThreshold(legacy.getL1InvalidationThreshold())
                .lifespan(legacy.getL1Lifespan())
-               .onRehash(legacy.isL1OnRehash());
+               .onRehash(legacy.isL1OnRehash())
+               .cleanupTaskFrequency(legacy.getL1InvalidationCleanupTaskFrequency());
       } else {
          builder.clustering()
             .l1()

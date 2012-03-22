@@ -19,7 +19,6 @@
   -->
 
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:5.1" xmlns:tns="urn:infinispan:config:5.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-
   <xs:element name="infinispan">
     <xs:annotation>
       <xs:documentation>
@@ -901,6 +900,13 @@
                       Maximum lifespan of an entry placed in the L1 cache.
                     </xs:documentation>
                   </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="cleanupTaskFrequency" type="xs:long">
+                   <xs:annotation>
+                      <xs:documentation>
+                         Controls how often a cleanup task to prune L1 tracking data is run.
+                      </xs:documentation>
+                   </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="onRehash" type="xs:boolean">
                   <xs:annotation>

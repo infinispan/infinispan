@@ -174,7 +174,7 @@
       <clustering mode="distribution">
          <sync/>
          <hash numOwners="3" rehashRpcTimeout="120000"/>
-         <l1 enabled="true" lifespan="600000"/>
+         <l1 enabled="true" lifespan="600000" cleanupTaskFrequency="1200"/>
       </clustering>
    </namedCache>
 
