@@ -344,7 +344,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    private Future<?> flushL1Caches(InvocationContext ctx) {
       // TODO how do we tell the L1 manager which keys are removed and which keys may still exist in remote L1?
-      return isL1CacheEnabled ? l1Manager.flushCacheWithSimpleFuture(ctx.getLockedKeys(), null, ctx.getOrigin()) : null;
+      return isL1CacheEnabled ? l1Manager.flushCacheWithSimpleFuture(ctx.getLockedKeys(), null, ctx.getOrigin(), true) : null;
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {
@@ -482,9 +482,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
                		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                      if (useFuture) {
-               		   futureToReturn = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
+               		   futureToReturn = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue,
+                                                              ctx.getOrigin(), !(command instanceof RemoveCommand));
                      } else {
-                        invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(), returnValue, null);
+                        invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(), returnValue,
+                                                                                  ctx.getOrigin(), !(command instanceof RemoveCommand));
                      }
                	} else {
                      if (trace) log.tracef("Not performing invalidation! numCallRecipients=%s", numCallRecipients);
@@ -511,8 +513,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             		if (trace) log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
                   // If this is a remove command, then don't pass in the origin - since the entru would be removed from the origin's L1 cache.
             		invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),
-                                                                            returnValue,
-                                                                            command instanceof RemoveCommand ? null : ctx.getOrigin());
+                                                                            returnValue, ctx.getOrigin(), !(command instanceof RemoveCommand));
             		if (sync) {
                      invalidationFuture.get(); // wait for the inval command to complete
                      if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
