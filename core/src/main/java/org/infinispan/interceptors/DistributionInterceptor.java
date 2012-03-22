@@ -139,12 +139,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          Object returnValue = invokeNextInterceptor(ctx, command);
-
          // If L1 caching is enabled, this is a remote command, and we found a value in our cache
          // we store it so that we can later invalidate it
-         if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
-           l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
-         }
+         if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal()) l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
 
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
@@ -271,14 +268,15 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object returnValue = handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false, false);
+      SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
+      Object returnValue = handleWriteCommand(ctx, command, skrg, false, false);
       // If this was a remote put record that which sent it
-      if (isL1CacheEnabled && !ctx.isOriginLocal()) {
-      	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
-      }
+      if (isL1CacheEnabled && !ctx.isOriginLocal() && !skrg.generateRecipients().contains(ctx.getOrigin()))
+         l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+
       return returnValue;
    }
-
+   
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
@@ -345,7 +343,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private Future<?> flushL1Caches(InvocationContext ctx) {
-      return isL1CacheEnabled ? l1Manager.flushCache(ctx.getLockedKeys(), null, ctx.getOrigin()) : null;
+      // TODO how do we tell the L1 manager which keys are removed and which keys may still exist in remote L1?
+      return isL1CacheEnabled ? l1Manager.flushCacheWithSimpleFuture(ctx.getLockedKeys(), null, ctx.getOrigin()) : null;
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {
@@ -466,7 +465,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (command.isSuccessful()) {
 
          if (!ctx.isInTxScope()) {
-            NotifyingNotifiableFuture<Object> future = null;
+            NotifyingNotifiableFuture<Object> futureToReturn = null;
+            Future<?> invalidationFuture = null;
             if (ctx.isOriginLocal()) {
                int newCacheViewId = -1;
                stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
@@ -481,23 +481,27 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
                		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
-               		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
+                     if (useFuture) {
+               		   futureToReturn = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
+                     } else {
+                        invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(), returnValue, null);
+                     }
                	} else {
                      if (trace) log.tracef("Not performing invalidation! numCallRecipients=%s", numCallRecipients);
                   }
                if (!isSingleOwnerAndLocal(recipientGenerator)) {
                   if (useFuture) {
-                     if (future == null) future = new NotifyingFutureImpl(returnValue);
-                     rpcManager.invokeRemotelyInFuture(rec, command, future);
-                     return future;
+                     if (futureToReturn == null) futureToReturn = new NotifyingFutureImpl(returnValue);
+                     rpcManager.invokeRemotelyInFuture(rec, command, futureToReturn);
+                     return futureToReturn;
                   } else {
                      rpcManager.invokeRemotely(rec, command, sync);
                   }
-               } else if (useFuture && future != null) {
-                  return future;
+               } else if (useFuture && futureToReturn != null) {
+                  return futureToReturn;
                }
-               if (future != null && sync) {
-                  future.get(); // wait for the inval command to complete
+               if (invalidationFuture != null && sync) {
+                  invalidationFuture.get(); // wait for the inval command to complete
                   if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
                }
             } else {
@@ -505,9 +509,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             	if (isL1CacheEnabled && !skipL1Invalidation) {
                	// Command was successful and L1 should be flushed, so request any L1 invalidations from this node
             		if (trace) log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
-            		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, ctx.getOrigin());
+                  // If this is a remove command, then don't pass in the origin - since the entru would be removed from the origin's L1 cache.
+            		invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),
+                                                                            returnValue,
+                                                                            command instanceof RemoveCommand ? null : ctx.getOrigin());
             		if (sync) {
-            			future.get(); // wait for the inval command to complete
+                     invalidationFuture.get(); // wait for the inval command to complete
                      if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
             		}
             	}

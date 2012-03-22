@@ -22,12 +22,13 @@
  */
 package org.infinispan.distribution;
 
-import java.util.Collection;
-
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+
+import java.util.Collection;
+import java.util.concurrent.Future;
 
 /**
  * Manages the L1 Cache, in particular recording anyone who is going to cache an
@@ -43,12 +44,12 @@ public interface L1Manager {
 	/**
 	 * Records a request that will be cached in another nodes L1
 	 */
-	public void addRequestor(Object key, Address requestor);
+	void addRequestor(Object key, Address requestor);
 
 	/**
 	 * Flushes a cache (using unicast or multicast) for a set of keys
 	 */
-	public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys,
-	      Object retval, Address origin);
+	NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin);
 
+   Future<Object> flushCacheWithSimpleFuture(Collection<Object> keys, Object retval, Address origin);
 }
