@@ -56,7 +56,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.versioning = new VersioningConfigurationBuilder(this);
       this.unsafe = new UnsafeConfigurationBuilder(this);
    }
-   
+
    public ConfigurationBuilder classLoader(ClassLoader cl) {
       this.classLoader = cl;
       return this;
@@ -155,23 +155,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    @Override
    public Configuration build() {
-      validate();
-      return new Configuration(clustering.create(),
-            customInterceptors.create(),
-            dataContainer.create(),
-            deadlockDetection.create(),
-            eviction.create(),
-            expiration.create(),
-            indexing.create(),
-            invocationBatching.create(),
-            jmxStatistics.create(),
-            loaders.create(),
-            locking.create(),
-            storeAsBinary.create(),
-            transaction.create(),
-            unsafe.create(),
-            versioning.create(),
-            classLoader );// TODO
+      return build(true);
+   }
+   
+   public Configuration build(boolean validate) {
+      if (validate) {
+         validate();
+      }
+      return new Configuration(clustering.create(), customInterceptors.create(),
+               dataContainer.create(), deadlockDetection.create(), eviction.create(),
+               expiration.create(), indexing.create(), invocationBatching.create(),
+               jmxStatistics.create(), loaders.create(), locking.create(), storeAsBinary.create(),
+               transaction.create(), unsafe.create(), versioning.create(), classLoader);// TODO
    }
 
    public ConfigurationBuilder read(Configuration template) {
