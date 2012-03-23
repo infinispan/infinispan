@@ -22,6 +22,7 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -36,6 +37,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
@@ -58,6 +60,9 @@ import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
+import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -325,8 +330,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
-            try {
-               channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader()));
+            URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader());
+            if (conf == null) {
+               throw new CacheConfigurationException(CONFIGURATION_FILE
+                        + " property specifies value " + conf + " that could not be read!",
+                        new FileNotFoundException(cfg));
+            }
+            try {                              
+               channel = new JChannel(conf);
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
