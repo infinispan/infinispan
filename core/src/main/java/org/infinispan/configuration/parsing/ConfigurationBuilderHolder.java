@@ -42,7 +42,9 @@ public class ConfigurationBuilderHolder {
    
    public ConfigurationBuilder newConfigurationBuilder(String name) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.read(getDefaultConfigurationBuilder().build());
+      //no need to validate default config again 
+      //https://issues.jboss.org/browse/ISPN-1938
+      builder.read(getDefaultConfigurationBuilder().build(false));
       namedConfigurationBuilders.put(name, builder);
       return builder;
    }
