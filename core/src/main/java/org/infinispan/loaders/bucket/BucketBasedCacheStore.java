@@ -156,7 +156,12 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
       public boolean handle(Bucket bucket) throws CacheLoaderException {
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
+               upgradeLock(bucket.getBucketId());
+               try {
+                  updateBucket(bucket);
+               } finally {
+                  downgradeLock(bucket.getBucketId());
+               }
             }
             boolean enoughLooping = consider(bucket.getStoredEntries());
             if (enoughLooping) {
