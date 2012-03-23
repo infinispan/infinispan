@@ -34,6 +34,7 @@ import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
 import logging.Log
 import org.infinispan.server.core.transport.CustomReplayingDecoder
+import java.lang.StringBuilder
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.

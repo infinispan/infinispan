@@ -34,6 +34,7 @@ import org.infinispan.util.ByteArrayKey
 import java.io.{IOException, StreamCorruptedException}
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.Channel
+import java.lang.StringBuilder
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the

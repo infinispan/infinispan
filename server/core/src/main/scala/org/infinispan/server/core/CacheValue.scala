@@ -27,6 +27,7 @@ import java.io.{ObjectOutput, ObjectInput}
 import java.util.Arrays
 import org.infinispan.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
+import java.lang.StringBuilder
 
 /**
  * Represents the value part of a key/value pair stored in a protocol cache.

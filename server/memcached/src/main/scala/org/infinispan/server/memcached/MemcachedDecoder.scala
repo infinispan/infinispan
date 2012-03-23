@@ -39,6 +39,8 @@ import org.jboss.netty.buffer.ChannelBuffer
 import transport.NettyTransport
 import DecoderState._
 import org.jboss.netty.channel.Channel
+import java.lang.StringBuilder
+import TextProtocolUtil._
 
 /**
  * A Memcached protocol specific decoder
@@ -47,7 +49,7 @@ import org.jboss.netty.channel.Channel
  * @since 4.1
  */
 class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler: ScheduledExecutorService, transport: NettyTransport)
-      extends AbstractProtocolDecoder[String, MemcachedValue](transport) with TextProtocolUtil {
+      extends AbstractProtocolDecoder[String, MemcachedValue](transport) {
 
    cache = memcachedCache
 
@@ -400,8 +402,12 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    }
 
    override def createGetResponse(k: String, v: MemcachedValue): AnyRef = {
-      if (v != null)
-         List(buildGetResponse(header.op, k, v), wrappedBuffer(END))
+      if (v != null) {
+         header.op match {
+            case GetRequest => buildSingleGetResponse(k, v)
+            case GetWithVersionRequest => buildSingleGetWithVersionResponse(k,v)
+         }
+      }
       else
          END
    }
@@ -527,17 +533,53 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    }   
 
    private def buildGetResponse(op: Enumeration#Value, k: String, v: MemcachedValue): ChannelBuffer = {
-      val header = buildGetResponseHeader(k, v, op)
-      wrappedBuffer(header.getBytes, v.data, CRLFBytes)
+      val buf = buildGetHeaderBegin(k, v, 0)
+      writeGetHeaderData(v.data, buf)
    }
 
-   private def buildGetResponseHeader(k: String, v: MemcachedValue, op: Enumeration#Value): String = {
-      val sb = new StringBuilder
-      sb.append("VALUE ").append(k).append(" ").append(v.flags).append(" ").append(v.data.length)
-      if (op == GetWithVersionRequest)
-         sb.append(" ").append(v.version)
-      sb.append(CRLF)
-      sb.toString
+   private def buildSingleGetResponse(k: String, v: MemcachedValue): ChannelBuffer = {
+      val buf = buildGetHeaderBegin(k, v, END_SIZE)
+      writeGetHeaderData(v.data, buf)
+      writeGetHeaderEnd(buf)
+   }
+   
+   private def buildGetHeaderBegin(k: String, v: MemcachedValue,
+           extraSpace: Int): ChannelBuffer = {
+      val data = v.data
+      val dataSize = data.length.toString.getBytes
+      val key = k.getBytes
+      val flags = if (v.flags != 0) v.flags.toString.getBytes else ZERO
+      val flagsSize = flags.length
+      val buf = buffer(VALUE_SIZE + key.length + data.length + flagsSize
+              + dataSize.length + 6 + extraSpace)
+      buf.writeBytes(VALUE)
+      buf.writeBytes(key)
+      buf.writeByte(SP)
+      buf.writeBytes(flags)
+      buf.writeByte(SP)
+      buf.writeBytes(dataSize)
+      buf
+   }
+
+   private def writeGetHeaderData(data: Array[Byte], buf: ChannelBuffer): ChannelBuffer = {
+      buf.writeBytes(CRLFBytes)
+      buf.writeBytes(data)
+      buf.writeBytes(CRLFBytes)
+      buf
+   }
+
+   private def writeGetHeaderEnd(buf: ChannelBuffer): ChannelBuffer = {
+      buf.writeBytes(END)
+      buf
+   }
+
+   private def buildSingleGetWithVersionResponse(k: String, v: MemcachedValue): ChannelBuffer = {
+      val version = v.version.toString.getBytes
+      val buf = buildGetHeaderBegin(k, v, version.length + 1 + END_SIZE)
+      buf.writeByte(SP) // 1
+      buf.writeBytes(version) // version.length
+      writeGetHeaderData(v.data, buf)
+      writeGetHeaderEnd(buf)
    }
 
    private def friendlyMaxIntCheck(number: String, message: String): Int = {

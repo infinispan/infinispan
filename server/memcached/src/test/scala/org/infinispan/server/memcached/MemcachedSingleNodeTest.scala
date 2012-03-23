@@ -32,6 +32,7 @@ import java.net.Socket
 import collection.mutable.ListBuffer
 import java.io.InputStream
 import org.testng.Assert._
+import java.lang.StringBuilder
 
 /**
  * Base class for single node tests.
