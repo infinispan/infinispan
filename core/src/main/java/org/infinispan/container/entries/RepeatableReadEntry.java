@@ -49,25 +49,30 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       setChanged();
 
       if (localModeWriteSkewCheck) {
-         // check for write skew.
-         InternalCacheEntry ice = container.get(key);
-         Object actualValue = ice == null ? null : ice.getValue();
-
-         // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.
-         // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
-         if (actualValue != null && actualValue != value) {
-            log.unableToCopyEntryForUpdate(getKey());
-            throw new CacheException("Detected write skew");
-         }
-
-         if (ice == null && !isCreated()) {
-            // We still have a write-skew here.  When this wrapper was created there was an entry in the data container
-            // (hence isCreated() == false) but 'ice' is now null.
-            log.unableToCopyEntryForUpdate(getKey());
-            throw new CacheException("Detected write skew - concurrent removal of entry!");
-         }
+         performLocalWriteSkewCheck(container, false);
       }
       // make a backup copy
       oldValue = value;
+   }
+
+   public void performLocalWriteSkewCheck(DataContainer container, boolean alreadyCopied) {
+      // check for write skew.
+      InternalCacheEntry ice = container.get(key);
+
+      Object actualValue = ice == null ? null : ice.getValue();
+      Object valueToCompare = alreadyCopied ? oldValue : value;
+      // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.
+      // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
+      if (actualValue != null && actualValue != valueToCompare) {
+         log.unableToCopyEntryForUpdate(getKey());
+         throw new CacheException("Detected write skew.");
+      }
+
+      if (ice == null && !isCreated()) {
+         // We still have a write-skew here.  When this wrapper was created there was an entry in the data container
+         // (hence isCreated() == false) but 'ice' is now null.
+         log.unableToCopyEntryForUpdate(getKey());
+         throw new CacheException("Detected write skew - concurrent removal of entry!");
+      }
    }
 }

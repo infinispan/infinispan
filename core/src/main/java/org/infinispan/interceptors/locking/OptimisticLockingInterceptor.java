@@ -23,11 +23,6 @@
 
 package org.infinispan.interceptors.locking;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
@@ -41,13 +36,24 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.config.Configuration;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.TimSort;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
@@ -57,7 +63,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
-   final LockAcquisitionVisitor lockAcquisitionVisitor = new LockAcquisitionVisitor();
+   private LockAcquisitionVisitor lockAcquisitionVisitor;
    private static final MurmurHash3 HASH = new MurmurHash3();
    private final static Comparator<Object> keyComparator = new Comparator<Object>() {
 
@@ -81,6 +87,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Inject
    public void setDependencies(EntryFactory entryFactory) {
       this.entryFactory = entryFactory;
+   }
+   
+   @Start
+   public void start() {
+      if (configuration.getCacheMode() == Configuration.CacheMode.LOCAL && 
+            configuration.isWriteSkewCheck() &&
+            configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ) {
+         lockAcquisitionVisitor = new LocalWriteSkewCheckingLockAcquisitionVisitor();
+      } else {
+         lockAcquisitionVisitor = new LockAcquisitionVisitor();
+      }
    }
 
    @Override
@@ -166,13 +183,16 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       throw new CacheException("Explicit locking is not allowed with optimistic caches!");
    }
 
-   private final class LockAcquisitionVisitor extends AbstractVisitor {
-
+   private class LockAcquisitionVisitor extends AbstractVisitor {
+      protected void performWriteSkewCheck(TxInvocationContext ctx, Object key) {
+         // A no-op
+      }
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
          for (Object key : dataContainer.keySet()) {
             lockAndRegisterBackupLock(txC, key);
+            performWriteSkewCheck(txC, key);
             txC.addAffectedKey(key);
          }
          return null;
@@ -182,6 +202,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
          for (Object key : command.getMap().keySet()) {
+            performWriteSkewCheck(txC, key);
             lockAndRegisterBackupLock(txC, key);
             txC.addAffectedKey(key);
          }
@@ -192,6 +213,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
          lockAndRegisterBackupLock(txC, command.getKey());
+         performWriteSkewCheck(txC, command.getKey());
          txC.addAffectedKey(command.getKey());
          return null;
       }
@@ -200,6 +222,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
          lockAndRegisterBackupLock(txC, command.getKey());
+         performWriteSkewCheck(txC, command.getKey());
          txC.addAffectedKey(command.getKey());
          return null;
       }
@@ -208,8 +231,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             Object[] compositeKeys = command.getCompositeKeys();
-            for (Object key : compositeKeys) {
-               lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
+            TxInvocationContext txC = (TxInvocationContext) ctx;
+            for (Object key : compositeKeys) {               
+               performWriteSkewCheck(txC, key);
+               lockAndRegisterBackupLock(txC, key);
             }            
          }
          return null;
@@ -219,10 +244,22 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
          lockAndRegisterBackupLock(txC, command.getKey());
+         performWriteSkewCheck(txC, command.getKey());
          txC.addAffectedKey(command.getKey());
          return null;
       }
    }
+   
+   private class LocalWriteSkewCheckingLockAcquisitionVisitor extends LockAcquisitionVisitor {
+      @Override
+      protected void performWriteSkewCheck(TxInvocationContext ctx, Object key) {
+         CacheEntry ce = ctx.lookupEntry(key);
+         if (ce instanceof RepeatableReadEntry) {
+            ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
+         }
+      }
+   }
+   
    
    private Object[] sort(WriteCommand[] writes) {
       Set<Object> set = new HashSet<Object>();
