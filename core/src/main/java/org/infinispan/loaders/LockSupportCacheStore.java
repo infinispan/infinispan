@@ -100,6 +100,20 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
    }
 
    /**
+    * Upgrades a read lock to a write lock.
+    */
+   protected final void upgradeLock(L key) {
+      locks.upgradeLock(key);
+   }
+
+   /**
+    * Downgrade a write lock to a read lock
+    */
+   protected final void downgradeLock(L key) {
+      locks.downgradeLock(key);
+   }
+
+   /**
     * Same as {@link #lockForWriting(Object)}, but with 0 timeout.
     */
    protected final boolean immediateLockForWriting(L key) {

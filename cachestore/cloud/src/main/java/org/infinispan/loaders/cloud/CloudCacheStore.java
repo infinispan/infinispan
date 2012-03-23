@@ -201,7 +201,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
+               upgradeLock(bucket.getBucketId());
+               try {
+                  updateBucket(bucket);
+               } finally {
+                  downgradeLock(bucket.getBucketId());
+               }
             }
             if (handler.handle(bucket)) {
                break;
@@ -287,7 +292,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          Bucket bucket = readFromBlob(blob, blobName);
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
+               lockForWriting(bucket.getBucketId());
+               try {
+                  updateBucket(bucket);
+               } finally {
+                  unlock(bucket.getBucketId());
+               }
            }
          } else {
             throw new CacheLoaderException("Blob not found: " + blobName);
