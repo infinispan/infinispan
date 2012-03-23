@@ -42,6 +42,7 @@ import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
@@ -166,6 +167,34 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       Configuration cfg = cm.getDefaultCacheConfiguration();
       assert cfg.locking().concurrencyLevel() == 10000;
       assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+   }
+      
+   public void testPassivationOnDefaultEvictionOnNamed() throws Exception {
+      
+      //should not throw a warning id 152 for each named caches, just for default
+      //https://issues.jboss.org/browse/ISPN-1938
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+      "<default>\n" +
+      "<transaction \n" +
+      "transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" \n" +
+      "syncRollbackPhase=\"false\" syncCommitPhase=\"false\" useEagerLocking=\"false\" />\n" +      
+      "<loaders passivation=\"true\" shared=\"true\" preload=\"true\"> \n" +
+      "<loader class=\"org.infinispan.loaders.file.FileCacheStore\" \n" +
+      "fetchPersistentState=\"true\" purgerThreads=\"3\" purgeSynchronously=\"true\" \n" +
+      "ignoreModifications=\"false\" purgeOnStartup=\"false\"> \n" +
+      "</loader>\n" +
+      "</loaders>\n" +
+      "</default>\n" +
+      "<namedCache name=\"Cache1\"> \n" +
+      "<jmxStatistics enabled=\"true\" />\n" +
+      "<eviction strategy=\"LIRS\" maxEntries=\"60000\" />\n" +
+      "</namedCache> \n" +
+      "<namedCache name=\"Cache2\"> \n" +
+      "<jmxStatistics enabled=\"true\" />\n" +
+      "<eviction strategy=\"LIRS\" maxEntries=\"60000\" />\n" +
+      "</namedCache> \n" + INFINISPAN_END_TAG;
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(is)));
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm) {
