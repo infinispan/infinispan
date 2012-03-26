@@ -60,7 +60,7 @@
    <!-- Ergonomics, new in JGroups 2.11, are disabled by default in TCPPING until JGRP-1253 is resolved -->
    <!--
    <TCPPING timeout="3000"
-            initial_hosts="localhost[7800],localhost[7801]}"
+            initial_hosts="localhost[7800],localhost[7801]"
             port_range="5"
             num_initial_members="3"
             ergonomics="false"
