@@ -37,6 +37,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -139,7 +140,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendInterceptor(createInterceptor(new OptimisticLockingInterceptor(), OptimisticLockingInterceptor.class), false);
          }
       } else {
-         interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(), NonTransactionalLockingInterceptor.class), false);
+         if (configuration.getIsolationLevel() != IsolationLevel.NONE)
+            interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(), NonTransactionalLockingInterceptor.class), false);
       }
 
       if (needsVersionAwareComponents && configuration.getCacheMode().isClustered())

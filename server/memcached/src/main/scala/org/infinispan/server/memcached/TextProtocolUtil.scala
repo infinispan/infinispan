@@ -69,12 +69,12 @@ object TextProtocolUtil {
 
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
       var next = buffer.readByte 
-      if (next == 32) { // Space
+      if (next == SP) { // Space
          (sb.toString.trim, false)
       }
-      else if (next == 13) { // CR
+      else if (next == CR) { // CR
          next = buffer.readByte
-         if (next == 10) { // LF
+         if (next == LF) { // LF
             (sb.toString.trim, true)
          } else {
             sb.append(next.asInstanceOf[Char])
@@ -99,15 +99,15 @@ object TextProtocolUtil {
 
    private def readLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte
-      if (next == 13) { // CR
+      if (next == CR) { // CR
          next = buffer.readByte
-         if (next == 10) { // LF
+         if (next == LF) { // LF
             sb.toString.trim
          } else {
             sb.append(next.asInstanceOf[Char])
             readLine(buffer, sb)
          }
-      } else if (next == 10) { //LF
+      } else if (next == LF) { //LF
          sb.toString.trim
       } else {
          sb.append(next.asInstanceOf[Char])
