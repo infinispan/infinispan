@@ -33,6 +33,10 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
+import org.hibernate.TransactionException;
+import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
+import org.hibernate.service.jta.platform.spi.JtaPlatform;
+
 /**
  * @author Steve Ebersole
  */

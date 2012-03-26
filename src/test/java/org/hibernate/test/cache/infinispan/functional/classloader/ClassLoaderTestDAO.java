@@ -25,11 +25,13 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import javax.transaction.TransactionManager;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Comment
