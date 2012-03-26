@@ -69,26 +69,21 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    override def readHeader(buffer: ChannelBuffer): (Option[RequestHeader], Boolean) = {
       var (streamOp, endOfOp) = readElement(buffer)
-      val op = toRequest(streamOp)
-      if (op == None) {
-         if (!endOfOp)
-            readLine(buffer) // Read rest of line to clear the operation
-         throw new UnknownOperationException("Unknown operation: " + streamOp);
-      }
-      if (op.get == StatsRequest && !endOfOp) {
+      val op = toRequest(streamOp, endOfOp, buffer)
+      if (op == StatsRequest && !endOfOp) {
          val line = readLine(buffer).trim
          if (!line.isEmpty)
             throw new StreamCorruptedException("Stats command does not accept arguments: " + line)
          else
             endOfOp = true
       }
-      if (op.get == VerbosityRequest) {
+      if (op == VerbosityRequest) {
          if (!endOfOp)
             readLine(buffer) // Read rest of line to clear the operation
          throw new StreamCorruptedException("Memcached 'verbosity' command is unsupported")
       }
 
-      (Some(new RequestHeader(op.get)), endOfOp)
+      (Some(new RequestHeader(op)), endOfOp)
    }
 
    override def readKey(b: ChannelBuffer): (String, Boolean) = {
@@ -110,7 +105,8 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          }
          createMultiGetResponse(new immutable.HashMap ++ map)
       } else {
-         createGetResponse(keys.head, cache.get(checkKeyLength(keys.head, true, buffer)))
+         val key = keys(0)
+         createGetResponse(key, cache.get(checkKeyLength(key, true, buffer)))
       }
    }
 
@@ -130,6 +126,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             val args = line.trim.split(" +")
             try {
                header.op match {
+                  case PutRequest => readStorageParameters(args, b)
                   case RemoveRequest => readRemoveParameters(args)
                   case IncrementRequest | DecrementRequest => {
                      endOfOp = true
@@ -546,9 +543,13 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    private def buildGetHeaderBegin(k: String, v: MemcachedValue,
            extraSpace: Int): ChannelBuffer = {
       val data = v.data
-      val dataSize = data.length.toString.getBytes
+      val dataSize = Integer.valueOf(data.length).toString.getBytes
       val key = k.getBytes
-      val flags = if (v.flags != 0) v.flags.toString.getBytes else ZERO
+      val flags =
+         if (v.flags != 0)
+            java.lang.Long.valueOf(v.flags).toString.getBytes
+         else ZERO
+
       val flagsSize = flags.length
       val buf = buffer(VALUE_SIZE + key.length + data.length + flagsSize
               + dataSize.length + 6 + extraSpace)
@@ -584,22 +585,22 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    private def friendlyMaxIntCheck(number: String, message: String): Int = {
       try {
-         number.toInt
+         Integer.parseInt(number)
       } catch {
          case n: NumberFormatException => numericLimitCheck(number, Int.MaxValue, message, n)
       }
    }
 
    private def numericLimitCheck(number: String, maxValue: Long, message: String, n: NumberFormatException): Int = {
-      if (number.toLong > maxValue)
+      if (java.lang.Long.parseLong(number) > maxValue)
          throw new NumberFormatException(message + " sent (" + number
             + ") exceeds the limit (" + maxValue + ")")
       else throw n
    }
 
    private def numericLimitCheck(number: String, maxValue: Long, message: String): Long =  {
-      val numeric = number.toLong
-      if (number.toLong > maxValue)
+      val numeric = java.lang.Long.parseLong(number)
+      if (java.lang.Long.parseLong(number) > maxValue)
          throw new NumberFormatException(message + " sent (" + number
             + ") exceeds the limit (" + maxValue + ")")
       numeric
@@ -631,28 +632,31 @@ private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
 }
 
 private object RequestResolver extends Log {
-   private val operations = Map[String, Enumeration#Value](
-      "set" -> PutRequest,
-      "add" -> PutIfAbsentRequest,
-      "replace" -> ReplaceRequest,
-      "cas" -> ReplaceIfUnmodifiedRequest,
-      "append" -> AppendRequest,
-      "prepend" -> PrependRequest,
-      "get" -> GetRequest,
-      "gets" -> GetWithVersionRequest,
-      "delete" -> RemoveRequest,
-      "incr" -> IncrementRequest,
-      "decr" -> DecrementRequest,
-      "flush_all" -> FlushAllRequest,
-      "version" -> VersionRequest,
-      "stats" -> StatsRequest,
-      "verbosity" -> VerbosityRequest,
-      "quit" -> QuitRequest
-   )
-
-   def toRequest(commandName: String): Option[Enumeration#Value] = {
+   def toRequest(commandName: String, endOfOp: Boolean, buffer: ChannelBuffer): Enumeration#Value = {
       if (isTraceEnabled) trace("Operation: %s", commandName)
-      val op = operations.get(commandName)
+      val op = commandName match {
+         case "get" => GetRequest
+         case "set" => PutRequest
+         case "add" => PutIfAbsentRequest
+         case "delete" => RemoveRequest
+         case "replace" => ReplaceRequest
+         case "cas" => ReplaceIfUnmodifiedRequest
+         case "append" => AppendRequest
+         case "prepend" => PrependRequest
+         case "gets" => GetWithVersionRequest
+         case "incr" => IncrementRequest
+         case "decr" => DecrementRequest
+         case "flush_all" => FlushAllRequest
+         case "version" => VersionRequest
+         case "stats" => StatsRequest
+         case "verbosity" => VerbosityRequest
+         case "quit" => QuitRequest
+         case _ => {
+            if (!endOfOp)
+               readLine(buffer) // Read rest of line to clear the operation
+            throw new UnknownOperationException("Unknown operation: " + commandName);
+         }
+      }
       op
    }
 }
