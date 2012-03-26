@@ -32,6 +32,13 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
+<<<<<<< HEAD
+=======
+
+import org.hibernate.TransactionException;
+import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
+import org.hibernate.service.jta.platform.spi.JtaPlatform;
+>>>>>>> HHH-7197 reimport imports
 
 /**
  * @author Steve Ebersole

@@ -23,17 +23,24 @@ package org.hibernate.test.cache.infinispan.functional.bulk;
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 >>>>>>> HHH-5942 - Migrate to JUnit 4
+=======
+>>>>>>> HHH-7197 reimport imports
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
+import org.junit.Test;
 
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
@@ -46,10 +53,6 @@ import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 >>>>>>> HHH-6150 - JBoss AS7 integration work
 import org.hibernate.stat.SecondLevelCacheStatistics;
-
-import org.junit.Test;
-
-import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.functional.Contact;
 import org.hibernate.test.cache.infinispan.functional.Customer;
 <<<<<<< HEAD
@@ -64,6 +67,7 @@ import org.hibernate.service.jta.platform.internal.JtaPlatformInitiator;
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.hibernate.testing.junit.functional.FunctionalTestCase;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.test.cache.infinispan.functional.Contact;
@@ -72,6 +76,9 @@ import org.hibernate.test.cache.infinispan.functional.Customer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 =======
+=======
+import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
+>>>>>>> HHH-7197 reimport imports
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

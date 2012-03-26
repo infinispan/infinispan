@@ -44,6 +44,7 @@ import junit.framework.TestSuite;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 =======
 =======
@@ -52,17 +53,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 >>>>>>> ISPN-6955 Add guarantees that the cluster forms
+=======
+import java.util.Arrays;
+>>>>>>> HHH-7197 reimport imports
 import java.util.concurrent.Callable;
 >>>>>>> HHH-6955 Upgrade to Infinispan 5.1.0.CR3
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.cache.infinispan.util.CacheHelper;
+import junit.framework.AssertionFailedError;
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.jboss.logging.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 import org.hibernate.cache.CacheDataDescription;
@@ -77,11 +85,21 @@ import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 >>>>>>> HHH-6191 - repackage org.hibernate.cache per api/spi/internal split
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
+=======
+import org.hibernate.cache.infinispan.InfinispanRegionFactory;
+import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
+import org.hibernate.cache.infinispan.util.CacheHelper;
+import org.hibernate.cache.internal.CacheDataDescriptionImpl;
+import org.hibernate.cache.spi.CacheDataDescription;
+import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+>>>>>>> HHH-7197 reimport imports
 import org.hibernate.cfg.Configuration;
 <<<<<<< HEAD
 import org.hibernate.service.spi.ServiceRegistry;
 =======
 import org.hibernate.internal.util.compare.ComparableComparator;
+<<<<<<< HEAD
 
 import org.junit.After;
 import org.junit.Before;
@@ -89,6 +107,8 @@ import org.junit.Test;
 import junit.framework.AssertionFailedError;
 
 >>>>>>> HHH-5942 - Migrate to JUnit 4
+=======
+>>>>>>> HHH-7197 reimport imports
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.NodeEnvironment;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;

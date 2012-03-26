@@ -36,7 +36,7 @@ import javax.naming.StringRefAddr;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-import static org.junit.Assert.*;
+
 import org.enhydra.jdbc.standard.StandardXADataSource;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -45,6 +45,12 @@ import org.jboss.util.naming.NonSerializableFactory;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.server.Main;
 import org.jnp.server.NamingServer;
+<<<<<<< HEAD
+=======
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+>>>>>>> HHH-7197 reimport imports
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -62,6 +68,7 @@ import org.hibernate.test.cache.infinispan.functional.Item;
 import org.hibernate.test.common.ServiceRegistryHolder;
 =======
 import org.hibernate.testing.ServiceRegistryBuilder;
+<<<<<<< HEAD
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -79,6 +86,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 >>>>>>> HHH-6742 move unit tests back to src/test
+=======
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+>>>>>>> HHH-7197 reimport imports
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with

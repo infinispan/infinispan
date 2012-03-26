@@ -25,8 +25,11 @@ package org.hibernate.test.cache.infinispan.functional;
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 import javax.transaction.TransactionManager;
 >>>>>>> HHH-5942 - Migrate to JUnit 4
+=======
+>>>>>>> HHH-7197 reimport imports
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -40,18 +43,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.transaction.TransactionManager;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.junit.Test;
 
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 import org.hibernate.stat.SecondLevelCacheStatistics;
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -59,6 +65,8 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.junit.Test;
 
 >>>>>>> HHH-5942 - Migrate to JUnit 4
+=======
+>>>>>>> HHH-7197 reimport imports
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeConnectionProviderImpl;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeTestCase;

@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.jboss.logging.Logger;
+<<<<<<< HEAD
 
 import org.hibernate.cache.spi.RegionFactory;
 <<<<<<< HEAD
@@ -48,6 +49,12 @@ import org.junit.After;
 import org.junit.Before;
 
 >>>>>>> HHH-5942 - Migrate to JUnit 4
+=======
+import org.junit.After;
+import org.junit.Before;
+
+import org.hibernate.cache.spi.RegionFactory;
+>>>>>>> HHH-7197 reimport imports
 import org.hibernate.test.cache.infinispan.util.CacheTestSupport;
 
 /**
