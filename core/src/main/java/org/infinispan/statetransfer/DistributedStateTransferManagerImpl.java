@@ -70,6 +70,11 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
             this, dm, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView, transactionTable);
    }
 
+   @Override
+   protected long getTimeout() {
+      return configuration.getRehashWaitTime();
+   }
+
    protected ConsistentHash createConsistentHash(List<Address> members) {
       return ConsistentHashHelper.createConsistentHash(configuration, members);
    }

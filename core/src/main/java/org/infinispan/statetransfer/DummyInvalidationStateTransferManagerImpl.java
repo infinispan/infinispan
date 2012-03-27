@@ -66,6 +66,12 @@ public class DummyInvalidationStateTransferManagerImpl extends BaseStateTransfer
    }
 
    @Override
+   protected long getTimeout() {
+      // although we don't have state transfer RPCs, we still have to wait for the join to complete
+      return configuration.getStateRetrievalTimeout();
+   }
+
+   @Override
    public boolean isLocationInDoubt(Object key) {
       return false;
    }
