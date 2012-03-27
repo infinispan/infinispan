@@ -46,6 +46,11 @@ public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManager
             this, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView);
    }
 
+   @Override
+   protected long getTimeout() {
+      return configuration.getStateRetrievalTimeout();
+   }
+
    protected ConsistentHash createConsistentHash(List<Address> members) {
       // The user will not be able to configure the consistent hash in replicated mode
       // We are always going to use the default consistent hash function.
