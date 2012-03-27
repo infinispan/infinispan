@@ -170,6 +170,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       // ensure the correct isolation level upgrades and/or downgrades are performed.
       switch (locking.isolationLevel) {
          case NONE:
+            if (clustering.mode.isClustered())
+               locking.isolationLevel = IsolationLevel.READ_COMMITTED;
+            break;
          case READ_UNCOMMITTED:
             locking.isolationLevel = IsolationLevel.READ_COMMITTED;
             break;
