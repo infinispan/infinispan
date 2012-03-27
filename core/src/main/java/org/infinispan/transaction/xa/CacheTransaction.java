@@ -84,4 +84,8 @@ public interface CacheTransaction {
    EntryVersionsMap getUpdatedEntryVersions();
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
+
+   boolean keyRead(Object key);
+
+   void addReadKey(Object key);
 }
