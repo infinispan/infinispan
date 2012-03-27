@@ -30,6 +30,8 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.annotations.Test;
+import org.testng.internal.annotations.TestAnnotation;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

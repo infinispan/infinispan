@@ -62,9 +62,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
       cacheManager1.defineConfiguration("clusteredCl", config1);
       cacheManager2.defineConfiguration("clusteredCl", config2);
-      Cache cache1 = cache(0, "clusteredCl");
-      Cache cache2 = cache(1, "clusteredCl");
-      
+      waitForClusterToForm("clusteredCl");
    }
 
    public void testRemoteLoad() {

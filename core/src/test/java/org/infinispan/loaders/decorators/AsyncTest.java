@@ -24,6 +24,7 @@ package org.infinispan.loaders.decorators;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -85,6 +86,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    @Test(timeOut=10000)
    public void testPutRemove() throws Exception {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       final int number = 1000;
       String key = "testPutRemove-k-";
       String value = "testPutRemove-v-";
@@ -94,6 +96,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    @Test(timeOut=10000)
    public void testPutClearPut() throws Exception {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       final int number = 1000;
       String key = "testPutClearPut-k-";
       String value = "testPutClearPut-v-";
@@ -106,6 +109,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    @Test(timeOut=10000)
    public void testMultiplePutsOnSameKey() throws Exception {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       final int number = 1000;
       String key = "testMultiplePutsOnSameKey-k";
       String value = "testMultiplePutsOnSameKey-v-";
@@ -115,6 +119,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    @Test(timeOut=10000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       store.remove("blah");
 
       final int number = 10;

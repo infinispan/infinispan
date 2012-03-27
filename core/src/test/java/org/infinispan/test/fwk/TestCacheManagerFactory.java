@@ -40,6 +40,7 @@ import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.internal.annotations.TestAnnotation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -381,22 +382,7 @@ public class TestCacheManagerFactory {
 
          String fullTestName = perThreadCacheManagers.get().fullTestName;
          String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
-         if (fullTestName == null) {
-            // Either we're running from within the IDE or it's a
-            // @Test(timeOut=nnn) test. We rely here on some specific TestNG
-            // thread naming convention which can break, but TestNG offers no
-            // other alternative. It does not offer any callbacks within the
-            // thread that runs the test that can timeout.
-            String threadName = Thread.currentThread().getName();
-            String pattern = "TestNGInvoker-";
-            if (threadName.startsWith(pattern)) {
-               // This is a timeout test, so for the moment rely on the test
-               // method name that comes in the thread name.
-               fullTestName = threadName;
-               nextCacheName = threadName.substring(
-                     threadName.indexOf("-") + 1, threadName.indexOf('('));
-            } // else, test is being run from IDE
-         }
+         checkTestName(fullTestName);
 
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
                getJGroupsConfig(fullTestName, flags));
@@ -411,27 +397,28 @@ public class TestCacheManagerFactory {
       if (gc.transport().transport() != null) { //this is local
          String fullTestName = perThreadCacheManagers.get().fullTestName;
          String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
-         if (fullTestName == null) {
-            // Either we're running from within the IDE or it's a
-            // @Test(timeOut=nnn) test. We rely here on some specific TestNG
-            // thread naming convention which can break, but TestNG offers no
-            // other alternative. It does not offer any callbacks within the
-            // thread that runs the test that can timeout.
-            String threadName = Thread.currentThread().getName();
-            String pattern = "TestNGInvoker-";
-            if (threadName.startsWith(pattern)) {
-               // This is a timeout test, so for the moment rely on the test
-               // method name that comes in the thread name.
-               fullTestName = threadName;
-               nextCacheName = threadName.substring(
-                     threadName.indexOf("-") + 1, threadName.indexOf('('));
-            } // else, test is being run from IDE
-         }
+         checkTestName(fullTestName);
 
          builder
                .transport()
                .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(fullTestName, flags))
                .nodeName(nextCacheName);
+      }
+   }
+
+   private static void checkTestName(String fullTestName) {
+      if (fullTestName == null) {
+         // Either we're running from within the IDE or it's a
+         // @Test(timeOut=nnn) test. We rely here on some specific TestNG
+         // thread naming convention which can break, but TestNG offers no
+         // other alternative. It does not offer any callbacks within the
+         // thread that runs the test that can timeout.
+         String threadName = Thread.currentThread().getName();
+         String pattern = "TestNGInvoker-";
+         if (threadName.startsWith(pattern)) {
+            // This is a timeout test, so force the user to call our marking method
+            throw new RuntimeException("Test name is not set! Please call TestCacheManagerFactory.backgroundTestStarted(this) in your test method!");
+         } // else, test is being run from IDE
       }
    }
 
@@ -513,6 +500,13 @@ public class TestCacheManagerFactory {
             return e.toString();
       }
       return null;
+   }
+
+   public static void backgroundTestStarted(Object testInstance) {
+      String fullName = testInstance.getClass().getName();
+      String testName = testInstance.getClass().getSimpleName();
+
+      TestCacheManagerFactory.testStarted(testName, fullName);
    }
 
    static void testStarted(String testName, String fullName) {
