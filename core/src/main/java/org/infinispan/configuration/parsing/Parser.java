@@ -1009,12 +1009,12 @@ public class Parser {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceSystemProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         log.stateRetrievalConfigurationDeprecated();
          switch (attribute) {
             case ALWAYS_PROVIDE_IN_MEMORY_STATE:
                log.alwaysProvideInMemoryStateDeprecated();
                break;
             case FETCH_IN_MEMORY_STATE:
-               log.stateRetrievalConfigurationDeprecaced();
                builder.clustering().stateTransfer().fetchInMemoryState(Boolean.parseBoolean(value));
                break;
             case INITIAL_RETRY_WAIT_TIME:
@@ -1033,7 +1033,6 @@ public class Parser {
                log.retryWaitTimeIncreaseFactorDeprecated();
                break;
             case TIMEOUT:
-               log.stateRetrievalConfigurationDeprecaced();
                builder.clustering().stateTransfer().timeout(Long.parseLong(value));
                break;
             default:
@@ -1124,16 +1123,16 @@ public class Parser {
                builder.clustering().hash().numVirtualNodes(Integer.parseInt(value));
                break;
             case REHASH_ENABLED:
-               if (Boolean.parseBoolean(value))
-                  builder.clustering().hash().rehashEnabled();
-               else
-                  builder.clustering().hash().rehashDisabled();
+               log.hashRehashEnabledDeprecated();
+               builder.clustering().stateTransfer().fetchInMemoryState(Boolean.parseBoolean(value));
                break;
             case REHASH_RPC_TIMEOUT:
-               builder.clustering().hash().rehashRpcTimeout(Long.parseLong(value));
+               log.hashRehashRpcTimeoutDeprecated();
+               builder.clustering().stateTransfer().timeout(Long.parseLong(value));
                break;
             case REHASH_WAIT:
-               builder.clustering().hash().rehashWait(Long.parseLong(value));
+               log.hashRehashWaitDeprecated();
+               builder.clustering().stateTransfer().timeout(Long.parseLong(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
