@@ -848,6 +848,18 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "The stateRetrieval configuration element has been deprecated, " +
          "we're assuming you meant stateTransfer. Please see XML schema for more information.", id = 184)
-   void stateRetrievalConfigurationDeprecaced();
+   void stateRetrievalConfigurationDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashEnabled' attribute has been deprecated. Please use stateTransfer.fetchInMemoryState instead", id = 185)
+   void hashRehashEnabledDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashRpcTimeout' attribute has been deprecated. Please use stateTransfer.timeout instead", id = 186)
+   void hashRehashRpcTimeoutDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashWait' attribute has been deprecated. Please use stateTransfer.timeout instead", id = 187)
+   void hashRehashWaitDeprecated();
 
 }
