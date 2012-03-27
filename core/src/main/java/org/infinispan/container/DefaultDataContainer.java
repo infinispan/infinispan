@@ -59,9 +59,9 @@ import java.util.concurrent.ConcurrentMap;
 @ThreadSafe
 public class DefaultDataContainer implements DataContainer {
 
-   final ConcurrentMap<Object, InternalCacheEntry> entries;
-   InternalEntryFactory entryFactory;
-   final DefaultEvictionListener evictionListener;
+   final protected ConcurrentMap<Object, InternalCacheEntry> entries;
+   protected InternalEntryFactory entryFactory;
+   final protected DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
 
