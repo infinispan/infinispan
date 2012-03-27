@@ -200,4 +200,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
       this.updatedEntryVersions = updatedEntryVersions;
    }
+   
+   @Override
+   public void addReadKey(Object key) {
+      // No-op
+   }
+   
+   @Override
+   public boolean keyRead(Object key) {
+      return false;
+   }
 }
