@@ -40,6 +40,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
@@ -49,6 +50,7 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -259,7 +261,34 @@ public class ConfigurationUnitTest {
       org.infinispan.config.Configuration adapt = 
             LegacyConfigurationAdaptor.adapt(builder.build());
       assert adapt.isEnableVersioning();
+   }
 
+   public void testNoneIsolationLevel() throws Exception {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.locking().isolationLevel(IsolationLevel.NONE);
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() throws Exception {
+            Configuration cfg = cm.getCache().getCacheConfiguration();
+            assertEquals(IsolationLevel.NONE, cfg.locking().isolationLevel());
+         }
+      });
+   }
+
+   public void testNoneIsolationLevelInCluster() throws Exception {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.locking().isolationLevel(IsolationLevel.NONE)
+            .clustering().cacheMode(CacheMode.REPL_SYNC).build();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createClusteredCacheManager(builder)) {
+         @Override
+         public void call() throws Exception {
+            Configuration cfg = cm.getCache().getCacheConfiguration();
+            assertEquals(IsolationLevel.READ_COMMITTED,
+                  cfg.locking().isolationLevel());
+         }
+      });
    }
 
 }
