@@ -60,6 +60,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Test(timeOut = 10000)
    public void writeOnStorage() {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       cache = cacheManager.getCache("AsyncStoreInMemory");
       cache.put("key1", "value");
       cache.stop();

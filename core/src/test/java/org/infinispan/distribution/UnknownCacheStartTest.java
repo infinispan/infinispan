@@ -28,6 +28,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.TestException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -55,6 +56,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000, enabled = false)
    public void testStartingUnknownCaches() throws Throwable {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       try {
          cm1 = createCacheManager(configuration);
 
