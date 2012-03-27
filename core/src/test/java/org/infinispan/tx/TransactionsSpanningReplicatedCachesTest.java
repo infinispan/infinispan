@@ -54,6 +54,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
+
+      waitForClusterToForm();
    }
 
    private void startAllCaches() {
