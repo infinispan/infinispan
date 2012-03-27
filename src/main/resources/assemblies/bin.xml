@@ -447,7 +447,48 @@
          </sources>
 
       </moduleSet>
-      
+
+      <!-- CDI -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-cdi</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+         </sources>
+
+         <!-- All modules except core and Webapp modules -->
+         <binaries>
+
+            <outputDirectory>modules/cdi</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+
+            <dependencySets>
+               <dependencySet>
+                  <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
+                     <exclude>infinispan-core*</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                     <exclude>org.infinispan:infinispan-core</exclude>
+                     <exclude>org.infinispan:infinispan-server-rest</exclude>
+                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
+                     <exclude>log4j:log4j</exclude>
+                  </excludes>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
+                  <outputDirectory>modules/cdi/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
+
    </moduleSets>
 
    <fileSets>
