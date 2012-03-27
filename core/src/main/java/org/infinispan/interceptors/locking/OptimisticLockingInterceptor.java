@@ -26,6 +26,7 @@ package org.infinispan.interceptors.locking;
 import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -65,8 +66,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private LockAcquisitionVisitor lockAcquisitionVisitor;
    private static final MurmurHash3 HASH = new MurmurHash3();
+   private boolean needToMarkReads;
    private final static Comparator<Object> keyComparator = new Comparator<Object>() {
-
       @Override
       public int compare(Object o1, Object o2) {
          int thisVal = HASH.hash(o1);
@@ -95,11 +96,20 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             configuration.isWriteSkewCheck() &&
             configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ) {
          lockAcquisitionVisitor = new LocalWriteSkewCheckingLockAcquisitionVisitor();
+         needToMarkReads = true;
       } else {
          lockAcquisitionVisitor = new LockAcquisitionVisitor();
+         needToMarkReads = false;
       }
    }
 
+   private void markKeyAsRead(InvocationContext ctx, Object key) {
+      if (needToMarkReads && ctx.isInTxScope()) {
+         TxInvocationContext tctx = (TxInvocationContext) ctx;
+         tctx.getCacheTransaction().addReadKey(key);
+      }
+   }
+   
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       abortIfRemoteTransactionInvalid(ctx, command);
@@ -125,10 +135,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
+         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
+   }
+   
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      markKeyAsRead(ctx, command.getKey());
+      return super.visitGetKeyValueCommand(ctx, command);
    }
    
    @Override
@@ -152,6 +169,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
+         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -161,6 +179,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
+         markKeyAsRead(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -254,8 +273,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       @Override
       protected void performWriteSkewCheck(TxInvocationContext ctx, Object key) {
          CacheEntry ce = ctx.lookupEntry(key);
-         if (ce instanceof RepeatableReadEntry) {
-            ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
+         if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
+               ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
          }
       }
    }
