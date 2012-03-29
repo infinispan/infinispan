@@ -59,6 +59,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
    private var viewId: Int = _
+   private val isTrace = isTraceEnabled
 
    def getAddress: ServerAddress = address
 
@@ -184,7 +185,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          if (!event.isPre) {
             val localViewId = transport.getViewId
             setViewId(localViewId)
-            if (isTraceEnabled) {
+            if (isTrace) {
                log.tracef("Address cache had %s for key %s. View id is now %d",
                           event.getType, event.getKey, localViewId)
             }
