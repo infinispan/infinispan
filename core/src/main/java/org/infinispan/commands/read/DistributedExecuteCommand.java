@@ -27,6 +27,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.lifecycle.ComponentStatus;
 
 import java.util.Collection;
@@ -90,15 +91,24 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
     */
    @Override
    public Object perform(InvocationContext context) throws Throwable {
+      // hook into lifecycle
+      DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
       Callable<V> callable = getCallable();
-      if (callable instanceof DistributedCallable<?, ?, ?>) {
-         DistributedCallable<Object, Object, Object> dc = (DistributedCallable<Object, Object, Object>) callable;
-         dc.setEnvironment(cache, keys);
+      V result = null;
+      try {
+         taskLifecycleService.onPreExecute(callable);
+         if (callable instanceof DistributedCallable<?, ?, ?>) {
+            DistributedCallable<Object, Object, Object> dc = (DistributedCallable<Object, Object, Object>) callable;
+            dc.setEnvironment(cache, keys);
+         }
+         result = callable.call();
+      } finally {
+         taskLifecycleService.onPostExecute(callable);
       }
-      return callable.call();      
+      return result;
    }
 
-   private Callable<V> getCallable() {
+   public Callable<V> getCallable() {
       return callable;
    }
 

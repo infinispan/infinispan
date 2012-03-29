@@ -40,7 +40,7 @@ import org.infinispan.Cache;
  * @since 5.0
  * 
  */
-public interface DistributedCallable<K, V, T> extends Callable<T> {
+public interface DistributedCallable<K, V, T> extends Callable<T>, RemoteExecutable {
 
    /**
     * Invoked by execution environment after DistributedCallable has been migrated for execution to

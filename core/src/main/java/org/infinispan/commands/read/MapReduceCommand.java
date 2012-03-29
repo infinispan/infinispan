@@ -29,6 +29,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
+import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Address;
@@ -135,25 +136,39 @@ public class MapReduceCommand extends BaseRpcCommand {
 
          keys.addAll(selectedKeys);
       }
+      //hook into lifecycle
+      DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
       log.tracef("For %s at %s invoking mapper on keys %s", this, localAddress, keys);
-      DefaultCollector<Object,Object> collector = new DefaultCollector<Object, Object>();
-      for (Object key : keys) {
-         GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
-         command.setReturnCacheEntry(false);
-         Object value = invoker.invoke(ctx, command);
-         mapper.map(key, value,collector);
-      }
-      Map<Object, List<Object>> collectedValues = collector.collectedValues();
-      Map<Object,Object> reducedMap = new HashMap<Object, Object>();
-      for (Entry<Object, List<Object>> e : collectedValues.entrySet()) {
-         List<Object> list = e.getValue();
-         if(list.size()>1){
-            Object reduced = reducer.reduce(e.getKey(),list.iterator());
-            reducedMap.put(e.getKey(), reduced);
-         } else {
-            reducedMap.put(e.getKey(),list.get(0));
+      DefaultCollector<Object, Object> collector = new DefaultCollector<Object, Object>();
+      try {
+         taskLifecycleService.onPreExecute(mapper);         
+         for (Object key : keys) {
+            GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key,
+                     ctx.getFlags());
+            command.setReturnCacheEntry(false);
+            Object value = invoker.invoke(ctx, command);
+            mapper.map(key, value, collector);
          }
-      }                 
+      } finally {
+         taskLifecycleService.onPostExecute(mapper);
+      }
+      
+      Map<Object, Object> reducedMap = new HashMap<Object, Object>();
+      try {
+         taskLifecycleService.onPreExecute(reducer);
+         Map<Object, List<Object>> collectedValues = collector.collectedValues();         
+         for (Entry<Object, List<Object>> e : collectedValues.entrySet()) {
+            List<Object> list = e.getValue();
+            if (list.size() > 1) {
+               Object reduced = reducer.reduce(e.getKey(), list.iterator());
+               reducedMap.put(e.getKey(), reduced);
+            } else {
+               reducedMap.put(e.getKey(), list.get(0));
+            }
+         }
+      } finally {
+         taskLifecycleService.onPostExecute(reducer);
+      }
       log.tracef("%s executed at %s was reduced to %s", this, localAddress, reducedMap);
       return reducedMap;
    }
