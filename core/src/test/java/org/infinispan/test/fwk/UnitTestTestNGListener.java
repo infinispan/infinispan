@@ -31,6 +31,7 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -51,7 +52,16 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    public void onTestStart(ITestResult res) {
       log.info("Starting test " + getTestDesc(res));
+      addOomLoggingSupport();
       threadTestClass.set(res.getTestClass());
+   }
+
+   private void addOomLoggingSupport() {
+      Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+         public void uncaughtException(final Thread t, final Throwable e) {
+            printAllTheThreadsInTheJvm(e);
+         }
+      });
    }
 
    synchronized public void onTestSuccess(ITestResult arg0) {
@@ -110,6 +120,22 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
       if (!method.isTestMethod())
          return;
-      if (testResult.getThrowable() != null) log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
+      if (testResult.getThrowable() != null)
+         log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
+   }
+
+   public static void printAllTheThreadsInTheJvm(Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+         Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
+         log.tracef("Dumping all %s threads in the system.", allStackTraces.size());
+         for (Map.Entry<Thread, StackTraceElement[]> s : allStackTraces.entrySet()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Thread: ").append(s.getKey().getName()).append(". Stack trace:\n");
+            for (StackTraceElement ste: s.getValue()) {
+               sb.append("      ").append(ste.toString()).append("\n");
+            }
+            log.trace(sb.toString());
+         }
+      }
    }
 }
