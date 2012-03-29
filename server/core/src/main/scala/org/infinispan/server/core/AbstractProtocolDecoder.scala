@@ -63,7 +63,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
       try {
-         if (isTraceEnabled) // To aid debugging
+         if (isTrace) // To aid debugging
             trace("Decode using instance @%x", System.identityHashCode(this))
          state match {
             case DECODE_HEADER => decodeHeader(ch, buffer, state)
