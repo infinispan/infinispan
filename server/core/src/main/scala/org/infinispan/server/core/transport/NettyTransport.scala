@@ -63,6 +63,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
    private val userBytesWritten, userBytesRead = new AtomicLong
+   private val isTrace = isTraceEnabled
 
    override def start {
       ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
@@ -75,7 +76,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                else "ClientMaster-"
             // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
             val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-            if (isTraceEnabled)
+            if (isTrace)
                trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
                   name, currentThread, proposedThreadName)
             name

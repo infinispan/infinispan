@@ -66,6 +66,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    private final val replaceIfUnmodifiedMisses = new AtomicLong(0)
    private final val replaceIfUnmodifiedHits = new AtomicLong(0)
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
+   private val isTrace = isTraceEnabled
 
    override def readHeader(buffer: ChannelBuffer): (Option[RequestHeader], Boolean) = {
       var (streamOp, endOfOp) = readElement(buffer)
@@ -122,7 +123,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       var endOfOp = false
       params =
          if (!line.isEmpty) {
-            if (isTraceEnabled) trace("Operation parameters: %s", line)
+            if (isTrace) trace("Operation parameters: %s", line)
             val args = line.trim.split(" +")
             try {
                header.op match {
@@ -632,8 +633,9 @@ private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
 }
 
 private object RequestResolver extends Log {
+   private val isTrace = isTraceEnabled
    def toRequest(commandName: String, endOfOp: Boolean, buffer: ChannelBuffer): Enumeration#Value = {
-      if (isTraceEnabled) trace("Operation: %s", commandName)
+      if (isTrace) trace("Operation: %s", commandName)
       val op = commandName match {
          case "get" => GetRequest
          case "set" => PutRequest
