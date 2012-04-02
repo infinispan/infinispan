@@ -296,12 +296,12 @@ class Git(object):
     '''Creates and switches to a temp tagging branch, based off the release branch.'''
     self.run_git("checkout -b %s %s" % (self.working_branch, self.branch))
   
-  def commit(self, files):
+  def commit(self, files, message):
     '''Commits the set of files to the current branch with a generated commit message.'''    
     for f in files:
       self.run_git("add %s" % f)
     
-    self.run_git(["commit", "-m", "'Release Script: update versions for %s'" % self.tag])
+    self.run_git(["commit", "-m", message])
   
   def tag_for_release(self):
     '''Tags the current branch for release using the tag name.'''
