@@ -29,6 +29,7 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -478,14 +479,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected Object getKeyForCache(Cache cache) {
-      ExecutorService ex = Executors.newSingleThreadExecutor();
-      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex,
-                                                                                       new RndKeyGenerator(), 5, true);
-      try {
-         return kas.getKeyForAddress(cache.getAdvancedCache().getRpcManager().getAddress());
-      } finally {
-         ex.shutdown();
-      }
+      return new MagicKey(cache);
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {

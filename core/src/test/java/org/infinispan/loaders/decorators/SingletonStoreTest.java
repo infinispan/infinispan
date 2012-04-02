@@ -259,7 +259,8 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       ssdc.setPushStateTimeout(100L);
       final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null, ssdc);
 
-      Future f = Executors.newSingleThreadExecutor().submit(createActiveStatusChanger(mscl));
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      Future f = executor.submit(createActiveStatusChanger(mscl));
       pushStateCanFinish.await(200, TimeUnit.MILLISECONDS);
       pushStateCanFinish.countDown();
 
@@ -275,6 +276,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
             throw e;
          }
       }
+      executor.shutdownNow();
    }
 
    private void waitForPushStateCompletion(Future pushThreadFuture) throws Exception {

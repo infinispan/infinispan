@@ -31,6 +31,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -57,11 +58,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       assert cache(1).get("k").equals("v");
       assert cache(1, "second").get("k").equals("v");
 
-      KeyAffinityService<Object> service = KeyAffinityServiceFactory.newKeyAffinityService(cache(0),
-                                                                                           Executors.newSingleThreadExecutor(),
-                                                                                           new RndKeyGenerator(), 2, true);
-      k0 = service.getKeyForAddress(address(0));
-      service.stop();
+      k0 = new MagicKey(cache(0));
    }
 
    public void testL1Invalidated() throws Exception {
