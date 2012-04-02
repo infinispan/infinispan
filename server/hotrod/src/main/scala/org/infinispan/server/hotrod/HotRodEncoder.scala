@@ -39,11 +39,10 @@ import org.infinispan.remoting.transport.Address
  */
 class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
         extends OneToOneEncoder with Constants with Log {
-   import HotRodServer._
 
    private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
    private lazy val addressCache: Cache[Address, ServerAddress] =
-      if (isClustered) cacheManager.getCache(ADDRESS_CACHE_NAME) else null
+      if (isClustered) cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME) else null
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg %s", msg)
@@ -64,7 +63,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
          case 0 => encoder.writeHeader(r, buf, null, null)
       }
 
-      encoder.writeResponse(r, buf, cacheManager)
+      encoder.writeResponse(r, buf, cacheManager, server)
       buf
    }
 
