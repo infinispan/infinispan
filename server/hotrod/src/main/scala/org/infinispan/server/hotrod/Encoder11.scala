@@ -25,7 +25,6 @@ import org.infinispan.Cache
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
-import org.infinispan.server.hotrod.HotRodServer._
 import collection.JavaConversions._
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -63,8 +62,8 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
 
    }
 
-   override def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager) =
-      encoder10.writeResponse(this, r, buf, cacheManager)
+   override def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager, server: HotRodServer) =
+      encoder10.writeResponse(this, r, buf, cacheManager, server)
 
    def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
             server: HotRodServer): AbstractTopologyResponse = {
@@ -74,7 +73,7 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
             case 2 | 3 => {
                val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
-                  val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
+                  val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
                      TopologyAwareResponse(lastViewId)

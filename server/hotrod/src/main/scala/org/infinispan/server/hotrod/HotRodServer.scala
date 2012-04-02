@@ -35,10 +35,10 @@ import org.infinispan.server.core.Main._
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
 import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.Cache
-import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryCreated}
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.remoting.transport.{Transport, Address}
-import java.util.concurrent.atomic.AtomicInteger
+import org.infinispan.util.concurrent.ConcurrentMapFactory
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -52,13 +52,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * @since 4.1
  */
 class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
-   import HotRodServer._
    private var isClustered: Boolean = _
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
    private var viewId: Int = _
+   private val knownCaches : java.util.Map[String, Cache[ByteArrayKey, CacheValue]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
    private val isTrace = isTraceEnabled
 
    def getAddress: ServerAddress = address
@@ -73,7 +73,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
    override def getDecoder : HotRodDecoder = {
-      val hotRodDecoder = new HotRodDecoder(getCacheManager, transport)
+      val hotRodDecoder = new HotRodDecoder(getCacheManager, transport, this)
       hotRodDecoder.versionGenerator = this.versionGenerator
       hotRodDecoder
    }
@@ -114,14 +114,14 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private def preStartCaches {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
-         if (cacheName != ADDRESS_CACHE_NAME) {
+         if (cacheName != HotRodServer.ADDRESS_CACHE_NAME) {
             cacheManager.getCache(cacheName)
          }
       }
    }
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
-      addressCache = cacheManager.getCache(ADDRESS_CACHE_NAME)
+      addressCache = cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME)
       addressCache.addListener(new ViewIdUpdater(
             addressCache.getAdvancedCache.getRpcManager.getTransport))
       clusterAddress = cacheManager.getAddress
@@ -133,7 +133,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
-      cacheManager.defineConfiguration(ADDRESS_CACHE_NAME,
+      cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
          createTopologyCacheConfig(typedProps,
             cacheManager.getGlobalConfiguration.getDistributedSyncTimeout))
    }
@@ -167,6 +167,26 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       topologyCacheConfig
    }
 
+   def isCacheNameKnown(cacheName: String) = {
+      cacheName != null && !cacheName.isEmpty && !(knownCaches containsKey cacheName)
+   }
+
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[ByteArrayKey, CacheValue] = {
+      var cache: Cache[ByteArrayKey, CacheValue] = null 
+      if (!skipCacheCheck) cache = knownCaches.get(cacheName)
+
+      if (cache == null) {
+         if (cacheName.isEmpty) 
+            cache = cacheManager.getCache[ByteArrayKey, CacheValue]
+         else 
+            cache = cacheManager.getCache(cacheName)
+
+         knownCaches.put(cacheName, cache)
+      }
+
+      cache
+   }
+
    private[hotrod] def getAddressCache = addressCache
 
    /**
@@ -193,15 +213,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       }
 
    }
-
 }
 
 object HotRodServer {
    val ADDRESS_CACHE_NAME = "___hotRodTopologyCache"
-
-   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager): Cache[ByteArrayKey, CacheValue] = {
-      if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
-      else cacheManager.getCache(cacheName)
-   }   
 }
-
