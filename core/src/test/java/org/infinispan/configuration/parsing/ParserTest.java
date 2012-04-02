@@ -19,6 +19,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -40,8 +42,8 @@ public class ParserTest {
    /**
     * This test makes sure that some named cached values are overridden properly
     */
-   public void testNamedCacheOverride() {
-      String cacheName = "asyncRepl";
+   public void testNamedCacheOverride() throws Exception {
+      final String cacheName = "asyncRepl";
       String xml1 = INFINISPAN_START_TAG +
             "   <namedCache name=\"" + cacheName + "\">\n" +
             "      <clustering mode=\"repl\">\n" +
@@ -65,30 +67,33 @@ public class ParserTest {
             TestingUtil.INFINISPAN_END_TAG;
       
       ConfigurationBuilderHolder holder = getHolder(xml1, xml2);
-      
-      EmbeddedCacheManager cm = fromHolder(holder);
-      
-      Configuration c = cm.getCacheConfiguration(cacheName);
-      
-      // These are all overridden values
-      Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
-      Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-      Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
-      Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
-      Assert.assertEquals(c.locking().concurrencyLevel(), 30);
-      Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
-      Assert.assertEquals(c.storeAsBinary().enabled(), false);
-      
-      // Following should have been taken over from first cache
-      Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
-      Assert.assertEquals(c.expiration().lifespan(), 50012);
-      Assert.assertEquals(c.expiration().maxIdle(), 1341);
+
+      withCacheManager(new CacheManagerCallable(fromHolder(holder)){
+         @Override
+         public void call() throws Exception {
+            Configuration c = cm.getCacheConfiguration(cacheName);
+
+            // These are all overridden values
+            Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
+            Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
+            Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
+            Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
+            Assert.assertEquals(c.locking().concurrencyLevel(), 30);
+            Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
+            Assert.assertEquals(c.storeAsBinary().enabled(), false);
+
+            // Following should have been taken over from first cache
+            Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
+            Assert.assertEquals(c.expiration().lifespan(), 50012);
+            Assert.assertEquals(c.expiration().maxIdle(), 1341);
+         }
+      });
    }
    
    /**
     * This test makes sure that both defaults are applied to a named cache
     */
-   public void testDefaultCacheOverride() {
+   public void testDefaultCacheOverride() throws Exception {
       String xml1 = INFINISPAN_START_TAG +
             "   <default>\n" +
             "      <clustering mode=\"repl\">\n" +
@@ -113,33 +118,36 @@ public class ParserTest {
             TestingUtil.INFINISPAN_END_TAG;
       
       ConfigurationBuilderHolder holder = getHolder(xml1, xml2);
-      
-      EmbeddedCacheManager cm = fromHolder(holder);
-      
-      Configuration c = cm.getDefaultCacheConfiguration();
-      
-      // These are all overridden values
-      Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
-      Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-      Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
-      Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
-      Assert.assertEquals(c.locking().concurrencyLevel(), 30);
-      Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
-      Assert.assertEquals(c.storeAsBinary().enabled(), false);
-      
-      // Following should have been taken over from first cache
-      Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
-      Assert.assertEquals(c.expiration().lifespan(), 50012);
-      Assert.assertEquals(c.expiration().maxIdle(), 1341);
-      Assert.assertEquals(c.jmxStatistics().enabled(), true);
+
+      withCacheManager(new CacheManagerCallable(fromHolder(holder)){
+         @Override
+         public void call() throws Exception {
+            Configuration c = cm.getDefaultCacheConfiguration();
+
+            // These are all overridden values
+            Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
+            Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
+            Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
+            Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
+            Assert.assertEquals(c.locking().concurrencyLevel(), 30);
+            Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
+            Assert.assertEquals(c.storeAsBinary().enabled(), false);
+
+            // Following should have been taken over from first cache
+            Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
+            Assert.assertEquals(c.expiration().lifespan(), 50012);
+            Assert.assertEquals(c.expiration().maxIdle(), 1341);
+            Assert.assertEquals(c.jmxStatistics().enabled(), true);
+         }
+      });
    }
    
    /**
     * This test makes sure that both defaults are applied to a named cache then
     * named caches in order are applied to a named cache
     */
-   public void testDefaultAndNamedCacheOverride() {
-      String cacheName = "ourCache";
+   public void testDefaultAndNamedCacheOverride() throws Exception {
+      final String cacheName = "ourCache";
       String xml1 = INFINISPAN_START_TAG +
             "   <default>\n" +
             "      <clustering mode=\"repl\">\n" +
@@ -182,31 +190,34 @@ public class ParserTest {
             TestingUtil.INFINISPAN_END_TAG;
       
       ConfigurationBuilderHolder holder = getHolder(xml1, xml2);
-      
-      EmbeddedCacheManager cm = fromHolder(holder);
-      
-      Configuration c = cm.getCacheConfiguration(cacheName);
-      
-      // These are all overridden values
-      Assert.assertEquals(c.clustering().cacheMode(), CacheMode.DIST_ASYNC);
-      Assert.assertEquals(c.clustering().hash().numOwners(), 3);
-      Assert.assertEquals(c.clustering().hash().numVirtualNodes(), 51);
-      Assert.assertEquals(c.clustering().l1().enabled(), true);
-      Assert.assertEquals(c.clustering().l1().lifespan(), 12345);
-      Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-      Assert.assertEquals(c.clustering().async().useReplQueue(), false);
-      Assert.assertEquals(c.clustering().async().replQueueInterval(), 105);
-      Assert.assertEquals(c.clustering().async().replQueueMaxElements(), 341);
-      Assert.assertEquals(c.jmxStatistics().enabled(), true);
-      Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
-      Assert.assertEquals(c.locking().concurrencyLevel(), 30);
-      Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
-      Assert.assertEquals(c.storeAsBinary().enabled(), false);
-      Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
-      Assert.assertEquals(c.expiration().lifespan(), 50012);
-      Assert.assertEquals(c.expiration().maxIdle(), 1341);
-      Assert.assertEquals(c.deadlockDetection().enabled(), true);
-      Assert.assertEquals(c.deadlockDetection().spinDuration(), 1224);
+
+      withCacheManager(new CacheManagerCallable(fromHolder(holder)){
+         @Override
+         public void call() throws Exception {
+            Configuration c = cm.getCacheConfiguration(cacheName);
+
+            // These are all overridden values
+            Assert.assertEquals(c.clustering().cacheMode(), CacheMode.DIST_ASYNC);
+            Assert.assertEquals(c.clustering().hash().numOwners(), 3);
+            Assert.assertEquals(c.clustering().hash().numVirtualNodes(), 51);
+            Assert.assertEquals(c.clustering().l1().enabled(), true);
+            Assert.assertEquals(c.clustering().l1().lifespan(), 12345);
+            Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
+            Assert.assertEquals(c.clustering().async().useReplQueue(), false);
+            Assert.assertEquals(c.clustering().async().replQueueInterval(), 105);
+            Assert.assertEquals(c.clustering().async().replQueueMaxElements(), 341);
+            Assert.assertEquals(c.jmxStatistics().enabled(), true);
+            Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
+            Assert.assertEquals(c.locking().concurrencyLevel(), 30);
+            Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
+            Assert.assertEquals(c.storeAsBinary().enabled(), false);
+            Assert.assertEquals(c.expiration().wakeUpInterval(), 23);
+            Assert.assertEquals(c.expiration().lifespan(), 50012);
+            Assert.assertEquals(c.expiration().maxIdle(), 1341);
+            Assert.assertEquals(c.deadlockDetection().enabled(), true);
+            Assert.assertEquals(c.deadlockDetection().spinDuration(), 1224);
+         }
+      });
    }
    
    private EmbeddedCacheManager fromHolder(ConfigurationBuilderHolder holder) {

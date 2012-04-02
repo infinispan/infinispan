@@ -23,6 +23,7 @@
 
 package org.infinispan.spring.provider;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.Test;
@@ -152,38 +154,45 @@ public class SpringEmbeddedCacheManagerTest {
     * @throws IOException
     */
    @Test
-   public final void stopShouldStopTheNativeEmbeddedCacheManager() throws IOException {
-      final EmbeddedCacheManager nativeCacheManager = new DefaultCacheManager();
-      nativeCacheManager.getCache(); // Implicitly starts EmbeddedCacheManager
-      final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
-               nativeCacheManager);
+   public final void stopShouldStopTheNativeEmbeddedCacheManager() throws Exception {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+         @Override
+         public void call() throws Exception {
+            cm.getCache(); // Implicitly starts EmbeddedCacheManager
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
+                  cm);
 
-      objectUnderTest.stop();
+            objectUnderTest.stop();
 
-      assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed "
-               + "Infinispan EmbeddedCacheManager. However, it is still running.",
-               ComponentStatus.TERMINATED, nativeCacheManager.getStatus());
+            assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed "
+                  + "Infinispan EmbeddedCacheManager. However, it is still running.",
+                  ComponentStatus.TERMINATED, cm.getStatus());
+         }
+      });
    }
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager#getNativeCache()}.
+    * {@link SpringEmbeddedCacheManager#getNativeCacheManager()} ()}.
     * 
     * @throws IOException
     */
    @Test
    public final void getNativeCacheShouldReturnTheEmbeddedCacheManagerSuppliedAtConstructionTime()
-            throws IOException {
-      final EmbeddedCacheManager nativeCacheManager = new DefaultCacheManager();
-      final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
-               nativeCacheManager);
+         throws Exception {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+         @Override
+         public void call() throws Exception {
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
+                  cm);
 
-      final EmbeddedCacheManager nativeCacheManagerReturned = objectUnderTest
-               .getNativeCacheManager();
+            final EmbeddedCacheManager nativeCacheManagerReturned = objectUnderTest
+                  .getNativeCacheManager();
 
-      assertSame(
-               "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.",
-               nativeCacheManager, nativeCacheManagerReturned);
-      nativeCacheManager.stop();
+            assertSame(
+                  "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.",
+                  cm, nativeCacheManagerReturned);
+         }
+      });
    }
 }

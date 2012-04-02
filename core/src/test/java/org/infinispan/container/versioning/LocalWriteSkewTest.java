@@ -57,7 +57,7 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
             .transaction()
                .lockingMode(LockingMode.OPTIMISTIC);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(builder.build());
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       builder.locking().writeSkewCheck(false).versioning().disable();
       cm.defineConfiguration("no-ws-chk", builder.build());
       return cm;

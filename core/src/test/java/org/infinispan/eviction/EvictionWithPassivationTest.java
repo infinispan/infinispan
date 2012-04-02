@@ -26,9 +26,9 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 
@@ -50,7 +50,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = new DefaultCacheManager(getDefaultStandaloneConfig(true));
+      cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
 
       for (EvictionStrategy s : EvictionStrategy.values()) {
          for (EvictionThreadPolicy p : EvictionThreadPolicy.values()) {

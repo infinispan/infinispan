@@ -22,21 +22,28 @@ package org.infinispan.stress;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.testng.annotations.Test;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
 @Test(groups = {"performance", "manual"})
 public class CreateThousandCachesTest {
-   public void doTest() {
+   public void doTest() throws Exception {
       System.out.println("Starting... ");
-      EmbeddedCacheManager ecm = new DefaultCacheManager();
-      List<Cache<?,?>> thousandCaches = new LinkedList<Cache<?,?>>();
-      long start = System.currentTimeMillis();
-      for (int i=0; i<1000; i++) {
-         thousandCaches.add(ecm.getCache("cache" + i));
-      }
-      System.out.println("Created 1000 basic caches in " + (System.currentTimeMillis() - start) + " millis");
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+         @Override
+         public void call() throws Exception {
+            List<Cache<?, ?>> thousandCaches = new LinkedList<Cache<?, ?>>();
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < 1000; i++) {
+               thousandCaches.add(cm.getCache("cache" + i));
+            }
+            System.out.println("Created 1000 basic caches in " + (System.currentTimeMillis() - start) + " millis");
+         }
+      });
    }
 }

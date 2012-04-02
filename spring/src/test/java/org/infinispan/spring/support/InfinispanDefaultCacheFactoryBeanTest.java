@@ -23,6 +23,7 @@
 
 package org.infinispan.spring.support;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -30,6 +31,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.testng.annotations.Test;
 
 /**
@@ -66,15 +68,20 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    public final void infinispanDefaultCacheFactoryBeanShouldProduceANonNullInfinispanCache()
             throws Exception {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      objectUnderTest.setInfinispanCacheContainer(new DefaultCacheManager());
-      objectUnderTest.afterPropertiesSet();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-      final Cache<Object, Object> cache = objectUnderTest.getObject();
+            final Cache<Object, Object> cache = objectUnderTest.getObject();
 
-      assertNotNull(
-               "InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. "
+            assertNotNull(
+                  "InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. "
                         + "However, it produced a null Infinispan cache.", cache);
-      objectUnderTest.destroy();
+            objectUnderTest.destroy();
+         }
+      });
    }
 
    /**
@@ -87,14 +94,20 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    public final void getObjectTypeShouldReturnTheMostDerivedTypeOfTheProducedInfinispanCache()
             throws Exception {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      objectUnderTest.setInfinispanCacheContainer(new DefaultCacheManager());
-      objectUnderTest.afterPropertiesSet();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-      assertEquals(
-               "getObjectType() should have returned the produced Infinispan cache's most derived type. "
+            assertEquals(
+                  "getObjectType() should have returned the produced Infinispan cache's most derived type. "
                         + "However, it returned a more generic type.", objectUnderTest.getObject()
-                        .getClass(), objectUnderTest.getObjectType());
-      objectUnderTest.destroy();
+                  .getClass(), objectUnderTest.getObjectType());
+            objectUnderTest.destroy();
+         }
+      });
+
    }
 
    /**
@@ -120,15 +133,20 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    public final void infinispanDefaultCacheFactoryBeanShouldStopTheCreatedInfinispanCacheWhenItIsDestroyed()
             throws Exception {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      objectUnderTest.setInfinispanCacheContainer(new DefaultCacheManager());
-      objectUnderTest.afterPropertiesSet();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-      final Cache<Object, Object> cache = objectUnderTest.getObject();
-      objectUnderTest.destroy();
+            final Cache<Object, Object> cache = objectUnderTest.getObject();
+            objectUnderTest.destroy();
 
-      assertEquals(
-               "InfinispanDefaultCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. "
+            assertEquals(
+                  "InfinispanDefaultCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. "
                         + "However, the created Infinispan is not yet terminated.",
-               ComponentStatus.TERMINATED, cache.getStatus());
+                  ComponentStatus.TERMINATED, cache.getStatus());
+         }
+      });
    }
 }

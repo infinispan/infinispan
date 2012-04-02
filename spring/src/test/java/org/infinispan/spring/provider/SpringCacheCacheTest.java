@@ -29,10 +29,15 @@ import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBean;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.springframework.cache.Cache;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
@@ -50,7 +55,7 @@ import org.testng.annotations.Test;
  * 
  */
 @Test(testName = "spring.provider.SpringCacheCacheTest", groups = "unit")
-public class SpringCacheCacheTest {
+public class SpringCacheCacheTest extends SingleCacheManagerTest {
 
    protected final static String CACHE_NAME = "testCache";
 
@@ -60,19 +65,21 @@ public class SpringCacheCacheTest {
 
    private Cache cache;
 
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      return new DefaultCacheManager();
+   }
+
    @BeforeMethod
    public void setUp() throws Exception {
       this.nativeCache = createNativeCache();
       this.cache = createCache(this.nativeCache);
-      this.cache.clear();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws Exception {
       this.nativeCache = null;
-      this.cache.clear();
       this.cache = null;
-      this.fb.destroy();
    }
 
    @Test
@@ -116,10 +123,8 @@ public class SpringCacheCacheTest {
       assertNull(this.cache.get("enescu"));
    }
 
-
-
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
-      this.fb.setInfinispanEmbeddedCacheManager(new DefaultCacheManager());
+      this.fb.setInfinispanEmbeddedCacheManager(cacheManager);
       this.fb.setBeanName(CACHE_NAME);
       this.fb.setCacheName(CACHE_NAME);
       this.fb.afterPropertiesSet();

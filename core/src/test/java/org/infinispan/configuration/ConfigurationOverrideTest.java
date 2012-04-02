@@ -90,10 +90,9 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
                      .numVirtualNodes(51)
              .build();
       
-      GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
 
-      cm = new DefaultCacheManager(globalConfigBuilder.build(), config);
+
+      cm = TestCacheManagerFactory.createCacheManager(config);
 
       Cache<?, ?> cache = cm.getCache("my-cache");
       
@@ -113,12 +112,9 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
                      .numOwners(3)
                      .numVirtualNodes(51)
              .build();
-      
-      GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
-      
-      cm = new DefaultCacheManager(globalConfigBuilder.build());
-      
+
+      cm = TestCacheManagerFactory.createCacheManager(config);
+
       cm.defineConfiguration(cacheName, config);
       
       Cache<?, ?> cache = cm.getCache(cacheName);
