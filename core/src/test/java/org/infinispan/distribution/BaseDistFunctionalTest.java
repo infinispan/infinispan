@@ -79,7 +79,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration = buildConfiguration();
       // Create clustered caches with failure detection protocols on
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
-                                     new TransportFlags().withFD(true));
+                                     new TransportFlags().withFD(false));
 
       reorderBasedOnCHPositions();
 
