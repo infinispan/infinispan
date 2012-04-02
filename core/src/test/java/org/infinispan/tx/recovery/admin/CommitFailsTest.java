@@ -28,6 +28,7 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -98,11 +99,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
    }
 
    protected Object getKey() {
-      KeyAffinityService kaf = KeyAffinityServiceFactory
-            .newKeyAffinityService(this.cache(2), Executors.newSingleThreadExecutor(), new RndKeyGenerator(), 1000);
-      Object key = kaf.getKeyForAddress(address(2));
-      kaf.stop();
-      return key;
+      return new MagicKey(cache(2));
    }
 
    public void testForceCommitOnOriginator() {
