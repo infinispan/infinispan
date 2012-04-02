@@ -29,13 +29,12 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class JdbcConfigurationTest {
    public void testWrongStoreConfiguration() throws IOException {
       CacheContainer cm = null;
       try {
-         cm = new DefaultCacheManager("configs/illegal.xml");
+         cm = TestCacheManagerFactory.fromXml("configs/illegal.xml");
          cm.start();
          //needs to get at least a cache to reproduce:
          cm.getCache("AnyCache");

@@ -27,6 +27,10 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Standalone cache for infinispan testing
@@ -37,38 +41,40 @@ public class InfinispanRhqTest {
 
    private static final String MY_CUSTOM_CACHE = "myCustomCache";
 
-   public static void main(String[] args) throws InterruptedException {
-
+   public static void main(String[] args) throws Exception {
       GlobalConfiguration myGlobalConfig = new GlobalConfiguration();
       // org.infinispan:cache-name=[global],jmx-resource=CacheManager
       myGlobalConfig.setJmxDomain("org.infinispan");
       myGlobalConfig.setExposeGlobalJmxStatistics(true);
-      EmbeddedCacheManager manager = new DefaultCacheManager(myGlobalConfig);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(myGlobalConfig)) {
+         @Override
+         public void call() throws Exception {
+            // org.infinispan:cache-name=myCustomcache(local),jmx-resource=CacheMgmgtInterceptor
+            // org.infinispan:cache-name=myCustomcache(local),jmx-resource=MvccLockManager
+            // org.infinispan:cache-name=myCustomcache(local),jmx-resource=TxInterceptor
 
-      // org.infinispan:cache-name=myCustomcache(local),jmx-resource=CacheMgmgtInterceptor
-      // org.infinispan:cache-name=myCustomcache(local),jmx-resource=MvccLockManager
-      // org.infinispan:cache-name=myCustomcache(local),jmx-resource=TxInterceptor
+            Configuration config = new Configuration();
+            config.setExposeJmxStatistics(true);
+            config.setEvictionMaxEntries(123);
+            config.setExpirationMaxIdle(180000);
 
-      Configuration config = new Configuration();
-      config.setExposeJmxStatistics(true);
-      config.setEvictionMaxEntries(123);
-      config.setExpirationMaxIdle(180000);
-      
-      manager.defineConfiguration(MY_CUSTOM_CACHE, config);
-      Cache<String,String> cache = manager.getCache(MY_CUSTOM_CACHE);
+            cm.defineConfiguration(MY_CUSTOM_CACHE, config);
+            Cache<String,String> cache = cm.getCache(MY_CUSTOM_CACHE);
 
-      cache.put("myKey", "myValue");
+            cache.put("myKey", "myValue");
 
-      int i = 0;
-      while (i < Integer.MAX_VALUE) {
-         Thread.sleep(12000);
-         cache.put("key" + i, String.valueOf(i));
-         cache.get("key" + ((int)(10000 * Math.random())));
-         i++;
-         if (i%10 == 0) {
-            System.out.print(".");
-            System.out.flush();
+            int i = 0;
+            while (i < Integer.MAX_VALUE) {
+               Thread.sleep(12000);
+               cache.put("key" + i, String.valueOf(i));
+               cache.get("key" + ((int)(10000 * Math.random())));
+               i++;
+               if (i%10 == 0) {
+                  System.out.print(".");
+                  System.out.flush();
+               }
+            }
          }
-      }
+      });
    }
 }

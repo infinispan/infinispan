@@ -30,12 +30,19 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+<<<<<<< HEAD
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+=======
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+>>>>>>> ISPN-1895 All cache managers that can cluster to go through factory
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(groups = "functional")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {
@@ -63,37 +70,34 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       Assert.assertEquals(cache.getCacheConfiguration().eviction().strategy(), EvictionStrategy.LIRS);
    }
 
-   public void testOldConfigurationOverride() {
+   public void testOldConfigurationOverride() throws Exception {
       org.infinispan.config.Configuration defaultConfiguration = new org.infinispan.config.Configuration().fluent()
             .eviction().maxEntries(200).strategy(EvictionStrategy.LIRS)
             .build();
 
-      org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
+      final org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
             .build();
 
-      cm = new DefaultCacheManager(defaultConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration)
       cm.defineConfiguration("my-cache", cacheConfiguration);
 
       Cache<?, ?> cache = cm.getCache("my-cache");
-
       Assert.assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
-      Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(), EvictionStrategy.LIRS);
    }
    
    public void testSimpleDistributedClusterModeDefault() {
-      Configuration config = 
-            new ConfigurationBuilder()
-               .clustering()
-                  .cacheMode(CacheMode.DIST_SYNC)
-                  .hash()
-                     .numOwners(3)
-                     .numVirtualNodes(51)
-             .build();
-      
+      ConfigurationBuilder config =  new ConfigurationBuilder();
+      config.clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .hash()
+            .numOwners(3)
+            .numVirtualNodes(51)
+            .build();
+
       GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
 
-      cm = new DefaultCacheManager(globalConfigBuilder.build(), config);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfigBuilder, new ConfigurationBuilder());
 
       Cache<?, ?> cache = cm.getCache("my-cache");
       
@@ -105,21 +109,21 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
    
    public void testSimpleDistributedClusterModeNamedCache() {
       String cacheName = "my-cache";
-      Configuration config = 
-            new ConfigurationBuilder()
-               .clustering()
-                  .cacheMode(CacheMode.DIST_SYNC)
-                  .hash()
-                     .numOwners(3)
-                     .numVirtualNodes(51)
-             .build();
-      
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .hash()
+            .numOwners(3)
+            .numVirtualNodes(51)
+      ;
+
       GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
+
+
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfigBuilder, new ConfigurationBuilder());
       
-      cm = new DefaultCacheManager(globalConfigBuilder.build());
-      
-      cm.defineConfiguration(cacheName, config);
+      cm.defineConfiguration(cacheName, config.build());
       
       Cache<?, ?> cache = cm.getCache(cacheName);
       

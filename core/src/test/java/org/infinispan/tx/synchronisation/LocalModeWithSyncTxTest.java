@@ -26,6 +26,7 @@ package org.infinispan.tx.synchronisation;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.LocalModeTxTest;
@@ -48,7 +49,7 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
       Configuration config = getDefaultStandaloneConfig(true);
       config.fluent().transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
       config.fluent().transaction().useSynchronization(true);
-      return new DefaultCacheManager(config);
+      return TestCacheManagerFactory.createCacheManager(config);
    }
 
    public void testSyncRegisteredWithCommit() throws Exception {

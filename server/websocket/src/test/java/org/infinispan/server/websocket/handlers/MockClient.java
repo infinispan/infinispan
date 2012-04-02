@@ -162,4 +162,9 @@ public class MockClient {
 		
 		return jsonObj;
 	}
+
+   public void stop() {
+      cacheContainer.stop();
+   }
+
 }

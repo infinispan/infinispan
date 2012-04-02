@@ -133,6 +133,11 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public TransportConfigurationBuilder removeProperty(String key) {
+      this.properties.remove(key);
+      return this;
+   }
+
    /**
     * If set to true, RPC operations will fail if the named cache does not exist on remote nodes
     * with a NamedCacheNotFoundException. Otherwise, operations will succeed but it will be

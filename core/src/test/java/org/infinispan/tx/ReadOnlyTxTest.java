@@ -24,11 +24,11 @@ package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL, true);
-      return new DefaultCacheManager(configuration);
+      return TestCacheManagerFactory.createCacheManager(configuration);
    }
 
    public void testSimpleReadOnlTx() throws Exception {

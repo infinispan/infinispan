@@ -25,9 +25,9 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.group.Group;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -163,7 +163,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
     }
 
     private EmbeddedCacheManager buildCacheManager() throws IOException {
-        DefaultCacheManager cacheManager = new DefaultCacheManager("erm-cluster.xml");
+        EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("erm-cluster.xml");
         return cacheManager;
     }
 

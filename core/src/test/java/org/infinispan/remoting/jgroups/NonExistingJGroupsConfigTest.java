@@ -29,10 +29,10 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(testName = "remoting.jgroups.NonExistingJGroupsConfigTest", groups = "functional")
@@ -55,7 +55,7 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
       TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(is)) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
          @Override
          public void call() throws Exception {
             try {

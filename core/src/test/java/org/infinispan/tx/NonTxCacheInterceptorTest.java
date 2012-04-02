@@ -25,9 +25,9 @@ package org.infinispan.tx;
 
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return new DefaultCacheManager(getDefaultStandaloneConfig(false));
+      return TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(false));
    }
 
    public void testNoTxInterceptor() {

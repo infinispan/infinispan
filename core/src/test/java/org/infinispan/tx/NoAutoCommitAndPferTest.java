@@ -20,9 +20,9 @@
 package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "tx.NoAutoCommitAndPferTest")
@@ -32,7 +32,7 @@ public class NoAutoCommitAndPferTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration dsc = getDefaultStandaloneConfig(true);
       dsc.fluent().transaction().autoCommit(false);
-      return new DefaultCacheManager(dsc);
+      return TestCacheManagerFactory.createCacheManager(dsc);
    }
 
    public void testPferNoAutoCommitExplicitTransaction() throws Exception {
