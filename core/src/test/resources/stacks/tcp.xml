@@ -38,7 +38,7 @@
         bundler_type="old"
  
         thread_pool.enabled="true"
-        thread_pool.min_threads="2"
+        thread_pool.min_threads="1"
         thread_pool.max_threads="8"
         thread_pool.keep_alive_time="5000"
         thread_pool.queue_enabled="false"
@@ -46,7 +46,7 @@
         thread_pool.rejection_policy="Run"
 
         oob_thread_pool.enabled="true"
-        oob_thread_pool.min_threads="2"
+        oob_thread_pool.min_threads="1"
         oob_thread_pool.max_threads="8"
         oob_thread_pool.keep_alive_time="5000"
         oob_thread_pool.queue_enabled="false"
