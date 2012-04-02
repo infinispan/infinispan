@@ -42,6 +42,6 @@ abstract class AbstractVersionedEncoder {
    /**
     * Write operation response using the given channel buffer
     */
-   def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager)
+   def writeResponse(r: Response, buf: ChannelBuffer, cacheManager: EmbeddedCacheManager, server: HotRodServer)
 
 }
