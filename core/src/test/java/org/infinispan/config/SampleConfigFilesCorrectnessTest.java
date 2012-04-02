@@ -115,10 +115,14 @@ public class SampleConfigFilesCorrectnessTest {
    }
 
    private File getRootFolder() {
-      File file = new File(new File(CONFIG_ROOT).getAbsolutePath());
+      File file = new File(CONFIG_ROOT);
+      //this is a hack. If the tests are run from core folder then following if should not be entered.
+      //otherwise assume we are runnin
+      if (!file.isDirectory()) {
+         file = new File("core/" + CONFIG_ROOT);
+      }
       return file;
    }
-
 
    private static class InMemoryAppender extends AppenderSkeleton {
       String[] TOLERABLE_WARNINGS =

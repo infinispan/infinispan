@@ -79,111 +79,146 @@ class AbstractProtocolServerTest {
       var host = "1.2.3.4";
       var p = new Properties
       p.setProperty(PROP_KEY_HOST, host);
-      var server = createServer
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getHost, host)
+      Stoppable.useServer(createServer) { server =>
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getHost, host)
+         }
 
-      host = "${" + m.getName + "-myhost:5.6.7.8}"
-      p = new Properties
-      p.setProperty(PROP_KEY_HOST, host);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getHost, "5.6.7.8")
+         host = "${" + m.getName + "-myhost:5.6.7.8}"
+         p = new Properties
+         p.setProperty(PROP_KEY_HOST, host);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getHost, "5.6.7.8")
+         }
 
-      host = "${" + m.getName + "-myhost:9.10.11.12}"
-      System.setProperty(m.getName + "-myhost", "13.14.15.16");
-      p = new Properties
-      p.setProperty(PROP_KEY_HOST, host);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getHost, "13.14.15.16")
+         host = "${" + m.getName + "-myhost:9.10.11.12}"
+         System.setProperty(m.getName + "-myhost", "13.14.15.16");
+         p = new Properties
+         p.setProperty(PROP_KEY_HOST, host);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getHost, "13.14.15.16")
+         }
 
-      host = "${" + m.getName + "-otherhost}"
-      p = new Properties
-      p.setProperty(PROP_KEY_HOST, host);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getHost, host)
+         host = "${" + m.getName + "-otherhost}"
+         p = new Properties
+         p.setProperty(PROP_KEY_HOST, host);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getHost, host)
+         }
 
-      host = "${" + m.getName + "-otherhost}"
-      System.setProperty(m.getName + "-otherhost", "17.18.19.20");
-      p = new Properties
-      p.setProperty(PROP_KEY_HOST, host);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getHost, "17.18.19.20")
+         host = "${" + m.getName + "-otherhost}"
+         System.setProperty(m.getName + "-otherhost", "17.18.19.20");
+         p = new Properties
+         p.setProperty(PROP_KEY_HOST, host);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getHost, "17.18.19.20")
+         }
+      }
    }
 
    def testPortPropertySubstitution(m: Method) {
       var port = "123"
       var p = new Properties
       p.setProperty(PROP_KEY_PORT, port);
-      var server = createServer
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getPort, port.toInt)
+      Stoppable.useServer(createServer) { server =>
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getPort, port.toInt)
+         }
 
-      port = "${" + m.getName + "-myport:567}"
-      p = new Properties
-      p.setProperty(PROP_KEY_PORT, port);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getPort, 567)
+         port = "${" + m.getName + "-myport:567}"
+         p = new Properties
+         p.setProperty(PROP_KEY_PORT, port);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getPort, 567)
+         }
 
-      port = "${" + m.getName + "-myport:891}"
-      System.setProperty(m.getName + "-myport", "234");
-      p = new Properties
-      p.setProperty(PROP_KEY_PORT, port);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getPort, 234)
+         port = "${" + m.getName + "-myport:891}"
+         System.setProperty(m.getName + "-myport", "234");
+         p = new Properties
+         p.setProperty(PROP_KEY_PORT, port);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getPort, 234)
+         }
 
-      port = "${" + m.getName + "-otherport}"
-      p = new Properties
-      p.setProperty(PROP_KEY_PORT, port);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getPort, 12345)
+         port = "${" + m.getName + "-otherport}"
+         p = new Properties
+         p.setProperty(PROP_KEY_PORT, port);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getPort, 12345)
+         }
 
-      port = "${" + m.getName + "-otherport}"
-      System.setProperty(m.getName + "-otherport", "5567");
-      p = new Properties
-      p.setProperty(PROP_KEY_PORT, port);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.getPort, 5567)
+         port = "${" + m.getName + "-otherport}"
+         System.setProperty(m.getName + "-otherport", "5567");
+         p = new Properties
+         p.setProperty(PROP_KEY_PORT, port);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.getPort, 5567)
+         }
+      }
    }
 
    def testTcpNoDelayPropertySubstitution(m: Method) {
       var tcpNoDelay = "true"
       var p = new Properties
       p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
-      var server = createServer
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.tcpNoDelay, tcpNoDelay.toBoolean)
+      Stoppable.useServer(createServer) { server =>
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.tcpNoDelay, tcpNoDelay.toBoolean)
+         }
 
-      tcpNoDelay = "${" + m.getName + "-mytcpnodelay:false}"
-      p = new Properties
-      p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.tcpNoDelay, false)
+         tcpNoDelay = "${" + m.getName + "-mytcpnodelay:false}"
+         p = new Properties
+         p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.tcpNoDelay, false)
+         }
 
-      tcpNoDelay = "${" + m.getName + "-mytcpnodelay:true}"
-      System.setProperty(m.getName + "-mytcpnodelay", "false");
-      p = new Properties
-      p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.tcpNoDelay, false)
+         tcpNoDelay = "${" + m.getName + "-mytcpnodelay:true}"
+         System.setProperty(m.getName + "-mytcpnodelay", "false");
+         p = new Properties
+         p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.tcpNoDelay, false)
+         }
 
-      tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
-      p = new Properties
-      p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
-      server.start(p, new DefaultCacheManager)
-      // Boolean.parseBoolean() returning false to anything other than true, no exception thrown
-      assertEquals(server.tcpNoDelay, false)
+         tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
+         p = new Properties
+         p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            // Boolean.parseBoolean() returning false to anything other than true, no exception thrown
+            assertEquals(server.tcpNoDelay, false)
+         }
 
-      tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
-      System.setProperty(m.getName + "-othertcpnodelay", "true");
-      p = new Properties
-      p.setProperty(PROP_KEY_PORT, tcpNoDelay);
-      server.start(p, new DefaultCacheManager)
-      assertEquals(server.tcpNoDelay, true)
+         tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
+         System.setProperty(m.getName + "-othertcpnodelay", "true");
+         p = new Properties
+         p.setProperty(PROP_KEY_PORT, tcpNoDelay);
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+            assertEquals(server.tcpNoDelay, true)
+         }
+      }
    }
 
    private def expectIllegalArgument(p: Properties, server: ProtocolServer) {
       try {
-         server.start(p, new DefaultCacheManager)
+         Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
+            server.start(p, cm)
+         }
       } catch {
          case i: IllegalArgumentException => // expected
       } finally {

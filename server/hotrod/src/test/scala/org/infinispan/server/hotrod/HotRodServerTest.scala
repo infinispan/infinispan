@@ -25,6 +25,7 @@ package org.infinispan.server.hotrod
 import org.testng.annotations.Test
 import org.infinispan.manager.DefaultCacheManager
 import org.testng.Assert._
+import org.infinispan.server.core.Stoppable
 
 /**
  * Hot Rod server unit test.
@@ -36,13 +37,12 @@ import org.testng.Assert._
 class HotRodServerTest {
 
    def testValidateProtocolServerNullProperties {
-      val server = new HotRodServer
-      try {
-         server.start(null, new DefaultCacheManager)
-         assertEquals(server.getHost, "127.0.0.1")
-         assertEquals(server.getPort, 11222)
-      } finally {
-         server.stop
+      Stoppable.useServer(new HotRodServer) { server =>
+         Stoppable.useCacheManager(new DefaultCacheManager) { cm =>
+            server.start(null, cm)
+            assertEquals(server.getHost, "127.0.0.1")
+            assertEquals(server.getPort, 11222)
+         }
       }
    }
 

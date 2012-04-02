@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
@@ -42,7 +43,7 @@ public class TxCacheAndAsyncOpsTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final Configuration defaultStandaloneConfig = getDefaultStandaloneConfig(true);
-      return new DefaultCacheManager(defaultStandaloneConfig);
+      return TestCacheManagerFactory.createCacheManager(defaultStandaloneConfig);
    }
 
    public void testAsyncOps() throws Exception {

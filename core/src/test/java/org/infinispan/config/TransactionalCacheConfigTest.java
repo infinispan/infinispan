@@ -27,12 +27,15 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -44,7 +47,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return new DefaultCacheManager(getDefaultStandaloneConfig(true));
+      return TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
    }
 
    public void test() {
@@ -135,60 +138,78 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
          assert false : "This should not start as the cache doesn't have a TM configured.";
       } catch (CacheException e) {
          e.printStackTrace();
+      } finally {
+         TestingUtil.killCacheManagers(dcm);
       }
    }
 
-   public void testInvocationBatchingAndInducedTm() {
+   public void testInvocationBatchingAndInducedTm() throws Exception {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
       assert c.isTransactionalCache();
-      DefaultCacheManager dcm = new DefaultCacheManager(c);
-      assert  dcm.getCache().getAdvancedCache().getTransactionManager() != null;
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(c)){
+         @Override
+         public void call() throws Exception {
+            assert cm.getCache().getAdvancedCache().getTransactionManager() != null;
+         }
+      });
    }
 
-   public void testOverride() {
-      Configuration c = new Configuration();
+   public void testOverride() throws Exception {
+      final Configuration c = new Configuration();
       c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
 
-      DefaultCacheManager cm = new DefaultCacheManager();
-      cm.defineConfiguration("transactional", c);
-      Cache cache = cm.getCache("transactional");
-      assert cache.getConfiguration().isTransactionalCache();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            cm.defineConfiguration("transactional", c);
+            Cache cache = cm.getCache("transactional");
+            assert cache.getConfiguration().isTransactionalCache();
+         }
+      });
    }
 
-   public void testBatchingAndTransactionalCache() {
-      Configuration c = new Configuration();
+   public void testBatchingAndTransactionalCache() throws Exception {
+      final Configuration c = new Configuration();
       c.fluent().invocationBatching();
 
       assert c.isInvocationBatchingEnabled();
       assert c.isTransactionalCache();
 
-      DefaultCacheManager dcm = new DefaultCacheManager();
-      assert !dcm.getCache().getConfiguration().isTransactionalCache();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            assert !cm.getCache().getConfiguration().isTransactionalCache();
 
-      dcm.defineConfiguration("a", c);
-      final Cache<Object, Object> a = dcm.getCache("a");
+            cm.defineConfiguration("a", c);
+            final Cache<Object, Object> a = cm.getCache("a");
 
-      assert a.getConfiguration().isInvocationBatchingEnabled();
-      assert a.getConfiguration().isTransactionalCache();
+            assert a.getConfiguration().isInvocationBatchingEnabled();
+            assert a.getConfiguration().isTransactionalCache();
+         }
+      });
    }
 
-   public void testBatchingAndTransactionalCache2() {
-      Configuration c = new Configuration();
+   public void testBatchingAndTransactionalCache2() throws Exception {
+      final Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
 
       assert c.isInvocationBatchingEnabled();
       assert c.isTransactionalCache();
 
-      DefaultCacheManager dcm = new DefaultCacheManager();
-      assert !dcm.getCache().getConfiguration().isTransactionalCache();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+         @Override
+         public void call() throws Exception {
+            assert !cm.getCache().getConfiguration().isTransactionalCache();
 
-      dcm.defineConfiguration("a", c);
-      final Cache<Object, Object> a = dcm.getCache("a");
+            cm.defineConfiguration("a", c);
+            final Cache<Object, Object> a = cm.getCache("a");
 
-      assert a.getConfiguration().isInvocationBatchingEnabled();
-      assert a.getConfiguration().isTransactionalCache();
+            assert a.getConfiguration().isInvocationBatchingEnabled();
+            assert a.getConfiguration().isTransactionalCache();
+         }
+      });
    }
 
 

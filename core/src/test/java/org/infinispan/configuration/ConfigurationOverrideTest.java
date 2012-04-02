@@ -31,8 +31,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(groups = "functional")
 public class ConfigurationOverrideTest {
@@ -53,67 +57,76 @@ public class ConfigurationOverrideTest {
       Assert.assertEquals(cache.getCacheConfiguration().eviction().strategy(), EvictionStrategy.LIRS);
    }
 
-   public void testOldConfigurationOverride() {
+   public void testOldConfigurationOverride() throws Exception {
       org.infinispan.config.Configuration defaultConfiguration = new org.infinispan.config.Configuration().fluent()
             .eviction().maxEntries(200).strategy(EvictionStrategy.LIRS)
             .build();
 
-      org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
+      final org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
             .build();
 
-      EmbeddedCacheManager embeddedCacheManager = new DefaultCacheManager(defaultConfiguration);
-      embeddedCacheManager.defineConfiguration("my-cache", cacheConfiguration);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(defaultConfiguration)){
+         @Override
+         public void call() throws Exception {
+            cm.defineConfiguration("my-cache", cacheConfiguration);
 
-      Cache<?, ?> cache = embeddedCacheManager.getCache("my-cache");
+            Cache<?, ?> cache = cm.getCache("my-cache");
 
-      Assert.assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
-      Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(), EvictionStrategy.LIRS);
+            Assert.assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
+            Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(), EvictionStrategy.LIRS);
+         }
+      });
+
    }
    
-   public void testSimpleDistributedClusterModeDefault() {
-      Configuration config = 
-            new ConfigurationBuilder()
-               .clustering()
-                  .cacheMode(CacheMode.DIST_SYNC)
-                  .hash()
-                     .numOwners(3)
-                     .numVirtualNodes(51)
-             .build();
-      
-      GlobalConfiguration globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
-      
-      EmbeddedCacheManager cm = new DefaultCacheManager(globalConfig, config);
-      
-      Cache<?, ?> cache = cm.getCache("my-cache");
-      
-      // These are all overridden values
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(), CacheMode.DIST_SYNC);
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numOwners(), 3);
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numVirtualNodes(), 51);
+   public void testSimpleDistributedClusterModeDefault() throws Exception {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+         .clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .hash()
+               .numOwners(3)
+               .numVirtualNodes(51);
+
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder)){
+         @Override
+         public void call() throws Exception {
+            Cache<?, ?> cache = cm.getCache("my-cache");
+
+            // These are all overridden values
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(), CacheMode.DIST_SYNC);
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numOwners(), 3);
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numVirtualNodes(), 51);
+         }
+      });
    }
    
-   public void testSimpleDistributedClusterModeNamedCache() {
-      String cacheName = "my-cache";
-      Configuration config = 
-            new ConfigurationBuilder()
-               .clustering()
-                  .cacheMode(CacheMode.DIST_SYNC)
-                  .hash()
-                     .numOwners(3)
-                     .numVirtualNodes(51)
-             .build();
-      
-      GlobalConfiguration globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
-      
-      EmbeddedCacheManager cm = new DefaultCacheManager(globalConfig);
-      
-      cm.defineConfiguration(cacheName, config);
-      
-      Cache<?, ?> cache = cm.getCache(cacheName);
-      
-      // These are all overridden values
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(), CacheMode.DIST_SYNC);
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numOwners(), 3);
-      Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numVirtualNodes(), 51);
+   public void testSimpleDistributedClusterModeNamedCache() throws Exception {
+      final String cacheName = "my-cache";
+      final ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+         .clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .hash()
+               .numOwners(3)
+               .numVirtualNodes(51);
+
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, new ConfigurationBuilder())) {
+         @Override
+         public void call() throws Exception {
+            cm.defineConfiguration(cacheName, builder.build());
+
+            Cache<?, ?> cache = cm.getCache(cacheName);
+
+            // These are all overridden values
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(), CacheMode.DIST_SYNC);
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numOwners(), 3);
+            Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numVirtualNodes(), 51);
+         }
+      });
    }
 }

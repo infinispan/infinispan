@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -40,7 +41,7 @@ public class CustomInterceptorInjectionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(false);
       c.fluent().customInterceptors().add(new SomeInterceptor()).atIndex(0);
-      return new DefaultCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void testInjectionWorks() {

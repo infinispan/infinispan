@@ -23,7 +23,6 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.FluentConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,6 +32,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,11 +41,9 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * @author Manik Surtani
@@ -72,13 +70,17 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testUnstartedCachemanager() {
-      DefaultCacheManager dcm = new DefaultCacheManager(false);
-      assert dcm.getStatus().equals(ComponentStatus.INSTANTIATED);
-      assert !dcm.getStatus().allowInvocations();
-      Cache<Object, Object> cache = dcm.getCache();
-      cache.put("k","v");
-      assert cache.get("k").equals("v");
+   public void testUnstartedCachemanager() throws Exception {
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(false)){
+         @Override
+         public void call() throws Exception {
+            assert cm.getStatus().equals(ComponentStatus.INSTANTIATED);
+            assert !cm.getStatus().allowInvocations();
+            Cache<Object, Object> cache = cm.getCache();
+            cache.put("k","v");
+            assert cache.get("k").equals("v");
+         }
+      });
    }
 
    public void testClashingNames() {
