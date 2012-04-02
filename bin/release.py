@@ -135,7 +135,8 @@ def get_poms_to_patch(working_dir):
       
   return poms_to_patch
 
-def update_versions(version):
+def update_versions(base_dir, version):
+  os.chdir(base_dir)
   poms_to_patch = get_poms_to_patch(".")
   
   modified_files = []
@@ -151,7 +152,8 @@ def update_versions(version):
   f_out = open(version_java+".tmp", "w")
 
   regexp = re.compile('\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
-  pieces = version.split('.')
+  pieces = re.compile('[\.\-]').split(version)
+  snapshot = pieces[3]=='SNAPSHOT'
   try:
     for l in f_in:
       if regexp.match(l):
@@ -164,7 +166,7 @@ def update_versions(version):
         elif l.find('MODIFIER') > -1:
           f_out.write('   private static final String MODIFIER = "%s";\n' % pieces[3])
         elif l.find('SNAPSHOT') > -1:
-          f_out.write('   private static final boolean SNAPSHOT = false;\n')
+          f_out.write('   private static final boolean SNAPSHOT = %s;\n' % ('true' if snapshot else 'false'))
       else:
         f_out.write(l)
   finally:
@@ -174,7 +176,10 @@ def update_versions(version):
   os.rename(version_java+".tmp", version_java)
   
   # Now make sure this goes back into the repository.
-  git.commit(modified_files)
+  git.commit(modified_files, "'Release Script: update versions for %s'" % version)
+  
+  # And return the next version
+  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.FINAL' if snapshot else '-SNAPSHOT')
 
 def get_module_name(pom_file):
   tree = ElementTree()
@@ -299,7 +304,7 @@ def release():
   
   # Step 2: Update version in tagged files
   prettyprint("Step 2: Updating version number in source files", Levels.INFO)
-  update_versions(version)
+  version_next = update_versions(base_dir, version)
   prettyprint("Step 2: Complete", Levels.INFO)
   
   # Step 3: Build and test in Maven2
@@ -341,8 +346,14 @@ def release():
   for p in async_processes:
     p.join()
   
-  ## Clean up in git
+  ## Tag the release
   git.tag_for_release()
+  
+  # Update to next version
+  prettyprint("Step 9: Updating version number for next release", Levels.INFO)
+  update_versions(base_dir, version_next)
+  prettyprint("Step 9: Complete", Levels.INFO)
+  
   if not settings['dry_run']:
     git.push_to_origin()
     git.cleanup()
