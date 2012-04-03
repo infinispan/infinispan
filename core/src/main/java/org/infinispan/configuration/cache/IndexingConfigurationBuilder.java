@@ -95,6 +95,29 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    /**
     * <p>
+    * Defines a single value. Can be used multiple times to define all needed property values, but the
+    * full set is overridden by {@link #withProperties(Properties)}.
+    * </p>
+    * <p>
+    * These properties are passed directly to the embedded Hibernate Search engine, so for the
+    * complete and up to date documentation about available properties refer to the Hibernate Search
+    * reference of the version you're using with Infinispan Query.
+    * </p>
+    *
+    * @see <a
+    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
+    *      Search</a>
+    * @param key Property key
+    * @param value Property value
+    * @return <code>this</code>, for method chaining
+    */
+   public IndexingConfigurationBuilder addValue(String key, Object value) {
+      this.properties.put(key, value);
+      return this;
+   }
+
+   /**
+    * <p>
     * The Query engine relies on properties for configuration.
     * </p>
     * <p>
@@ -106,7 +129,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
-    * @param properties
+    * @param props the properties
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder withProperties(Properties props) {
