@@ -96,15 +96,24 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile) throws IOException {
+      return fromXml(xmlFile, false);
+   }
+
+   public static EmbeddedCacheManager fromXml(String fileName, boolean keepJmxDomainName) throws IOException {
       InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-            xmlFile, Thread.currentThread().getContextClassLoader());
-      return fromStream(is);
+            fileName, Thread.currentThread().getContextClassLoader());
+      return fromStream(is, keepJmxDomainName);
+   }
+
+
+   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
+      ConfigurationBuilderHolder holder = new Parser(
+            Thread.currentThread().getContextClassLoader()).parse(is);
+      return createClusteredCacheManager(holder, keepJmxDomainName);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
-      ConfigurationBuilderHolder holder = new Parser(
-            Thread.currentThread().getContextClassLoader()).parse(is);
-      return createClusteredCacheManager(holder);
+      return fromStream(is, false);
    }
 
    /**
@@ -193,14 +202,18 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultCacheConfig);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilderHolder holder) {
+   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilderHolder holder, boolean keepJmxDomainName) {
       TransportFlags flags = new TransportFlags();
       amendGlobalConfiguration(holder.getGlobalConfigurationBuilder(), flags);
       amendJTA(holder.getDefaultConfigurationBuilder());
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values())
          amendJTA(builder);
 
-      return newDefaultCacheManager(true, holder, false);
+      return newDefaultCacheManager(true, holder, keepJmxDomainName);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilderHolder holder) {
+      return createClusteredCacheManager(holder, false);
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
