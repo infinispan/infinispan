@@ -39,6 +39,7 @@ import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -544,6 +545,20 @@ public final class Util {
    public static String hexDump(byte[] buffer) {
       StringBuilder buf = new StringBuilder(buffer.length << 1);
       for (byte b : buffer)
+         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+            .append(HEX_VALUES.charAt((b & 0x0F)));
+
+      return buf.toString();
+   }
+
+   public static String hexDump(ByteBuffer buffer) {
+      byte[] data = new byte[buffer.remaining()];
+      int pos = buffer.position();
+      buffer.get(data);
+      buffer.position(pos);
+      // TODO: Remove code dup
+      StringBuilder buf = new StringBuilder(buffer.remaining() + 22);
+      for (byte b : data)
          buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
             .append(HEX_VALUES.charAt((b & 0x0F)));
 

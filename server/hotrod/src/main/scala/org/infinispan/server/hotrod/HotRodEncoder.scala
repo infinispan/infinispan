@@ -30,6 +30,7 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel.Channel
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.remoting.transport.Address
+import org.infinispan.util.Util
 
 /**
  * Hot Rod specific encoder.
@@ -43,6 +44,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
    private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
    private lazy val addressCache: Cache[Address, ServerAddress] =
       if (isClustered) cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME) else null
+   private val isTrace = isTraceEnabled
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg %s", msg)
@@ -64,6 +66,10 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
       }
 
       encoder.writeResponse(r, buf, cacheManager, server)
+      if (isTrace)
+         trace("Write buffer contents %s to channel %s",
+            Util.hexDump(buf.toByteBuffer), ctx.getChannel)
+
       buf
    }
 
