@@ -25,9 +25,9 @@ package org.infinispan.tx.synchronisation;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -39,7 +39,7 @@ public class NoXaConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return new DefaultCacheManager("configs/no-xa-config.xml");
+      return TestCacheManagerFactory.fromXml("configs/no-xa-config.xml");
    }
 
    public void testConfig() {

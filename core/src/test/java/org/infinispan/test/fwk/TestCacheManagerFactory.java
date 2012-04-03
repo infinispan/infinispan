@@ -36,11 +36,11 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.internal.annotations.TestAnnotation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +100,9 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile) throws IOException {
-      return new DefaultCacheManager(xmlFile);
+      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader());
+      return fromStream(is);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
@@ -398,6 +400,9 @@ public class TestCacheManagerFactory {
          String fullTestName = perThreadCacheManagers.get().fullTestName;
          String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
          checkTestName(fullTestName);
+
+         // Remove any configuration file that might have been set.
+         builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
 
          builder
                .transport()

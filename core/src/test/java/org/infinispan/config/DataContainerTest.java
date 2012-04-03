@@ -106,7 +106,7 @@ public class DataContainerTest {
    	Configuration configuration = new Configuration();
    	configuration.fluent().dataContainer().dataContainer(new QueryableDataContainer());
    	
-      EmbeddedCacheManager cm = new DefaultCacheManager(configuration);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(configuration);
       
       try {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();

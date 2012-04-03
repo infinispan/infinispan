@@ -34,7 +34,9 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -42,6 +44,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -66,63 +70,66 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
          //System.out.println("Output file is:\n" + baos.toString());
+         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()))){
+            @Override
+            public void call() throws Exception {
+               Configuration defaultConfig = cm.getDefaultConfiguration();
+               GlobalConfiguration globalConfig = cm.getGlobalConfiguration();
+               assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
+               assert defaultConfig.getLockAcquisitionTimeout() == 234000;
+               assert defaultConfig.getConcurrencyLevel() == 510;
+               assert defaultConfig.getTransactionManagerLookup().getClass().getName().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
+               assert !defaultConfig.isSyncCommitPhase();
+               assert defaultConfig.isSyncRollbackPhase();
+               assert defaultConfig.isExposeJmxStatistics();
+               assert globalConfig.getShutdownHookBehavior().equals(GlobalConfiguration.ShutdownHookBehavior.DONT_REGISTER);
+               assert globalConfig.getAsyncListenerExecutorProperties().get("maxThreads").equals("123");
+               assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
+               assert !defaultConfig.isInvocationBatchingEnabled();
+               assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
+               assert defaultConfig.isStoreAsBinary();
+               assert globalConfig.getClusterName().equals("JBossCache-cluster");
+               assert defaultConfig.getCacheMode().equals(Configuration.CacheMode.INVALIDATION_SYNC);
+               assert defaultConfig.getStateRetrievalTimeout() == 2120000;
+               assert defaultConfig.getSyncReplTimeout() == 22220000;
+               assert defaultConfig.getEvictionStrategy().equals(EvictionStrategy.LRU);
+               assert defaultConfig.getEvictionMaxEntries() == 5001;
+               assert defaultConfig.getExpirationMaxIdle() == 1001 : "Received " + defaultConfig.getExpirationLifespan();
+               assert defaultConfig.getExpirationWakeUpInterval() == 50015;
 
-         EmbeddedCacheManager ecm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()), false);
-         Configuration defaultConfig = ecm.getDefaultConfiguration();
-         GlobalConfiguration globalConfig = ecm.getGlobalConfiguration();
-         assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
-         assert defaultConfig.getLockAcquisitionTimeout() == 234000;
-         assert defaultConfig.getConcurrencyLevel() == 510;
-         assert defaultConfig.getTransactionManagerLookup().getClass().getName().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
-         assert !defaultConfig.isSyncCommitPhase();
-         assert defaultConfig.isSyncRollbackPhase();
-         assert defaultConfig.isExposeJmxStatistics();
-         assert globalConfig.getShutdownHookBehavior().equals(GlobalConfiguration.ShutdownHookBehavior.DONT_REGISTER);
-         assert globalConfig.getAsyncListenerExecutorProperties().get("maxThreads").equals("123");
-         assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
-         assert !defaultConfig.isInvocationBatchingEnabled();
-         assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
-         assert defaultConfig.isStoreAsBinary();
-         assert globalConfig.getClusterName().equals("JBossCache-cluster");
-         assert defaultConfig.getCacheMode().equals(Configuration.CacheMode.INVALIDATION_SYNC);
-         assert defaultConfig.getStateRetrievalTimeout() == 2120000;
-         assert defaultConfig.getSyncReplTimeout() == 22220000;
-         assert defaultConfig.getEvictionStrategy().equals(EvictionStrategy.LRU);
-         assert defaultConfig.getEvictionMaxEntries() == 5001;
-         assert defaultConfig.getExpirationMaxIdle() == 1001 : "Received " + defaultConfig.getExpirationLifespan();
-         assert defaultConfig.getExpirationWakeUpInterval() == 50015;
+               ConcurrentMap<String, Configuration> configurationOverrides = (ConcurrentMap<String, Configuration>) TestingUtil.extractField(cm, "configurationOverrides");
 
-         ConcurrentMap<String, Configuration> configurationOverrides = (ConcurrentMap<String, Configuration>) TestingUtil.extractField(ecm, "configurationOverrides");
+               Configuration regionOne = configurationOverrides.get("/org/jboss/data1");
+               assert regionOne != null;
+               assert regionOne.getEvictionStrategy().equals(EvictionStrategy.LRU);
+               assert regionOne.getExpirationMaxIdle() == 2002;
+               assert regionOne.getExpirationWakeUpInterval() == 50015;
 
-         Configuration regionOne = configurationOverrides.get("/org/jboss/data1");
-         assert regionOne != null;
-         assert regionOne.getEvictionStrategy().equals(EvictionStrategy.LRU);
-         assert regionOne.getExpirationMaxIdle() == 2002;
-         assert regionOne.getExpirationWakeUpInterval() == 50015;
-
-         Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
-         assert regionTwo != null;
-         assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
-         assert regionTwo.getEvictionMaxEntries() == 3003;
-         assert regionTwo.getExpirationWakeUpInterval() == 50015;
+               Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
+               assert regionTwo != null;
+               assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
+               assert regionTwo.getEvictionMaxEntries() == 3003;
+               assert regionTwo.getExpirationWakeUpInterval() == 50015;
 
 
-         CacheLoaderManagerConfig loaderManagerConfig = defaultConfig.getCacheLoaderManagerConfig();
-         assert loaderManagerConfig.isPassivation();
-         assert loaderManagerConfig.isShared();
+               CacheLoaderManagerConfig loaderManagerConfig = defaultConfig.getCacheLoaderManagerConfig();
+               assert loaderManagerConfig.isPassivation();
+               assert loaderManagerConfig.isShared();
 
-         assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
-         CacheStoreConfig config = (CacheStoreConfig) loaderManagerConfig.getCacheLoaderConfigs().get(0);
-         assert config.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
-         AsyncStoreConfig asyncStoreConfig = config.getAsyncStoreConfig();
-         assert asyncStoreConfig != null;
-         assert asyncStoreConfig.isEnabled();
-         assert config.isFetchPersistentState();
-         assert config.isIgnoreModifications();
-         assert config.isPurgeOnStartup();
-         SingletonStoreConfig singletonStoreConfig = config.getSingletonStoreConfig();
-         assert singletonStoreConfig != null;
-         assert singletonStoreConfig.isSingletonStoreEnabled();
+               assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
+               CacheStoreConfig config = (CacheStoreConfig) loaderManagerConfig.getCacheLoaderConfigs().get(0);
+               assert config.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
+               AsyncStoreConfig asyncStoreConfig = config.getAsyncStoreConfig();
+               assert asyncStoreConfig != null;
+               assert asyncStoreConfig.isEnabled();
+               assert config.isFetchPersistentState();
+               assert config.isIgnoreModifications();
+               assert config.isPurgeOnStartup();
+               SingletonStoreConfig singletonStoreConfig = config.getSingletonStoreConfig();
+               assert singletonStoreConfig != null;
+               assert singletonStoreConfig.isSingletonStoreEnabled();
+            }
+         });
       } finally {
          Thread.currentThread().setContextClassLoader(existingCl);
       }

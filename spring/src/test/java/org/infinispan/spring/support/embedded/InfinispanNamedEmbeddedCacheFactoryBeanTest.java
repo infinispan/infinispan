@@ -33,6 +33,8 @@ import java.io.InputStream;
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -56,13 +58,13 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
 
    private static final DefaultCacheManager DEFAULT_CACHE_MANAGER = new DefaultCacheManager(false);
 
-   private static final DefaultCacheManager PRECONFIGURED_DEFAULT_CACHE_MANAGER;
+   private static final EmbeddedCacheManager PRECONFIGURED_DEFAULT_CACHE_MANAGER;
 
    static {
       InputStream configStream = null;
       try {
          configStream = NAMED_ASYNC_CACHE_CONFIG_LOCATION.getInputStream();
-         PRECONFIGURED_DEFAULT_CACHE_MANAGER = new DefaultCacheManager(configStream, false);
+         PRECONFIGURED_DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.fromStream(configStream);
       } catch (final IOException e) {
          throw new ExceptionInInitializerError(e);
       } finally {
@@ -82,7 +84,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
       PRECONFIGURED_DEFAULT_CACHE_MANAGER.start();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public static void stopCacheManagers() {
       PRECONFIGURED_DEFAULT_CACHE_MANAGER.stop();
       DEFAULT_CACHE_MANAGER.stop();

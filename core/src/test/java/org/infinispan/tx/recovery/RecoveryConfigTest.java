@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryInfoKey;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
@@ -44,7 +45,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return new DefaultCacheManager("configs/recovery-enabled-config.xml");
+      return TestCacheManagerFactory.fromXml("configs/recovery-enabled-config.xml");
    }
 
    public void testRecoveryAndAsyncCaches() {

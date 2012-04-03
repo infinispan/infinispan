@@ -60,7 +60,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
                .transaction()
                   .lockingMode(LockingMode.PESSIMISTIC)
             .build();
-      return new DefaultCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void testContentsOfContext() throws Exception {
