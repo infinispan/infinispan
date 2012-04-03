@@ -156,10 +156,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      this.enabled = template.enabled();
-      this.indexLocalOnly = template.indexLocalOnly();
-      this.properties = template.properties();
-      
+      enabled = template.enabled();
+      indexLocalOnly = template.indexLocalOnly();
+      properties = new Properties();
+
+      TypedProperties templateProperties = template.properties();
+      if (templateProperties != null) {
+         for (Object key : templateProperties.keySet()) {
+            properties.put(key, templateProperties.get(key));
+         }
+      }
+
       return this;
    }
 
