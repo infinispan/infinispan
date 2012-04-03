@@ -27,11 +27,17 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -40,8 +46,21 @@ import static junit.framework.Assert.assertEquals;
  * @since 4.1
  */
 public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
-   
+
+   protected ThreadFactory threadFactory = new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+         return new Thread(r, "KeyGeneratorThread," + this.getClass().getSimpleName());
+      }
+   };
+   protected ExecutorService executor  = Executors.newSingleThreadExecutor(threadFactory);
    protected KeyAffinityServiceImpl<Object> keyAffinityService;
+
+   @AfterTest
+   public void stopExecutorService() throws InterruptedException {
+      keyAffinityService.stop();
+      executor.shutdown();
+      assert executor.awaitTermination(100, TimeUnit.MILLISECONDS);
+   }
 
    protected void assertMapsToAddress(Object o, Address addr) {
       ConsistentHash hash = caches.get(0).getAdvancedCache().getDistributionManager().getConsistentHash();
