@@ -207,7 +207,7 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, gcb, defaultCacheConfig, false);
    }
 
-   private static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
+   public static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
       amendMarshaller(gcb);
       minimizeThreads(gcb);
       amendTransport(gcb, flags);
