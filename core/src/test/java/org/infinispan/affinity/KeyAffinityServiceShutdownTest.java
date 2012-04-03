@@ -25,10 +25,6 @@ package org.infinispan.affinity;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-
 import static junit.framework.Assert.assertEquals;
 
 /**
@@ -37,24 +33,15 @@ import static junit.framework.Assert.assertEquals;
  */
 @Test (groups = "functional", testName = "affinity.KeyAffinityServiceShutdownTest")
 public class KeyAffinityServiceShutdownTest extends BaseKeyAffinityServiceTest {
-   private ExecutorService executor;
    private EmbeddedCacheManager cacheManager;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
 
-      ThreadFactory tf = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r, "KeyGeneratorThread");
-         }
-      };
-      executor = Executors.newSingleThreadExecutor(tf);
       cacheManager = manager(0);
       keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.newKeyAffinityService(cacheManager.getCache(cacheName),
-                                                                                                    executor,
-                                                                                                    new RndKeyGenerator(), 100);
+            executor, new RndKeyGenerator(), 100);
    }
 
    public void testSimpleShutdown() throws Exception {
