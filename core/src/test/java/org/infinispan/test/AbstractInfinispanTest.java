@@ -28,6 +28,9 @@ import org.testng.annotations.AfterTest;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import static org.testng.Assert.assertEquals;
 
@@ -82,6 +85,16 @@ public class AbstractInfinispanTest {
          });
       }
       return t;
+   }
+
+   protected <T> Future<T> fork(Callable<T> c) {
+      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + c.hashCode();
+      log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
+      FutureTask future = new FutureTask(c);
+      final Thread t = new Thread(future);
+      spawnedThreads.add(t);
+      t.start();
+      return future;
    }
 
    public final class RunnableWrapper implements Runnable {

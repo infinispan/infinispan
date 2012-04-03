@@ -31,7 +31,6 @@ import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.infinispan.test.TestingUtil.k;
@@ -75,7 +74,8 @@ public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest {
             return null;
          }
       };
-      Future commitFuture = Executors.newSingleThreadExecutor().submit(commitCallable);
+      Future commitFuture = fork(commitCallable);
+      Thread.sleep(500);
       nonOwnerCache.put(key, value);
       commitLatch.countDown();
       commitFuture.get();
@@ -91,7 +91,7 @@ public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest {
          }
       };
 
-      Future getFuture = Executors.newSingleThreadExecutor().submit(getCallable);
+      Future getFuture = fork(getCallable);
       getFuture.get();
    }
 
