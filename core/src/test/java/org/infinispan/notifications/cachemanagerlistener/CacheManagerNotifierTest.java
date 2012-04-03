@@ -22,15 +22,6 @@
  */
 package org.infinispan.notifications.cachemanagerlistener;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
@@ -46,7 +37,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
@@ -75,29 +69,78 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       assert cm1.getMembers().contains(myAddress);
 
       // now attach a mock notifier
-      CacheManagerNotifier mockNotifier = mock(CacheManagerNotifier.class);
-      CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
+      CacheManagerNotifierWrapper nw = new CacheManagerNotifierWrapper(TestingUtil.extractComponent(cm1.getCache("cache"), CacheManagerNotifier.class));
+      CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, nw, true);
       try {
          // start a second cache.
          Cache c2 = cm2.getCache("cache");
          TestingUtil.blockUntilViewsReceived(60000, cm1, cm2);
-         verify(mockNotifier).notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
-
+         assert nw.notifyView;
+         assertEquals(myAddress, nw.address);
       } finally {
          TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
+      }
+   }
+   
+   public static class CacheManagerNotifierWrapper implements CacheManagerNotifier {
+
+      final CacheManagerNotifier realOne;
+      
+      volatile boolean notifyView;
+
+      volatile Address address;
+
+      public CacheManagerNotifierWrapper(CacheManagerNotifier realOne) {
+         this.realOne = realOne;
+      }
+
+      @Override
+      public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
+         realOne.notifyViewChange(members, oldMembers, myAddress, viewId);
+         notifyView = true;
+         this.address = myAddress;
+      }
+
+      @Override
+      public void notifyCacheStarted(String cacheName) {
+         realOne.notifyCacheStarted(cacheName);
+      }
+
+      @Override
+      public void notifyCacheStopped(String cacheName) {
+         realOne.notifyCacheStopped(cacheName);
+      }
+
+      @Override
+      public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
+         realOne.notifyMerge(members, oldMembers, myAddress, viewId, subgroupsMerged);
+      }
+
+      @Override
+      public void addListener(Object listener) {
+         realOne.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Object listener) {
+         realOne.removeListener(listener);
+      }
+
+      @Override
+      public Set<Object> getListeners() {
+         return realOne.getListeners();
       }
    }
 
    public void testViewChange() throws Exception {
       EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager();
       cmA.getCache();
-      CyclicBarrier barrier = new CyclicBarrier(2);
+      CountDownLatch barrier = new CountDownLatch(1);
       GetCacheManagerCheckListener listener = new GetCacheManagerCheckListener(barrier);
       cmA.addListener(listener);
       CacheContainer cmB = TestCacheManagerFactory.createClusteredCacheManager();
       cmB.getCache();
       try {
-         barrier.await();
          barrier.await();
          assert listener.cacheContainer != null;
       } finally {
@@ -108,19 +151,17 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    @Listener
    static public class GetCacheManagerCheckListener {
       CacheContainer cacheContainer;
-      CyclicBarrier barrier;
+      CountDownLatch barrier;
 
-      public GetCacheManagerCheckListener(CyclicBarrier barrier) {
+      public GetCacheManagerCheckListener(CountDownLatch barrier) {
          this.barrier = barrier;
       }
 
       @ViewChanged
       public void onViewChange(ViewChangedEvent e) throws Exception {
-         barrier.await();
          cacheContainer = e.getCacheManager();
-         barrier.await();
+         barrier.countDown();
       }
-
    }
 
 }
