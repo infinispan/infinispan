@@ -77,8 +77,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the Hibernate Search
-    * reference of the version you're using with Infinispan Query.
+    * complete and up to date documentation about available properties refer to the the Hibernate Search
+    * reference of the version used by Infinispan Query.
     * </p>
     * 
     * @see <a
@@ -100,8 +100,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the Hibernate Search
-    * reference of the version you're using with Infinispan Query.
+    * complete and up to date documentation about available properties refer to the the Hibernate Search
+    * reference of the version used by Infinispan Query.
     * </p>
     *
     * @see <a
@@ -111,7 +111,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @param value Property value
     * @return <code>this</code>, for method chaining
     */
-   public IndexingConfigurationBuilder addValue(String key, Object value) {
+   public IndexingConfigurationBuilder setProperty(String key, Object value) {
       this.properties.put(key, value);
       return this;
    }
