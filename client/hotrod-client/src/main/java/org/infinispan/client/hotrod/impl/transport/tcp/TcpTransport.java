@@ -169,6 +169,8 @@ public class TcpTransport extends AbstractTransport {
       int resultInt;
       try {
          resultInt = socketInputStream.read();
+         if (trace)
+            log.tracef("Read byte %d from socket input in %s", resultInt, socket);
       } catch (IOException e) {
          invalid = true;
          throw new TransportException(e);
