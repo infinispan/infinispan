@@ -27,8 +27,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 /**
  *
@@ -43,19 +41,13 @@ public class FilteredKeyAffinityServiceTest extends BaseFilterKeyAffinityService
 
    @Override
    protected void createService() {
-      ThreadFactory tf = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r, "KeyGeneratorThread");
-         }
-      };
       filter = new ArrayList<Address>();
       filter.add(caches.get(0).getAdvancedCache().getRpcManager().getTransport().getAddress());
       filter.add(caches.get(1).getAdvancedCache().getRpcManager().getTransport().getAddress());
       cacheManager = caches.get(0).getCacheManager();
       keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.
             newKeyAffinityService(cacheManager.getCache(cacheName), filter, new RndKeyGenerator(),
-                                       Executors.newSingleThreadExecutor(tf), 100);
+                  executor, 100);
    }
 
    @Override

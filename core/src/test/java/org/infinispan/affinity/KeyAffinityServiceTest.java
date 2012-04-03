@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -56,15 +54,8 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
       assertEquals("v", cache(1, cacheName).get("k"));
 
 
-      ThreadFactory tf = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {       
-            return new Thread(r, "KeyGeneratorThread");
-         }
-      };
       keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),
-                                                                                                    Executors.newSingleThreadExecutor(tf),
-                                                                                                    new RndKeyGenerator(), 100);
+            executor, new RndKeyGenerator(), 100);
    }
 
    public void testKeysAreCorrectlyCreated() throws Exception {

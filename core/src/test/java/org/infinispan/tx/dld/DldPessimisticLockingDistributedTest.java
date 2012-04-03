@@ -26,12 +26,15 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -40,7 +43,6 @@ import java.util.concurrent.Executor;
 @Test (groups = "functional", testName = "tx.dld.DldEagerLockingDistributedTest")
 public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
-   private KeyAffinityService cas;
    private Object k0;
    private Object k1;
 
@@ -54,14 +56,8 @@ public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLock
       registerCacheManager(cm2);
       waitForClusterToForm();
 
-      cas = KeyAffinityServiceFactory.newKeyAffinityService(cache(0), new Executor() {
-         public void execute(Runnable command) {
-            new Thread(command).start();
-         }
-      }, new RndKeyGenerator(), 2, true);
-      k0 = cas.getKeyForAddress(address(0));
-      k1 = cas.getKeyForAddress(address(1));
-      cas.stop();
+      k0 = new MagicKey(cache(0));
+      k1 = new MagicKey(cache(1));
    }
 
    protected Configuration createConfiguration() {

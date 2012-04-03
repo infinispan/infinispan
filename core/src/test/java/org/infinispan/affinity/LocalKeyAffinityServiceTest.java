@@ -27,8 +27,6 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * This class just overrides the methods in the base class as TestNG behaves funny with depending methods and inheritance.
@@ -42,16 +40,10 @@ public class LocalKeyAffinityServiceTest extends BaseFilterKeyAffinityServiceTes
    @Override
    protected void createService() {
       {
-         ThreadFactory tf = new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-               return new Thread(r, "KeyGeneratorThread");
-            }
-         };
          cacheManager = caches.get(0).getCacheManager();
          keyAffinityService = (KeyAffinityServiceImpl<Object>) KeyAffinityServiceFactory.
                newLocalKeyAffinityService(cacheManager.getCache(cacheName), new RndKeyGenerator(),
-                                          Executors.newSingleThreadExecutor(tf), 100);
+                     executor, 100);
       }
    }
 

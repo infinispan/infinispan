@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.testng.AssertJUnit.assertTrue;
@@ -49,6 +50,8 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
    EmbeddedCacheManager manager1 = null, manager2 = null;
    AdvancedCache<Object, Object> cache1 = null, cache2 = null;
    KeyAffinityService<Object> keyAffinityService1 = null, keyAffinityService2 = null;
+   private ExecutorService ex1;
+   private ExecutorService ex2;
 
    @BeforeMethod
    protected void setUp() throws Exception {
@@ -61,13 +64,15 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       manager1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
       manager1.defineConfiguration("test", conf);
       cache1 = manager1.getCache("test").getAdvancedCache();
-      keyAffinityService1 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache1, new RndKeyGenerator(), Executors.newSingleThreadExecutor(), KEY_QUEUE_SIZE);
+      ex1 = Executors.newSingleThreadExecutor();
+      keyAffinityService1 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache1, new RndKeyGenerator(), ex1, KEY_QUEUE_SIZE);
       System.out.println("Address for manager1: " + manager1.getAddress());
 
       manager2 = TestCacheManagerFactory.createClusteredCacheManager(conf);
       manager2.defineConfiguration("test", conf);
       cache2 = manager2.getCache("test").getAdvancedCache();
-      keyAffinityService2 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache2, new RndKeyGenerator(), Executors.newSingleThreadExecutor(), KEY_QUEUE_SIZE);
+      ex2 = Executors.newSingleThreadExecutor();
+      keyAffinityService2 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache2, new RndKeyGenerator(), ex2, KEY_QUEUE_SIZE);
       System.out.println("Address for manager2: " + manager2.getAddress());
 
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
@@ -76,6 +81,10 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
 
    @AfterTest
    protected void tearDown() throws Exception {
+      ex1.shutdownNow();
+      ex2.shutdownNow();
+      keyAffinityService1.stop();
+      keyAffinityService2.stop();
       TestingUtil.killCacheManagers(manager1, manager2);
    }
 
