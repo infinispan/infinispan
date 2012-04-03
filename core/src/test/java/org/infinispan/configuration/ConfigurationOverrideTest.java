@@ -30,19 +30,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-<<<<<<< HEAD
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-=======
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
->>>>>>> ISPN-1895 All cache managers that can cluster to go through factory
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(groups = "functional")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {
@@ -78,7 +71,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       final org.infinispan.config.Configuration cacheConfiguration = new org.infinispan.config.Configuration().fluent()
             .build();
 
-      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration)
+      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
       cm.defineConfiguration("my-cache", cacheConfiguration);
 
       Cache<?, ?> cache = cm.getCache("my-cache");
@@ -98,6 +91,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
 
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfigBuilder, new ConfigurationBuilder());
+      cm.defineConfiguration("my-cache", config.build());
 
       Cache<?, ?> cache = cm.getCache("my-cache");
       
