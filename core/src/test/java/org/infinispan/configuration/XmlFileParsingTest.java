@@ -110,7 +110,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheFile() throws IOException {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
+      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true);
       assertNamedCacheFile(cm);
    }
 
@@ -319,8 +319,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert !c.jmxStatistics().enabled();
       assert gc.globalJmxStatistics().enabled();
       assert gc.globalJmxStatistics().allowDuplicateDomains();
-      // Should be "funky_domain", but it's overriden by the test cache manager factory
-      assertEquals("infinispan2", gc.globalJmxStatistics().domain());
+      assertEquals("funky_domain", gc.globalJmxStatistics().domain());
       assert gc.globalJmxStatistics().mbeanServerLookup() instanceof PerThreadMBeanServerLookup;
 
       c = cm.getCacheConfiguration("dist");
