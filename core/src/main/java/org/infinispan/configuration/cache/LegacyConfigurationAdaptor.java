@@ -408,7 +408,8 @@ public class LegacyConfigurationAdaptor {
          
       if (legacy.isIndexingEnabled())
          builder.indexing().enable()
-            .indexLocalOnly(legacy.isIndexLocalOnly());
+            .indexLocalOnly(legacy.isIndexLocalOnly())
+            .withProperties(legacy.getIndexingProperties());
       else
          builder.indexing().disable();
          
