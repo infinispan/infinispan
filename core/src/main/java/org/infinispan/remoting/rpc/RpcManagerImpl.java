@@ -113,6 +113,18 @@ public class RpcManagerImpl implements RpcManager {
       statisticsEnabled = configuration.isExposeJmxStatistics();
    }
 
+   @ManagedAttribute(description = "Retrieves the committed view.")
+   @Metric(displayName = "Committed view", dataType = DataType.TRAIT)
+   public String getCommittedViewAsString() {
+      return cvm == null ? "N/A" : cvm.getCommittedView(configuration.getName()).toString();
+   }
+
+   @ManagedAttribute(description = "Retrieves the pending view.")
+   @Metric(displayName = "Pending view", dataType = DataType.TRAIT)
+   public String getPendingViewAsString() {
+      return cvm == null ? "N/A" : cvm.getPendingView(configuration.getName()).toString();
+   }
+
    private boolean useReplicationQueue(boolean sync) {
       return !sync && replicationQueue != null && replicationQueue.isEnabled();
    }
