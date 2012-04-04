@@ -39,7 +39,7 @@
                <property name="userName" value="sa"/>
                <property name="password" value="" />
                <property name="driverClass" value="org.h2.Driver"/>
-               <property name="dropTableOnExit" value="true"/>
+               <property name="dropTableOnExit" value="false"/>
                <property name="createTableOnStart" value="true"/>
 
                <property name="bucketTableNamePrefix" value="bucket" />
