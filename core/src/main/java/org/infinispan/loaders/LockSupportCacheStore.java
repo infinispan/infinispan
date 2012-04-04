@@ -124,7 +124,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
     * Based on the supplied param, acquires a global read(false) or write (true) lock.
     */
    protected final boolean acquireGlobalLock(boolean exclusive) {
-      return locks.aquireGlobalLock(exclusive, globalLockTimeoutMillis);
+      return locks.acquireGlobalLock(exclusive, globalLockTimeoutMillis);
    }
 
    /**
