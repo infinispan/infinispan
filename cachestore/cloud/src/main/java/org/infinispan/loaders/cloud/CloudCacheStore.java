@@ -292,11 +292,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          Bucket bucket = readFromBlob(blob, blobName);
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               lockForWriting(bucket.getBucketId());
+               upgradeLock(bucket.getBucketId());
                try {
                   updateBucket(bucket);
                } finally {
-                  unlock(bucket.getBucketId());
+                  downgradeLock(bucket.getBucketId());
                }
            }
          } else {
