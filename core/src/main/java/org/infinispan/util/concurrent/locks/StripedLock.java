@@ -131,7 +131,7 @@ public class StripedLock {
          if (trace) log.tracef("WL released for '%s'", key);
       } else {
          lock.readLock().unlock();
-         if (trace) log.tracef("WL released for '%s'", key);
+         if (trace) log.tracef("RL released for '%s'", key);
       }
    }
 
@@ -210,20 +210,21 @@ public class StripedLock {
    /**
     * Acquires RL on all locks agregated by this StripedLock, in the given timeout.
     */
-   public boolean aquireGlobalLock(boolean exclusive, long timeout) {
+   public boolean acquireGlobalLock(boolean exclusive, long timeout) {
+      log.tracef("About to acquire global lock. Exclusive? %s", exclusive);
       boolean success = true;
       for (int i = 0; i < sharedLocks.length; i++) {
          Lock toAcquire = exclusive ? sharedLocks[i].writeLock() : sharedLocks[i].readLock();
          try {
             success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
             if (!success) {
-               if (trace) log.tracef("Could not aquire lock on %s. Exclusive? %b", toAcquire, exclusive);
+               if (trace) log.tracef("Could not acquire lock on %s. Exclusive? %b", toAcquire, exclusive);
                break;
             }
          } catch (InterruptedException e) {
-            if (trace) log.trace("Cought InterruptedException while trying to aquire global lock", e);
+            if (trace) log.trace("Caught InterruptedException while trying to acquire global lock", e);
             success = false;
-            Thread.currentThread().interrupt(); // Restore interrupted status
+            Thread.currentThread().interrupt();
          } finally {
             if (!success) {
                for (int j = 0; j < i; j++) {

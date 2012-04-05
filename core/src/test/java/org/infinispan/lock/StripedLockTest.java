@@ -56,7 +56,7 @@ public class StripedLockTest extends AbstractInfinispanTest {
    public void testGlobalReadLockSimple() throws Exception {
       assert canAquireWL();
       assert canAquireRL();
-      assert stripedLock.aquireGlobalLock(false, 0);
+      assert stripedLock.acquireGlobalLock(false, 0);
       assert stripedLock.getTotalReadLockCount() == stripedLock.getSharedLockCount();
       assert !canAquireWL();
       assert canAquireRL();
@@ -65,7 +65,7 @@ public class StripedLockTest extends AbstractInfinispanTest {
    public void testGlobalReadLockIsAtomic() throws Exception {
       assert aquireWL();
       assert 1 == stripedLock.getTotalWriteLockCount();
-      assert !stripedLock.aquireGlobalLock(false, 0);
+      assert !stripedLock.acquireGlobalLock(false, 0);
       assert stripedLock.getTotalReadLockCount() == 0 : "No read locks should be held if the operation failed";
    }
 
@@ -73,12 +73,12 @@ public class StripedLockTest extends AbstractInfinispanTest {
       assert aquireRL();
       assert aquireRL();
       assert stripedLock.getTotalReadLockCount() == 2;
-      assert stripedLock.aquireGlobalLock(false, 0);
+      assert stripedLock.acquireGlobalLock(false, 0);
       assert stripedLock.getTotalReadLockCount() == stripedLock.getSharedLockCount() + 2;
    }
 
    public void testAquireGlobalAndRelease() {
-      assert stripedLock.aquireGlobalLock(false, 0);
+      assert stripedLock.acquireGlobalLock(false, 0);
       assert stripedLock.getTotalReadLockCount() == stripedLock.getSharedLockCount();
       assert stripedLock.getTotalWriteLockCount() == 0;
       try {
@@ -91,7 +91,7 @@ public class StripedLockTest extends AbstractInfinispanTest {
       assert stripedLock.getTotalReadLockCount() == 0;
       assert stripedLock.getTotalWriteLockCount() == 0;
 
-      assert stripedLock.aquireGlobalLock(true, 0);
+      assert stripedLock.acquireGlobalLock(true, 0);
       assert stripedLock.getTotalReadLockCount() == 0;
       assert stripedLock.getTotalWriteLockCount() == stripedLock.getSharedLockCount();
 
