@@ -120,8 +120,6 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    @Override
    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-      if (!method.isTestMethod())
-         return;
       if (testResult.getThrowable() != null)
          log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
    }
