@@ -447,12 +447,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (trace)
          log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
       Address self = getAddress();
+      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
-         if (mode == ResponseMode.SYNCHRONOUS)
-            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
-         else { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
+         if (ignoreLeavers) { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
             recipients = new HashSet<Address>(recipients);
             recipients.retainAll(getMembers());
+         } else { // SYNCHRONOUS
+            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
          }
       }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
@@ -473,13 +474,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                asyncMarshalling);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
-            boolean singleRecipient = jgAddressList != null && jgAddressList.size() == 1;
+            boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
             boolean skipRpc = false;
             if (jgAddressList == null) {
                ArrayList<Address> others = new ArrayList<Address>(members);
                others.remove(self);
                skipRpc = others.isEmpty();
-               singleRecipient = others.size() == 1;
+               singleRecipient = !ignoreLeavers && others.size() == 1;
                if (singleRecipient) singleJGAddress = toJGroupsAddress(others.get(0));
             }
             if (!skipRpc) {
@@ -509,7 +510,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } else {      
          Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
-         boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
          boolean noValidResponses = true;
          for (Rsp<Object> rsp : rsps.values()) {
             noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),
