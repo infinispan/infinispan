@@ -104,7 +104,7 @@
    <namedCache name="withRecoveryAndAsync">
 
       <clustering mode="repl">
-         <stateRetrieval fetchInMemoryState="false"/>
+         <stateTransfer fetchInMemoryState="false"/>
          <async asyncMarshalling="false"/>
       </clustering>
 

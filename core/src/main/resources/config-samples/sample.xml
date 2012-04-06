@@ -255,12 +255,12 @@
       <clustering mode="replication">
 
          <!--
-            Defines whether to retrieve state on startup.  This is only valud for 'replication' mode.
+            Configures how state is transferred between the nodes
          -->
-         <stateRetrieval
+         <stateTransfer
             timeout="240000"
             fetchInMemoryState="false"
-            alwaysProvideInMemoryState="false"
+            chunkSize="10000"
          />
 
          <!--

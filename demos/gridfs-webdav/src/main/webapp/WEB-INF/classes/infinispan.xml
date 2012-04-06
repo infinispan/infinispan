@@ -46,7 +46,7 @@
    <namedCache name="metadata">
       <clustering mode="r">
          <sync replTimeout="60000" />
-         <stateRetrieval fetchInMemoryState="true" />
+         <stateTransfer fetchInMemoryState="true" />
       </clustering>
    </namedCache>
 </infinispan>

@@ -49,10 +49,9 @@
       />
       <jmxStatistics enabled="true"/>
       <clustering mode="replication">
-         <stateRetrieval
+         <stateTransfer
             timeout="240000"
             fetchInMemoryState="false"
-            alwaysProvideInMemoryState="false"
          />
          <sync replTimeout="20000"/>
       </clustering>
