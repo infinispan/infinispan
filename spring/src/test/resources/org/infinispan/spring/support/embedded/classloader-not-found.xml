@@ -53,7 +53,7 @@
 
    <namedCache name="testCache">
       <clustering mode="replication">
-         <stateRetrieval fetchInMemoryState="true"/>
+         <stateTransfer fetchInMemoryState="true"/>
          <sync/>
       </clustering>
 

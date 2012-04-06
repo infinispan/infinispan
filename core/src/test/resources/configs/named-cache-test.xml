@@ -103,21 +103,21 @@
 
    <namedCache name="syncRepl">
       <clustering mode="repl">
-         <stateRetrieval fetchInMemoryState="false"/>
+         <stateTransfer fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncRepl">
       <clustering mode="repl">
-         <stateRetrieval fetchInMemoryState="false"/>
+         <stateTransfer fetchInMemoryState="false"/>
          <async asyncMarshalling="false"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncReplQueue">
       <clustering mode="repl">
-         <stateRetrieval fetchInMemoryState="false"/>
+         <stateTransfer fetchInMemoryState="false"/>
          <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
       </clustering>
    </namedCache>
