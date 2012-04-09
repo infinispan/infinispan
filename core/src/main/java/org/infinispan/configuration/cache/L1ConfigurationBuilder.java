@@ -150,16 +150,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
    @Override
    L1Configuration create() {
-      if (enabled) {
-         if (onRehash == null) {
-            log.debug("L1 is enabled and L1OnRehash was not defined, enabling it");
-            onRehash = true;
-         }
+      boolean finalOnRehash;
+      if (onRehash != null) {
+         finalOnRehash = onRehash.booleanValue();
       } else {
-         onRehash = false;
+         finalOnRehash = false;
+         if (enabled && onRehash == null) {
+            log.debug("L1 is enabled and L1OnRehash was not defined, enabling it");
+            finalOnRehash = true;
+         }
       }
-
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash, cleanupTaskFrequency, activated);
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, finalOnRehash, cleanupTaskFrequency, activated);
    }
 
    @Override
