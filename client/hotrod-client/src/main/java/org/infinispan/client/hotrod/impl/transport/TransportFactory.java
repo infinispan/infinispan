@@ -40,9 +40,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public interface TransportFactory {
 
-   public Transport getTransport();
+   Transport getTransport();
 
-   public void releaseTransport(Transport transport);
+   void releaseTransport(Transport transport);
 
    void start(Codec codec, ConfigurationProperties props, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
 

@@ -206,5 +206,5 @@ public interface RpcManager {
    /**
     * Returns the address associated with this RpcManager or null if not part of the cluster.
     */
-   public Address getAddress();
+   Address getAddress();
 }

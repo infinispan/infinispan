@@ -35,6 +35,7 @@ public class ClusterCacheLoaderConfig extends AbstractCacheLoaderConfig {
    
    private long remoteCallTimeout;
 
+   @Override
    public String getCacheLoaderClassName() {
       return ClusterCacheLoader.class.getName();
    }

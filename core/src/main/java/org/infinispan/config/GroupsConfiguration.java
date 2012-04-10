@@ -76,6 +76,7 @@ public class GroupsConfiguration extends AbstractFluentConfigurationBean impleme
       
    }
    
+   @Override
    public Boolean isEnabled() {
       return enabled;
    }

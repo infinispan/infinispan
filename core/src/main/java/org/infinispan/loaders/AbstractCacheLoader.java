@@ -41,6 +41,7 @@ public abstract class AbstractCacheLoader implements CacheLoader {
     * {@inheritDoc} This implementation delegates to {@link CacheLoader#load(Object)}, to ensure that a response is
     * returned only if the entry is not expired.
     */
+   @Override
    public boolean containsKey(Object key) throws CacheLoaderException {
       return load(key) != null;
    }

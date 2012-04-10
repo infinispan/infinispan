@@ -46,27 +46,33 @@ public class InfinispanCollections {
 
       Iterator<E> it = new Iterator() {
 
+         @Override
          public boolean hasNext() {
             return false;
          }
 
+         @Override
          public E next() {
             throw new NoSuchElementException();
          }
 
+         @Override
          public void remove() {
             throw new UnsupportedOperationException();
          }
       };
 
+      @Override
       public Iterator<E> iterator() {
          return it;
       }
 
+      @Override
       public int size() {
          return 0;
       }
 
+      @Override
       public Iterator<E> reverseIterator() {
          return it;
       }

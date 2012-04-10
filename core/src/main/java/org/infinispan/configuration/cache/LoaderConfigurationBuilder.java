@@ -110,6 +110,7 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
     * These properties are passed directly to the cache loader.
     * </p>
     */
+   @Override
    public LoaderConfigurationBuilder withProperties(Properties props) {
       this.properties = props;
       return this;

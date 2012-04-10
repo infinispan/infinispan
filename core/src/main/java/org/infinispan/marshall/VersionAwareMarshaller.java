@@ -77,6 +77,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       this.defaultMarshaller.inject(extTable, myClassLoader, icc, globalCfg);
    }
 
+   @Override
    public void stop() {
       defaultMarshaller.stop();
    }

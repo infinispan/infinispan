@@ -194,6 +194,7 @@ public abstract class AbstractListenerImpl {
       public void invoke(final Object event) {
          Runnable r = new Runnable() {
 
+            @Override
             public void run() {
                try {
                   method.invoke(target, event);

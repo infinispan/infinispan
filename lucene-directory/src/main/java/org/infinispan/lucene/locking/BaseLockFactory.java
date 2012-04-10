@@ -56,6 +56,7 @@ public class BaseLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public BaseLuceneLock makeLock(String lockName) {
       BaseLuceneLock lock;
       //It appears Lucene always uses the same name so we give locks
@@ -76,6 +77,7 @@ public class BaseLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void clearLock(String lockName) {
       //Same special care as above for locks named DEF_LOCK_NAME:
       if (DEF_LOCK_NAME.equals(lockName)) {

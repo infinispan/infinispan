@@ -186,10 +186,12 @@ public class ResourceDMBean implements DynamicMBean {
       return obj;
    }
 
+   @Override
    public synchronized MBeanInfo getMBeanInfo() {
       return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(), attInfos, null, opInfos, null);
    }
    
+   @Override
    public synchronized Object getAttribute(String name) throws AttributeNotFoundException {
       if (name == null || name.length() == 0)
          throw new NullPointerException("Invalid attribute requested " + name);
@@ -202,6 +204,7 @@ public class ResourceDMBean implements DynamicMBean {
       return attr.getValue();
    }
 
+   @Override
    public synchronized void setAttribute(Attribute attribute) {
       if (attribute == null || attribute.getName() == null)
          throw new NullPointerException("Invalid attribute requested " + attribute);
@@ -209,6 +212,7 @@ public class ResourceDMBean implements DynamicMBean {
       setNamedAttribute(attribute);
    }
 
+   @Override
    public synchronized AttributeList getAttributes(String[] names) {
       AttributeList al = new AttributeList();
       for (String name : names) {
@@ -222,6 +226,7 @@ public class ResourceDMBean implements DynamicMBean {
       return al;
    }
 
+   @Override
    public synchronized AttributeList setAttributes(AttributeList list) {
       AttributeList results = new AttributeList();
       for (Object aList : list) {
@@ -236,6 +241,7 @@ public class ResourceDMBean implements DynamicMBean {
       return results;
    }
 
+   @Override
    public Object invoke(String name, Object[] args, String[] sig) throws MBeanException,
                                                                          ReflectionException {
       if (log.isDebugEnabled()) {

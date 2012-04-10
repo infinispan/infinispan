@@ -37,6 +37,7 @@ import java.util.Properties;
  */
 public class PlatformMBeanServerLookup implements MBeanServerLookup {
 
+   @Override
    public MBeanServer getMBeanServer(Properties properties) {
       return ManagementFactory.getPlatformMBeanServer();
    }

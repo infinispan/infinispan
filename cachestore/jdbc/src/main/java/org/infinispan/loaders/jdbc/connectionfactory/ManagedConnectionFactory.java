@@ -50,6 +50,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    private DataSource dataSource;
 
+   @Override
    public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
       InitialContext ctx = null;
       String datasourceName = config.getDatasourceJndiLocation();
@@ -81,9 +82,11 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       }
    }
 
+   @Override
    public void stop() {
    }
 
+   @Override
    public Connection getConnection() throws CacheLoaderException {
       Connection connection;
       try {
@@ -99,6 +102,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    }
 
+   @Override
    public void releaseConnection(Connection conn) {
       try {         
          if (conn != null) // Could be null if getConnection failed

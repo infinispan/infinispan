@@ -35,6 +35,7 @@ import org.infinispan.util.Util;
 @DefaultFactoryFor(classes = Transport.class)
 public class TransportFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
+   @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       String transportClass = globalConfiguration.getTransportClass();

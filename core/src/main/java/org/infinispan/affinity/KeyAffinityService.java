@@ -73,5 +73,5 @@ public interface KeyAffinityService<K> extends Lifecycle {
    /**
     * Checks weather or not the service is started.
     */
-   public boolean isStarted();
+   boolean isStarted();
 }

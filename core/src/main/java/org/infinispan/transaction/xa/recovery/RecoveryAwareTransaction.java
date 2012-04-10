@@ -32,7 +32,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
  */
 public interface RecoveryAwareTransaction extends CacheTransaction {
 
-   public boolean isPrepared();
+   boolean isPrepared();
 
-   public void setPrepared(boolean prepared);
+   void setPrepared(boolean prepared);
 }

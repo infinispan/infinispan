@@ -43,7 +43,7 @@ public interface TxInvocationContext extends InvocationContext {
    /**
     * Were there any modifications performed within the tx's scope?
     */
-   public boolean hasModifications();
+   boolean hasModifications();
 
    /**
     * Returns the set of keys that are affected by this transaction.  Used to generate appropriate recipient groups

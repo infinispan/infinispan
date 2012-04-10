@@ -38,6 +38,7 @@ public class Store implements Modification {
       this.storedEntry = storedEntry;
    }
 
+   @Override
    public Type getType() {
       return Type.STORE;
    }

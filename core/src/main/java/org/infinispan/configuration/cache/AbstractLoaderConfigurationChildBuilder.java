@@ -9,10 +9,12 @@ public abstract class AbstractLoaderConfigurationChildBuilder<T> extends Abstrac
       this.loaderConfigurationBuilder = builder;
    }
 
+   @Override
    public AsyncLoaderConfigurationBuilder async() {
       return loaderConfigurationBuilder.async();
    }
    
+   @Override
    public SingletonStoreConfigurationBuilder singletonStore() {
       return loaderConfigurationBuilder.singletonStore();
    }

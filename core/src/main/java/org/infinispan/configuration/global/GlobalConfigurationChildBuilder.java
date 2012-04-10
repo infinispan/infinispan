@@ -1,21 +1,21 @@
 package org.infinispan.configuration.global;
 
 public interface GlobalConfigurationChildBuilder {
-   public TransportConfigurationBuilder transport();
+   TransportConfigurationBuilder transport();
 
-   public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics();
+   GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics();
 
-   public SerializationConfigurationBuilder serialization();
+   SerializationConfigurationBuilder serialization();
 
-   public ExecutorFactoryConfigurationBuilder asyncListenerExecutor();
+   ExecutorFactoryConfigurationBuilder asyncListenerExecutor();
 
-   public ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
+   ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
    
-   public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
+   ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 
-   public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();
+   ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();
 
-   public ShutdownConfigurationBuilder shutdown();
+   ShutdownConfigurationBuilder shutdown();
 
-   public GlobalConfiguration build();
+   GlobalConfiguration build();
 }

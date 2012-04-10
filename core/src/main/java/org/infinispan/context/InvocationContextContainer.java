@@ -50,7 +50,7 @@ public interface InvocationContextContainer {
     * To be used when building InvocationContext with {@link #createInvocationContext(boolean, int)} as an indicator
     * of the fact that the size of the keys to be accessed in the context is not known.
     */
-   public static final int UNBOUNDED = -1;
+   int UNBOUNDED = -1;
 
    /**
     * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:

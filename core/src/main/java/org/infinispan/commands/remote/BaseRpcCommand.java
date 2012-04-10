@@ -33,6 +33,7 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
+   @Override
    public String getCacheName() {
       return cacheName;
    }
@@ -44,10 +45,12 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
             '}';
    }
    
+   @Override
    public Address getOrigin() {
 	   return origin;
    }
    
+   @Override
    public void setOrigin(Address origin) {
 	   this.origin = origin;
    }

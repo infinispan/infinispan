@@ -53,16 +53,19 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       structureKey = new NodeKey(fqn, NodeKey.Type.STRUCTURE);
    }
 
+   @Override
    public Node<K, V> getParent() {
       if (fqn.isRoot()) return this;
       return new NodeImpl<K, V>(fqn.getParent(), cache, batchContainer);
    }
 
+   @Override
    public Node<K, V> getParent(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getParent();
    }
 
+   @Override
    public Set<Node<K, V>> getChildren() {
       startAtomic();
       try {
@@ -78,30 +81,36 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public Set<Node<K, V>> getChildren(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getChildren();
    }
 
+   @Override
    public Set<Object> getChildrenNames() {
       return Immutables.immutableSetCopy(getStructure().keySet());
    }
 
+   @Override
    public Set<Object> getChildrenNames(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getChildrenNames();
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public Map<K, V> getData() {
       return Collections.unmodifiableMap(new HashMap(getDataInternal()));
    }
 
+   @Override
    public Map<K, V> getData(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getData();
    }
 
+   @Override
    public Set<K> getKeys() {
       startAtomic();
       try {
@@ -112,15 +121,18 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public Set<K> getKeys(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getKeys();
    }
 
+   @Override
    public Fqn getFqn() {
       return fqn;
    }
 
+   @Override
    public Node<K, V> addChild(Fqn f) {
       startAtomic();
       try {
@@ -140,20 +152,24 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public Node<K, V> addChild(Fqn f, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return addChild(f);
    }
 
+   @Override
    public boolean removeChild(Fqn f) {
       return removeChild(f.getLastElement());
    }
 
+   @Override
    public boolean removeChild(Fqn f, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return removeChild(f);
    }
 
+   @Override
    public boolean removeChild(Object childName) {
       startAtomic();
       try {
@@ -175,11 +191,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public boolean removeChild(Object childName, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return removeChild(childName);
    }
 
+   @Override
    public Node<K, V> getChild(Fqn f) {
       startAtomic();
       try {
@@ -193,11 +211,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public Node<K, V> getChild(Fqn f, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getChild(f);
    }
 
+   @Override
    public Node<K, V> getChild(Object name) {
       startAtomic();
       try {
@@ -211,11 +231,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public Node<K, V> getChild(Object name, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return getChild(name);
    }
 
+   @Override
    public V put(K key, V value) {
       startAtomic();
       try {
@@ -227,11 +249,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public V put(K key, V value, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return put(key, value);
    }
 
+   @Override
    public V putIfAbsent(K key, V value) {
       startAtomic();
       try {
@@ -245,11 +269,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public V putIfAbsent(K key, V value, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return putIfAbsent(key, value);
    }
 
+   @Override
    public V replace(K key, V value) {
       startAtomic();
       try {
@@ -264,11 +290,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public V replace(K key, V value, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return replace(key, value);
    }
 
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       startAtomic();
       try {
@@ -285,11 +313,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public boolean replace(K key, V oldValue, V value, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return replace(key, oldValue, value);
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> map) {
       startAtomic();
       try {
@@ -300,11 +330,13 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       putAll(map);
    }
 
+   @Override
    public void replaceAll(Map<? extends K, ? extends V> map) {
       startAtomic();
       try {
@@ -317,20 +349,24 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public void replaceAll(Map<? extends K, ? extends V> map, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       replaceAll(map);
    }
 
+   @Override
    public V get(K key) {
       return getData().get(key);
    }
 
+   @Override
    public V get(K key, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return get(key);
    }
 
+   @Override
    public V remove(K key) {
       startAtomic();
       try {
@@ -341,29 +377,35 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public V remove(K key, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return remove(key);
    }
 
+   @Override
    public void clearData() {
       getDataInternal().clear();
    }
 
+   @Override
    public void clearData(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       clearData();
    }
 
+   @Override
    public int dataSize() {
       return getData().size();
    }
 
+   @Override
    public int dataSize(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return dataSize();
    }
 
+   @Override
    public boolean hasChild(Fqn f) {
       if (f.size() > 1) {
          // indirect child.
@@ -374,24 +416,29 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public boolean hasChild(Fqn f, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return hasChild(f);
    }
 
+   @Override
    public boolean hasChild(Object o) {
       return getStructure().containsKey(o);
    }
 
+   @Override
    public boolean hasChild(Object o, Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       return hasChild(o);
    }
 
+   @Override
    public boolean isValid() {
       return cache.containsKey(dataKey);
    }
 
+   @Override
    public void removeChildren() {
       startAtomic();
       try {
@@ -403,6 +450,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
+   @Override
    public void removeChildren(Flag... flags) {
       tcc.createTreeContext().addFlags(flags);
       removeChildren();

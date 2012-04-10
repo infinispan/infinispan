@@ -123,6 +123,7 @@ public class TreeNode implements Iterable<TreeNode>, Comparable<TreeNode> {
       return attributes;
    }
 
+   @Override
    public Iterator<TreeNode> iterator() {
       return new TreeIterator();
    }
@@ -167,22 +168,27 @@ public class TreeNode implements Iterable<TreeNode>, Comparable<TreeNode> {
          i = nodes.iterator();
       }
 
+      @Override
       public Iterator<TreeNode> iterator() {
          return nodes.iterator();
       }
 
+      @Override
       public void visitNode(TreeNode treeNode) {
          nodes.add(treeNode);
       }
 
+      @Override
       public boolean hasNext() {
          return i.hasNext();
       }
 
+      @Override
       public TreeNode next() {
          return i.next();
       }
 
+      @Override
       public void remove() {
       }
    }

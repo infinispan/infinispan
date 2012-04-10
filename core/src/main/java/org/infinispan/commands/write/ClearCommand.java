@@ -55,10 +55,12 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
       this.notifier = notifier;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitClearCommand(ctx, this);
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       for (CacheEntry e : ctx.getLookedUpEntries().values()) {
          if (e instanceof MVCCEntry) {
@@ -73,14 +75,17 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
       return null;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{flags};
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
       if (parameters.length > 0) {
@@ -88,6 +93,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
       }
    }
 
+   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }
@@ -101,14 +107,17 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
          .toString();
    }
 
+   @Override
    public boolean isSuccessful() {
       return true;
    }
 
+   @Override
    public boolean isConditional() {
       return false;
    }
 
+   @Override
    public Set<Object> getAffectedKeys() {
       return Collections.emptySet();
    }

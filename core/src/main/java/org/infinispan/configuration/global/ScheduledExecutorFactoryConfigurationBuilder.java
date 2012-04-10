@@ -57,6 +57,7 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       return this;
    }
    
+   @Override
    void validate() {
       // No-op, no validation required
    } 

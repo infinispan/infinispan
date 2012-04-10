@@ -168,6 +168,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean fileExists(String name) {
       checkIsOpen();
       return fileOps.getFileList().contains(name);
@@ -176,6 +177,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public long fileModified(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -190,6 +192,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void touchFile(String fileName) {
       checkIsOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
@@ -206,6 +209,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void deleteFile(String name) {
       checkIsOpen();
       fileOps.deleteFileName(name);
@@ -252,6 +256,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public long fileLength(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -266,6 +271,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public IndexOutput createOutput(String name) {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
@@ -275,6 +281,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
@@ -298,6 +305,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void close() {
       isOpen = false;
    }
@@ -314,6 +322,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /** new name for list() in Lucene 3.0 **/
+   @Override
    public String[] listAll() {
       return list();
    }

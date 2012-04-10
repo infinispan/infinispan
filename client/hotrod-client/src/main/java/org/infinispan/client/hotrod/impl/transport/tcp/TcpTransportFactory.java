@@ -143,6 +143,7 @@ public class TcpTransportFactory implements TransportFactory {
       return borrowTransportFromPool(server);
    }
 
+   @Override
    public Transport getTransport(byte[] key) {
       SocketAddress server;
       synchronized (lock) {
@@ -271,6 +272,7 @@ public class TcpTransportFactory implements TransportFactory {
       return hashFactory;
    }
 
+   @Override
    public boolean isTcpNoDelay() {
       return tcpNoDelay;
    }

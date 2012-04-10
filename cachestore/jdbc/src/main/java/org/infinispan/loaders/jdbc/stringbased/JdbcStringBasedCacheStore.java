@@ -344,6 +344,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
       return storedEntry;
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcStringBasedCacheStoreConfig.class;
    }

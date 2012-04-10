@@ -78,22 +78,27 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       }
    }
 
+   @Override
    public Iterator<Class<?>> getClassMappings() {
       return classes.values().iterator();
    }
 
+   @Override
    public Class<?> getClassMapping(String name) {
       return classes.get(name);
    }
 
+   @Override
    public String getProperty(String propertyName) {
       return properties.getProperty(propertyName);
    }
 
+   @Override
    public Properties getProperties() {
       return properties;
    }
 
+   @Override
    public ReflectionManager getReflectionManager() {
       return null;
    }

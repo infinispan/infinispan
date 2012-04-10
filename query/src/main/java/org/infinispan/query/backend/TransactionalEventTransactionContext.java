@@ -71,6 +71,7 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     *
     * @return true if a transaction is in progress, false otherwise.
     */
+   @Override
    public boolean isTransactionInProgress() {
       if (transactionManager == null) return false;
 
@@ -90,6 +91,7 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * @return a JTA transaction if one is available, or a null otherwise.
     * @see javax.transaction.TransactionManager
     */
+   @Override
    public Object getTransactionIdentifier() {
       if (transactionManager == null) return null;
 
@@ -113,6 +115,7 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * @param synchronization synchronization to register.  Must not be null.
     * @throws NullPointerException if the synchronization is null.
     */
+   @Override
    public void registerSynchronization(Synchronization synchronization) {
       if(transactionSynchronizationRegistry != null) {
          if (synchronization == null) throw new NullPointerException("Synchronization passed in is null!");

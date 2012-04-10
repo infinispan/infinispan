@@ -190,7 +190,8 @@ public class CacheListener {
 	
 	private class ChannelCloseFutureListener implements ChannelFutureListener {
 
-		public void operationComplete(ChannelFuture channelCloseFuture) throws Exception {
+		@Override
+      public void operationComplete(ChannelFuture channelCloseFuture) throws Exception {
 			for(ChannelNotifyParams channel : channels) {
 				if(channelCloseFuture.getChannel() ==  channel.channel) {
 					removeChannel(channel);

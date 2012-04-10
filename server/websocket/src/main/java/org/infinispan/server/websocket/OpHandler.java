@@ -34,11 +34,11 @@ import org.json.JSONObject;
  */
 public interface OpHandler {
 	
-	public static final String OP_CODE = "opCode";
-	public static final String CACHE_NAME = "cacheName";
-	public static final String KEY = "key";
-	public static final String VALUE = "value";
-	public static final String MIME = "mime";
+	String OP_CODE = "opCode";
+	String CACHE_NAME = "cacheName";
+	String KEY = "key";
+	String VALUE = "value";
+	String MIME = "mime";
 
 	/**
 	 * Handle a websocket channel operation.

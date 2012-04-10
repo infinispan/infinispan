@@ -42,50 +42,62 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       this.key = key;
    }
 
+   @Override
    public final void commit(DataContainer container, EntryVersion newVersion) {
       // no-op
    }
 
+   @Override
    public final void rollback() {
       // no-op
    }
 
+   @Override
    public final void setCreated(boolean created) {
       // no-op
    }
 
+   @Override
    public final void setRemoved(boolean removed) {
       // no-op
    }
 
+   @Override
    public final void setEvicted(boolean evicted) {
       // no-op
    }
 
+   @Override
    public final void setValid(boolean valid) {
       // no-op
    }
 
+   @Override
    public final boolean isNull() {
       return false;
    }
 
+   @Override
    public final boolean isChanged() {
       return false;
    }
 
+   @Override
    public final boolean isCreated() {
       return false;
    }
 
+   @Override
    public final boolean isRemoved() {
       return false;
    }
 
+   @Override
    public final boolean isEvicted() {
       return true;
    }
 
+   @Override
    public final boolean isValid() {
       return false;
    }
@@ -95,13 +107,16 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       return false;
    }
 
+   @Override
    public final boolean isLockPlaceholder() {
       return false;
    }
 
+   @Override
    public void setMaxIdle(long maxIdle) {
    }
 
+   @Override
    public void setLifespan(long lifespan) {
    }
 
@@ -115,6 +130,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       // no-op
    }
 
+   @Override
    public final Object getKey() {
       return key;
    }
@@ -126,6 +142,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
             '}';
    }
 
+   @Override
    public AbstractInternalCacheEntry clone() {
       try {
          return (AbstractInternalCacheEntry) super.clone();

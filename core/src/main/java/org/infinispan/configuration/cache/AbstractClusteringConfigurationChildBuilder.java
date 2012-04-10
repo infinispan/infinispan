@@ -9,6 +9,7 @@ abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractCo
       this.clusteringBuilder = builder;
    }
 
+   @Override
    public AsyncConfigurationBuilder async() {
       return clusteringBuilder.async();
    }

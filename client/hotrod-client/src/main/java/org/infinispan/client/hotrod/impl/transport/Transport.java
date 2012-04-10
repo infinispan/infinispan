@@ -30,30 +30,30 @@ package org.infinispan.client.hotrod.impl.transport;
  */
 public interface Transport {
 
-   public TransportFactory getTransportFactory();
+   TransportFactory getTransportFactory();
 
-   public void writeArray(byte[] toAppend);
+   void writeArray(byte[] toAppend);
 
-   public void writeByte(short toWrite);
+   void writeByte(short toWrite);
 
-   public void writeVInt(int vint);
+   void writeVInt(int vint);
 
-   public void writeVLong(long l);
+   void writeVLong(long l);
 
-   public long readVLong();
+   long readVLong();
 
-   public int readVInt();
+   int readVInt();
 
-   public void flush();
+   void flush();
 
-   public short readByte();
+   short readByte();
 
-   public void release();
+   void release();
 
    /**
     * reads an vint which is size; then an array having that size.
     */
-   public byte[] readArray();
+   byte[] readArray();
 
    String readString();
 

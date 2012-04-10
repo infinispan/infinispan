@@ -55,6 +55,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
       this.newValue = newValue;
    }
 
+   @Override
    public void rollback(Map<K, V> delegate) {
       if (oldValue == null)
          delegate.remove(key);
@@ -62,6 +63,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
          delegate.put(key, oldValue);
    }
 
+   @Override
    public void replay(Map<K, V> delegate) {
       delegate.put(key, newValue);
    }

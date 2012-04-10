@@ -39,26 +39,32 @@ public class CacheEntryPassivatedAdapter<K, V> extends AbstractAdapter<CacheEntr
 
    public static final CacheEntryPassivatedEvent<?, ?> EMPTY = new CacheEntryPassivatedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public Object getKey() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
@@ -77,6 +83,7 @@ public class CacheEntryPassivatedAdapter<K, V> extends AbstractAdapter<CacheEntr
       super(event);
    }
 
+   @Override
    @CacheEntryPassivated
    public void fire(CacheEntryPassivatedEvent<K, V> payload) {
       super.fire(payload);

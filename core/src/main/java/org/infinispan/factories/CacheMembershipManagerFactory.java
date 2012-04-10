@@ -44,6 +44,7 @@ public class CacheMembershipManagerFactory extends AbstractComponentFactory impl
       this.transport = transport;
    }
 
+   @Override
    public <T> T construct(Class<T> componentType) {
       // the CacheViewsManager doesn't make sense for local caches
       if (transport == null)

@@ -72,6 +72,7 @@ public class CacheQueryImpl implements CacheQuery {
     *
     * @param filter - lucene filter
     */
+   @Override
    public CacheQuery filter(Filter filter) {
       hSearchQuery.filter( filter );
       return this;
@@ -80,10 +81,12 @@ public class CacheQueryImpl implements CacheQuery {
    /**
     * @return The result size of the query.
     */
+   @Override
    public int getResultSize() {
       return hSearchQuery.queryResultSize();
    }
 
+   @Override
    public CacheQuery sort(Sort sort) {
       hSearchQuery.sort( sort );
       return this;
@@ -95,6 +98,7 @@ public class CacheQueryImpl implements CacheQuery {
     * @param name of filter.
     * @return a FullTextFilter object.
     */
+   @Override
    public FullTextFilter enableFullTextFilter(String name) {
       return hSearchQuery.enableFullTextFilter( name );
    }
@@ -104,6 +108,7 @@ public class CacheQueryImpl implements CacheQuery {
     *
     * @param name of filter.
     */
+   @Override
    public CacheQuery disableFullTextFilter(String name) {
       hSearchQuery.disableFullTextFilter( name );
       return this;
@@ -115,20 +120,24 @@ public class CacheQueryImpl implements CacheQuery {
     * @param firstResult index to be set.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
+   @Override
    public CacheQuery firstResult(int firstResult) {
       hSearchQuery.firstResult( firstResult );
       return this;
    }
    
+   @Override
    public CacheQuery maxResults(int maxResults) {
       hSearchQuery.maxResults( maxResults );
       return this;
    }
 
+   @Override
    public QueryIterator iterator() throws SearchException {
       return iterator(1);
    }
 
+   @Override
    public QueryIterator iterator(int fetchSize) throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
@@ -136,14 +145,17 @@ public class CacheQueryImpl implements CacheQuery {
       return new EagerIterator(keyList, cache, fetchSize);
    }
 
+   @Override
    public QueryIterator lazyIterator() {
       return lazyIterator(1);
    }
 
+   @Override
    public QueryIterator lazyIterator(int fetchSize) {
       return new LazyIterator(hSearchQuery, cache, keyTransformationHandler, fetchSize);
    }
 
+   @Override
    public List<Object> list() throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();

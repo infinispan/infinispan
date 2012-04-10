@@ -83,6 +83,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       this.cacheManager = cacheManager;
    }
 
+   @Override
    public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
@@ -97,6 +98,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       }
    }
 
+   @Override
    public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
       if (!mergeListeners.isEmpty()) {
          EventImpl e = new EventImpl();
@@ -112,6 +114,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       }
    }
 
+   @Override
    public void notifyCacheStarted(String cacheName) {
       if (!cacheStartedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
@@ -122,6 +125,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       }
    }
 
+   @Override
    public void notifyCacheStopped(String cacheName) {
       if (!cacheStoppedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
@@ -132,10 +136,12 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       }
    }
 
+   @Override
    protected Log getLog() {
       return log;
    }
 
+   @Override
    protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
       return allowedListeners;
    }

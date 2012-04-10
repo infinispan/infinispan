@@ -87,6 +87,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return this;
    }
    
+   @Override
    public TransportConfigurationBuilder transport() {
       return transport;
    }
@@ -95,30 +96,37 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     * This method allows configuration of the global, or cache manager level,
     * jmx statistics.
     */
+   @Override
    public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
       return globalJmxStatistics;
    }
 
+   @Override
    public SerializationConfigurationBuilder serialization() {
       return serialization;
    }
 
+   @Override
    public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
       return asyncTransportExecutor;
    }
 
+   @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
       return asyncListenerExecutor;
    }
 
+   @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
 
+   @Override
    public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
       return replicationQueueScheduledExecutor;
    }
 
+   @Override
    public ShutdownConfigurationBuilder shutdown() {
       return shutdown;
    }
@@ -132,6 +140,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
         }
     }
 
+   @Override
    public GlobalConfiguration build() {
        validate();
       return new GlobalConfiguration(

@@ -62,10 +62,12 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
       return RESEND_PREPARE;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }

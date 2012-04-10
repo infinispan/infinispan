@@ -29,7 +29,7 @@ package org.infinispan.loaders.modifications;
  * @since 4.0
  */
 public interface Modification {
-   public static enum Type {
+   static enum Type {
       STORE, REMOVE, CLEAR, PURGE_EXPIRED, LIST
    }
 

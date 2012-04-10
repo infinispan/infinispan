@@ -231,6 +231,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - resetNanoseconds.get());
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset Statistics (Statistics)")
    public void resetStatistics() {

@@ -87,6 +87,7 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
       return builder;
    }
 
+   @Override
    public Configuration build() {
       return builder.build();
    }

@@ -84,6 +84,7 @@ public class TransactionalLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public TransactionalSharedLuceneLock makeLock(String lockName) {
       TransactionalSharedLuceneLock lock;
       //It appears Lucene always uses the same name so we give locks
@@ -104,6 +105,7 @@ public class TransactionalLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void clearLock(String lockName) {
       //Same special care as above for locks named DEF_LOCK_NAME:
       if (DEF_LOCK_NAME.equals(lockName)) {
