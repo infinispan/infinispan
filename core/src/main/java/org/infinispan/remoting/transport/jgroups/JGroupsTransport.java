@@ -338,7 +338,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.classLoader());
             if (conf == null) {
                throw new CacheConfigurationException(CONFIGURATION_FILE
-                        + " property specifies value " + conf + " that could not be read!",
+                        + " property specifies value " + cfg + " that could not be read!",
                         new FileNotFoundException(cfg));
             }
             try {                              
