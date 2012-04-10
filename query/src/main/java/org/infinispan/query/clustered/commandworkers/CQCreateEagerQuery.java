@@ -38,33 +38,35 @@ import org.infinispan.query.clustered.QueryResponse;
  */
 public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
 
-	@Override
-	public QueryResponse perform() {
-		query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
-		DocumentExtractor extractor = query.queryDocumentExtractor();
-		int resultSize = query.queryResultSize();
+   @Override
+   public QueryResponse perform() {
+      query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
+      DocumentExtractor extractor = query.queryDocumentExtractor();
+      int resultSize = query.queryResultSize();
 
-		ISPNEagerTopDocs eagerTopDocs = collectKeys(extractor);
+      ISPNEagerTopDocs eagerTopDocs = collectKeys(extractor);
 
-		QueryResponse queryResponse = new QueryResponse(eagerTopDocs,
-				getQueryBox().getMyId(), resultSize);
-		queryResponse.setAddress(cache.getAdvancedCache().getRpcManager()
-				.getAddress());
-		return queryResponse;
-	}
+      QueryResponse queryResponse = new QueryResponse(eagerTopDocs,
+            getQueryBox().getMyId(), resultSize);
+      queryResponse.setAddress(cache.getAdvancedCache().getRpcManager()
+            .getAddress());
+      return queryResponse;
+   }
 
-	private ISPNEagerTopDocs collectKeys(DocumentExtractor extractor) {
-		TopDocs topDocs = extractor.getTopDocs();
+   private ISPNEagerTopDocs collectKeys(DocumentExtractor extractor) {
+      TopDocs topDocs = extractor.getTopDocs();
 
-		Object[] keys = new Object[topDocs.scoreDocs.length];
-		KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
+      Object[] keys = new Object[topDocs.scoreDocs.length];
+      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler
+            .getInstance(cache.getAdvancedCache());
 
-		// collecting keys (it's a eager query!)
-		for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-			keys[i] = QueryExtractorUtil.extractKey(extractor, cache, keyTransformationHandler, i);
-		}
+      // collecting keys (it's a eager query!)
+      for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+         keys[i] = QueryExtractorUtil.extractKey(extractor, cache,
+               keyTransformationHandler, i);
+      }
 
-		return new ISPNEagerTopDocs(topDocs, keys);
-	}
+      return new ISPNEagerTopDocs(topDocs, keys);
+   }
 
 }

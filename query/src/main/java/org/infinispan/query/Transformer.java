@@ -34,5 +34,5 @@ public interface Transformer {
    Object fromString(String s);
 
    String toString(Object customType);
-   
+
 }
