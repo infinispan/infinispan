@@ -52,6 +52,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    private LocalTransaction localTransaction;
 
+   @Override
    public boolean isTransactionValid() {
       Transaction t = getTransaction();
       int status = -1;
@@ -65,18 +66,22 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 
+   @Override
    public boolean isOriginLocal() {
       return true;
    }
 
+   @Override
    public Object getLockOwner() {
       return localTransaction.getGlobalTransaction();
    }
 
+   @Override
    public GlobalTransaction getGlobalTransaction() {
       return localTransaction.getGlobalTransaction();
    }
 
+   @Override
    public List<WriteCommand> getModifications() {
       return localTransaction == null ? null : localTransaction.getModifications();
    }
@@ -85,26 +90,32 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       this.localTransaction = localTransaction;
    }
 
+   @Override
    public CacheEntry lookupEntry(Object key) {
       return localTransaction != null ? localTransaction.lookupEntry(key) : null;
    }
 
+   @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return localTransaction != null ? localTransaction.getLookedUpEntries() : EMPTY_ENTRY_MAP;
    }
 
+   @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
       localTransaction.putLookedUpEntry(key, e);
    }
 
+   @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       localTransaction.putLookedUpEntries(lookedUpEntries);
    }
 
+   @Override
    public void removeLookedUpEntry(Object key) {
       localTransaction.removeLookedUpEntry(key);
    }
 
+   @Override
    public void clearLookedUpEntries() {
       localTransaction.clearLookedUpEntries();
    }
@@ -137,6 +148,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       localTransaction.registerLockedKey(key);
    }
 
+   @Override
    public Transaction getTransaction() {
       Transaction tx = super.getTransaction();
       return tx == null ? localTransaction.getTransaction() : tx;

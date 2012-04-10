@@ -112,6 +112,7 @@ final public class InfinispanIndexInput extends IndexInput {
       }
    }
 
+   @Override
    public long getFilePointer() {
       return ((long) currentLoadedChunk) * chunkSize + bufferPosition;
    }

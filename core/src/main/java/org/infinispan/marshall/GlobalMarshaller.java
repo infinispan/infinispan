@@ -29,6 +29,7 @@ public class GlobalMarshaller extends AbstractDelegatingMarshaller {
             null, loader, null, extTable, globalCfg);
    }
 
+   @Override
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       super.stop();

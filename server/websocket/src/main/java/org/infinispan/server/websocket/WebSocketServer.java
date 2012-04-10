@@ -131,6 +131,7 @@ public class WebSocketServer extends AbstractProtocolServer {
          operationHandlers.put("unnotify", notifyHandler);
       }
 
+      @Override
       public ChannelPipeline getPipeline() throws Exception {
          // Create a default pipeline implementation.
          ChannelPipeline pipeline = Channels.pipeline();

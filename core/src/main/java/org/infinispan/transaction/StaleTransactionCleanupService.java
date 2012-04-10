@@ -156,6 +156,7 @@ public class StaleTransactionCleanupService {
    private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
       try {
          lockBreakingService.submit(new Runnable() {
+            @Override
             public void run() {
                try {
                transactionTable.updateStateOnNodesLeaving(leavers);
@@ -172,6 +173,7 @@ public class StaleTransactionCleanupService {
    public void start(final Configuration configuration, final RpcManager rpcManager, InterceptorChain interceptorChain) {
       this.invoker = interceptorChain;
       ThreadFactory tf = new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
             Thread th = new Thread(r, "LockBreakingService," + configuration.getName() + "," + address);

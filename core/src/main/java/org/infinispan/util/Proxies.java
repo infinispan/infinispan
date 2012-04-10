@@ -81,6 +81,7 @@ public class Proxies {
             this.obj = obj;
         }
 
+        @Override
         public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
             Object result = null;
             try {

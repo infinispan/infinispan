@@ -37,16 +37,16 @@ import java.util.Map;
  */
 public interface HotRodOperations {
 
-   public byte[] get(byte[] key, Flag... flags);
+   byte[] get(byte[] key, Flag... flags);
 
-   public byte[] remove(byte[] key, Flag... flags);
+   byte[] remove(byte[] key, Flag... flags);
 
-   public boolean containsKey(byte[] key, Flag... flags);
+   boolean containsKey(byte[] key, Flag... flags);
 
    /**
     * Returns null if the given key does not exist.
     */
-   public BinaryVersionedValue getWithVersion(byte[] key, Flag... flags);
+   BinaryVersionedValue getWithVersion(byte[] key, Flag... flags);
 
    /**
     * @param lifespan number of seconds that a entry during which the entry is allowed to life.
@@ -55,33 +55,33 @@ public interface HotRodOperations {
     * @param maxIdle Number of seconds that a entry can be idle before it's evicted from the cache. If 0, no max
     * @param flags
     */
-   public byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
+   byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
 
    /**
     * @param lifespan same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param maxIdle same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param flags
     */
-   public byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
+   byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
 
    /**
     * @param lifespan same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param maxIdle same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param flags
     */
-   public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
+   byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags);
 
    /**
     * @param lifespan same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param maxIdle same as in {@link #put(byte[],byte[],int,int,org.infinispan.client.hotrod.Flag...)}
     * @param flags
     */
-   public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags);
+   VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags);
 
-   public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags);
+   VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags);
 
-   public void clear(Flag... flags);
+   void clear(Flag... flags);
 
-   public Map<String, String> stats();
+   Map<String, String> stats();
 
 }

@@ -38,15 +38,18 @@ public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockC
       super(concurrencyLevel);
    }
 
+   @Override
    protected OwnableReentrantLock newLock() {
       return new OwnableReentrantLock();
    }
 
+   @Override
    public boolean ownsLock(Object key, Object owner) {
       OwnableReentrantLock l = getLockFromMap(key);
       return l != null && owner.equals(l.getOwner());
    }
 
+   @Override
    public boolean isLocked(Object key) {
       OwnableReentrantLock l = getLockFromMap(key);
       return l != null && l.isLocked();

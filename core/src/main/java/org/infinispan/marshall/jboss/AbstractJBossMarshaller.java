@@ -82,6 +82,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       baseCfg.setVersion(3);
    }
 
+   @Override
    final public void objectToObjectStream(final Object obj, final ObjectOutput out) throws IOException {
       out.writeObject(obj);
    }
@@ -98,6 +99,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
+   @Override
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
       PerThreadInstanceHolder instanceHolder = marshallerTL.get();
       org.jboss.marshalling.Marshaller marshaller = instanceHolder.getMarshaller(estimatedSize);
@@ -105,10 +107,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       return marshaller;
    }
 
+   @Override
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
       return startObjectOutput(os, isReentrant, RIVER_INTERNAL_BUFFER);
    }
 
+   @Override
    final public void finishObjectOutput(final ObjectOutput oo) {
       try {
          if (trace) log.trace("Stop marshaller");
@@ -132,6 +136,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       return o;
    }
 
+   @Override
    final public ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
       PerThreadInstanceHolder instanceHolder = marshallerTL.get();
       Unmarshaller unmarshaller = instanceHolder.getUnmarshaller();
@@ -144,10 +149,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       return unmarshaller;
    }
 
+   @Override
    final public Object objectFromObjectStream(final ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
    }
 
+   @Override
    final public void finishObjectInput(final ObjectInput oi) {
       try {
          if (trace)
@@ -181,6 +188,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       }
    }
 
+   @Override
    public void stop() {
        // Clear class cache
       isMarshallableMap.clear();

@@ -31,7 +31,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 4.0
  */
 public interface Event {
-   public enum Type {
+   enum Type {
       CACHE_STARTED, CACHE_STOPPED, VIEW_CHANGED, MERGED
    }
 

@@ -67,10 +67,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public RemoveCommand() {
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitRemoveCommand(ctx, this);
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull()) {
@@ -114,6 +116,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       notifier.notifyCacheEntryRemoved(key, value, isPre, ctx);
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
@@ -158,10 +161,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .toString();
    }
 
+   @Override
    public boolean isSuccessful() {
       return successful;
    }
 
+   @Override
    public boolean isConditional() {
       return value != null;
    }

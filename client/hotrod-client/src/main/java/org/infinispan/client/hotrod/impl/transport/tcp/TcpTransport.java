@@ -89,6 +89,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public void writeVInt(int vInt) {
       try {
          writeUnsignedInt(socketOutputStream, vInt);
@@ -98,6 +99,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public void writeVLong(long l) {
       try {
          writeUnsignedLong(socketOutputStream, l);
@@ -107,6 +109,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public long readVLong() {
       try {
          return readUnsignedLong(socketInputStream);
@@ -116,6 +119,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public int readVInt() {
       try {
          return readUnsignedInt(socketInputStream);
@@ -152,6 +156,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public void flush() {
       try {
          socketOutputStream.flush();
@@ -165,6 +170,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public short readByte() {
       int resultInt;
       try {
@@ -181,6 +187,7 @@ public class TcpTransport extends AbstractTransport {
       return (short) resultInt;
    }
 
+   @Override
    public void release() {
       try {
          socket.close();
@@ -190,6 +197,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public byte[] readByteArray(final int size) {
       byte[] result = new byte[size];
       boolean done = false;

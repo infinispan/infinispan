@@ -105,6 +105,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
    static private Charset UTF8Charset = Charset.forName("UTF-8");
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return CassandraCacheStoreConfig.class;
    }
@@ -417,6 +418,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
       return v.toInternalCacheEntry(key);
    }
 
+   @Override
    public void store(InternalCacheEntry entry) throws CacheLoaderException {
       Cassandra.Client cassandraClient = null;
 
@@ -468,6 +470,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
    /**
     * Writes to a stream the number of entries (long) then the entries themselves.
     */
+   @Override
    public void toStream(ObjectOutput out) throws CacheLoaderException {
       try {
          Set<InternalCacheEntry> loadAll = loadAll();
@@ -485,6 +488,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
    /**
     * Reads from a stream the number of entries (long) then the entries themselves.
     */
+   @Override
    public void fromStream(ObjectInput in) throws CacheLoaderException {
       try {
          int count = 0;

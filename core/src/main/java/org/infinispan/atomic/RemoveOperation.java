@@ -53,10 +53,12 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
       this.oldValue = oldValue;
    }
 
+   @Override
    public void rollback(Map<K, V> delegate) {
       if (oldValue != null) delegate.put(key, oldValue);
    }
 
+   @Override
    public void replay(Map<K, V> delegate) {
       delegate.remove(key);
    }

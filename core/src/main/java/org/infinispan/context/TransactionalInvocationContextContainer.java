@@ -63,6 +63,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    }
 
+   @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       final Transaction runningTx = getRunningTx();
       if (runningTx == null && !isWrite) {
@@ -102,6 +103,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return ctx;
    }
 
+   @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
       final NonTxInvocationContext nonTxInvocationContext = newNonTxInvocationContext(false);
       nonTxInvocationContext.setOrigin(origin);

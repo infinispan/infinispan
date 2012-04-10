@@ -95,11 +95,13 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return singletonStore;
    }
 
+   @Override
    @XmlAttribute
    public Boolean isPurgeSynchronously() {
       return purgeSynchronously;
    }
 
+   @Override
    @XmlAttribute
    public Integer getPurgerThreads() {
       return purgerThreads;
@@ -119,6 +121,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     *
     * @param purgeSynchronously
     */
+   @Override
    public void setPurgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
@@ -129,6 +132,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param purgeSynchronously
     */
+   @Override
    public CacheStoreConfig purgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
@@ -153,6 +157,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return this;
    }
 
+   @Override
    @XmlAttribute
    public Boolean isFetchPersistentState() {
       return fetchPersistentState;
@@ -170,6 +175,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param fetchPersistentState
     */
+   @Override
    public void setFetchPersistentState(Boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
@@ -187,6 +193,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param fetchPersistentState
     */
+   @Override
    public CacheStoreConfig fetchPersistentState(Boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
@@ -200,6 +207,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param ignoreModifications
     */
+   @Override
    public void setIgnoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;    
@@ -212,17 +220,20 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param ignoreModifications
     */
+   @Override
    public CacheStoreConfig ignoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
       return this;
    }
 
+   @Override
    @XmlAttribute
    public Boolean isIgnoreModifications() {
       return ignoreModifications;
    }
    
+   @Override
    @XmlAttribute
    public Boolean isPurgeOnStartup() {
       return purgeOnStartup;
@@ -234,6 +245,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param purgeOnStartup
     */
+   @Override
    public CacheStoreConfig purgeOnStartup(Boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;
@@ -246,31 +258,37 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * 
     * @param purgeOnStartup
     */
+   @Override
    public void setPurgeOnStartup(Boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;
    }
 
+   @Override
    @XmlElement(name="singletonStore")
    public SingletonStoreConfig getSingletonStoreConfig() {
       return singletonStore;
    }
 
+   @Override
    public void setSingletonStoreConfig(SingletonStoreConfig singletonStoreConfig) {
       testImmutability("singletonStore");
       this.singletonStore = singletonStoreConfig;
    }
 
+   @Override
    @XmlElement(name="async")
    public AsyncStoreConfig getAsyncStoreConfig() {
       return async;      
    }
 
+   @Override
    public void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig) {
       testImmutability("async");
       this.async = asyncStoreConfig;      
    }
    
+   @Override
    public void accept(ConfigurationBeanVisitor v) {
       singletonStore.accept(v);
       async.accept(v);

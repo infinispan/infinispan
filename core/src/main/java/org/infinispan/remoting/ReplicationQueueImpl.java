@@ -94,6 +94,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    /**
     * Starts the asynchronous flush queue.
     */
+   @Override
    @Start
    public void start() {
       long interval = configuration.getReplQueueInterval();
@@ -106,6 +107,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
       enabled = configuration.isUseReplQueue();
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
+            @Override
             public void run() {
                LogFactory.pushNDC(configuration.getName(), trace);
                try {
@@ -121,6 +123,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    /**
     * Stops the asynchronous flush queue.
     */
+   @Override
    @Stop(priority = 9)
    // Stop before transport
    public void stop() {

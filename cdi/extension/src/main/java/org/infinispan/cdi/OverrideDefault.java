@@ -47,5 +47,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Qualifier
 @Documented
+@Deprecated
 public @interface OverrideDefault {
 }

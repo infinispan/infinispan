@@ -372,6 +372,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       return keyGenWorker.isActive();
    }
 
+   @Override
    public boolean isStarted() {
       return started;
    }

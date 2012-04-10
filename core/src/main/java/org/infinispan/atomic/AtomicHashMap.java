@@ -97,43 +97,53 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       this.copied = true;
    }
 
+   @Override
    public void commit() {
       copied = false;
       delta = null;
    }
 
+   @Override
    public int size() {
       return delegate.size();
    }
 
+   @Override
    public boolean isEmpty() {
       return delegate.isEmpty();
    }
 
+   @Override
    public boolean containsKey(Object key) {
       return delegate.containsKey(key);
    }
 
+   @Override
    public boolean containsValue(Object value) {
       return delegate.containsValue(value);
    }
 
+   @Override
    public V get(Object key) {
       return delegate.get(key);
    }
 
+   @Override
    public Set<K> keySet() {
       return delegate.keySet();
    }
 
+   @Override
    public Collection<V> values() {
       return delegate.values();
    }
 
+   @Override
    public Set<Entry<K, V>> entrySet() {
       return delegate.entrySet();
    }
 
+   @Override
    public V put(K key, V value) {
       V oldValue = delegate.put(key, value);
       PutOperation<K, V> op = new PutOperation<K, V>(key, oldValue, value);
@@ -141,6 +151,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       return oldValue;
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public V remove(Object key) {
       V oldValue = delegate.remove(key);
@@ -149,11 +160,13 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       return oldValue;
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> t) {
       // this is crappy - need to do this more efficiently!
       for (Entry<? extends K, ? extends V> e : t.entrySet()) put(e.getKey(), e.getValue());
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
@@ -186,6 +199,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       removed = b;
    }
 
+   @Override
    public Delta delta() {
       Delta toReturn = delta == null ? NullDelta.INSTANCE : delta;
       delta = null; // reset

@@ -53,6 +53,7 @@ public class ConfigHtmlGenerator extends AbstractConfigHtmlGenerator {
 
    }
 
+   @Override
    protected List<Class<?>> getConfigBeans() throws Exception {
       List<Class<?>> list = ClassFinder.isAssignableFrom(ClassFinder.infinispanClasses(classpath),
                                           AbstractConfigurationBean.class);
@@ -62,18 +63,22 @@ public class ConfigHtmlGenerator extends AbstractConfigHtmlGenerator {
       return list;
    }
    
+   @Override
    protected String getSchemaFile() {
        return String.format("schema/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
    }
    
+   @Override
    protected String getTitle() {
        return String.format("<h2>Infinispan configuration options %s</h2><br/>", Version.MAJOR_MINOR);
    }
    
+   @Override
    protected String getRootElementName() {
        return "infinispan";
    }
    
+   @Override
    protected void preXMLTableOfContentsCreate(XSOMSchemaTreeWalker sw, XMLTreeOutputWalker tw) {
        
        TreeNode root = sw.getRoot();
@@ -84,10 +89,12 @@ public class ConfigHtmlGenerator extends AbstractConfigHtmlGenerator {
        ptw.postOrderTraverse(root);              
    }
    
+   @Override
    protected boolean preVisitNode(TreeNode n) {
        return n.getName().equals("properties");           
    }
    
+   @Override
    protected boolean postVisitNode(TreeNode n) {
        //generate table for properties as well                 
        if (n.hasChild("properties")) {
@@ -123,6 +130,7 @@ public class ConfigHtmlGenerator extends AbstractConfigHtmlGenerator {
          this.pruneNodeName = pruneNodeName;
       }
 
+      @Override
       public void visitNode(TreeNode treeNode) {
          if (treeNode.getName().equals(pruneNodeName)) {
             treeNode.detach();

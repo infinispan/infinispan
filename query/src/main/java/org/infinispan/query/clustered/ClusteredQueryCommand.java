@@ -135,14 +135,17 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return worker.perform();
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[] { commandType, query, lazyQueryId, docIndex };
    }
 
+   @Override
    public void setParameters(int commandId, Object[] args) {
       int i = 0;
       commandType = (ClusteredQueryCommandType) args[i++];

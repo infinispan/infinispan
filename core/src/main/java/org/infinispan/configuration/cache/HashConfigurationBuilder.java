@@ -98,6 +98,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashEnabled() {
       stateTransfer().fetchInMemoryState(true);
       activated = true;
@@ -109,6 +110,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashEnabled(boolean enabled) {
       stateTransfer().fetchInMemoryState(enabled);
       return this;
@@ -119,6 +121,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * cluster or a node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashDisabled() {
       stateTransfer().fetchInMemoryState(false);
       return this;

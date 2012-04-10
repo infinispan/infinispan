@@ -53,6 +53,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     *                               transactions are not supported.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void begin() throws NotSupportedException, SystemException {
       tm.begin();
    }
@@ -68,6 +69,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws HeuristicRollbackException If a heuristic decision to roll back the transaction was made.
     * @throws SecurityException          If the caller is not allowed to commit this transaction.
     */
+   @Override
    public void commit()
          throws RollbackException, HeuristicMixedException,
                 HeuristicRollbackException, SecurityException, SystemException {
@@ -83,6 +85,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     *                               Status#STATUS_PREPARED prepared state}.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void rollback() throws IllegalStateException, SystemException {
       tm.rollback();
    }
@@ -93,6 +96,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws IllegalStateException If the transaction is not in an active state.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void setRollbackOnly() throws IllegalStateException, SystemException {
       tm.setRollbackOnly();
    }
@@ -103,6 +107,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @return The status of the transaction. This is one of the {@link Status} constants.
     * @throws SystemException If the transaction service fails in an unexpected way.
     */
+   @Override
    public int getStatus() throws SystemException {
       return tm.getStatus();
    }
@@ -114,6 +119,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     *                to the default value.
     * @throws SystemException If the transaction service fails in an unexpected way.
     */
+   @Override
    public void setTransactionTimeout(int seconds) throws SystemException {
       throw new SystemException("not supported");
    }

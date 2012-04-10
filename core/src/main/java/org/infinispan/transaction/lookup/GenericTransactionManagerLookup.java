@@ -108,6 +108,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     *
     * @return TransactionManager
     */
+   @Override
    public TransactionManager getTransactionManager() {
       if (!lookupDone)
          doLookups(configuration.getClassLoader());

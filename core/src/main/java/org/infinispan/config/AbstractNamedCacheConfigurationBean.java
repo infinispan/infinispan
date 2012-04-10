@@ -49,6 +49,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
       this.cr = cr;
    }
 
+   @Override
    protected boolean hasComponentStarted() {
       return cr != null && cr.getStatus() != null && cr.getStatus() == ComponentStatus.RUNNING;
    }
@@ -69,6 +70,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
          super();
          this.registry = registry;
       }
+      @Override
       public void defaultVisit(AbstractConfigurationBean c) {
          if (c instanceof AbstractNamedCacheConfigurationBean) {
             ((AbstractNamedCacheConfigurationBean) c).cr = registry;

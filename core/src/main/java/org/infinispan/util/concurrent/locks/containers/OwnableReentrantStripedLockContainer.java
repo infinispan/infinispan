@@ -51,25 +51,30 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
       initLocks(calculateNumberOfSegments(concurrencyLevel));
    }
 
+   @Override
    protected void initLocks(int numLocks) {
       sharedLocks = new OwnableReentrantLock[numLocks];
       for (int i = 0; i < numLocks; i++) sharedLocks[i] = new OwnableReentrantLock();
    }
 
+   @Override
    public final OwnableReentrantLock getLock(Object object) {
       return sharedLocks[hashToIndex(object)];
    }
 
+   @Override
    public final boolean ownsLock(Object object, Object owner) {
       OwnableReentrantLock lock = getLock(object);
       return owner.equals(lock.getOwner());
    }
 
+   @Override
    public final boolean isLocked(Object object) {
       OwnableReentrantLock lock = getLock(object);
       return lock.isLocked();
    }
 
+   @Override
    public final int getNumLocksHeld() {
       int i = 0;
       for (OwnableReentrantLock l : sharedLocks) if (l.isLocked()) i++;
@@ -82,6 +87,7 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
             '}';
    }
 
+   @Override
    public int size() {
       return sharedLocks.length;
    }

@@ -110,6 +110,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       return recoveryManager.getPreparedTransaction(((RecoverableTransactionIdentifier) txId).getXid());
    }
 
+   @Override
    public void remoteTransactionRollback(GlobalTransaction gtx) {
       super.remoteTransactionRollback(gtx);
       recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier) gtx).getXid());
@@ -135,6 +136,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       return result;
    }
 
+   @Override
    public void failureCompletingTransaction(Transaction tx) {
       RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) getLocalTx(tx);
       if (localTx == null)

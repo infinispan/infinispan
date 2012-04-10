@@ -95,6 +95,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.estimateValueSize = estimateValueSize;
    }
 
+   @Override
    public RemoteCacheManager getRemoteCacheManager() {
       return remoteCacheManager;
    }

@@ -91,10 +91,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    LockManager lockManager;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
+      @Override
       public List<Address> generateRecipients() {
          return null;
       }
 
+      @Override
       public Collection<Object> getKeys() {
          return Collections.emptySet();
       }
@@ -551,11 +553,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          keys = Collections.singleton(key);
       }
 
+      @Override
       public List<Address> generateRecipients() {
          if (recipients == null) recipients = dm.locate(key);
          return recipients;
       }
 
+      @Override
       public Collection<Object> getKeys() {
          return keys;
       }
@@ -570,6 +574,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          this.keys = keys;
       }
 
+      @Override
       public List<Address> generateRecipients() {
          if (recipients == null) {
             Set<Address> addresses = new HashSet<Address>();
@@ -580,6 +585,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          return recipients;
       }
 
+      @Override
       public Collection<Object> getKeys() {
          return keys;
       }

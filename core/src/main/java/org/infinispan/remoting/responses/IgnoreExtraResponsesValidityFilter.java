@@ -53,6 +53,7 @@ public final class IgnoreExtraResponsesValidityFilter implements ResponseFilter 
       }
    }
 
+   @Override
    public boolean isAcceptable(Response response, Address address) {
       if (targets.contains(address)) {
          missingResponses--;
@@ -62,6 +63,7 @@ public final class IgnoreExtraResponsesValidityFilter implements ResponseFilter 
       return true;
    }
 
+   @Override
    public boolean needMoreResponses() {
       return missingResponses > 0;
    }

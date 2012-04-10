@@ -52,10 +52,12 @@ public class ClearOperation<K, V> extends Operation<K, V> {
       this.originalEntries = originalEntries;
    }
 
+   @Override
    public void rollback(Map<K, V> delegate) {
       if (!originalEntries.isEmpty()) delegate.putAll(originalEntries);
    }
 
+   @Override
    public void replay(Map<K, V> delegate) {
       delegate.clear();
    }

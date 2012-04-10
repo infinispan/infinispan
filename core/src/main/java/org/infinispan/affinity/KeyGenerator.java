@@ -30,5 +30,5 @@ package org.infinispan.affinity;
  * @since 4.1
  */
 public interface KeyGenerator<K> {
-   public K getKey();
+   K getKey();
 }

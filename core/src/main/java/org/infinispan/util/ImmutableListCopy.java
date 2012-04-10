@@ -169,6 +169,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       throw new UnsupportedOperationException();
    }
 
+   @Override
    public final E get(int index) {
       if (index >= size || index < 0) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
       return elements[index];
@@ -223,6 +224,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     * @param out stream to write to
     * @throws IOException
     */
+   @Override
    public void writeExternal(ObjectOutput out) throws IOException {
       out.writeInt(size);
       for (E e : elements) out.writeObject(e);
@@ -235,6 +237,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     * @throws IOException
     * @throws ClassNotFoundException
     */
+   @Override
    @SuppressWarnings("unchecked")
    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       size = in.readInt();
@@ -253,10 +256,12 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       ImmutableIterator() {
       }
 
+      @Override
       public boolean hasNext() {
          return cursor != size;
       }
 
+      @Override
       public E next() {
          try {
             return get(cursor++);
@@ -266,14 +271,17 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
          }
       }
 
+      @Override
       public void remove() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean hasPrevious() {
          return cursor != 0;
       }
 
+      @Override
       public E previous() {
          try {
             return get(--cursor);
@@ -283,18 +291,22 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
          }
       }
 
+      @Override
       public int nextIndex() {
          return cursor;
       }
 
+      @Override
       public int previousIndex() {
          return cursor - 1;
       }
 
+      @Override
       public void set(E o) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void add(E o) {
          throw new UnsupportedOperationException();
       }
@@ -311,12 +323,14 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
          size = toIndex - fromIndex;
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final E get(int index) {
          if (index < 0 || index >= size) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
          return (E) ImmutableListCopy.this.get(index + offset);
       }
 
+      @Override
       public final int size() {
          return size;
       }
@@ -349,10 +363,12 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
          return new ListIterator<E>() {
             private ListIterator<?> i = ImmutableListCopy.this.listIterator(index + offset);
 
+            @Override
             public boolean hasNext() {
                return nextIndex() < size;
             }
 
+            @Override
             @SuppressWarnings("unchecked")
             public E next() {
                if (hasNext())
@@ -361,10 +377,12 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
                   throw new NoSuchElementException();
             }
 
+            @Override
             public boolean hasPrevious() {
                return previousIndex() >= 0;
             }
 
+            @Override
             @SuppressWarnings("unchecked")
             public E previous() {
                if (hasPrevious())
@@ -373,22 +391,27 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
                   throw new NoSuchElementException();
             }
 
+            @Override
             public int nextIndex() {
                return i.nextIndex() - offset;
             }
 
+            @Override
             public int previousIndex() {
                return i.previousIndex() - offset;
             }
 
+            @Override
             public void remove() {
                throw new UnsupportedOperationException();
             }
 
+            @Override
             public void set(E o) {
                throw new UnsupportedOperationException();
             }
 
+            @Override
             public void add(E o) {
                throw new UnsupportedOperationException();
             }

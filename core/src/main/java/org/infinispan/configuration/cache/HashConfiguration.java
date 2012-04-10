@@ -95,6 +95,7 @@ public class HashConfiguration {
     * node leaves
     * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#fetchInMemoryState()} instead.
     */
+   @Deprecated
    public boolean rehashEnabled() {
       return stateTransferConfiguration.fetchInMemoryState();
    }

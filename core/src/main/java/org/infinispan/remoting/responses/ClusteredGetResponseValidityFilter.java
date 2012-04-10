@@ -51,6 +51,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
       }
    }
 
+   @Override
    public boolean isAcceptable(Response response, Address address) {
       if (targets.contains(address)) {
          missingResponses--;
@@ -61,6 +62,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
       return true;
    }
 
+   @Override
    public boolean needMoreResponses() {
       return validResponses < 1 && missingResponses > 0;
    }

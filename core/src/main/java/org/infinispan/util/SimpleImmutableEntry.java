@@ -49,14 +49,17 @@ public class SimpleImmutableEntry<K, V> implements Map.Entry<K, V>, Serializable
       this.value = value;
    }
 
+   @Override
    public K getKey() {
       return key;
    }
 
+   @Override
    public V getValue() {
       return value;
    }
 
+   @Override
    public V setValue(V arg0) {
       throw new UnsupportedOperationException();
    }

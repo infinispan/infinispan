@@ -91,6 +91,7 @@ public class EvictionManagerImpl implements EvictionManager {
       }
    }
 
+   @Override
    public void processEviction() {
       long start = 0;
       if (!Thread.currentThread().isInterrupted()) {
@@ -126,6 +127,7 @@ public class EvictionManagerImpl implements EvictionManager {
       }
    }
 
+   @Override
    public boolean isEnabled() {
       return enabled;
    }
@@ -138,6 +140,7 @@ public class EvictionManagerImpl implements EvictionManager {
    }
 
    class ScheduledTask implements Runnable {
+      @Override
       public void run() {
          LogFactory.pushNDC(configuration.getName(), trace);
          try {

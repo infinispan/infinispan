@@ -115,6 +115,7 @@ public class SingletonStore extends AbstractDelegatingStore {
       this.config = config;
 
       executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, THREAD_NAME);
          }
@@ -174,6 +175,7 @@ public class SingletonStore extends AbstractDelegatingStore {
       super.start();
    }
    
+   @Override
    public void stop() throws CacheLoaderException {
       try {
          super.stop();
@@ -190,6 +192,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     */
    protected Callable<?> createPushStateTask() {
       return new Callable() {
+         @Override
          public Object call() throws Exception {
             final boolean debugEnabled = log.isDebugEnabled();
 

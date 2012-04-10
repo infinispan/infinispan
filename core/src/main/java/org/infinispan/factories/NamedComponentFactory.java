@@ -32,6 +32,7 @@ package org.infinispan.factories;
  */
 public abstract class NamedComponentFactory extends AbstractComponentFactory {
 
+   @Override
    public <T> T construct(Class<T> componentType) {
 
       // by default, use the FQCN of the component type.

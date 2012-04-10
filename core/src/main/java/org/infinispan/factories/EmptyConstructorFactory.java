@@ -45,6 +45,7 @@ import org.infinispan.transaction.xa.TransactionFactory;
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
+   @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (componentType.equals(InboundInvocationHandler.class))

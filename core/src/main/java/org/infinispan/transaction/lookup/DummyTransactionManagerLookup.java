@@ -37,6 +37,7 @@ import javax.transaction.UserTransaction;
  */
 public class DummyTransactionManagerLookup implements TransactionManagerLookup {
 
+   @Override
    public TransactionManager getTransactionManager() throws Exception {
       return DummyTransactionManager.getInstance();
    }

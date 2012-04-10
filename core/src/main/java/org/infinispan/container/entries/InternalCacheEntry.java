@@ -53,6 +53,7 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
     *
     * @param maxIdle maxIdle to set
     */
+   @Override
    void setMaxIdle(long maxIdle);
 
    /**
@@ -60,6 +61,7 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
     *
     * @param lifespan lifespan to set
     */
+   @Override
    void setLifespan(long lifespan);
 
    /**

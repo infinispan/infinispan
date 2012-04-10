@@ -73,10 +73,12 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       this.icc = icc;
    }
 
+   @Override
    public CacheLoader getCacheLoader() {
       return loader;
    }
 
+   @Override
    public final CacheStore getCacheStore() {
       if (loader != null && loader instanceof CacheStore) {
          return (CacheStore) loader;
@@ -85,6 +87,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   @Override
    public void purge() {
       CacheStore cs = getCacheStore();
       if (cs != null) try {
@@ -108,18 +111,22 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   @Override
    public boolean isUsingPassivation() {
       return isEnabled() ? clmConfig.isPassivation() : false;
    }
 
+   @Override
    public boolean isShared() {
       return isEnabled() ? clmConfig.isShared() : false;
    }
 
+   @Override
    public boolean isFetchPersistentState() {
       return isEnabled() ? clmConfig.isFetchPersistentState() : false;
    }
 
+   @Override
    @Start(priority = 10)
    public void start() {
       clmConfig = configuration.getCacheLoaderManagerConfig();
@@ -134,6 +141,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   @Override
    public boolean isEnabled() {
       return clmConfig != null;
    }
@@ -141,6 +149,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
     */
+   @Override
    @Start(priority = 56)
    public void preload() {
       if (loader != null) {
@@ -196,6 +205,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return state;
    }
 
+   @Override
    @Stop
    public void stop() {
       if (loader != null) {

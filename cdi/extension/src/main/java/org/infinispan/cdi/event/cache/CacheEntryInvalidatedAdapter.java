@@ -39,30 +39,37 @@ public class CacheEntryInvalidatedAdapter<K, V> extends AbstractAdapter<CacheEnt
 
    public static final CacheEntryInvalidatedEvent<?, ?> EMPTY = new CacheEntryInvalidatedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public Object getKey() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
 
+      @Override
       public Object getValue() {
          return null;
       }
@@ -77,6 +84,7 @@ public class CacheEntryInvalidatedAdapter<K, V> extends AbstractAdapter<CacheEnt
       super(event);
    }
 
+   @Override
    @CacheEntryInvalidated
    public void fire(CacheEntryInvalidatedEvent<K, V> payload) {
       super.fire(payload);

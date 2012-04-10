@@ -63,6 +63,7 @@ public class LazyIterator extends AbstractIterator {
       buffer = new Object[this.fetchSize];
    }
 
+   @Override
    public void jumpToResult(int index) throws IndexOutOfBoundsException {
       if (index < first || index > max) {
          throw new IndexOutOfBoundsException("The given index is incorrect. Please check and try again.");
@@ -75,6 +76,7 @@ public class LazyIterator extends AbstractIterator {
       extractor.close();
    }
 
+   @Override
    public Object next() {
       if (!hasNext()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no next");
 
@@ -120,6 +122,7 @@ public class LazyIterator extends AbstractIterator {
       return toReturn;
    }
 
+   @Override
    public Object previous() {
       if (!hasPrevious()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
 
@@ -162,11 +165,13 @@ public class LazyIterator extends AbstractIterator {
       return toReturn;
    }
 
+   @Override
    public int nextIndex() {
       if (!hasNext()) throw new NoSuchElementException("Out of boundaries");
       return index + 1;
    }
 
+   @Override
    public int previousIndex() {
       if (!hasPrevious()) throw new NoSuchElementException("Out of boundaries.");
       return index - 1;
@@ -175,6 +180,7 @@ public class LazyIterator extends AbstractIterator {
    /**
     * This method is not supported and should not be used. Use cache.remove() instead.
     */
+   @Override
    public void remove() {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
    }
@@ -185,6 +191,7 @@ public class LazyIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
+   @Override
    public void set(Object o) throws UnsupportedOperationException {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
    }
@@ -195,6 +202,7 @@ public class LazyIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
+   @Override
    public void add(Object o) {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
    }

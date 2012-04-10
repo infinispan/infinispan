@@ -66,18 +66,22 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return e;
    }
 
+   @Override
    public Type getType() {
       return type;
    }
 
+   @Override
    public boolean isPre() {
       return pre;
    }
 
+   @Override
    public Cache<K, V> getCache() {
       return cache;
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public K getKey() {
       if (key instanceof MarshalledValue)
@@ -85,14 +89,17 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return key;
    }
 
+   @Override
    public GlobalTransaction getGlobalTransaction() {
       return this.transaction;
    }
 
+   @Override
    public boolean isOriginLocal() {
       return originLocal;
    }
 
+   @Override
    public boolean isTransactionSuccessful() {
       return transactionSuccessful;
    }
@@ -147,6 +154,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.newViewId = newViewId;
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
       if (value instanceof MarshalledValue)

@@ -34,6 +34,7 @@ import org.infinispan.atomic.AtomicHashMap;
 public enum NullDelta implements Delta {
    INSTANCE;
 
+   @Override
    public DeltaAware merge(DeltaAware other) {
       return (other != null && other instanceof AtomicHashMap) ? other : new AtomicHashMap();
    }

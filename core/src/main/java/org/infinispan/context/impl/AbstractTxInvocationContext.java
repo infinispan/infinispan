@@ -42,14 +42,17 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
 
    private boolean implicitTransaction;
 
+   @Override
    public boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
    }
 
+   @Override
    public Set<Object> getAffectedKeys() {
       return getCacheTransaction().getAffectedKeys();
    }
 
+   @Override
    public void addAllAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
          getCacheTransaction().addAllAffectedKeys(keys);
@@ -77,6 +80,7 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       implicitTransaction = false;
    }
 
+   @Override
    public boolean isInTxScope() {
       return true;
    }
@@ -86,6 +90,7 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return this;
    }
 
+   @Override
    public Transaction getTransaction() {
       return transaction;
    }
@@ -95,6 +100,7 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       getCacheTransaction().clearLockedKeys();
    }
 
+   @Override
    public abstract AbstractCacheTransaction getCacheTransaction();
 
 }

@@ -45,42 +45,52 @@ public abstract class AbstractIterator implements QueryIterator {
    protected int first;
    protected int fetchSize;
 
+   @Override
    public void first() {
       index = first;
    }
 
+   @Override
    public void last() {
       index = max;
    }
 
+   @Override
    public void afterFirst() {
       index = first + 1;
    }
 
+   @Override
    public void beforeLast() {
       index = max - 1;
    }
 
+   @Override
    public boolean isFirst() {
       return index == first;
    }
 
+   @Override
    public boolean isLast() {
       return index == max;
    }
 
+   @Override
    public boolean isAfterFirst() {
       return index == first + 1;
    }
 
+   @Override
    public boolean isBeforeLast() {
       return index == max - 1;
    }
 
+   @Override
    public boolean hasPrevious() {
       return index >= first;
    }
 
+   @Override
    public boolean hasNext() {
       return index <= max;
    }

@@ -32,7 +32,7 @@ package org.infinispan.commons.hash;
  * @see MurmurHash3
  */
 
-public abstract interface Hash {
+public interface Hash {
    /**
     * Hashes a byte array efficiently.
     * 

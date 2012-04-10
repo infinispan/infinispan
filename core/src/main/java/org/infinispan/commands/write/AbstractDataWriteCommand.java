@@ -43,6 +43,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
       super(key, flags);
    }
 
+   @Override
    public Set<Object> getAffectedKeys() {
       return Collections.singleton(key);
    }

@@ -14,7 +14,8 @@ public class OsgiFileLookup extends DefaultFileLookup {
    protected OsgiFileLookup() {
    }
    
-   protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {    
+   @Override
+   protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {
       Collection<URL> urls = super.getAsURLsFromClassLoader(filename, userClassLoader);
       // scan osgi bundles
       BundleContext bc = ((BundleReference) FileLookup.class.getClassLoader()).getBundle().getBundleContext();

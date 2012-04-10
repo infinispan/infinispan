@@ -183,6 +183,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       }
    }
 
+   @Override
    public void commitStateTransfer() {
       // update the distribution manager's consistent hash
       dm.setConsistentHash(chNew);

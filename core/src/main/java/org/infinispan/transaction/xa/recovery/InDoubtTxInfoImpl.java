@@ -91,6 +91,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       owners.add(owner);
    }
 
+   @Override
    public boolean isLocal() {
       return isLocal;
    }

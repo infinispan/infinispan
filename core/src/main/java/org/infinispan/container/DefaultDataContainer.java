@@ -114,10 +114,12 @@ public class DefaultDataContainer implements DataContainer {
       return new DefaultDataContainer(concurrencyLevel);
    }
 
+   @Override
    public InternalCacheEntry peek(Object key) {
       return entries.get(key);
    }
 
+   @Override
    public InternalCacheEntry get(Object k) {
       InternalCacheEntry e = peek(k);
       if (e != null && e.canExpire()) {
@@ -132,6 +134,7 @@ public class DefaultDataContainer implements DataContainer {
       return e;
    }
 
+   @Override
    public void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle) {
       InternalCacheEntry e = entries.get(k);
       if (e != null) {
@@ -150,6 +153,7 @@ public class DefaultDataContainer implements DataContainer {
       entries.put(k, e);
    }
 
+   @Override
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
       if (ice != null && ice.canExpire() && ice.isExpired(System.currentTimeMillis())) {
@@ -159,31 +163,38 @@ public class DefaultDataContainer implements DataContainer {
       return ice != null;
    }
 
+   @Override
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = entries.remove(k);
       return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
    }
 
+   @Override
    public int size() {
       return entries.size();
    }
 
+   @Override
    public void clear() {
       entries.clear();
    }
 
+   @Override
    public Set<Object> keySet() {
       return Collections.unmodifiableSet(entries.keySet());
    }
 
+   @Override
    public Collection<Object> values() {
       return new Values();
    }
 
+   @Override
    public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
 
+   @Override
    public void purgeExpired() {
       long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
@@ -194,6 +205,7 @@ public class DefaultDataContainer implements DataContainer {
       }
    }
 
+   @Override
    public Iterator<InternalCacheEntry> iterator() {
       return new EntryIterator(entries.values().iterator());
    }
@@ -228,6 +240,7 @@ public class DefaultDataContainer implements DataContainer {
 
       EntryIterator(Iterator<InternalCacheEntry> it){this.it=it;}
 
+      @Override
       public InternalCacheEntry next() {
          return it.next();
       }
@@ -298,14 +311,17 @@ public class DefaultDataContainer implements DataContainer {
          currentIterator = it;
       }
 
+      @Override
       public boolean hasNext() {
          return currentIterator.hasNext();
       }
 
+      @Override
       public void remove() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public Object next() {
          return currentIterator.next().getValue();
       }

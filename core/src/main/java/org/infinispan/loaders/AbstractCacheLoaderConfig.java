@@ -83,6 +83,7 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
       is.close();
    }
 
+   @Override
    public String getCacheLoaderClassName() {
       return cacheLoaderClassName;
    }
@@ -93,6 +94,7 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
     * 
     * @see org.infinispan.loaders.CacheLoaderConfig#setCacheLoaderClassName(java.lang.String)
     */
+   @Override
    public void setCacheLoaderClassName(String className) {
       if (className == null || className.length() == 0) return;
       testImmutability("cacheLoaderClassName");
@@ -108,6 +110,7 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
       }
    }
    
+   @Override
    public ClassLoader getClassLoader() {
       // TODO This is a total mess, but requires config to be re-architected to fix
       if (cr != null && cr.getComponent(Configuration.class) != null)
@@ -118,5 +121,6 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
          return null;
    }
 
+   @Override
    public void accept(ConfigurationBeanVisitor v) {}
 }

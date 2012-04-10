@@ -61,11 +61,11 @@ public interface CacheTransaction {
 
    void clearLookedUpEntries();
 
-   abstract boolean ownsLock(Object key);
+   boolean ownsLock(Object key);
    
    void clearLockedKeys();
 
-   public Set<Object> getLockedKeys();
+   Set<Object> getLockedKeys();
 
    int getViewId();
 

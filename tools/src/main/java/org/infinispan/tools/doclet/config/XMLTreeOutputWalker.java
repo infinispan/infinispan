@@ -42,6 +42,7 @@ public class XMLTreeOutputWalker extends AbstractTreeWalker {
       this.sb = sb;
    }
 
+   @Override
    public void visitNode(TreeNode treeNode) {
       String ident = "";
       for (int i = 0; i <= treeNode.getDepth(); i++)
