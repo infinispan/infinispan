@@ -22,6 +22,7 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.context.FlagContainer;
@@ -137,12 +138,12 @@ public class AtomicMapLookup {
       Object value = cache.get(key);
       if (value == null) {
          if (createIfAbsent)
-            value = AtomicHashMap.newInstance(cache, key);
+            value = AtomicHashMap.newInstance((Cache<Object,Object>) cache, key);
          else return null;
       }
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
       AtomicHashMapProxy<K, V> proxy =
-            castValue.getProxy(cache.getAdvancedCache(), key, fineGrained, flagContainer);
+            castValue.getProxy((AdvancedCache<Object,Object>) cache.getAdvancedCache(), key, fineGrained, flagContainer);
       boolean typeSwitchAttempt = proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
       if (typeSwitchAttempt) {
          throw new IllegalArgumentException("Cannot switch type of previously used " + value

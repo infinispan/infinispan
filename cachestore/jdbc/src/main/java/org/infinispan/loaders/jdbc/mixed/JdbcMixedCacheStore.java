@@ -77,7 +77,7 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    private ConnectionFactory sharedConnectionFactory;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcMixedCacheStoreConfig) config;
       binaryCacheStore.init(this.config.getBinaryCacheStoreConfig(), cache, m);

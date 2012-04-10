@@ -50,14 +50,14 @@ class TransactionalSharedLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
 
-   private final Cache noCacheStoreCache;
+   private final Cache<FileCacheKey, FileCacheKey> noCacheStoreCache;
    private final String lockName;
    private final String indexName;
    private final TransactionManager tm;
    private final FileCacheKey keyOfLock;
 
-   TransactionalSharedLuceneLock(Cache cache, String indexName, String lockName, TransactionManager tm) {
-      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
+   TransactionalSharedLuceneLock(Cache<?, ?> cache, String indexName, String lockName, TransactionManager tm) {
+      this.noCacheStoreCache = (Cache<FileCacheKey, FileCacheKey>) cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
       this.tm = tm;

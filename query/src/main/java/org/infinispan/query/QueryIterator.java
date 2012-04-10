@@ -31,7 +31,7 @@ import java.util.ListIterator;
  * @author Manik Surtani
  * @author Navin Surtani
  */
-public interface QueryIterator extends ListIterator {
+public interface QueryIterator extends ListIterator<Object> {
    /**
     * Jumps to a specific index in the iterator.
     *

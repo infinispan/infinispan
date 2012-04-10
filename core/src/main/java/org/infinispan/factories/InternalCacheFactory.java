@@ -82,7 +82,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
-   private void bootstrap(String cacheName, AdvancedCache cache, Configuration configuration,
+   private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
                           GlobalComponentRegistry globalComponentRegistry) {
       this.configuration = configuration;
 

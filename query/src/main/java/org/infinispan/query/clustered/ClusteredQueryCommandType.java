@@ -74,7 +74,7 @@ public enum ClusteredQueryCommandType {
 
    protected abstract ClusteredQueryCommandWorker getNewInstance();
 
-   public ClusteredQueryCommandWorker getCommand(Cache cache, HSQuery query, UUID lazyQueryId,
+   public ClusteredQueryCommandWorker getCommand(Cache<?, ?> cache, HSQuery query, UUID lazyQueryId,
             int docIndex) {
       ClusteredQueryCommandWorker command = null;
       command = getNewInstance();

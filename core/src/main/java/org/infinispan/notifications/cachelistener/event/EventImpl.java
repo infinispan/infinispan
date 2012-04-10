@@ -167,7 +167,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      EventImpl event = (EventImpl) o;
+      EventImpl<?, ?> event = (EventImpl<?, ?>) o;
 
       if (originLocal != event.originLocal) return false;
       if (pre != event.pre) return false;
@@ -243,7 +243,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
-   public Map getEntries() {
-      return entries;
+   public Map<K, V> getEntries() {
+      return (Map<K, V>) entries;
    }
 }

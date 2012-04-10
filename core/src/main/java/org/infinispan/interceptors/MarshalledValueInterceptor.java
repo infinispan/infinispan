@@ -120,7 +120,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>(command.getMap().size());
-      Map map = wrapMap(command.getMap(), marshalledValues, ctx);
+      Map<Object, Object> map = wrapMap(command.getMap(), marshalledValues, ctx);
       command.setMap(map);
       Object retVal = invokeNextInterceptor(ctx, command);
       return compactAndProcessRetVal(marshalledValues, retVal, ctx);
@@ -208,9 +208,9 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    @SuppressWarnings("unchecked")
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      Set keys = (Set) invokeNextInterceptor(ctx, command);
+      Set<Object> keys = (Set<Object>) invokeNextInterceptor(ctx, command);
       if (wrapKeys) {
-         Set copy = new HashSet(keys.size());
+         Set<Object> copy = new HashSet<Object>(keys.size());
          for (Object key : keys) {
             if (key instanceof MarshalledValue) {
                key = ((MarshalledValue) key).get();
@@ -226,9 +226,9 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    @SuppressWarnings("unchecked")
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
-      Collection values = (Collection) invokeNextInterceptor(ctx, command);
+      Collection<Object> values = (Collection<Object>) invokeNextInterceptor(ctx, command);
       if (wrapValues) {
-         Collection copy = new ArrayList();
+         Collection<Object> copy = new ArrayList<Object>();
          for (Object value : values) {
             if (value instanceof MarshalledValue) {
                value = ((MarshalledValue) value).get();
@@ -330,14 +330,14 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    @SuppressWarnings("unchecked")
-   protected Map wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) {
+   protected Map<Object, Object> wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) {
       if (m == null) {
          if (trace) log.trace("Map is nul; returning an empty map.");
          return Collections.emptyMap();
       }
       if (trace) log.tracef("Wrapping map contents of argument %s", m);
-      Map copy = new HashMap(m.size());
-      for (Map.Entry me : m.entrySet()) {
+      Map<Object, Object> copy = new HashMap(m.size());
+      for (Map.Entry<Object, Object> me : m.entrySet()) {
          Object key = me.getKey();
          Object value = me.getValue();
          Object newKey = (key == null || isTypeExcluded(key.getClass())) || !wrapKeys ? key : createMarshalledValue(key, ctx);

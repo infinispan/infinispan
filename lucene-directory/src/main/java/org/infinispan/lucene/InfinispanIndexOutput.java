@@ -48,9 +48,9 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private static final boolean trace = log.isTraceEnabled();
 
    private final int bufferSize;
-   private final Cache chunksCache;
-   private final Cache chunksCacheForStorage;
-   private final AdvancedCache metadataCache;
+   private final Cache<ChunkCacheKey, Object> chunksCache;
+   private final Cache<ChunkCacheKey, Object> chunksCacheForStorage;
+   private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final FileListOperations fileOps;
@@ -66,10 +66,10 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private long filePosition = 0;
    private int currentChunkNumber = 0;
 
-   public InfinispanIndexOutput(final AdvancedCache metadataCache, final AdvancedCache chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
-      this.metadataCache = metadataCache;
-      this.chunksCache = chunksCache;
-      this.chunksCacheForStorage = chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
+   public InfinispanIndexOutput(final AdvancedCache<?, ?> metadataCache, final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
+      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache;
+      this.chunksCache = (Cache<ChunkCacheKey, Object>) chunksCache;
+      this.chunksCacheForStorage = (Cache<ChunkCacheKey, Object>) chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;

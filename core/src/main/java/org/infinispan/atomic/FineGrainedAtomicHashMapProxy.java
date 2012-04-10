@@ -58,7 +58,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    private static final boolean trace = log.isTraceEnabled();
 
    FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
-     super(cache, deltaMapKey);
+     super((AdvancedCache<Object,AtomicMap<K,V>>) cache, deltaMapKey);
    }
 
    @SuppressWarnings("unchecked")
@@ -109,7 +109,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<K> keySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().keySet(): Collections.<K>emptySet() ;
+      return entry != null ? (Set<K>) entry.getUncommittedChages().keySet() : Collections.<K>emptySet();
    }
 
    public Collection<V> values() {
@@ -124,7 +124,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Collection<V> valuesUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().values(): Collections.<V>emptySet() ;
+      return entry != null ? (Collection<V>) entry.getUncommittedChages().values() : Collections.<V>emptySet();
    }
 
    public Set<Entry<K, V>> entrySet() {
@@ -139,7 +139,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<Entry<K, V>> entrySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().entrySet(): Collections.<V>emptySet() ;
+      return (Set<Entry<K, V>>) (entry != null ? entry.getUncommittedChages().entrySet(): Collections.<V>emptySet());
    }
 
    public int size() {
@@ -259,10 +259,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    private void invokeApplyDelta(AtomicHashMapDelta delta) {
-      Collection keys = Collections.emptyList();
+      Collection<?> keys = Collections.emptyList();
       if (delta.hasClearOperation()) {
          // if it has clear op we need to lock all keys
-         AtomicHashMap map = (AtomicHashMap) cache.get(deltaMapKey);
+         AtomicHashMap<?, ?> map = (AtomicHashMap<?, ?>) cache.get(deltaMapKey);
          if (map != null) {
             keys = new ArrayList(map.keySet());
          }

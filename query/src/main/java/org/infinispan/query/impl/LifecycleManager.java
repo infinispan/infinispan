@@ -115,7 +115,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
       
       // initializing the query module command initializer. we can t inject Cache with @inject in there
-      Cache cache = cr.getComponent(Cache.class);
+      Cache<?, ?> cache = cr.getComponent(Cache.class);
       CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
       initializer.setCache(cache);
       

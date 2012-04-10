@@ -49,8 +49,8 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * @param cache
     * @param indexName
     */
-   public LocalLockMergingSegmentReadLocker(Cache cache, String indexName) {
-      this.delegate = new DistributedSegmentReadLocker(cache, cache, cache, indexName);
+   public LocalLockMergingSegmentReadLocker(Cache<?, ?> cache, String indexName) {
+      this.delegate = new DistributedSegmentReadLocker((Cache<Object, Integer>) cache, cache, cache, indexName);
    }
    
    /**
@@ -60,8 +60,8 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * @param metadataCache smaller cache for the metadata of stored elements
     * @param indexName
     */
-   public LocalLockMergingSegmentReadLocker(Cache locksCache, Cache chunksCache, Cache metadataCache, String indexName) {
-      this.delegate = new DistributedSegmentReadLocker(locksCache, chunksCache, metadataCache, indexName);
+   public LocalLockMergingSegmentReadLocker(Cache<?, ?> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName) {
+      this.delegate = new DistributedSegmentReadLocker((Cache<Object, Integer>) locksCache, chunksCache, metadataCache, indexName);
    }
 
    /**

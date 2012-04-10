@@ -42,5 +42,5 @@ public @interface DefaultFactoryFor {
     *
     * @return classes that can be constructed by this factory
     */
-   public abstract Class[] classes();
+   public abstract Class<?>[] classes();
 }

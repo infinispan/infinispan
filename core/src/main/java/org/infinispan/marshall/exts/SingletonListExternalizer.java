@@ -45,7 +45,7 @@ import java.util.Set;
 public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
-   public void writeObject(ObjectOutput output, List list) throws IOException {
+   public void writeObject(ObjectOutput output, List<?> list) throws IOException {
       output.writeObject(list.get(0));
    }
 

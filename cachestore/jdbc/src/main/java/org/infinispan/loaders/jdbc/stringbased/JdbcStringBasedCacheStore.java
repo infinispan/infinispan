@@ -102,7 +102,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
    private String cacheName;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcStringBasedCacheStoreConfig) config;
       cacheName = cache.getName();
@@ -348,7 +348,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
       return JdbcStringBasedCacheStoreConfig.class;
    }
 
-   public boolean supportsKey(Class keyType) {
+   public boolean supportsKey(Class<?> keyType) {
       return key2StringMapper.isSupportedType(keyType);
    }
 

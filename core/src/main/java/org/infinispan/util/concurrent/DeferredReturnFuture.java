@@ -33,19 +33,19 @@ import java.util.concurrent.*;
  * @author Galder Zamarreño
  * @since 5.0
  */
-public class DeferredReturnFuture implements NotifyingNotifiableFuture<Object> {
+public class DeferredReturnFuture<V> implements NotifyingNotifiableFuture<V> {
 
    private final NotifyingFutureImpl delegateFuture = new NotifyingFutureImpl(null);
 
    @Override
-   public Object get() throws InterruptedException, ExecutionException {
+   public V get() throws InterruptedException, ExecutionException {
       // Return the network's future result
-      return delegateFuture.ioFuture.get();
+      return (V) delegateFuture.ioFuture.get();
    }
 
    @Override
-   public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
-      return delegateFuture.ioFuture.get(timeout, unit);
+   public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
+      return (V) delegateFuture.ioFuture.get(timeout, unit);
    }
 
    @Override
@@ -54,13 +54,13 @@ public class DeferredReturnFuture implements NotifyingNotifiableFuture<Object> {
    }
 
    @Override
-   public void setNetworkFuture(Future<Object> future) {
-      delegateFuture.setNetworkFuture(future);
+   public void setNetworkFuture(Future<V> future) {
+      delegateFuture.setNetworkFuture((Future<Object>) future);
    }
 
    @Override
-   public NotifyingFuture<Object> attachListener(FutureListener<Object> objectFutureListener) {
-      return delegateFuture.attachListener(objectFutureListener);
+   public NotifyingFuture<V> attachListener(FutureListener<V> objectFutureListener) {
+      return (NotifyingFuture<V>) delegateFuture.attachListener((FutureListener<Object>) objectFutureListener);
    }
 
    @Override

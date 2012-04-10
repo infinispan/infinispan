@@ -99,7 +99,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
    @Override
    @SuppressWarnings("unchecked")
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
-      Map result;
+      Map<?, ?> result;
       try {
          result = (Map<Object, InternalCacheEntry>) marshaller.objectFromObjectStream(inputStream);
          remoteCache.putAll(result);
@@ -110,7 +110,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
-      Map map = remoteCache.getBulk();
+      Map<?, ?> map = remoteCache.getBulk();
       try {
          marshaller.objectToObjectStream(map, outputStream);
       } catch (IOException e) {
