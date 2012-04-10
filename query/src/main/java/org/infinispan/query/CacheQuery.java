@@ -40,7 +40,7 @@ import java.util.List;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @see SearchManagerImpl#getQuery(org.apache.lucene.search.Query)
  */
-public interface CacheQuery extends Iterable {
+public interface CacheQuery extends Iterable<Object> {
   
    /**
     * Returns the results of a search as a list.

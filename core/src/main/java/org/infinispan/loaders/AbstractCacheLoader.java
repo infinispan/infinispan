@@ -35,7 +35,7 @@ import org.infinispan.marshall.StreamingMarshaller;
 public abstract class AbstractCacheLoader implements CacheLoader {
 
    protected volatile StreamingMarshaller marshaller;
-   protected volatile Cache cache;
+   protected volatile Cache<Object, Object> cache;
 
    /**
     * {@inheritDoc} This implementation delegates to {@link CacheLoader#load(Object)}, to ensure that a response is
@@ -49,6 +49,6 @@ public abstract class AbstractCacheLoader implements CacheLoader {
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
-      this.cache = cache;
+      this.cache = (Cache<Object, Object>) cache;
    }
 }

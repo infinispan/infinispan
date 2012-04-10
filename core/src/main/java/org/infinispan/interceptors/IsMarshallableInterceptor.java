@@ -182,7 +182,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    }
 
    private void checkMarshallable(Map<Object, Object> objs) throws NotSerializableException {
-      for (Map.Entry entry : objs.entrySet())
+      for (Map.Entry<Object, Object> entry : objs.entrySet())
          checkMarshallable(entry.getKey(), entry.getValue());
    }
 

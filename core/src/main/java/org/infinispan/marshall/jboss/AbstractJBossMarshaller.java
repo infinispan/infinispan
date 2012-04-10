@@ -69,7 +69,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
     * a cache for the types that are known to be marshallable or not is
     * advantageous.
     */
-   private final ConcurrentMap<Class, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class, Boolean>();
+   private final ConcurrentMap<Class<?>, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class<?>, Boolean>();
 
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
@@ -160,7 +160,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    public boolean isMarshallable(Object o) throws Exception {
-      Class clazz = o.getClass();
+      Class<?> clazz = o.getClass();
       Object isClassMarshallable = isMarshallableMap.get(clazz);
       if (isClassMarshallable != null) {
          return (Boolean) isClassMarshallable;
@@ -233,8 +233,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       private static URL[] getClassLoaderURLs(final ClassLoader cl) {
          URL[] urls = EMPTY_URLS;
          try {
-            Class returnType = urls.getClass();
-            Class[] parameterTypes = EMPTY_CLASS_ARRAY;
+            Class<?> returnType = urls.getClass();
+            Class<?>[] parameterTypes = EMPTY_CLASS_ARRAY;
             Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
             if (returnType.isAssignableFrom(getURLs.getReturnType())) {
                Object[] args = EMPTY_OBJECT_ARRAY;

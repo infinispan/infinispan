@@ -127,7 +127,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * @param localExecutorService
     *           ExecutorService to run local tasks
     */
-   public DefaultExecutorService(Cache masterCacheNode, ExecutorService localExecutorService){
+   public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService){
       super();
       if (masterCacheNode == null)
          throw new IllegalArgumentException("Can not use null cache for DefaultExecutorService");
@@ -492,7 +492,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       return chosen;
    }
 
-   private void ensureProperCacheState(AdvancedCache cache) throws NullPointerException,
+   private void ensureProperCacheState(AdvancedCache<?, ?> cache) throws NullPointerException,
             IllegalStateException {
 
       if (cache.getRpcManager() == null)

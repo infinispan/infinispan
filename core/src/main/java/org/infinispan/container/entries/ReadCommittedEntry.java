@@ -168,7 +168,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
-            AtomicHashMap ahm = (AtomicHashMap) value;
+            AtomicHashMap<?, ?> ahm = (AtomicHashMap<?, ?>) value;
             ahm.commit();
             if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
          }

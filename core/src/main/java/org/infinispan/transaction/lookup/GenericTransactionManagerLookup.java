@@ -185,7 +185,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
 
       //try to find websphere lookups since we came here
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
-      Class clazz;
+      Class<?> clazz;
       try {
          log.debugf("Trying WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
          clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1, cl);
@@ -211,7 +211,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          }
       }
       try {
-         Class[] signature = null;
+         Class<?>[] signature = null;
          Object[] args = null;
          Method method = clazz.getMethod("getTransactionManager", signature);
          tm = (TransactionManager) method.invoke(null, args);

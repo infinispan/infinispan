@@ -480,7 +480,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader, UNBOUNDED, false);
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, ctx.getFlags());
+      LockControlCommand command = commandsFactory.buildLockControlCommand((Collection<Object>) keys, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
    
@@ -834,7 +834,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    NotifyingFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       final Transaction tx = getOngoingTransaction();
-      final NotifyingNotifiableFuture f = new DeferredReturnFuture();
+      final NotifyingNotifiableFuture<V> f = new DeferredReturnFuture<V>();
 
       // Optimization to not start a new thread only when the operation is cheap:
       if (asyncSkipsThread(explicitFlags, key)) {

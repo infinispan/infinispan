@@ -422,7 +422,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      NodeImpl node = (NodeImpl) o;
+      NodeImpl<?, ?> node = (NodeImpl<?, ?>) o;
 
       if (fqn != null ? !fqn.equals(node.fqn) : node.fqn != null) return false;
 

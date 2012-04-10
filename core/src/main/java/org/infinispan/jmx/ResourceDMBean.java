@@ -49,6 +49,8 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.infinispan.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
+
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not
  * ship with MBean, ManagedAttribute and ManagedOperation. Once JGroups will ship these classes, the code can be
@@ -78,9 +80,7 @@ public class ResourceDMBean implements DynamicMBean {
 
    private static final Map<String, Field> FIELD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
    private static final Map<String, Method> METHOD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
-   private static final Map<String[], Class[]> PARAM_TYPE_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
-
-   private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+   private static final Map<String[], Class<?>[]> PARAM_TYPE_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
 
    public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) throws NoSuchFieldException, ClassNotFoundException {
 
@@ -146,10 +146,10 @@ public class ResourceDMBean implements DynamicMBean {
       return m;
    }
 
-   private static Class[] getParameterArray(String[] types) throws ClassNotFoundException {
+   private static Class<?>[] getParameterArray(String[] types) throws ClassNotFoundException {
       if (types == null) return null;
       if (types.length == 0) return EMPTY_CLASS_ARRAY;
-      Class[] params = PARAM_TYPE_CACHE.get(types);
+      Class<?>[] params = PARAM_TYPE_CACHE.get(types);
       if (params == null) {
          params = ReflectionUtil.toClassArray(types);
          if (params == null) params = EMPTY_CLASS_ARRAY;

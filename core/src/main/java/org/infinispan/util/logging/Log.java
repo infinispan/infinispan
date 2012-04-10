@@ -646,7 +646,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Attempted to register listener of class %s, but no valid, " +
          "public methods annotated with method-level event annotations found! " +
          "Ignoring listener.", id = 133)
-   void noAnnotateMethodsFoundInListener(Class listenerClass);
+   void noAnnotateMethodsFoundInListener(Class<?> listenerClass);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +

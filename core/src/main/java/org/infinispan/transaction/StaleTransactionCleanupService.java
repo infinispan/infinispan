@@ -94,7 +94,7 @@ public class StaleTransactionCleanupService {
     * This method will only ever be called in distributed mode.
     */
    @TopologyChanged
-   public void onTopologyChange(TopologyChangedEvent tce) {
+   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       // do all the work AFTER the consistent hash has changed
       if (tce.isPre())
          return;

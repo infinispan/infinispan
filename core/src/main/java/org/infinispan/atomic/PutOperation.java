@@ -80,7 +80,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
 
       @Override
       public PutOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         PutOperation put = new PutOperation();
+         PutOperation<Object, Object> put = new PutOperation<Object, Object>();
          put.key = input.readObject();
          put.newValue = input.readObject();         
          return put;

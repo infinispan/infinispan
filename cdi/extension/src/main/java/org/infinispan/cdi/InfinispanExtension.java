@@ -85,7 +85,7 @@ public class InfinispanExtension implements Extension {
 
    private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
 
-   private Producer<RemoteCache> remoteCacheProducer;
+   private Producer<RemoteCache<?, ?>> remoteCacheProducer;
    private final Set<ConfigurationHolder> configurations;
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 
@@ -131,7 +131,7 @@ public class InfinispanExtension implements Extension {
                                    .create());
    }
 
-   void saveRemoteCacheProducer(@Observes ProcessProducer<RemoteCacheProducer, RemoteCache> event) {
+   void saveRemoteCacheProducer(@Observes ProcessProducer<RemoteCacheProducer, RemoteCache<?, ?>> event) {
       remoteCacheProducer = event.getProducer();
    }
 
@@ -187,14 +187,14 @@ public class InfinispanExtension implements Extension {
                              .readFromType(beanManager.createAnnotatedType(getRawType(entry.getKey())))
                              .addType(entry.getKey())
                              .addQualifiers(entry.getValue())
-                             .beanLifecycle(new ContextualLifecycle<RemoteCache>() {
+                             .beanLifecycle(new ContextualLifecycle<RemoteCache<?, ?>>() {
                                 @Override
-                                public RemoteCache create(Bean<RemoteCache> bean, CreationalContext<RemoteCache> ctx) {
+                                public RemoteCache<?, ?> create(Bean<RemoteCache<?, ?>> bean, CreationalContext<RemoteCache<?, ?>> ctx) {
                                    return remoteCacheProducer.produce(ctx);
                                 }
 
                                 @Override
-                                public void destroy(Bean<RemoteCache> bean, RemoteCache instance, CreationalContext<RemoteCache> ctx) {
+                                public void destroy(Bean<RemoteCache<?, ?>> bean, RemoteCache<?, ?> instance, CreationalContext<RemoteCache<?, ?>> ctx) {
                                    remoteCacheProducer.dispose(instance);
                                 }
                              }).create());

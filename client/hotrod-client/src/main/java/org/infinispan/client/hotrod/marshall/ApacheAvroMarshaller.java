@@ -134,7 +134,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       if (o == null) {
          NULL_TYPE.write(o, encoder);
       } else {
-         Class clazz = o.getClass();
+         Class<?> clazz = o.getClass();
          MarshallableType type;
          if (clazz.equals(String.class)) type = STRING_TYPE;
          else if (clazz.equals(byte[].class)) type = BYTES_TYPE;
@@ -174,7 +174,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      Class clazz = o.getClass();
+      Class<?> clazz = o.getClass();
       return clazz.equals(String.class) || clazz.equals(byte[].class)
             || clazz.equals(Boolean.class) || clazz.equals(Integer.class)
             || clazz.equals(Long.class) || clazz.equals(Float.class)
@@ -199,12 +199,12 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       void write(Object o, Encoder encoder) throws IOException {
-         GenericDatumWriter writer = new GenericDatumWriter(schema); // TODO: Could this be cached? Maybe, but ctor is very cheap
+         GenericDatumWriter<Object> writer = new GenericDatumWriter(schema); // TODO: Could this be cached? Maybe, but ctor is very cheap
          encoder.writeInt(id);
          write(writer, o, encoder);
       }
 
-      void write(GenericDatumWriter writer, Object o, Encoder encoder) throws IOException {
+      void write(GenericDatumWriter<Object> writer, Object o, Encoder encoder) throws IOException {
          writer.write(o, encoder);
       }
 
@@ -221,7 +221,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      void write(GenericDatumWriter writer, Object o, Encoder encoder) throws IOException {
+      void write(GenericDatumWriter<Object> writer, Object o, Encoder encoder) throws IOException {
          writer.write(new Utf8((String) o), encoder);
       }
    }
@@ -240,7 +240,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      void write(GenericDatumWriter writer, Object o, Encoder encoder) throws IOException {
+      void write(GenericDatumWriter<Object> writer, Object o, Encoder encoder) throws IOException {
          writer.write(java.nio.ByteBuffer.wrap((byte[]) o), encoder);
       }
    }
@@ -260,7 +260,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      void write(GenericDatumWriter writer, Object o, Encoder encoder) throws IOException {
+      void write(GenericDatumWriter<Object> writer, Object o, Encoder encoder) throws IOException {
          String[] strings = (String[]) o;
          GenericData.Array<Utf8> array = new GenericData.Array(strings.length, schema);
          for (String str : strings)
@@ -293,7 +293,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      void write(GenericDatumWriter writer, Object o, Encoder encoder) throws IOException {
+      void write(GenericDatumWriter<Object> writer, Object o, Encoder encoder) throws IOException {
          T[] array = (T[]) o;
          GenericData.Array<T> avroArray = new GenericData.Array(array.length, schema);
          for (T t : array)
@@ -313,7 +313,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       @Override
       Object read(Decoder decoder) throws IOException {
          long size = decoder.readArrayStart();
-         Collection collection = createCollection((int) size);
+         Collection<Object> collection = createCollection((int) size);
          for (int k = 0; k < size; k++)
             collection.add(marshaller.objectFromByteBuffer(decoder));
          return collection;
@@ -321,14 +321,14 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
 
       @Override
       void write(Object o, Encoder encoder) throws IOException {
-         Collection collection = (Collection) o;
+         Collection<Object> collection = (Collection<Object>) o;
          encoder.writeInt(id);
          encoder.setItemCount(collection.size());
          for (Object element : collection)
             marshaller.objectToBuffer(element, encoder);
       }
 
-      abstract Collection createCollection(int size);
+      abstract Collection<Object> createCollection(int size);
 
    }
 
@@ -338,8 +338,8 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      Collection createCollection(int size) {
-         return new ArrayList(size);
+      Collection<Object> createCollection(int size) {
+         return new ArrayList<Object>(size);
       }
    }
 
@@ -351,7 +351,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       @Override
       Object read(Decoder decoder) throws IOException {
          long size = decoder.readArrayStart();
-         Map map = new HashMap((int) size);
+         Map<Object, Object> map = new HashMap<Object, Object>((int) size);
          for (int i = 0; i < size; i++)
             map.put(marshaller.objectFromByteBuffer(decoder), marshaller.objectFromByteBuffer(decoder));
          return map;
@@ -359,10 +359,10 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
 
       @Override
       void write(Object o, Encoder encoder) throws IOException {
-         Map map = (Map) o;
+         Map<Object, Object> map = (Map<Object, Object>) o;
          encoder.writeInt(id);
          encoder.setItemCount(map.size());
-         for (Map.Entry entry : (Set<Map.Entry>) map.entrySet()) {
+         for (Map.Entry<Object, Object> entry : (Set<Map.Entry<Object, Object>>) map.entrySet()) {
             marshaller.objectToBuffer(entry.getKey(), encoder);
             marshaller.objectToBuffer(entry.getValue(), encoder);
          }
@@ -370,7 +370,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      Collection createCollection(int size) {
+      Collection<Object> createCollection(int size) {
          return null; // Ignored for this class
       }
    }
@@ -381,8 +381,8 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       }
 
       @Override
-      Collection createCollection(int size) {
-         return new HashSet(size);
+      Collection<Object> createCollection(int size) {
+         return new HashSet<Object>(size);
       }
    }
 }

@@ -50,7 +50,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final Properties properties;
    private final SearchMapping searchMapping;
 
-   public SearchableCacheConfiguration(Class[] classArray, Properties properties) {
+   public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties) {
       if (properties == null) {
          this.properties = new Properties();
       }
@@ -60,7 +60,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
       classes = new HashMap<String, Class<?>>();
 
-      for (Class c : classArray) {
+      for (Class<?> c : classArray) {
          String classname = c.getName();
          classes.put(classname, c);
       }

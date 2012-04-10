@@ -46,7 +46,7 @@ public class AdvancedExternalizerConfig extends AbstractConfigurationBeanWithGCR
    @ConfigurationDocRef(bean = AdvancedExternalizerConfig.class, targetElement = "setExternalizerClass")
    protected String externalizerClass;
 
-   private AdvancedExternalizer advancedExternalizer;
+   private AdvancedExternalizer<?> advancedExternalizer;
 
    @ConfigurationDocRef(bean = AdvancedExternalizerConfig.class, targetElement = "setId")
    protected Integer id;
@@ -97,11 +97,11 @@ public class AdvancedExternalizerConfig extends AbstractConfigurationBeanWithGCR
    }
 
    @XmlTransient // Prevent JAXB from thinking that advancedExternalizer is an XML attribute
-   public AdvancedExternalizer getAdvancedExternalizer() {
+   public AdvancedExternalizer<?> getAdvancedExternalizer() {
       return advancedExternalizer;
    }
 
-   public AdvancedExternalizerConfig setAdvancedExternalizer(AdvancedExternalizer advancedExternalizer) {
+   public AdvancedExternalizerConfig setAdvancedExternalizer(AdvancedExternalizer<?> advancedExternalizer) {
       this.advancedExternalizer = advancedExternalizer;
       return this;
    }

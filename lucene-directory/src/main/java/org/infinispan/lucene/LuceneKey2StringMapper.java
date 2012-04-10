@@ -46,7 +46,7 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
    static final Pattern singlePipePattern = Pattern.compile("\\|");
 
    @Override
-   public boolean isSupportedType(Class keyType) {
+   public boolean isSupportedType(Class<?> keyType) {
       return (keyType == ChunkCacheKey.class    ||
               keyType == FileCacheKey.class     ||
               keyType == FileListCacheKey.class ||

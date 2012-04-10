@@ -91,7 +91,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private volatile BaseStateTransferTask stateTransferTask;
    private CommandBuilder commandBuilder;
    protected TransactionTable transactionTable;
-   private LockContainer lockContainer;
+   private LockContainer<?> lockContainer;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -100,7 +100,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
-                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer lockContainer) {
+                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;

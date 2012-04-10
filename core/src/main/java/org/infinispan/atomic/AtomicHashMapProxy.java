@@ -64,18 +64,18 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    private static final Log log = LogFactory.getLog(AtomicHashMapProxy.class);
    private static final boolean trace = log.isTraceEnabled();
    protected final Object deltaMapKey;
-   protected final AdvancedCache cache;
+   protected final AdvancedCache<Object, AtomicMap<K, V>> cache;
    protected volatile boolean startedReadingMap = false;
    protected final FlagContainer flagContainer;
    protected TransactionTable transactionTable;
    protected TransactionManager transactionManager;
 
-   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
+   AtomicHashMapProxy(AdvancedCache<Object, AtomicMap<K, V>> cache, Object deltaMapKey) {
       this(cache, deltaMapKey, null);
    }
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
-      this.cache = cache;
+      this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       this.flagContainer = flagContainer;

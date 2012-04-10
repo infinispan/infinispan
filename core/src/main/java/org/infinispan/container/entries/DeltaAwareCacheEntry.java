@@ -54,7 +54,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
    protected byte flags = 0;
 
    // add Map representing uncommitted changes
-   protected AtomicHashMap uncommittedChanges;
+   protected AtomicHashMap<?, ?> uncommittedChanges;
 
    public DeltaAwareCacheEntry(Object key, DeltaAware value, CacheEntry wrappedEntry) {
       setValid(true);
@@ -71,7 +71,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       setChanged();    
    }
 
-   public AtomicHashMap getUncommittedChages() {
+   public AtomicHashMap<?, ?> getUncommittedChages() {
       return uncommittedChanges;
    }
 

@@ -21,11 +21,7 @@
  */
 package org.infinispan.query.clustered;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
-import java.util.UUID;
-
+import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -33,6 +29,11 @@ import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.impl.AbstractIterator;
 import org.infinispan.util.ReflectionUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 /**
  * DistributedIterator.
@@ -53,7 +54,7 @@ public class DistributedIterator extends AbstractIterator {
 
 	private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
-	private PriorityQueue hq;
+	private PriorityQueue<ScoreDoc> hq;
 
 	private final int resultSize;
 
@@ -77,7 +78,7 @@ public class DistributedIterator extends AbstractIterator {
 				ReflectionUtil.setValue(sf, "reverse", !reverse);
 			}
 			hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
-					topDocsResponses.size(), sort.getSort());
+               topDocsResponses.size(), sort.getSort());
 
 		} else
 			hq = ISPNPriorityQueueFactory.getHitQueue(topDocsResponses.size());

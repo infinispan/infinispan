@@ -71,8 +71,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
     * CacheDelegate.  User code should use {@link AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
-   @SuppressWarnings("unchecked")
-   public static <K, V> AtomicHashMap<K, V> newInstance(Cache cache, Object cacheKey) {
+   public static <K, V> AtomicHashMap<K, V> newInstance(Cache<Object, Object> cache, Object cacheKey) {
       AtomicHashMap<K, V> value = new AtomicHashMap<K, V>();
       Object oldValue = cache.putIfAbsent(cacheKey, value);
       if (oldValue != null) value = (AtomicHashMap<K, V>) oldValue;
@@ -167,7 +166,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey, boolean fineGrained, FlagContainer flagContainer) {
+   AtomicHashMapProxy<K, V> getProxy(AdvancedCache<Object, Object> cache, Object mapKey, boolean fineGrained, FlagContainer flagContainer) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
@@ -227,7 +226,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       @Override
       @SuppressWarnings("unchecked")
       public AtomicHashMap readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         FastCopyHashMap delegate = (FastCopyHashMap) input.readObject();
+         FastCopyHashMap<?, ?> delegate = (FastCopyHashMap<?, ?>) input.readObject();
          return new AtomicHashMap(delegate);
       }
 

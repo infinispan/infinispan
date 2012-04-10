@@ -59,7 +59,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
 
-   private static final Map<Class<? extends Annotation>, Class> allowedListeners = new HashMap<Class<? extends Annotation>, Class>(16);
+   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<Class<? extends Annotation>, Class<?>>(16);
 
    static {
       allowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
@@ -120,8 +120,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Inject
-   @SuppressWarnings("unchecked")
-   void injectDependencies(Cache cache) {
+   void injectDependencies(Cache<Object, Object> cache) {
       this.cache = cache;
    }
 
@@ -131,7 +130,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   protected Map<Class<? extends Annotation>, Class> getAllowedMethodAnnotations() {
+   protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
       return allowedListeners;
    }
 
@@ -292,7 +291,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
       }
    }
 
-   private void setTx(InvocationContext ctx, EventImpl e) {
+   private void setTx(InvocationContext ctx, EventImpl<Object, Object> e) {
       if (ctx != null && ctx.isInTxScope()) {
          GlobalTransaction tx = ((TxInvocationContext) ctx).getGlobalTransaction();
          e.setTransactionId(tx);

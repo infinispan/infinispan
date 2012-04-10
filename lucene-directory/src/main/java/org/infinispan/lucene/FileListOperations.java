@@ -44,13 +44,13 @@ final class FileListOperations {
    private static final boolean trace = log.isTraceEnabled();
 
    private final FileListCacheKey fileListCacheKey;
-   private final AdvancedCache cache;
+   private final AdvancedCache<FileListCacheKey, Object> cache;
    private final String indexName;
-   private final AdvancedCache cacheNoRetrieve;
+   private final AdvancedCache<FileListCacheKey, Set<String>> cacheNoRetrieve;
 
-   FileListOperations(AdvancedCache cache, String indexName){
-      this.cache = cache;
-      this.cacheNoRetrieve = cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
+   FileListOperations(AdvancedCache<?, ?> cache, String indexName){
+      this.cache = (AdvancedCache<FileListCacheKey, Object>) cache;
+      this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>) cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }

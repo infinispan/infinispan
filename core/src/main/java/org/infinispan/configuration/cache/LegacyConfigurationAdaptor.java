@@ -429,7 +429,7 @@ public class LegacyConfigurationAdaptor {
          .shared(legacy.isCacheLoaderShared());
 
       for (CacheLoaderConfig clc : legacy.getCacheLoaders()) {
-         AbstractLoaderConfigurationBuilder loaderBuilder = null;
+         AbstractLoaderConfigurationBuilder<?> loaderBuilder = null;
          if (clc instanceof FileCacheStoreConfig) {
             FileCacheStoreConfig csc = (FileCacheStoreConfig) clc;
             FileCacheStoreConfigurationBuilder fcsBuilder = builder.loaders().addFileCacheStore();

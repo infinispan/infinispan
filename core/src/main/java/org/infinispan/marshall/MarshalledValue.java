@@ -303,7 +303,7 @@ public class MarshalledValue implements Serializable {
     * @param type type to test.  Should not be null.
     * @return true if it should be excluded from MarshalledValue wrapping.
     */
-   public static boolean isTypeExcluded(Class type) {
+   public static boolean isTypeExcluded(Class<?> type) {
       return type.equals(String.class) || type.isPrimitive() ||
             type.equals(Void.class) || type.equals(Boolean.class) || type.equals(Character.class) ||
             type.equals(Byte.class) || type.equals(Short.class) || type.equals(Integer.class) ||
