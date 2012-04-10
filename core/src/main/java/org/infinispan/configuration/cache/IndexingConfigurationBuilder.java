@@ -77,8 +77,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the Hibernate Search
-    * reference of the version you're using with Infinispan Query.
+    * complete and up to date documentation about available properties refer to the the Hibernate Search
+    * reference of the version used by Infinispan Query.
     * </p>
     * 
     * @see <a
@@ -89,6 +89,29 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder addProperty(String key, String value) {
+      this.properties.put(key, value);
+      return this;
+   }
+
+   /**
+    * <p>
+    * Defines a single value. Can be used multiple times to define all needed property values, but the
+    * full set is overridden by {@link #withProperties(Properties)}.
+    * </p>
+    * <p>
+    * These properties are passed directly to the embedded Hibernate Search engine, so for the
+    * complete and up to date documentation about available properties refer to the the Hibernate Search
+    * reference of the version used by Infinispan Query.
+    * </p>
+    *
+    * @see <a
+    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
+    *      Search</a>
+    * @param key Property key
+    * @param value Property value
+    * @return <code>this</code>, for method chaining
+    */
+   public IndexingConfigurationBuilder setProperty(String key, Object value) {
       this.properties.put(key, value);
       return this;
    }
@@ -106,7 +129,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
-    * @param properties
+    * @param props the properties
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder withProperties(Properties props) {
@@ -133,10 +156,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      this.enabled = template.enabled();
-      this.indexLocalOnly = template.indexLocalOnly();
-      this.properties = template.properties();
-      
+      enabled = template.enabled();
+      indexLocalOnly = template.indexLocalOnly();
+      properties = new Properties();
+
+      TypedProperties templateProperties = template.properties();
+      if (templateProperties != null) {
+         for (Object key : templateProperties.keySet()) {
+            properties.put(key, templateProperties.get(key));
+         }
+      }
+
       return this;
    }
 

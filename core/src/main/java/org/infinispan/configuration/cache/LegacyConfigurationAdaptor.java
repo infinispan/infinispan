@@ -407,8 +407,7 @@ public class LegacyConfigurationAdaptor {
          .wakeUpInterval(legacy.getExpirationWakeUpInterval());
          
       if (legacy.isIndexingEnabled())
-         builder.indexing().enable()
-            .indexLocalOnly(legacy.isIndexLocalOnly());
+         builder.indexing().enable().indexLocalOnly(legacy.isIndexLocalOnly()).withProperties(legacy.getIndexingProperties());
       else
          builder.indexing().disable();
          
