@@ -39,7 +39,7 @@ public class JmxOperationMetadata implements Serializable {
    
    public JmxOperationMetadata(Method m) {
       methodName = m.getName();
-      Class[] params = m.getParameterTypes();
+      Class<?>[] params = m.getParameterTypes();
       methodParameters = ReflectionUtil.toStringArray(params);
       ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
       if (mo != null) {

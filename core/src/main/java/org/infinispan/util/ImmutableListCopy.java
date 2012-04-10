@@ -347,7 +347,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
 
          return new ListIterator<E>() {
-            private ListIterator i = ImmutableListCopy.this.listIterator(index + offset);
+            private ListIterator<?> i = ImmutableListCopy.this.listIterator(index + offset);
 
             public boolean hasNext() {
                return nextIndex() < size;

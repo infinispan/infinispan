@@ -99,7 +99,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig clc, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig clc, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(clc, cache, m);
       this.config = (JdbmCacheStoreConfig) clc;
    }
@@ -414,7 +414,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          if (existing != null) {
             // in the case of collision make the key a List ...
             if (existing instanceof List) {
-               ((List) existing).add(entry.key);
+               ((List<Object>) existing).add(entry.key);
                expiryTree.insert(entry.expiry, existing, true);
             } else {
                List<Object> al = new ArrayList<Object>(2);
@@ -437,7 +437,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          times.add(time);
          Object key = tuple.getValue();
          if (key instanceof List)
-            keys.addAll((List) key);
+            keys.addAll((List<?>) key);
          else
             keys.add(key);
       }

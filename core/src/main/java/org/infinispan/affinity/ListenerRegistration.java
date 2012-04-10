@@ -43,7 +43,7 @@ public class ListenerRegistration {
    }
 
    @TopologyChanged
-   public void handleViewChange(TopologyChangedEvent tce) {
+   public void handleViewChange(TopologyChangedEvent<?, ?> tce) {
       if (!tce.isPre()) keyAffinityService.handleViewChange(tce);
    }
 

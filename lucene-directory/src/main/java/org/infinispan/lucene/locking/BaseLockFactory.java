@@ -43,11 +43,11 @@ public class BaseLockFactory extends LockFactory {
    private static final Log log = LogFactory.getLog(BaseLockFactory.class);
    static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
 
-   private final Cache cache;
+   private final Cache<?, ?> cache;
    private final String indexName;
    private final BaseLuceneLock defLock;
 
-   public BaseLockFactory(Cache cache, String indexName) {
+   public BaseLockFactory(Cache<?, ?> cache, String indexName) {
       this.cache = cache;
       this.indexName = indexName;
       defLock = new BaseLuceneLock(cache, indexName, DEF_LOCK_NAME);

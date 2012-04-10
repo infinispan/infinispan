@@ -173,7 +173,7 @@ public class ExternalizerTable implements ObjectTable {
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
-      Class clazz = o.getClass();
+      Class<?> clazz = o.getClass();
       Writer writer = writers.get(clazz);
       if (writer == null) {
          if (Thread.currentThread().isInterrupted())
@@ -295,7 +295,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new LockInfo.Externalizer());
    }
 
-   void addInternalExternalizer(AdvancedExternalizer ext) {
+   void addInternalExternalizer(AdvancedExternalizer<?> ext) {
       int id = checkInternalIdLimit(ext.getId(), ext);
       updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
    }
@@ -305,9 +305,9 @@ public class ExternalizerTable implements ObjectTable {
    }
 
    private void updateExtReadersWritersWithTypes(ExternalizerAdapter adapter, int readerIndex) {
-      Set<Class> typeClasses = adapter.externalizer.getTypeClasses();
+      Set<Class<?>> typeClasses = adapter.externalizer.getTypeClasses();
       if (typeClasses.size() > 0) {
-         for (Class typeClass : typeClasses)
+         for (Class<?> typeClass : typeClasses)
             updateExtReadersWriters(adapter, typeClass, readerIndex);
       } else {
          throw new ConfigurationException(String.format(
@@ -320,8 +320,8 @@ public class ExternalizerTable implements ObjectTable {
       log.trace("Loading user defined externalizers");
       List<AdvancedExternalizerConfig> configs = globalCfg.getExternalizers();
       for (AdvancedExternalizerConfig config : configs) {
-         AdvancedExternalizer ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
-               : (AdvancedExternalizer) Util.getInstance(config.getExternalizerClass(), globalCfg.getClassLoader());
+         AdvancedExternalizer<?> ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
+               : (AdvancedExternalizer<?>) Util.getInstance(config.getExternalizerClass(), globalCfg.getClassLoader());
 
          // If no XML or programmatic config, id in annotation is used
          // as long as it's not default one (meaning, user did not set it).
@@ -339,7 +339,7 @@ public class ExternalizerTable implements ObjectTable {
       }
    }
 
-   private void updateExtReadersWriters(ExternalizerAdapter adapter, Class typeClass, int readerIndex) {
+   private void updateExtReadersWriters(ExternalizerAdapter adapter, Class<?> typeClass, int readerIndex) {
       writers.put(typeClass, adapter);
       ExternalizerAdapter prevReader = readers.put(readerIndex, adapter);
       // Several externalizers might share same id (i.e. HashMap and TreeMap use MapExternalizer)
@@ -356,7 +356,7 @@ public class ExternalizerTable implements ObjectTable {
 
    }
 
-   private int checkInternalIdLimit(int id, AdvancedExternalizer ext) {
+   private int checkInternalIdLimit(int id, AdvancedExternalizer<?> ext) {
       if (id >= Ids.MAX_ID)
          throw new ConfigurationException(String.format(
                "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
@@ -364,7 +364,7 @@ public class ExternalizerTable implements ObjectTable {
       return id;
    }
 
-   private int checkForeignIdLimit(int id, AdvancedExternalizer ext) {
+   private int checkForeignIdLimit(int id, AdvancedExternalizer<?> ext) {
       if (id < 0)
          throw new ConfigurationException(String.format(
                "Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.",
@@ -378,11 +378,11 @@ public class ExternalizerTable implements ObjectTable {
 
    static class ExternalizerAdapter implements Writer {
       final int id;
-      final AdvancedExternalizer externalizer;
+      final AdvancedExternalizer<Object> externalizer;
 
-      ExternalizerAdapter(int id, AdvancedExternalizer externalizer) {
+      ExternalizerAdapter(int id, AdvancedExternalizer<?> externalizer) {
          this.id = id;
-         this.externalizer = externalizer;
+         this.externalizer = (AdvancedExternalizer<Object>) externalizer;
       }
 
       public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
@@ -425,7 +425,7 @@ public class ExternalizerTable implements ObjectTable {
    static class ForeignExternalizerAdapter extends ExternalizerAdapter {
       final int foreignId;
 
-      ForeignExternalizerAdapter(int foreignId, AdvancedExternalizer externalizer) {
+      ForeignExternalizerAdapter(int foreignId, AdvancedExternalizer<?> externalizer) {
          super(Ids.MAX_ID, externalizer);
          this.foreignId = foreignId;
       }

@@ -62,9 +62,9 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;
-   private AdvancedCache cache;
+   private AdvancedCache<?, ?> cache;
 
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) {
       this.config = (ClusterCacheLoaderConfig) config;
       this.cache = cache.getAdvancedCache();
       rpcManager = this.cache.getRpcManager();

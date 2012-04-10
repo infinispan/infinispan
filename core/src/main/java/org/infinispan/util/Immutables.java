@@ -751,9 +751,8 @@ public class Immutables {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Map map = new HashMap();
+         Map<Object, Object> map = new HashMap<Object, Object>();
          MarshallUtil.unmarshallMap(map, input);
          return Immutables.immutableMapWrap(map);
       }

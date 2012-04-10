@@ -171,7 +171,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
          // Loop through all the keys and put those key, value pairings into lucene.
 
-         for (Map.Entry entry : dataMap.entrySet()) {
+         for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
             Object value = extractValue(entry.getValue());
             updateKnownTypesIfNeeded( value );
             updateIndexes(value, extractValue(entry.getKey()));
@@ -189,7 +189,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (shouldModifyIndexes(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
 
-         for (Class c : this.knownClasses.keySet()) {
+         for (Class<?> c : this.knownClasses.keySet()) {
             EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
             if ( binder != null ) { //check as not all known classes are indexed
                searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
@@ -249,7 +249,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (locked) {
          Set<Class<?>> existingClasses = knownClasses.keySet();
          int index = existingClasses.size();
-         Class[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
+         Class<?>[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
          for (Class<?> toAddClass : toAdd) {
             all[index++] = toAddClass;
          }

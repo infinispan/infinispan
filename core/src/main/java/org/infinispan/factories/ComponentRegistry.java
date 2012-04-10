@@ -76,7 +76,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
     * @param cache            cache
     * @param globalComponents Shared Component Registry to delegate to
     */
-   public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache,
+   public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
       super(defaultClassLoader); // registers the default classloader
       try {

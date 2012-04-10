@@ -53,7 +53,7 @@ public class LinkedListExternalizer extends AbstractExternalizer<LinkedList> {
    @Override
    public LinkedList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
-      LinkedList l = new LinkedList();
+      LinkedList<Object> l = new LinkedList();
       for (int i = 0; i < size; i++) l.add(input.readObject());
       return l;
    }

@@ -39,7 +39,7 @@ public class JBossMBeanServerLookup implements MBeanServerLookup {
 
    @Override
    public MBeanServer getMBeanServer(Properties properties) {
-      Class mbsLocator = Util.loadClass("org.jboss.mx.util.MBeanServerLocator", null);
+      Class<?> mbsLocator = Util.loadClass("org.jboss.mx.util.MBeanServerLocator", null);
       try {
          return (MBeanServer) mbsLocator.getMethod("locateJBoss").invoke(null);
       } catch (Exception e) {

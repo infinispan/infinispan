@@ -508,7 +508,7 @@ public class InfinispanDemo {
       @CacheEntryModified
       @CacheEntryRemoved
       @CacheEntriesEvicted
-      public void removed(Event e) {
+      public void removed(Event<?, ?> e) {
          if (!e.isPre()) updateCachedDataTable();
       }
    }

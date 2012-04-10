@@ -49,7 +49,7 @@ public class DemoDriver implements Runnable {
 
    private final DemoActions actions;
 
-   public DemoDriver(InfinispanDirectory infinispanDirectory, Cache cache) {
+   public DemoDriver(InfinispanDirectory infinispanDirectory, Cache<?, ?> cache) {
       actions = new DemoActions(infinispanDirectory, cache);
    }
 
@@ -57,7 +57,7 @@ public class DemoDriver implements Runnable {
       DefaultCacheManager cacheManager = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager.start();
       try {
-         Cache cache = cacheManager.getCache();
+         Cache<?, ?> cache = cacheManager.getCache();
          InfinispanDirectory directory = new InfinispanDirectory(cache);
          DemoDriver driver = new DemoDriver(directory, cache);
          driver.run();

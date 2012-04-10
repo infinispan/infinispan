@@ -58,12 +58,12 @@ public class TransactionalLockFactory extends LockFactory {
    private static final Log log = LogFactory.getLog(TransactionalLockFactory.class);
    private static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
 
-   private final Cache cache;
+   private final Cache<?, ?> cache;
    private final String indexName;
    private final TransactionManager tm;
    private final TransactionalSharedLuceneLock defLock;
 
-   public TransactionalLockFactory(Cache cache, String indexName) {
+   public TransactionalLockFactory(Cache<?, ?> cache, String indexName) {
       this.cache = cache;
       this.indexName = indexName;
       tm = cache.getAdvancedCache().getTransactionManager();

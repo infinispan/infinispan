@@ -48,6 +48,6 @@ public @interface SerializeWith {
     *
     * @return the externalizer type
     */
-   Class<? extends Externalizer> value();
+   Class<? extends Externalizer<?>> value();
 
 }

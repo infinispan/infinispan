@@ -1451,7 +1451,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @Override
       public <T> SerializationConfig addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers) {
-         for (AdvancedExternalizer ext : advancedExternalizers)
+         for (AdvancedExternalizer<?> ext : advancedExternalizers)
             externalizerTypes.addExternalizer(new AdvancedExternalizerConfig().setAdvancedExternalizer(ext));
          return this;
       }

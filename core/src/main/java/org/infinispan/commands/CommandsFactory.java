@@ -183,7 +183,7 @@ public interface CommandsFactory {
     * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
     * @return a PutMapCommand
     */
-   PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
+   PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
 
    /**
     * Builds a ClearCommand
@@ -280,7 +280,7 @@ public interface CommandsFactory {
     * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
     * Same as {@link #buildLockControlCommand(Object, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
@@ -289,7 +289,7 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
 
 
-   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple

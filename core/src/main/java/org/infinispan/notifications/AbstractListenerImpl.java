@@ -84,7 +84,7 @@ public abstract class AbstractListenerImpl {
 
    protected abstract Log getLog();
 
-   protected abstract Map<Class<? extends Annotation>, Class> getAllowedMethodAnnotations();
+   protected abstract Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations();
 
    protected List<ListenerInvocation> getListenerCollectionForAnnotation(Class<? extends Annotation> annotation) {
       List<ListenerInvocation> list = listenersMap.get(annotation);
@@ -129,13 +129,13 @@ public abstract class AbstractListenerImpl {
    private void validateAndAddListenerInvocation(Object listener) {
       boolean sync = testListenerClassValidity(listener.getClass());
       boolean foundMethods = false;
-      Map<Class<? extends Annotation>, Class> allowedListeners = getAllowedMethodAnnotations();
+      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations();
       // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
       for (Method m : listener.getClass().getMethods()) {
          // loop through all valid method annotations
-         for (Map.Entry<Class<? extends Annotation>,Class> annotationEntry : allowedListeners.entrySet()) {
+         for (Map.Entry<Class<? extends Annotation>,Class<?>> annotationEntry : allowedListeners.entrySet()) {
             Class<? extends Annotation> key = annotationEntry.getKey();
-            Class value = annotationEntry.getValue();
+            Class<?> value = annotationEntry.getValue();
             if (m.isAnnotationPresent(key)) {
                testListenerMethodValidity(m, value, key.getName());
                addListenerInvocation(key, new ListenerInvocation(listener, m, sync));
@@ -148,7 +148,7 @@ public abstract class AbstractListenerImpl {
          getLog().noAnnotateMethodsFoundInListener(listener.getClass());
    }
 
-   private void addListenerInvocation(Class annotation, ListenerInvocation li) {
+   private void addListenerInvocation(Class<? extends Annotation> annotation, ListenerInvocation li) {
       List<ListenerInvocation> result = getListenerCollectionForAnnotation(annotation);
       result.add(li);
    }
@@ -169,7 +169,7 @@ public abstract class AbstractListenerImpl {
       return l.sync();
    }
 
-   protected static void testListenerMethodValidity(Method m, Class allowedParameter, String annotationName) {
+   protected static void testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
       if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       if (!m.getReturnType().equals(void.class))

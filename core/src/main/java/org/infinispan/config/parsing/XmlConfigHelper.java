@@ -407,10 +407,10 @@ public class XmlConfigHelper {
    }
 
    public static void setValues(Object target, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingSetter) {
-      Class objectClass = target.getClass();
+      Class<?> objectClass = target.getClass();
 
       // go thru simple string setters first.
-      for (Map.Entry entry : attribs.entrySet()) {
+      for (Map.Entry<?, ?> entry : attribs.entrySet()) {
          String propName = (String) entry.getKey();
          String setter = BeanUtils.setterName(propName);
 
@@ -439,13 +439,13 @@ public class XmlConfigHelper {
          // if we get here, we could not find a String or Element setter.
          for (Method m : objectClass.getMethods()) {
             if (setter.equals(m.getName())) {
-               Class paramTypes[] = m.getParameterTypes();
+               Class<?> paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
                   log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
                   continue; // try another param with the same name.
                }
 
-               Class parameterType = paramTypes[0];
+               Class<?> parameterType = paramTypes[0];
                PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
                if (editor == null) {
                   throw new ConfigurationException("Couldn't find a property editor for parameter type " + parameterType);

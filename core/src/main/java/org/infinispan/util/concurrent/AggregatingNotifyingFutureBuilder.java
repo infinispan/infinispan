@@ -47,7 +47,7 @@ public class AggregatingNotifyingFutureBuilder extends NotifyingFutureImpl {
       futures = new ArrayList<Future<Object>>(capacity);
    }
 
-   public NotifyingNotifiableFuture build() {
+   public NotifyingNotifiableFuture<?> build() {
       AggregatingNotifyingFutureImpl notifyingAggregateFuture = new AggregatingNotifyingFutureImpl(actualReturnValue, futures.size());
       for (FutureListener<Object> listener : listeners) {
          notifyingAggregateFuture.attachListener(listener);

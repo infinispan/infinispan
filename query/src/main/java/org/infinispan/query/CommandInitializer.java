@@ -34,9 +34,9 @@ import org.infinispan.query.clustered.ClusteredQueryCommand;
  */
 public class CommandInitializer implements ModuleCommandInitializer {
 
-   private Cache cache;
+   private Cache<?, ?> cache;
    
-   public void setCache(Cache cache){
+   public void setCache(Cache<?, ?> cache){
       this.cache = cache;
    }
    

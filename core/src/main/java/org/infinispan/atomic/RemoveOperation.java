@@ -74,7 +74,7 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
 
       @Override
       public RemoveOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         RemoveOperation remove = new RemoveOperation();
+         RemoveOperation<Object, Object> remove = new RemoveOperation<Object, Object>();
          remove.key = input.readObject();
          return remove;
       }

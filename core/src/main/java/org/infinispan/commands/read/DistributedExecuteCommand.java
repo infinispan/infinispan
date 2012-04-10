@@ -48,7 +48,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    
    private static final long serialVersionUID = -7828117401763700385L;
 
-   private Cache cache;
+   private Cache<Object, Object> cache;
 
    private Set<Object> keys;
 
@@ -67,7 +67,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       this(null, null);
    }
 
-   public void init(Cache cache) {
+   public void init(Cache<Object, Object> cache) {
       this.cache = cache;
    }
 
@@ -118,7 +118,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
          throw new IllegalStateException("Invalid method id");
       int i = 0;
       this.keys = (Set<Object>) args[i++];
-      this.callable = (Callable) args[i++];
+      this.callable = (Callable<V>) args[i++];
    }
    
    @Override
@@ -132,7 +132,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       if (!super.equals(o)) {
          return false;
       }
-      DistributedExecuteCommand<?> that = (DistributedExecuteCommand) o;
+      DistributedExecuteCommand<?> that = (DistributedExecuteCommand<?>) o;
       return !keys.equals(that.keys);
    }
 

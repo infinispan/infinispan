@@ -45,7 +45,7 @@ public class QueryExtractorUtil {
    private QueryExtractorUtil() {
    }
 
-   public static Object extractKey(DocumentExtractor extractor, Cache cache, KeyTransformationHandler keyTransformationHandler, int docIndex) {
+   public static Object extractKey(DocumentExtractor extractor, Cache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, int docIndex) {
       String bufferDocumentId;
       try {
          bufferDocumentId = (String) extractor.extract(docIndex).getId();

@@ -82,7 +82,7 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
    public void particle(XSParticle part) {
       int i;
 
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       i = part.getMaxOccurs();
       if (i == XSParticle.UNBOUNDED) {
          buf.append(" maxOccurs=\"unbounded\"");

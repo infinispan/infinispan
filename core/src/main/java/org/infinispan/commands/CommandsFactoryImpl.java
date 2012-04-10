@@ -106,7 +106,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    private DataContainer dataContainer;
    private CacheNotifier notifier;
-   private Cache cache;
+   private Cache<Object, Object> cache;
    private String cacheName;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
@@ -127,7 +127,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
    @Inject
-   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
+   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache<Object, Object> cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
@@ -219,7 +219,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new GetKeyValueCommand(key, notifier, flags);
    }
 
-   public PutMapCommand buildPutMapCommand(Map map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
+   public PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
       return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis, flags);
    }
 
@@ -396,7 +396,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
@@ -405,7 +405,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
+   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags) {
       return new LockControlCommand(keys,  cacheName, flags, null);
    }
 

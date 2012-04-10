@@ -93,8 +93,8 @@ public class JdbmCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * Returns a new comparator instance based on {@link #setComparatorClassName(String)}.
     */
-   public Comparator createComparator() {
-      return (Comparator) Util.getInstance(comparatorClassName, getClassLoader());
+   public Comparator<?> createComparator() {
+      return (Comparator<?>) Util.getInstance(comparatorClassName, getClassLoader());
    }
 
 }

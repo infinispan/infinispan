@@ -59,7 +59,7 @@ public class ProteinCache {
       return myCache.get(GBAN);
 	}
 
-	public Cache getCache() {
+	public Cache<String, Nucleotide_Protein_Element> getCache() {
 		return myCache;
 	}
 

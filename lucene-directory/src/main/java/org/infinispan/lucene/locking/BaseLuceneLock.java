@@ -43,13 +43,13 @@ class BaseLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
 
-   private final Cache noCacheStoreCache;
+   private final Cache<Object, Object> noCacheStoreCache;
    private final String lockName;
    private final String indexName;
    private final FileCacheKey keyOfLock;
 
-   BaseLuceneLock(Cache cache, String indexName, String lockName) {
-      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
+   BaseLuceneLock(Cache<?, ?> cache, String indexName, String lockName) {
+      this.noCacheStoreCache = (Cache<Object, Object>) cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
       this.keyOfLock = new FileCacheKey(indexName, lockName);

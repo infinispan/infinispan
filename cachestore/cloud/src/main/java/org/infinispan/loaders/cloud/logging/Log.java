@@ -45,7 +45,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Unable to use configured Cloud Service Location [%s].  " +
          "Available locations for Cloud Service [%s] are %s", id = 7001)
-   void unableToConfigureCloudService(String loc, String cloudService, Set keySet);
+   void unableToConfigureCloudService(String loc, String cloudService, Set<?> keySet);
 
    @LogMessage(level = INFO)
    @Message(value = "Attempt to load the same cloud bucket (%s) ignored", id = 7002)
