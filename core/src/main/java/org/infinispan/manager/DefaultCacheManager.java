@@ -466,6 +466,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
       return defineConfiguration(cacheName, configurationOverride, defaultConfiguration, true);
    }
@@ -476,6 +477,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public Configuration defineConfiguration(String cacheName, String templateName, Configuration configurationOverride) {
       if (templateName != null) {
          Configuration c = configurationOverrides.get(templateName);
@@ -515,6 +517,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @return the default cache.
     */
+   @Override
    public <K, V> Cache<K, V> getCache() {
       return getCache(DEFAULT_CACHE_NAME);
    }
@@ -532,6 +535,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @return a cache instance identified by cacheName
     */
+   @Override
    @SuppressWarnings("unchecked")
    public <K, V> Cache<K, V> getCache(String cacheName) {
       assertIsNotTerminated();
@@ -606,6 +610,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public String getClusterName() {
       return globalConfiguration.getClusterName();
    }
@@ -613,6 +618,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public List<Address> getMembers() {
       Transport t = getTransport();
       return t == null ? null : t.getMembers();
@@ -621,6 +627,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public Address getAddress() {
       Transport t = getTransport();
       return t == null ? null : t.getAddress();
@@ -629,6 +636,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public Address getCoordinator() {
       Transport t = getTransport();
       return t == null ? null : t.getCoordinator();
@@ -637,6 +645,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean isCoordinator() {
       Transport t = getTransport();
       return t != null && t.isCoordinator();
@@ -715,11 +724,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return c;
    }
 
+   @Override
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
       log.debugf("Started cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
    }
 
+   @Override
    public void stop() {
       if (!stopping) {
          synchronized (this) {
@@ -765,37 +776,45 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
    }
 
+   @Override
    public void addListener(Object listener) {
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       notifier.addListener(listener);
    }
 
+   @Override
    public void removeListener(Object listener) {
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       notifier.removeListener(listener);
    }
 
+   @Override
    public Set<Object> getListeners() {
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       return notifier.getListeners();
    }
 
+   @Override
    public ComponentStatus getStatus() {
       return globalComponentRegistry.getStatus();
    }
 
+   @Override
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
    
+   @Override
    public org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration() {
       return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
    }
 
+   @Override
    public Configuration getDefaultConfiguration() {
       return defaultConfiguration;
    }
    
+   @Override
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
       return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
    }
@@ -809,6 +828,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return LegacyConfigurationAdaptor.adapt(c);
    }
 
+   @Override
    public Set<String> getCacheNames() {
       // Get the XML/programmatically defined caches
       Set<String> names = new HashSet<String>(configurationOverrides.keySet());
@@ -822,6 +842,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return Immutables.immutableSetWrap(names);
    }
 
+   @Override
    public boolean isRunning(String cacheName) {
       CacheWrapper w = caches.get(cacheName);
       try {
@@ -831,6 +852,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
    }
 
+   @Override
    public boolean isDefaultRunning() {
       return isRunning(DEFAULT_CACHE_NAME);
    }

@@ -94,12 +94,13 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private HTree tree;
    private BTree expiryTree;
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbmCacheStoreConfig.class;
    }
 
    @Override
-   public void init(CacheLoaderConfig clc, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig clc, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(clc, cache, m);
       this.config = (JdbmCacheStoreConfig) clc;
    }
@@ -151,6 +152,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       super.start();
    }
 
+   @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry ice = unmarshall(tree.get(key), key);
@@ -166,6 +168,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       return new BTreeSet();
    }
@@ -248,6 +251,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       expiryTree = null;
    }
 
+   @Override
    public void clear() throws CacheLoaderException {
       if (trace)
          log.trace("clear()");
@@ -260,6 +264,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public boolean remove(Object key) throws CacheLoaderException {
       try {
          return remove0(key);
@@ -291,6 +296,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public void store(InternalCacheEntry entry) throws CacheLoaderException {
       store0(entry);
       commit();
@@ -345,6 +351,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Writes to a stream the number of entries (long) then the entries themselves.
     */
+   @Override
    public void toStream(ObjectOutput out) throws CacheLoaderException {
       try {
          Set<InternalCacheEntry> loadAll = loadAll();
@@ -364,6 +371,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Reads from a stream the number of entries (long) then the entries themselves.
     */
+   @Override
    public void fromStream(ObjectInput in) throws CacheLoaderException {
       try {
          log.debug("fromStream()");
@@ -414,7 +422,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          if (existing != null) {
             // in the case of collision make the key a List ...
             if (existing instanceof List) {
-               ((List) existing).add(entry.key);
+               ((List<Object>) existing).add(entry.key);
                expiryTree.insert(entry.expiry, existing, true);
             } else {
                List<Object> al = new ArrayList<Object>(2);
@@ -437,7 +445,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          times.add(time);
          Object key = tuple.getValue();
          if (key instanceof List)
-            keys.addAll((List) key);
+            keys.addAll((List<?>) key);
          else
             keys.add(key);
       }
@@ -517,6 +525,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
             InternalCacheEntry current = null;
             boolean next = true;
 
+            @Override
             public boolean hasNext() {
                if (current == null && next) {
                   Object key = fi.next();
@@ -536,6 +545,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                return next;
             }
 
+            @Override
             public InternalCacheEntry next() {
                if (!hasNext())
                   throw new NoSuchElementException();
@@ -547,6 +557,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                }
             }
 
+            @Override
             public void remove() {
                throw new UnsupportedOperationException();
             }

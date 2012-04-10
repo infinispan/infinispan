@@ -44,6 +44,7 @@ public abstract class AbstractTransport implements Transport {
 
    protected GlobalConfiguration configuration;
 
+   @Override
    public void setConfiguration(GlobalConfiguration globalConfiguration) {
       this.configuration = globalConfiguration;
    }

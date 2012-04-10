@@ -46,6 +46,7 @@ public class FileLookupFactory {
       protected DefaultFileLookup() {
       }
       
+      @Override
       protected InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader appClassLoader) {
          for (ClassLoader cl : Util.getClassLoaders(appClassLoader))  {
             if (cl == null)
@@ -59,6 +60,7 @@ public class FileLookupFactory {
          return null;
       }
       
+      @Override
       protected URL getAsURLFromClassLoader(String filename, ClassLoader userClassLoader) {
          for (ClassLoader cl : Util.getClassLoaders(userClassLoader))  {
             if (cl == null)
@@ -73,7 +75,8 @@ public class FileLookupFactory {
          return null;
       }
       
-      protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {    
+      @Override
+      protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {
          Collection<URL> urls = new HashSet<URL>(4);
          for (ClassLoader cl : Util.getClassLoaders(userClassLoader))  {
             if (cl == null)

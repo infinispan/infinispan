@@ -65,6 +65,7 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
    }
 
 
+   @Override
    protected BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView) {
       return new DistributedStateTransferTask(rpcManager, configuration, dataContainer,
             this, dm, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView, transactionTable);
@@ -75,6 +76,7 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
       return configuration.getRehashWaitTime();
    }
 
+   @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
       return ConsistentHashHelper.createConsistentHash(configuration, members);
    }
@@ -95,12 +97,14 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
       }
    }
 
+   @Override
    public CacheStore getCacheStoreForStateTransfer() {
       if (cacheLoaderManager == null || !cacheLoaderManager.isEnabled() || cacheLoaderManager.isShared())
          return null;
       return cacheLoaderManager.getCacheStore();
    }
 
+   @Override
    public boolean isLocationInDoubt(Object key) {
       return isStateTransferInProgress() && !chOld.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners())
             && chNew.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners());

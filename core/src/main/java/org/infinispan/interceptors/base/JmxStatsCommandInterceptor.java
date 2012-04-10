@@ -47,6 +47,7 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
     *
     * @return true if statistics are captured
     */
+   @Override
    public boolean getStatisticsEnabled() {
       return statisticsEnabled;
    }
@@ -54,6 +55,7 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
    /**
     * @param enabled whether gathering statistics for JMX are enabled.
     */
+   @Override
    public void setStatisticsEnabled(boolean enabled) {
       statisticsEnabled = enabled;
    }
@@ -61,6 +63,7 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
    /**
     * Resets statistics gathered.  Is a no-op, and should be overridden if it is to be meaningful.
     */
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
    }

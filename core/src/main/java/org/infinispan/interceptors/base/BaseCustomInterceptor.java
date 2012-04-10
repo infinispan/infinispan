@@ -45,7 +45,7 @@ public class BaseCustomInterceptor extends CommandInterceptor {
    protected EmbeddedCacheManager embeddedCacheManager;
 
    @Inject
-   private void setup(Cache cache, EmbeddedCacheManager embeddedCacheManager) {
+   private void setup(Cache<?, ?> cache, EmbeddedCacheManager embeddedCacheManager) {
       this.cache = cache;
       this.embeddedCacheManager = embeddedCacheManager;
    }

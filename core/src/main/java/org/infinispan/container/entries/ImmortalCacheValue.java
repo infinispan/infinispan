@@ -45,6 +45,7 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       this.value = value;
    }
 
+   @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
       return new ImmortalCacheEntry(key, value);
    }
@@ -55,34 +56,42 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       return old;
    }
 
+   @Override
    public Object getValue() {
       return value;
    }
 
+   @Override
    public boolean isExpired(long now) {
       return false;
    }
 
+   @Override
    public boolean isExpired() {
       return false;
    }
 
+   @Override
    public boolean canExpire() {
       return false;
    }
 
+   @Override
    public long getCreated() {
       return -1;
    }
 
+   @Override
    public long getLastUsed() {
       return -1;
    }
 
+   @Override
    public long getLifespan() {
       return -1;
    }
 
+   @Override
    public long getMaxIdle() {
       return -1;
    }

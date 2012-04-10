@@ -57,6 +57,7 @@ public class ModificationsTransactionWorker implements TransactionWorker {
     * executes it against the {@link CacheStore}.<p/> Current commands supported are: <ul> <li>STORE</li> <li>CLEAR</li>
     * <li>REMOVE</li> <li>PURGE_EXPIRED</li> </ul>
     */
+   @Override
    public void doWork() throws Exception {
       for (Modification modification : mods)
          switch (modification.getType()) {

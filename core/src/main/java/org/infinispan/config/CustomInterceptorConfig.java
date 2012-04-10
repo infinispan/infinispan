@@ -375,6 +375,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return dolly;
    }
    
+   @Override
    protected String uc(String s) {
       return s == null ? null : s.toUpperCase(Locale.ENGLISH);
    }

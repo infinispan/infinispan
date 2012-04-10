@@ -77,7 +77,7 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    private ConnectionFactory sharedConnectionFactory;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcMixedCacheStoreConfig) config;
       binaryCacheStore.init(this.config.getBinaryCacheStoreConfig(), cache, m);
@@ -130,10 +130,12 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       stringBasedCacheStore.purgeInternal();
    }
 
+   @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       return getCacheStore(key).load(key);
    }
 
+   @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
       Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
@@ -166,29 +168,35 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       return fromBuckets;
    }
 
+   @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       getCacheStore(ed.getKey()).store(ed);
    }
 
+   @Override
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       binaryCacheStore.fromStream(inputStream);
       stringBasedCacheStore.fromStream(inputStream);
    }
 
+   @Override
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       binaryCacheStore.toStream(outputStream);
       stringBasedCacheStore.toStream(outputStream);
    }
 
+   @Override
    public boolean remove(Object key) throws CacheLoaderException {
       return getCacheStore(key).remove(key);
    }
 
+   @Override
    public void clear() throws CacheLoaderException {
       binaryCacheStore.clear();
       stringBasedCacheStore.clear();
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcMixedCacheStoreConfig.class;
    }

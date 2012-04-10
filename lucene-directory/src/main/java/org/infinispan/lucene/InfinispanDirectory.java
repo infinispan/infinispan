@@ -87,8 +87,8 @@ public class InfinispanDirectory extends Directory {
    // access type will be changed in the next Lucene version
    volatile boolean isOpen = true;
 
-   private final AdvancedCache metadataCache;
-   private final AdvancedCache chunksCache;
+   private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
+   private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
    // indexName is required when one common cache is used
    private final String indexName;
    // chunk size used in this directory, static filed not used as we want to have different chunk
@@ -106,7 +106,7 @@ public class InfinispanDirectory extends Directory {
     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
     */
-   public InfinispanDirectory(Cache metadataCache, Cache chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
+   public InfinispanDirectory(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
       checkNotNull(metadataCache, "metadataCache");
       checkNotNull(chunksCache, "chunksCache");
       checkNotNull(indexName, "indexName");
@@ -114,8 +114,8 @@ public class InfinispanDirectory extends Directory {
       checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
-      this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunksCache = chunksCache.getAdvancedCache();
+      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
+      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
@@ -124,7 +124,7 @@ public class InfinispanDirectory extends Directory {
       this.readLocks = readLocker;
    }
 
-   public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
+   public InfinispanDirectory(Cache<?, ?> cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
       this(cache, cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
    }
 
@@ -138,7 +138,7 @@ public class InfinispanDirectory extends Directory {
     * @param chunkSize the maximum size in bytes for each chunk of data: larger sizes offer better search performance
     * but might be problematic to handle during network replication or storage
     */
-   public InfinispanDirectory(Cache metadataCache, Cache chunksCache, Cache distLocksCache, String indexName, int chunkSize) {
+   public InfinispanDirectory(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int chunkSize) {
       this(metadataCache, chunksCache, indexName, makeDefaultLockFactory(distLocksCache, indexName),
                chunkSize, makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName));
    }
@@ -147,11 +147,11 @@ public class InfinispanDirectory extends Directory {
     * @param cache the cache to use to store the index
     * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
     */
-   public InfinispanDirectory(Cache cache, String indexName) {
+   public InfinispanDirectory(Cache<?, ?> cache, String indexName) {
       this(cache, cache, cache, indexName, DEFAULT_BUFFER_SIZE);
    }
 
-   public InfinispanDirectory(Cache cache) {
+   public InfinispanDirectory(Cache<?, ?> cache) {
       this(cache, cache, cache, "", DEFAULT_BUFFER_SIZE);
    }
 
@@ -168,6 +168,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean fileExists(String name) {
       checkIsOpen();
       return fileOps.getFileList().contains(name);
@@ -176,6 +177,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public long fileModified(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -190,6 +192,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void touchFile(String fileName) {
       checkIsOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
@@ -206,6 +209,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void deleteFile(String name) {
       checkIsOpen();
       fileOps.deleteFileName(name);
@@ -252,6 +256,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public long fileLength(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -266,6 +271,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public IndexOutput createOutput(String name) {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
@@ -275,6 +281,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
@@ -298,6 +305,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void close() {
       isOpen = false;
    }
@@ -314,6 +322,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /** new name for list() in Lucene 3.0 **/
+   @Override
    public String[] listAll() {
       return list();
    }
@@ -325,16 +334,16 @@ public class InfinispanDirectory extends Directory {
        return indexName;
    }
    
-   private static LockFactory makeDefaultLockFactory(Cache cache, String indexName) {
+   private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
    }
    
-   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache metadataCache, Cache chunksCache, Cache distLocksCache, String indexName) {
+   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       checkNotNull(distLocksCache, "distLocksCache");
       checkNotNull(indexName, "indexName");
-      return new DistributedSegmentReadLocker(distLocksCache, chunksCache, metadataCache, indexName);
+      return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
    }
    
    private static void checkNotNull(Object v, String objectname) {

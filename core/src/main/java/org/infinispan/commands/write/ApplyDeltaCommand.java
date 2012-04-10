@@ -93,10 +93,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       return "ApplyDeltaCommand[key=" + deltaAwareValueKey + ", delta=" + delta + ",keys=" + keys+ ']';
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{deltaAwareValueKey, delta, keys};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
       // TODO: Check duplicated in all commands? A better solution is needed.

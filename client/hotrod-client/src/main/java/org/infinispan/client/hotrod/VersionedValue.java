@@ -29,7 +29,7 @@ package org.infinispan.client.hotrod;
  * @author Mircea.Markus@jboss.com
  */
 public interface VersionedValue<V> {
-   public long getVersion();
+   long getVersion();
 
-   public V getValue();
+   V getValue();
 }

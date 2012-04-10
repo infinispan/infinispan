@@ -565,7 +565,7 @@ public final class Util {
       return buf.toString();
    }
 
-   public static Double constructDouble(Class type, Object o) {
+   public static Double constructDouble(Class<?> type, Object o) {
       if (type.equals(Long.class) || type.equals(long.class))
          return Double.valueOf((Long) o);
       else if (type.equals(Double.class) || type.equals(double.class))

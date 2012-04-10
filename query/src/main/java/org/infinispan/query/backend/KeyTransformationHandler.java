@@ -103,7 +103,7 @@ public class KeyTransformationHandler {
    private Transformer getCustomTransformer(final String keyClassName, final ClassLoader classLoader) {
       Transformer t = null;
       // try and locate class
-      Class keyClass = null;
+      Class<?> keyClass = null;
       try {
          keyClass = Util.loadClassStrict(keyClassName, classLoader);
       } catch (ClassNotFoundException e) {
@@ -193,13 +193,13 @@ public class KeyTransformationHandler {
     * @return a Transformer for this key, or null if the key type is not properly annotated.
     */
    private Transformer getTransformer(Class<?> keyClass) {
-      Class transformerClass = getTransformerClass(keyClass);
+      Class<?> transformerClass = getTransformerClass(keyClass);
       if (transformerClass != null)
          return instantiate(transformerClass);
       return null;
    }
 
-   private Class getTransformerClass(Class<?> keyClass) {
+   private Class<? extends Transformer> getTransformerClass(Class<?> keyClass) {
       Class<? extends Transformer> transformerClass = transformerTypes.get(keyClass);
       if (transformerClass == null) {
          transformerClass = getTransformerClassFromAnnotation(keyClass);
@@ -217,7 +217,7 @@ public class KeyTransformationHandler {
       return null;
    }
 
-   private Transformer instantiate(Class transformerClass) {
+   private Transformer instantiate(Class<?> transformerClass) {
       try {
          // The cast should not be necessary but it's a workaround for a compiler bug.
          return (Transformer) transformerClass.newInstance();

@@ -51,13 +51,13 @@ public class ClusteredQueryInvoker {
 
    private final RpcManager rpcManager;
 
-   private final Cache localCacheInstance;
+   private final Cache<?, ?> localCacheInstance;
 
    private final Address myAddress;
 
    private ExecutorService asyncExecutor;
 
-   ClusteredQueryInvoker(Cache localCacheInstance, ExecutorService asyncExecutor) {
+   ClusteredQueryInvoker(Cache<?, ?> localCacheInstance, ExecutorService asyncExecutor) {
       this.asyncExecutor = asyncExecutor;
       this.rpcManager = localCacheInstance.getAdvancedCache().getComponentRegistry()
                .getLocalComponent(RpcManager.class);
@@ -157,9 +157,9 @@ public class ClusteredQueryInvoker {
 
       private final ClusteredQueryCommand clusteredQuery;
 
-      private final Cache localInstance;
+      private final Cache<?, ?> localInstance;
 
-      ClusteredQueryCallable(ClusteredQueryCommand clusteredQuery, Cache localInstance) {
+      ClusteredQueryCallable(ClusteredQueryCommand clusteredQuery, Cache<?, ?> localInstance) {
          this.clusteredQuery = clusteredQuery;
          this.localInstance = localInstance;
       }

@@ -51,6 +51,6 @@ public interface DistributedCallable<K, V, T> extends Callable<T> {
     * @param inputKeys
     *           keys used as input for this DistributedCallable task
     */
-   public void setEnvironment(Cache<K, V> cache, Set<K> inputKeys);
+   void setEnvironment(Cache<K, V> cache, Set<K> inputKeys);
 
 }

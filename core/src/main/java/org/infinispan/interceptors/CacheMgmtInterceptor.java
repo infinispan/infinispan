@@ -105,7 +105,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map data = command.getMap();
+      Map<Object, Object> data = command.getMap();
       long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
       long t2 = System.nanoTime();
@@ -231,6 +231,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - resetNanoseconds.get());
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset Statistics (Statistics)")
    public void resetStatistics() {

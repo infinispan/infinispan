@@ -104,6 +104,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       this.commandsFactory = commandsFactory;
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(configuration.getName(), trace);
@@ -131,14 +132,17 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       return type;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{(byte) type.ordinal(), sender, viewId, state, locks};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;

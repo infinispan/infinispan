@@ -62,7 +62,7 @@ public class QueryBox {
    private final UUID myId = UUID.randomUUID();
 
    // the local cache instance
-   private AdvancedCache cache;
+   private AdvancedCache<?, ?> cache;
 
    private static final Log log = LogFactory.getLog(QueryBox.class, Log.class);
 
@@ -138,7 +138,7 @@ public class QueryBox {
       return myId;
    }
 
-   public void setCache(AdvancedCache cache) {
+   public void setCache(AdvancedCache<?, ?> cache) {
       this.cache = cache;
       keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
    }

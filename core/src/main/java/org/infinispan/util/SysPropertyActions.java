@@ -56,7 +56,8 @@ public class SysPropertyActions {
       SysProps PRIVILEDGED = new SysProps() {
          @Override
          public String getProperty(final String name, final String defaultValue) {
-            PrivilegedAction action = new PrivilegedAction() {
+            PrivilegedAction<Object> action = new PrivilegedAction() {
+               @Override
                public Object run() {
                   return System.getProperty(name, defaultValue);
                }
@@ -66,7 +67,8 @@ public class SysPropertyActions {
 
          @Override
          public String getProperty(final String name) {
-            PrivilegedAction action = new PrivilegedAction() {
+            PrivilegedAction<Object> action = new PrivilegedAction() {
+               @Override
                public Object run() {
                   return System.getProperty(name);
                }
@@ -76,7 +78,8 @@ public class SysPropertyActions {
 
          @Override
          public String setProperty(final String name, final String value) {
-            PrivilegedAction action = new PrivilegedAction() {
+            PrivilegedAction<Object> action = new PrivilegedAction() {
+               @Override
                public Object run() {
                   return System.setProperty(name, value);
                }

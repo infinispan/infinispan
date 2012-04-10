@@ -58,6 +58,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.viewId = viewId;
    }
 
+   @Override
    public String getCacheName() {
       return cacheName;
    }
@@ -66,6 +67,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.cacheName = cacheName;
    }
 
+   @Override
    public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
    }
@@ -74,6 +76,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.cacheManager = cacheManager;
    }
 
+   @Override
    public Type getType() {
       return type;
    }
@@ -82,6 +85,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.type = type;
    }
 
+   @Override
    public List<Address> getNewMembers() {
       return newMembers;
    }
@@ -94,14 +98,17 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.oldMembers = oldMembers;
    }
 
+   @Override
    public List<Address> getOldMembers() {
       return this.oldMembers;
    }
 
+   @Override
    public Address getLocalAddress() {
       return localAddress;
    }
 
+   @Override
    public int getViewId() {
       return viewId;
    }
@@ -162,10 +169,12 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.subgroupsMerged = subgroupsMerged;
    }
 
+   @Override
    public List<List<Address>> getSubgroupsMerged() {
       return this.subgroupsMerged;
    }
 
+   @Override
    public boolean isMergeView() {
       return mergeView;
    }

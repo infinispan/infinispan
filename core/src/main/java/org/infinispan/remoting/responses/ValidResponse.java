@@ -30,6 +30,7 @@ package org.infinispan.remoting.responses;
  */
 public abstract class ValidResponse implements Response {
 
+   @Override
    public boolean isValid() {
       return true;
    }

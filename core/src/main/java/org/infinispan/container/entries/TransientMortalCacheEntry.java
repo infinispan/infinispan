@@ -68,38 +68,47 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
+   @Override
    public void setLifespan(long lifespan) {
       this.cacheValue.lifespan = lifespan;
    }
 
+   @Override
    public void setMaxIdle(long maxIdle) {
       this.cacheValue.maxIdle = maxIdle;
    }
 
+   @Override
    public Object getValue() {
       return cacheValue.value;
    }
 
+   @Override
    public long getLifespan() {
       return cacheValue.lifespan;
    }
 
+   @Override
    public final boolean canExpire() {
       return true;
    }
 
+   @Override
    public long getCreated() {
       return cacheValue.created;
    }
 
+   @Override
    public boolean isExpired(long now) {
       return cacheValue.isExpired(now);
    }
 
+   @Override
    public boolean isExpired() {
       return cacheValue.isExpired();
    }
 
+   @Override
    public final long getExpiryTime() {
       long lset = cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
       long muet = cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
@@ -108,30 +117,37 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       return min(lset, muet);
    }
 
+   @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }
 
+   @Override
    public long getLastUsed() {
       return cacheValue.lastUsed;
    }
 
+   @Override
    public final void touch() {
       cacheValue.lastUsed = System.currentTimeMillis();
    }
 
+   @Override
    public final void touch(long currentTimeMillis) {
       cacheValue.lastUsed = currentTimeMillis;
    }
 
+   @Override
    public final void reincarnate() {
       cacheValue.created = System.currentTimeMillis();
    }
 
+   @Override
    public long getMaxIdle() {
       return cacheValue.maxIdle;
    }
 
+   @Override
    public Object setValue(Object value) {
       return cacheValue.setValue(value);
    }

@@ -44,20 +44,20 @@ public interface SearchManager {
     * @param classes - optionally only return results of type that matches this list of acceptable types
     * @return the CacheQuery object which can be used to iterate through results
     */
-   public CacheQuery getQuery(Query luceneQuery, Class<?>... classes);
+   CacheQuery getQuery(Query luceneQuery, Class<?>... classes);
 
    /**
     * Experimental.
     * Provides Hibernate Search DSL to build full text queries
     * @return 
     */
-   public EntityContext buildQueryBuilderForClass(Class<?> entityType);
+   EntityContext buildQueryBuilderForClass(Class<?> entityType);
 
    /**
     * Experimental.
     * Access the SearchFactory
     */
-   public SearchFactory getSearchFactory();
+   SearchFactory getSearchFactory();
 
    /**
     * Experimental!

@@ -90,6 +90,7 @@ public final class JGroupsTopologyAwareAddress extends JGroupsAddress implements
          }
       }
 
+      @Override
       public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
             TopologyUUID jgroupsAddress = (TopologyUUID) org.jgroups.util.Util.readAddress(unmarshaller);

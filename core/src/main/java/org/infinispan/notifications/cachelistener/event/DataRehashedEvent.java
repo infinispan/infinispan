@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author Manik Surtani
  * @since 5.0
  */
-public interface DataRehashedEvent extends Event {
+public interface DataRehashedEvent<K, V> extends Event<K, V> {
 
    /**
     * @return Retrieves the list of members before rehashing started.

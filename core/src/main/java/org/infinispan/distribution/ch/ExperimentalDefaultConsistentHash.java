@@ -89,6 +89,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       }
    }
 
+   @Override
    public Set<Address> getCaches() {
       return new LinkedHashSet<Address>(nodes);
    }
@@ -184,6 +185,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       return distance == 1 || distance == pool.size() - 1;
    }
 
+   @Override
    public List<Address> locate(Object key, int replCount) {
       if (key == null) throw new NullPointerException("Attempt to get with null key");
 
@@ -361,6 +363,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
        *              other Entry.</li> </ul>
        * @return
        */
+      @Override
       public int compareTo(Entry other) {
          if (this.hash < other.hash) {
             return -1;

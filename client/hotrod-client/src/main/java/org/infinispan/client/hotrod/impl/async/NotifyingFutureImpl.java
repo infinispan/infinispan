@@ -40,16 +40,16 @@ import java.util.concurrent.TimeoutException;
 public class NotifyingFutureImpl<T> implements NotifyingFuture<T> {
 
    private volatile Future<T> executing;
-   private volatile CopyOnWriteArraySet<FutureListener> listeners;
+   private volatile CopyOnWriteArraySet<FutureListener<T>> listeners;
 
    public void setExecuting(Future<T> executing) {
       this.executing = executing;
    }
 
    @Override
-   public NotifyingFuture<T> attachListener(FutureListener futureListener) {
+   public NotifyingFuture<T> attachListener(FutureListener<T> futureListener) {
       if (listeners == null) {
-         listeners = new CopyOnWriteArraySet<FutureListener>();
+         listeners = new CopyOnWriteArraySet<FutureListener<T>>();
       }
       listeners.add(futureListener);
       return this;
@@ -66,7 +66,7 @@ public class NotifyingFutureImpl<T> implements NotifyingFuture<T> {
 
    public void notifyFutureCompletion() {
       if (listeners != null) {
-         for (FutureListener listener : listeners) {
+         for (FutureListener<T> listener : listeners) {
             listener.futureDone(this);
          }
       }

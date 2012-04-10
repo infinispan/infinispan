@@ -14,6 +14,6 @@ public interface GroupManager {
 	 * @param key the key for which to get the group
 	 * @return the group, or null if no group is defined for the key
 	 */
-	public String getGroup(Object key);
+	String getGroup(Object key);
 
 }

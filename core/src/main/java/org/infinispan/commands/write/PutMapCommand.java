@@ -50,8 +50,8 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    public PutMapCommand() {
    }
 
-   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      this.map = map;
+   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+      this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
       this.maxIdleTimeMillis = maxIdleTimeMillis;
@@ -105,7 +105,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
-      map = (Map) parameters[0];
+      map = (Map<Object, Object>) parameters[0];
       lifespanMillis = (Long) parameters[1];
       maxIdleTimeMillis = (Long) parameters[2];
       if (parameters.length>3) {

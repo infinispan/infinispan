@@ -53,10 +53,12 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
       this.oldValue = oldValue;
    }
 
+   @Override
    public void rollback(Map<K, V> delegate) {
       if (oldValue != null) delegate.put(key, oldValue);
    }
 
+   @Override
    public void replay(Map<K, V> delegate) {
       delegate.remove(key);
    }
@@ -74,7 +76,7 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
 
       @Override
       public RemoveOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         RemoveOperation remove = new RemoveOperation();
+         RemoveOperation<Object, Object> remove = new RemoveOperation<Object, Object>();
          remove.key = input.readObject();
          return remove;
       }

@@ -47,6 +47,7 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    public ExecutorService getExecutor(Properties p) {
       ConfigurationProperties cp = new ConfigurationProperties(p);
       ThreadFactory tf = new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, THREAD_NAME + "-" + counter.getAndIncrement());
             th.setDaemon(true);

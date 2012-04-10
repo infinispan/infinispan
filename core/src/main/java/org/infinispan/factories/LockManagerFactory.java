@@ -35,6 +35,7 @@ import org.infinispan.util.concurrent.locks.LockManagerImpl;
  */
 @DefaultFactoryFor(classes = LockManager.class)
 public class LockManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+   @Override
    public <T> T construct(Class<T> componentType) {
       if (configuration.isEnableDeadlockDetection()) {
          return (T) new DeadlockDetectingLockManager();

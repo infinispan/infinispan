@@ -66,9 +66,9 @@ public class DemoActions {
 
    private InfinispanDirectory index;
 
-   private final Cache cache;
+   private final Cache<?, ?> cache;
 
-   public DemoActions(InfinispanDirectory index, Cache cache) {
+   public DemoActions(InfinispanDirectory index, Cache<?, ?> cache) {
       this.index = index;
       this.cache = cache;
    }

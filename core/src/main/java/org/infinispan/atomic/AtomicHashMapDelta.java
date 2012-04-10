@@ -34,6 +34,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,36 +47,37 @@ public class AtomicHashMapDelta implements Delta {
    private static final Log log = LogFactory.getLog(AtomicHashMapDelta.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private List<Operation> changeLog;
+   private List<Operation<Object, Object>> changeLog;
    private boolean hasClearOperation;
 
+   @Override
    public DeltaAware merge(DeltaAware d) {
-      AtomicHashMap other;
+      AtomicHashMap<Object, Object> other;
       if (d != null && (d instanceof AtomicHashMap))
-         other = (AtomicHashMap) d;
+         other = (AtomicHashMap<Object, Object>) d;
       else
          other = new AtomicHashMap();
       if (changeLog != null) {
-         for (Operation o : changeLog) o.replay(other.delegate);
+         for (Operation<Object, Object> o : changeLog) o.replay(other.delegate);
       }      
       return other;
    }
    
-   public void addOperation(Operation o) {
+   public void addOperation(Operation<?, ?> o) {
       if (changeLog == null) {
          // lazy init
-         changeLog = new LinkedList<Operation>();
+         changeLog = new LinkedList<Operation<Object, Object>>();
       }
       if(o instanceof ClearOperation) {
          hasClearOperation = true;
       }
-      changeLog.add(o);
+      changeLog.add((Operation<Object, Object>) o);
    }
    
    public Collection<Object> getKeys() {
       List<Object> keys = new LinkedList<Object>();
       if (changeLog != null) {
-         for (Operation o : changeLog) {
+         for (Operation<?, ?> o : changeLog) {
             Object key = o.keyAffected();
             keys.add(key);
          }
@@ -111,7 +113,7 @@ public class AtomicHashMapDelta implements Delta {
       @Override
       public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
-         delta.changeLog = (List<Operation>) input.readObject();
+         delta.changeLog = (List<Operation<Object, Object>>) input.readObject();
          if (trace) log.tracef("Deserialized changeLog %s", delta.changeLog);
          return delta;
       }

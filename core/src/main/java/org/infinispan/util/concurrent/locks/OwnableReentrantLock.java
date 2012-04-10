@@ -69,10 +69,12 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
       requestorOnStack.remove();
    }
 
+   @Override
    public void lock() {
       throw new UnsupportedOperationException();
    }
 
+   @Override
    public void unlock() {
       throw new UnsupportedOperationException();
    }
@@ -89,14 +91,17 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
       }
    }
 
+   @Override
    public void lockInterruptibly() throws InterruptedException {
       acquireInterruptibly(1);
    }
 
+   @Override
    public boolean tryLock() {
       return tryAcquire(1);
    }
 
+   @Override
    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
       throw new UnsupportedOperationException("Should never get here");
    }
@@ -121,6 +126,7 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
       }
    }
 
+   @Override
    public ConditionObject newCondition() {
       throw new UnsupportedOperationException("Not supported in this implementation!");
    }

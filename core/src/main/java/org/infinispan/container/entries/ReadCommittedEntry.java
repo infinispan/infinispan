@@ -105,40 +105,49 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
 
+   @Override
    public final long getLifespan() {
       return lifespan;
    }
 
+   @Override
    public final long getMaxIdle() {
       return maxIdle;
    }
 
+   @Override
    public final void setMaxIdle(long maxIdle) {
       this.maxIdle = maxIdle;
    }
 
+   @Override
    public final void setLifespan(long lifespan) {
       this.lifespan = lifespan;
    }
 
+   @Override
    public final Object getKey() {
       return key;
    }
 
+   @Override
    public final Object getValue() {
       return value;
    }
 
+   @Override
    public final Object setValue(Object value) {
       Object oldValue = this.value;
       this.value = value;
       return oldValue;
    }
 
+   @Override
    public boolean isNull() {
       return false;
    }
 
+   @Override
    public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
       if (isChanged()) return; // already copied
 
@@ -168,7 +177,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
-            AtomicHashMap ahm = (AtomicHashMap) value;
+            AtomicHashMap<?, ?> ahm = (AtomicHashMap<?, ?>) value;
             ahm.commit();
             if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
          }
@@ -188,6 +197,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       setValid(true);
    }
 
+   @Override
    public final void rollback() {
       if (isChanged()) {
          value = oldValue;
@@ -195,6 +205,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       }
    }
 
+   @Override
    public final boolean isChanged() {
       return isFlagSet(CHANGED);
    }
@@ -203,10 +214,12 @@ public class ReadCommittedEntry implements MVCCEntry {
       setFlag(CHANGED);
    }
 
+   @Override
    public boolean isValid() {
       return isFlagSet(VALID);
    }
 
+   @Override
    public final void setValid(boolean valid) {
       if (valid)
          setFlag(VALID);
@@ -228,10 +241,12 @@ public class ReadCommittedEntry implements MVCCEntry {
    public void setVersion(EntryVersion version) {
    }
 
+   @Override
    public final boolean isCreated() {
       return isFlagSet(CREATED);
    }
 
+   @Override
    public final void setCreated(boolean created) {
       if (created)
          setFlag(CREATED);
@@ -239,14 +254,17 @@ public class ReadCommittedEntry implements MVCCEntry {
          unsetFlag(CREATED);
    }
 
+   @Override
    public boolean isRemoved() {
       return isFlagSet(REMOVED);
    }
 
+   @Override
    public boolean isEvicted() {
       return isFlagSet(EVICTED);
    }
 
+   @Override
    public final void setRemoved(boolean removed) {
       if (removed)
          setFlag(REMOVED);
@@ -254,6 +272,7 @@ public class ReadCommittedEntry implements MVCCEntry {
          unsetFlag(REMOVED);
    }
 
+   @Override
    public void setEvicted(boolean evicted) {
       if (evicted)
          setFlag(EVICTED);

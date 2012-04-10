@@ -93,6 +93,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       super(cacheName);
    }
 
+   @Override
    public Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
@@ -127,6 +128,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       return invoker.invoke(ctx, this);
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitPrepareCommand((TxInvocationContext) ctx, this);
    }
@@ -147,6 +149,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       return modifications != null ? modifications.length : 0;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }

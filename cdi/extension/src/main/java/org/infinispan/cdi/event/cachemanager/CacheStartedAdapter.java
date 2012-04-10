@@ -37,14 +37,17 @@ public class CacheStartedAdapter extends AbstractAdapter<CacheStartedEvent> {
 
    public static final CacheStartedEvent EMPTY = new CacheStartedEvent() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public EmbeddedCacheManager getCacheManager() {
          return null;
       }
 
+      @Override
       public String getCacheName() {
          return null;
       }
@@ -57,6 +60,7 @@ public class CacheStartedAdapter extends AbstractAdapter<CacheStartedEvent> {
       this.cacheName = cacheName;
    }
 
+   @Override
    @CacheStarted
    public void fire(CacheStartedEvent payload) {
       if (payload.getCacheName().equals(cacheName)) {

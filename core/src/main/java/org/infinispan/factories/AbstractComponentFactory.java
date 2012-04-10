@@ -66,9 +66,9 @@ public abstract class AbstractComponentFactory {
     */
    public abstract <T> T construct(Class<T> componentType);
 
-   protected void assertTypeConstructable(Class requestedType, Class... ableToConstruct) {
+   protected void assertTypeConstructable(Class<?> requestedType, Class<?>... ableToConstruct) {
       boolean canConstruct = false;
-      for (Class c : ableToConstruct) {
+      for (Class<?> c : ableToConstruct) {
          canConstruct = canConstruct || requestedType.isAssignableFrom(c);
       }
       if (!canConstruct) throw new ConfigurationException("Don't know how to construct " + requestedType);

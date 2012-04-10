@@ -76,7 +76,7 @@ public class SingletonStore extends AbstractDelegatingStore {
    private static final boolean trace = log.isTraceEnabled();
 
    EmbeddedCacheManager cacheManager;
-   Cache cache;
+   Cache<Object, Object> cache;
    SingletonStoreConfig config;
 
    /**
@@ -108,13 +108,14 @@ public class SingletonStore extends AbstractDelegatingStore {
    private volatile boolean active;
 
 
-   public SingletonStore(CacheStore delegate, Cache cache, SingletonStoreConfig config) {
+   public SingletonStore(CacheStore delegate, Cache<Object, Object> cache, SingletonStoreConfig config) {
       super(delegate);
       this.cacheManager = cache == null ? null : cache.getCacheManager();
       this.cache = cache;
       this.config = config;
 
       executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, THREAD_NAME);
          }
@@ -174,6 +175,7 @@ public class SingletonStore extends AbstractDelegatingStore {
       super.start();
    }
    
+   @Override
    public void stop() throws CacheLoaderException {
       try {
          super.stop();
@@ -190,6 +192,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     */
    protected Callable<?> createPushStateTask() {
       return new Callable() {
+         @Override
          public Object call() throws Exception {
             final boolean debugEnabled = log.isDebugEnabled();
 
@@ -208,9 +211,9 @@ public class SingletonStore extends AbstractDelegatingStore {
     *
     * @throws Exception if there's any issues reading the data from the cache or pushing data to the cache store.
     */
-   protected void pushState(final Cache cache) throws Exception {
+   protected void pushState(final Cache<Object, Object> cache) throws Exception {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      Set keys = dc.keySet();
+      Set<Object> keys = dc.keySet();
       InternalCacheEntry entry;
       for (Object k : keys) if ((entry = dc.get(k)) != null) store(entry);
    }
@@ -224,7 +227,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     * @param timeout time to wait for the push task to finish
     * @param unit    instance of TimeUnit representing the unit of timeout
     */
-   protected void awaitForPushToFinish(Future future, long timeout, TimeUnit unit) {
+   protected void awaitForPushToFinish(Future<?> future, long timeout, TimeUnit unit) {
       final boolean debugEnabled = log.isDebugEnabled();
       try {
          if (debugEnabled) log.debug("wait for state push to cache loader to finish");
@@ -307,7 +310,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     * @param unit    instance of TimeUnit representing the unit of timeout
     * @throws Exception if any issues are reported while waiting for the task to finish
     */
-   private void waitForTaskToFinish(Future future, long timeout, TimeUnit unit) throws Exception {
+   private void waitForTaskToFinish(Future<?> future, long timeout, TimeUnit unit) throws Exception {
       try {
          future.get(timeout, unit);
       }

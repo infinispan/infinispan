@@ -64,18 +64,18 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    private static final Log log = LogFactory.getLog(AtomicHashMapProxy.class);
    private static final boolean trace = log.isTraceEnabled();
    protected final Object deltaMapKey;
-   protected final AdvancedCache cache;
+   protected final AdvancedCache<Object, AtomicMap<K, V>> cache;
    protected volatile boolean startedReadingMap = false;
    protected final FlagContainer flagContainer;
    protected TransactionTable transactionTable;
    protected TransactionManager transactionManager;
 
-   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
+   AtomicHashMapProxy(AdvancedCache<Object, AtomicMap<K, V>> cache, Object deltaMapKey) {
       this(cache, deltaMapKey, null);
    }
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
-      this.cache = cache;
+      this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       this.flagContainer = flagContainer;
@@ -158,47 +158,56 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       if (startedReadingMap && (map == null || map.removed)) throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
    }
 
+   @Override
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<K>emptySet() : map.keySet();
    }
 
+   @Override
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<V>emptySet() : map.values();
    }
 
+   @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<Entry<K,V>>emptySet() : map.entrySet();
    }
 
-   public int size() {      
+   @Override
+   public int size() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? 0 : map.size();
    }
 
-   public boolean isEmpty() {      
+   @Override
+   public boolean isEmpty() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null || map.isEmpty();
    }
 
+   @Override
    public boolean containsKey(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map != null && map.containsKey(key);
    }
 
+   @Override
    public boolean containsValue(Object value) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map != null && map.containsValue(value);
    }
 
+   @Override
    public V get(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? null : map.get(key);
    }
 
    //writers      
+   @Override
    public V put(K key, V value) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -211,6 +220,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public V remove(Object key) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -223,6 +233,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -235,6 +246,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public void clear() {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {

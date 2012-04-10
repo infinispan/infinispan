@@ -48,6 +48,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    public RemoteTxInvocationContext() {
    }
 
+   @Override
    public Transaction getTransaction() {
       // this method is only valid for locally originated transactions!
       return null;
@@ -59,18 +60,22 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       return true;
    }
 
+   @Override
    public Object getLockOwner() {
       return remoteTransaction.getGlobalTransaction();
    }
 
+   @Override
    public GlobalTransaction getGlobalTransaction() {
       return remoteTransaction.getGlobalTransaction();
    }
 
+   @Override
    public boolean isOriginLocal() {
       return false;
    }
 
+   @Override
    public List<WriteCommand> getModifications() {
       return remoteTransaction.getModifications();
    }
@@ -79,26 +84,32 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       this.remoteTransaction = remoteTransaction;
    }
 
+   @Override
    public CacheEntry lookupEntry(Object key) {
       return remoteTransaction.lookupEntry(key);
    }
 
+   @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return remoteTransaction.getLookedUpEntries();
    }
 
+   @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
       remoteTransaction.putLookedUpEntry(key, e);
    }
 
+   @Override
    public void removeLookedUpEntry(Object key) {
       remoteTransaction.removeLookedUpEntry(key);
    }
 
+   @Override
    public void clearLookedUpEntries() {
       remoteTransaction.clearLookedUpEntries();
    }
 
+   @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       remoteTransaction.putLookedUpEntries(lookedUpEntries);
    }

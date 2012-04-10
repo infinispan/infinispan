@@ -20,6 +20,7 @@ public abstract class AbstractDelegatingMarshaller implements StreamingMarshalle
 
    protected StreamingMarshaller marshaller;
 
+   @Override
    public void stop() {
       marshaller.stop();
    }

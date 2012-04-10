@@ -276,6 +276,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
 
+   @Override
    public RecoveryAwareRemoteTransaction getPreparedTransaction(Xid xid) {
       return inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName));
    }

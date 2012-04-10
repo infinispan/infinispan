@@ -37,6 +37,7 @@ class InternalCacheEntryBinding implements EntryBinding<InternalCacheEntry> {
       this.m = m;
    }
 
+   @Override
    public InternalCacheEntry entryToObject(DatabaseEntry entry) {
       try {
          return (InternalCacheEntry) m.objectFromByteBuffer(entry.getData());
@@ -47,6 +48,7 @@ class InternalCacheEntryBinding implements EntryBinding<InternalCacheEntry> {
       }
    }
 
+   @Override
    public void objectToEntry(InternalCacheEntry object, DatabaseEntry entry) {
       byte[] b;
       try {

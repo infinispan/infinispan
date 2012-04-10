@@ -40,7 +40,7 @@ import java.util.List;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @see SearchManagerImpl#getQuery(org.apache.lucene.search.Query)
  */
-public interface CacheQuery extends Iterable {
+public interface CacheQuery extends Iterable<Object> {
   
    /**
     * Returns the results of a search as a list.
@@ -63,6 +63,7 @@ public interface CacheQuery extends Iterable {
     *
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
+   @Override
    QueryIterator iterator();
 
    /**
@@ -145,20 +146,19 @@ public interface CacheQuery extends Iterable {
     * @param name of filter.
     * @return a FullTextFilter object.
     */
-   public FullTextFilter enableFullTextFilter(String name);
+   FullTextFilter enableFullTextFilter(String name);
 
    /**
     * Disable a given filter by its name.
     *
     * @param name of filter.
     */
-   public CacheQuery disableFullTextFilter(String name);
+   CacheQuery disableFullTextFilter(String name);
 
    /**
     * Allows lucene to filter the results.
     *
     * @param f - lucene filter
     */
-   public CacheQuery filter(Filter f);
-
+   CacheQuery filter(Filter f);
 }

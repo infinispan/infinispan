@@ -105,14 +105,17 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
 
+   @Override
    public boolean hasFlag(Flag o) {
       return flags != null && flags.contains(o);
    }
 
+   @Override
    public Set<Flag> getFlags() {
       return flags;
    }
 
+   @Override
    public void setFlags(Flag... flags) {
       if (flags == null || flags.length == 0) return;
       if (this.flags == null)
@@ -121,6 +124,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
          this.flags.addAll(Arrays.asList(flags));
    }
 
+   @Override
    public void setFlags(Collection<Flag> flags) {
       if (flags == null || flags.isEmpty()) return;
       if (this.flags == null)
@@ -129,6 +133,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
          this.flags.addAll(flags);
    }
    
+   @Override
    public Address getOrigin() {
 	   return origin;
    }
@@ -137,6 +142,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 	   this.origin = origin;
    }
 
+   @Override
    public void reset() {
       flags = null;
       contextFlags = 0;
@@ -146,15 +152,18 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       return flags == null;
    }
 
+   @Override
    public boolean hasLockedKey(Object key) {
       return getLockedKeys().contains(key);
    }
 
 
+   @Override
    public boolean isUseFutureReturnType() {
       return isContextFlagSet(ContextFlag.USE_FUTURE_RETURN_TYPE);
    }
 
+   @Override
    public void setUseFutureReturnType(boolean useFutureReturnType) {
       setContextFlag(ContextFlag.USE_FUTURE_RETURN_TYPE, useFutureReturnType);
    }

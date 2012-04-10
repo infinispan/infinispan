@@ -202,6 +202,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
       return (AsyncStoreConfig) super.clone();
    }
 
+   @Override
    public void accept(ConfigurationBeanVisitor v) {
       v.visitAsyncStoreConfig(this);
    }

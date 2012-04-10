@@ -44,6 +44,4 @@ public class FqnGenerator {
       for (int i = 0; i < depth; i++) fqnElements.add(Integer.toHexString(r.nextInt(Integer.MAX_VALUE)));
       return Fqn.fromList(fqnElements);
    }
-
-
 }

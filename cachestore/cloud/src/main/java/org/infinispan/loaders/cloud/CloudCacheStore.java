@@ -132,7 +132,6 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
-      this.cache = cache;
       marshaller = m;
       this.ctx = ctx;
       this.blobStore = blobStore;

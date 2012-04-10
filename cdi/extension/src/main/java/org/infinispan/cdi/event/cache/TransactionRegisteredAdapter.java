@@ -39,22 +39,27 @@ public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<Transact
 
    public static final TransactionRegisteredEvent<?, ?> EMPTY = new TransactionRegisteredEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
@@ -69,6 +74,7 @@ public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<Transact
       super(event);
    }
 
+   @Override
    @TransactionRegistered
    public void fire(TransactionRegisteredEvent<K, V> payload) {
       super.fire(payload);

@@ -94,7 +94,7 @@ public class StaleTransactionCleanupService {
     * This method will only ever be called in distributed mode.
     */
    @TopologyChanged
-   public void onTopologyChange(TopologyChangedEvent tce) {
+   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       // do all the work AFTER the consistent hash has changed
       if (tce.isPre())
          return;
@@ -156,6 +156,7 @@ public class StaleTransactionCleanupService {
    private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
       try {
          lockBreakingService.submit(new Runnable() {
+            @Override
             public void run() {
                try {
                transactionTable.updateStateOnNodesLeaving(leavers);
@@ -172,6 +173,7 @@ public class StaleTransactionCleanupService {
    public void start(final Configuration configuration, final RpcManager rpcManager, InterceptorChain interceptorChain) {
       this.invoker = interceptorChain;
       ThreadFactory tf = new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
             Thread th = new Thread(r, "LockBreakingService," + configuration.getName() + "," + address);

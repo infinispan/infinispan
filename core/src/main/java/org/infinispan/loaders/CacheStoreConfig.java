@@ -79,7 +79,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
    @Deprecated
    void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig);
    
-   public Boolean isPurgeSynchronously();
+   Boolean isPurgeSynchronously();
 
    /**
     * @deprecated use {@link #purgeSynchronously(Boolean)} instead

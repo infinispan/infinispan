@@ -133,9 +133,11 @@ public interface Transport extends Lifecycle {
     */
    boolean isMulticastCapable();
 
+   @Override
    @Start(priority = 10)
    void start();
 
+   @Override
    @Stop
    void stop();
 

@@ -59,7 +59,7 @@ public class InfluenzaVirusCache {
       return myCache.get(GBAN);
 	}
 	
-	public Cache getCache(){
+	public Cache<String, Influenza_N_P_CR_Element> getCache(){
 		return myCache;
 	}
 }

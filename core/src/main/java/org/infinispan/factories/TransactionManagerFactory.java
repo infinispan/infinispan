@@ -44,6 +44,7 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
 
    private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
 
+   @Override
    public <T> T construct(Class<T> componentType) {
 
       if (!configuration.isTransactionalCache()) {

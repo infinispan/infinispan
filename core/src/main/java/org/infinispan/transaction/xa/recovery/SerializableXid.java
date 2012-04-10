@@ -59,14 +59,17 @@ public class SerializableXid implements Xid {
       this(xid.getBranchQualifier(), xid.getGlobalTransactionId(), xid.getFormatId());
    }
 
+   @Override
    public byte[] getBranchQualifier() {
       return branchQualifier;
    }
 
+   @Override
    public byte[] getGlobalTransactionId() {
       return globalTransactionId;
    }
 
+   @Override
    public int getFormatId() {
       return formatId;
    }

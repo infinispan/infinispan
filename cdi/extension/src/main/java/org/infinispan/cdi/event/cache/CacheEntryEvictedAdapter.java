@@ -39,30 +39,37 @@ public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEv
 
    public static final CacheEntryEvictedEvent<?, ?> EMPTY = new CacheEntryEvictedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public Object getKey() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
 
+      @Override
       public Object getValue() {
          return null;
       }
@@ -76,6 +83,7 @@ public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEv
       super(event);
    }
 
+   @Override
    @CacheEntryEvicted
    public void fire(CacheEntryEvictedEvent<K, V> payload) {
       super.fire(payload);

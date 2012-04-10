@@ -39,13 +39,13 @@ public class Proxies {
                         getInterfaces(obj.getClass()), new CatchThrowableProxy(obj));
     }
 
-   private static Class[] getInterfaces(Class clazz) {
-      Class[] interfaces = clazz.getInterfaces();
+   private static Class<?>[] getInterfaces(Class<?> clazz) {
+      Class<?>[] interfaces = clazz.getInterfaces();
       if (interfaces.length > 0) {
-         Class superClass = clazz.getSuperclass();
+         Class<?> superClass = clazz.getSuperclass();
          if (superClass != null && superClass.getInterfaces().length > 0) {
-            Class[] superInterfaces = superClass.getInterfaces();
-            Class[] clazzes = new Class[interfaces.length + superInterfaces.length];
+            Class<?>[] superInterfaces = superClass.getInterfaces();
+            Class<?>[] clazzes = new Class[interfaces.length + superInterfaces.length];
             System.arraycopy(interfaces, 0, clazzes, 0, interfaces.length);
             System.arraycopy(superInterfaces, 0, clazzes, interfaces.length, superInterfaces.length);
             return clazzes;
@@ -53,7 +53,7 @@ public class Proxies {
             return interfaces;
          }
       }
-      Class superclass = clazz.getSuperclass();
+      Class<?> superclass = clazz.getSuperclass();
       if (!superclass.equals(Object.class))
          return superclass.getInterfaces();
       return ReflectionUtil.EMPTY_CLASS_ARRAY;
@@ -81,6 +81,7 @@ public class Proxies {
             this.obj = obj;
         }
 
+        @Override
         public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
             Object result = null;
             try {

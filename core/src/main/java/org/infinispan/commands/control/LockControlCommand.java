@@ -125,6 +125,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return keys.get(0);
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitLockControlCommand((TxInvocationContext) ctx, this);
    }
@@ -152,14 +153,17 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return invoker.invoke(ctx, this);
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{globalTx, unlock, keys, flags};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
       // TODO: Check duplicated in all commands? A better solution is needed.

@@ -132,12 +132,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    public void wireDependencies(Object target) throws ConfigurationException {
       try {
-         Class targetClass = target.getClass();
+         Class<?> targetClass = target.getClass();
          ComponentMetadata metadata = ComponentMetadataRepo.findComponentMetadata(targetClass);
          if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
             // search for anything we need to inject
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
-               Class[] methodParameters = injectMetadata.getParameterClasses();
+               Class<?>[] methodParameters = injectMetadata.getParameterClasses();
                if (methodParameters == null) {
                   methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters());
                   injectMetadata.setParameterClasses(methodParameters);
@@ -163,7 +163,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param component component to register
     * @param type      type of component
     */
-   public final void registerComponent(Object component, Class type) {
+   public final void registerComponent(Object component, Class<?> type) {
       registerComponent(component, type.getName(), type.equals(component.getClass()));
    }
 
@@ -179,7 +179,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       registerComponentInternal(component, name, false);
    }
 
-   protected final void registerNonVolatileComponent(Object component, Class type) {
+   protected final void registerNonVolatileComponent(Object component, Class<?> type) {
       registerComponentInternal(component, type.getName(), true);
    }
 
@@ -235,7 +235,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    @SuppressWarnings("unchecked")
    private void invokeInjectionMethod(Object o, ComponentMetadata.InjectMetadata injectMetadata) {
-      Class[] dependencies = injectMetadata.getParameterClasses();
+      Class<?>[] dependencies = injectMetadata.getParameterClasses();
       if (dependencies.length > 0) {
          Object[] params = new Object[dependencies.length];
          if (getLog().isTraceEnabled())
@@ -306,7 +306,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param componentClass type of component to construct
     * @return component factory capable of constructing such components
     */
-   protected AbstractComponentFactory getFactory(Class componentClass) {
+   protected AbstractComponentFactory getFactory(Class<?> componentClass) {
       String cfClass = ComponentMetadataRepo.findFactoryForComponent(componentClass);
       if (cfClass == null) {
          throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
@@ -513,6 +513,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * This starts the components in the cache, connecting to channels, starting service threads, etc.  If the cache is
     * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, it will be initialized first.
     */
+   @Override
    public void start() {
 
       if (!state.startAllowed()) {
@@ -538,6 +539,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * is done.  If the cache is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a
     * no-op.
     */
+   @Override
    public void stop() {
       if (!state.stopAllowed()) {
          getLog().debugf("Ignoring call to stop() as current state is %s", this);
@@ -808,7 +810,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          if (injectionMethods != null && injectionMethods.length > 0) {
             Class<?> clazz = instance.getClass();
             for (ComponentMetadata.InjectMetadata meta: injectionMethods) {
-               Class[] parameterClasses = meta.getParameterClasses();
+               Class<?>[] parameterClasses = meta.getParameterClasses();
                if (parameterClasses == null) {
                   parameterClasses = ReflectionUtil.toClassArray(meta.getParameters());
                   meta.setParameterClasses(parameterClasses);
@@ -851,6 +853,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       ComponentMetadata.PrioritizedMethodMetadata metadata;
       Component component;
 
+      @Override
       public int compareTo(PrioritizedMethod o) {
          int thisVal = metadata.getPriority();
          int anotherVal = o.metadata.getPriority();

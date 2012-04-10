@@ -40,34 +40,40 @@ import static java.util.Collections.unmodifiableMap;
  * @since 4.0
  */
 public class InfinispanCollections {
-   private static final ReversibleOrderedSet EMPTY_ROS = new EmptyReversibleOrderedSet();
+   private static final ReversibleOrderedSet<Object> EMPTY_ROS = new EmptyReversibleOrderedSet<Object>();
 
-   private static final class EmptyReversibleOrderedSet extends AbstractSet implements ReversibleOrderedSet {
+   private static final class EmptyReversibleOrderedSet<E> extends AbstractSet<E> implements ReversibleOrderedSet<E> {
 
-      Iterator it = new Iterator() {
+      Iterator<E> it = new Iterator() {
 
+         @Override
          public boolean hasNext() {
             return false;
          }
 
-         public Object next() {
+         @Override
+         public E next() {
             throw new NoSuchElementException();
          }
 
+         @Override
          public void remove() {
             throw new UnsupportedOperationException();
          }
       };
 
-      public Iterator iterator() {
+      @Override
+      public Iterator<E> iterator() {
          return it;
       }
 
+      @Override
       public int size() {
          return 0;
       }
 
-      public Iterator reverseIterator() {
+      @Override
+      public Iterator<E> reverseIterator() {
          return it;
       }
    }

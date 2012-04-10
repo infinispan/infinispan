@@ -39,22 +39,27 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
 
    public static final ViewChangedEvent EMPTY = new ViewChangedEvent() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public EmbeddedCacheManager getCacheManager() {
          return null;
       }
 
+      @Override
       public List<Address> getNewMembers() {
          return null;
       }
 
+      @Override
       public List<Address> getOldMembers() {
          return null;
       }
 
+      @Override
       public Address getLocalAddress() {
          return null;
       }
@@ -63,6 +68,7 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
          return false;
       }
 
+      @Override
       public int getViewId() {
          return 0;
       }
@@ -77,6 +83,7 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
       super(event);
    }
 
+   @Override
    @ViewChanged
    public void fire(ViewChangedEvent payload) {
       super.fire(payload);
