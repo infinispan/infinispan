@@ -22,7 +22,6 @@
 
 package org.infinispan.query.logging;
 
-import org.infinispan.query.Transformer;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
