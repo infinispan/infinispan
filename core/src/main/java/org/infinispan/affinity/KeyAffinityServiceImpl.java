@@ -221,27 +221,30 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    }
 
 
-   public class KeyGeneratorWorker implements Runnable {
+   private class KeyGeneratorWorker implements Runnable {
 
       private volatile boolean isActive;
-      private volatile boolean  isStopped = false;
-      private volatile Thread runner;
+      private volatile boolean isStopped = false;
 
       @Override
       public void run() {
-         this.runner = Thread.currentThread();
          try {
-            while (true) {
-               if (waitToBeWakenUp()) break;
-               isActive = true;
-               log.trace("KeyGeneratorWorker marked as ACTIVE");
-               generateKeys();
+            while (isStopped == false) {
+               keyProducerStartLatch.await();
+               if (isStopped == false) {
+                  isActive = true;
+                  log.trace("KeyGeneratorWorker marked as ACTIVE");
+                  generateKeys();
 
-               isActive = false;
-               log.trace("KeyGeneratorWorker marked as INACTIVE");
+                  isActive = false;
+                  log.trace("KeyGeneratorWorker marked as INACTIVE");
+               }
             }
-         } finally {
-            isStopped = true;
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+         finally {
+            log.debugf("Shutting down KeyAffinity service for key set: %s", filter);
          }
       }
 
@@ -257,8 +260,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             // in order to fill all the queues
             int maxMisses = maxNumberOfKeys.get();
             int missCount = 0;
-            while (!Thread.currentThread().isInterrupted() && existingKeyCount.get() < maxNumberOfKeys.get()
-                  && missCount < maxMisses) {
+            while (existingKeyCount.get() < maxNumberOfKeys.get() && missCount < maxMisses) {
                K key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
                if (interestedInAddress(addressForKey)) {
@@ -274,18 +276,6 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
          } finally {
             maxNumberInvariant.readLock().unlock();
          }
-      }
-
-      private boolean waitToBeWakenUp() {
-         try {
-            keyProducerStartLatch.await();
-         } catch (InterruptedException e) {
-            if (log.isDebugEnabled()) {
-               log.debugf("Shutting down KeyAffinity service for key set: %s", filter);
-            }
-            return true;
-         }
-         return false;
       }
 
       private boolean tryAddKey(Address address, K key) {
@@ -304,7 +294,8 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       }
 
       public void stop() {
-         runner.interrupt();
+         isStopped = true;
+         keyProducerStartLatch.open();
       }
    }
 
