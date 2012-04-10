@@ -39,6 +39,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.Assert;
+
 import static junit.framework.Assert.assertEquals;
 
 /**
@@ -49,7 +51,7 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
 
    protected ThreadFactory threadFactory = new ThreadFactory() {
       public Thread newThread(Runnable r) {
-         return new Thread(r, "KeyGeneratorThread," + this.getClass().getSimpleName());
+         return new Thread(r, "KeyGeneratorThread," + BaseKeyAffinityServiceTest.this.getClass().getSimpleName());
       }
    };
    protected ExecutorService executor  = Executors.newSingleThreadExecutor(threadFactory);
@@ -59,7 +61,11 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    public void stopExecutorService() throws InterruptedException {
       keyAffinityService.stop();
       executor.shutdown();
-      assert executor.awaitTermination(100, TimeUnit.MILLISECONDS);
+      boolean terminatedGracefully = executor.awaitTermination(100, TimeUnit.MILLISECONDS);
+      if (!terminatedGracefully) {
+         executor.shutdownNow();
+         Assert.fail("KeyGenerator Executor not terminated in expected time");
+      }
    }
 
    protected void assertMapsToAddress(Object o, Address addr) {
