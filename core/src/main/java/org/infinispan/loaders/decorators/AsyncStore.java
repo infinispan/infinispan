@@ -205,6 +205,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                // any possible RejectedExecutionException.
                new LinkedBlockingQueue<Runnable>(poolSize + 1),
                new ThreadFactory() {
+                  @Override
                   public Thread newThread(Runnable r) {
                      Thread t = new Thread(r, "CoalescedAsyncStore-" + threadId.getAndIncrement());
                      t.setDaemon(true);
@@ -304,6 +305,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       private final Set<Object> lockedKeys = new HashSet<Object>();
       boolean runAgainAfterWaiting = false;
 
+      @Override
       public void run() {
          LogFactory.pushNDC(cacheName, trace);
          try {

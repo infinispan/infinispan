@@ -172,6 +172,7 @@ public class ExternalizerTable implements ObjectTable {
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
+   @Override
    public Writer getObjectWriter(Object o) throws IOException {
       Class<?> clazz = o.getClass();
       Writer writer = writers.get(clazz);
@@ -184,6 +185,7 @@ public class ExternalizerTable implements ObjectTable {
       return writer;
    }
 
+   @Override
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       int readerIndex = input.readUnsignedByte();
       if (readerIndex == Ids.MAX_ID) // User defined externalizer
@@ -389,6 +391,7 @@ public class ExternalizerTable implements ObjectTable {
          return externalizer.readObject(input);
       }
 
+      @Override
       public void writeObject(Marshaller output, Object object) throws IOException {
          output.write(id);
          externalizer.writeObject(output, object);

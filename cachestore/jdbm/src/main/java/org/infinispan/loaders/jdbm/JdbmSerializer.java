@@ -51,6 +51,7 @@ public class JdbmSerializer implements Serializer {
         this.marshaller = marshaller;
     }
 
+    @Override
     public Object deserialize(byte[] buf) throws IOException {
         try {
             return marshaller.objectFromByteBuffer(buf);
@@ -59,6 +60,7 @@ public class JdbmSerializer implements Serializer {
         }
     }
 
+    @Override
     public byte[] serialize(Object obj) throws IOException {
        try {
           return marshaller.objectToByteBuffer(obj);

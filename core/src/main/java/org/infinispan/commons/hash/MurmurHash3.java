@@ -342,6 +342,7 @@ public class MurmurHash3 implements Hash {
       return (int) (MurmurHash3_x64_64(key, seed) >>> 32);
    }
 
+   @Override
    public int hash(byte[] payload) {
       return MurmurHash3_x64_32(payload, 9001);
    }
@@ -356,6 +357,7 @@ public class MurmurHash3 implements Hash {
       return MurmurHash3_x64_32(payload, 9001);
    }
 
+   @Override
    public int hash(int hashcode) {
       // Obtained by inlining MurmurHash3_x64_32(byte[], 9001) and removing all the unused code
       // (since we know the input is always 4 bytes and we only need 4 bytes of output)
@@ -394,6 +396,7 @@ public class MurmurHash3 implements Hash {
       return (int) (state.h1 >>> 32);
    }
 
+   @Override
    public int hash(Object o) {
       if (o instanceof byte[])
          return hash((byte[]) o);

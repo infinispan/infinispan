@@ -34,6 +34,7 @@ public class JmxHtmlGenerator extends HtmlGenerator {
       this.components = components;
    }
 
+   @Override
    protected String generateContents() {
       StringBuilder sb = new StringBuilder();
       // index of components

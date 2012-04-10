@@ -154,26 +154,32 @@ public class CommandsFactoryImpl implements CommandsFactory {
       cacheName = cache.getName();
    }
 
+   @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
       return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags);
    }
 
+   @Override
    public VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
       return new VersionedPutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags, version);
    }
 
+   @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
       return new RemoveCommand(key, value, notifier, flags);
    }
 
+   @Override
    public InvalidateCommand buildInvalidateCommand(Object... keys) {
       return new InvalidateCommand(notifier, keys);
    }
 
+   @Override
    public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys) {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
+   @Override
    public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys) {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
@@ -183,10 +189,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
+   @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
       return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis, flags);
    }
 
+   @Override
    public SizeCommand buildSizeCommand() {
       if (cachedSizeCommand == null) {
          cachedSizeCommand = new SizeCommand(dataContainer);
@@ -194,6 +202,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedSizeCommand;
    }
 
+   @Override
    public KeySetCommand buildKeySetCommand() {
       if (cachedKeySetCommand == null) {
          cachedKeySetCommand = new KeySetCommand(dataContainer);
@@ -201,6 +210,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedKeySetCommand;
    }
 
+   @Override
    public ValuesCommand buildValuesCommand() {
       if (cachedValuesCommand == null) {
          cachedValuesCommand = new ValuesCommand(dataContainer);
@@ -208,6 +218,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedValuesCommand;
    }
 
+   @Override
    public EntrySetCommand buildEntrySetCommand() {
       if (cachedEntrySetCommand == null) {
          cachedEntrySetCommand = new EntrySetCommand(dataContainer, entryFactory);
@@ -215,50 +226,62 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedEntrySetCommand;
    }
 
+   @Override
    public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
       return new GetKeyValueCommand(key, notifier, flags);
    }
 
+   @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
       return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis, flags);
    }
 
+   @Override
    public ClearCommand buildClearCommand(Set<Flag> flags) {
       return new ClearCommand(notifier, flags);
    }
 
+   @Override
    public EvictCommand buildEvictCommand(Object key) {
       return new EvictCommand(key, notifier);
    }
 
+   @Override
    public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
       return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
+   @Override
    public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
       return new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
    }
 
+   @Override
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
       return new CommitCommand(cacheName, gtx);
    }
 
+   @Override
    public VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx) {
       return new VersionedCommitCommand(cacheName, gtx);
    }
 
+   @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
       return new RollbackCommand(cacheName, gtx);
    }
 
+   @Override
    public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
       return new MultipleRpcCommand(toReplicate, cacheName);
    }
 
+   @Override
    public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return new SingleRpcCommand(cacheName, call);
    }
 
+   @Override
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
       return new ClusteredGetCommand(key, cacheName, flags, acquireRemoteLock, gtx);
    }
@@ -266,6 +289,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    /**
     * @param isRemote true if the command is deserialized and is executed remote.
     */
+   @Override
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
       if (c == null) return;
       switch (c.getCommandId()) {
@@ -396,10 +420,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
+   @Override
    public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
+   @Override
    public LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(key, cacheName, flags, gtx);
    }
@@ -409,16 +435,19 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys,  cacheName, flags, null);
    }
 
+   @Override
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
                                                                 int viewId) {
       return new StateTransferControlCommand(cacheName, type, sender, viewId);
    }
 
+   @Override
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
                                                                 int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
       return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
    }
 
+   @Override
    public String getCacheName() {
       return cacheName;
    }

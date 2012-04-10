@@ -57,6 +57,7 @@ public class LocalXaTransaction extends LocalTransaction {
     * As per the JTA spec, XAResource.start is called on enlistment. That method also sets the xid for this local
     * transaction.
     */
+   @Override
    public boolean isEnlisted() {
       return xid != null;
    }

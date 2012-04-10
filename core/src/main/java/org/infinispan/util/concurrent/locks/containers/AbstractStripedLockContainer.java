@@ -74,6 +74,7 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
 
    protected abstract void initLocks(int numLocks);
 
+   @Override
    public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {
       L lock = getLock(key);
       boolean locked;
@@ -89,11 +90,13 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
       return locked ? lock : null;
    }
 
+   @Override
    public void releaseLock(Object lockOwner, Object key) {
       final L lock = getLock(key);
       safeRelease(lock, lockOwner);
    }
 
+   @Override
    public int getLockId(Object key) {
       return hashToIndex(key);
    }

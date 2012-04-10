@@ -77,6 +77,7 @@ public class GridStore implements IWebdavStore {
          metadata.stop();
    }
 
+   @Override
    public ITransaction begin(Principal principal) throws WebdavException {
       log.trace("GridStore.begin()");
       if (!root.exists()) {
@@ -89,18 +90,22 @@ public class GridStore implements IWebdavStore {
       return null;
    }
 
+   @Override
    public void checkAuthentication(ITransaction transaction) throws SecurityException {
       log.trace("GridStore.checkAuthentication()");
    }
 
+   @Override
    public void commit(ITransaction transaction) throws WebdavException {
       log.trace("GridStore.commit()");
    }
 
+   @Override
    public void rollback(ITransaction transaction) throws WebdavException {
       log.trace("GridStore.rollback()");
    }
 
+   @Override
    public void createFolder(ITransaction transaction, String uri) throws WebdavException {
       log.tracef("GridStore.createFolder(%s)", uri);
       File file = fs.getFile(root, uri);
@@ -108,6 +113,7 @@ public class GridStore implements IWebdavStore {
          throw new WebdavException("cannot create folder: " + uri);
    }
 
+   @Override
    public void createResource(ITransaction transaction, String uri) throws WebdavException {
       log.tracef("GridStore.createResource(%s)", uri);
       File file = fs.getFile(root, uri);
@@ -121,6 +127,7 @@ public class GridStore implements IWebdavStore {
       }
    }
 
+   @Override
    public long setResourceContent(ITransaction transaction, String uri,
                                   InputStream is, String contentType, String characterEncoding)
            throws WebdavException {
@@ -158,6 +165,7 @@ public class GridStore implements IWebdavStore {
       return length;
    }
 
+   @Override
    public String[] getChildrenNames(ITransaction transaction, String uri) throws WebdavException {
       log.tracef("GridStore.getChildrenNames(%s)", uri);
       File file = fs.getFile(root, uri);
@@ -179,6 +187,7 @@ public class GridStore implements IWebdavStore {
       return childrenNames;
    }
 
+   @Override
    public void removeObject(ITransaction transaction, String uri) throws WebdavException {
       File file = fs.getFile(root, uri);
       boolean success = file.delete();
@@ -187,6 +196,7 @@ public class GridStore implements IWebdavStore {
          throw new WebdavException("cannot delete object: " + uri);
    }
 
+   @Override
    public InputStream getResourceContent(ITransaction transaction, String uri) throws WebdavException {
       log.tracef("GridStore.getResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
@@ -203,12 +213,14 @@ public class GridStore implements IWebdavStore {
       return in;
    }
 
+   @Override
    public long getResourceLength(ITransaction transaction, String uri) throws WebdavException {
       log.tracef("GridStore.getResourceLength(%s)", uri);
       File file = fs.getFile(root, uri);
       return file.length();
    }
 
+   @Override
    public StoredObject getStoredObject(ITransaction transaction, String uri) {
 
       StoredObject so = null;

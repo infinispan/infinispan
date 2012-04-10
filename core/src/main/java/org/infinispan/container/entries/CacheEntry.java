@@ -75,6 +75,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
     *
     * @return a key
     */
+   @Override
    Object getKey();
 
    /**
@@ -82,6 +83,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
     *
     * @return the value of the entry
     */
+   @Override
    Object getValue();
 
    /**
@@ -114,6 +116,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
     * @param value value to set
     * @return previous value
     */
+   @Override
    Object setValue(Object value);
 
    /**

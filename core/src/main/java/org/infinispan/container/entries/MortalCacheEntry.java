@@ -46,10 +46,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = cacheValue;
    }
 
+   @Override
    public Object getValue() {
       return cacheValue.value;
    }
 
+   @Override
    public Object setValue(Object value) {
       return cacheValue.setValue(value);
    }
@@ -63,54 +65,67 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       cacheValue = new MortalCacheValue(value, created, lifespan);
    }
 
+   @Override
    public final boolean isExpired(long now) {
       return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created, now);
    }
 
+   @Override
    public final boolean isExpired() {
       return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created);
    }
 
+   @Override
    public final boolean canExpire() {
       return true;
    }
 
+   @Override
    public void setLifespan(long lifespan) {
       cacheValue.setLifespan(lifespan);
    }
 
+   @Override
    public final long getCreated() {
       return cacheValue.created;
    }
 
+   @Override
    public final long getLastUsed() {
       return -1;
    }
 
+   @Override
    public final long getLifespan() {
       return cacheValue.lifespan;
    }
 
+   @Override
    public final long getMaxIdle() {
       return -1;
    }
 
+   @Override
    public final long getExpiryTime() {
       return cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
    }
 
+   @Override
    public final void touch() {
       // no-op
    }
 
+   @Override
    public final void touch(long currentTimeMillis) {
       // no-op
    }
 
+   @Override
    public final void reincarnate() {
       cacheValue.created = System.currentTimeMillis();
    }
 
+   @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }

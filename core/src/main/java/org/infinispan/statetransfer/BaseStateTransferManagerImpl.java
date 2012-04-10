@@ -149,6 +149,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    protected abstract ConsistentHash createConsistentHash(List<Address> members);
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
+   @Override
    @Start(priority = 1000)
    public void waitForJoinToComplete() throws InterruptedException {
       joinCompletedLatch.await(getTimeout(), TimeUnit.MILLISECONDS);

@@ -107,6 +107,7 @@ public interface ConsistentHash {
     * @param replCount
     * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
+   @Deprecated
    List<Address> getStateProvidersOnLeave(Address leaver, int replCount);
 
    /**
@@ -115,12 +116,14 @@ public interface ConsistentHash {
     * - the nodes that held joiner's state
     * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
+   @Deprecated
    List<Address> getStateProvidersOnJoin(Address joiner, int replCount);
 
    /**
     * Returns the nodes that backup data for the supplied node including the node itself.
     * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
+   @Deprecated
    List<Address> getBackupsForNode(Address node, int replCount);
 
    /**

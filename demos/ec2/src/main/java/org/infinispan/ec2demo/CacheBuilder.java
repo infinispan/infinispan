@@ -63,7 +63,8 @@ class ShutdownHook extends Thread {
 		currCache = cache_container;
 	}
 
-	public void run() {
+	@Override
+   public void run() {
 		System.out.println("Shutting down Cache Manager");
 		currCache.stop();
 	}

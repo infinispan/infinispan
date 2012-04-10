@@ -268,14 +268,17 @@ public class Immutables {
          this.iterator = iterator;
       }
 
+      @Override
       public boolean hasNext() {
          return iterator.hasNext();
       }
 
+      @Override
       public E next() {
          return iterator.next();
       }
 
+      @Override
       public void remove() {
          throw new UnsupportedOperationException();
       }
@@ -290,22 +293,27 @@ public class Immutables {
          this.collection = collection;
       }
 
+      @Override
       public boolean add(E o) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean addAll(Collection<? extends E> c) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void clear() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean contains(Object o) {
          return collection.contains(o);
       }
 
+      @Override
       public boolean containsAll(Collection<?> c) {
          return collection.containsAll(c);
       }
@@ -318,34 +326,42 @@ public class Immutables {
          return collection.hashCode();
       }
 
+      @Override
       public boolean isEmpty() {
          return collection.isEmpty();
       }
 
+      @Override
       public Iterator<E> iterator() {
          return new ImmutableIteratorWrapper<E>(collection.iterator());
       }
 
+      @Override
       public boolean remove(Object o) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean removeAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean retainAll(Collection<?> c) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public int size() {
          return collection.size();
       }
 
+      @Override
       public Object[] toArray() {
          return collection.toArray();
       }
 
+      @Override
       public <T> T[] toArray(T[] a) {
          return collection.toArray(a);
       }
@@ -371,6 +387,7 @@ public class Immutables {
          super(set);
       }
 
+      @Override
       public Iterator<E> reverseIterator() {
          return new ImmutableIteratorWrapper<E>(((ReversibleOrderedSet<? extends E>) collection).reverseIterator());
       }
@@ -390,14 +407,17 @@ public class Immutables {
          this.hash = entry.hashCode();
       }
 
+      @Override
       public K getKey() {
          return key;
       }
 
+      @Override
       public V getValue() {
          return value;
       }
 
+      @Override
       public V setValue(V value) {
          throw new UnsupportedOperationException();
       }
@@ -436,18 +456,22 @@ public class Immutables {
          this.hash = entry.hashCode();
       }
 
+      @Override
       public Object getKey() {
          return entry.getKey();
       }
 
+      @Override
       public Object getValue() {
          return entry.getValue();
       }
 
+      @Override
       public Object setValue(Object value) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void commit(DataContainer container, EntryVersion newVersion) {
          throw new UnsupportedOperationException();
       }
@@ -469,42 +493,52 @@ public class Immutables {
          return getKey() + "=" + getValue();
       }
 
+      @Override
       public boolean canExpire() {
          return entry.canExpire();
       }
 
+      @Override
       public long getCreated() {
          return entry.getCreated();
       }
 
+      @Override
       public long getExpiryTime() {
          return entry.getExpiryTime();
       }
 
+      @Override
       public long getLastUsed() {
          return entry.getLastUsed();
       }
 
+      @Override
       public boolean isExpired(long now) {
          return entry.isExpired(now);
       }
 
+      @Override
       public boolean isExpired() {
          return entry.isExpired();
       }
 
+      @Override
       public void setLifespan(long lifespan) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void setMaxIdle(long maxIdle) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public InternalCacheValue toInternalCacheValue() {
          return new ImmutableInternalCacheValue(this);
       }
 
+      @Override
       public void touch() {
          throw new UnsupportedOperationException();
       }
@@ -514,78 +548,97 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean undelete(boolean doUndelete) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void reincarnate() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void setVersion(EntryVersion version) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public long getLifespan() {
          return entry.getLifespan();
       }
 
+      @Override
       public long getMaxIdle() {
          return entry.getMaxIdle();
       }
 
+      @Override
       public boolean isChanged() {
          return entry.isChanged();
       }
 
+      @Override
       public boolean isCreated() {
          return entry.isCreated();
       }
 
+      @Override
       public boolean isNull() {
          return entry.isNull();
       }
 
+      @Override
       public boolean isRemoved() {
          return entry.isRemoved();
       }
 
+      @Override
       public boolean isEvicted() {
          return entry.isEvicted();
       }
 
+      @Override
       public boolean isValid() {
          return entry.isValid();
       }
 
+      @Override
       public void rollback() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void setCreated(boolean created) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void setRemoved(boolean removed) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void setEvicted(boolean evicted) {
          entry.setEvicted(evicted);
       }
 
+      @Override
       public void setValid(boolean valid) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean isLockPlaceholder() {
          return entry.isLockPlaceholder();
       }
 
+      @Override
       public EntryVersion getVersion() {
          return entry.getVersion();
       }
 
+      @Override
       public InternalCacheEntry clone() {
          return new ImmutableInternalCacheEntry(entry.clone());
       }
@@ -598,38 +651,47 @@ public class Immutables {
          this.entry = entry;
       }
 
+      @Override
       public boolean canExpire() {
          return entry.canExpire();
       }
 
+      @Override
       public long getCreated() {
          return entry.getCreated();
       }
 
+      @Override
       public long getLastUsed() {
          return entry.getLastUsed();
       }
 
+      @Override
       public long getLifespan() {
          return entry.getLifespan();
       }
 
+      @Override
       public long getMaxIdle() {
          return entry.getMaxIdle();
       }
 
+      @Override
       public Object getValue() {
          return entry.getValue();
       }
 
+      @Override
       public boolean isExpired(long now) {
          return entry.isExpired(now);
       }
 
+      @Override
       public boolean isExpired() {
          return entry.isExpired();
       }
 
+      @Override
       public InternalCacheEntry toInternalCacheEntry(Object key) {
          return entry;
       }
@@ -643,6 +705,7 @@ public class Immutables {
          super((Set<Entry<K, V>>) set);
       }
 
+      @Override
       public Object[] toArray() {
          Object[] array = new Object[collection.size()];
          int i = 0;
@@ -651,6 +714,7 @@ public class Immutables {
          return array;
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public <T> T[] toArray(T[] array) {
          int size = collection.size();
@@ -665,8 +729,10 @@ public class Immutables {
          return array;
       }
 
+      @Override
       public Iterator<Entry<K, V>> iterator() {
          return new ImmutableIteratorWrapper<Entry<K, V>>(collection.iterator()) {
+            @Override
             public Entry<K, V> next() {
                return new ImmutableEntry<K, V>(super.next());
             }
@@ -683,18 +749,22 @@ public class Immutables {
          this.map = map;
       }
 
+      @Override
       public void clear() {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean containsKey(Object key) {
          return map.containsKey(key);
       }
 
+      @Override
       public boolean containsValue(Object value) {
          return map.containsValue(value);
       }
 
+      @Override
       public Set<Entry<K, V>> entrySet() {
          return new ImmutableEntrySetWrapper<K, V>(map.entrySet());
       }
@@ -703,6 +773,7 @@ public class Immutables {
          return map.equals(o);
       }
 
+      @Override
       public V get(Object key) {
          return map.get(key);
       }
@@ -711,30 +782,37 @@ public class Immutables {
          return map.hashCode();
       }
 
+      @Override
       public boolean isEmpty() {
          return map.isEmpty();
       }
 
+      @Override
       public Set<K> keySet() {
          return new ImmutableSetWrapper<K>(map.keySet());
       }
 
+      @Override
       public V put(K key, V value) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public void putAll(Map<? extends K, ? extends V> t) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public V remove(Object key) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public int size() {
          return map.size();
       }
 
+      @Override
       public Collection<V> values() {
          return new ImmutableCollectionWrapper<V>(map.values());
       }

@@ -16,8 +16,9 @@ public class GroupManagerImpl implements GroupManager {
     
     private static interface GroupMetadata {
         
-        static final GroupMetadata NONE = new GroupMetadata() {
+        GroupMetadata NONE = new GroupMetadata() {
             
+            @Override
             public String getGroup(Object instance) {
                 return null;
             }
@@ -39,6 +40,7 @@ public class GroupManagerImpl implements GroupManager {
             this.method = method;
         }
 
+        @Override
         public String getGroup(Object instance) {
             return String.class.cast(invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
         }

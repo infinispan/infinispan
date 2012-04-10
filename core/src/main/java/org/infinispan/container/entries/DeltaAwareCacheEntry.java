@@ -117,36 +117,44 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       flags &= ~flag.mask;
    }
 
+   @Override
    public final long getLifespan() {
       return 0;
    }
 
+   @Override
    public final long getMaxIdle() {
       return 0;
    }
 
+   @Override
    public final void setMaxIdle(long maxIdle) {
       // irrelevant
    }
 
+   @Override
    public final void setLifespan(long lifespan) {
       // irrelevant
    }
 
+   @Override
    public final Object getKey() {
       return key;
    }
 
+   @Override
    public final Object getValue() {
       return value;
    }
 
+   @Override
    public final Object setValue(Object value) {
       Object oldValue = this.value;
       this.value = (DeltaAware) value;
       return oldValue;
    }
 
+   @Override
    public boolean isNull() {
       return false;
    }
@@ -162,6 +170,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
          oldValue = value;
    }
 
+   @Override
    public final void commit(DataContainer container, EntryVersion version) {
       // only do stuff if there are changes.
       if (wrappedEntry != null) {
@@ -183,6 +192,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       setValid(true);
    }
 
+   @Override
    public final void rollback() {
       if (isChanged()) {
          value = oldValue;
@@ -190,6 +200,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public final boolean isChanged() {
       return isFlagSet(CHANGED);
    }
@@ -198,6 +209,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       setFlag(CHANGED);
    }
 
+   @Override
    public boolean isValid() {
       if (wrappedEntry != null) {
          return wrappedEntry.isValid();
@@ -206,6 +218,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public final void setValid(boolean valid) {
       if (valid)
          setFlag(VALID);
@@ -222,6 +235,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public final boolean isCreated() {
       if (wrappedEntry != null) {
          return wrappedEntry.isCreated();
@@ -231,6 +245,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public final void setCreated(boolean created) {
       if (created)
          setFlag(CREATED);
@@ -238,6 +253,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
          unsetFlag(CREATED);
    }
 
+   @Override
    public boolean isRemoved() {
       if (wrappedEntry != null) {
          return wrappedEntry.isRemoved();
@@ -246,6 +262,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public boolean isEvicted() {
       if (wrappedEntry != null) {
          return wrappedEntry.isEvicted();
@@ -254,6 +271,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       }
    }
 
+   @Override
    public final void setRemoved(boolean removed) {
       if (removed)
          setFlag(REMOVED);
@@ -261,6 +279,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
          unsetFlag(REMOVED);
    }
 
+   @Override
    public void setEvicted(boolean evicted) {
       if (evicted)
          setFlag(EVICTED);

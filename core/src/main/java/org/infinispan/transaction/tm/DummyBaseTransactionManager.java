@@ -59,6 +59,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *          If the transaction service fails in an unexpected way.
     */
+   @Override
    public void begin() throws NotSupportedException, SystemException {
       Transaction currentTx;
       if ((currentTx = getTransaction()) != null)
@@ -84,6 +85,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     *                               If a heuristic decision to roll back the transaction was made.
     * @throws SecurityException     If the caller is not allowed to commit this transaction.
     */
+   @Override
    public void commit() throws RollbackException, HeuristicMixedException,
                                HeuristicRollbackException, SecurityException,
                                IllegalStateException, SystemException {
@@ -114,6 +116,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *                               If the transaction service fails in an unexpected way.
     */
+   @Override
    public void rollback() throws IllegalStateException, SecurityException,
                                  SystemException {
       Transaction tx = getTransaction();
@@ -134,6 +137,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *                               If the transaction service fails in an unexpected way.
     */
+   @Override
    public void setRollbackOnly() throws IllegalStateException, SystemException {
       Transaction tx = getTransaction();
       if (tx == null)
@@ -150,6 +154,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *          If the transaction service fails in an unexpected way.
     */
+   @Override
    public int getStatus() throws SystemException {
       Transaction tx = getTransaction();
       return tx != null ? tx.getStatus() : Status.STATUS_NO_TRANSACTION;
@@ -163,6 +168,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *          If the transaction service fails in an unexpected way.
     */
+   @Override
    public DummyTransaction getTransaction() {
       return thread_local.get();
    }
@@ -175,6 +181,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *          If the transaction service fails in an unexpected way.
     */
+   @Override
    public void setTransactionTimeout(int seconds) throws SystemException {
       throw new SystemException("not supported");
    }
@@ -188,6 +195,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *          If the transaction service fails in an unexpected way.
     */
+   @Override
    public Transaction suspend() throws SystemException {
       Transaction retval = getTransaction();
       setTransaction(null);
@@ -205,6 +213,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     * @throws javax.transaction.SystemException
     *                               If the transaction service fails in an unexpected way.
     */
+   @Override
    public void resume(Transaction tx) throws InvalidTransactionException, IllegalStateException, SystemException {
       if (trace) log.tracef("Resuming tx %s", tx);
       setTransaction(tx);

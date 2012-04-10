@@ -50,6 +50,7 @@ public class AtomicHashMapDelta implements Delta {
    private List<Operation<Object, Object>> changeLog;
    private boolean hasClearOperation;
 
+   @Override
    public DeltaAware merge(DeltaAware d) {
       AtomicHashMap<Object, Object> other;
       if (d != null && (d instanceof AtomicHashMap))

@@ -194,6 +194,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
                                                                                 new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
+                                                                                   @Override
                                                                                    public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
                                                                                       return new Map.Entry<Object, Object>() {
 

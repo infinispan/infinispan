@@ -443,14 +443,17 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       return is;
    }
 
+   @Override
    public Configuration parseDefaultConfiguration() throws ConfigurationException {
       return defaultConfiguration;
    }
 
+   @Override
    public GlobalConfiguration parseGlobalConfiguration() {
       return global;
    }
 
+   @Override
    public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {
       Map<String, Configuration> map = new HashMap<String, Configuration>(7);
       for (Configuration conf : namedCaches) {

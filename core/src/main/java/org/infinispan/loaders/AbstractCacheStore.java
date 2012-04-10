@@ -60,6 +60,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
    protected boolean multiThreadedPurge = false;
 
+   @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException{
       super.init(config, cache, m);
       this.config = (AbstractCacheStoreConfig) config;
@@ -69,6 +70,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       return cache == null || cache.getConfiguration() == null? 16 : cache.getConfiguration().getConcurrencyLevel();
    }
 
+   @Override
    public void start() throws CacheLoaderException {
       if (config == null) throw new IllegalStateException("Make sure you call super.init() from CacheStore extension");
       if (config.isPurgeSynchronously()) {
@@ -93,14 +95,17 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       return false;
    }
 
+   @Override
    public void stop() throws CacheLoaderException {
       purgerService.shutdownNow();
    }
 
+   @Override
    public void purgeExpired() throws CacheLoaderException {
       if (purgerService == null)
          throw new IllegalStateException("purgerService is null (did you call super.start() from cache loader implementation ?");
       purgerService.execute(new Runnable() {
+         @Override
          public void run() {
             try {
                purgeInternal();
@@ -133,6 +138,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
+   @Override
    public void prepare(List<? extends Modification> mods, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       if (isOnePhase) {
          applyModifications(mods);
@@ -141,19 +147,23 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
+   @Override
    public void rollback(GlobalTransaction tx) {
       transactions.remove(tx);
    }
 
+   @Override
    public CacheStoreConfig getCacheStoreConfig() {
       return config;
    }
 
+   @Override
    public void commit(GlobalTransaction tx) throws CacheLoaderException {
       List<? extends Modification> list = transactions.remove(tx);
       if (list != null && !list.isEmpty()) applyModifications(list);
    }
 
+   @Override
    public void removeAll(Set<Object> keys) throws CacheLoaderException {
       if (keys != null && !keys.isEmpty()) {
          for (Object key : keys) remove(key);

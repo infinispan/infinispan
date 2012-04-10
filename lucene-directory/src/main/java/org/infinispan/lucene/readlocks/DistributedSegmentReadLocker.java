@@ -124,6 +124,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * 
     * @see #deleteOrReleaseReadLock(String)
     */
+   @Override
    public boolean acquireReadLock(String filename) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       Integer lockValue = locksCache.get(readLockKey);

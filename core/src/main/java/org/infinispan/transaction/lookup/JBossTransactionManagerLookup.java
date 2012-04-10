@@ -38,6 +38,7 @@ import javax.transaction.TransactionManager;
  */
 public class JBossTransactionManagerLookup implements TransactionManagerLookup {
 
+   @Override
    public TransactionManager getTransactionManager() throws Exception {
       String as7Location = "java:jboss/TransactionManager";
 

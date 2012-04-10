@@ -48,6 +48,7 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
       fileLength = (int) file.length();
    }
 
+   @Override
    public int read(ByteBuffer dst) throws IOException {
       int bytesRead = 0;
       long len = Math.min(dst.remaining(), getTotalBytesRemaining());
@@ -83,10 +84,12 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
       return fileLength - position;
    }
 
+   @Override
    public boolean isOpen() {
       return !closed;
    }
 
+   @Override
    public void close() throws IOException {
       reset();
       closed = true;

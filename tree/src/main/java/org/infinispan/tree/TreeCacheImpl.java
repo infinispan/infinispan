@@ -55,10 +55,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       createRoot();
    }
 
+   @Override
    public Node<K, V> getRoot() {
       return new NodeImpl<K, V>(Fqn.ROOT, cache, batchContainer);
    }
 
+   @Override
    public Node<K, V> getRoot(Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -68,10 +70,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V put(String fqn, K key, V value) {
       return put(Fqn.fromString(fqn), key, value);
    }
 
+   @Override
    public V put(String fqn, K key, V value, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -81,6 +85,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void put(Fqn fqn, Map<? extends K, ? extends V> data) {
       startAtomic();
       try {
@@ -93,6 +98,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void put(Fqn fqn, Map<? extends K, ? extends V> data, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -102,10 +108,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void put(String fqn, Map<? extends K, ? extends V> data) {
       put(Fqn.fromString(fqn), data);
    }
 
+   @Override
    public void put(String fqn, Map<? extends K, ? extends V> data, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -115,6 +123,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V remove(Fqn fqn, K key) {
       startAtomic();
       try {
@@ -125,6 +134,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V remove(Fqn fqn, K key, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -134,10 +144,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V remove(String fqn, K key) {
       return remove(Fqn.fromString(fqn), key);
    }
 
+   @Override
    public V remove(String fqn, K key, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -147,6 +159,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public boolean removeNode(Fqn fqn) {
       if (fqn.isRoot()) return false;
       startAtomic();
@@ -162,6 +175,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       return result;
    }
 
+   @Override
    public boolean removeNode(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -171,10 +185,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public boolean removeNode(String fqn) {
       return removeNode(Fqn.fromString(fqn));
    }
 
+   @Override
    public boolean removeNode(String fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -184,6 +200,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Node<K, V> getNode(Fqn fqn) {
       startAtomic();
       try {
@@ -195,6 +212,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Node<K, V> getNode(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -204,10 +222,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Node<K, V> getNode(String fqn) {
       return getNode(Fqn.fromString(fqn));
    }
 
+   @Override
    public Node<K, V> getNode(String fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -217,12 +237,14 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V get(Fqn fqn, K key) {
       Map<K, V> m = getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
       if (m == null) return null;
       return m.get(key);
    }
 
+   @Override
    public V get(Fqn fqn, K key, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -232,10 +254,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public boolean exists(String f) {
       return exists(Fqn.fromString(f));
    }
 
+   @Override
    public boolean exists(String fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -245,6 +269,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public boolean exists(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -254,10 +279,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V get(String fqn, K key) {
       return get(Fqn.fromString(fqn), key);
    }
 
+   @Override
    public V get(String fqn, K key, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -267,6 +294,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void move(Fqn nodeToMoveFqn, Fqn newParentFqn) throws NodeNotExistsException {
       if (trace) log.tracef("Moving node '%s' to '%s'", nodeToMoveFqn, newParentFqn);
       if (nodeToMoveFqn == null || newParentFqn == null)
@@ -311,6 +339,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       log.tracef("Successfully moved node '%s' to '%s'", nodeToMoveFqn, newParentFqn);
    }
 
+   @Override
    public void move(Fqn nodeToMove, Fqn newParent, Flag... flags) throws NodeNotExistsException {
       tcc.setFlags(flags);
       try {
@@ -320,10 +349,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void move(String nodeToMove, String newParent) throws NodeNotExistsException {
       move(Fqn.fromString(nodeToMove), Fqn.fromString(newParent));
    }
 
+   @Override
    public void move(String nodeToMove, String newParent, Flag... flags) throws NodeNotExistsException {
       tcc.setFlags(flags);
       try {
@@ -333,6 +364,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Map<K, V> getData(Fqn fqn) {
       startAtomic();
       try {
@@ -346,6 +378,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Map<K, V> getData(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -355,10 +388,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Set<K> getKeys(String fqn) {
       return getKeys(Fqn.fromString(fqn));
    }
 
+   @Override
    public Set<K> getKeys(String fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -368,6 +403,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Set<K> getKeys(Fqn fqn) {
       startAtomic();
       try {
@@ -381,6 +417,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Set<K> getKeys(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -390,10 +427,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void clearData(String fqn) {
       clearData(Fqn.fromString(fqn));
    }
 
+   @Override
    public void clearData(String fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -403,6 +442,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void clearData(Fqn fqn) {
       startAtomic();
       try {
@@ -414,6 +454,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public void clearData(Fqn fqn, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -423,6 +464,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V put(Fqn fqn, K key, V value) {
       if (trace) log.tracef("Start: Putting value under key [%s] for node [%s]", key, fqn);
       startAtomic();
@@ -436,6 +478,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public V put(Fqn fqn, K key, V value, Flag... flags) {
       tcc.setFlags(flags);
       try {
@@ -445,6 +488,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
    }
 
+   @Override
    public Cache<?, ?> getCache() {
       // Retrieve the advanced cache as a way to retrieve
       // the cache behind the cache adapter.
@@ -452,11 +496,13 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    // ------------------ nothing different; just delegate to the cache
+   @Override
    public void start() throws CacheException {
       cache.start();
       createRoot();
    }
 
+   @Override
    public void stop() {
       cache.stop();
    }

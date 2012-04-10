@@ -115,6 +115,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
     * @param context invocation context, ignored.
     * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
+   @Override
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
       acquireLocksIfNeeded();
       if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
@@ -149,14 +150,17 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       }
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{key, flags, acquireRemoteLock, gtx};
    }
 
+   @Override
    public void setParameters(int commandId, Object[] args) {
       int i = 0;
       key = args[i++];

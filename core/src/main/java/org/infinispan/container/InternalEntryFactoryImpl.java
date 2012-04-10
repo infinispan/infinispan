@@ -55,6 +55,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       return create(key, value, cacheEntry.getVersion(), cacheEntry.getCreated(), cacheEntry.getLifespan(), cacheEntry.getLastUsed(), cacheEntry.getMaxIdle());
    }
 
+   @Override
    public InternalCacheEntry create(Object key, Object value, EntryVersion ignored, long created, long lifespan, long lastUsed, long maxIdle) {
       if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
       if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, created);

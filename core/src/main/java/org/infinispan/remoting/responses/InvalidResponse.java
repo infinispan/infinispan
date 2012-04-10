@@ -29,10 +29,12 @@ package org.infinispan.remoting.responses;
  * @since 4.0
  */
 public abstract class InvalidResponse implements Response {
+   @Override
    public boolean isValid() {
       return false;
    }
 
+   @Override
    public boolean isSuccessful() {
       return false;
    }

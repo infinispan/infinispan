@@ -48,6 +48,7 @@ public final class JGroupsResponseFilterAdapter implements RspFilter {
       this.r = r;
    }
 
+   @Override
    public boolean isAcceptable(Object response, Address sender) {
       if (response instanceof Exception)
          response = new ExceptionResponse((Exception) response);
@@ -57,6 +58,7 @@ public final class JGroupsResponseFilterAdapter implements RspFilter {
       return r.isAcceptable((Response) response, JGroupsTransport.fromJGroupsAddress(sender));
    }
 
+   @Override
    public boolean needMoreResponses() {
       return r.needMoreResponses();
    }

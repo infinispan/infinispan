@@ -38,6 +38,7 @@ import java.util.Set;
 public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand implements DataCommand {
    protected Object key;
 
+   @Override
    public Object getKey() {
       return key;
    }
@@ -54,10 +55,13 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
    protected AbstractDataCommand() {
    }
 
+   @Override
    public abstract void setParameters(int commandId, Object[] parameters);
 
+   @Override
    public abstract Object[] getParameters();
 
+   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }

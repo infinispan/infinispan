@@ -90,6 +90,7 @@ public class WritableGridFileChannel implements WritableByteChannel {
       return file.length() % getChunkSize() == 0;
    }
 
+   @Override
    public int write(ByteBuffer src) throws IOException {
       checkOpen();
 
@@ -141,10 +142,12 @@ public class WritableGridFileChannel implements WritableByteChannel {
       return position / getChunkSize();
    }
 
+   @Override
    public boolean isOpen() {
       return !closed;
    }
 
+   @Override
    public void close() throws IOException {
       flush();
       position = localIndex = 0;

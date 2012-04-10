@@ -37,6 +37,7 @@ import org.infinispan.remoting.responses.ResponseGenerator;
 @DefaultFactoryFor(classes = ResponseGenerator.class)
 public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
+   @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (configuration.getCacheMode().isDistributed()) {

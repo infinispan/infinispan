@@ -44,6 +44,7 @@ public final class DummyXid implements Xid {
    private byte[] branchQualifier = new byte[64];
    private final int cachedHashcode;
 
+   @Override
    public int getFormatId() {
       return 1;
    }
@@ -52,10 +53,12 @@ public final class DummyXid implements Xid {
       cachedHashcode = initializeAndCalculateHash(transactionManagerId);
    }
 
+   @Override
    public byte[] getGlobalTransactionId() {
       return globalTransactionId;
    }
 
+   @Override
    public byte[] getBranchQualifier() {
       return branchQualifier;
    }

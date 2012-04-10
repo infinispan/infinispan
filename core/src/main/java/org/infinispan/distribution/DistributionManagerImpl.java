@@ -115,11 +115,13 @@ public class DistributionManagerImpl implements DistributionManager {
       return rpcManager.getAddress();
    }
 
+   @Override
    @Deprecated
    public boolean isLocal(Object key) {
       return getLocality(key).isLocal();
    }
 
+   @Override
    public DataLocality getLocality(Object key) {
       boolean local = getConsistentHash().isKeyLocalToAddress(getAddress(), key, getReplCount());
       if (isRehashInProgress()) {
@@ -137,27 +139,33 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
+   @Override
    public List<Address> locate(Object key) {
       return getConsistentHash().locate(key, getReplCount());
    }
 
+   @Override
    public Address getPrimaryLocation(Object key) {
       return getConsistentHash().primaryLocation(key);
    }
 
+   @Override
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
       return locateAll(keys, getReplCount());
    }
 
+   @Override
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
       return getConsistentHash().locateAll(keys, numOwners);
    }
 
+   @Override
    public void transformForL1(CacheEntry entry) {
       if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.getL1Lifespan())
          entry.setLifespan(configuration.getL1Lifespan());
    }
 
+   @Override
    public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
@@ -181,10 +189,12 @@ public class DistributionManagerImpl implements DistributionManager {
       return null;
    }
 
+   @Override
    public ConsistentHash getConsistentHash() {
       return consistentHash;
    }
 
+   @Override
    public ConsistentHash setConsistentHash(ConsistentHash newCH) {
       if (trace) log.tracef("Installing new consistent hash %s", newCH);
       ConsistentHash oldCH = consistentHash;
@@ -196,6 +206,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
 
    // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
+   @Override
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
@@ -206,6 +217,7 @@ public class DistributionManagerImpl implements DistributionManager {
     * Tests whether a rehash is in progress
     * @return true if a rehash is in progress, false otherwise
     */
+   @Override
    public boolean isRehashInProgress() {
       return stateTransferManager.isStateTransferInProgress();
    }
@@ -215,6 +227,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return stateTransferManager.isJoinComplete();
    }
 
+   @Override
    public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (trace) log.trace("affected keys are empty");

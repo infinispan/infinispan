@@ -478,6 +478,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
    /**
     * Compares this Fqn to another using {@link FqnComparator}.
     */
+   @Override
    public int compareTo(Fqn fqn) {
       return FqnComparator.INSTANCE.compare(this, fqn);
    }

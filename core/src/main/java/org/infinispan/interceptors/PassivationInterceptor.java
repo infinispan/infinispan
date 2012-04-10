@@ -69,6 +69,7 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset statistics")
    public void resetStatistics() {

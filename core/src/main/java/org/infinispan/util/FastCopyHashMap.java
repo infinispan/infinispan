@@ -143,14 +143,17 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       return hashCode & (length - 1);
    }
 
+   @Override
    public int size() {
       return size;
    }
 
+   @Override
    public boolean isEmpty() {
       return size == 0;
    }
 
+   @Override
    public V get(Object key) {
       assertKeyNotNull(key);
       int hash = hash(key);
@@ -169,6 +172,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       }
    }
 
+   @Override
    public boolean containsKey(Object key) {
       assertKeyNotNull(key);
       int hash = hash(key);
@@ -219,6 +223,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      }
    }
 
+   @Override
    public boolean containsValue(Object value) {
       for (Entry<K, V> e : table)
          if (e != null && eq(value, e.value))
@@ -227,6 +232,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       return false;
    }
 
+   @Override
    public V put(K key, V value) {
       assertKeyNotNull(key);
       Entry<K, V>[] table = this.table;
@@ -286,6 +292,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       table = newTable;
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> map) {
       int size = map.size();
       if (size == 0)
@@ -305,6 +312,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          put(e.getKey(), e.getValue());
    }
 
+   @Override
    public V remove(Object key) {
       assertKeyNotNull(key);
       Entry<K, V>[] table = this.table;
@@ -358,6 +366,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       }
    }
 
+   @Override
    public void clear() {
       modCount++;
       Entry<K, V>[] table = this.table;
@@ -367,6 +376,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       size = 0;
    }
 
+   @Override
    public FastCopyHashMap<K, V> clone() {
       try {
          FastCopyHashMap<K, V> clone = (FastCopyHashMap<K, V>) super.clone();
@@ -461,6 +471,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       private boolean hasNext;
       Entry<K, V> table[] = FastCopyHashMap.this.table;
 
+      @Override
       public boolean hasNext() {
          if (hasNext)
             return true;
@@ -490,6 +501,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          return table[current];
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public void remove() {
          if (modCount != expectedCount)
@@ -554,12 +566,14 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    }
 
    private class KeyIterator extends FasyCopyHashMapIterator<K> {
+      @Override
       public K next() {
          return nextEntry().key;
       }
    }
 
    private class ValueIterator extends FasyCopyHashMapIterator<V> {
+      @Override
       public V next() {
          return nextEntry().value;
       }
@@ -571,6 +585,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             super(key, value);
          }
 
+         @Override
          public V setValue(V value) {
             if (table != FastCopyHashMap.this.table)
                FastCopyHashMap.this.put(getKey(), value);
@@ -579,74 +594,89 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          }
       }
 
+      @Override
       public Map.Entry<K, V> next() {
          Entry<K, V> e = nextEntry();
          return new WriteThroughEntry(e.key, e.value);
       }
    }
 
+   @Override
    public Collection<V> values() {
       if (values == null) values = new Values();
       return values;
    }
 
    public final class Values extends AbstractCollection<V> {
+      @Override
       public Iterator<V> iterator() {
          return new ValueIterator();
       }
 
+      @Override
       public int size() {
          return FastCopyHashMap.this.size();
       }
 
+      @Override
       public boolean contains(Object o) {
          return containsValue(o);
       }
 
+      @Override
       public void clear() {
          FastCopyHashMap.this.clear();
       }
    }
 
+   @Override
    public Set<K> keySet() {
       if (keySet == null) keySet = new KeySet();
       return keySet;
    }
 
    public class KeySet extends AbstractSet<K> {
+      @Override
       public Iterator<K> iterator() {
          return new KeyIterator();
       }
 
+      @Override
       public void clear() {
          FastCopyHashMap.this.clear();
       }
 
+      @Override
       public boolean contains(Object o) {
          return containsKey(o);
       }
 
+      @Override
       public boolean remove(Object o) {
          int size = size();
          FastCopyHashMap.this.remove(o);
          return size() < size;
       }
 
+      @Override
       public int size() {
          return FastCopyHashMap.this.size();
       }
    }
 
+   @Override
    public Set<Map.Entry<K, V>> entrySet() {
       if (entrySet == null) entrySet = new EntrySet();
       return entrySet;
    }
 
    public class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+      @Override
       public Iterator<Map.Entry<K, V>> iterator() {
          return new EntryIterator();
       }
 
+      @Override
       public boolean contains(Object o) {
          if (!(o instanceof Map.Entry))
             return false;
@@ -656,14 +686,17 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          return eq(entry.getValue(), value);
       }
 
+      @Override
       public void clear() {
          FastCopyHashMap.this.clear();
       }
 
+      @Override
       public boolean isEmpty() {
          return FastCopyHashMap.this.isEmpty();
       }
 
+      @Override
       public int size() {
          return FastCopyHashMap.this.size();
       }

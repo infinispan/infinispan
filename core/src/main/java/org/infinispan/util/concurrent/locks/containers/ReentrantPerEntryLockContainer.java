@@ -37,15 +37,18 @@ public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContaine
       super(concurrencyLevel);
    }
 
+   @Override
    protected ReentrantLock newLock() {
       return new ReentrantLock();
    }
 
+   @Override
    public boolean ownsLock(Object key, Object ignored) {
       ReentrantLock l = getLockFromMap(key);
       return l != null && l.isHeldByCurrentThread();
    }
 
+   @Override
    public boolean isLocked(Object key) {
       ReentrantLock l = getLockFromMap(key);
       return l != null && l.isLocked();

@@ -28,6 +28,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 @DefaultFactoryFor(classes = DistributionManager.class)
 public class DistributionManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+   @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (configuration.getCacheMode().isDistributed())

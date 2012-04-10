@@ -47,6 +47,7 @@ public class NotSerializableException extends CacheException {
       // nothing
    }
 
+   @Override
    public Throwable fillInStackTrace() {
       // no operation
       return this;

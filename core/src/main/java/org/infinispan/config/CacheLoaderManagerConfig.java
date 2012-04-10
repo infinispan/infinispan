@@ -89,6 +89,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
     * 
     * @param preload
     */
+   @Override
    public LoadersConfig preload(Boolean preload) {
       testImmutability("preload");
       this.preload = preload;

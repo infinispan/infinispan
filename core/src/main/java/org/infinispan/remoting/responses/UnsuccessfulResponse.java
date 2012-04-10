@@ -43,6 +43,7 @@ public class UnsuccessfulResponse extends ValidResponse {
    private UnsuccessfulResponse() {
    }
 
+   @Override
    public boolean isSuccessful() {
       return false;
    }

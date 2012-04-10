@@ -158,47 +158,56 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       if (startedReadingMap && (map == null || map.removed)) throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
    }
 
+   @Override
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<K>emptySet() : map.keySet();
    }
 
+   @Override
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<V>emptySet() : map.values();
    }
 
+   @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? Collections.<Entry<K,V>>emptySet() : map.entrySet();
    }
 
-   public int size() {      
+   @Override
+   public int size() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? 0 : map.size();
    }
 
-   public boolean isEmpty() {      
+   @Override
+   public boolean isEmpty() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null || map.isEmpty();
    }
 
+   @Override
    public boolean containsKey(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map != null && map.containsKey(key);
    }
 
+   @Override
    public boolean containsValue(Object value) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map != null && map.containsValue(value);
    }
 
+   @Override
    public V get(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? null : map.get(key);
    }
 
    //writers      
+   @Override
    public V put(K key, V value) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -211,6 +220,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public V remove(Object key) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -223,6 +233,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {
@@ -235,6 +246,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       }
    }
 
+   @Override
    public void clear() {
       AtomicHashMap<K, V> deltaMapForWrite;
       try {

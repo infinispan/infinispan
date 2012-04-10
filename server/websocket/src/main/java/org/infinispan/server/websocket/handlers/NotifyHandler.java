@@ -43,7 +43,8 @@ public class NotifyHandler implements OpHandler {
 	
 	private Map<Cache, CacheListener> listeners = ConcurrentMapFactory.makeConcurrentMap();
 
-	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
+	@Override
+   public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String opCode = (String) opPayload.get(OpHandler.OP_CODE);
 		String key = (String) opPayload.opt(OpHandler.KEY);
 		String[] onEvents = (String[]) opPayload.opt("onEvents");

@@ -152,6 +152,7 @@ public class SingletonStoreConfig extends AbstractDecoratorConfigurationBean {
       return (SingletonStoreConfig) super.clone();
    }
 
+   @Override
    public void accept(ConfigurationBeanVisitor v) {
       v.visitSingletonStoreConfig(this);
    }

@@ -54,10 +54,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       this.maxIdleTimeMillis = maxIdleTimeMillis;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReplaceCommand(ctx, this);
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
@@ -93,14 +95,17 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       }
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
@@ -138,10 +143,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       return result;
    }
 
+   @Override
    public boolean isSuccessful() {
       return successful;
    }
 
+   @Override
    public boolean isConditional() {
       return true;
    }

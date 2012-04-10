@@ -130,6 +130,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * This future object may not be used as a NotifyingFuture.  That is because
      * internally this class sets the listener to provide ability to add to the queue.
      */
+    @Override
     public Future<V> submit(Callable<V> task) {
         if (task == null) throw new NullPointerException();
         NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task);
@@ -143,6 +144,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * This future object may not be used as a NotifyingFuture.  That is because
      * internally this class sets the listener to provide ability to add to the queue.
      */
+    @Override
     public Future<V> submit(Runnable task, V result) {
         if (task == null) throw new NullPointerException();
         NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, result);
@@ -157,6 +159,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * is because if it tries to set a listener it will be called immediately
      * since the task has already been completed.
      */
+    @Override
     public NotifyingFuture<V> take() throws InterruptedException {
         return completionQueue.take();
     }
@@ -168,6 +171,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     * is because if it tries to set a listener it will be called immediately
     * since the task has already been completed.
     */
+    @Override
     public NotifyingFuture<V> poll() {
         return completionQueue.poll();
     }
@@ -179,6 +183,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * is because if it tries to set a listener it will be called immediately
      * since the task has already been completed.
      */
+    @Override
     public NotifyingFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return completionQueue.poll(timeout, unit);
     }

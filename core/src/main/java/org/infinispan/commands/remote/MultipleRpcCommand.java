@@ -67,6 +67,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
    /**
     * Executes commands replicated to the current cache instance by other cache instances.
     */
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) log.tracef("Executing remotely originated commands: %d", commands.length);
       for (ReplicableCommand command : commands) {
@@ -79,6 +80,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
       return null;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
@@ -87,6 +89,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
       return commands;
    }
 
+   @Override
    public Object[] getParameters() {
       int numCommands = commands.length;
       Object[] retval = new Object[numCommands];
@@ -94,6 +97,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
       return retval;
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
       int numCommands = args.length;

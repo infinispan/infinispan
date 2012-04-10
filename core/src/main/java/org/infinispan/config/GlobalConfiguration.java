@@ -347,6 +347,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gcr.registerComponent(shutdown, "shutdown");
    }
 
+   @Override
    protected boolean hasComponentStarted() {
       return gcr != null && gcr.getStatus() != null && gcr.getStatus() == ComponentStatus.RUNNING;
    }

@@ -77,6 +77,7 @@ public class EagerIterator extends AbstractIterator {
     * @param index to jump to
     * @throws IndexOutOfBoundsException
     */
+   @Override
    public void jumpToResult(int index) throws IndexOutOfBoundsException {
       if (index > idList.size() || index < 0) {
          throw new IndexOutOfBoundsException("The index you entered is either greater than the size of the list or negative");
@@ -84,6 +85,7 @@ public class EagerIterator extends AbstractIterator {
       this.index = index;
    }
 
+   @Override
    public void close() {
       // This method does not need to do anything for this type of iterator as when an instace of it is
       // created, the iterator() method in CacheQueryImpl closes everything that needs to be closed.
@@ -94,6 +96,7 @@ public class EagerIterator extends AbstractIterator {
     *
     * @return The next element in the list.
     */
+   @Override
    public Object next() {
       if (!hasNext()) throw new IndexOutOfBoundsException("Out of boundaries. There is no next");
 
@@ -144,6 +147,7 @@ public class EagerIterator extends AbstractIterator {
     *
     * @return The previous element in the list.
     */
+   @Override
    public Object previous() {
       if (!hasPrevious()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
 
@@ -189,6 +193,7 @@ public class EagerIterator extends AbstractIterator {
     *
     * @return Index of next element.
     */
+   @Override
    public int nextIndex() {
       if (!hasNext()) throw new NoSuchElementException("Out of boundaries");
       return index + 1;
@@ -199,6 +204,7 @@ public class EagerIterator extends AbstractIterator {
     *
     * @return Index of previous element.
     */
+   @Override
    public int previousIndex() {
       if (!hasPrevious()) throw new NoSuchElementException("Out of boundaries");
       return index - 1;
@@ -207,6 +213,7 @@ public class EagerIterator extends AbstractIterator {
    /**
     * This method is not supported and should not be used. Use cache.remove() instead.
     */
+   @Override
    public void remove() {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }
@@ -217,6 +224,7 @@ public class EagerIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
+   @Override
    public void set(Object o) throws UnsupportedOperationException {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }
@@ -227,6 +235,7 @@ public class EagerIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
+   @Override
    public void add(Object o) {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache. Please use searchableCache.put()");
    }

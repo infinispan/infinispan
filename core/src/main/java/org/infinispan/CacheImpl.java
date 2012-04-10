@@ -215,6 +215,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
+   @Override
    public final boolean remove(Object key, Object value) {
       return remove(key, value, null, null);
    }
@@ -226,6 +227,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public final int size() {
       return size(null, null);
    }
@@ -236,6 +238,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
                                                                   UNBOUNDED), command);
    }
 
+   @Override
    public final boolean isEmpty() {
       return size() == 0;
    }
@@ -244,6 +247,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return size(explicitFlags, explicitClassLoader) == 0;
    }
 
+   @Override
    public final boolean containsKey(Object key) {
       return containsKey(key, null, null);
    }
@@ -256,10 +260,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return response != null;
    }
 
+   @Override
    public final boolean containsValue(Object value) {
       throw new UnsupportedOperationException("Not supported");
    }
 
+   @Override
    public final V get(Object key) {
       return get(key, null, null);
    }
@@ -272,6 +278,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) invoker.invoke(ctx, command);
    }
 
+   @Override
    public final V remove(Object key) {
       return remove(key, null, null);
    }
@@ -284,6 +291,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public final void clear() {
       clear(null, null);
    }
@@ -294,6 +302,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public Set<K> keySet() {
       return keySet(null, null);
    }
@@ -305,6 +314,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (Set<K>) invoker.invoke(ctx, command);
    }
 
+   @Override
    public Collection<V> values() {
       return values(null, null);
    }
@@ -316,6 +326,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (Collection<V>) invoker.invoke(ctx, command);
    }
 
+   @Override
    public Set<Map.Entry<K, V>> entrySet() {
       return entrySet(null, null);
    }
@@ -327,6 +338,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
 
+   @Override
    public final void putForExternalRead(K key, V value) {
       putForExternalRead(key, value, null, null);
    }
@@ -358,6 +370,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
+   @Override
    public final void evict(K key) {
       evict(key, null, null);
    }
@@ -374,24 +387,29 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
+   @Override
    @Deprecated
    public Configuration getConfiguration() {
       return config;
    }
    
+   @Override
    public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
       // TODO Once we switch to the new configuration as the canonical configuration, we can remove the adaptor
       return LegacyConfigurationAdaptor.adapt(config);
    }
 
+   @Override
    public void addListener(Object listener) {
       notifier.addListener(listener);
    }
 
+   @Override
    public void removeListener(Object listener) {
       notifier.removeListener(listener);
    }
 
+   @Override
    public Set<Object> getListeners() {
       return notifier.getListeners();
    }
@@ -463,11 +481,13 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return ctx;
    }
 
+   @Override
    public boolean lock(K... keys) {
       assertKeyNotNull(keys);
       return lock(Arrays.asList(keys), null, null);
    }
 
+   @Override
    public boolean lock(Collection<? extends K> keys) {
       return lock(keys, null, null);
    }
@@ -484,6 +504,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (Boolean) invoker.invoke(ctx, command);
    }
    
+   @Override
    public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
       if (locksToAcquire == null || locksToAcquire.length == 0) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
@@ -493,6 +514,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       invoker.invoke(ctx, command);
    }
 
+   @Override
    @ManagedOperation(description = "Starts the cache.")
    @Operation(displayName = "Starts cache.")
    public void start() {
@@ -502,6 +524,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
+   @Override
    @ManagedOperation(description = "Stops the cache.")
    @Operation(displayName = "Stops cache.")
    public void stop() {
@@ -516,42 +539,52 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       componentRegistry.stop();
    }
 
+   @Override
    public List<CommandInterceptor> getInterceptorChain() {
       return invoker.asList();
    }
 
+   @Override
    public void addInterceptor(CommandInterceptor i, int position) {
       invoker.addInterceptor(i, position);
    }
 
+   @Override
    public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
       return invoker.addInterceptorAfter(i, afterInterceptor);
    }
 
+   @Override
    public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
       return invoker.addInterceptorBefore(i, beforeInterceptor);
    }
 
+   @Override
    public void removeInterceptor(int position) {
       invoker.removeInterceptor(position);
    }
 
+   @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
       invoker.removeInterceptor(interceptorType);
    }
 
+   @Override
    public EvictionManager getEvictionManager() {
       return evictionManager;
    }
 
+   @Override
    public ComponentRegistry getComponentRegistry() {
       return componentRegistry;
    }
 
+   @Override
    public DistributionManager getDistributionManager() {
       return distributionManager;
    }
 
+   @Override
    public ComponentStatus getStatus() {
       return componentRegistry.getStatus();
    }
@@ -566,6 +599,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return getStatus().toString();
    }
 
+   @Override
    public boolean startBatch() {
       if (!config.isInvocationBatchingEnabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
@@ -573,6 +607,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return batchContainer.startBatch();
    }
 
+   @Override
    public void endBatch(boolean successful) {
       if (!config.isInvocationBatchingEnabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
@@ -580,6 +615,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       batchContainer.endBatch(successful);
    }
 
+   @Override
    public String getName() {
       return name;
    }
@@ -603,6 +639,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return getConfiguration().toXmlString();
    }
 
+   @Override
    public String getVersion() {
       return Version.VERSION;
    }
@@ -612,30 +649,37 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(this));
    }
 
+   @Override
    public BatchContainer getBatchContainer() {
       return batchContainer;
    }
 
+   @Override
    public InvocationContextContainer getInvocationContextContainer() {
       return icc;
    }
 
+   @Override
    public DataContainer getDataContainer() {
       return dataContainer;
    }
 
+   @Override
    public TransactionManager getTransactionManager() {
       return transactionManager;
    }
 
+   @Override
    public LockManager getLockManager() {
       return this.lockManager;
    }
 
+   @Override
    public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
    }
 
+   @Override
    public Stats getStats() {
       return new StatsImpl(invoker);
    }
@@ -645,6 +689,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config);
    }
 
+   @Override
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       return put(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
    }
@@ -657,6 +702,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       return putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
    }
@@ -670,6 +716,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       putAll(map, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
    }
@@ -681,6 +728,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       return replace(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
    }
@@ -694,6 +742,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    }
 
+   @Override
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       return replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
    }
@@ -723,6 +772,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          return (NotifyingFuture<X>) retval;
       } else {
          return new AbstractInProcessNotifyingFuture<X>() {
+            @Override
             @SuppressWarnings("unchecked")
             public X get() throws InterruptedException, ExecutionException {
                return (X) retval;
@@ -731,6 +781,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
+   @Override
    public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
@@ -743,6 +794,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
@@ -755,6 +807,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<Void> clearAsync() {
       return clearAsync(null, null);
    }
@@ -766,6 +819,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
@@ -779,6 +833,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<V> removeAsync(Object key) {
       return removeAsync(key, null, null);
    }
@@ -791,6 +846,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
       return removeAsync(key, value, null, null);
    }
@@ -803,6 +859,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
@@ -815,6 +872,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
@@ -827,6 +885,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
    }
 
+   @Override
    public NotifyingFuture<V> getAsync(K key) {
       return getAsync(key, null, null);
    }
@@ -895,10 +954,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             || (hasCacheLoaderConfig && flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
    }
 
+   @Override
    public AdvancedCache<K, V> getAdvancedCache() {
       return this;
    }
 
+   @Override
    public void compact() {
       for (InternalCacheEntry e : dataContainer) {
          if (e.getKey() instanceof MarshalledValue) {
@@ -910,6 +971,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
+   @Override
    public RpcManager getRpcManager() {
       return rpcManager;
    }

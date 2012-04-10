@@ -48,6 +48,7 @@ public class FqnComparator implements Comparator<Fqn>, Serializable {
     * Returns -1 if the first comes before; 0 if they are the same; 1 if the second Fqn comes before.  <code>null</code>
     * always comes first.
     */
+   @Override
    public int compare(Fqn fqn1, Fqn fqn2) {
       int s1 = fqn1.size();
       int s2 = fqn2.size();

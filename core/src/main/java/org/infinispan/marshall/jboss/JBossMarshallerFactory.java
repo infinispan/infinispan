@@ -51,6 +51,7 @@ public class JBossMarshallerFactory extends AbstractMarshallerFactory {
             "River marshaller factory not found.  Verify that the JBoss Marshalling River jar archive is in the classpath.");
 
       registry = AccessController.doPrivileged(new PrivilegedAction<SerializableClassRegistry>() {
+          @Override
           public SerializableClassRegistry run() {
               return SerializableClassRegistry.getInstance();
           }

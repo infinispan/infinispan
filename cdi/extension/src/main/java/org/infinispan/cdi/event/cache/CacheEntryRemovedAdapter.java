@@ -39,30 +39,37 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
 
    public static final CacheEntryRemovedEvent<?, ?> EMPTY = new CacheEntryRemovedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public Object getKey() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
 
+      @Override
       public Object getValue() {
          return null;
       }
@@ -77,6 +84,7 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
       super(event);
    }
 
+   @Override
    @CacheEntryRemoved
    public void fire(CacheEntryRemovedEvent<K, V> payload) {
       super.fire(payload);

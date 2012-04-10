@@ -160,7 +160,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     *
     * @return true if a batch was successfully started; false if one was available and already running.
     */
-   public boolean startBatch();
+   boolean startBatch();
 
    /**
     * Completes a batch if one has been started using {@link #startBatch()}.  If no batch has been started, this is a
@@ -169,7 +169,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     *
     * @param successful if true, the batch completes, otherwise the batch is aborted and changes are not committed.
     */
-   public void endBatch(boolean successful);
+   void endBatch(boolean successful);
 
    /**
     * Retrieves the cache manager responsible for creating this cache instance.
@@ -203,6 +203,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * 
     * @return a set view of the keys contained in this cache.
     */
+   @Override
    Set<K> keySet();
 
    /**
@@ -217,6 +218,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * 
     * @return a collection view of the values contained in this map.
     */
+   @Override
    Collection<V> values();
    
    /**
@@ -232,5 +234,6 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * 
     * @return a set view of the mappings contained in this cache.
     */
+   @Override
    Set<Map.Entry<K, V>> entrySet();
 }

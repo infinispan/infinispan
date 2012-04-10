@@ -137,7 +137,7 @@ public interface RecoveryManager {
    */
    interface RecoveryIterator extends Iterator<Xid[]> {
 
-      public static final Xid[] NOTHING = new Xid[]{};
+      Xid[] NOTHING = new Xid[]{};
 
       /**
        * Exhaust the iterator. After this call, {@link #hasNext()} returns false.
@@ -154,27 +154,27 @@ public interface RecoveryManager {
       /**
        * Transaction's id.
        */
-      public Xid getXid();
+      Xid getXid();
 
       /**
        * Each xid has a unique long object associated to it. It makes possible the invocation of recovery operations.
        */
-      public Long getInternalId();
+      Long getInternalId();
 
       /**
        * The value represent transaction's state as described by the {@link Status} field. Multiple values are returned
        * as it is possible for an in-doubt transaction to be at the same time e.g. prepared on one node and committed on the other.
        */
-      public Set<Integer> getStatus();
+      Set<Integer> getStatus();
 
       /**
        * Returns the set of nodes where this transaction information is maintained.
        */
-      public Set<Address> getOwners();
+      Set<Address> getOwners();
 
       /**
        * Returns true if the transaction information is also present on this node.
        */
-      public boolean isLocal();
+      boolean isLocal();
    }
 }

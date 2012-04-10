@@ -513,6 +513,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * This starts the components in the cache, connecting to channels, starting service threads, etc.  If the cache is
     * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, it will be initialized first.
     */
+   @Override
    public void start() {
 
       if (!state.startAllowed()) {
@@ -538,6 +539,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * is done.  If the cache is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a
     * no-op.
     */
+   @Override
    public void stop() {
       if (!state.stopAllowed()) {
          getLog().debugf("Ignoring call to stop() as current state is %s", this);
@@ -851,6 +853,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       ComponentMetadata.PrioritizedMethodMetadata metadata;
       Component component;
 
+      @Override
       public int compareTo(PrioritizedMethod o) {
          int thisVal = metadata.getPriority();
          int anotherVal = o.metadata.getPriority();
