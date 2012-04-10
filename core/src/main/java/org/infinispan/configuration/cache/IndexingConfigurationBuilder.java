@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.util.TypedProperties;
@@ -162,8 +163,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
       TypedProperties templateProperties = template.properties();
       if (templateProperties != null) {
-         for (Object key : templateProperties.keySet()) {
-            properties.put(key, templateProperties.get(key));
+         for (Map.Entry entry : templateProperties.entrySet()) {
+            properties.put(entry.getKey(), entry.getValue());
          }
       }
 
