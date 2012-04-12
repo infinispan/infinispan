@@ -115,7 +115,7 @@ public class SampleConfigFilesCorrectnessTest {
    }
 
    private File getRootFolder() {
-      File file = new File(CONFIG_ROOT);
+      File file = new File(new File(CONFIG_ROOT).getAbsolutePath());
       //this is a hack. If the tests are run from core folder then following if should not be entered.
       //otherwise assume we are runnin
       if (!file.isDirectory()) {
