@@ -22,6 +22,19 @@
  */
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
 import org.infinispan.Version;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -35,7 +48,6 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -51,15 +63,6 @@ import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "configuration.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
@@ -111,7 +114,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testNamedCacheFile() throws IOException {
       EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true);
-      assertNamedCacheFile(cm);
+      assertNamedCacheFile(cm, false);
+   }
+
+   public void testOldNamedCacheFile() throws IOException {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test-51.xml", true);
+      assertNamedCacheFile(cm, true);
    }
 
    public void testNoNamedCaches() throws Exception {
@@ -169,16 +177,16 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert cfg.locking().concurrencyLevel() == 10000;
       assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
    }
-      
+
    public void testPassivationOnDefaultEvictionOnNamed() throws Exception {
-      
+
       //should not throw a warning id 152 for each named caches, just for default
       //https://issues.jboss.org/browse/ISPN-1938
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
       "<default>\n" +
       "<transaction \n" +
       "transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" \n" +
-      "syncRollbackPhase=\"false\" syncCommitPhase=\"false\" useEagerLocking=\"false\" />\n" +      
+      "syncRollbackPhase=\"false\" syncCommitPhase=\"false\" useEagerLocking=\"false\" />\n" +
       "<loaders passivation=\"true\" shared=\"true\" preload=\"true\"> \n" +
       "<loader class=\"org.infinispan.loaders.file.FileCacheStore\" \n" +
       "fetchPersistentState=\"true\" purgerThreads=\"3\" purgeSynchronously=\"true\" \n" +
@@ -198,7 +206,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)));
    }
 
-   private void assertNamedCacheFile(EmbeddedCacheManager cm) {
+   private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
       final GlobalConfiguration gc = cm.getCacheManagerConfiguration();
 
       assert gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory;
@@ -325,7 +333,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("dist");
       assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
       assert c.clustering().l1().lifespan() == 600000;
-      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
       assert c.clustering().l1().cleanupTaskFrequency() == 1200;
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
@@ -335,7 +343,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("dist_with_vnodes");
       assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
       assert c.clustering().l1().lifespan() == 600000;
-      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
       assert c.clustering().hash().numOwners() == 3;

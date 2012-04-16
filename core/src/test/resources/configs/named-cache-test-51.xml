@@ -23,20 +23,20 @@
   -->
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
-      xmlns="urn:infinispan:config:5.2">
+      xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+      xmlns="urn:infinispan:config:5.1">
 
    <global>
 
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	 <properties>
-         	<property name="maxThreads" value="5"/>
-         	<property name="threadNamePrefix" value="AsyncListenerThread"/>
+         <properties>
+            <property name="maxThreads" value="5"/>
+            <property name="threadNamePrefix" value="AsyncListenerThread"/>
          </properties>         
       </asyncListenerExecutor>
 
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	<properties>	
+        <properties>    
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
          </properties>
@@ -125,7 +125,7 @@
    <namedCache name="txSyncRepl">
       <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL"/>
       <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
+         <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
@@ -172,18 +172,16 @@
 
    <namedCache name="dist">
       <clustering mode="distribution">
-         <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" />
+         <hash numOwners="3" rehashRpcTimeout="120000"/>
          <l1 enabled="true" lifespan="600000" cleanupTaskFrequency="1200"/>
       </clustering>
    </namedCache>
 
    <namedCache name="dist_with_vnodes">
       <clustering mode="distribution">
-         <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" numVirtualNodes="1000"/>
+         <hash numOwners="3" rehashRpcTimeout="120000" numVirtualNodes="1000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
@@ -244,7 +242,7 @@
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
-      	<loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+        <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                         ignoreModifications="true" purgeOnStartup="true"> 
            <properties> 
              <property name="location" value="${java.io.tmpdir}"/>

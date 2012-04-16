@@ -515,6 +515,11 @@
             <version>${version.resteasy}</version>
          </dependency>
          <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>staxmapper</artifactId>
+            <version>${version.org.jboss.staxmapper}</version>
+         </dependency>
+         <dependency>
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-blobstore</artifactId>
             <version>${version.jclouds}</version>

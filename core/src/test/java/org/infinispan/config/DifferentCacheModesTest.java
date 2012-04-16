@@ -23,15 +23,15 @@
 package org.infinispan.config;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 @Test(testName = "config.DifferentCacheModesTest", groups = "unit")
 public class DifferentCacheModesTest extends AbstractInfinispanTest {
@@ -84,19 +84,19 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
                "<namedCache name=\"explicit-state-disable\">" +
                   "<clustering mode=\"repl\">" +
                      "<sync />" +
-                     "<stateRetrieval fetchInMemoryState=\"false\"/>" +
+                     "<stateTransfer fetchInMemoryState=\"false\"/>" +
                   "</clustering>" +
                "</namedCache>" +
                "<namedCache name=\"explicit-state-enable\">" +
                   "<clustering mode=\"repl\">" +
                      "<sync />" +
-                     "<stateRetrieval fetchInMemoryState=\"true\"/>" +
+                     "<stateTransfer fetchInMemoryState=\"true\"/>" +
                   "</clustering>" +
                "</namedCache>" +
                "<namedCache name=\"explicit-state-enable-async\">" +
                   "<clustering mode=\"repl\">" +
                      "<async />" +
-                     "<stateRetrieval fetchInMemoryState=\"true\"/>" +
+                     "<stateTransfer fetchInMemoryState=\"true\"/>" +
                   "</clustering>" +
                "</namedCache>" +
              "</infinispan>";

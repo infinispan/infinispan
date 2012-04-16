@@ -23,6 +23,27 @@
 
 package org.infinispan.test;
 
+import static java.io.File.separator;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
+import javax.management.ObjectName;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
@@ -62,26 +83,6 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
-import javax.management.ObjectName;
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-
-import static java.io.File.separator;
-
 public class TestingUtil {
 
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -91,6 +92,10 @@ public class TestingUtil {
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
            "      xmlns=\"urn:infinispan:config:5.2\">";
+   public static final String INFINISPAN_START_TAG_51 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
+         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+         "      xsi:schemaLocation=\"urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:5.1\">";
    public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
@@ -173,7 +178,7 @@ public class TestingUtil {
          log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
       }
    }
-   
+
    public static void waitForRehashToComplete(Cache cache, int groupSize) {
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
       int gracetime = 30000; // 30 seconds?
@@ -199,6 +204,7 @@ public class TestingUtil {
    /**
     * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
     */
+   @Deprecated
    public static void waitForInitRehashToComplete(Cache... caches) {
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
@@ -220,6 +226,7 @@ public class TestingUtil {
    /**
     * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
     */
+   @Deprecated
    public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
       Set<Cache> cachesSet = new HashSet<Cache>();
       cachesSet.addAll(caches);
