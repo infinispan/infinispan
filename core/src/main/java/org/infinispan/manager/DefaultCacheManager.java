@@ -610,14 +610,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * {@inheritDoc}
     */
    @Override
-   public String getClusterName() {
-      return globalConfiguration.getClusterName();
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   @Override
    public List<Address> getMembers() {
       Transport t = getTransport();
       return t == null ? null : t.getMembers();
@@ -858,6 +850,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @ManagedAttribute(description = "The status of the cache manager instance.")
    @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getCacheManagerStatus() {
       return getStatus().toString();
    }
@@ -876,18 +869,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.")
    @Metric(displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getDefinedCacheCount() {
       return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
    @ManagedAttribute(description = "The total number of created caches, including the default cache.")
    @Metric(displayName = "Number of caches created", displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
    }
 
    @ManagedAttribute(description = "The total number of running caches, including the default cache.")
    @Metric(displayName = "Number of running caches", displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getRunningCacheCount() {
       int running = 0;
       for (CacheWrapper cachew : caches.values()) {
@@ -912,24 +908,28 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @ManagedOperation(description = "Starts the default cache associated with this cache manager")
    @Operation(displayName = "Starts the default cache")
+   @SuppressWarnings("unused")
    public void startCache() {
       getCache();
    }
 
    @ManagedOperation(description = "Starts a named cache from this cache manager")
    @Operation(name = "startCacheWithCacheName", displayName = "Starts a cache with the given name")
+   @SuppressWarnings("unused")
    public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
       getCache(cacheName);
    }
 
    @ManagedAttribute(description = "The network address associated with this instance")
    @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getNodeAddress() {
       return getLogicalAddressString();
    }
 
    @ManagedAttribute(description = "The physical network addresses associated with this instance")
    @Metric(displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getPhysicalAddresses() {
       Transport t = getTransport();
       if (t == null) return "local";
@@ -939,6 +939,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @ManagedAttribute(description = "List of members in the cluster")
    @Metric(displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public String getClusterMembers() {
       Transport t = getTransport();
       if (t == null) return "local";
@@ -948,10 +949,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @ManagedAttribute(description = "Size of the cluster in number of nodes")
    @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public int getClusterSize() {
       Transport t = getTransport();
       if (t == null) return 1;
       return t.getMembers().size();
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @ManagedAttribute(description = "Cluster name")
+   @Metric(displayName = "Cluster name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @Override
+   public String getClusterName() {
+      return globalConfiguration.getClusterName();
    }
 
    private String getLogicalAddressString() {
