@@ -26,6 +26,9 @@ package org.infinispan.util;
 import java.io.File;
 import java.util.Properties;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * A utility class for replacing properties in strings.
  *
@@ -37,6 +40,7 @@ import java.util.Properties;
  * @since 4.2
  */
 public class StringPropertyReplacer {
+   private static final Log log = LogFactory.getLog(StringPropertyReplacer.class);
    /**
     * New line string constant
     */
@@ -190,6 +194,7 @@ public class StringPropertyReplacer {
                   buffer.append("${");
                   buffer.append(key);
                   buffer.append('}');
+                  log.propertyCouldNotBeReplaced(key);
                }
 
             }

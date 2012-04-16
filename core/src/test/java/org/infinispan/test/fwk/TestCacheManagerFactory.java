@@ -22,13 +22,23 @@
  */
 package org.infinispan.test.fwk;
 
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,16 +51,6 @@ import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -66,7 +66,7 @@ public class TestCacheManagerFactory {
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
-   
+
    private static volatile boolean shuttingDown;
    private static CountDownLatch shutDownLatch = new CountDownLatch(1);
 
@@ -114,8 +114,8 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
-      ConfigurationBuilderHolder holder = new Parser(
-            Thread.currentThread().getContextClassLoader()).parse(is);
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       return createClusteredCacheManager(holder, keepJmxDomainName);
    }
 
@@ -572,7 +572,7 @@ public class TestCacheManagerFactory {
 
       public String getNextCacheName() {
          int index = cacheManagers.size();
-         char name = (char) ((int) 'A' + index);
+         char name = (char) ('A' + index);
          return (testName != null ? testName + "-" : "") + "Node" + name;
       }
 

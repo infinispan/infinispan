@@ -25,7 +25,7 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
-import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.StringPropertyReplacer;
@@ -61,7 +61,7 @@ import java.util.Map;
  *
  * @author Vladimir Blagojevic
  * @since 4.0
- * @deprecated Use {@link Parser} instead
+ * @deprecated Use {@link ParserRegistry} instead
  */
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)

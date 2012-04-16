@@ -1,100 +1,101 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
+ * as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA  02110-1301, USA.
  */
-
 package org.infinispan.configuration.parsing;
 
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.XMLConstants;
-
 /**
- * An enumeration of the supported domain model namespaces.
+ * Namespace.
  *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Tristan Tarrant
+ * @since 5.2
  */
-public enum Namespace {
-    // must be first
-    UNKNOWN(null), NONE(null),
+public class Namespace {
+   public static final String INFINISPAN_NS_BASE_URI = "urn:infinispan:config";
+   private final String base;
+   private final String rootElement;
+   private final int major;
+   private final int minor;
 
-    // predefined standard
-    XML_SCHEMA_INSTANCE("http://www.w3.org/2001/XMLSchema-instance"),
+   public Namespace(final String rootElement) {
+      this("", rootElement, 0, 0);
+   }
 
-    // configuration versions, oldest to newest
-    INFINISPAN_5_0("urn:infinispan:config:5.0"),
-    INFINISPAN_5_1("urn:infinispan:config:5.1"),
-    INFINISPAN_5_2("urn:infinispan:config:5.2");
+   public Namespace(final String base, final String rootElement, int major, int minor) {
+      this.base = base;
+      this.rootElement = rootElement;
+      this.major = major;
+      this.minor = minor;
+   }
 
-    /**
-     * The current namespace version.
-     */
-    public static final Namespace CURRENT = INFINISPAN_5_2;
+   public String getBase() {
+      return base;
+   }
 
-    private static final Namespace[] SUPPORTED_NAMESPACES = new Namespace[] {
-          INFINISPAN_5_2, INFINISPAN_5_1, INFINISPAN_5_0, NONE};
+   public String getRootElement() {
+      return rootElement;
+   }
 
-    public boolean isSupported() {
-       for (Namespace ns : SUPPORTED_NAMESPACES) if (this == ns) return true;
-       return false;
-    }
+   public int getMajor() {
+      return major;
+   }
 
-    private final String name;
+   public int getMinor() {
+      return minor;
+   }
 
-    Namespace(final String name) {
-        this.name = name;
-    }
+   public String getUri() {
+      return base == "" ? base : (base + ":" + major + "." + minor);
+   }
 
-    /**
-     * Get the URI of this namespace.
-     *
-     * @return the URI
-     */
-    public String getUriString() {
-        return name;
-    }
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((base == null) ? 0 : base.hashCode());
+      result = prime * result + major;
+      result = prime * result + minor;
+      result = prime * result + ((rootElement == null) ? 0 : rootElement.hashCode());
+      return result;
+   }
 
-    /**
-     * Set of all namespaces, excluding the special {@link #UNKNOWN} value.
-     */
-    public static final EnumSet<Namespace> STANDARD_NAMESPACES = EnumSet.complementOf(EnumSet.of(UNKNOWN, XML_SCHEMA_INSTANCE));
-
-    private static final Map<String, Namespace> MAP;
-
-    static {
-        final Map<String, Namespace> map = new HashMap<String, Namespace>();
-        for (Namespace namespace : values()) {
-            final String name = namespace.getUriString();
-            if (name != null)
-                map.put(name, namespace);
-        }
-        MAP = map;
-    }
-
-    public static Namespace forUri(String uri) {
-        // FIXME when STXM-8 is done, remove the null check
-        if (uri == null || XMLConstants.NULL_NS_URI.equals(uri))
-            return NONE;
-        final Namespace element = MAP.get(uri);
-        return element == null ? UNKNOWN : element;
-    }
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      Namespace other = (Namespace) obj;
+      if (base == null) {
+         if (other.base != null)
+            return false;
+      } else if (!base.equals(other.base))
+         return false;
+      if (major != other.major)
+         return false;
+      if (minor != other.minor)
+         return false;
+      if (rootElement == null) {
+         if (other.rootElement != null)
+            return false;
+      } else if (!rootElement.equals(other.rootElement))
+         return false;
+      return true;
+   }
 }

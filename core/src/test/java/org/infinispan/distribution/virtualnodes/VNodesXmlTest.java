@@ -19,27 +19,21 @@
 
 package org.infinispan.distribution.virtualnodes;
 
-import com.sun.tools.javac.resources.legacy;
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 @Test(testName = "distribution.virtualnodes.VNodesXmlTest", groups = "functional")
 public class VNodesXmlTest extends AbstractInfinispanTest {
@@ -56,8 +50,8 @@ public class VNodesXmlTest extends AbstractInfinispanTest {
 
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-
-      ConfigurationBuilderHolder holder = new Parser(Thread.currentThread().getContextClassLoader()).parse(is);
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       org.infinispan.configuration.cache.Configuration defaultCfg = holder.getDefaultConfigurationBuilder().build();
       org.infinispan.configuration.cache.Configuration namedCfg = holder.getNamedConfigurationBuilders().get("x").build();
 
