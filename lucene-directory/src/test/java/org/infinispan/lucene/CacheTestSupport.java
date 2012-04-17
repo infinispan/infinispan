@@ -35,11 +35,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,18 +65,57 @@ public abstract class CacheTestSupport {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
 
-   public static Configuration createTestConfiguration() {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-      c.setSyncReplTimeout(10000);
-      c.setLockAcquisitionTimeout(10000);
-      c.setSyncCommitPhase(true);
-      c.setL1CacheEnabled(true);
-      c.setExposeJmxStatistics(false);
-      c.setSyncRollbackPhase(true);
-      c.setEnableDeadlockDetection(false);
-      c.setInvocationBatchingEnabled(true);
-      return c;
+   public static ConfigurationBuilder createTestConfiguration() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder
+            .clustering()
+               .cacheMode(CacheMode.DIST_SYNC)
+               .stateTransfer()
+                  .fetchInMemoryState(true)
+               .l1()
+                  .enable()
+                  .enableOnRehash()
+               .sync()
+                  .replTimeout(10000)
+            .transaction()
+               .syncCommitPhase(true)
+               .syncRollbackPhase(true)
+            .locking()
+               .lockAcquisitionTimeout(10000)
+            .invocationBatching()
+               .enable()
+            .deadlockDetection()
+               .disable()
+            .jmxStatistics()
+               .disable()
+            ;
+      return builder;
+   }
+
+   public static CacheContainer createLocalCacheManager() {
+      ConfigurationBuilder localCacheConfigurationBuilder = createLocalCacheConfiguration();
+      Configuration configuration = localCacheConfigurationBuilder.build();
+      return new DefaultCacheManager(configuration);
+   }
+
+   public static ConfigurationBuilder createLocalCacheConfiguration() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder
+            .clustering()
+               .cacheMode(CacheMode.LOCAL)
+            .transaction()
+               .syncCommitPhase(true)
+               .syncRollbackPhase(true)
+            .locking()
+               .lockAcquisitionTimeout(10000)
+            .invocationBatching()
+               .enable()
+            .deadlockDetection()
+               .disable()
+            .jmxStatistics()
+               .disable()
+            ;
+      return builder;
    }
 
    protected static File createDummyDocToIndex(String fileName, int sz) throws Exception {
@@ -137,18 +177,6 @@ public abstract class CacheTestSupport {
       }
    }
 
-   public static CacheContainer createLocalCacheManager() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      Configuration cfg = new Configuration();
-      cfg.setCacheMode(CacheMode.LOCAL);
-      cfg.setEnableDeadlockDetection(false);
-      cfg.setExposeJmxStatistics(false);
-      cfg.setL1CacheEnabled(false);
-      cfg.setWriteSkewCheck(false);
-      cfg.setInvocationBatchingEnabled(true);
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg);
-   }
-   
    public static void initializeDirectory(Directory directory) throws IOException {
       IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, true, MaxFieldLength.UNLIMITED);
       iwriter.setUseCompoundFile(false);
@@ -239,5 +267,24 @@ public abstract class CacheTestSupport {
       sb.append("\n");
       System.out.println(sb.toString());
    }
-   
+
+   /**
+    * We should remove this very soon, but it's currently being needed by the JDBC
+    * CacheLoader as there is no new alternative for programmatic configuration.
+    */
+   @Deprecated
+   public static org.infinispan.config.Configuration createLegacyTestConfiguration() {
+      org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
+      c.setCacheMode(org.infinispan.config.Configuration.CacheMode.DIST_SYNC);
+      c.setSyncReplTimeout(10000);
+      c.setLockAcquisitionTimeout(10000);
+      c.setSyncCommitPhase(true);
+      c.setL1CacheEnabled(true);
+      c.setExposeJmxStatistics(false);
+      c.setSyncRollbackPhase(true);
+      c.setEnableDeadlockDetection(false);
+      c.setInvocationBatchingEnabled(true);
+      return c;
+   }
+
 }

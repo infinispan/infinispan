@@ -55,7 +55,7 @@ public class CacheStoreStressTest extends SingleCacheManagerTest {
    
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = CacheTestSupport.createTestConfiguration();
+      Configuration configuration = CacheTestSupport.createLegacyTestConfiguration();
       enableTestJdbcStorage(configuration);
       return TestCacheManagerFactory.createClusteredCacheManager(configuration);
    }
