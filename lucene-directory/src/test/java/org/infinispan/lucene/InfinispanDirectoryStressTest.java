@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -70,10 +71,14 @@ public class InfinispanDirectoryStressTest {
          CacheTestSupport.doReadOperation(directory);
       }
 
-      IndexSearcher search = new IndexSearcher(directory, true);
+      IndexReader ir = IndexReader.open(directory);
+      IndexSearcher search = new IndexSearcher(ir);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
       TopDocs hits = search.search(query, 1);
+
+      search.close();
+      ir.close();
 
       assert OPERATIONS == hits.totalHits;
 
@@ -122,11 +127,15 @@ public class InfinispanDirectoryStressTest {
          }
       }
 
-      IndexSearcher search = new IndexSearcher(directory1,true);
+      IndexReader indexReader1 = IndexReader.open(directory1);
+      IndexSearcher search = new IndexSearcher(indexReader1);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
       int expectedDocs = writeCount.get();
       TopDocs hits = search.search(query, 1);
+
+      search.close();
+      indexReader1.close();
 
       assert expectedDocs == hits.totalHits;
 

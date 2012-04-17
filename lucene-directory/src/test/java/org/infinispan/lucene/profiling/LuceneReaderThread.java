@@ -73,7 +73,7 @@ public class LuceneReaderThread extends LuceneUserThread {
 
    protected void refreshIndexReader() throws CorruptIndexException, IOException {
       if (indexReader == null) {
-         indexReader = IndexReader.open(directory, true);
+         indexReader = IndexReader.open(directory);
       }
       else {
          IndexReader before = indexReader;

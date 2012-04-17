@@ -25,8 +25,9 @@ package org.infinispan.lucene;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -164,8 +165,9 @@ public abstract class CacheTestSupport {
    protected static void doReadOperation(Directory d) throws Exception {
       IndexSearcher search = null;
       try {
+         IndexReader indexReader = IndexReader.open(d);
          // this is a read
-         search = new IndexSearcher(d, true);
+         search = new IndexSearcher(indexReader);
          // dummy query that probably won't return anything
          Term term = new Term( "path", "good" );
          TermQuery termQuery = new TermQuery(term);
@@ -178,15 +180,15 @@ public abstract class CacheTestSupport {
    }
 
    public static void initializeDirectory(Directory directory) throws IOException {
-      IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, true, MaxFieldLength.UNLIMITED);
-      iwriter.setUseCompoundFile(false);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iwriter = new IndexWriter(directory, indexWriterConfig);
       iwriter.commit();
       iwriter.close();
       //reopen to check for index
-      IndexSearcher searcher = new IndexSearcher(directory, true);
-      searcher.close();
+      IndexReader reader = IndexReader.open(directory);
+      reader.close();
    }
-   
+
    /**
     * Used in test to remove all documents containing some term
     * 
@@ -194,7 +196,8 @@ public abstract class CacheTestSupport {
     * @param string
     */
    public static void removeByTerm(Directory dir, String term) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       iw.deleteDocuments(new Term("body", term));
       iw.commit();
       iw.close();
@@ -211,7 +214,8 @@ public abstract class CacheTestSupport {
    public static void assertTextIsFoundInIds(Directory dir, String term, Integer... validDocumentIds) throws IOException {
       int expectedResults = validDocumentIds.length;
       Set<Integer> expectedDocumendIds = new HashSet<Integer>(Arrays.asList(validDocumentIds));
-      IndexSearcher searcher = new IndexSearcher(dir,true);
+      IndexReader reader = IndexReader.open(dir);
+      IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);
       assert docs.totalHits == expectedResults;
@@ -224,6 +228,7 @@ public abstract class CacheTestSupport {
          assert expectedDocumendIds.contains(idFoundElement);
       }
       searcher.close();
+      reader.close();
    }
 
    /**
@@ -235,7 +240,8 @@ public abstract class CacheTestSupport {
     * @throws IOException
     */
    public static void writeTextToIndex(Directory dir, int id, String text) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       Document doc = new Document();
       doc.add(new Field("id", String.valueOf(id), Field.Store.YES, Field.Index.NOT_ANALYZED));
       doc.add(new Field("body", text, Field.Store.NO, Field.Index.ANALYZED));
@@ -243,9 +249,14 @@ public abstract class CacheTestSupport {
       iw.commit();
       iw.close();
    }
-   
+
+   /**
+    * Optimizing an index is not recommended nowadays, still it's an interesting
+    * byte-shuffling exercise to test.
+    */
    public static void optimizeIndex(Directory dir) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       iw.forceMerge(1, true);
       iw.close();
    }

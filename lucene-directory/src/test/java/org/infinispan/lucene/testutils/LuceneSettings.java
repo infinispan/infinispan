@@ -28,11 +28,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.SimpleAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LogByteSizeMergePolicy;
+import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergeScheduler;
 import org.apache.lucene.index.SerialMergeScheduler;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Version;
 
 /**
  * Collects common LuceneSettings for all tests; especially define the backwards compatibility.
@@ -42,18 +45,22 @@ import org.apache.lucene.store.LockObtainFailedException;
  */
 public class LuceneSettings {
 
-   public static final Analyzer analyzer = new SimpleAnalyzer();
-   
+   public static final Version LUCENE_VERSION = Version.LUCENE_36;
+
+   public static final Analyzer analyzer = new SimpleAnalyzer(LUCENE_VERSION);
+
    private static final MergeScheduler mergeScheduler = new SerialMergeScheduler();
-   
+
    public static IndexWriter openWriter(Directory directory, int maxMergeDocs, boolean useSerialMerger) throws CorruptIndexException, LockObtainFailedException, IOException {
-      IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, false, MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LUCENE_VERSION, analyzer);
       if (useSerialMerger) {
-         iwriter.setMergeScheduler(mergeScheduler);
+         indexWriterConfig.setMergeScheduler(mergeScheduler);
       }
-      iwriter.setMaxMergeDocs(maxMergeDocs);
-      iwriter.setUseCompoundFile(false);
-      return iwriter;
+      LogMergePolicy mergePolicy = new LogByteSizeMergePolicy();
+      mergePolicy.setMaxMergeDocs(maxMergeDocs);
+      mergePolicy.setUseCompoundFile(false);
+      indexWriterConfig.setMergePolicy(mergePolicy);
+      return new IndexWriter(directory, indexWriterConfig);
    }
    
    public static IndexWriter openWriter(Directory directory, int maxMergeDocs) throws CorruptIndexException, LockObtainFailedException, IOException {
