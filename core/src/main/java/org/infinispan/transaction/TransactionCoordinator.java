@@ -173,7 +173,7 @@ public class TransactionCoordinator {
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction);
+            handleCommitFailure(e, localTransaction, true);
          }
       } else {
          CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
@@ -181,7 +181,7 @@ public class TransactionCoordinator {
             invoker.invoke(ctx, commitCommand);
             txTable.removeLocalTransaction(localTransaction);
          } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction);
+            handleCommitFailure(e, localTransaction, false);
          }
       }
    }
@@ -204,9 +204,13 @@ public class TransactionCoordinator {
       }
    }
 
-   private void handleCommitFailure(Throwable e, LocalTransaction localTransaction) throws XAException {
-      log.errorProcessing1pcPrepareCommand(e);
-      if (trace) log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.", localTransaction);
+   private void handleCommitFailure(Throwable e, LocalTransaction localTransaction, boolean onePhaseCommit) throws XAException {
+      if (trace) log.tracef("Couldn't commit transaction %s, trying to rollback.", localTransaction);
+      if (onePhaseCommit) {
+         log.errorProcessing1pcPrepareCommand(e);
+      } else {
+         log.errorProcessing2pcCommitCommand(e);
+      }
       try {
          rollbackInternal(localTransaction);
       } catch (Throwable e1) {
