@@ -96,9 +96,10 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             done = (null == lockValue);
          }
          else {
-            int refCount = (Integer) lockValue;
+            Integer refCountObject = (Integer) lockValue;
+            int refCount = refCountObject.intValue();
             newValue = refCount - 1;
-            done = locksCache.replace(readLockKey, refCount, newValue);
+            done = locksCache.replace(readLockKey, refCountObject, newValue);
             if (!done) {
                lockValue = locksCache.get(readLockKey);
             }
@@ -131,12 +132,12 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       boolean done = false;
       while (done == false) {
          if (lockValue != null) {
-            int refCount = (Integer) lockValue;
+            int refCount = ((Integer) lockValue).intValue();
             if (refCount == 0) {
                // too late: in case refCount==0 the delete is being performed
                return false;
             }
-            Integer newValue = refCount + 1;
+            Integer newValue = Integer.valueOf(refCount + 1);
             done = locksCache.replace(readLockKey, lockValue, newValue);
             if ( ! done) {
                lockValue = locksCache.get(readLockKey);
