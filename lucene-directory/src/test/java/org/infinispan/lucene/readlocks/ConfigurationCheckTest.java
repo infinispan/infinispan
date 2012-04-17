@@ -23,8 +23,9 @@
 package org.infinispan.lucene.readlocks;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,15 +39,18 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "lucene.readlocks.ConfigurationCheckTest")
 public class ConfigurationCheckTest extends SingleCacheManagerTest {
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = new Configuration();
-      configuration.setEvictionStrategy(EvictionStrategy.LRU);
-      configuration.setEvictionMaxEntries(10);
-      return TestCacheManagerFactory.createCacheManager(configuration);
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createLocalCacheConfiguration();
+      configurationBuilder
+         .eviction()
+            .strategy(EvictionStrategy.LRU)
+            .maxEntries(10)
+            ;
+      return TestCacheManagerFactory.createCacheManager(configurationBuilder);
    }
-   
+
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEvictionIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();

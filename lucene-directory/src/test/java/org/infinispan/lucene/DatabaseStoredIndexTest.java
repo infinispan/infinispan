@@ -23,7 +23,6 @@
 package org.infinispan.lucene;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
@@ -69,7 +68,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = CacheTestSupport.createTestConfiguration();
+      Configuration configuration = CacheTestSupport.createLegacyTestConfiguration();
       enableTestJdbcStorage(configuration);
       return TestCacheManagerFactory.createClusteredCacheManager(configuration);
    }
