@@ -81,6 +81,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      if (e == null && ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         successful = false;
+         return null;
+      }
+
       Object entryValue = e.getValue();
       if (entryValue != null && putIfAbsent && !e.isRemoved()) {
          successful = false;

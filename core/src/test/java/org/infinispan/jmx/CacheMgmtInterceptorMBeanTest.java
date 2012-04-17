@@ -134,6 +134,22 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertCurrentNumberOfEntries(4);
    }
 
+   public void testStoresPutForExternalRead() throws Exception {
+      assertStores(0);
+      cache.putForExternalRead("key", "value");
+      assertStores(1);
+      cache.putForExternalRead("key", "value");
+      assertStores(1);
+   }
+
+   public void testStoresPutIfAbsent() throws Exception {
+      assertStores(0);
+      cache.putIfAbsent("voooo", "doooo");
+      assertStores(1);
+      cache.putIfAbsent("voooo", "no-doooo");
+      assertStores(1);
+   }
+
    public void testRemoves() throws Exception {
       assertStores(0);
       assertRemoveHits(0);
