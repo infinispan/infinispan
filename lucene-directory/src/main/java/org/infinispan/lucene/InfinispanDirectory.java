@@ -26,7 +26,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 
-import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
@@ -155,7 +154,7 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    public String[] list() {
-      checkIsOpen();
+      ensureOpen();
       Set<String> filesList = fileOps.getFileList();
       String[] array = filesList.toArray(new String[0]);
       return array;
@@ -166,7 +165,7 @@ public class InfinispanDirectory extends Directory {
     */
    @Override
    public boolean fileExists(String name) {
-      checkIsOpen();
+      ensureOpen();
       return fileOps.getFileList().contains(name);
    }
 
@@ -175,7 +174,7 @@ public class InfinispanDirectory extends Directory {
     */
    @Override
    public long fileModified(String name) {
-      checkIsOpen();
+      ensureOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
          return 0L;
@@ -190,7 +189,7 @@ public class InfinispanDirectory extends Directory {
     */
    @Override
    public void touchFile(String fileName) {
-      checkIsOpen();
+      ensureOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
       if (file == null) {
          return;
@@ -207,7 +206,7 @@ public class InfinispanDirectory extends Directory {
     */
    @Override
    public void deleteFile(String name) {
-      checkIsOpen();
+      ensureOpen();
       fileOps.deleteFileName(name);
       readLocks.deleteOrReleaseReadLock(name);
       if (log.isDebugEnabled()) {
@@ -219,7 +218,7 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    public void renameFile(String from, String to) {
-      checkIsOpen();
+      ensureOpen();
 
       // preparation: copy all chunks to new keys
       int i = -1;
@@ -254,7 +253,7 @@ public class InfinispanDirectory extends Directory {
     */
    @Override
    public long fileLength(String name) {
-      checkIsOpen();
+      ensureOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
          return 0L;//as in FSDirectory (RAMDirectory throws an exception instead)
@@ -304,12 +303,6 @@ public class InfinispanDirectory extends Directory {
    @Override
    public void close() {
       isOpen = false;
-   }
-
-   private void checkIsOpen() throws AlreadyClosedException {
-      if (!isOpen) {
-         throw new AlreadyClosedException("this Directory is closed");
-      }
    }
 
    @Override
