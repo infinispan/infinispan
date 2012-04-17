@@ -44,6 +44,7 @@ final public class SingleChunkIndexInput extends IndexInput {
    private int bufferPosition;
 
    public SingleChunkIndexInput(final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata) {
+      super(fileKey.getFileName());
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
       byte[] b = (byte[]) chunksCache.get(key);
       if (b == null) {
