@@ -307,7 +307,7 @@ public class InfinispanDirectory extends Directory {
 
    @Override
    public String toString() {
-      return "InfinispanDirectory{" + "indexName='" + indexName + '\'' + '}';
+      return "InfinispanDirectory{indexName=\'" + indexName + "\'}";
    }
 
    /** new name for list() in Lucene 3.0 **/
