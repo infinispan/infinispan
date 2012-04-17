@@ -22,7 +22,10 @@
  */
 package org.infinispan.remoting.responses;
 
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
 
 /**
@@ -33,6 +36,15 @@ import org.infinispan.container.versioning.EntryVersionsMap;
  */
 public class DefaultResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
+      if (command instanceof SingleRpcCommand) {
+         //https://issues.jboss.org/browse/ISPN-1984
+         SingleRpcCommand src = (SingleRpcCommand) command;
+         ReplicableCommand c = src.getCommand();
+         if (c.getCommandId()== DistributedExecuteCommand.COMMAND_ID) {
+            // Even null values should be wrapped in this case.
+            return new SuccessfulResponse(returnValue);
+         }
+      }
       if (returnValue == null) return null;
       if (returnValue instanceof EntryVersionsMap || command.isReturnValueExpected()) {
          return new SuccessfulResponse(returnValue);
