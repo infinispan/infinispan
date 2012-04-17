@@ -83,10 +83,6 @@ public class InfinispanDirectory extends Directory {
 
    private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
 
-   // own flag required if we are not in this same package what org.apache.lucene.store.Directory,
-   // access type will be changed in the next Lucene version
-   volatile boolean isOpen = true;
-
    private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
    private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
    // indexName is required when one common cache is used
