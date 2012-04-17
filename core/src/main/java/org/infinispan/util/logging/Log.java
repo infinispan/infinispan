@@ -494,7 +494,7 @@ public interface Log extends BasicLogger {
    void errorRequestingOrApplyingState(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error while processing 1PC PrepareCommand", id = 97)
+   @Message(value = "Error while processing a prepare in a single-phase transaction", id = 97)
    void errorProcessing1pcPrepareCommand(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
@@ -862,4 +862,7 @@ public interface Log extends BasicLogger {
    @Message(value = "hash's 'rehashWait' attribute has been deprecated. Please use stateTransfer.timeout instead", id = 187)
    void hashRehashWaitDeprecated();
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while processing a commit in a two-phase transaction", id = 188)
+   void errorProcessing2pcCommitCommand(@Cause Throwable e);
 }
