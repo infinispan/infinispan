@@ -61,6 +61,7 @@ final public class InfinispanIndexInput extends IndexInput {
    private boolean isClone;
 
    public InfinispanIndexInput(final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata, final SegmentReadLocker readLocks) {
+      super(fileKey.getFileName());
       this.chunksCache = (Cache<ChunkCacheKey, Object>) chunksCache;
       this.fileKey = fileKey;
       this.chunkSize = fileMetadata.getBufferSize();
