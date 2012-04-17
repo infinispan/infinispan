@@ -76,6 +76,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
+   @SuppressWarnings("unused")
    public void setDependencies(DataContainer dataContainer) {
       this.dataContainer = dataContainer;
    }
@@ -122,10 +123,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.nanoTime();
-      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
-      storeTimes.getAndAdd(intervalMilliseconds);
-      stores.incrementAndGet();
+      if (command.isSuccessful()) {
+         long t2 = System.nanoTime();
+         long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
+         storeTimes.getAndAdd(intervalMilliseconds);
+         stores.incrementAndGet();
+      }
       return retval;
    }
 
@@ -178,6 +181,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "Percentage hit/(hit+miss) ratio for the cache")
    @Metric(displayName = "Hit ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public double getHitRatio() {
       long hitsL = hits.get();
       double total = hitsL + misses.get();
@@ -190,6 +194,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "read/writes ratio for the cache")
    @Metric(displayName = "Read/write ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public double getReadWriteRatio() {
       if (stores.get() == 0)
          return 0;
@@ -198,6 +203,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "Average number of milliseconds for a read operation on the cache")
    @Metric(displayName = "Average read time", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getAverageReadTime() {
       long total = hits.get() + misses.get();
       if (total == 0)
@@ -207,6 +213,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "Average number of milliseconds for a write operation in the cache")
    @Metric(displayName = "Average write time", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getAverageWriteTime() {
       if (stores.get() == 0)
          return 0;
@@ -227,6 +234,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "Number of seconds since the cache statistics were last reset")
    @Metric(displayName = "Seconds since cache statistics were reset", units = Units.SECONDS, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getTimeSinceReset() {
       return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - resetNanoseconds.get());
    }
@@ -248,8 +256,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    /**
-    * @param nanoStart
-    * @param nanoEnd
+    * @param nanoStart start time
+    * @param nanoEnd end time
     * @return the interval rounded in milliseconds
     */
    private long nanosecondsIntervalToMilliseconds(final long nanoStart, final long nanoEnd) {
