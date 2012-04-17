@@ -218,7 +218,7 @@ public abstract class CacheTestSupport {
    
    public static void optimizeIndex(Directory dir) throws IOException {
       IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
-      iw.optimize();
+      iw.forceMerge(1, true);
       iw.close();
    }
    
