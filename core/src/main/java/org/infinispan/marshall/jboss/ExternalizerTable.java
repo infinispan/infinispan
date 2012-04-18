@@ -200,7 +200,7 @@ public class ExternalizerTable implements ObjectTable {
                throw new IOException(String.format(
                      "Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",
                      readerIndex), new InterruptedException());
-            } else if (gcr.getStatus().isStopping()) {
+            } else if (gcr.getStatus().isStopping() || gcr.getStatus().isTerminated()) {
                log.tracef("Cache manager is shutting down and type (id=%d) cannot be resolved (thread not interrupted)", readerIndex);
             } else {
                throw new CacheException(String.format(
