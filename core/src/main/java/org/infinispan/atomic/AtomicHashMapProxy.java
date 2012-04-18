@@ -22,8 +22,8 @@
  */
 package org.infinispan.atomic;
 
-import com.sun.tools.javac.code.Flags;
 import org.infinispan.AdvancedCache;
+import org.infinispan.DecoratedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -66,6 +66,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    private static final boolean trace = log.isTraceEnabled();
    protected final Object deltaMapKey;
    protected final AdvancedCache<Object, AtomicMap<K, V>> cache;
+   protected final AdvancedCache<Object, AtomicMap<K, V>> cacheForWriting;
    protected volatile boolean startedReadingMap = false;
    protected final FlagContainer flagContainer;
    protected TransactionTable transactionTable;
@@ -77,6 +78,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
+      this.cacheForWriting = new DecoratedCache<Object, AtomicMap<K, V>>(this.cache, Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       this.flagContainer = flagContainer;
@@ -148,7 +150,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          // copy for write
          AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();          
          copy.initForWriting();                 
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(deltaMapKey, copy);
+         cacheForWriting.put(deltaMapKey, copy);
          return copy;
       }
    }
