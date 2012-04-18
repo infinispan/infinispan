@@ -91,7 +91,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<K, V>(true) : map.copy();
          copy.initForWriting();
          if (insertNewMap) {
-            cache.put(deltaMapKey, copy);
+            cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(deltaMapKey, copy);
          }
          return copy;
       }

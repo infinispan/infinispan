@@ -22,6 +22,7 @@
  */
 package org.infinispan.atomic;
 
+import com.sun.tools.javac.code.Flags;
 import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.container.entries.CacheEntry;
@@ -147,7 +148,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          // copy for write
          AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();          
          copy.initForWriting();                 
-         cache.put(deltaMapKey, copy);         
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(deltaMapKey, copy);
          return copy;
       }
    }
