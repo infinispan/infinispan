@@ -1,0 +1,4 @@
+.SH SYNOPSIS
+.B end
+.SH DESCRIPTION
+Ends a batch successfully 

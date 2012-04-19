@@ -1,0 +1,5 @@
+.SH SYNOPSIS
+.B quit
+.SH DESCRIPTION
+Quits the CLI
+ 

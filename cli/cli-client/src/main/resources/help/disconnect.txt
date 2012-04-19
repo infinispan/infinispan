@@ -1,0 +1,5 @@
+.SH SYNOPSIS
+.B disconnect
+.SH DESCRIPTION
+Disconnects from the current server
+ 

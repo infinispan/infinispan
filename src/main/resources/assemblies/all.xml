@@ -173,6 +173,8 @@
             <include>org.infinispan:infinispan-client-hotrod</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-spring</include>
+            <include>org.infinispan:infinispan-cli-client</include>
+            <include>org.infinispan:infinispan-cli-server</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>

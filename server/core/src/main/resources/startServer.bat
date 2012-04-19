@@ -13,6 +13,7 @@ set CP=%LIB%;..\infinispan-core.jar;..\modules\core\infinispan-server-memcached.
 set CP=..\modules\memcached\infinispan-server-memcached.jar;%CP%
 set CP=..\modules\hotrod\infinispan-server-hotrod.jar;%CP%
 set CP=..\modules\websocket\infinispan-server-websocket.jar;%CP%
+set CP=..\modules\cli-server\infinispan-cli-server.jar;%CP%
 
 :test
 set /a "TESTPORT=%RANDOM%+2000"

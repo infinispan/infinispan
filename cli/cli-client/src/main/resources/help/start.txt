@@ -1,0 +1,4 @@
+.SH SYNOPSIS
+.B begin
+.SH DESCRIPTION
+Begins a transaction 

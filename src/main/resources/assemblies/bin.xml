@@ -157,6 +157,8 @@
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
             <include>org.infinispan:infinispan-cachestore-jdbm</include>
             <include>org.infinispan:infinispan-cachestore-s3</include>
+            <include>org.infinispan:infinispan-cli-client</include>
+            <include>org.infinispan:infinispan-cli-server</include>
             <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>

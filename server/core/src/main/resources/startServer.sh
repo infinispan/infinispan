@@ -7,6 +7,7 @@ add_classpath "${ISPN_HOME}/lib"
 add_classpath "${ISPN_HOME}/modules/memcached"
 add_classpath "${ISPN_HOME}/modules/hotrod"
 add_classpath "${ISPN_HOME}/modules/websocket"
+add_classpath "${ISPN_HOME}/modules/cli-server"
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djava.net.preferIPv4Stack=true'

@@ -1,0 +1,7 @@
+Infinispan CLI list of things to do
+===================================
+
+- Command-line operation (i.e. stdin/stdout/stderr)
+- Handle security for connections (username/password or client cert)
+- Tab completion for cache names (need to retrieve list of caches for the current manager)
+- Bulk load / dump operations from JSON/CSV/XML
