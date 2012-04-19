@@ -36,6 +36,7 @@ public class Remove implements Modification {
       this.key = key;
    }
 
+   @Override
    public Type getType() {
       return Type.REMOVE;
    }

@@ -76,13 +76,15 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
       return root;
    }
 
+   @Override
    public void empty(XSContentType empty) {
    }
 
+   @Override
    public void particle(XSParticle part) {
       int i;
 
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       i = part.getMaxOccurs();
       if (i == XSParticle.UNBOUNDED) {
          buf.append(" maxOccurs=\"unbounded\"");
@@ -98,6 +100,7 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
       }
 
       part.getTerm().visit(new XSTermVisitor() {
+         @Override
          public void elementDecl(XSElementDecl decl) {
             if (decl.isLocal()) {
                XSOMSchemaTreeWalker.this.elementDecl(decl);
@@ -106,9 +109,11 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
             }
          }
 
+         @Override
          public void modelGroupDecl(XSModelGroupDecl decl) {
          }
 
+         @Override
          public void modelGroup(XSModelGroup group) {
             final int len = group.getSize();
             for (int i = 0; i < len; i++) {
@@ -116,17 +121,21 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
             }
          }
 
+         @Override
          public void wildcard(XSWildcard wc) {
          }
       });
    }
 
+   @Override
    public void simpleType(XSSimpleType simpleType) {
       simpleType.visit(new XSSimpleTypeVisitor() {
 
+         @Override
          public void listSimpleType(XSListSimpleType type) {
          }
 
+         @Override
          public void restrictionSimpleType(XSRestrictionSimpleType type) {
             //XSSimpleType baseType = type.getSimpleBaseType();
             Iterator<?> itr = type.iterateDeclaredFacets();
@@ -135,23 +144,28 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
             }
          }
 
+         @Override
          public void unionSimpleType(XSUnionSimpleType type) {
          }
       });
    }
 
+   @Override
    public void annotation(XSAnnotation ann) {
 
    }
 
+   @Override
    public void attGroupDecl(XSAttGroupDecl decl) {
 
    }
 
+   @Override
    public void attributeDecl(XSAttributeDecl decl) {
       // visitAttribute(decl);
    }
 
+   @Override
    public void attributeUse(XSAttributeUse use) {
       XSAttributeDecl decl = use.getDecl();
 
@@ -176,6 +190,7 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
       }
    }
 
+   @Override
    public void complexType(XSComplexType type) {
       dumpComplexTypeAttribute(type);
       if (type.getDerivationMethod() == XSType.RESTRICTION) {
@@ -189,22 +204,28 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
       }
    }
 
+   @Override
    public void facet(XSFacet facet) {
       //System.out.println(facet.getName() + ":" + facet.getValue());
    }
 
+   @Override
    public void identityConstraint(XSIdentityConstraint decl) {
    }
 
+   @Override
    public void notation(XSNotation notation) {
    }
 
+   @Override
    public void schema(XSSchema schema) {
    }
 
+   @Override
    public void xpath(XSXPath xp) {
    }
 
+   @Override
    public void elementDecl(XSElementDecl decl) {
       XSComplexType type = schema.getComplexType(decl.getType().getName());
       if (!decl.isAbstract()) {
@@ -219,12 +240,15 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
       }
    }
 
+   @Override
    public void modelGroup(XSModelGroup group) {
    }
 
+   @Override
    public void modelGroupDecl(XSModelGroupDecl decl) {
    }
 
+   @Override
    public void wildcard(XSWildcard wc) {
    }
 }

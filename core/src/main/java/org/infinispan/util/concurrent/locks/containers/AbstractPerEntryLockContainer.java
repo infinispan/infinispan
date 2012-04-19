@@ -44,6 +44,7 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
 
    protected abstract L newLock();
 
+   @Override
    public final L getLock(Object key) {
       // this is an optimisation.  It is not foolproof as we may still be creating new locks unnecessarily (thrown away
       // when we do a putIfAbsent) but it minimises the chances somewhat, for the cost of an extra CHM get.
@@ -56,14 +57,17 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
       return lock;
    }
 
+   @Override
    public int getNumLocksHeld() {
       return locks.size();
    }
 
+   @Override
    public int size() {
       return locks.size();
    }
 
+   @Override
    public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {
       while (true) {
          L lock = getLock(key);
@@ -93,11 +97,13 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
       }
    }
 
+   @Override
    public void releaseLock(Object lockOwner, Object key) {
       L l = locks.remove(key);
       if (l != null) unlock(l, lockOwner);
    }
 
+   @Override
    public int getLockId(Object key) {
       return System.identityHashCode(getLock(key));
    }

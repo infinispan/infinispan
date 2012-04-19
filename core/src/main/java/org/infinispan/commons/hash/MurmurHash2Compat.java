@@ -54,6 +54,7 @@ public class MurmurHash2Compat implements Hash {
    private static final int R = 24;
    private static final int H = -1;
 
+   @Override
    public final int hash(byte[] payload) {
       int h = H;
       int len = payload.length;
@@ -91,6 +92,7 @@ public class MurmurHash2Compat implements Hash {
       return h;
    }
 
+   @Override
    public final int hash(int hashcode) {
       byte[] b = new byte[4];
       b[0] = (byte) hashcode;
@@ -100,6 +102,7 @@ public class MurmurHash2Compat implements Hash {
       return hash(b);
    }
 
+   @Override
    public final int hash(Object o) {
       if (o instanceof byte[])
          return hash((byte[]) o);

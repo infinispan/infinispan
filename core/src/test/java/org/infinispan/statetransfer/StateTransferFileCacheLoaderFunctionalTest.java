@@ -25,6 +25,7 @@ package org.infinispan.statetransfer;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
@@ -192,11 +193,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
 
          cm30 = cm3;
 
-         Future<Void> f1 = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-               return new Thread(r, "CacheStarter-Cache3");
-            }
-         }).submit(new Callable<Void>() {
+         Future<Void> f1 = fork(new Callable<Void>() {
             public Void call() throws Exception {
                cm3.getCache(cacheName);
                return null;
@@ -242,22 +239,14 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          cm30 = cm3;
          cm40 = cm4;
 
-         Future<Void> f1 = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-               return new Thread(r, "CacheStarter-Cache3");
-            }
-         }).submit(new Callable<Void>() {
+         Future<Void> f1 = fork(new Callable<Void>() {
             public Void call() throws Exception {
                cm3.getCache(cacheName);
                return null;
             }
          });
 
-         Future<Void> f2 = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-               return new Thread(r, "CacheStarter-Cache4");
-            }
-         }).submit(new Callable<Void>() {
+         Future<Void> f2 = fork(new Callable<Void>() {
             public Void call() throws Exception {
                cm4.getCache(cacheName);
                return null;

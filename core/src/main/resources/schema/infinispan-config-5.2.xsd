@@ -693,13 +693,6 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="wakeUpInterval" type="xs:long">
-            <xs:annotation>
-              <xs:documentation>
-                Deprecated, set on expiration instead. Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set wakeupInterval to -1.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="expiration" minOccurs="0">
@@ -774,71 +767,6 @@
                   <xs:annotation>
                     <xs:documentation>
                       This is the timeout used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-              </xs:complexType>
-            </xs:element>
-            <xs:element name="stateRetrieval" minOccurs="0">
-              <xs:annotation>
-                <xs:documentation>
-                  Configures how state is retrieved when a new cache joins the cluster. Used with invalidation and replication clustered modes.
-                </xs:documentation>
-              </xs:annotation>
-              <xs:complexType>
-                <xs:attribute name="alwaysProvideInMemoryState" type="xs:boolean">
-                  <xs:annotation>
-                    <xs:documentation>
-                      If true, this will allow the cache to provide in-memory state to a neighbor, even if the cache is not configured to fetch state from its neighbors (fetchInMemoryState is false)
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="fetchInMemoryState" type="xs:boolean">
-                  <xs:annotation>
-                    <xs:documentation>
-                      If true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="initialRetryWaitTime" type="xs:long">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Initial wait time when backing off before retrying state transfer retrieval
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="logFlushTimeout" type="xs:long">
-                  <xs:annotation>
-                    <xs:documentation>
-                      This is the maximum amount of time to run a cluster-wide flush, to allow for syncing of transaction logs.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="maxNonProgressingLogWrites" type="xs:int">
-                  <xs:annotation>
-                    <xs:documentation>
-                      This is the maximum number of non-progressing transaction log writes after which a brute-force flush approach is resorted to, to synchronize transaction logs.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="numRetries" type="xs:int">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Number of state retrieval retries before giving up and aborting startup.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="retryWaitTimeIncreaseFactor" type="xs:int">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Wait time increase factor over successive state retrieval backoffs
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="timeout" type="xs:long">
-                  <xs:annotation>
-                    <xs:documentation>
-                      This is the maximum amount of time - in milliseconds - to wait for state from neighboring caches, before throwing an exception and aborting startup.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
@@ -1013,27 +941,6 @@
                   <xs:annotation>
                     <xs:documentation>
                       Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at TODO. If numVirtualNodes is 1, then virtual nodes are disabled. A default of 1 is used.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="rehashEnabled" type="xs:boolean">
-                  <xs:annotation>
-                    <xs:documentation>
-                      If false, no rebalancing or rehashing will take place when a new node joins the cluster or a node leaves
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="rehashRpcTimeout" type="xs:long">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Rehashing timeout
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="rehashWait" type="xs:long">
-                  <xs:annotation>
-                    <xs:documentation>
-                      TODO
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>

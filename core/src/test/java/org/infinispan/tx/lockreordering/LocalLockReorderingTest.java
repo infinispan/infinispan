@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -28,7 +29,7 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
       final Configuration c = getDefaultStandaloneConfig(true);
       c.fluent().transaction().cacheStopTimeout(1);
       keys = generateKeys();
-      return new DefaultCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void testWithPut(Method m) throws Exception {

@@ -71,6 +71,7 @@ class CacheLoaderInvocationHandler implements InvocationHandler {
       this.acsc = acsc;
    }
 
+   @Override
    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       return method.invoke(acsc, args);
    }

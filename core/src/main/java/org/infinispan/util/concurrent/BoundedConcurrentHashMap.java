@@ -303,7 +303,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
    public interface EvictionPolicy<K, V> {
 
-      public final static int MAX_BATCH_SIZE = 64;
+      int MAX_BATCH_SIZE = 64;
       
       HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value);
 
@@ -505,6 +505,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          return size() > trimDownSize;
       }
 
+      @Override
       protected boolean removeEldestEntry(Map.Entry<HashEntry<K,V>,V> eldest){
          boolean aboveThreshold = isAboveThreshold();
          if(aboveThreshold){

@@ -28,7 +28,7 @@ import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
  * @author Manik Surtani
  * @since 5.0
  */
-public interface TopologyChangedEvent extends Event {
+public interface TopologyChangedEvent<K, V> extends Event<K, V> {
 
    /**
     * @return retrieves the consistent hash at the start of a topology change

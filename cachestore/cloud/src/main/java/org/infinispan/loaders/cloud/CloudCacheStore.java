@@ -132,7 +132,6 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
-      this.cache = cache;
       marshaller = m;
       this.ctx = ctx;
       this.blobStore = blobStore;
@@ -201,7 +200,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
+               upgradeLock(bucket.getBucketId());
+               try {
+                  updateBucket(bucket);
+               } finally {
+                  downgradeLock(bucket.getBucketId());
+               }
             }
             if (handler.handle(bucket)) {
                break;
@@ -287,7 +291,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          Bucket bucket = readFromBlob(blob, blobName);
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
+               upgradeLock(bucket.getBucketId());
+               try {
+                  updateBucket(bucket);
+               } finally {
+                  downgradeLock(bucket.getBucketId());
+               }
            }
          } else {
             throw new CacheLoaderException("Blob not found: " + blobName);

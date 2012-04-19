@@ -32,7 +32,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.KnownComponentNames;
@@ -71,7 +70,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class QueryInterceptor extends CommandInterceptor {
 
    private final SearchFactoryIntegrator searchFactory;
-   private final ConcurrentMap<Class<?>,Class<?>> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    protected TransactionManager transactionManager;
@@ -117,13 +116,19 @@ public class QueryInterceptor extends CommandInterceptor {
       if (shouldModifyIndexes(ctx)) {
          // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
+         getLog().debug("Infinispan Query indexing is triggered");
          Object key = command.getKey();
          Object value = extractValue(command.getValue());
-         updateKnownTypesIfNeeded( value );
 
-         // This means that the entry is just modified so we need to update the indexes and not add to them.
-         getLog().debug("Entry is changed");
-         updateIndexes(value, extractValue(key));
+         if (updateKnownTypesIfNeeded(value)) {
+            // This means that the entry is just modified so we need to update the indexes and not add to them.
+            updateIndexes(value, extractValue(key));
+         }
+         else {
+            if (updateKnownTypesIfNeeded(toReturn)) {
+               removeFromIndexes(toReturn, extractValue(command.getKey()));
+            }
+         }
       }
       return toReturn;
    }
@@ -135,8 +140,9 @@ public class QueryInterceptor extends CommandInterceptor {
 
       if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx)) {
          Object value = extractValue(valueRemoved);
-         updateKnownTypesIfNeeded( value );
-         removeFromIndexes( value, extractValue(command.getKey()));
+         if (updateKnownTypesIfNeeded( value )) {
+            removeFromIndexes(value, extractValue(command.getKey()));
+         }
       }
       return valueRemoved;
    }
@@ -144,19 +150,21 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object valueReplaced = invokeNextInterceptor(ctx, command);
-      if (valueReplaced != null && shouldModifyIndexes(ctx)) {
+      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(ctx)) {
 
          Object[] parameters = command.getParameters();
          Object p1 = extractValue(parameters[1]);
          Object p2 = extractValue(parameters[2]);
-         updateKnownTypesIfNeeded( p1 );
-         updateKnownTypesIfNeeded( p2 );
+         boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
+         boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
          Object key = extractValue(command.getKey());
          
-         if (p1 != null) {
+         if (p1 != null && originalIsIndexed) {
             removeFromIndexes(p1, key);
          }
-         updateIndexes(p2, key);
+         if (newValueIsIndexed) {
+            updateIndexes(p2, key);
+         }
       }
 
       return valueReplaced;
@@ -171,10 +179,11 @@ public class QueryInterceptor extends CommandInterceptor {
 
          // Loop through all the keys and put those key, value pairings into lucene.
 
-         for (Map.Entry entry : dataMap.entrySet()) {
+         for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
             Object value = extractValue(entry.getValue());
-            updateKnownTypesIfNeeded( value );
-            updateIndexes(value, extractValue(entry.getKey()));
+            if (updateKnownTypesIfNeeded(value)) {
+               updateIndexes(value, extractValue(entry.getKey()));
+            }
          }
       }
       return mapPut;
@@ -189,7 +198,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (shouldModifyIndexes(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
 
-         for (Class c : this.knownClasses.keySet()) {
+         for (Class<?> c : this.knownClasses.keySet()) {
             EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
             if ( binder != null ) { //check as not all known classes are indexed
                searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
@@ -237,7 +246,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
       ArrayList<Class<?>> toAdd = null;
       for (Class<?> type : classes) {
-         if (!knownClasses.containsValue(type)) {
+         if (!knownClasses.containsKey(type)) {
             if (toAdd==null)
                toAdd = new ArrayList<Class<?>>(classes.length);
             toAdd.add(type);
@@ -249,13 +258,18 @@ public class QueryInterceptor extends CommandInterceptor {
       if (locked) {
          Set<Class<?>> existingClasses = knownClasses.keySet();
          int index = existingClasses.size();
-         Class[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
+         Class<?>[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
          for (Class<?> toAddClass : toAdd) {
             all[index++] = toAddClass;
          }
          searchFactory.addClasses(all);
          for (Class<?> type : toAdd) {
-            knownClasses.put(type, type);
+            if (searchFactory.getIndexBindingForEntity(type) != null) {
+               knownClasses.put(type, Boolean.TRUE);
+            }
+            else {
+               knownClasses.put(type, Boolean.FALSE);
+            }
          }
       } else {
          mutating.lock();
@@ -266,11 +280,11 @@ public class QueryInterceptor extends CommandInterceptor {
          }
       }
    }
-   
-   private void updateKnownTypesIfNeeded(Object value) {
+
+   private boolean updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
          Class<?> potentialNewType = value.getClass();
-         if ( ! this.knownClasses.containsValue(potentialNewType) ) {
+         if ( ! this.knownClasses.containsKey(potentialNewType) ) {
             mutating.lock();
             try {
                enableClassesIncrementally( new Class[]{potentialNewType}, true);
@@ -279,6 +293,10 @@ public class QueryInterceptor extends CommandInterceptor {
                mutating.unlock();
             }
          }
+         return this.knownClasses.get(potentialNewType);
+      }
+      else {
+         return false;
       }
    }
 

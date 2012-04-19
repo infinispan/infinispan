@@ -323,6 +323,13 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       });
    }
 
+   public void testMultipleIdenticalPutForExternalReadCalls() {
+      Cache cache1 = cache(0, "replSync");
+      cache1.putForExternalRead(key, value);
+      cache1.putForExternalRead(key, value2);
+      assertEquals(value, cache1.get(key));
+   }
+
    /**
     * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead().
     *

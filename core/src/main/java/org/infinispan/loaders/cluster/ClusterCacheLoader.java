@@ -62,14 +62,16 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;
-   private AdvancedCache cache;
+   private AdvancedCache<?, ?> cache;
 
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) {
+   @Override
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) {
       this.config = (ClusterCacheLoaderConfig) config;
       this.cache = cache.getAdvancedCache();
       rpcManager = this.cache.getRpcManager();
    }
 
+   @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
@@ -98,11 +100,13 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       throw new CacheLoaderException("Unknown responses");
    }
 
+   @Override
    @SuppressWarnings(value = "unchecked")
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       return emptySet();
    }
 
+   @Override
    public Set<InternalCacheEntry> load(int maxElems) throws CacheLoaderException {
       return emptySet();
    }
@@ -112,14 +116,17 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       return emptySet();
    }
 
+   @Override
    public void start() throws CacheLoaderException {
       //nothing to do here
    }
 
+   @Override
    public void stop() throws CacheLoaderException {
       //nothing to do here
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return ClusterCacheLoaderConfig.class;
    }

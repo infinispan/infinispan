@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.testng.Assert.assertEquals;
@@ -121,10 +122,12 @@ public class DistributionRetryTest extends AbstractRetryTest {
    private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException, InterruptedException {
       resetStats();
       Cache<Object,Object> cache = manager(1).getCache();
-      KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, Executors.newSingleThreadExecutor(), new ByteKeyGenerator(), 2, true);
+      ExecutorService ex = Executors.newSingleThreadExecutor();
+      KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex, new ByteKeyGenerator(), 2, true);
       Address address = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
       byte[] keyBytes = (byte[]) kaf.getKeyForAddress(address);
       String key = ByteKeyGenerator.getStringObject(keyBytes);
+      ex.shutdownNow();
       kaf.stop();
 
       remoteCache.put(key, "v");

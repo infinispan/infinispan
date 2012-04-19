@@ -25,26 +25,22 @@ package org.infinispan.config;
 import org.infinispan.Cache;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
 @Test(testName = "config.CustomInterceptorConfigTest", groups = "functional")
 public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
-   Cache c;
-   CacheContainer cm;
 
-   public void testCustomInterceptors() throws IOException {
+   public void testCustomInterceptors() throws Exception {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<infinispan>" +
             "<default><customInterceptors> \n" +
@@ -62,47 +58,54 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
             "</infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
-      cm = TestCacheManagerFactory.fromStream(stream);
-      c = cm.getCache();
-      DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
-      assert i != null;
-      
-      Cache<Object, Object> namedCacheX = cm.getCache("x");
-      assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor1.class) != null;
-      assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor2.class) != null;     
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(stream)){
+         @Override
+         public void call() throws Exception {
+            Cache c = cm.getCache();
+            DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
+            assert i != null;
+
+            Cache<Object, Object> namedCacheX = cm.getCache("x");
+            assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor1.class) != null;
+            assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor2.class) != null;
+         }
+      });
    }
    
    public static final class CustomInterceptor1 extends CommandInterceptor {}
    public static final class CustomInterceptor2 extends CommandInterceptor {}
 
 
-   public void testCustomInterceptorsProgramatically() {
+   public void testCustomInterceptorsProgramatically() throws Exception {
       Configuration cfg = new Configuration();
       cfg.setLockAcquisitionTimeout(1010);
       CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
-      cm = new DefaultCacheManager(cfg);
-      c = cm.getCache();
-      DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
-      assert i != null;
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(cfg)) {
+         @Override
+         public void call() throws Exception {
+            Cache c = cm.getCache();
+            DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
+            assert i != null;
+         }
+      });
    }
 
-
-   public void testCustomInterceptorsProgramaticallyWithOverride() {
-      Configuration cfg = new Configuration();
+   public void testCustomInterceptorsProgramaticallyWithOverride() throws Exception {
+      final Configuration cfg = new Configuration();
       cfg.setLockAcquisitionTimeout(1010);
       CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
-      cm = new DefaultCacheManager(new Configuration());
-      ((EmbeddedCacheManager) cm).defineConfiguration("custom", cfg);
-      c = cm.getCache("custom");
-      DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
-      assert i != null;
-   }
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())) {
+         @Override
+         public void call() throws Exception {
+            cm.defineConfiguration("custom", cfg);
+            Cache c = cm.getCache("custom");
+            DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
+            assert i != null;
+         }
+      });
 
-   @AfterMethod
-   public void tearDown() {
-      if (cm != null) cm.stop();
    }
 
    public static class DummyInterceptor extends CommandInterceptor {

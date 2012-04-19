@@ -36,6 +36,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 @DefaultFactoryFor(classes = {TransactionSynchronizationRegistry.class})
 public class TransactionSynchronizationRegistryFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
+   @Override
    public <T> T construct(Class<T> componentType) {
       // See if we had a TransactionSynchronizationRegistry injected into our config
       TransactionSynchronizationRegistryLookup lookup = configuration.getTransactionSynchronizationRegistryLookup();

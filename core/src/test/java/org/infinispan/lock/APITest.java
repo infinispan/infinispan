@@ -25,15 +25,19 @@ package org.infinispan.lock;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.interceptors.locking.AbstractLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -51,6 +55,8 @@ import java.util.concurrent.Future;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 
 @Test(testName = "lock.APITest", groups = "functional")
@@ -217,6 +223,20 @@ public class APITest extends MultipleCacheManagersTest {
          @Override
          public void call() throws Exception {
             cm.getCache().getAdvancedCache().lock("k");
+         }
+      });
+   }
+
+   public void testNoLockingInterceptorWithNoneIsolationLevel() throws Exception {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.locking().isolationLevel(IsolationLevel.NONE);
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() throws Exception {
+            AbstractLockingInterceptor locking = TestingUtil.findInterceptor(
+                  cm.getCache(), AbstractLockingInterceptor.class);
+            assertNull(locking);
          }
       });
    }

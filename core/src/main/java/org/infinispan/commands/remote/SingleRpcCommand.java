@@ -49,19 +49,23 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
       super(cacheName);
    }
 
+   @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Unusupported command id:" + commandId);
       command = (ReplicableCommand) parameters[0];
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{command};
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       return processVisitableCommand(command);
    }

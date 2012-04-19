@@ -99,6 +99,7 @@ public class PassivationManagerImpl implements PassivationManager {
       }
    }
 
+   @Override
    @Stop(priority = 9)
    public void passivateAll() throws CacheLoaderException {
       if (enabled) {
@@ -112,10 +113,12 @@ public class PassivationManagerImpl implements PassivationManager {
       }
    }
 
+   @Override
    public long getPassivationCount() {
       return passivations.get();
    }
 
+   @Override
    public void resetPassivationCount() {
       passivations.set(0L);
    }

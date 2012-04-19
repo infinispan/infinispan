@@ -61,10 +61,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class CustomReplayingDecoder<T extends Enum<T>>
       extends SimpleChannelUpstreamHandler {
 
-    private static Constructor unsafeDynamicBufferCtor;
-    private static Constructor replayingDecoderBufferCtor;
+    private static Constructor<?> unsafeDynamicBufferCtor;
+    private static Constructor<?> replayingDecoderBufferCtor;
     private static Method replayingDecoderBufferTerminate;
-    private static Class replayErrorClass;
+    private static Class<?> replayErrorClass;
 
     private final AtomicReference<ChannelBuffer> cumulation =
         new AtomicReference<ChannelBuffer>();
@@ -78,7 +78,7 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
        try {
           unsafeDynamicBufferCtor =
                 getConstructor("org.jboss.netty.handler.codec.replay.UnsafeDynamicChannelBuffer");
-          Class cl = Class.forName("org.jboss.netty.handler.codec.replay.ReplayingDecoderBuffer");
+          Class<?> cl = Class.forName("org.jboss.netty.handler.codec.replay.ReplayingDecoderBuffer");
           replayingDecoderBufferCtor = getConstructor(cl);
           replayingDecoderBufferTerminate = getMethod(cl, "terminate");
           replayErrorClass = Class.forName("org.jboss.netty.handler.codec.replay.ReplayError");
@@ -371,17 +371,17 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
        }
     }
 
-    private static Constructor getConstructor(String className) throws ClassNotFoundException {
+    private static Constructor<?> getConstructor(String className) throws ClassNotFoundException {
        return getConstructor(Class.forName(className));
     }
 
-    private static Constructor getConstructor(Class cl) throws ClassNotFoundException {
-       Constructor ctor = cl.getDeclaredConstructors()[0];
+    private static Constructor<?> getConstructor(Class<?> cl) throws ClassNotFoundException {
+       Constructor<?> ctor = cl.getDeclaredConstructors()[0];
        ctor.setAccessible(true);
        return ctor;
     }
 
-    private static Method getMethod(Class cl, String methodName) {
+    private static Method getMethod(Class<?> cl, String methodName) {
        Method[] methods = cl.getDeclaredMethods();
        for (Method method : methods) {
           if (method.getName().equals(methodName)) {

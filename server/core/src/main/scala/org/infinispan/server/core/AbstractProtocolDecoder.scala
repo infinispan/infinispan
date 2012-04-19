@@ -34,6 +34,7 @@ import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
 import logging.Log
 import org.infinispan.server.core.transport.CustomReplayingDecoder
+import java.lang.StringBuilder
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -62,7 +63,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
       try {
-         if (isTraceEnabled) // To aid debugging
+         if (isTrace) // To aid debugging
             trace("Decode using instance @%x", System.identityHashCode(this))
          state match {
             case DECODE_HEADER => decodeHeader(ch, buffer, state)
@@ -104,20 +105,28 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    private def decodeKey(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       header.op match {
-         case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
-            val (k, endOfOp) = readKey(buffer)
-            key = k
-            if (endOfOp) {
-               // If it's the end of the operation, it can only be a remove
-               writeResponse(ch, remove)
-            } else {
-               checkpointTo(DECODE_PARAMETERS)
-            }
-         }
-         case GetRequest | GetWithVersionRequest => writeResponse(ch, get(buffer))
+         // Get, put and remove are the most typical operations, so they're first
+         case GetRequest => writeResponse(ch, get(buffer))
+         case PutRequest => handleModification(ch, buffer)
+         case RemoveRequest => handleModification(ch, buffer)
+         case GetWithVersionRequest => writeResponse(ch, get(buffer))
+         case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest =>
+            handleModification(ch, buffer)
          case _ => customDecodeKey(ch, buffer)
       }
    }
+
+   def handleModification(ch: Channel, buf: ChannelBuffer): AnyRef = {
+      val (k, endOfOp) = readKey(buf)
+      key = k
+      if (endOfOp) {
+         // If it's the end of the operation, it can only be a remove
+         writeResponse(ch, remove)
+      } else {
+         checkpointTo(DECODE_PARAMETERS)
+      }
+   }
+
 
    private def decodeParameters(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val endOfOp = readParameters(ch, buffer)

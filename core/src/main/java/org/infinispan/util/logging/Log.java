@@ -494,7 +494,7 @@ public interface Log extends BasicLogger {
    void errorRequestingOrApplyingState(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error while processing 1PC PrepareCommand", id = 97)
+   @Message(value = "Error while processing a prepare in a single-phase transaction", id = 97)
    void errorProcessing1pcPrepareCommand(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
@@ -646,7 +646,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Attempted to register listener of class %s, but no valid, " +
          "public methods annotated with method-level event annotations found! " +
          "Ignoring listener.", id = 133)
-   void noAnnotateMethodsFoundInListener(Class listenerClass);
+   void noAnnotateMethodsFoundInListener(Class<?> listenerClass);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +
@@ -848,6 +848,21 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "The stateRetrieval configuration element has been deprecated, " +
          "we're assuming you meant stateTransfer. Please see XML schema for more information.", id = 184)
-   void stateRetrievalConfigurationDeprecaced();
+   void stateRetrievalConfigurationDeprecated();
 
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashEnabled' attribute has been deprecated. Please use stateTransfer.fetchInMemoryState instead", id = 185)
+   void hashRehashEnabledDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashRpcTimeout' attribute has been deprecated. Please use stateTransfer.timeout instead", id = 186)
+   void hashRehashRpcTimeoutDeprecated();
+
+   @LogMessage(level = INFO)
+   @Message(value = "hash's 'rehashWait' attribute has been deprecated. Please use stateTransfer.timeout instead", id = 187)
+   void hashRehashWaitDeprecated();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while processing a commit in a two-phase transaction", id = 188)
+   void errorProcessing2pcCommitCommand(@Cause Throwable e);
 }

@@ -136,7 +136,7 @@ public abstract class BaseStateTransferTask {
 
    protected void finishPushingState() throws InterruptedException, ExecutionException, TimeoutException {
       // wait to see if all servers received the new state
-      statePushFuture.get(configuration.getRehashRpcTimeout(), TimeUnit.MILLISECONDS);
+      statePushFuture.get(stateTransferManager.getTimeout(), TimeUnit.MILLISECONDS);
       log.debugf("Node finished pushing data for cache views %d.", newViewId);
    }
 

@@ -53,7 +53,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    private final ExecutorService asyncExecutor;
 
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
-            ExecutorService asyncExecutor, AdvancedCache cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
+            ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
       hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)

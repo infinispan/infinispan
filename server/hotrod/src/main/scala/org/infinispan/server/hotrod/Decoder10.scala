@@ -50,6 +50,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
    import OperationResponse._
    import ProtocolFlag._
    type SuitableHeader = HotRodHeader
+   private val isTrace = isTraceEnabled
 
    override def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long): (HotRodHeader, Boolean) = {
       val streamOp = buffer.readUnsignedByte
@@ -70,7 +71,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
          case _ => throw new HotRodUnknownOperationException(
                "Unknown operation: " + streamOp, version, messageId)
       }
-      if (isTraceEnabled) trace("Operation code: %d has been matched to %s", streamOp, op)
+      if (isTrace) trace("Operation code: %d has been matched to %s", streamOp, op)
       
       val cacheName = readString(buffer)
       val flag = readUnsignedInt(buffer) match {
@@ -203,7 +204,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
          }
          case BulkGetRequest => {
             val count = readUnsignedInt(buffer)
-            if (isTraceEnabled) trace("About to create bulk response, count = %d", count)
+            if (isTrace) trace("About to create bulk response, count = %d", count)
             new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                                 BulkGetResponse, Success, h.topologyId, count)
          }

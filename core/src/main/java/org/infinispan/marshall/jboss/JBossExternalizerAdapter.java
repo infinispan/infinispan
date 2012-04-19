@@ -32,10 +32,10 @@ import java.io.ObjectOutput;
 
 public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
 
-   final Externalizer externalizer;
+   final Externalizer<Object> externalizer;
 
-   public JBossExternalizerAdapter(Externalizer externalizer) {
-      this.externalizer = externalizer;
+   public JBossExternalizerAdapter(Externalizer<?> externalizer) {
+      this.externalizer = (Externalizer<Object>) externalizer;
    }
 
    @Override

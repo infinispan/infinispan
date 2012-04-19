@@ -22,7 +22,6 @@
 
 package org.infinispan.query.logging;
 
-import org.infinispan.query.Transformer;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -46,7 +45,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Cannot instantiate an instance of Transformer class %s", id = 14002)
-   void couldNotInstantiaterTransformerClass(Class<? extends Transformer> transformer, @Cause Exception e);
+   void couldNotInstantiaterTransformerClass(Class<?> transformer, @Cause Exception e);
 
    @LogMessage(level = INFO)
    @Message(value = "Registering Query interceptor", id = 14003)

@@ -42,6 +42,7 @@ public abstract class AbstractTransport implements Transport {
       this.transportFactory = transportFactory;
    }
 
+   @Override
    public byte[] readArray() {
       int responseLength = readVInt();
       return readByteArray(responseLength);
@@ -113,6 +114,7 @@ public abstract class AbstractTransport implements Transport {
       return transportFactory;
    }
 
+   @Override
    public void writeArray(byte[] toAppend) {
       writeVInt(toAppend.length);
       writeBytes(toAppend);

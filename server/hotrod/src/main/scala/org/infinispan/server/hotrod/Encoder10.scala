@@ -22,7 +22,6 @@ package org.infinispan.server.hotrod
 import logging.Log
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
-import org.infinispan.server.hotrod.HotRodServer._
 import org.infinispan.Cache
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.server.core.CacheValue
@@ -30,7 +29,6 @@ import collection.JavaConversions._
 import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Hot Rod encoder for protocol version 1.0
@@ -56,18 +54,18 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
                   writeHashTopologyHeader(t, buf, addressCache)
             }
             case h: HashDistAwareResponse =>
-               writeHashTopologyHeader(h, buf, r, addressCache)
+               writeHashTopologyHeader(h, buf, r, addressCache, server)
          }
       } else {
          buf.writeByte(0) // No topology change
       }
    }
 
-   override def writeResponse(r: Response, buf: ChannelBuffer, cm: EmbeddedCacheManager) =
-      writeResponse(this, r, buf, cm)
+   override def writeResponse(r: Response, buf: ChannelBuffer, cm: EmbeddedCacheManager, server: HotRodServer) =
+      writeResponse(this, r, buf, cm, server)
 
    def writeResponse(log: Log, r: Response, buf: ChannelBuffer,
-                              cacheManager: EmbeddedCacheManager) {
+                              cacheManager: EmbeddedCacheManager, server: HotRodServer) {
       r match {
          case r: ResponseWithPrevious => {
             if (r.previous == None)
@@ -92,7 +90,7 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
             log.trace("About to respond to bulk get request")
             if (g.status == Success) {
                val cache: Cache[ByteArrayKey, CacheValue] =
-                     getCacheInstance(g.cacheName, cacheManager)
+                     server.getCacheInstance(g.cacheName, cacheManager, false)
                var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
                   log.trace("About to write (max) %d messages to the client", g.count)
@@ -120,7 +118,7 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
             case 2 | 3 => {
                val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
-                  val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
+                  val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
                      TopologyAwareResponse(lastViewId)
@@ -167,7 +165,8 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
    }
 
    private def writeHashTopologyHeader(h: HashDistAwareResponse,
-            buffer: ChannelBuffer, r: Response, addressCache: Cache[Address, ServerAddress]) {
+            buffer: ChannelBuffer, r: Response, addressCache: Cache[Address, ServerAddress],
+                                            server: HotRodServer) {
       trace("Write hash distribution change response header %s", h)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(h.viewId, buffer)
@@ -177,7 +176,7 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
       // If virtual nodes are enabled, we need to send as many hashes as
       // cluster members * num virtual nodes. Otherwise, rely on the default
       // when virtual nodes is disabled which is '1'.
-      val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
+      val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
       val numVNodes = cache.getConfiguration.getNumVirtualNodes
 
       val clusterMembers = addressCache.getCacheManager.getMembers

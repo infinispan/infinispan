@@ -56,21 +56,21 @@ public class CacheListener {
 	private List<ChannelNotifyParams> channels = new CopyOnWriteArrayList<ChannelNotifyParams>();
 
 	@CacheEntryCreated
-	public void cacheEntryCreated(CacheEntryCreatedEvent event) {
+	public void cacheEntryCreated(CacheEntryCreatedEvent<Object, Object> event) {
 		notifyChannels(event, event.getType());
 	}
 
 	@CacheEntryModified
-	public void cacheEntryModified(CacheEntryModifiedEvent event) {
+	public void cacheEntryModified(CacheEntryModifiedEvent<Object, Object> event) {
 		notifyChannels(event, event.getType());
 	}
 
 	@CacheEntryRemoved
-	public void cacheEntryRemoved(CacheEntryRemovedEvent event) {
+	public void cacheEntryRemoved(CacheEntryRemovedEvent<Object, Object> event) {
 		notifyChannels(event, event.getType());
 	}
 	
-	private void notifyChannels(CacheEntryEvent event, Event.Type eventType) {
+	private void notifyChannels(CacheEntryEvent<Object, Object> event, Event.Type eventType) {
 		if(event.isPre()) {
 			return;
 		}
@@ -89,7 +89,7 @@ public class CacheListener {
 				jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
 				break;
 			case CACHE_ENTRY_MODIFIED:
-				value = ((CacheEntryModifiedEvent)event).getValue();
+				value = ((CacheEntryModifiedEvent<Object, Object>)event).getValue();
 				jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
 				break;
 			case CACHE_ENTRY_REMOVED:
@@ -190,7 +190,8 @@ public class CacheListener {
 	
 	private class ChannelCloseFutureListener implements ChannelFutureListener {
 
-		public void operationComplete(ChannelFuture channelCloseFuture) throws Exception {
+		@Override
+      public void operationComplete(ChannelFuture channelCloseFuture) throws Exception {
 			for(ChannelNotifyParams channel : channels) {
 				if(channelCloseFuture.getChannel() ==  channel.channel) {
 					removeChannel(channel);

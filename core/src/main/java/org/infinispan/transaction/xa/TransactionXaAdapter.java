@@ -99,6 +99,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    /**
     * This can be call for any transaction object. See Section 3.4.6 (Resource Sharing) from JTA spec v1.1.
     */
+   @Override
    public int prepare(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
@@ -108,6 +109,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */
+   @Override
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
@@ -126,6 +128,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */   
+   @Override
    public void rollback(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
@@ -134,6 +137,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction1);
    }
 
+   @Override
    public void start(Xid externalXid, int i) throws XAException {
       Xid xid = convertXid(externalXid);
       //transform in our internal format in order to be able to serialize
@@ -142,10 +146,12 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       if (trace) log.tracef("start called on tx %s", this.localTransaction.getGlobalTransaction());
    }
 
+   @Override
    public void end(Xid externalXid, int i) throws XAException {
       if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), config.getName());
    }
 
+   @Override
    public void forget(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       if (trace) log.tracef("forget called for xid %s", xid);
@@ -157,6 +163,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       }
    }
 
+   @Override
    public int getTransactionTimeout() throws XAException {
       if (trace) log.trace("start called");
       return txTimeout;
@@ -166,6 +173,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * the only situation in which it returns true is when the other xa resource pertains to the same cache, on
     * the same node.
     */
+   @Override
    public boolean isSameRM(XAResource xaResource) throws XAException {
       if (!(xaResource instanceof TransactionXaAdapter)) {
          return false;
@@ -175,6 +183,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       return this.txTable == other.txTable;
    }
 
+   @Override
    public Xid[] recover(int flag) throws XAException {
       if (!config.isTransactionRecoveryEnabled()) {
          log.recoveryIgnored();
@@ -202,6 +211,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       return (value & flag) != 0;
    }
 
+   @Override
    public boolean setTransactionTimeout(int i) throws XAException {
       this.txTimeout = i;
       return true;

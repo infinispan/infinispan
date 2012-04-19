@@ -79,6 +79,7 @@ public class DummyTransaction implements Transaction {
     * @throws HeuristicRollbackException If a heuristic decision to roll back the transaction was made.
     * @throws SecurityException          If the caller is not allowed to commit this transaction.
     */
+   @Override
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
 
       try {
@@ -101,6 +102,7 @@ public class DummyTransaction implements Transaction {
     *                               Status#STATUS_PREPARED prepared state}.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void rollback() throws IllegalStateException, SystemException {
       try {
          status = Status.STATUS_ROLLING_BACK;
@@ -121,6 +123,7 @@ public class DummyTransaction implements Transaction {
     * @throws IllegalStateException If the transaction is not in an active state.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void setRollbackOnly() throws IllegalStateException, SystemException {
       status = Status.STATUS_MARKED_ROLLBACK;
    }
@@ -131,6 +134,7 @@ public class DummyTransaction implements Transaction {
     * @return The status of the transaction. This is one of the {@link Status} constants.
     * @throws SystemException If the transaction service fails in an unexpected way.
     */
+   @Override
    public int getStatus() throws SystemException {
       return status;
    }
@@ -145,6 +149,7 @@ public class DummyTransaction implements Transaction {
     *                               Status#STATUS_PREPARED prepared state}.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public boolean enlistResource(XAResource xaRes) throws RollbackException, IllegalStateException, SystemException {
       this.enlistedResources.add(xaRes);
       try {
@@ -164,6 +169,7 @@ public class DummyTransaction implements Transaction {
     *                               because the transaction is no longer active.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public boolean delistResource(XAResource xaRes, int flag)
          throws IllegalStateException, SystemException {
       throw new SystemException("not supported");
@@ -178,6 +184,7 @@ public class DummyTransaction implements Transaction {
     *                               is in the {@link Status#STATUS_PREPARED prepared state}.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
+   @Override
    public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
       if (sync == null)
          throw new IllegalArgumentException("null synchronization " + this);

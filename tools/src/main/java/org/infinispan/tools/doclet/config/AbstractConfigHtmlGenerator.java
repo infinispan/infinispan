@@ -176,6 +176,7 @@ public abstract class AbstractConfigHtmlGenerator extends HtmlGenerator {
       return sb;
    }
 
+   @Override
    protected String generateContents() {
       sb.append(getTitle());
 

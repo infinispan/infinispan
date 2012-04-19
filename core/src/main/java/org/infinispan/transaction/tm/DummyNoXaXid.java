@@ -15,14 +15,17 @@ public final class DummyNoXaXid implements Xid {
    private static final AtomicInteger txIdCounter = new AtomicInteger(0);
    private final int id = txIdCounter.incrementAndGet();
 
+   @Override
    public int getFormatId() {
       return id;
    }
 
+   @Override
    public byte[] getGlobalTransactionId() {
       throw new UnsupportedOperationException();
    }
 
+   @Override
    public byte[] getBranchQualifier() {
       throw new UnsupportedOperationException();
    }

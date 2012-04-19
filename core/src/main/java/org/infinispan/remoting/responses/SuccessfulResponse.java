@@ -50,6 +50,7 @@ public class SuccessfulResponse extends ValidResponse {
       return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse(responseValue);
    }    
 
+   @Override
    public boolean isSuccessful() {
       return true;
    }

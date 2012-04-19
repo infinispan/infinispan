@@ -31,9 +31,12 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * BaseTest for MapReduceTask
@@ -92,16 +95,20 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    }
    
    @Test(expectedExceptions={IllegalStateException.class})
-   public void testImproperCacheStateForMapReduceTask() {
+   public void testImproperCacheStateForMapReduceTask() throws Exception {
 
       GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
       Configuration c = new Configuration();
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, true);
-      Cache<Object, Object> cache = defaultCacheManager.getCache();
-      MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
-               cache);
-   }
 
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())){
+         @Override
+         public void call() throws Exception {
+            Cache<Object, Object> cache = cm.getCache();
+            MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
+                  cache);
+         }
+      });
+   }
 
    public void testinvokeMapReduceOnAllKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = testinvokeMapReduce(null);

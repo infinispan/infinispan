@@ -25,8 +25,7 @@ package org.infinispan.server.hotrod
 import OperationStatus._
 import OperationResponse._
 import org.infinispan.util.Util
-import org.infinispan.Cache
-import org.infinispan.remoting.transport.Address
+import java.lang.StringBuilder
 
 /**
  * A basic responses. The rest of this file contains other response types.

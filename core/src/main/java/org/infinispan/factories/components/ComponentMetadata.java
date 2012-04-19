@@ -108,7 +108,7 @@ public class ComponentMetadata implements Serializable {
             List<String> params = new LinkedList<String>();
             InjectMetadata injectMetadata = new InjectMetadata(m.getName());
             
-            Class[] parameterTypes = m.getParameterTypes();
+            Class<?>[] parameterTypes = m.getParameterTypes();
 
             // Add this to our dependencies map
             Annotation[][] annotations = m.getParameterAnnotations();
@@ -240,7 +240,7 @@ public class ComponentMetadata implements Serializable {
       String methodName;
       transient Method method;
       String[] parameters;
-      transient Class[] parameterClasses;
+      transient Class<?>[] parameterClasses;
       Map<Integer, String> parameterNames; 
 
       private InjectMetadata(String methodName) {
@@ -277,11 +277,11 @@ public class ComponentMetadata implements Serializable {
          this.method = method;
       }
 
-      public synchronized Class[] getParameterClasses() {
+      public synchronized Class<?>[] getParameterClasses() {
          return parameterClasses;
       }
 
-      public synchronized void setParameterClasses(Class[] parameterClasses) {
+      public synchronized void setParameterClasses(Class<?>[] parameterClasses) {
          this.parameterClasses = parameterClasses;
       }
    }

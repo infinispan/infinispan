@@ -48,10 +48,12 @@ public class ClusteredFieldDoc extends FieldDoc implements ClusteredDoc{
       this.index = index;
    }
 
+   @Override
    public UUID getNodeUuid() {
       return nodeUuid;
    }
    
+   @Override
    public int getIndex(){
       return index;
    }

@@ -55,7 +55,7 @@ public class BeanUtils {
     * @param componentClass class to find getter for
     * @return name of getter method
     */
-   public static String getterName(Class componentClass) {
+   public static String getterName(Class<?> componentClass) {
       if (componentClass == null) return null;
       StringBuilder sb = new StringBuilder("get");
       sb.append(componentClass.getSimpleName());
@@ -68,7 +68,7 @@ public class BeanUtils {
     * @param componentClass class to find setter for
     * @return name of getter method
     */
-   public static String setterName(Class componentClass) {
+   public static String setterName(Class<?> componentClass) {
       if (componentClass == null) return null;
       StringBuilder sb = new StringBuilder("set");
       sb.append(componentClass.getSimpleName());
@@ -83,7 +83,7 @@ public class BeanUtils {
     * @param componentClass component to get
     * @return Method object, or null of one does not exist
     */
-   public static Method getterMethod(Class target, Class componentClass) {
+   public static Method getterMethod(Class<?> target, Class<?> componentClass) {
       try {
          return target.getMethod(getterName(componentClass));
       }
@@ -103,7 +103,7 @@ public class BeanUtils {
     * @param componentClass component to set
     * @return Method object, or null of one does not exist
     */
-   public static Method setterMethod(Class target, Class componentClass) {
+   public static Method setterMethod(Class<?> target, Class<?> componentClass) {
       try {
          return target.getMethod(setterName(componentClass), componentClass);
       }

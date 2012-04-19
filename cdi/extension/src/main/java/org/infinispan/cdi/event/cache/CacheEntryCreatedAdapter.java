@@ -39,26 +39,32 @@ public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCr
 
    public static final CacheEntryCreatedEvent<?, ?> EMPTY = new CacheEntryCreatedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public Object getKey() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
@@ -72,6 +78,7 @@ public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCr
       super(event);
    }
 
+   @Override
    @CacheEntryCreated
    public void fire(CacheEntryCreatedEvent<K, V> payload) {
       super.fire(payload);

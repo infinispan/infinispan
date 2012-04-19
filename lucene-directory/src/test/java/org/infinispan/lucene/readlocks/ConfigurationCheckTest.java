@@ -22,6 +22,7 @@
  */
 package org.infinispan.lucene.readlocks;
 
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -48,8 +49,8 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
    
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEvictionIsNotAllowed() {
-      cache = cacheManager.getCache();
-      new DistributedSegmentReadLocker(cache, cache, cache, "lucene.readlocks.ConfigurationCheckTest");
+      Cache<?, ?> c = cacheManager.getCache();
+      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, c, "lucene.readlocks.ConfigurationCheckTest");
    }
 
 }

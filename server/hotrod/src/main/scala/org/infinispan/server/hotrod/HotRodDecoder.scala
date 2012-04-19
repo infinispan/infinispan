@@ -34,6 +34,9 @@ import org.infinispan.util.ByteArrayKey
 import java.io.{IOException, StreamCorruptedException}
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.Channel
+import java.lang.StringBuilder
+import java.util.HashSet
+import org.infinispan.util.concurrent.ConcurrentMapFactory
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -42,21 +45,20 @@ import org.jboss.netty.channel.Channel
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTransport)
+class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTransport, server: HotRodServer)
         extends AbstractProtocolDecoder[ByteArrayKey, CacheValue](transport) with Constants {
-   import HotRodServer._
-   
    type SuitableHeader = HotRodHeader
-   type SuitableParameters = RequestParameters
 
+   type SuitableParameters = RequestParameters
    private var isError = false
+
    private val isTrace = isTraceEnabled
 
    override def readHeader(buffer: ChannelBuffer): (Option[HotRodHeader], Boolean) = {
       try {
          val magic = buffer.readUnsignedByte
          if (magic != MAGIC_REQ) {
-            if (!isError) {               
+            if (!isError) {
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic)
             } else {
                trace("Error happened previously, ignoring %d byte until we find the magic number again", magic)
@@ -100,17 +102,24 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       val cacheName = header.cacheName
       // Talking to the wrong cache are really request parsing errors
       // and hence should be treated as client errors
-      if (cacheName == ADDRESS_CACHE_NAME)
+      if (cacheName == HotRodServer.ADDRESS_CACHE_NAME)
          throw new RequestParsingException(
-            "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(ADDRESS_CACHE_NAME),
+            "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(HotRodServer.ADDRESS_CACHE_NAME),
             header.version, header.messageId)
 
-      if (!cacheName.isEmpty && !cacheManager.getCacheNames.contains(cacheName))
-         throw new CacheNotFoundException(
-            "Cache with name '%s' not found amongst the configured caches".format(cacheName),
-            header.version, header.messageId)
+      var seenForFirstTime = false;
+      // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
+      if (server.isCacheNameKnown(cacheName)) {
+         if (!(cacheManager.getCacheNames contains cacheName)) {
+            throw new CacheNotFoundException(
+               "Cache with name '%s' not found amongst the configured caches".format(cacheName),
+               header.version, header.messageId)
+         } else {
+            seenForFirstTime = true;
+         }
+      }
 
-      getCacheInstance(cacheName, cacheManager)
+      server.getCacheInstance(cacheName, cacheManager, seenForFirstTime)
    }
 
    override def readKey(b: ChannelBuffer): (ByteArrayKey, Boolean) =

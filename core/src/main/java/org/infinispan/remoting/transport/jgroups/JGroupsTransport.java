@@ -22,6 +22,7 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -36,6 +37,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
@@ -58,6 +60,9 @@ import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
+import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -325,8 +330,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
-            try {
-               channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader()));
+            URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader());
+            if (conf == null) {
+               throw new CacheConfigurationException(CONFIGURATION_FILE
+                        + " property specifies value " + conf + " that could not be read!",
+                        new FileNotFoundException(cfg));
+            }
+            try {                              
+               channel = new JChannel(conf);
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
@@ -436,12 +447,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (trace)
          log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
       Address self = getAddress();
+      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
-         if (mode == ResponseMode.SYNCHRONOUS)
-            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
-         else { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
+         if (ignoreLeavers) { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
             recipients = new HashSet<Address>(recipients);
             recipients.retainAll(getMembers());
+         } else { // SYNCHRONOUS
+            throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
          }
       }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
@@ -462,13 +474,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                asyncMarshalling);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
-            boolean singleRecipient = jgAddressList != null && jgAddressList.size() == 1;
+            boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
             boolean skipRpc = false;
             if (jgAddressList == null) {
                ArrayList<Address> others = new ArrayList<Address>(members);
                others.remove(self);
                skipRpc = others.isEmpty();
-               singleRecipient = others.size() == 1;
+               singleRecipient = !ignoreLeavers && others.size() == 1;
                if (singleRecipient) singleJGAddress = toJGroupsAddress(others.get(0));
             }
             if (!skipRpc) {
@@ -498,7 +510,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } else {      
          Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
-         boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
          boolean noValidResponses = true;
          for (Rsp<Object> rsp : rsps.values()) {
             noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()),

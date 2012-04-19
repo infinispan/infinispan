@@ -43,8 +43,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -236,21 +234,19 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    }
 
    public void testAvoidConcurrentStatePush() throws Exception {
-      final ExecutorService executor = Executors.newFixedThreadPool(2);
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
       final CountDownLatch secondActiveStatusChangerCanStart = new CountDownLatch(1);
       final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, secondActiveStatusChangerCanStart, new SingletonStoreConfig());
 
-      Future f1 = executor.submit(createActiveStatusChanger(mscl));
+      Future f1 = fork(createActiveStatusChanger(mscl));
       assert secondActiveStatusChangerCanStart.await(1000, TimeUnit.MILLISECONDS) : "Failed waiting on latch";
 
-      Future f2 = executor.submit(createActiveStatusChanger(mscl));
+      Future f2 = fork(createActiveStatusChanger(mscl));
 
       f1.get();
       f2.get();
 
       assertEquals(1, mscl.getNumberCreatedTasks());
-      executor.shutdownNow();
    }
 
    public void testPushStateTimedOut() throws Throwable {
@@ -259,7 +255,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       ssdc.setPushStateTimeout(100L);
       final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null, ssdc);
 
-      Future f = Executors.newSingleThreadExecutor().submit(createActiveStatusChanger(mscl));
+      Future f = fork(createActiveStatusChanger(mscl));
       pushStateCanFinish.await(200, TimeUnit.MILLISECONDS);
       pushStateCanFinish.countDown();
 

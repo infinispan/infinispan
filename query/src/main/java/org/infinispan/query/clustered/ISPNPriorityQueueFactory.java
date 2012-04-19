@@ -25,7 +25,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.apache.lucene.search.FieldDoc;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.hibernate.search.SearchException;
@@ -53,11 +53,11 @@ class ISPNPriorityQueueFactory {
     * @param sort
     * @return a PriorityQueue<FieldDoc> instance
     */
-   public static PriorityQueue<FieldDoc> getFieldDocSortedHitQueue(int size, SortField[] sort) {
+   public static PriorityQueue<ScoreDoc> getFieldDocSortedHitQueue(int size, SortField[] sort) {
       String className = "org.apache.lucene.search.FieldDocSortedHitQueue";
       Object[] constructorArgument = new Object[]{ size };
-      Class[] types = new Class[]{ int.class };
-      PriorityQueue<FieldDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
+      Class<?>[] types = new Class[]{ int.class };
+      PriorityQueue<ScoreDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
       Method[] methods = queue.getClass().getDeclaredMethods();
       
       for (Method method : methods) {
@@ -80,10 +80,10 @@ class ISPNPriorityQueueFactory {
     * @param sort
     * @return a PriorityQueue<FieldDoc> instance
     */
-   public static PriorityQueue<FieldDoc> getHitQueue(int size) {
+   public static PriorityQueue<ScoreDoc> getHitQueue(int size) {
       String className = "org.apache.lucene.search.HitQueue";
       Object[] constructorArgument = new Object[]{ size, false };
-      Class[] types = new Class[]{ int.class, boolean.class };
+      Class<?>[] types = new Class[]{ int.class, boolean.class };
       return buildPriorityQueueSafe(className, types, constructorArgument);
    }
 
@@ -92,8 +92,8 @@ class ISPNPriorityQueueFactory {
     * @param types types of the constructor to use
     * @param constructorArgument arguments for the chosen constructor
     */
-   private static PriorityQueue<FieldDoc> buildPriorityQueueSafe(String className,
-         Class[] types, Object[] constructorArgument) {
+   private static PriorityQueue<ScoreDoc> buildPriorityQueueSafe(String className,
+         Class<?>[] types, Object[] constructorArgument) {
       try {
          return buildPriorityQueue(className, types, constructorArgument);
       } catch (Exception e) {
@@ -109,13 +109,13 @@ class ISPNPriorityQueueFactory {
     * @param types
     * @param constructorArgument
     */
-   private static PriorityQueue<FieldDoc> buildPriorityQueue(String className, Class[] types,
+   private static PriorityQueue<ScoreDoc> buildPriorityQueue(String className, Class<?>[] types,
          java.lang.Object[] constructorArgument) throws ClassNotFoundException, SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
       Class<?> clazz = Class.forName(className);
-      Constructor c = clazz.getDeclaredConstructor(types);
+      Constructor<?> c = clazz.getDeclaredConstructor(types);
       c.setAccessible(true);
       Object newInstance = c.newInstance(constructorArgument);
-      return (PriorityQueue<FieldDoc>) newInstance;
+      return (PriorityQueue<ScoreDoc>) newInstance;
    }
 
 }

@@ -75,6 +75,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       exposeJmxStats = configuration.isExposeJmxStatistics();
    }
 
+   @Override
    public boolean lockAndRecord(Object key, InvocationContext ctx, long lockTimeout) throws InterruptedException {
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 

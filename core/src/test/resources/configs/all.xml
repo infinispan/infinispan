@@ -68,13 +68,14 @@
       <default name="foo">
         <clustering mode="DIST">
           <async asyncMarshalling="true" replQueueClass="com.acme.replQueue" replQueueInterval="1" replQueueMaxElements="1" useReplQueue="true"/>
-          <hash class="com.acme.Hash" hashFunctionClass="com.acme.HashFunction" numOwners="1" numVirtualNodes="1" rehashEnabled="true" rehashRpcTimeout="1" rehashWait="1">
+          <hash class="com.acme.Hash" hashFunctionClass="com.acme.HashFunction" numOwners="1" numVirtualNodes="1">
             <groups enabled="true">
               <grouper class="com.acme.Grouper"/>
             </groups>
           </hash>
           <l1 enabled="true" invalidationThreshold="1" lifespan="1" onRehash="true"/>
-          <stateRetrieval alwaysProvideInMemoryState="true" fetchInMemoryState="true" initialRetryWaitTime="1" logFlushTimeout="1" maxNonProgressingLogWrites="1" numRetries="1" retryWaitTimeIncreaseFactor="1" timeout="1"/>
+          <stateTransfer chunkSize="10000" fetchInMemoryState="true"  timeout="1"/>
+          
           <sync replTimeout="1"/>
         </clustering>
         <customInterceptors>

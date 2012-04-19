@@ -35,6 +35,7 @@ import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -144,6 +145,10 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.undelete(undeleteIfNeeded);
       } else {
          InternalCacheEntry ice = (icEntry == null ? getFromContainer(key) : icEntry);
+         // A putForExternalRead is putIfAbsent, so if key present, do nothing
+         if (ice != null && ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ))
+            return null;
+
          mvccEntry = ice != null ?
              wrapInternalCacheEntryForPut(ctx, key, ice) :
              newMvccEntryForPut(ctx, key);

@@ -21,11 +21,6 @@
  */
 package org.infinispan.query.clustered;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
-import java.util.UUID;
-
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -33,6 +28,11 @@ import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.impl.AbstractIterator;
 import org.infinispan.util.ReflectionUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 /**
  * DistributedIterator.
@@ -44,156 +44,154 @@ import org.infinispan.util.ReflectionUtil;
  */
 public class DistributedIterator extends AbstractIterator {
 
-	private int currentIndex = -1;
+   private int currentIndex = -1;
 
-	// this array keeps all values (ordered) fetched by this iterator...
-	private final ArrayList<Object> orderedValues = new ArrayList<Object>();
+   // this array keeps all values (ordered) fetched by this iterator...
+   private final ArrayList<Object> orderedValues = new ArrayList<Object>();
 
-	private final Sort sort;
+   private final Sort sort;
 
-	private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
+   private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
-	private PriorityQueue hq;
+   private PriorityQueue<ScoreDoc> hq;
 
-	private final int resultSize;
+   private final int resultSize;
 
-	public DistributedIterator(Sort sort, int fetchSize, int resultSize,
-			HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?,?> cache) {
-		this.sort = sort;
-		this.fetchSize = fetchSize;
-		this.resultSize = resultSize;
-		this.cache = cache;
-		setTopDocs(topDocsResponses);
-	}
+   public DistributedIterator(Sort sort, int fetchSize, int resultSize,
+         HashMap<UUID, ClusteredTopDocs> topDocsResponses,
+         AdvancedCache<?, ?> cache) {
+      this.sort = sort;
+      this.fetchSize = fetchSize;
+      this.resultSize = resultSize;
+      this.cache = cache;
+      setTopDocs(topDocsResponses);
+   }
 
-	private void setTopDocs(HashMap<UUID, ClusteredTopDocs> topDocsResponses) {
-		this.topDocsResponses = topDocsResponses;
+   private void setTopDocs(HashMap<UUID, ClusteredTopDocs> topDocsResponses) {
+      this.topDocsResponses = topDocsResponses;
 
-		if (sort != null) {
-			// reversing sort fields to FieldDocSortedHitQueue work properly
-			for (SortField sf : sort.getSort()) {
-				boolean reverse = (Boolean) ReflectionUtil.getValue(sf,
-						"reverse");
-				ReflectionUtil.setValue(sf, "reverse", !reverse);
-			}
-			hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
-					topDocsResponses.size(), sort.getSort());
+      if (sort != null) {
+         // reversing sort fields to FieldDocSortedHitQueue work properly
+         for (SortField sf : sort.getSort()) {
+            boolean reverse = (Boolean) ReflectionUtil.getValue(sf, "reverse");
+            ReflectionUtil.setValue(sf, "reverse", !reverse);
+         }
+         hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
+               topDocsResponses.size(), sort.getSort());
 
-		} else
-			hq = ISPNPriorityQueueFactory.getHitQueue(topDocsResponses.size());
+      } else
+         hq = ISPNPriorityQueueFactory.getHitQueue(topDocsResponses.size());
 
-		// taking the first value of each queue
-		for (ClusteredTopDocs ctp : topDocsResponses.values()) {
-			if (ctp.hasNext())
-				hq.add(ctp.getNext());
-		}
+      // taking the first value of each queue
+      for (ClusteredTopDocs ctp : topDocsResponses.values()) {
+         if (ctp.hasNext())
+            hq.add(ctp.getNext());
+      }
 
-	}
+   }
 
-	@Override
-	public void close() {
-		// Nothing to do...
-	}
+   @Override
+   public void close() {
+      // Nothing to do...
+   }
 
-	@Override
-	public void jumpToResult(int index) throws IndexOutOfBoundsException {
-		currentIndex = index;
-	}
+   @Override
+   public void jumpToResult(int index) throws IndexOutOfBoundsException {
+      currentIndex = index;
+   }
 
-	@Override
-	public void add(Object arg0) {
-		throw new UnsupportedOperationException(
-				"Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-	}
+   @Override
+   public void add(Object arg0) {
+      throw new UnsupportedOperationException(
+            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
+   }
 
-	@Override
-	public Object next() {
-		if (!hasNext())
-			throw new NoSuchElementException("Out of boundaries");
-		currentIndex++;
-		return current();
-	}
+   @Override
+   public Object next() {
+      if (!hasNext())
+         throw new NoSuchElementException("Out of boundaries");
+      currentIndex++;
+      return current();
+   }
 
-	@Override
-	public int nextIndex() {
-		if (!hasNext())
-			throw new NoSuchElementException("Out of boundaries");
-		return currentIndex + 1;
-	}
+   @Override
+   public int nextIndex() {
+      if (!hasNext())
+         throw new NoSuchElementException("Out of boundaries");
+      return currentIndex + 1;
+   }
 
-	@Override
-	public Object previous() {
-		currentIndex--;
-		return current();
-	}
+   @Override
+   public Object previous() {
+      currentIndex--;
+      return current();
+   }
 
-	private Object current() {
-		// if already fecthed
-		if (orderedValues.size() > currentIndex) {
-			return orderedValues.get(currentIndex);
-		}
+   private Object current() {
+      // if already fecthed
+      if (orderedValues.size() > currentIndex) {
+         return orderedValues.get(currentIndex);
+      }
 
-		// fetch and return the value
-		loadTo(currentIndex);
-		return orderedValues.get(currentIndex);
-	}
+      // fetch and return the value
+      loadTo(currentIndex);
+      return orderedValues.get(currentIndex);
+   }
 
-	private void loadTo(int index) {
-		int fetched = 0;
+   private void loadTo(int index) {
+      int fetched = 0;
 
-		while (orderedValues.size() <= index || fetched < fetchSize) {
-			// getting the next scoreDoc. If null, then there is no more results
-			ClusteredDoc scoreDoc = (ClusteredDoc) hq.pop();
-			if (scoreDoc == null) {
-				return;
-			}
+      while (orderedValues.size() <= index || fetched < fetchSize) {
+         // getting the next scoreDoc. If null, then there is no more results
+         ClusteredDoc scoreDoc = (ClusteredDoc) hq.pop();
+         if (scoreDoc == null) {
+            return;
+         }
 
-			// "recharging" the queue
-			ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc
-					.getNodeUuid());
-			ScoreDoc score = topDoc.getNext();
-			if (score != null) {
-				hq.add(score);
-			}
+         // "recharging" the queue
+         ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc.getNodeUuid());
+         ScoreDoc score = topDoc.getNext();
+         if (score != null) {
+            hq.add(score);
+         }
 
-			// fetching the value
-			Object value = fetchValue(scoreDoc, topDoc);
+         // fetching the value
+         Object value = fetchValue(scoreDoc, topDoc);
 
-			orderedValues.add(value);
+         orderedValues.add(value);
 
-			fetched++;
-		}
-	}
+         fetched++;
+      }
+   }
 
-	protected Object fetchValue(ClusteredDoc scoreDoc,
-			ClusteredTopDocs topDoc) {
-		ISPNEagerTopDocs eagerTopDocs = (ISPNEagerTopDocs) topDoc.getTopDocs();
-		return cache.get(eagerTopDocs.keys[scoreDoc.getIndex()]);
-	}
+   protected Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
+      ISPNEagerTopDocs eagerTopDocs = (ISPNEagerTopDocs) topDoc.getTopDocs();
+      return cache.get(eagerTopDocs.keys[scoreDoc.getIndex()]);
+   }
 
-	@Override
-	public int previousIndex() {
-		return currentIndex - 1;
-	}
+   @Override
+   public int previousIndex() {
+      return currentIndex - 1;
+   }
 
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException(
-				"Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-	}
+   @Override
+   public void remove() {
+      throw new UnsupportedOperationException(
+            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
+   }
 
-	@Override
-	public void set(Object arg0) {
-		throw new UnsupportedOperationException(
-				"Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-	}
+   @Override
+   public void set(Object arg0) {
+      throw new UnsupportedOperationException(
+            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
+   }
 
-	@Override
-	public boolean hasNext() {
-		if (currentIndex + 1 >= resultSize) {
-			return false;
-		}
-		return true;
-	}
+   @Override
+   public boolean hasNext() {
+      if (currentIndex + 1 >= resultSize) {
+         return false;
+      }
+      return true;
+   }
 
 }

@@ -1484,6 +1484,7 @@ public class ConcurrentHashMapV8<K, V>
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean isEmpty() {
       return counter.sum() <= 0L; // ignore transient negative values
    }
@@ -1491,6 +1492,7 @@ public class ConcurrentHashMapV8<K, V>
    /**
     * {@inheritDoc}
     */
+   @Override
    public int size() {
       long n = counter.sum();
       return ((n < 0L) ? 0 :
@@ -1514,6 +1516,7 @@ public class ConcurrentHashMapV8<K, V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    @SuppressWarnings("unchecked")
    public V get(Object key) {
       if (key == null)
@@ -1530,6 +1533,7 @@ public class ConcurrentHashMapV8<K, V>
     *         {@code equals} method; {@code false} otherwise
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean containsKey(Object key) {
       if (key == null)
          throw new NullPointerException();
@@ -1546,6 +1550,7 @@ public class ConcurrentHashMapV8<K, V>
     *         specified value
     * @throws NullPointerException if the specified value is null
     */
+   @Override
    public boolean containsValue(Object value) {
       if (value == null)
          throw new NullPointerException();
@@ -1591,6 +1596,7 @@ public class ConcurrentHashMapV8<K, V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    @SuppressWarnings("unchecked")
    public V put(K key, V value) {
       if (key == null || value == null)
@@ -1605,6 +1611,7 @@ public class ConcurrentHashMapV8<K, V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    @SuppressWarnings("unchecked")
    public V putIfAbsent(K key, V value) {
       if (key == null || value == null)
@@ -1619,6 +1626,7 @@ public class ConcurrentHashMapV8<K, V>
     *
     * @param m mappings to be stored in this map
     */
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       internalPutAll(m);
    }
@@ -1723,6 +1731,7 @@ public class ConcurrentHashMapV8<K, V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    @SuppressWarnings("unchecked")
    public V remove(Object key) {
       if (key == null)
@@ -1735,6 +1744,7 @@ public class ConcurrentHashMapV8<K, V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean remove(Object key, Object value) {
       if (key == null)
          throw new NullPointerException();
@@ -1748,6 +1758,7 @@ public class ConcurrentHashMapV8<K, V>
     *
     * @throws NullPointerException if any of the arguments are null
     */
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       if (key == null || oldValue == null || newValue == null)
          throw new NullPointerException();
@@ -1761,6 +1772,7 @@ public class ConcurrentHashMapV8<K, V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    @SuppressWarnings("unchecked")
    public V replace(K key, V value) {
       if (key == null || value == null)
@@ -1771,6 +1783,7 @@ public class ConcurrentHashMapV8<K, V>
    /**
     * Removes all of the mappings from this map.
     */
+   @Override
    public void clear() {
       internalClear();
    }
@@ -1791,6 +1804,7 @@ public class ConcurrentHashMapV8<K, V>
     * construction of the iterator, and may (but is not guaranteed to)
     * reflect any modifications subsequent to construction.
     */
+   @Override
    public Set<K> keySet() {
       KeySet<K,V> ks = keySet;
       return (ks != null) ? ks : (keySet = new KeySet<K,V>(this));
@@ -1812,6 +1826,7 @@ public class ConcurrentHashMapV8<K, V>
     * construction of the iterator, and may (but is not guaranteed to)
     * reflect any modifications subsequent to construction.
     */
+   @Override
    public Collection<V> values() {
       Values<K,V> vs = values;
       return (vs != null) ? vs : (values = new Values<K,V>(this));
@@ -1833,6 +1848,7 @@ public class ConcurrentHashMapV8<K, V>
     * construction of the iterator, and may (but is not guaranteed to)
     * reflect any modifications subsequent to construction.
     */
+   @Override
    public Set<Map.Entry<K,V>> entrySet() {
       EntrySet<K,V> es = entrySet;
       return (es != null) ? es : (entrySet = new EntrySet<K,V>(this));
@@ -1968,6 +1984,7 @@ public class ConcurrentHashMapV8<K, V>
          implements Iterator<K>, Enumeration<K> {
       KeyIterator(ConcurrentHashMapV8<K, V> map) { super(map); }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final K next() {
          if (next == null)
@@ -1977,6 +1994,7 @@ public class ConcurrentHashMapV8<K, V>
          return (K)k;
       }
 
+      @Override
       public final K nextElement() { return next(); }
    }
 
@@ -1984,6 +2002,7 @@ public class ConcurrentHashMapV8<K, V>
          implements Iterator<V>, Enumeration<V> {
       ValueIterator(ConcurrentHashMapV8<K, V> map) { super(map); }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final V next() {
          if (next == null)
@@ -1993,6 +2012,7 @@ public class ConcurrentHashMapV8<K, V>
          return (V)v;
       }
 
+      @Override
       public final V nextElement() { return next(); }
    }
 
@@ -2000,6 +2020,7 @@ public class ConcurrentHashMapV8<K, V>
          implements Iterator<Map.Entry<K,V>> {
       EntryIterator(ConcurrentHashMapV8<K, V> map) { super(map); }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final Map.Entry<K,V> next() {
          if (next == null)
@@ -2015,6 +2036,7 @@ public class ConcurrentHashMapV8<K, V>
          implements Iterator<Map.Entry<K,V>> {
       SnapshotEntryIterator(ConcurrentHashMapV8<K, V> map) { super(map); }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final Map.Entry<K,V> next() {
          if (next == null)
@@ -2033,7 +2055,9 @@ public class ConcurrentHashMapV8<K, V>
       final K key; // non-null
       V val;       // non-null
       MapEntry(K key, V val)        { this.key = key; this.val = val; }
+      @Override
       public final K getKey()       { return key; }
+      @Override
       public final V getValue()     { return val; }
       public final int hashCode()   { return key.hashCode() ^ val.hashCode(); }
       public final String toString(){ return key + "=" + val; }
@@ -2047,6 +2071,7 @@ public class ConcurrentHashMapV8<K, V>
                        (v == val || v.equals(val)));
       }
 
+      @Override
       public abstract V setValue(V value);
    }
 
@@ -2071,6 +2096,7 @@ public class ConcurrentHashMapV8<K, V>
        * removed in which case the put will re-establish). We do not
        * and cannot guarantee more.
        */
+      @Override
       public final V setValue(V value) {
          if (value == null) throw new NullPointerException();
          V v = val;
@@ -2086,6 +2112,7 @@ public class ConcurrentHashMapV8<K, V>
    static final class SnapshotEntry<K,V> extends MapEntry<K,V>
          implements Map.Entry<K, V> {
       SnapshotEntry(K key, V val) { super(key, val); }
+      @Override
       public final V setValue(V value) { // only locally update
          if (value == null) throw new NullPointerException();
          V v = val;
@@ -2228,18 +2255,24 @@ public class ConcurrentHashMapV8<K, V>
 
    static final class KeySet<K,V> extends MapView<K,V> implements Set<K> {
       KeySet(ConcurrentHashMapV8<K, V> map)   { super(map); }
+      @Override
       public final boolean contains(Object o) { return map.containsKey(o); }
+      @Override
       public final boolean remove(Object o)   { return map.remove(o) != null; }
 
+      @Override
       public final Iterator<K> iterator() {
          return new KeyIterator<K,V>(map);
       }
+      @Override
       final Iterator<?> iter() {
          return new KeyIterator<K,V>(map);
       }
+      @Override
       public final boolean add(K e) {
          throw new UnsupportedOperationException();
       }
+      @Override
       public final boolean addAll(Collection<? extends K> c) {
          throw new UnsupportedOperationException();
       }
@@ -2254,8 +2287,10 @@ public class ConcurrentHashMapV8<K, V>
    static final class Values<K,V> extends MapView<K,V>
          implements Collection<V> {
       Values(ConcurrentHashMapV8<K, V> map)   { super(map); }
+      @Override
       public final boolean contains(Object o) { return map.containsValue(o); }
 
+      @Override
       public final boolean remove(Object o) {
          if (o != null) {
             Iterator<V> it = new ValueIterator<K,V>(map);
@@ -2268,15 +2303,19 @@ public class ConcurrentHashMapV8<K, V>
          }
          return false;
       }
+      @Override
       public final Iterator<V> iterator() {
          return new ValueIterator<K,V>(map);
       }
+      @Override
       final Iterator<?> iter() {
          return new ValueIterator<K,V>(map);
       }
+      @Override
       public final boolean add(V e) {
          throw new UnsupportedOperationException();
       }
+      @Override
       public final boolean addAll(Collection<? extends V> c) {
          throw new UnsupportedOperationException();
       }
@@ -2286,6 +2325,7 @@ public class ConcurrentHashMapV8<K, V>
          implements Set<Map.Entry<K,V>> {
       EntrySet(ConcurrentHashMapV8<K, V> map) { super(map); }
 
+      @Override
       public final boolean contains(Object o) {
          Object k, v, r; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -2295,6 +2335,7 @@ public class ConcurrentHashMapV8<K, V>
                        (v == r || v.equals(r)));
       }
 
+      @Override
       public final boolean remove(Object o) {
          Object k, v; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -2303,15 +2344,19 @@ public class ConcurrentHashMapV8<K, V>
                        map.remove(k, v));
       }
 
+      @Override
       public final Iterator<Map.Entry<K,V>> iterator() {
          return new EntryIterator<K,V>(map);
       }
+      @Override
       final Iterator<?> iter() {
          return new SnapshotEntryIterator<K,V>(map);
       }
+      @Override
       public final boolean add(Entry<K,V> e) {
          throw new UnsupportedOperationException();
       }
+      @Override
       public final boolean addAll(Collection<? extends Entry<K,V>> c) {
          throw new UnsupportedOperationException();
       }
@@ -2473,6 +2518,7 @@ public class ConcurrentHashMapV8<K, V>
             return java.security.AccessController.doPrivileged
                   (new java.security
                         .PrivilegedExceptionAction<sun.misc.Unsafe>() {
+                     @Override
                      public sun.misc.Unsafe run() throws Exception {
                         java.lang.reflect.Field f = sun.misc
                               .Unsafe.class.getDeclaredField("theUnsafe");

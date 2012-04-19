@@ -195,7 +195,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *
     * @return the default configuration associated with this CacheManager
     */
-   public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
+   org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
 
    /**
     * This method returns a collection of caches names which contains the

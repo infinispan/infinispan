@@ -113,12 +113,12 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * @see BdbjeCacheStoreConfig
     */
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       BdbjeCacheStoreConfig cfg = (BdbjeCacheStoreConfig) config;
       init(cfg, new BdbjeResourceFactory(cfg), cache, m);
    }
 
-   void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       if (trace) log.trace("initializing BdbjeCacheStore");
       printLicense();
       super.init(cfg, cache, m);
@@ -131,6 +131,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     *
     * @return {@link BdbjeCacheStoreConfig}
     */
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig.class;
    }
@@ -140,6 +141,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * org.infinispan.loaders.bdbje.BdbjeCacheStore#openSleepyCatResources() opens the databases}.  When this is
     * finished, transactional and purging services are instantiated.
     */
+   @Override
    public void start() throws CacheLoaderException {
       if (trace) log.trace("starting BdbjeCacheStore");
 
@@ -200,6 +202,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * not removed from the file system. Exceptions during close of databases are ignored as closing the environment
     * will ensure the databases are also.
     */
+   @Override
    public void stop() throws CacheLoaderException {
       if (trace) log.trace("stopping BdbjeCacheStore");
       super.stop();
@@ -263,6 +266,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * <code>isOnePhase</code>. Otherwise, delegates to {@link BdbjeCacheStore#prepare(java.util.List,
     * org.infinispan.transaction.xa.GlobalTransaction)}
     */
+   @Override
    public void prepare(List<? extends Modification> mods, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       if (isOnePhase) {
          applyModifications(mods);
@@ -319,6 +323,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * This implementation calls {@link BdbjeCacheStore#completeTransaction(org.infinispan.transaction.xa.GlobalTransaction,
     * boolean)} completeTransaction} with an argument of false.
     */
+   @Override
    public void rollback(GlobalTransaction tx) {
       try {
          completeTransaction(tx, false);
@@ -333,6 +338,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * This implementation calls {@link BdbjeCacheStore#completeTransaction(org.infinispan.transaction.xa.GlobalTransaction,
     * boolean)} completeTransaction} with an argument of true.
     */
+   @Override
    public void commit(GlobalTransaction tx) throws CacheLoaderException {
       completeTransaction(tx, true);
    }
@@ -384,6 +390,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation delegates to {@link StoredMap#remove(Object)}
     */
+   @Override
    public boolean remove(Object key) throws CacheLoaderException {
       try {
          if (cacheMap.containsKey(key)) {
@@ -400,6 +407,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * {@inheritDoc} This implementation delegates to {@link StoredMap#get(Object)}.  If the object is expired, it will
     * not be returned.
     */
+   @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry s = cacheMap.get(key);
@@ -415,6 +423,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation delegates to {@link StoredMap#put(Object, Object)}
     */
+   @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       try {
          cacheMap.put(ed.getKey(), ed);
@@ -441,6 +450,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation delegates to {@link StoredMap#clear()}
     */
+   @Override
    public void clear() throws CacheLoaderException {
       try {
          cacheMap.clear();
@@ -453,6 +463,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation returns a Set from {@link StoredMap#values()}
     */
+   @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       try {
          return new HashSet<InternalCacheEntry>(cacheMap.values());
@@ -493,6 +504,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     *
     * @see BdbjeCacheStore#toStream(java.io.ObjectOutput)
     */
+   @Override
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
       try {
          currentTransaction.beginTransaction(null);
@@ -528,6 +540,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * <p/>
     * This implementation holds a transaction open to ensure that we see no new records added while iterating.
     */
+   @Override
    public void toStream(ObjectOutput oos) throws CacheLoaderException {
       try {
          currentTransaction.beginTransaction(null);

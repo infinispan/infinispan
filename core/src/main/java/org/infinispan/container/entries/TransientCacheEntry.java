@@ -55,63 +55,78 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
    }
 
+   @Override
    public Object getValue() {
       return cacheValue.value;
    }
 
+   @Override
    public Object setValue(Object value) {
       return cacheValue.setValue(value);
    }
 
+   @Override
    public final void touch() {
       cacheValue.lastUsed = System.currentTimeMillis();
    }
 
+   @Override
    public final void touch(long currentTimeMillis) {
       cacheValue.lastUsed = currentTimeMillis;
    }
 
 
+   @Override
    public final void reincarnate() {
       // no-op
    }
 
+   @Override
    public final boolean canExpire() {
       return true;
    }
 
+   @Override
    public boolean isExpired(long now) {
       return cacheValue.isExpired(now);
    }
 
+   @Override
    public boolean isExpired() {
       return cacheValue.isExpired();
    }
 
+   @Override
    public void setMaxIdle(long maxIdle) {
       cacheValue.maxIdle = maxIdle;
    }
 
+   @Override
    public long getCreated() {
       return -1;
    }
 
+   @Override
    public final long getLastUsed() {
       return cacheValue.lastUsed;
    }
 
+   @Override
    public long getLifespan() {
       return -1;
    }
 
+   @Override
    public long getExpiryTime() {
       return cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
    }
 
+   @Override
    public final long getMaxIdle() {
       return cacheValue.maxIdle;
    }
 
+   @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }

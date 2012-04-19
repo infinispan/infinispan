@@ -31,6 +31,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.UnitTestTestNGListener;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -63,6 +64,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       /*
 
       Sequence 1:
@@ -100,6 +102,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       /*
 
       Sequence 3:
@@ -117,6 +120,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       /*
 
       Sequence 4:

@@ -27,6 +27,7 @@ import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
 import org.infinispan.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
+import java.lang.StringBuilder
 
 /**
  * Memcached value part of key/value pair containing flags on top the common

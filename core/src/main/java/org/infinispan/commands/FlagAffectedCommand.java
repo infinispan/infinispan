@@ -41,13 +41,13 @@ public interface FlagAffectedCommand {
    /**
     * @return the Flags which where set in the context - only valid to invoke after {@link #setFlags(Set)}
     */
-   public Set<Flag> getFlags();
+   Set<Flag> getFlags();
    
    /**
     * Use it to store the flags from the InvocationContext into the Command before remoting the Command.
     * @param flags
     */
-   public void setFlags(Set<Flag> flags);
+   void setFlags(Set<Flag> flags);
 
    /**
     * Check whether a particular flag is present in the command
@@ -55,6 +55,6 @@ public interface FlagAffectedCommand {
     * @param flag to lookup in the command
     * @return true if the flag is present
     */
-   public boolean hasFlag(Flag flag);
+   boolean hasFlag(Flag flag);
 
 }

@@ -38,13 +38,14 @@ import java.lang.reflect.Method
 import HotRodTestingUtil._
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
-import mutable.{HashMap, ListBuffer}
+import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
 import org.infinispan.util.{ByteArrayKey, Util}
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._
 import java.lang.IllegalStateException
+import java.lang.StringBuilder
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing

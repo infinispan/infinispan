@@ -42,6 +42,7 @@ import org.infinispan.util.Util;
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
 
+   @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (configuration.getDataContainer() != null) {

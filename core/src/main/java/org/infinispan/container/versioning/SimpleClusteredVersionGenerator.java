@@ -39,11 +39,11 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
    // generated based on a newer view, the one based on the newer view wins regardless of the version's counter.
    // See SimpleClusteredVersion for more details.
    private volatile int viewId;
-   private Cache cache;
+   private Cache<?, ?> cache;
    private Transport transport;
 
    @Inject
-   public void init(Cache cache, Transport transport) {
+   public void init(Cache<?, ?> cache, Transport transport) {
       this.cache = cache;
       this.transport = transport;
    }

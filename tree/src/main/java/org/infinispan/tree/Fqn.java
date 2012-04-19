@@ -25,6 +25,7 @@ package org.infinispan.tree;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -99,7 +100,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     * A cached string representation of this Fqn, used by toString to it isn't calculated again every time.
     */
    protected String stringRepresentation;
-   private static final Object[] EMPTY_ARRAY = new Object[]{};
+   private static final Object[] EMPTY_ARRAY = ReflectionUtil.EMPTY_CLASS_ARRAY;
 
    // ----------------- START: Private constructors for use by factory methods only. ----------------------
 
@@ -114,7 +115,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     *
     * @param names List of names
     */
-   private Fqn(List names) {
+   private Fqn(List<Object> names) {
       if (names != null)
          elements = names.toArray();
       else
@@ -137,7 +138,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     * @since 4.0
     */
    @SuppressWarnings("unchecked")
-   public static Fqn fromList(List names) {
+   public static Fqn fromList(List<?> names) {
       return new Fqn(names);
    }
 
@@ -174,7 +175,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     * @return an Fqn
     * @since 4.0
     */
-   public static Fqn fromRelativeList(Fqn base, List relativeElements) {
+   public static Fqn fromRelativeList(Fqn base, List<?> relativeElements) {
       return new Fqn(base, relativeElements.toArray());
    }
 
@@ -470,13 +471,14 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     *
     * @return an unmodifiable list
     */
-   public List peekElements() {
+   public List<Object> peekElements() {
       return Arrays.asList(elements);
    }
 
    /**
     * Compares this Fqn to another using {@link FqnComparator}.
     */
+   @Override
    public int compareTo(Fqn fqn) {
       return FqnComparator.INSTANCE.compare(this, fqn);
    }

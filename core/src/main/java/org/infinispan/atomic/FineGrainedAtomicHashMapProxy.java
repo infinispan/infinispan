@@ -58,7 +58,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    private static final boolean trace = log.isTraceEnabled();
 
    FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
-     super(cache, deltaMapKey);
+     super((AdvancedCache<Object,AtomicMap<K,V>>) cache, deltaMapKey);
    }
 
    @SuppressWarnings("unchecked")
@@ -91,12 +91,13 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<K, V>(true) : map.copy();
          copy.initForWriting();
          if (insertNewMap) {
-            cache.put(deltaMapKey, copy);
+            cacheForWriting.put(deltaMapKey, copy);
          }
          return copy;
       }
    }
 
+   @Override
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<K> result = new HashSet<K>(keySetUncommitted());
@@ -109,9 +110,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<K> keySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().keySet(): Collections.<K>emptySet() ;
+      return entry != null ? (Set<K>) entry.getUncommittedChages().keySet() : Collections.<K>emptySet();
    }
 
+   @Override
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<V> result = new HashSet<V>(valuesUncommitted());
@@ -124,9 +126,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Collection<V> valuesUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().values(): Collections.<V>emptySet() ;
+      return entry != null ? (Collection<V>) entry.getUncommittedChages().values() : Collections.<V>emptySet();
    }
 
+   @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<Entry<K, V>> result = new HashSet<Entry<K, V>>(entrySetUncommitted());
@@ -139,9 +142,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<Entry<K, V>> entrySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? entry.getUncommittedChages().entrySet(): Collections.<V>emptySet() ;
+      return (Set<Entry<K, V>>) (entry != null ? entry.getUncommittedChages().entrySet(): Collections.<V>emptySet());
    }
 
+   @Override
    public int size() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       int su = sizeUncommitted();
@@ -153,6 +157,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       return entry != null ? entry.getUncommittedChages().size() : 0;
    }
 
+   @Override
    public boolean isEmpty() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return isEmptyUncommitted() && (map == null || map.isEmpty());
@@ -163,6 +168,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       return entry != null && entry.getUncommittedChages().isEmpty();
    }
 
+   @Override
    public boolean containsKey(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return containsKeyUncommitted(key) || (map != null && map.containsKey(key));
@@ -173,6 +179,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       return entry != null && entry.getUncommittedChages().containsKey(key);
    }
 
+   @Override
    public boolean containsValue(Object value) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return containsValueUncommitted(value) || (map != null && map.containsValue(value));
@@ -183,6 +190,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       return entry != null && entry.getUncommittedChages().containsValue(value);
    }
 
+   @Override
    public V get(Object key) {
       V result = getUncommitted(key);
       if (result == null) {
@@ -199,6 +207,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    // writers
+   @Override
    public V put(K key, V value) {
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
@@ -212,6 +221,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       }
    }
 
+   @Override
    public V remove(Object key) {
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
@@ -225,6 +235,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       }
    }
 
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
@@ -237,6 +248,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       }
    }
 
+   @Override
    public void clear() {
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
@@ -259,10 +271,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    private void invokeApplyDelta(AtomicHashMapDelta delta) {
-      Collection keys = Collections.emptyList();
+      Collection<?> keys = Collections.emptyList();
       if (delta.hasClearOperation()) {
          // if it has clear op we need to lock all keys
-         AtomicHashMap map = (AtomicHashMap) cache.get(deltaMapKey);
+         AtomicHashMap<?, ?> map = (AtomicHashMap<?, ?>) cache.get(deltaMapKey);
          if (map != null) {
             keys = new ArrayList(map.keySet());
          }

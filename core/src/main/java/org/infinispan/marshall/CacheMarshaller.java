@@ -29,6 +29,7 @@ public class CacheMarshaller extends AbstractDelegatingMarshaller {
             cfg, null, icc, extTable, globalCfg);
    }
 
+   @Override
    @Stop(priority = 11) // Stop after RPCManager to avoid send/receive and marshaller not being ready
    public void stop() {
       super.stop();

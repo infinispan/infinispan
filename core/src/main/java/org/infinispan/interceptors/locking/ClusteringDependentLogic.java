@@ -62,7 +62,7 @@ import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAn
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
 
-   static final Log log = LogFactory.getLog(ClusteringDependentLogic.class);
+   Log log = LogFactory.getLog(ClusteringDependentLogic.class);
 
    boolean localNodeIsOwner(Object key);
 

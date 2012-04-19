@@ -26,11 +26,14 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Test class that verifies how quickly Cache instances are created under different scenarios
@@ -41,14 +44,18 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "functional", testName = "profiling.CacheCreationStressTest")
 public class CacheCreationStressTest extends AbstractInfinispanTest {
 
-   public void testCreateCachesFromSameContainer() {
-      long start = System.currentTimeMillis();
-      CacheContainer container = new DefaultCacheManager();
-      for (int i = 0; i < 1000; i++) {
-         Cache cache = container.getCache(generateRandomString(20));
-      }
-      System.out.println("Took: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start));
-      TestingUtil.sleepThread(2000);
+   public void testCreateCachesFromSameContainer() throws Exception {
+      final long start = System.currentTimeMillis();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+         @Override
+         public void call() throws Exception {
+            for (int i = 0; i < 1000; i++) {
+               cm.getCache(generateRandomString(20));
+            }
+            System.out.println("Took: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start));
+            TestingUtil.sleepThread(2000);
+         }
+      });
    }
 
    public static String generateRandomString(int numberOfChars) {

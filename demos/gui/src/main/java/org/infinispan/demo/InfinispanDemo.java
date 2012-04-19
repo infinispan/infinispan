@@ -145,6 +145,7 @@ public class InfinispanDemo {
 
       // when we start up scan the classpath for a file named
       actionButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             if (actionButton.getText().equals(startCacheButtonLabel)) {
                // start cache
@@ -157,11 +158,13 @@ public class InfinispanDemo {
       });
 
       goButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             processAction(goButton, true);
 
             // do this in a separate thread
             asyncExecutor.execute(new Runnable() {
+               @Override
                public void run() {
                   // based on the value of the radio button:
                   if (putEntryRadioButton.isSelected()) {
@@ -203,6 +206,7 @@ public class InfinispanDemo {
       });
 
       removeEntryRadioButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(false);
@@ -212,6 +216,7 @@ public class InfinispanDemo {
       });
 
       putEntryRadioButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(true);
@@ -221,6 +226,7 @@ public class InfinispanDemo {
       });
 
       getEntryRadioButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(false);
@@ -231,6 +237,7 @@ public class InfinispanDemo {
 
       generateSlider.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent e) {
             randomGeneratorButton.setText("Generate " + generateSlider.getValue() + " Random Entries");
          }
@@ -239,11 +246,13 @@ public class InfinispanDemo {
       randomGeneratorButton.setText("Generate " + generateSlider.getValue() + " Random Entries");
 
       randomGeneratorButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             processAction(randomGeneratorButton, true);
 
             // process this asynchronously
             asyncExecutor.execute(new Runnable() {
+               @Override
                public void run() {
                   int entries = generateSlider.getValue();
 
@@ -274,9 +283,11 @@ public class InfinispanDemo {
          }
       });
       cacheClearButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             processAction(cacheClearButton, true);
             asyncExecutor.execute(new Runnable() {
+               @Override
                public void run() {
                   cache.clear();
                   processAction(cacheClearButton, false);
@@ -288,9 +299,11 @@ public class InfinispanDemo {
       });
 
       refreshButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             processAction(refreshButton, true);
             asyncExecutor.execute(new Runnable() {
+               @Override
                public void run() {
                   InfinispanDemo.this.updateCachedDataTable();
                   processAction(refreshButton, false);
@@ -351,6 +364,7 @@ public class InfinispanDemo {
 
       // actually start the cache asynchronously.
       asyncExecutor.execute(new Runnable() {
+         @Override
          public void run() {
             try {
                URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
@@ -409,6 +423,7 @@ public class InfinispanDemo {
       moveCacheToState(ComponentStatus.STOPPING);
       // actually stop the cache asynchronously
       asyncExecutor.execute(new Runnable() {
+         @Override
          public void run() {
             if (cache != null) {
                cache.stop();
@@ -508,13 +523,14 @@ public class InfinispanDemo {
       @CacheEntryModified
       @CacheEntryRemoved
       @CacheEntriesEvicted
-      public void removed(Event e) {
+      public void removed(Event<?, ?> e) {
          if (!e.isPre()) updateCachedDataTable();
       }
    }
 
    private void updateCachedDataTable() {
       tableUpdateExecutor.execute(new Runnable() {
+         @Override
          public void run() {
             cachedDataTableModel.update();
          }
@@ -550,14 +566,17 @@ public class InfinispanDemo {
          fireTableDataChanged();
       }
 
+      @Override
       public int getRowCount() {
          return members.size();
       }
 
+      @Override
       public int getColumnCount() {
          return 2;
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          switch (columnIndex) {
             case 0:
@@ -581,14 +600,17 @@ public class InfinispanDemo {
       List<InternalCacheEntry> data = new ArrayList<InternalCacheEntry>();
       private static final long serialVersionUID = -7109980678271415778L;
 
+      @Override
       public int getRowCount() {
          return data.size();
       }
 
+      @Override
       public int getColumnCount() {
          return 4;
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (data.size() > rowIndex) {
             InternalCacheEntry e = data.get(rowIndex);

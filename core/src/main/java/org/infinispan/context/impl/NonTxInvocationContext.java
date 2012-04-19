@@ -52,32 +52,39 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       lookedUpEntries = new HashMap<Object, CacheEntry>(INITIAL_CAPACITY);
    }
 
+   @Override
    public CacheEntry lookupEntry(Object k) {
       return lookedUpEntries.get(k);
    }
 
+   @Override
    public void removeLookedUpEntry(Object key) {
       lookedUpEntries.remove(key);
    }
 
+   @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
       lookedUpEntries.put(key, e);
    }
 
+   @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> newLookedUpEntries) {
       lookedUpEntries.putAll(newLookedUpEntries);
    }
 
+   @Override
    public void clearLookedUpEntries() {
       lookedUpEntries.clear();
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)
             (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
    }
 
+   @Override
    public boolean isOriginLocal() {
       return isContextFlagSet(ContextFlag.ORIGIN_LOCAL);
    }
@@ -86,10 +93,12 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       setContextFlag(ContextFlag.ORIGIN_LOCAL, originLocal);
    }
 
+   @Override
    public boolean isInTxScope() {
       return false;
    }
 
+   @Override
    public Object getLockOwner() {
       return Thread.currentThread();
    }

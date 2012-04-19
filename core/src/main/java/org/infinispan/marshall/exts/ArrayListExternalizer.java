@@ -53,7 +53,7 @@ public class ArrayListExternalizer extends AbstractExternalizer<ArrayList> {
    @Override
    public ArrayList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
-      ArrayList l = new ArrayList(size);
+      ArrayList<Object> l = new ArrayList<Object>(size);
       for (int i = 0; i < size; i++) l.add(input.readObject());
       return l;
    }

@@ -199,7 +199,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
          return;
       }
       for (File f : toDelete) {
-         if (!deleteFile(f)) {
+         deleteFile(f);
+         if (f.exists()) {
             log.problemsRemovingFile(f);
          }
       }
@@ -244,23 +245,22 @@ public class FileCacheStore extends BucketBasedCacheStore {
     */
    private boolean doPurge(File bucketFile) {
       Integer bucketKey = Integer.valueOf(bucketFile.getName());
-      boolean lockAcquired = false;
       boolean interrupted = false;
       try {
+         lockForReading(bucketKey);
          Bucket bucket = loadBucket(bucketFile);
 
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               lockForWriting(bucketKey);
-               lockAcquired = true;
+               upgradeLock(bucketKey);
+               updateBucket(bucket);
             }
-            updateBucket(bucket);
          } else {
             // Bucket may be an empty 0-length file
             if (bucketFile.exists() && bucketFile.length() == 0) {
-               lockForWriting(bucketKey);
-               lockAcquired = true;
-               if (!bucketFile.delete())
+               upgradeLock(bucketKey);
+               fileSync.deleteFile(bucketFile);
+               if (bucketFile.exists())
                   log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
             }
          }
@@ -269,9 +269,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       } catch (CacheLoaderException e) {
          log.problemsPurgingFile(bucketFile, e);
       } finally {
-         if (lockAcquired) {
-            unlock(bucketKey);
-         }
+         unlock(bucketKey);
       }
       return !interrupted;
    }
@@ -398,11 +396,11 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return loadBucket(getLockFromKey(key));
    }
 
-   private boolean deleteFile(File f) {
+   private void deleteFile(File f) {
       if (trace) {
          log.tracef("Really delete file %s", f);
       }
-      return f.delete();
+      fileSync.deleteFile(f);
    }
 
    private boolean purgeFile(File f) {
@@ -505,6 +503,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
        */
       void stop();
 
+      void deleteFile(File f);
    }
 
    private static class BufferedFileSync implements FileSync {
@@ -513,8 +512,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       @Override
       public void write(byte[] bytes, File f) throws IOException {
          if (bytes.length == 0) {
-            // Short circuit
-            if (f.exists()) f.delete();
+            // Short circuit for deleting files
+            deleteFile(f);
             return;
          }
 
@@ -540,6 +539,17 @@ public class FileCacheStore extends BucketBasedCacheStore {
             }
          }
          channel.write(ByteBuffer.wrap(bytes));
+      }
+
+      @Override
+      public void deleteFile(File f) {
+         String path = f.getPath();
+         // First remove the channel from the map
+         FileChannel fc = streams.remove(path);
+         // Then close the channel (handles null params)
+         Util.close(fc);
+         // Now that the channel is closed we can delete the file
+         f.delete();
       }
 
       private FileChannel createChannel(File f) throws FileNotFoundException {
@@ -644,8 +654,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
                fos = new FileOutputStream(f);
                fos.write(bytes);
                fos.flush();
-            } else if (f.exists()) {
-               f.delete();
+               fos.getChannel().force(true);
+            } else {
+               deleteFile(f);
             }
          } finally {
             if (fos != null)
@@ -660,12 +671,17 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       @Override
       public void purge(File f) throws IOException {
-         f.delete();
+         deleteFile(f);
       }
 
       @Override
       public void stop() {
          // No-op
+      }
+
+      @Override
+      public void deleteFile(File f) {
+         f.delete();
       }
    }
 

@@ -73,10 +73,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.viewId = viewId;
    }
 
+   @Override
    public GlobalTransaction getGlobalTransaction() {
       return tx;
    }
 
+   @Override
    public List<WriteCommand> getModifications() {
       return modifications;
    }
@@ -85,19 +87,23 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Arrays.asList(modifications);
    }
 
+   @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return lookedUpEntries;
    }
 
+   @Override
    public CacheEntry lookupEntry(Object key) {
       if (lookedUpEntries == null) return null;
       return lookedUpEntries.get(key);
    }
 
+   @Override
    public void removeLookedUpEntry(Object key) {
       if (lookedUpEntries != null) lookedUpEntries.remove(key);
    }
 
+   @Override
    public void clearLookedUpEntries() {
       lookedUpEntries = null;
    }
@@ -160,10 +166,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       lockedKeys.add(key);
    }
 
+   @Override
    public Set<Object> getLockedKeys() {
       return lockedKeys == null ? Collections.emptySet() : lockedKeys;
    }
 
+   @Override
    public void clearLockedKeys() {
       if (trace) log.tracef("Clearing locked keys: %s", lockedKeys);
       lockedKeys = null;
@@ -199,5 +207,15 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
       this.updatedEntryVersions = updatedEntryVersions;
+   }
+   
+   @Override
+   public void addReadKey(Object key) {
+      // No-op
+   }
+   
+   @Override
+   public boolean keyRead(Object key) {
+      return false;
    }
 }

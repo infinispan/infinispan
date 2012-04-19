@@ -91,7 +91,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private volatile BaseStateTransferTask stateTransferTask;
    private CommandBuilder commandBuilder;
    protected TransactionTable transactionTable;
-   private LockContainer lockContainer;
+   private LockContainer<?> lockContainer;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -100,7 +100,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
-                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer lockContainer) {
+                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -149,9 +149,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    protected abstract ConsistentHash createConsistentHash(List<Address> members);
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
+   @Override
    @Start(priority = 1000)
    public void waitForJoinToComplete() throws InterruptedException {
-      joinCompletedLatch.await(configuration.getRehashWaitTime(), TimeUnit.MILLISECONDS);
+      joinCompletedLatch.await(getTimeout(), TimeUnit.MILLISECONDS);
    }
 
    @Stop(priority = 20)
@@ -181,7 +182,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Override
    public void waitForJoinToStart() throws InterruptedException {
-      joinStartedLatch.await(configuration.getRehashWaitTime(), TimeUnit.MILLISECONDS);
+      joinStartedLatch.await(getTimeout(), TimeUnit.MILLISECONDS);
    }
 
    @Override
@@ -204,7 +205,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Override
    public void waitForStateTransferToComplete() throws InterruptedException {
-      stateTransferInProgressLatch.await(configuration.getRehashWaitTime(), TimeUnit.MILLISECONDS);
+      stateTransferInProgressLatch.await(getTimeout(), TimeUnit.MILLISECONDS);
    }
 
    private boolean isLatchOpen(CountDownLatch latch) {
@@ -306,7 +307,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       final StateTransferControlCommand cmd = cf.buildStateTransferCommand(type, getAddress(), viewId, state, lockInfo);
 
-      rpcManager.invokeRemotelyInFuture(targets, cmd, false, stateTransferFuture, configuration.getRehashRpcTimeout());
+      rpcManager.invokeRemotelyInFuture(targets, cmd, false, stateTransferFuture, getTimeout());
    }
 
    public boolean isLastViewId(int viewId) {
@@ -399,4 +400,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private static interface CommandBuilder {
       PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e);
    }
+
+   protected abstract long getTimeout();
 }

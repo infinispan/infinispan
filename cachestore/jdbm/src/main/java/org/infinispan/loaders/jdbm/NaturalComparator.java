@@ -31,12 +31,13 @@ import java.util.Comparator;
  * 
  * @author Elias Ross
  */
-public class NaturalComparator implements Comparator, Serializable {
+public class NaturalComparator<T> implements Comparator<T>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public int compare(Object o1, Object o2) {
-        return ((Comparable)o1).compareTo(o2);
+    @Override
+    public int compare(T o1, T o2) {
+        return ((Comparable<T>)o1).compareTo(o2);
     }
 
 }

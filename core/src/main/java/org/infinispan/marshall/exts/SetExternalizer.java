@@ -65,7 +65,7 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    @Override
    public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
-      Set subject = null;
+      Set<Object> subject = null;
       switch (magicNumber) {
          case HASHSET:
             subject = new HashSet();

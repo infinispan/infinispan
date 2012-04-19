@@ -45,6 +45,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    private String userName;
    private String password;
 
+   @Override
    public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
       loadDriver(config.getDriverClass(), classLoader);
       this.connectionUrl = config.getConnectionUrl();
@@ -55,10 +56,12 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       }
    }
 
+   @Override
    public void stop() {
       //do nothing
    }
 
+   @Override
    public Connection getConnection() throws CacheLoaderException {
       try {
          Connection connection = DriverManager.getConnection(connectionUrl, userName, password);
@@ -70,6 +73,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       }
    }
 
+   @Override
    public void releaseConnection(Connection conn) {
       try {
          conn.close();

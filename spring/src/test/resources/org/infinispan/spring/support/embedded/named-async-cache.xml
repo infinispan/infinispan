@@ -231,9 +231,9 @@
         <clustering mode="replication">
 
          <!--
-            Defines whether to retrieve state on startup.  This is only valud for 'replication' mode.
+            Configures state transfer
          -->
-            <stateRetrieval timeout="20000" fetchInMemoryState="false" alwaysProvideInMemoryState="false" />
+            <stateTransfer timeout="20000" fetchInMemoryState="false" />
 
          <!--
             Network calls are synchronous.

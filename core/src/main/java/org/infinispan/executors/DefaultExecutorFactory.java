@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DefaultExecutorFactory implements ExecutorFactory {
    private final static AtomicInteger counter = new AtomicInteger(0);
 
+   @Override
    public ExecutorService getExecutor(Properties p) {
       TypedProperties tp = TypedProperties.toTypedProperties(p);
       int maxThreads = tp.getIntProperty("maxThreads", 1);
@@ -48,6 +49,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
       final int threadPrio = tp.getIntProperty("threadPriority", Thread.MIN_PRIORITY);
       final String threadNamePrefix = tp.getProperty("threadNamePrefix", tp.getProperty("componentName", "Thread"));
       ThreadFactory tf = new ThreadFactory() {
+         @Override
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());
             th.setDaemon(true);

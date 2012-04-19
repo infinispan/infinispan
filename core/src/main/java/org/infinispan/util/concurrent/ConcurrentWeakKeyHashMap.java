@@ -959,6 +959,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     *         key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V putIfAbsent(K key, V value) {
       if (value == null) {
          throw new NullPointerException();
@@ -1000,6 +1001,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean remove(Object key, Object value) {
       int hash = hashOf(key);
       if (value == null) {
@@ -1013,6 +1015,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     *
     * @throws NullPointerException if any of the arguments are null
     */
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       if (oldValue == null || newValue == null) {
          throw new NullPointerException();
@@ -1028,6 +1031,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     *         key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V replace(K key, V value) {
       if (value == null) {
          throw new NullPointerException();
@@ -1224,10 +1228,12 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
    final class KeyIterator
          extends HashIterator implements ReusableIterator<K>, Enumeration<K> {
 
+      @Override
       public K next() {
          return super.nextEntry().key();
       }
 
+      @Override
       public K nextElement() {
          return super.nextEntry().key();
       }
@@ -1236,10 +1242,12 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
    final class ValueIterator
          extends HashIterator implements ReusableIterator<V>, Enumeration<V> {
 
+      @Override
       public V next() {
          return super.nextEntry().value();
       }
 
+      @Override
       public V nextElement() {
          return super.nextEntry().value();
       }
@@ -1266,14 +1274,17 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
 
       }
 
+      @Override
       public K getKey() {
          return key;
       }
 
+      @Override
       public V getValue() {
          return value;
       }
 
+      @Override
       public V setValue(V value) {
          V oldValue = this.value;
          this.value = value;
@@ -1335,6 +1346,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
 
    final class EntryIterator extends HashIterator implements
                                                   ReusableIterator<Entry<K, V>> {
+      @Override
       public Map.Entry<K, V> next() {
          HashEntry<K, V> e = super.nextEntry();
          return new WriteThroughEntry(e.key(), e.value());

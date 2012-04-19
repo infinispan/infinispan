@@ -57,74 +57,91 @@ import java.util.Collection;
 public abstract class AbstractVisitor implements Visitor {
    // write commands
 
+   @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
    
+   @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    // read commands
 
+   @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    // tx commands
 
+   @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
       return handleDefault(ctx, invalidateCommand);
    }
    
+   @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
 	   return visitInvalidateCommand(ctx, invalidateL1Command);
    }
@@ -155,14 +172,17 @@ public abstract class AbstractVisitor implements Visitor {
       }
    }
 
+   @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
+   @Override
    public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
    
+   @Override
    public Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<?> command) throws Throwable {
       return handleDefault(ctx, command);
    }

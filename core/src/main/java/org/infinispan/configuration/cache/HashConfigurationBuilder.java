@@ -98,6 +98,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashEnabled() {
       stateTransfer().fetchInMemoryState(true);
       activated = true;
@@ -109,9 +110,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashEnabled(boolean enabled) {
       stateTransfer().fetchInMemoryState(enabled);
-      activated = true;
       return this;
    }
 
@@ -120,9 +121,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * cluster or a node leaves
     * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder rehashDisabled() {
       stateTransfer().fetchInMemoryState(false);
-      activated = true;
       return this;
    }
 
@@ -133,7 +134,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Deprecated
    public HashConfigurationBuilder rehashRpcTimeout(long rehashRpcTimeout) {
       stateTransfer().timeout(rehashRpcTimeout);
-      activated = true;
       return this;
    }
 
@@ -174,7 +174,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    HashConfiguration create() {
-      // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance
+      // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
       return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes,
             groupsConfigurationBuilder.create(), stateTransfer().create(), activated);
    }

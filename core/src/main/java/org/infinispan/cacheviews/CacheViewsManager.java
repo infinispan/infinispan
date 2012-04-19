@@ -41,12 +41,12 @@ public interface CacheViewsManager {
    /**
     * @return The currently installed view for the given cache.
     */
-   public CacheView getCommittedView(String cacheName);
+   CacheView getCommittedView(String cacheName);
 
    /**
     * @return The pending view for the given cache.
     */
-   public CacheView getPendingView(String cacheName);
+   CacheView getPendingView(String cacheName);
 
    /**
     * @return The members which will (should) handle commands for a given cache.
@@ -56,12 +56,12 @@ public interface CacheViewsManager {
    /**
     * Start the cache.
     */
-   public void join(String cacheName, CacheViewListener listener) throws Exception;
+   void join(String cacheName, CacheViewListener listener) throws Exception;
 
    /**
     * Stop the cache.
     */
-   public void leave(String cacheName);
+   void leave(String cacheName);
 
 
    // Remote interface: these methods are called by CacheViewControlCommand

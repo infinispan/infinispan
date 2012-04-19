@@ -32,6 +32,7 @@ public abstract class JmxComponent implements Comparable<JmxComponent> {
    public String name;
    public String desc = "";
 
+   @Override
    public int compareTo(JmxComponent other) {
       return name.compareTo(other.name);
    }

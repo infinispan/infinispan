@@ -23,6 +23,7 @@
 package org.infinispan.server.memcached
 
 import org.jboss.netty.buffer.ChannelBuffer
+import java.lang.StringBuilder
 
 /**
  * Memcached text protocol utilities.
@@ -30,12 +31,13 @@ import org.jboss.netty.buffer.ChannelBuffer
  * @author Galder Zamarreño
  * @since 4.1
  */
-trait TextProtocolUtil {
+object TextProtocolUtil {
    // todo: refactor name once old code has been removed?
 
    val CRLF = "\r\n"
    val CRLFBytes = "\r\n".getBytes
    val END = "END\r\n".getBytes
+   val END_SIZE = END.length
    val DELETED = "DELETED\r\n".getBytes
    val NOT_FOUND = "NOT_FOUND\r\n".getBytes
    val EXISTS = "EXISTS\r\n".getBytes
@@ -45,7 +47,11 @@ trait TextProtocolUtil {
    val ERROR = "ERROR\r\n".getBytes
    val CLIENT_ERROR_BAD_FORMAT = "CLIENT_ERROR bad command line format: "
    val SERVER_ERROR = "SERVER_ERROR "
+   val VALUE = "VALUE ".getBytes
+   val VALUE_SIZE = VALUE.length
+   val ZERO = "0".getBytes
 
+   val SP = 32
    val CR = 13
    val LF = 10
 
@@ -63,12 +69,12 @@ trait TextProtocolUtil {
 
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
       var next = buffer.readByte 
-      if (next == 32) { // Space
+      if (next == SP) { // Space
          (sb.toString.trim, false)
       }
-      else if (next == 13) { // CR
+      else if (next == CR) { // CR
          next = buffer.readByte
-         if (next == 10) { // LF
+         if (next == LF) { // LF
             (sb.toString.trim, true)
          } else {
             sb.append(next.asInstanceOf[Char])
@@ -93,15 +99,15 @@ trait TextProtocolUtil {
 
    private def readLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte
-      if (next == 13) { // CR
+      if (next == CR) { // CR
          next = buffer.readByte
-         if (next == 10) { // LF
+         if (next == LF) { // LF
             sb.toString.trim
          } else {
             sb.append(next.asInstanceOf[Char])
             readLine(buffer, sb)
          }
-      } else if (next == 10) { //LF
+      } else if (next == LF) { //LF
          sb.toString.trim
       } else {
          sb.append(next.asInstanceOf[Char])

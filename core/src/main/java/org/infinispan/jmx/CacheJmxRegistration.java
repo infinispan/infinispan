@@ -60,11 +60,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
-   private AdvancedCache cache;
+   private AdvancedCache<?, ?> cache;
    private Set<Component> nonCacheComponents;
 
    @Inject
-   public void initialize(Cache cache, GlobalConfiguration globalConfig) {
+   public void initialize(Cache<?, ?> cache, GlobalConfiguration globalConfig) {
       this.cache = cache.getAdvancedCache();
       this.globalConfig = globalConfig;
    }

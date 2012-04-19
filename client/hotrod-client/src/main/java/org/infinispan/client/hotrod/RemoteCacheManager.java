@@ -427,6 +427,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @return a cache instance identified by cacheName or null if the cache
     *         name has not been defined
     */
+   @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
       return getCache(cacheName, forceReturnValueDefault);
    }
@@ -441,6 +442,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @return a remote cache instance that can be used to send requests to the
     *         default cache in the server
     */
+   @Override
    public <K, V> RemoteCache<K, V> getCache() {
       return getCache(forceReturnValueDefault);
    }

@@ -43,6 +43,7 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,7 +143,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void addShutdownHook() {
-      ArrayList al = MBeanServerFactory.findMBeanServer(null);
+      ArrayList<MBeanServer> al = MBeanServerFactory.findMBeanServer(null);
       boolean registerShutdownHook = (globalConfiguration.getShutdownHookBehavior() == DEFAULT && al.isEmpty())
             || globalConfiguration.getShutdownHookBehavior() == REGISTER;
 

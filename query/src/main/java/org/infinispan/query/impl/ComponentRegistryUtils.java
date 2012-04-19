@@ -33,7 +33,7 @@ public class ComponentRegistryUtils {
    private ComponentRegistryUtils() {
    }
 
-   public static <T> T getComponent(Cache cache, Class<T> class1) {
+   public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       T component = componentRegistry.getComponent(class1);
       if (component == null) {

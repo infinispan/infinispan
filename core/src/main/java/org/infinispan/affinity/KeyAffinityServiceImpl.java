@@ -195,7 +195,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       keyGenWorker.stop();
    }
 
-   public void handleViewChange(TopologyChangedEvent vce) {
+   public void handleViewChange(TopologyChangedEvent<?, ?> vce) {
       if (vce.isPre())
          return;
 
@@ -372,6 +372,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       return keyGenWorker.isActive();
    }
 
+   @Override
    public boolean isStarted() {
       return started;
    }

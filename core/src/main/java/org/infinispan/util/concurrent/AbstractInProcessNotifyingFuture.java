@@ -29,6 +29,7 @@ package org.infinispan.util.concurrent;
  * @version 4.1
  */
 public abstract class AbstractInProcessNotifyingFuture<V> extends AbstractInProcessFuture<V> implements NotifyingFuture<V> {
+   @Override
    public NotifyingFuture<V> attachListener(FutureListener<V> futureListener) {
       futureListener.futureDone(this);
       return this;

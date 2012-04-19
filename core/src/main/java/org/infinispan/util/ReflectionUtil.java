@@ -52,7 +52,7 @@ public class ReflectionUtil {
 
    private static final Class<?>[] primitiveArrays = {int[].class, byte[].class, short[].class, long[].class,
                                                       float[].class, double[].class, boolean[].class, char[].class};
-   public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+   public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
 
 
    /**
@@ -63,7 +63,7 @@ public class ReflectionUtil {
     * @param annotationType the type of annotation to look for
     * @return List of Method objects that require injection.
     */
-   public static List<Method> getAllMethods(Class c, Class<? extends Annotation> annotationType) {
+   public static List<Method> getAllMethods(Class<?> c, Class<? extends Annotation> annotationType) {
       List<Method> annotated = new LinkedList<Method>();
       inspectRecursively(c, annotated, annotationType);
       return annotated;
@@ -77,7 +77,7 @@ public class ReflectionUtil {
     * @param annotationType the type of annotation to look for
     * @return List of Method objects that require injection.
     */
-   public static List<Method> getAllMethodsShallow(Class c, Class<? extends Annotation> annotationType) {
+   public static List<Method> getAllMethodsShallow(Class<?> c, Class<? extends Annotation> annotationType) {
       List<Method> annotated = new LinkedList<Method>();
       for (Method m : c.getDeclaredMethods()) {
          if (m.isAnnotationPresent(annotationType))
@@ -139,7 +139,7 @@ public class ReflectionUtil {
       return null;
    }
 
-   public static Method findMethod(Class<?> type, String methodName, Class[] parameters) {
+   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) {
       return findRecursively(type, methodName, parameters);
    }
 
@@ -147,7 +147,7 @@ public class ReflectionUtil {
       return findRecursively(type, methodName, toClassArray(parameters));
    }
 
-   private static Method findRecursively(Class<?> type, String methodName, Class[] parameters) {
+   private static Method findRecursively(Class<?> type, String methodName, Class<?>[] parameters) {
       try {
          return type.getDeclaredMethod(methodName, parameters);
       } catch (NoSuchMethodException e) {
@@ -168,7 +168,7 @@ public class ReflectionUtil {
     * @param s
     * @param annotationType
     */
-   private static void inspectRecursively(Class c, List<Method> s, Class<? extends Annotation> annotationType) {
+   private static void inspectRecursively(Class<?> c, List<Method> s, Class<? extends Annotation> annotationType) {
 
       for (Method m : c.getDeclaredMethods()) {
          // don't bother if this method has already been overridden by a subclass
@@ -180,7 +180,7 @@ public class ReflectionUtil {
       if (!c.equals(Object.class)) {
          if (!c.isInterface()) {
             inspectRecursively(c.getSuperclass(), s, annotationType);
-            for (Class ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
+            for (Class<?> ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
          }
       }
    }
@@ -213,7 +213,7 @@ public class ReflectionUtil {
       }
    }
 
-   private static Field findFieldRecursively(Class c, String fieldName) {
+   private static Field findFieldRecursively(Class<?> c, String fieldName) {
       Field f = null;
       try {
          f = c.getDeclaredField(fieldName);
@@ -250,7 +250,7 @@ public class ReflectionUtil {
             if (!c.isInterface()) {
                retval = findGetterForField(c.getSuperclass(), fieldName);
                if (retval == null) {
-                  for (Class ifc : c.getInterfaces()) {
+                  for (Class<?> ifc : c.getInterfaces()) {
                      retval = findGetterForField(ifc, fieldName);
                      if (retval != null) break;
                   }
@@ -339,7 +339,7 @@ public class ReflectionUtil {
     * @return the annotation instance, or null
     */
    @SuppressWarnings("unchecked")
-   public static <T extends Annotation> T getAnnotation(Class clazz, Class<T> ann) {
+   public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> ann) {
       while (true) {
          // first check class
          T a = (T) clazz.getAnnotation(ann);
@@ -347,15 +347,15 @@ public class ReflectionUtil {
 
          // check interfaces
          if (!clazz.isInterface()) {
-            Class[] interfaces = clazz.getInterfaces();
-            for (Class inter : interfaces) {
+            Class<?>[] interfaces = clazz.getInterfaces();
+            for (Class<?> inter : interfaces) {
                a = getAnnotation(inter, ann);
                if (a != null) return a;
             }
          }
 
          // check superclasses
-         Class superclass = clazz.getSuperclass();
+         Class<?> superclass = clazz.getSuperclass();
          if (superclass == null) return null; // no where else to look
          clazz = superclass;
       }
@@ -369,7 +369,7 @@ public class ReflectionUtil {
     * @param annotation annotation to look for
     * @return true if the annotation is found, false otherwise
     */
-   public static boolean isAnnotationPresent(Class clazz, Class<? extends Annotation> annotation) {
+   public static boolean isAnnotationPresent(Class<?> clazz, Class<? extends Annotation> annotation) {
       return getAnnotation(clazz, annotation) != null;
    }
 
@@ -390,9 +390,9 @@ public class ReflectionUtil {
             .getName().startsWith("is"));
    }
 
-   public static Class[] toClassArray(String[] typeList) throws ClassNotFoundException {
+   public static Class<?>[] toClassArray(String[] typeList) throws ClassNotFoundException {
       if (typeList == null) return EMPTY_CLASS_ARRAY;
-      Class[] retval = new Class[typeList.length];
+      Class<?>[] retval = new Class[typeList.length];
       int i = 0;
       ClassLoader classLoader = ReflectionUtil.class.getClassLoader();
       for (String s : typeList) retval[i++] = getClassForName(s, classLoader);
@@ -410,7 +410,7 @@ public class ReflectionUtil {
       throw new ClassNotFoundException("Class " + name + " cannot be found");
    }
 
-   public static String[] toStringArray(Class[] classes) {
+   public static String[] toStringArray(Class<?>[] classes) {
       if (classes == null)
          return EMPTY_STRING_ARRAY;
       else {

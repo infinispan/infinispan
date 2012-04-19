@@ -41,17 +41,25 @@ public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManager
       super();
    }
 
+   @Override
    protected ReplicatedStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView) {
       return new ReplicatedStateTransferTask(rpcManager, configuration, dataContainer,
             this, stateTransferLock, cacheNotifier, viewId, members, chOld, chNew, initialView);
    }
 
+   @Override
+   protected long getTimeout() {
+      return configuration.getStateRetrievalTimeout();
+   }
+
+   @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
       // The user will not be able to configure the consistent hash in replicated mode
       // We are always going to use the default consistent hash function.
       return ConsistentHashHelper.createConsistentHash(configuration, members);
    }
 
+   @Override
    public CacheStore getCacheStoreForStateTransfer() {
       if (cacheLoaderManager == null || !cacheLoaderManager.isEnabled() || cacheLoaderManager.isShared()
             || !cacheLoaderManager.isFetchPersistentState())
@@ -59,6 +67,7 @@ public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManager
       return cacheLoaderManager.getCacheStore();
    }
 
+   @Override
    public boolean isLocationInDoubt(Object key) {
       return !isJoinComplete();
    }

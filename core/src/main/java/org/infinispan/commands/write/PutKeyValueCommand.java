@@ -72,13 +72,20 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       this.value = value;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitPutKeyValueCommand(ctx, this);
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      if (e == null && ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         successful = false;
+         return null;
+      }
+
       Object entryValue = e.getValue();
       if (entryValue != null && putIfAbsent && !e.isRemoved()) {
          successful = false;
@@ -110,14 +117,17 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       return o;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
@@ -184,10 +194,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             .toString();
    }
 
+   @Override
    public boolean isSuccessful() {
       return successful;
    }
 
+   @Override
    public boolean isConditional() {
       return putIfAbsent;
    }

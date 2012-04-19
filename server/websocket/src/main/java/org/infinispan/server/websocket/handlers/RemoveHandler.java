@@ -35,7 +35,8 @@ import org.json.JSONObject;
  */
 public class RemoveHandler implements OpHandler {
 
-	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
+	@Override
+   public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String key = (String) opPayload.get(OpHandler.KEY);
 		
 		cache.remove(key);

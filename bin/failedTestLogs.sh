@@ -21,7 +21,8 @@ if [ -z $FAILED_TESTS ] ; then
 fi
 
 for TEST in $FAILED_TESTS ; do
-  SHORTNAME=`perl -e '$t = $ARGV[0]; chomp $t; $t =~ s/[a-z0-9]//g; print lc $t;' $TEST`
-  echo "$TEST > $SHORTNAME.log"
-  $CAT $FILE | $DIR/greplog.py $TEST > $SHORTNAME.log
+  SHORTNAME=`perl -e '$t = $ARGV[0]; chomp $t; $t =~ s/[a-z0-9]//g; print $t;' $TEST`
+  LOWSHORTNAME=`perl -e '$t = $ARGV[0]; chomp $t; $t =~ s/[a-z0-9]//g; print lc $t;' $TEST`
+  echo "$TEST > $LOWSHORTNAME.log"
+  $CAT $FILE | $DIR/greplog.py "\b$TEST\b" | perl -npe "s/(?![a-zA-Z.])$TEST(?![a-zA-Z.])/$SHORTNAME/g" > $LOWSHORTNAME.log
 done

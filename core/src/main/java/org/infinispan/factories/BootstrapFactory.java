@@ -38,9 +38,9 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 @DefaultFactoryFor(classes = {Cache.class, AdvancedCache.class, Configuration.class, ComponentRegistry.class})
 @SurvivesRestarts
 public class BootstrapFactory extends AbstractNamedCacheComponentFactory {
-   AdvancedCache advancedCache;
+   AdvancedCache<?, ?> advancedCache;
 
-   public BootstrapFactory(AdvancedCache advancedCache, Configuration configuration, ComponentRegistry componentRegistry) {
+   public BootstrapFactory(AdvancedCache<?, ?> advancedCache, Configuration configuration, ComponentRegistry componentRegistry) {
       this.componentRegistry = componentRegistry;
       this.configuration = configuration;
       this.advancedCache = advancedCache;

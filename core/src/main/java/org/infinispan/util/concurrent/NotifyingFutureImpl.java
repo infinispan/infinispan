@@ -54,22 +54,27 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
       this.actualReturnValue = actualReturnValue;
    }
 
+   @Override
    public void setNetworkFuture(Future<Object> future) {
       this.ioFuture = future;
    }
 
+   @Override
    public boolean cancel(boolean mayInterruptIfRunning) {
       return ioFuture.cancel(mayInterruptIfRunning);
    }
 
+   @Override
    public boolean isCancelled() {
       return ioFuture.isCancelled();
    }
 
+   @Override
    public boolean isDone() {
       return ioFuture.isDone();
    }
 
+   @Override
    public Object get() throws InterruptedException, ExecutionException {
       if (!callCompleted) {
          ioFuture.get();
@@ -77,6 +82,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
       return actualReturnValue;
    }
 
+   @Override
    public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
       if (!callCompleted) {
          ioFuture.get(timeout, unit);
@@ -84,6 +90,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
       return actualReturnValue;
    }
 
+   @Override
    public void notifyDone() {
       listenerLock.writeLock().lock();
       try {
@@ -94,6 +101,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
       }
    }
 
+   @Override
    public NotifyingFuture<Object> attachListener(FutureListener<Object> objectFutureListener) {
       listenerLock.readLock().lock();
       try {

@@ -33,5 +33,5 @@ public interface JAXBUnmarshallable {
     * Indicates that this element is about to be unmarshalled from the XML source that was processed.
     * @param parent parent component
     */
-   public void willUnmarshall(Object parent);
+   void willUnmarshall(Object parent);
 }

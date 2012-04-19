@@ -41,7 +41,7 @@ import org.infinispan.query.clustered.QueryResponse;
  */
 public abstract class ClusteredQueryCommandWorker {
 
-   protected Cache cache;
+   protected Cache<?, ?> cache;
 
    private QueryBox queryBox;
 
@@ -52,7 +52,7 @@ public abstract class ClusteredQueryCommandWorker {
    protected UUID lazyQueryId;
    protected int docIndex;
 
-   public void init(Cache cache, HSQuery query, UUID lazyQueryId, int docIndex) {
+   public void init(Cache<?, ?> cache, HSQuery query, UUID lazyQueryId, int docIndex) {
       this.cache = cache;
       this.query = query;
       this.lazyQueryId = lazyQueryId;

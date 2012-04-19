@@ -61,10 +61,12 @@ public class ChainingCacheStore implements CacheStore {
    LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>(2);
    LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>(2);
 
+   @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.store(ed);
    }
 
+   @Override
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
       for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
@@ -77,6 +79,7 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
+   @Override
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
       for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
@@ -89,42 +92,51 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
+   @Override
    public void clear() throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.clear();
    }
 
+   @Override
    public boolean remove(Object key) throws CacheLoaderException {
       boolean r = false;
       for (CacheStore s : stores.keySet()) r = s.remove(key) || r;
       return r;
    }
 
+   @Override
    public void removeAll(Set<Object> keys) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.removeAll(keys);
    }
 
+   @Override
    public void purgeExpired() throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.purgeExpired();
    }
 
+   @Override
    public void commit(GlobalTransaction tx) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.commit(tx);
    }
 
+   @Override
    public void rollback(GlobalTransaction tx) {
       for (CacheStore s : stores.keySet()) s.rollback(tx);
    }
 
+   @Override
    public void prepare(List<? extends Modification> list, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.prepare(list, tx, isOnePhase);
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   @Override
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       for (Map.Entry<CacheLoader, CacheLoaderConfig> e : loaders.entrySet()) {
          e.getKey().init(e.getValue(), cache, m);
       }
    }
 
+   @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       InternalCacheEntry se = null;
       for (CacheLoader l : loaders.keySet()) {
@@ -134,6 +146,7 @@ public class ChainingCacheStore implements CacheStore {
       return se;
    }
 
+   @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();
       for (CacheStore s : stores.keySet()) set.addAll(s.loadAll());
@@ -160,6 +173,7 @@ public class ChainingCacheStore implements CacheStore {
       return set;
    }
 
+   @Override
    public boolean containsKey(Object key) throws CacheLoaderException {
       for (CacheLoader l : loaders.keySet()) {
          if (l.containsKey(key)) return true;
@@ -167,14 +181,17 @@ public class ChainingCacheStore implements CacheStore {
       return false;
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return null;
    }
 
+   @Override
    public void start() throws CacheLoaderException {
       for (CacheLoader l : loaders.keySet()) l.start();
    }
 
+   @Override
    public void stop() throws CacheLoaderException {
       for (CacheLoader l : loaders.keySet()) l.stop();
    }
@@ -196,6 +213,7 @@ public class ChainingCacheStore implements CacheStore {
       return stores;
    }
 
+   @Override
    public CacheStoreConfig getCacheStoreConfig() {
       return null;
    }

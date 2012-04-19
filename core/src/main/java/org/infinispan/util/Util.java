@@ -39,6 +39,7 @@ import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -550,7 +551,21 @@ public final class Util {
       return buf.toString();
    }
 
-   public static Double constructDouble(Class type, Object o) {
+   public static String hexDump(ByteBuffer buffer) {
+      byte[] data = new byte[buffer.remaining()];
+      int pos = buffer.position();
+      buffer.get(data);
+      buffer.position(pos);
+      // TODO: Remove code dup
+      StringBuilder buf = new StringBuilder(buffer.remaining() + 22);
+      for (byte b : data)
+         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+            .append(HEX_VALUES.charAt((b & 0x0F)));
+
+      return buf.toString();
+   }
+
+   public static Double constructDouble(Class<?> type, Object o) {
       if (type.equals(Long.class) || type.equals(long.class))
          return Double.valueOf((Long) o);
       else if (type.equals(Double.class) || type.equals(double.class))

@@ -20,16 +20,17 @@
  */
 package org.infinispan.query.api;
 
+import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 
 @ProvidedId
-@Indexed
+@Indexed(index="indexA")
 public class TestEntity {
 
-   @Field(store = Store.YES)
+   @Field(store = Store.YES, analyze=Analyze.NO)
    private String name;
 
    @Field(store = Store.YES)

@@ -77,42 +77,52 @@ public class StatsImpl implements Stats {
       }
    }
 
+   @Override
    public long getTimeSinceStart() {
       return timeSinceStart;
    }
 
+   @Override
    public int getCurrentNumberOfEntries() {
       return currentNumberOfEntries;
    }
 
+   @Override
    public long getTotalNumberOfEntries() {
       return totalNumberOfEntries;
    }
 
+   @Override
    public long getRetrievals() {
       return retrievals;
    }
 
+   @Override
    public long getStores() {
       return stores;
    }
 
+   @Override
    public long getHits() {
       return hits;
    }
 
+   @Override
    public long getMisses() {
       return misses;
    }
 
+   @Override
    public long getRemoveHits() {
       return removeHits;
    }
 
+   @Override
    public long getRemoveMisses() {
       return removeMisses;
    }
 
+   @Override
    public long getEvictions() {
       return evictions;
    }

@@ -110,6 +110,7 @@ public class CacheViewControlCommand implements CacheRpcCommand {
       this.cacheViewsManager = cacheViewsManager;
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
@@ -163,14 +164,17 @@ public class CacheViewControlCommand implements CacheRpcCommand {
       return type;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
+   @Override
    public Object[] getParameters() {
       return new Object[]{(byte) type.ordinal(), sender, newViewId, newMembers, oldViewId, oldMembers};
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;

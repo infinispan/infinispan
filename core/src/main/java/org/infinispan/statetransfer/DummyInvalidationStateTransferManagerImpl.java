@@ -35,6 +35,7 @@ import java.util.List;
  * @since 5.1
  * @deprecated This is just a temporary hack, do not rely on it to exist in future versions
  */
+@Deprecated
 public class DummyInvalidationStateTransferManagerImpl extends BaseStateTransferManagerImpl {
    @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
@@ -51,6 +52,7 @@ public class DummyInvalidationStateTransferManagerImpl extends BaseStateTransfer
                                                            final boolean initialView) {
       return new BaseStateTransferTask(this, rpcManager, stateTransferLock, cacheNotifier, configuration, dataContainer,
             members, viewId, null, null, initialView) {
+         @Override
          public void doPerformStateTransfer() throws Exception {
             // The state transfer lock is not really used in invalidation mode
             // but it's easier to block write commands here than override the base methods
@@ -63,6 +65,12 @@ public class DummyInvalidationStateTransferManagerImpl extends BaseStateTransfer
             // do nothing
          }
       };
+   }
+
+   @Override
+   protected long getTimeout() {
+      // although we don't have state transfer RPCs, we still have to wait for the join to complete
+      return configuration.getStateRetrievalTimeout();
    }
 
    @Override

@@ -29,6 +29,7 @@ package org.infinispan.loaders.modifications;
  * @since 4.0
  */
 public class Clear implements Modification {
+   @Override
    public Type getType() {
       return Type.CLEAR;
    }

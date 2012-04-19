@@ -39,26 +39,32 @@ public class TransactionCompletedAdapter<K, V> extends AbstractAdapter<Transacti
 
    public static final TransactionCompletedEvent<?, ?> EMPTY = new TransactionCompletedEvent<Object, Object>() {
 
+      @Override
       public Type getType() {
          return null;
       }
 
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return null;
       }
 
+      @Override
       public boolean isOriginLocal() {
          return false;
       }
 
+      @Override
       public boolean isPre() {
          return false;
       }
 
+      @Override
       public Cache<Object, Object> getCache() {
          return null;
       }
 
+      @Override
       public boolean isTransactionSuccessful() {
          return false;
       }
@@ -73,6 +79,7 @@ public class TransactionCompletedAdapter<K, V> extends AbstractAdapter<Transacti
       super(event);
    }
 
+   @Override
    @TransactionCompleted
    public void fire(TransactionCompletedEvent<K, V> payload) {
       super.fire(payload);
