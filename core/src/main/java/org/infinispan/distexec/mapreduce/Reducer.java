@@ -25,6 +25,8 @@ package org.infinispan.distexec.mapreduce;
 import java.io.Serializable;
 import java.util.Iterator;
 
+import org.infinispan.distexec.RemoteExecutable;
+
 /**
  * Reduces intermediate key/value results from map phase of MapReduceTask. Infinispan distributed
  * execution environment uses one instance of Reducer per execution node.
@@ -39,7 +41,7 @@ import java.util.Iterator;
  * 
  * @since 5.0
  */
-public interface Reducer<KOut, VOut> extends Serializable {
+public interface Reducer<KOut, VOut> extends Serializable, RemoteExecutable {
 
    /**
     * Combines/reduces all intermediate values for a particular intermediate key to a single value.

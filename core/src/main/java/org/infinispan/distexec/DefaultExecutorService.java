@@ -22,27 +22,7 @@
  */
 package org.infinispan.distexec;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.read.DistributedExecuteCommand;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 import java.io.Externalizable;
 import java.io.NotSerializableException;
@@ -76,7 +56,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.read.DistributedExecuteCommand;
+import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.FutureListener;
+import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Infinispan's implementation of an {@link ExecutorService} and {@link DistributedExecutorService}.
@@ -419,12 +420,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             public Object call() throws Exception {
                Object result = null;
                future.getCommand().init(cache);
+               DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
                try {
+                  //hook into lifecycle
+                  taskLifecycleService.onPreExecute(future.getCommand().getCallable());
                   result = future.getCommand().perform(null);
                   return Collections.singletonMap(rpc.getAddress(), SuccessfulResponse.create(result));
                } catch (Throwable e) {
                   return e;
                } finally {
+                  //hook into lifecycle
+                  taskLifecycleService.onPostExecute(future.getCommand().getCallable());
                   future.notifyDone();
                }
             }

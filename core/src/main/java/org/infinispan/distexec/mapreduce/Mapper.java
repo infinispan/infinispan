@@ -24,6 +24,8 @@ package org.infinispan.distexec.mapreduce;
 
 import java.io.Serializable;
 
+import org.infinispan.distexec.RemoteExecutable;
+
 /**
  * Implementation of a Mapper class is a component of a MapReduceTask invoked once for each input
  * entry K,V. Every Mapper instance migrated to an Infinispan node, given a cache entry K,V input
@@ -41,7 +43,7 @@ import java.io.Serializable;
  * 
  * @since 5.0
  */
-public interface Mapper<KIn, VIn, KOut, VOut> extends Serializable {
+public interface Mapper<KIn, VIn, KOut, VOut> extends Serializable, RemoteExecutable {
 
    /**
     * Invoked once for each input cache entry KIn,VOut pair.
