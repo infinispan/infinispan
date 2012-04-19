@@ -258,7 +258,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                              Address destination, ResponseMode mode,
                                              Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob,
                                              JGroupsTransport transport) throws Exception {
-      if (trace) log.tracef("Replication task sending %s to single recipient %s", command, destination);
+      if (trace) log.tracef("Replication task sending %s to single recipient %s with response mode %s", command, destination, mode);
 
       // Replay capability requires responses from all members!
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache view control command.
@@ -288,7 +288,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static RspList<Object> processCalls(ReplicableCommand command, boolean broadcast, long timeout,
                                                RspFilter filter, List<Address> dests, ResponseMode mode,
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
-      if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
+      if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
 
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache view control command.
       boolean rsvp = command instanceof CacheViewControlCommand;
