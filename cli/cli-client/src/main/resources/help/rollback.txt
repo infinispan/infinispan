@@ -1,0 +1,4 @@
+.SH SYNOPSIS
+.B start
+.SH DESCRIPTION
+Starts a batch

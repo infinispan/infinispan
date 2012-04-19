@@ -1,0 +1,17 @@
+.SH SYNOPSIS
+.B connect [
+.I protocol
+.B ]://[
+.I host
+.B ][:
+.I port
+.B ]
+.SH DESCRIPTION
+Connects to an Infinispan instance using the specified protocol, host and port.
+.SH ARGUMENTS
+.IP protocol
+currently only the jmx protocol is supported
+.IP host
+the host name or IP address where the Infinispan instance is running
+.IP port
+the port to connect to

@@ -64,6 +64,8 @@
       <module>client/hotrod-client</module>
       <module>rhq-plugin</module>
       <module>spring</module>
+      <module>cli/cli-server</module>
+      <module>cli/cli-client</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
       <module>demos/distexec</module>

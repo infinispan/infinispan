@@ -1,0 +1,10 @@
+.SH SYNOPSIS
+.B help [
+.I command
+.B ]
+.SH DESCRIPTION
+Prints out a description of how to invoke a specific command or a list of available commands
+.SH ARGUMENTS
+.IP command
+an optional command name. If omitted a list of all available commands is printed
+ 

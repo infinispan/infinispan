@@ -1,0 +1,4 @@
+.SH SYNOPSIS
+.B abort
+.SH DESCRIPTION
+Aborts a running batch 
