@@ -28,6 +28,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
@@ -309,11 +310,19 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
 
       // final reduce
-      //TODO parallelize into Executor
+      //TODO parallelize across cluster
       Map<KOut, VOut> result = new HashMap<KOut, VOut>();
-      for (Entry<KOut, List<VOut>> entry : reduceMap.entrySet()) {
-         VOut reduced = reducer.reduce(entry.getKey(), (entry.getValue()).iterator());
-         result.put(entry.getKey(), reduced);
+      
+      //hook into lifecycle
+      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+      try {
+         taskLifecycleService.onPreExecute(reducer);
+         for (Entry<KOut, List<VOut>> entry : reduceMap.entrySet()) {
+            VOut reduced = reducer.reduce(entry.getKey(), (entry.getValue()).iterator());
+            result.put(entry.getKey(), reduced);
+         }
+      } finally {
+         taskLifecycleService.onPostExecute(reducer);
       }
       return result;
    }

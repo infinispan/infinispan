@@ -39,6 +39,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.solder.bean.BeanBuilder;
 import org.jboss.solder.bean.ContextualLifecycle;
+import org.jboss.solder.beanManager.BeanManagerAware;
 import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 import javax.cache.annotation.CachePut;
@@ -56,6 +57,7 @@ import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
+import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
@@ -70,7 +72,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import static org.jboss.solder.bean.Beans.getQualifiers;
 import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
 import static org.jboss.solder.reflection.Reflections.getRawType;
@@ -81,14 +82,14 @@ import static org.jboss.solder.reflection.Reflections.getRawType;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class InfinispanExtension implements Extension {
-
-   private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
+public class InfinispanExtension extends BeanManagerAware implements Extension {
 
    private Producer<RemoteCache<?, ?>> remoteCacheProducer;
+   private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);  
+   private static BeanManagerController bmc;
+  
    private final Set<ConfigurationHolder> configurations;
-   private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
-
+   private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;   
    InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
       this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
@@ -228,6 +229,24 @@ public class InfinispanExtension implements Extension {
          // register cache manager observers
          eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
       }
+   }
+   
+   public static BeanManagerController getBeanManagerController() {
+      if (bmc == null) {
+         throw new IllegalStateException("CDI not properly set up in your execution environment!");
+      }
+      return bmc;
+   }
+
+   protected void setBeanManager(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {      
+      if (bmc == null) {        
+         bmc = new BeanManagerController();
+      }
+      bmc.registerBeanManager(beanManager);
+   }
+
+   protected void cleanupBeanManager(@Observes BeforeShutdown beforeShutdown) {      
+      bmc.deregisterBeanManager();
    }
 
    static class ConfigurationHolder {

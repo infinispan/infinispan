@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -51,13 +50,16 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
    }
 
    public void testBasicInvocation() throws Exception {
-
+      basicInvocation(new SimpleCallable());
+   } 
+   
+   public void basicInvocation (Callable <Integer> call) throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      Future<Integer> future = des.submit(new SimpleCallable());
+      Future<Integer> future = des.submit(call);
 
       Integer r = future.get();
       assert r == 1;
-   } 
+   }
    
    public void testExceptionInvocation() throws Exception {
 
