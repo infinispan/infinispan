@@ -22,9 +22,14 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.CacheLoaderException;
@@ -36,16 +41,11 @@ import org.infinispan.loaders.jdbc.stringbased.Person;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 /**
  * Tester class for {@link JdbcMixedCacheStore}
@@ -65,9 +65,9 @@ public class JdbcMixedCacheStoreTest {
 
    @BeforeMethod
    public void createCacheStore() throws CacheLoaderException {
-      stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(cfc, binaryTm, stringsTm);

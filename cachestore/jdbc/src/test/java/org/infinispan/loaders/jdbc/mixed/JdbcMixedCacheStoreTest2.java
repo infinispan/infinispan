@@ -22,7 +22,9 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheStore;
@@ -36,9 +38,9 @@ public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
       JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
-      TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      TableManipulation binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       binaryTm.setTableNamePrefix("BINARY_TABLE");
 
       ConnectionFactoryConfig cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
