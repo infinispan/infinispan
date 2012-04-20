@@ -22,15 +22,6 @@
  */
 package org.infinispan.test.fwk;
 
-import com.mysql.jdbc.Driver;
-import org.infinispan.loaders.jdbc.DatabaseType;
-import org.infinispan.loaders.jdbc.JdbcUtil;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,6 +30,16 @@ import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.infinispan.loaders.jdbc.DatabaseType;
+import org.infinispan.loaders.jdbc.JdbcUtil;
+import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
+
+import com.mysql.jdbc.Driver;
 
 /**
  * Class that assures concurrent access to the in memory database.
@@ -151,13 +152,19 @@ public class UnitTestDatabaseManager {
    }
 
 
-   public static TableManipulation buildDefaultTableManipulation() {
+   public static TableManipulation buildStringTableManipulation() {
 
       return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
               "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
 
    }
 
+   public static TableManipulation buildBinaryTableManipulation() {
+
+      return new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN",
+              "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
+
+   }
 
    /**
     * Counts the number of rows in the given table.

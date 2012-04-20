@@ -42,11 +42,12 @@ import org.testng.annotations.Test;
  */
 @Test (groups = "functional", testName = "loaders.jdbc.binary.BinaryStoreWithManagedConnectionTest")
 public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
       jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
