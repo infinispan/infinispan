@@ -32,9 +32,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
@@ -51,7 +49,6 @@ import javax.management.MBeanRegistrationException;
 import javax.management.ObjectName;
 import javax.naming.NamingException;
 import javax.transaction.Synchronization;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import java.io.File;
@@ -62,7 +59,6 @@ import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 import static org.jboss.logging.Logger.Level.*;
@@ -484,10 +480,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Received new cluster view: %s", id = 94)
    void receivedClusterView(View newView);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Caught while responding to state transfer request", id = 95)
-   void errorGeneratingState(@Cause StateTransferException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Caught while requesting or applying state", id = 96)
