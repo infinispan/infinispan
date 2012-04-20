@@ -43,13 +43,14 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loaders.jdbc.mixed.MixedStoreWithManagedConnectionTest")
 public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-      TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      TableManipulation binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();

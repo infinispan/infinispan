@@ -35,9 +35,9 @@ public class JdbcMixedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalT
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
       JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
-      TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      TableManipulation binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       ConnectionFactoryConfig cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       jdbcCacheStoreConfig.setConnectionFactoryConfig(cfc);

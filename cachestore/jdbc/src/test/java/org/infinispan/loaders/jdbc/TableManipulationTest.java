@@ -22,13 +22,8 @@
  */
 package org.infinispan.loaders.jdbc;
 
-import static org.mockito.Mockito.*;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,6 +31,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /**
  * Tester class for {@link org.infinispan.loaders.jdbc.TableManipulation}.
@@ -52,7 +54,7 @@ public class TableManipulationTest {
    public void createConnection() throws Exception {
       cfg = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       connection = DriverManager.getConnection(cfg.getConnectionUrl(), cfg.getUserName(), cfg.getPassword());
-      tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      tableManipulation = UnitTestDatabaseManager.buildStringTableManipulation();
       tableManipulation.setCacheName("aName");
    }
 

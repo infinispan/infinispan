@@ -22,10 +22,11 @@
  */
 package org.infinispan.loaders.jdbc.binary;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+
+import java.io.Serializable;
 
 import org.infinispan.CacheImpl;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -34,10 +35,9 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
 
 /**
  * Tester class for {@link JdbcBinaryCacheStore}
@@ -50,7 +50,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
       jdbcBucketCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
