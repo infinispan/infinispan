@@ -37,6 +37,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.statetransfer.StateTransferInProgressException;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -138,7 +139,14 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                      log.trace("Exception while executing code, failing silently...", th);
                   return null;
                } else {
-                  log.executionError(th);
+                  // HACK: There are way too many StateTransferInProgressExceptions on remote nodes during state transfer
+                  // and they not really exceptional (the originator will retry the command)
+                  boolean logAsError = !(th instanceof StateTransferInProgressException && !ctx.isOriginLocal());
+                  if (logAsError) {
+                     log.executionError(th);
+                  } else {
+                     log.trace("Exception while executing code", th);
+                  }
                   if (ctx.isInTxScope() && ctx.isOriginLocal()) {
                      if (trace) log.trace("Transaction marked for rollback as exception was received.");
                      markTxForRollbackAndRethrow(ctx, th);
