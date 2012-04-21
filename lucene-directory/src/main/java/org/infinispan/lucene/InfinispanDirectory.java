@@ -84,9 +84,11 @@ public class InfinispanDirectory extends Directory {
 
    private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
    private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
+
    // indexName is required when one common cache is used
    private final String indexName;
-   // chunk size used in this directory, static filed not used as we want to have different chunk
+
+   // chunk size used in this directory, static field not used as we want to have different chunk
    // size per dir
    private final int chunkSize;
 
