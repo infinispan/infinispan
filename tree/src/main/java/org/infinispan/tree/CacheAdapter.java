@@ -23,8 +23,10 @@
 
 package org.infinispan.tree;
 
-import org.infinispan.AbstractDelegatingAdvancedCache;
+import org.infinispan.AbstractDelegatingCacheImpl;
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheImpl;
+import org.infinispan.DecoratedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
@@ -46,11 +48,11 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.2
  */
-public class CacheAdapter<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
+public class CacheAdapter<K, V> extends AbstractDelegatingCacheImpl<K, V> {
 
-   private final TreeContextContainer tcc;
+   final TreeContextContainer tcc;
 
-   private CacheAdapter(AdvancedCache<K, V> cache, TreeContextContainer tcc) {
+   CacheAdapter(AdvancedCache<K, V> cache, TreeContextContainer tcc) {
       super(cache);
       this.tcc = tcc;
    }
@@ -64,266 +66,245 @@ public class CacheAdapter<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public void putForExternalRead(K key, V value) {
-      cache.withFlags(getFlags()).putForExternalRead(key, value);
+      super.putForExternalRead(key, value, getFlags(), null);
    }
 
    @Override
    public void evict(K key) {
-      cache.withFlags(getFlags()).evict(key);
-   }
-
-   @Override
-   public boolean startBatch() {
-      return cache.withFlags(getFlags()).startBatch();
-   }
-
-   @Override
-   public void endBatch(boolean successful) {
-      cache.withFlags(getFlags()).endBatch(successful);
+      super.evict(key, getFlags(), null);
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).put(key, value, lifespan, unit);
+      return super.put(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).putIfAbsent(key, value, lifespan, unit);
+      return super.putIfAbsent(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      cache.withFlags(getFlags()).putAll(map, lifespan, unit);
+      super.putAll(map, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).replace(key, value, lifespan, unit);
+      return super.replace(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).replace(key, oldValue, value, lifespan, unit);
+      return super.replace(key, oldValue, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cache.withFlags(getFlags()).put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return super.put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, getFlags(), null);
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cache.withFlags(getFlags()).putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return super.putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, getFlags(), null);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      cache.withFlags(getFlags()).putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      super.putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, getFlags(), null);
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cache.withFlags(getFlags()).replace(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return super.replace(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, getFlags(), null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cache.withFlags(getFlags()).replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return super.replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value) {
-      return cache.withFlags(getFlags()).putAsync(key, value);
+      return super.putAsync(key, value, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).putAsync(key, value, lifespan, unit);
+      return super.putAsync(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return cache.withFlags(getFlags()).putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return super.putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return cache.withFlags(getFlags()).putAllAsync(data);
+      return super.putAllAsync(data, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).putAllAsync(data, lifespan, unit);
+      return super.putAllAsync(data, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return cache.withFlags(getFlags()).putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return super.putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
-      return cache.withFlags(getFlags()).clearAsync();
+      return super.clearAsync(getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value);
+      return super.putIfAbsentAsync(key, value, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value, lifespan, unit);
+      return super.putIfAbsentAsync(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return cache.withFlags(getFlags()).putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return super.putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> removeAsync(Object key) {
-      return cache.withFlags(getFlags()).removeAsync(key);
+      return super.removeAsync(key, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
-      return cache.withFlags(getFlags()).removeAsync(key, value);
+      return super.removeAsync(key, value, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value) {
-      return cache.withFlags(getFlags()).replaceAsync(key, value);
+      return super.replaceAsync(key, value, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).replaceAsync(key, value, lifespan, unit);
+      return super.replaceAsync(key, value, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return cache.withFlags(getFlags()).replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return super.replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue);
+      return super.replaceAsync(key, oldValue, newValue, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue, lifespan, unit);
+      return super.replaceAsync(key, oldValue, newValue, lifespan, unit, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return cache.withFlags(getFlags()).replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-   }
-
-   @Override
-   public void compact() {
-      cache.withFlags(getFlags()).compact();
+      return super.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, getFlags(), null);
    }
 
    @Override
    public int size() {
-      return cache.withFlags(getFlags()).size();
+      return super.size(getFlags(), null);
    }
 
    @Override
    public boolean isEmpty() {
-      return cache.withFlags(getFlags()).isEmpty();
+      return super.isEmpty(getFlags(), null);
    }
 
    @Override
    public boolean containsKey(Object key) {
-      return cache.withFlags(getFlags()).containsKey(key);
-   }
-
-   @Override
-   public boolean containsValue(Object value) {
-      return cache.withFlags(getFlags()).containsValue(value);
+      return super.containsKey(key, getFlags(), null);
    }
 
    @Override
    public V get(Object key) {
-      return cache.withFlags(getFlags()).get(key);
+      return super.get(key, getFlags(), null);
    }
 
    @Override
    public V put(K key, V value) {
-      return cache.withFlags(getFlags()).put(key, value);
+      return super.put(key, value, getFlags(), null);
    }
 
    @Override
    public V remove(Object key) {
-      return cache.withFlags(getFlags()).remove(key);
+      return super.remove(key, getFlags(), null);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      cache.withFlags(getFlags()).putAll(m);
+      super.putAll(m, getFlags(), null);
    }
 
    @Override
    public void clear() {
-      cache.withFlags(getFlags()).clear();
+      super.clear(getFlags(), null);
    }
 
    @Override
    public Set<K> keySet() {
-      return cache.withFlags(getFlags()).keySet();
+      return super.keySet(getFlags(), null);
    }
 
    @Override
    public Collection<V> values() {
-      return cache.withFlags(getFlags()).values();
+      return super.values(getFlags(), null);
    }
 
    @Override
    public Set<Entry<K, V>> entrySet() {
-      return cache.withFlags(getFlags()).entrySet();
+      return super.entrySet(getFlags(), null);
    }
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return cache.withFlags(getFlags()).putIfAbsent(key, value);
+      return super.putIfAbsent(key, value, getFlags(), null);
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return cache.withFlags(getFlags()).remove(key, value);
+      return super.remove(key, value, getFlags(), null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return cache.withFlags(getFlags()).replace(key, oldValue, newValue);
+      return super.replace(key, oldValue, newValue, getFlags(), null);
    }
 
    @Override
    public V replace(K key, V value) {
-      return cache.withFlags(getFlags()).replace(key, value);
+      return super.replace(key, value, getFlags(), null);
    }
 
    @Override
    public NotifyingFuture<V> getAsync(K key) {
-      return cache.withFlags(getFlags()).getAsync(key);
+      return super.getAsync(key, getFlags(), null);
    }
 
-   private Flag[] getFlags() {
+   protected EnumSet<Flag> getFlags() {
       if (tcc.getTreeContext() == null)
          return null;
       else {
-         EnumSet<Flag> flagSet = tcc.getTreeContext().getFlags();
-         return flagSet.toArray(new Flag[flagSet.size()]);
+         return tcc.getTreeContext().getFlags();
       }
    }
 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      throw new UnsupportedOperationException("Unsupported in this implementation");
+      return new DecoratedCacheAdapter<K, V>(cache, tcc, flags);
    }
 
    @Override
