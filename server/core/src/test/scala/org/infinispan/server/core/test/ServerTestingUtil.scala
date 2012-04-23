@@ -1,3 +1,5 @@
+package org.infinispan.server.core.test
+
 /*
  * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
@@ -17,35 +19,22 @@
  * 02110-1301 USA
  */
 
-package org.infinispan.server.core
-
-import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.server.core.logging.Log
+import org.infinispan.server.core.AbstractProtocolServer
 
 /**
- * // TODO: Document this
+ * Infinispan servers testing util
+ *
  * @author Galder Zamarreño
  * @since // TODO
  */
-class Stoppable {
-   // Empty - do not delete!
-}
+object ServerTestingUtil extends Log {
 
-object Stoppable {
-
-   def useCacheManager[T <: EmbeddedCacheManager](stoppable: EmbeddedCacheManager)
-           (block: EmbeddedCacheManager => Unit) {
+   def killServer(server: AbstractProtocolServer) {
       try {
-         block(stoppable)
-      } finally {
-         stoppable.stop()
-      }
-   }
-
-   def useServer[T <: {def stop : Unit}](stoppable: T)(block: T => Unit) {
-      try {
-         block(stoppable)
-      } finally {
-         stoppable.stop
+         if (server != null) server.stop
+      } catch {
+         case t: Throwable => error("Error stopping server", t)
       }
    }
 

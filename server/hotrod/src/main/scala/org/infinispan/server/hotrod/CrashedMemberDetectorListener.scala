@@ -58,7 +58,8 @@ class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server
          val goneMembers = oldMembers.filterNot(newMembers contains _)
          if (!goneMembers.isEmpty) {
             // Consider doing removeAsync and then waiting for all removals...
-            goneMembers.foreach(addressCache.remove(_))
+            if (!addressCache.getStatus.isTerminated)
+               goneMembers.foreach(addressCache.remove(_))
             // Only update view id once we've removed all addresses to
             // guarantee that the cache will be up to date
             updateViewdId(e)

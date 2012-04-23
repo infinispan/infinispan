@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.hotrod
 
-import org.testng.annotations.Test
 import org.infinispan.config.Configuration
 import test.HotRodClient
 import java.lang.reflect.Method
@@ -30,6 +29,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.test.MultipleCacheManagersTest
 import test.HotRodTestingUtil._
 import org.infinispan.test.AbstractCacheTest._
+import org.testng.annotations.{BeforeClass, Test}
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSingleClusteredTest")
 class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
@@ -42,7 +42,13 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    override def createCacheManagers {
       val cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC))
-      hotRodServer = startHotRodServer(cm)
+   }
+
+   @BeforeClass(alwaysRun = true)
+   @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   override def createBeforeClass() {
+      super.createBeforeClass()
+      hotRodServer = startHotRodServer(cacheManagers.get(0))
       hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
    }
 

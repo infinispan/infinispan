@@ -40,7 +40,11 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "distributedVersion11"
 
-   override protected def createCacheConfig: Configuration = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
+   override protected def createCacheConfig: Configuration = {
+      val cfg = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
+      cfg.fluent().l1().disable() // Disable L1 explicitly
+      cfg
+   }
 
    override protected def protocolVersion = 11
 

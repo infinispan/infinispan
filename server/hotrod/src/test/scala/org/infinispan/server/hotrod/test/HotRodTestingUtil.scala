@@ -39,6 +39,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
 import java.util.concurrent.{TimeUnit, CountDownLatch}
 import collection.mutable.ListBuffer
+import org.jboss.netty.channel.ChannelFuture
 
 /**
  * Test utils for Hot Rod tests.
@@ -86,6 +87,7 @@ object HotRodTestingUtil extends Log {
       startHotRodServer(manager, port, 0, props)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
+      info("Start server in port %d", port)
       val server = new HotRodServer {
          override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
             if (delay > 0)
@@ -264,6 +266,19 @@ object HotRodTestingUtil extends Log {
       }
    }
 
+   def killClient(client: HotRodClient): ChannelFuture = {
+      try {
+         if (client != null) client.stop
+         else null
+      }
+      catch {
+         case t: Throwable => {
+            error("Error stopping client", t)
+            null
+         }
+      }
+   }
+
    @Listener
    private class AddressRemovalListener(latch: CountDownLatch) {
 
@@ -278,6 +293,14 @@ object HotRodTestingUtil extends Log {
 } 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
+
    private val uniqueAddr = new AtomicInteger(12311)
-   override def initialValue: Int = uniqueAddr.getAndAdd(100)
+
+   override def initialValue: Int = {
+      debug("Before incrementing, server port is: %d", uniqueAddr.get())
+      val port = uniqueAddr.getAndAdd(100)
+      debug("For next thread, server port will be: %d", uniqueAddr.get())
+      port
+   }
+
 }
