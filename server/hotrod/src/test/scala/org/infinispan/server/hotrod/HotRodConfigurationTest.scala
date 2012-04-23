@@ -32,6 +32,7 @@ import org.testng.Assert._
 import org.testng.annotations.Test
 import org.infinispan.config.Configuration
 import org.infinispan.loaders.cluster.{ClusterCacheLoaderConfig, ClusterCacheLoader}
+import org.infinispan.server.core.test.Stoppable
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -72,14 +73,11 @@ class HotRodConfigurationTest {
    }
 
    private def withClusteredServer(props: Properties) (assert: (Configuration, Long) => Unit) {
-      val cacheManager = TestCacheManagerFactory.createClusteredCacheManager
-      val server = startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, props)
-      try {
-         val cfg = cacheManager.getCache(ADDRESS_CACHE_NAME).getConfiguration
-         assert(cfg, cacheManager.getGlobalConfiguration.getDistributedSyncTimeout)
-      } finally {
-         server.stop
-         cacheManager.stop
+      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager) { cm =>
+         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, props)) { server =>
+            val cfg = cm.getCache(ADDRESS_CACHE_NAME).getConfiguration
+            assert(cfg, cm.getGlobalConfiguration.getDistributedSyncTimeout)
+         }
       }
    }
 }

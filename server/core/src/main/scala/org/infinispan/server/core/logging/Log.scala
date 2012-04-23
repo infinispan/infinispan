@@ -35,6 +35,12 @@ import org.infinispan.util.logging.LogFactory
 trait Log {
    private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 
+   def info(msg: => String) = log.info(msg)
+
+   def info(msg: => String, param1: Any) = log.infof(msg, param1)
+
+   def error(msg: => String, t: Throwable) = log.errorf(t, msg)
+
    def debug(msg: => String) = log.debug(msg)
 
    def debug(msg: => String, param1: Any) = log.debugf(msg, param1)
