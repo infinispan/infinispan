@@ -23,11 +23,12 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.config.Configuration
-import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
+import org.infinispan.server.core.test.ServerTestingUtil._
+import org.testng.annotations.{BeforeClass, AfterMethod, AfterClass, Test}
 
 /**
  * Base test class for multi node or clustered Hot Rod tests.
@@ -45,6 +46,12 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
          val cm = super.addClusterEnabledCacheManager()
          cm.defineConfiguration(cacheName, createCacheConfig)
       }
+   }
+
+   @BeforeClass(alwaysRun = true)
+   @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   override def createBeforeClass() {
+      super.createBeforeClass()
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(0)))
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(1), hotRodServers.head.getPort + 50))
       hotRodServers.foreach {s =>
@@ -82,8 +89,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    protected def stopClusteredServer(server: HotRodServer) {
-      server.stop
-      server.getCacheManager.stop
+      killServer(server)
+      TestingUtil.killCacheManagers(server.getCacheManager)
       TestingUtil.blockUntilViewsReceived(
          50000, false, manager(0), manager(1))
    }
@@ -92,8 +99,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    override def destroy {
       try {
          log.debug("Test finished, close Hot Rod server")
-         hotRodClients.foreach(_.stop)
-         hotRodServers.foreach(_.stop)
+         hotRodClients.foreach(killClient(_))
+         hotRodServers.foreach(killServer(_))
       } finally {
          super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
       }

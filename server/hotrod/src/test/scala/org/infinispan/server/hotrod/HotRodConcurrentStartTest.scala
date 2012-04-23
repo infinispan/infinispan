@@ -30,6 +30,7 @@ import org.infinispan.test.AbstractCacheTest._
 import test.{UniquePortThreadLocal, HotRodClient}
 import scala.concurrent.ops._
 import test.HotRodTestingUtil._
+import org.infinispan.server.core.test.ServerTestingUtil._
 
 /**
  * Tests concurrent Hot Rod server startups
@@ -56,8 +57,8 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
    override def destroy {
       try {
          log.debug("Test finished, close Hot Rod server")
-         hotRodClients.foreach(_.stop)
-         hotRodServers.foreach(_.stop)
+         hotRodClients.foreach(killClient(_))
+         hotRodServers.foreach(killServer(_))
       } finally {
          super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
       }

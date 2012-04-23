@@ -34,6 +34,7 @@ import org.infinispan.util.ByteArrayKey
 import org.infinispan.test.TestingUtil.generateRandomString
 import org.infinispan.config.Configuration
 import java.util.concurrent.TimeUnit
+import org.infinispan.server.core.test.Stoppable
 
 /**
  * Hot Rod server functional test.
@@ -444,17 +445,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testStoreAsBinaryOverrideOnNamedCache(m: Method) {
-      val cm = createTestCacheManager
-      val cacheName = "cache-" + m.getName
-      val namedCfg = new Configuration().fluent.storeAsBinary.build
-      assertTrue(namedCfg.isStoreAsBinary)
-      cm.defineConfiguration(cacheName, namedCfg)
-      val testServer = startHotRodServer(cm, server.getPort + 33)
-      try {
-         assertFalse(cm.getCache(cacheName).getConfiguration.isStoreAsBinary)
-      } finally {
-         cm.stop
-         testServer.stop
+      Stoppable.useCacheManager(createTestCacheManager) { cm =>
+         Stoppable.useServer(startHotRodServer(cm, server.getPort + 33)) { server =>
+            val cacheName = "cache-" + m.getName
+            val namedCfg = new Configuration().fluent.storeAsBinary.build
+            assertTrue(namedCfg.isStoreAsBinary)
+            cm.defineConfiguration(cacheName, namedCfg)
+            assertFalse(cm.getCache(cacheName).getConfiguration.isStoreAsBinary)
+         }
       }
    }
 

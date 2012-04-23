@@ -129,8 +129,10 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager) {
       val propsObject = new TypedProperties()
-      val stream = FileLookupFactory.newInstance().lookupFile(propertiesFileName, Thread.currentThread().getContextClassLoader())
-      propsObject.load(stream)
+      if (propertiesFileName != null) {
+         val stream = FileLookupFactory.newInstance().lookupFile(propertiesFileName, Thread.currentThread().getContextClassLoader())
+         propsObject.load(stream)
+      }
       start(propsObject, cacheManager)
    }
 
