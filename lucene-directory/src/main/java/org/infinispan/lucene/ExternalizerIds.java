@@ -31,31 +31,32 @@ package org.infinispan.lucene;
  * @author Sanne Grinovero
  * @since 5.0
  */
+@SuppressWarnings("boxing")
 public interface ExternalizerIds {
 
    /**
     * @see org.infinispan.lucene.FileListCacheKey.Externalizer
     */
-   static final int FILE_LIST_CACHE_KEY = 1300;
+   static final Integer FILE_LIST_CACHE_KEY = 1300;
    
    /**
     * @see org.infinispan.lucene.FileMetadata.Externalizer
     */
-   static final int FILE_METADATA = 1301;
+   static final Integer FILE_METADATA = 1301;
    
    /**
     * @see org.infinispan.lucene.FileCacheKey.Externalizer
     */
-   static final int FILE_CACHE_KEY = 1302;
+   static final Integer FILE_CACHE_KEY = 1302;
    
    /**
     * @see org.infinispan.lucene.ChunkCacheKey.Externalizer
     */
-   static final int CHUNK_CACHE_KEY = 1303;
+   static final Integer CHUNK_CACHE_KEY = 1303;
    
    /**
     * @see org.infinispan.lucene.FileReadLockKey.Externalizer
     */
-   static final int FILE_READLOCK_KEY = 1304;
+   static final Integer FILE_READLOCK_KEY = 1304;
 
 }
