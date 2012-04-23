@@ -78,7 +78,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       JdbcStringBasedCacheStoreConfig jdbcStoreConfiguration = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       jdbcStoreConfiguration.setKey2StringMapperClass(LuceneKey2StringMapper.class.getName());
       CacheLoaderManagerConfig loaderManagerConfig = configuration.getCacheLoaderManagerConfig();
-      loaderManagerConfig.setPreload(false);
+      loaderManagerConfig.setPreload(Boolean.FALSE);
       loaderManagerConfig.addCacheLoaderConfig(jdbcStoreConfiguration);
    }
 
