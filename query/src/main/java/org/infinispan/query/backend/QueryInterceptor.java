@@ -189,7 +189,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (shouldModifyIndexes(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
 
-         for (Class<?> c : this.knownClasses.keySet()) {
+         for (Class c : this.knownClasses.keySet()) {
             EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
             if ( binder != null ) { //check as not all known classes are indexed
                searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
