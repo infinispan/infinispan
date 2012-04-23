@@ -75,7 +75,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    }
    
    private void enableTestJdbcStorage(Configuration configuration) {
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig jdbcStoreConfiguration = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       jdbcStoreConfiguration.setKey2StringMapperClass(LuceneKey2StringMapper.class.getName());
       CacheLoaderManagerConfig loaderManagerConfig = configuration.getCacheLoaderManagerConfig();
