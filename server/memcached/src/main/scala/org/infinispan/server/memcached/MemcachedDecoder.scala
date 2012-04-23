@@ -93,7 +93,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       (k, endOfOp)
    }
 
-   private def readKeys(b: ChannelBuffer): Array[String] = readLine(b).trim.split(" +")
+   private def readKeys(b: ChannelBuffer): Seq[String] = readSplitLine(b)
 
    override protected def get(buffer: ChannelBuffer): AnyRef = {
       val keys = readKeys(buffer)
@@ -119,12 +119,11 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    }
 
    override def readParameters(ch: Channel, b: ChannelBuffer): Boolean = {
-      val line = readLine(b)
+      val args = readSplitLine(b)
       var endOfOp = false
       params =
-         if (!line.isEmpty) {
-            if (isTrace) trace("Operation parameters: %s", line)
-            val args = line.trim.split(" +")
+         if (!args.isEmpty) {
+            if (isTrace) trace("Operation parameters: %s", args)
             try {
                header.op match {
                   case PutRequest => readStorageParameters(args, b)
@@ -137,7 +136,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
                   case _ => readStorageParameters(args, b)
                }
             } catch {
-               case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + line)
+               case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + args)
             }
          } else {
             null // For example when delete <key> is sent without any further parameters, or flush_all without delay
@@ -145,18 +144,18 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       endOfOp
    }
 
-   private def readRemoveParameters(args: Array[String]): MemcachedParameters = {
+   private def readRemoveParameters(args: Seq[String]): MemcachedParameters = {
       val delayedDeleteTime = parseDelayedDeleteTime(args)
       val noReply = if (delayedDeleteTime == -1) parseNoReply(0, args) else false
       new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", 0)
    }
 
-   private def readIncrDecrParameters(args: Array[String]): MemcachedParameters = {
+   private def readIncrDecrParameters(args: Seq[String]): MemcachedParameters = {
       val delta = args(0)
       new MemcachedParameters(-1, -1, -1, -1, parseNoReply(1, args), 0, delta, 0)
    }
 
-   private def readFlushAllParameters(args: Array[String]): MemcachedParameters = {
+   private def readFlushAllParameters(args: Seq[String]): MemcachedParameters = {
       var noReplyFound = false
       val flushDelay =
          try {
@@ -173,7 +172,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", flushDelay)
    }
 
-   private def readStorageParameters(args: Array[String], b: ChannelBuffer): MemcachedParameters = {
+   private def readStorageParameters(args: Seq[String], b: ChannelBuffer): MemcachedParameters = {
       var index = 0
       val flags = getFlags(args(index))
       if (flags < 0) throw new StreamCorruptedException("Flags cannot be negative: " + flags)
@@ -229,7 +228,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       version.toLong
    }
 
-   private def parseNoReply(expectedIndex: Int, args: Array[String]): Boolean = {
+   private def parseNoReply(expectedIndex: Int, args: Seq[String]): Boolean = {
       if (args.length > expectedIndex) {
          if ("noreply" == args(expectedIndex))
             true
@@ -239,7 +238,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       else false      
    }
 
-   private def parseDelayedDeleteTime(args: Array[String]): Int = {
+   private def parseDelayedDeleteTime(args: Seq[String]): Int = {
       if (args.length > 0) {
          try {
             args(0).toInt
