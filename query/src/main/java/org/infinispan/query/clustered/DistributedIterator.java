@@ -57,14 +57,33 @@ public class DistributedIterator extends AbstractIterator {
 
    private final int resultSize;
 
-   public DistributedIterator(Sort sort, int fetchSize, int resultSize,
-         HashMap<UUID, ClusteredTopDocs> topDocsResponses,
-         AdvancedCache<?, ?> cache) {
+   private final int maxResults;
+
+   private final int firstResult;
+
+   public DistributedIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult,
+         HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
       this.sort = sort;
       this.fetchSize = fetchSize;
       this.resultSize = resultSize;
       this.cache = cache;
+      this.maxResults = maxResults;
+      this.firstResult = firstResult;
       setTopDocs(topDocsResponses);
+   }
+
+   /**
+    * We don't know where is the firstResult. So we have to look (we not fetch the result...) the
+    * results until we find the firstResult.
+    */
+   private void goToFirstResult() {
+      for (int i = 0; i < firstResult; i++) {
+         ClusteredDoc scoreDoc = (ClusteredDoc) hq.pop();
+         if (scoreDoc == null) {
+            return;
+         }
+         ClusteredTopDocs topDoc = rechargeQueue(scoreDoc);
+      }
    }
 
    private void setTopDocs(HashMap<UUID, ClusteredTopDocs> topDocsResponses) {
@@ -76,8 +95,7 @@ public class DistributedIterator extends AbstractIterator {
             boolean reverse = (Boolean) ReflectionUtil.getValue(sf, "reverse");
             ReflectionUtil.setValue(sf, "reverse", !reverse);
          }
-         hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
-               topDocsResponses.size(), sort.getSort());
+         hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(topDocsResponses.size(), sort.getSort());
 
       } else
          hq = ISPNPriorityQueueFactory.getHitQueue(topDocsResponses.size());
@@ -148,12 +166,7 @@ public class DistributedIterator extends AbstractIterator {
             return;
          }
 
-         // "recharging" the queue
-         ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc.getNodeUuid());
-         ScoreDoc score = topDoc.getNext();
-         if (score != null) {
-            hq.add(score);
-         }
+         ClusteredTopDocs topDoc = rechargeQueue(scoreDoc);
 
          // fetching the value
          Object value = fetchValue(scoreDoc, topDoc);
@@ -162,6 +175,23 @@ public class DistributedIterator extends AbstractIterator {
 
          fetched++;
       }
+   }
+
+   /**
+    * the queue has a top element of each node. When we pop a element, we have to get the next
+    * element from this node and put on the queue.
+    * 
+    * @param scoreDoc
+    * @return
+    */
+   private ClusteredTopDocs rechargeQueue(ClusteredDoc scoreDoc) {
+      // "recharging" the queue
+      ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc.getNodeUuid());
+      ScoreDoc score = topDoc.getNext();
+      if (score != null) {
+         hq.add(score);
+      }
+      return topDoc;
    }
 
    protected Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
@@ -188,7 +218,8 @@ public class DistributedIterator extends AbstractIterator {
 
    @Override
    public boolean hasNext() {
-      if (currentIndex + 1 >= resultSize) {
+      int nextIndex = currentIndex + 1;
+      if (firstResult + nextIndex >= resultSize || nextIndex >= maxResults) {
          return false;
       }
       return true;
