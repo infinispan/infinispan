@@ -24,6 +24,8 @@ package org.infinispan.server.memcached
 
 import org.jboss.netty.buffer.ChannelBuffer
 import java.lang.StringBuilder
+import collection.mutable.{Buffer, ListBuffer}
+import annotation.tailrec
 
 /**
  * Memcached text protocol utilities.
@@ -67,6 +69,7 @@ object TextProtocolUtil {
     */
    def readElement(buffer: ChannelBuffer): (String, Boolean) = readElement(buffer, new StringBuilder())
 
+   @tailrec
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
       var next = buffer.readByte 
       if (next == SP) { // Space
@@ -97,6 +100,7 @@ object TextProtocolUtil {
    private def readableBytes(buffer: ChannelBuffer): Int =
       buffer.writerIndex - buffer.readerIndex
 
+   @tailrec
    private def readLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte
       if (next == CR) { // CR
@@ -119,7 +123,38 @@ object TextProtocolUtil {
        val data = new Array[Byte](a.length + b.length)
        Array.copy(a, 0, data, 0, a.length)
        Array.copy(b, 0, data, a.length, b.length)
-       return data
+       data
+   }
+
+   def readSplitLine(buffer: ChannelBuffer): Seq[String] = {
+      if (readableBytes(buffer) > 0)
+         readSplitLine(buffer, new ListBuffer[String](), new StringBuilder)
+      else
+         Seq.empty
+   }
+
+   @tailrec
+   private def readSplitLine(buffer: ChannelBuffer, list: Buffer[String], word: StringBuilder): Seq[String] = {
+      var next = buffer.readByte
+      if (next == CR) { // CR
+         next = buffer.readByte
+         if (next == LF) { // LF
+            list += word.toString
+            Seq[String]() ++ list
+         } else {
+            word.append(next.asInstanceOf[Char])
+            readSplitLine(buffer, list, word)
+         }
+      } else if (next == LF) { // LF
+         list += word.toString
+         Seq[String]() ++ list
+      } else if (next == SP) {
+         list += word.toString
+         readSplitLine(buffer, list, new StringBuilder)
+      } else {
+         word.append(next.asInstanceOf[Char])
+         readSplitLine(buffer, list, word)
+      }
    }
 
 }
