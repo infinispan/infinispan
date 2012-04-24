@@ -109,7 +109,7 @@
       </dependency>
 
       <dependency>
-         <groupId>javassist</groupId>
+         <groupId>org.javassist</groupId>
          <artifactId>javassist</artifactId>
          <scope>test</scope>
       </dependency>

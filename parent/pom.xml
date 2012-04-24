@@ -116,16 +116,14 @@
       <version.cassandra.pool>1.0.0.CR1</version.cassandra.pool>
       <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
-      <version.commons.compress>1.0</version.commons.compress>
+      <version.commons.compress>1.4</version.commons.compress>
       <version.commons.dbcp>1.4</version.commons.dbcp>
-      <version.commons.pool>1.5.6</version.commons.pool>
+      <version.commons.pool>1.6</version.commons.pool>
       <version.commons.httpclient>3.1</version.commons.httpclient>
       <version.commons.logging>1.1</version.commons.logging>
-      <version.commons.math>2.0</version.commons.math>
-      <version.easymock>2.4</version.easymock>
-      <version.easymockclassext>2.4</version.easymockclassext>
+      <version.commons.math>2.2</version.commons.math>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
-      <version.guava>r03</version.guava>
+      <version.guava>11.0.2</version.guava>
       <version.h2.driver>1.3.166</version.h2.driver>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
@@ -134,7 +132,7 @@
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.marshalling>1.3.6.GA</version.jboss.marshalling>
+      <version.jboss.marshalling>1.3.11.GA</version.jboss.marshalling>
       <version.jbossjta>4.16.3.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.1.0.GA</version.jboss.logging>
@@ -150,20 +148,20 @@
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.0.Final</version.jta>
-      <version.junit>4.8.2</version.junit>
+      <version.junit>4.10</version.junit>
       <version.log4j>1.2.16</version.log4j>
       <version.lucene>3.6.0</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.8.5</version.mockito>
-      <version.mysql.driver>5.1.9</version.mysql.driver>
+      <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.netty>3.2.6.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
-      <version.resteasy>2.2.1.GA</version.resteasy>
+      <version.resteasy>2.3.2.Final</version.resteasy>
       <version.rhq.helpers>3.0.4</version.rhq.helpers>
       <version.rhq>4.2.0</version.rhq>
-      <version.scala>2.9.1</version.scala>
-      <version.slf4j>1.6.1</version.slf4j>
+      <version.scala>2.9.2</version.scala>
+      <version.slf4j>1.6.4</version.slf4j>
       <version.solder>3.1.0.Final</version.solder>
       <version.spring>3.1.0.RELEASE</version.spring>
       <version.spymemcached>2.5</version.spymemcached>
@@ -172,18 +170,11 @@
       <version.weld>1.1.4.Final</version.weld>
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.4.1</version.xstream>
-      <version.javassist>3.12.1.GA</version.javassist>
+      <version.javassist>3.15.0-GA</version.javassist>
       <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
       <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
-      <version.org.jboss.staxmapper>1.0.0.Final</version.org.jboss.staxmapper>
-      <!-- 
-         The Felix Bundle plugin used has an incompatibility with Maven's Source plugin. 
-         Hence this workaround to use an older version of the Bundle plugin.  See
-
-            http://comments.gmane.org/gmane.comp.apache.felix.devel/22887
-
-         for details. -->
-      <version.maven.bundle>2.3.4</version.maven.bundle>
+      <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
+      <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
    </properties>
    <dependencyManagement>
@@ -326,7 +317,7 @@
             <version>${version.gnu.getopt}</version>
          </dependency>
          <dependency>
-            <groupId>javassist</groupId>
+            <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>${version.javassist}</version>
          </dependency>
