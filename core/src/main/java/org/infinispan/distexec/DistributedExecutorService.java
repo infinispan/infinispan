@@ -22,6 +22,9 @@
  */
 package org.infinispan.distexec;
 
+import java.io.Externalizable;
+import java.io.NotSerializableException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +44,12 @@ import java.util.concurrent.Future;
  * return a result to task invoker.
  * <p>
  * 
+ * 
+ * Note that due to potential task migration to other nodes every {@link Callable},
+ * {@link Runnable} and/or {@link DistributedCallable} submitted must be either {@link Serializable}
+ * or {@link Externalizable}. Also the value returned from a callable must be {@link Serializable}
+ * or {@link Externalizable}. Unfortunately if the value returned is not serializable then a
+ * {@link NotSerializableException} will be thrown.
  * 
  * @see DefaultExecutorService
  * @see DistributedCallable
