@@ -31,7 +31,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
@@ -40,30 +42,51 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
-public class DistributedExecutorTest extends BaseDistFunctionalTest {
+public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
    public DistributedExecutorTest() {
+      cleanup = CleanupPhase.AFTER_TEST;
+   }
+   
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);      
+      createClusteredCaches(2, cacheName(), builder);
    }
 
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
+   protected String cacheName() {
+      return "DistributedExecutorTest-DIST_SYNC";
    }
+
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
+   }
+   
+   protected Cache<Object, Object> getCache(){
+      return cache(0, cacheName());
+   }
+   
 
    public void testBasicInvocation() throws Exception {
       basicInvocation(new SimpleCallable());
    } 
    
+   /**
+    * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method 
+    * @param call
+    * @throws Exception
+    */
+   @Test(enabled=false)
    public void basicInvocation (Callable <Integer> call) throws Exception {
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
       Future<Integer> future = des.submit(call);
-
       Integer r = future.get();
       assert r == 1;
    }
    
    public void testExceptionInvocation() throws Exception {
 
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
 
       Future<Integer> future = des.submit(new ExceptionThrowingCallable());
       int exceptionCount = 0;
@@ -88,33 +111,20 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
       assert exceptionCount == list.size();
    }
 
+   
+   
    public void testRunnableInvocation() throws Exception {
 
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
 
       Future<?> future = des.submit(new BoringRunnable());
       Object object = future.get();
       assert object == null;
-
-      des.execute(new BoringRunnable());
-      int exceptionCount = 0;
-      try {
-         des.execute(new Runnable() {
-            @Override
-            public void run() {
-            }
-         });
-         throw new Exception("Should not have happened");
-      } catch (IllegalArgumentException iae) {
-         exceptionCount++;
-      }
-
-      assert exceptionCount == 1;
    }
    
    public void testInvokeAny() throws Exception {
 
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
 
       List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
       tasks.add(new SimpleCallable());
@@ -130,7 +140,7 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
    
    public void testInvokeAll() throws Exception {
 
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
 
       List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
       tasks.add(new SimpleCallable());
@@ -158,7 +168,7 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
     * @throws Exception
     */
    public void testCallableIsolation() throws Exception {
-      DefaultExecutorService des = new DefaultExecutorService(c1);
+      DefaultExecutorService des = new DefaultExecutorService(getCache());
 
       List<Future<Integer>> list = des.submitEverywhere(new SimpleCallableWithField());
       assert list != null && !list.isEmpty();
@@ -168,7 +178,7 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
    }
 
    public void testTaskCancellation() throws Exception {
-      DistributedExecutorService des = new DefaultExecutorService(c2);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
       Future<Integer> future = des.submit(new SimpleCallable());
       if (future.cancel(true)){
          assert future.isCancelled();
@@ -178,19 +188,20 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
 
    public void testBasicDistributedCallable() throws Exception {
 
-      DistributedExecutorService des = new DefaultExecutorService(c2);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(false));
       Boolean r = future.get();
       assert r;
    }
 
    public void testBasicDistributedCallableWitkKeys() throws Exception {
+      Cache<Object, Object> c1 = getCache();
       c1.put("key1", "Manik");
       c1.put("key2", "Mircea");
       c1.put("key3", "Galder");
       c1.put("key4", "Sanne");
 
-      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
 
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
                "key1", "key2" });
@@ -199,12 +210,13 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
    }
 
    public void testDistributedCallableEverywhereWithKeys() throws Exception {
+      Cache<Object, Object> c1 = getCache();
       c1.put("key1", "Manik");
       c1.put("key2", "Mircea");
       c1.put("key3", "Galder");
       c1.put("key4", "Sanne");
 
-      DefaultExecutorService des = new DefaultExecutorService(c1);
+      DefaultExecutorService des = new DefaultExecutorService(getCache());
 
       List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
                new String[] { "key1", "key2" });
@@ -216,7 +228,7 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
 
    public void testDistributedCallableEverywhere() throws Exception {
 
-      DefaultExecutorService des = new DefaultExecutorService(c1);
+      DefaultExecutorService des = new DefaultExecutorService(getCache());
 
       List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false));
       assert list != null && !list.isEmpty();
