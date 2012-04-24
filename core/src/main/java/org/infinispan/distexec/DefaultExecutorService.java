@@ -326,6 +326,28 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                callable, rpc.getAddress(), null);
       return new DistributedRunnableFuture<T>(executeCommand);
    }
+   
+   @Override
+   public <T> Future<T> submit(Address target, Callable<T> task) {
+      if (task == null)
+         throw new NullPointerException();
+      if (target == null)
+         throw new NullPointerException();
+      List<Address> members = rpc.getTransport().getMembers();
+      if (!members.contains(target)) {
+         throw new IllegalArgumentException("Target node " + target + " is not a cluster member, members are " + members);
+      }
+      Address me = rpc.getAddress();
+      DistributedExecuteCommand<T> c = null;
+      if (target.equals(me)) {
+         c = factory.buildDistributedExecuteCommand(clone(task), me, null);
+      } else {
+         c = factory.buildDistributedExecuteCommand(task, me, null);
+      }
+      DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
+      executeFuture(target, f);
+      return f;
+   }
 
    @Override
    public <T, K> Future<T> submit(Callable<T> task, K... input) {

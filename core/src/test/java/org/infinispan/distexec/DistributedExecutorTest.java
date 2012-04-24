@@ -193,6 +193,17 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Boolean r = future.get();
       assert r;
    }
+   
+   public void testBasicTargetDistributedCallable() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+      
+      //initiate task from cache1 and select cache2 as target
+      DistributedExecutorService des = new DefaultExecutorService(cache1);
+      Future<Boolean> future = des.submit(cache2.getAdvancedCache().getRpcManager().getAddress(), new SimpleDistributedCallable(false));
+      Boolean r = future.get();
+      assert r;
+   }
 
    public void testBasicDistributedCallableWitkKeys() throws Exception {
       Cache<Object, Object> c1 = getCache();
