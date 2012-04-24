@@ -52,7 +52,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
    type SuitableHeader = HotRodHeader
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long): (HotRodHeader, Boolean) = {
+   override def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
       val streamOp = buffer.readUnsignedByte
       val (op, endOfOp) = streamOp match {
          case 0x01 => (PutRequest, false)
@@ -84,7 +84,15 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
       val txId = buffer.readByte
       if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
 
-      (new HotRodHeader(op, version, messageId, cacheName, flag, clientIntelligence, topologyId, this), endOfOp)
+      header.op = op
+      header.version = version
+      header.messageId = messageId
+      header.cacheName = cacheName
+      header.flag = flag
+      header.clientIntel = clientIntelligence
+      header.topologyId = topologyId
+      header.decoder = this
+      endOfOp
    }
 
    override def readKey(h: HotRodHeader, buffer: ChannelBuffer): (ByteArrayKey, Boolean) = {

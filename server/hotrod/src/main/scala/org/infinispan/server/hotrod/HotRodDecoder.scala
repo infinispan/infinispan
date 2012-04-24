@@ -35,8 +35,6 @@ import java.io.{IOException, StreamCorruptedException}
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.Channel
 import java.lang.StringBuilder
-import java.util.HashSet
-import org.infinispan.util.concurrent.ConcurrentMapFactory
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -54,7 +52,9 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ChannelBuffer): (Option[HotRodHeader], Boolean) = {
+   protected def createHeader: HotRodHeader = new HotRodHeader
+
+   override def readHeader(buffer: ChannelBuffer, header: HotRodHeader): Option[Boolean] = {
       try {
          val magic = buffer.readUnsignedByte
          if (magic != MAGIC_REQ) {
@@ -62,7 +62,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic)
             } else {
                trace("Error happened previously, ignoring %d byte until we find the magic number again", magic)
-               return (None, false) // Keep trying to read until we find magic
+               return None // Keep trying to read until we find magic
             }
          }
       } catch {
@@ -81,10 +81,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
             case _ => throw new UnknownVersionException(
                "Unknown version:" + version, version, messageId)
          }
-         val (header, endOfOp) = decoder.readHeader(buffer, version, messageId)
+         val endOfOp = decoder.readHeader(buffer, version, messageId, header)
          if (isTrace) trace("Decoded header %s", header)
          isError = false
-         (Some(header), endOfOp)
+         Some(endOfOp)
       } catch {
          case e: HotRodUnknownOperationException => {
             isError = true
@@ -214,6 +214,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
          case t: Throwable => (new HotRodException(header.decoder.createErrorResponse(header, t), e), false)
       }
    }
+
 }
 
 class UnknownVersionException(reason: String, val version: Byte, val messageId: Long)
@@ -229,10 +230,15 @@ class RequestParsingException(reason: String, val version: Byte, val messageId: 
    def this(reason: String, version: Byte, messageId: Long) = this(reason, version, messageId, null)
 }
 
-class HotRodHeader(override val op: Enumeration#Value, val version: Byte,
-                   val messageId: Long, val cacheName: String,
-                   val flag: ProtocolFlag, val clientIntel: Short, val topologyId: Int,
-                   val decoder: AbstractVersionedDecoder) extends RequestHeader(op) {
+class HotRodHeader extends RequestHeader {
+   var version: Byte = _
+   var messageId: Long = _
+   var cacheName: String = _
+   var flag: ProtocolFlag = _
+   var clientIntel: Short = _
+   var topologyId: Int = _
+   var decoder: AbstractVersionedDecoder = _
+
    override def toString = {
       new StringBuilder().append("HotRodHeader").append("{")
          .append("op=").append(op)

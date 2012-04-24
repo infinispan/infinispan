@@ -89,11 +89,16 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def decodeHeader(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
-      val (optHeader, endOfOp) = readHeader(buffer)
-      if (optHeader == None) return null // Something went wrong reading the header, so get more bytes
-      header = optHeader.get
+      header = createHeader
+      val endOfOp = readHeader(buffer, header)
+      if (endOfOp == None) {
+         // Something went wrong reading the header, so get more bytes.
+         // It can happen with Hot Rod if the header is completely corrupted
+         return null
+      }
+
       cache = getCache
-      if (endOfOp) {
+      if (endOfOp.get) {
          header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
             case _ => customDecodeHeader(ch, buffer)
@@ -284,7 +289,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       null // For netty's decoder that mandates a return
    }
 
-   protected def readHeader(b: ChannelBuffer): (Option[SuitableHeader], Boolean)
+   protected def createHeader: SuitableHeader
+
+   protected def readHeader(b: ChannelBuffer, header: SuitableHeader): Option[Boolean]
 
    protected def getCache: Cache[K, V]
 
@@ -369,7 +376,9 @@ object AbstractProtocolDecoder extends Log {
    private val DefaultSlimDownSize = 5 * 1024 * 1024
 }
 
-class RequestHeader(val op: Enumeration#Value) {
+class RequestHeader {
+   var op: Enumeration#Value = _
+
    override def toString = {
       new StringBuilder().append("RequestHeader").append("{")
          .append("op=").append(op)
