@@ -26,6 +26,7 @@ import org.jboss.netty.buffer.ChannelBuffer
 import java.lang.StringBuilder
 import collection.mutable.{Buffer, ListBuffer}
 import annotation.tailrec
+import java.io.{ByteArrayOutputStream, OutputStream}
 
 /**
  * Memcached text protocol utilities.
@@ -60,14 +61,40 @@ object TextProtocolUtil {
    val MAX_UNSIGNED_LONG = BigInt("18446744073709551615")
    val MIN_UNSIGNED = BigInt("0")
 
+   val CHARSET = "UTF-8"
+
    /**
     * In the particular case of Memcached, the end of operation/command
     * is signaled by "\r\n" characters. So, if end of operation is
-    * found, this method would return the element and true. On the
-    * contrary, if space was found instead of end of operation
-    * character, then it'd return the element and false.
+    * found, this method would return true. On the contrary, if space was
+    * found instead of end of operation character, then it'd return the element and false.
     */
-   def readElement(buffer: ChannelBuffer): (String, Boolean) = readElement(buffer, new StringBuilder())
+   @tailrec
+   def readElement(buffer: ChannelBuffer, byteBuffer: OutputStream): Boolean = {
+      var next = buffer.readByte
+      if (next == SP) { // Space
+         false
+      }
+      else if (next == CR) { // CR
+         next = buffer.readByte
+         if (next == LF) { // LF
+            true
+         } else {
+            byteBuffer.write(next)
+            readElement(buffer, byteBuffer)
+         }
+      }
+      else {
+         byteBuffer.write(next)
+         readElement(buffer, byteBuffer)
+      }
+   }
+
+   def extractString(byteBuffer: ByteArrayOutputStream): String = {
+      val string = new String(byteBuffer.toByteArray(), CHARSET);
+      byteBuffer.reset()
+      string
+   }
 
    @tailrec
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
@@ -90,9 +117,9 @@ object TextProtocolUtil {
       }
    }
 
-   def readLine(buffer: ChannelBuffer): String = {
+   def readDiscardedLine(buffer: ChannelBuffer): String = {
       if (readableBytes(buffer) > 0)
-         readLine(buffer, new StringBuilder())         
+         readDiscardedLine(buffer, new StringBuilder())
       else
          ""
    }
@@ -101,7 +128,7 @@ object TextProtocolUtil {
       buffer.writerIndex - buffer.readerIndex
 
    @tailrec
-   private def readLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
+   private def readDiscardedLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte
       if (next == CR) { // CR
          next = buffer.readByte
@@ -109,13 +136,32 @@ object TextProtocolUtil {
             sb.toString.trim
          } else {
             sb.append(next.asInstanceOf[Char])
-            readLine(buffer, sb)
+            readDiscardedLine(buffer, sb)
          }
       } else if (next == LF) { //LF
          sb.toString.trim
       } else {
          sb.append(next.asInstanceOf[Char])
-         readLine(buffer, sb)
+         readDiscardedLine(buffer, sb)
+      }
+   }
+
+   @tailrec
+   def skipLine(buffer: ChannelBuffer) {
+      if (readableBytes(buffer) > 0) {
+         var next = buffer.readByte
+         if (next == CR) { // CR
+            next = buffer.readByte
+            if (next == LF) { // LF
+               return
+            } else {
+               skipLine(buffer)
+            }
+         } else if (next == LF) { //LF
+            return
+         } else {
+            skipLine(buffer)
+         }
       }
    }
 
@@ -128,32 +174,37 @@ object TextProtocolUtil {
 
    def readSplitLine(buffer: ChannelBuffer): Seq[String] = {
       if (readableBytes(buffer) > 0)
-         readSplitLine(buffer, new ListBuffer[String](), new StringBuilder)
+         readSplitLine(buffer, new ListBuffer[String](), buffer.readerIndex(), 0)
       else
          Seq.empty
    }
 
    @tailrec
-   private def readSplitLine(buffer: ChannelBuffer, list: Buffer[String], word: StringBuilder): Seq[String] = {
+   private def readSplitLine(buffer: ChannelBuffer, list: Buffer[String],
+           start: Int, length: Int): Seq[String] = {
       var next = buffer.readByte
       if (next == CR) { // CR
          next = buffer.readByte
          if (next == LF) { // LF
-            list += word.toString
+            val bytes = new Array[Byte](length)
+            buffer.getBytes(start, bytes)
+            list += new String(bytes, CHARSET)
             Seq[String]() ++ list
          } else {
-            word.append(next.asInstanceOf[Char])
-            readSplitLine(buffer, list, word)
+            readSplitLine(buffer, list, start, length + 1)
          }
       } else if (next == LF) { // LF
-         list += word.toString
+         val bytes = new Array[Byte](length)
+         buffer.getBytes(start, bytes)
+         list += new String(bytes, CHARSET)
          Seq[String]() ++ list
       } else if (next == SP) {
-         list += word.toString
-         readSplitLine(buffer, list, new StringBuilder)
+         val bytes = new Array[Byte](length)
+         buffer.getBytes(start, bytes)
+         list += new String(bytes, CHARSET)
+         readSplitLine(buffer, list, start + length + 1, 0)
       } else {
-         word.append(next.asInstanceOf[Char])
-         readSplitLine(buffer, list, word)
+         readSplitLine(buffer, list, start, length + 1)
       }
    }
 
