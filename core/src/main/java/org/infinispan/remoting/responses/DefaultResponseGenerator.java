@@ -43,7 +43,7 @@ public class DefaultResponseGenerator implements ResponseGenerator {
          ReplicableCommand c = src.getCommand();
          if (c.getCommandId()== DistributedExecuteCommand.COMMAND_ID) {
             // Even null values should be wrapped in this case.
-            return new SuccessfulResponse(returnValue);
+            return SuccessfulResponse.create(returnValue);
          }
       }
       if (returnValue == null) return null;
