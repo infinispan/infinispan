@@ -23,6 +23,9 @@
 
 package org.infinispan.spring.provider;
 
+import org.infinispan.CacheException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -39,6 +42,7 @@ import org.springframework.util.Assert;
  * 
  */
 public class SpringCache implements Cache {
+   protected final Log logger = LogFactory.getLog(getClass());
 
    private final org.infinispan.api.BasicCache<Object, Object> nativeCache;
 
@@ -71,16 +75,21 @@ public class SpringCache implements Cache {
     */
    @Override
    public ValueWrapper get(final Object key) {
-      Object v = nativeCache.get(key);
-	  return (v != null ? new SimpleValueWrapper(v) : null);
-   }
+        Object v = nativeCache.get(key);
+        return (v != null ? new SimpleValueWrapper(v) : null);
+      }
 
    /**
     * @see org.springframework.cache.Cache#put(java.lang.Object, java.lang.Object)
     */
    @Override
    public void put(final Object key, final Object value) {
-      this.nativeCache.put(key, value);
+      try {
+        this.nativeCache.put(key, value);
+      }
+      catch(CacheException ce) {
+        logger.warnv(ce, "Unable to perform put for key {0}", key.toString());
+      }
    }
 
    /**
@@ -88,8 +97,8 @@ public class SpringCache implements Cache {
     */
    @Override
    public void evict(final Object key) {
-     this.nativeCache.remove(key);
-   }
+        this.nativeCache.remove(key);
+     }
 
 
    /**
@@ -97,7 +106,7 @@ public class SpringCache implements Cache {
     */
    @Override
    public void clear() {
-      this.nativeCache.clear();
+        this.nativeCache.clear();
    }
 
    /**
