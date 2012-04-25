@@ -45,11 +45,12 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "loaders.jdbc.stringbased.StringStoreWithManagedConnectionTest")
 public class StringStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       stringBasedCacheStore.init(config, new CacheImpl("aName"), getMarshaller());

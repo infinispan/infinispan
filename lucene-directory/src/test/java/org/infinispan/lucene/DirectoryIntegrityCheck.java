@@ -118,7 +118,7 @@ public class DirectoryIntegrityCheck {
       Object readLockValue = cache.get(readLockKey);
       Assert.assertNotNull(readLockValue);
       Assert.assertTrue(readLockValue instanceof Integer);
-      int v = (Integer) readLockValue;
+      int v = ((Integer) readLockValue).intValue();
       Assert.assertTrue(v > 1, "readlock exists for unregistered file of unexpected value: " + v + " for file: " + filename);
    }
 

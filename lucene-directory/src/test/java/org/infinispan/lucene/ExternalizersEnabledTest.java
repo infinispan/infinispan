@@ -26,7 +26,7 @@ package org.infinispan.lucene;
 import java.util.List;
 
 import org.infinispan.config.AdvancedExternalizerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,10 +43,8 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = new Configuration();
-      configuration.setCacheMode(Configuration.CacheMode.LOCAL);
-      configuration.setInvocationBatchingEnabled(true);
-      return TestCacheManagerFactory.createCacheManager(configuration);
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createLocalCacheConfiguration();
+      return TestCacheManagerFactory.createCacheManager(configurationBuilder);
    }
    
    @Test

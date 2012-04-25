@@ -180,7 +180,7 @@ public class IndexReadingStressTest {
          this.startValue = startValue;
          this.increment = increment;
          this.max = max;
-         indexReader = IndexReader.open(directory, true);
+         indexReader = IndexReader.open(directory);
          searcher = new IndexSearcher(indexReader);
       }
       

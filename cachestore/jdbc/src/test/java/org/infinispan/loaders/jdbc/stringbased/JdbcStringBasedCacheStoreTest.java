@@ -22,7 +22,10 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -31,7 +34,6 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.CacheImpl;
 import org.testng.annotations.Test;
 
 /**
@@ -45,7 +47,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       CacheImpl cache = new CacheImpl("aName");

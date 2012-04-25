@@ -27,7 +27,6 @@ import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
 import java.util.concurrent.{TimeUnit, ScheduledExecutorService}
-import java.io.{IOException, EOFException, StreamCorruptedException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.server.core._
@@ -38,9 +37,11 @@ import scala.collection.immutable
 import org.jboss.netty.buffer.ChannelBuffer
 import transport.NettyTransport
 import DecoderState._
-import org.jboss.netty.channel.Channel
 import java.lang.StringBuilder
-import TextProtocolUtil._
+import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorruptedException}
+import org.infinispan.server.memcached.TextProtocolUtil._
+import scala.Predef._
+import org.jboss.netty.channel.Channel
 
 /**
  * A Memcached protocol specific decoder
@@ -67,12 +68,16 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    private final val replaceIfUnmodifiedHits = new AtomicLong(0)
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
    private val isTrace = isTraceEnabled
+   private val byteBuffer = new ByteArrayOutputStream()
 
-   override def readHeader(buffer: ChannelBuffer): (Option[RequestHeader], Boolean) = {
-      var (streamOp, endOfOp) = readElement(buffer)
+   override def createHeader: RequestHeader = new RequestHeader
+
+   override def readHeader(buffer: ChannelBuffer, header: RequestHeader): Option[Boolean] = {
+      var endOfOp = readElement(buffer, byteBuffer)
+      val streamOp = extractString(byteBuffer)
       val op = toRequest(streamOp, endOfOp, buffer)
       if (op == StatsRequest && !endOfOp) {
-         val line = readLine(buffer).trim
+         val line = readDiscardedLine(buffer).trim
          if (!line.isEmpty)
             throw new StreamCorruptedException("Stats command does not accept arguments: " + line)
          else
@@ -80,20 +85,22 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       }
       if (op == VerbosityRequest) {
          if (!endOfOp)
-            readLine(buffer) // Read rest of line to clear the operation
+            skipLine(buffer) // Read rest of line to clear the operation
          throw new StreamCorruptedException("Memcached 'verbosity' command is unsupported")
       }
 
-      (Some(new RequestHeader(op)), endOfOp)
+      header.op = op
+      Some(endOfOp)
    }
 
    override def readKey(b: ChannelBuffer): (String, Boolean) = {
-      val (k, endOfOp) = readElement(b)
+      val endOfOp = readElement(b, byteBuffer)
+      val k = extractString(byteBuffer)
       checkKeyLength(k, endOfOp, b)
       (k, endOfOp)
    }
 
-   private def readKeys(b: ChannelBuffer): Array[String] = readLine(b).trim.split(" +")
+   private def readKeys(b: ChannelBuffer): Seq[String] = readSplitLine(b)
 
    override protected def get(buffer: ChannelBuffer): AnyRef = {
       val keys = readKeys(buffer)
@@ -113,18 +120,17 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    private def checkKeyLength(k: String, endOfOp: Boolean, b: ChannelBuffer): String = {
       if (k.length > 250) {
-         if (!endOfOp) readLine(b) // Clear the rest of line
+         if (!endOfOp) skipLine(b) // Clear the rest of line
          throw new StreamCorruptedException("Key length over the 250 character limit")
       } else k
    }
 
    override def readParameters(ch: Channel, b: ChannelBuffer): Boolean = {
-      val line = readLine(b)
+      val args = readSplitLine(b)
       var endOfOp = false
       params =
-         if (!line.isEmpty) {
-            if (isTrace) trace("Operation parameters: %s", line)
-            val args = line.trim.split(" +")
+         if (!args.isEmpty) {
+            if (isTrace) trace("Operation parameters: %s", args)
             try {
                header.op match {
                   case PutRequest => readStorageParameters(args, b)
@@ -137,7 +143,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
                   case _ => readStorageParameters(args, b)
                }
             } catch {
-               case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + line)
+               case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + args)
             }
          } else {
             null // For example when delete <key> is sent without any further parameters, or flush_all without delay
@@ -145,18 +151,18 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       endOfOp
    }
 
-   private def readRemoveParameters(args: Array[String]): MemcachedParameters = {
+   private def readRemoveParameters(args: Seq[String]): MemcachedParameters = {
       val delayedDeleteTime = parseDelayedDeleteTime(args)
       val noReply = if (delayedDeleteTime == -1) parseNoReply(0, args) else false
       new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", 0)
    }
 
-   private def readIncrDecrParameters(args: Array[String]): MemcachedParameters = {
+   private def readIncrDecrParameters(args: Seq[String]): MemcachedParameters = {
       val delta = args(0)
       new MemcachedParameters(-1, -1, -1, -1, parseNoReply(1, args), 0, delta, 0)
    }
 
-   private def readFlushAllParameters(args: Array[String]): MemcachedParameters = {
+   private def readFlushAllParameters(args: Seq[String]): MemcachedParameters = {
       var noReplyFound = false
       val flushDelay =
          try {
@@ -173,7 +179,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", flushDelay)
    }
 
-   private def readStorageParameters(args: Array[String], b: ChannelBuffer): MemcachedParameters = {
+   private def readStorageParameters(args: Seq[String], b: ChannelBuffer): MemcachedParameters = {
       var index = 0
       val flags = getFlags(args(index))
       if (flags < 0) throw new StreamCorruptedException("Flags cannot be negative: " + flags)
@@ -199,7 +205,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    override protected def readValue(b: ChannelBuffer) {
       b.readBytes(rawValue)
-      readLine(b) // read the rest of line to clear CRLF after value Byte[]
+      skipLine(b) // read the rest of line to clear CRLF after value Byte[]
    }
 
    override def createValue(nextVersion: Long): MemcachedValue =
@@ -229,7 +235,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       version.toLong
    }
 
-   private def parseNoReply(expectedIndex: Int, args: Array[String]): Boolean = {
+   private def parseNoReply(expectedIndex: Int, args: Seq[String]): Boolean = {
       if (args.length > expectedIndex) {
          if ("noreply" == args(expectedIndex))
             true
@@ -239,7 +245,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       else false      
    }
 
-   private def parseDelayedDeleteTime(args: Array[String]): Int = {
+   private def parseDelayedDeleteTime(args: Seq[String]): Int = {
       if (args.length > 0) {
          try {
             args(0).toInt
@@ -655,7 +661,7 @@ private object RequestResolver extends Log {
          case "quit" => QuitRequest
          case _ => {
             if (!endOfOp)
-               readLine(buffer) // Read rest of line to clear the operation
+               skipLine(buffer) // Read rest of line to clear the operation
             throw new UnknownOperationException("Unknown operation: " + commandName);
          }
       }

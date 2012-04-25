@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 
 /**
  * JdbcBinaryCacheStoreFunctionalTest.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -41,7 +41,7 @@ public class JdbcBinaryCacheStoreFunctionalTest extends BaseCacheStoreFunctional
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       return config;
 //      JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();

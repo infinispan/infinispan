@@ -22,10 +22,15 @@
  */
 package org.infinispan.distexec;
 
+import java.io.Externalizable;
+import java.io.NotSerializableException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * An ExecutorService that provides methods to submit tasks for execution on a cluster of Infinispan
@@ -42,6 +47,12 @@ import java.util.concurrent.Future;
  * <p>
  * 
  * 
+ * Note that due to potential task migration to other nodes every {@link Callable},
+ * {@link Runnable} and/or {@link DistributedCallable} submitted must be either {@link Serializable}
+ * or {@link Externalizable}. Also the value returned from a callable must be {@link Serializable}
+ * or {@link Externalizable}. Unfortunately if the value returned is not serializable then a
+ * {@link NotSerializableException} will be thrown.
+ * 
  * @see DefaultExecutorService
  * @see DistributedCallable
  * 
@@ -51,9 +62,20 @@ import java.util.concurrent.Future;
  * @since 5.0
  */
 public interface DistributedExecutorService extends ExecutorService {
+   
+   /**
+    *  Submits the given Callable task for an execution on the specified target Infinispan node.
+    * <p>
+    * 
+    * @param <T>
+    * @param target address of Infinispan node selected for execution of the task
+    * @param task a task to execute on selected Infinispan node
+    * @return a Future representing pending completion of the task
+    */
+   <T> Future<T> submit(Address target, Callable<T> task);
 
    /**
-    * Submits given Callable task for an execution on a single Infinispan node.
+    * Submits the given Callable task for an execution on a single Infinispan node.
     * <p>
     * 
     * Execution environment will chose an arbitrary node N hosting some or all of the keys specified
@@ -88,4 +110,5 @@ public interface DistributedExecutorService extends ExecutorService {
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
    <T, K > List<Future<T>> submitEverywhere(Callable<T> task, K... input);
+
 }

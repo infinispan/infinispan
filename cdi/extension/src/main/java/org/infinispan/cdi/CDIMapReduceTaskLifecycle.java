@@ -1,0 +1,60 @@
+package org.infinispan.cdi;
+
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.InjectionTarget;
+
+import org.infinispan.distexec.mapreduce.Mapper;
+import org.infinispan.distexec.mapreduce.Reducer;
+import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
+import org.jboss.solder.beanManager.BeanManagerAware;
+
+public class CDIMapReduceTaskLifecycle extends BeanManagerAware implements MapReduceTaskLifecycle {
+
+   @Override
+   @SuppressWarnings({ "unchecked" })
+   public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
+      BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+      Class<Mapper<KIn, VIn, KOut, VOut>> clazz = (Class<Mapper<KIn, VIn, KOut, VOut>>) mapper.getClass();
+      AnnotatedType<Mapper<KIn, VIn, KOut, VOut>> type = bm.createAnnotatedType(clazz);
+      InjectionTarget<Mapper<KIn, VIn, KOut, VOut>> it = bm.createInjectionTarget(type);
+      CreationalContext<Mapper<KIn, VIn, KOut, VOut>> ctx = bm.createCreationalContext(null);
+      it.inject(mapper, ctx);
+      it.postConstruct(mapper);
+   }
+
+   @Override
+   @SuppressWarnings({ "unchecked" })
+   public <KIn, VIn, KOut, VOut> void onPostExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
+      BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+      Class<Mapper<KIn, VIn, KOut, VOut>> clazz = (Class<Mapper<KIn, VIn, KOut, VOut>>) mapper.getClass();
+      AnnotatedType<Mapper<KIn, VIn, KOut, VOut>> type = bm.createAnnotatedType(clazz);
+      InjectionTarget<Mapper<KIn, VIn, KOut, VOut>> it = bm.createInjectionTarget(type);
+      it.preDestroy(mapper);
+      it.dispose(mapper);
+   }
+
+   @Override
+   @SuppressWarnings({ "unchecked" })
+   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer) {
+      BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+      Class<Reducer<KOut, VOut>> clazz = (Class<Reducer<KOut, VOut>>) reducer.getClass();
+      AnnotatedType<Reducer<KOut, VOut>> type = bm.createAnnotatedType(clazz);
+      InjectionTarget<Reducer<KOut, VOut>> it = bm.createInjectionTarget(type);
+      CreationalContext<Reducer<KOut, VOut>> ctx = bm.createCreationalContext(null);
+      it.inject(reducer, ctx);
+      it.postConstruct(reducer);
+   }
+
+   @Override
+   @SuppressWarnings({ "unchecked" })
+   public <KOut, VOut> void onPostExecute(Reducer<KOut, VOut> reducer) {
+      BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+      Class<Reducer<KOut, VOut>> clazz = (Class<Reducer<KOut, VOut>>) reducer.getClass();
+      AnnotatedType<Reducer<KOut, VOut>> type = bm.createAnnotatedType(clazz);
+      InjectionTarget<Reducer<KOut, VOut>> it = bm.createInjectionTarget(type);
+      it.preDestroy(reducer);
+      it.dispose(reducer);
+   }
+}

@@ -29,6 +29,7 @@ import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.testng.Assert._
 import java.lang.reflect.Method
 import org.infinispan.util.TypedProperties
+import test.Stoppable
 
 /**
  * Abstract protocol server test.
@@ -174,7 +175,8 @@ class AbstractProtocolServerTest {
       Stoppable.useServer(createServer) { server =>
          Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
             server.start(p, cm)
-            assertEquals(server.tcpNoDelay, tcpNoDelay.toBoolean)
+            assertEquals(server.asInstanceOf[MockProtocolServer]
+                    .tcpNoDelay, tcpNoDelay.toBoolean)
          }
 
          tcpNoDelay = "${" + m.getName + "-mytcpnodelay:false}"
@@ -182,7 +184,7 @@ class AbstractProtocolServerTest {
          p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
          Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
             server.start(p, cm)
-            assertEquals(server.tcpNoDelay, false)
+            assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
 
          tcpNoDelay = "${" + m.getName + "-mytcpnodelay:true}"
@@ -191,7 +193,7 @@ class AbstractProtocolServerTest {
          p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay);
          Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
             server.start(p, cm)
-            assertEquals(server.tcpNoDelay, false)
+            assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
 
          tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
@@ -200,7 +202,7 @@ class AbstractProtocolServerTest {
          Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
             server.start(p, cm)
             // Boolean.parseBoolean() returning false to anything other than true, no exception thrown
-            assertEquals(server.tcpNoDelay, false)
+            assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
 
          tcpNoDelay = "${" + m.getName + "-othertcpnodelay}"
@@ -209,7 +211,7 @@ class AbstractProtocolServerTest {
          p.setProperty(PROP_KEY_PORT, tcpNoDelay);
          Stoppable.useCacheManager(new DefaultCacheManager()) { cm =>
             server.start(p, cm)
-            assertEquals(server.tcpNoDelay, true)
+            assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, true)
          }
       }
    }

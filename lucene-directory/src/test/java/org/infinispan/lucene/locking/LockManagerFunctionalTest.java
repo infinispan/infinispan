@@ -28,7 +28,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -44,8 +44,8 @@ import org.testng.annotations.Test;
 public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
    
    protected void createCacheManagers() throws Throwable {
-      Configuration replSync = CacheTestSupport.createTestConfiguration();
-      createClusteredCaches(2, "lucene", replSync);
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      createClusteredCaches(2, "lucene", configurationBuilder);
    }
    
    public void testLuceneIndexLocking() throws IOException {

@@ -22,6 +22,10 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import static junit.framework.Assert.assertEquals;
+
+import java.sql.Connection;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
@@ -39,10 +43,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
-
-import java.sql.Connection;
-
-import static junit.framework.Assert.assertEquals;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-579.
@@ -128,7 +128,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       if (wrap) {
          connectionFactoryConfig.setConnectionFactoryClass(SharedConnectionFactory.class.getName());
       }
-      TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig csConfig = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       csConfig.setFetchPersistentState(true);
       csConfig.setKey2StringMapperClass(mapperName);

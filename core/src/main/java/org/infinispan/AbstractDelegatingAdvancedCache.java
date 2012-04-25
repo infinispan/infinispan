@@ -38,6 +38,7 @@ import org.infinispan.stats.Stats;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -176,5 +177,10 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
       return cache.with(classLoader);
+   }
+
+   protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
+
+      ((CacheImpl) cache).putForExternalRead(key, value, flags, classLoader);
    }
 }

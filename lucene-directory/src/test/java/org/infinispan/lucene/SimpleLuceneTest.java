@@ -30,7 +30,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -48,8 +48,8 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = CacheTestSupport.createTestConfiguration();
-      createClusteredCaches(2, "lucene", configuration);
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      createClusteredCaches(2, "lucene", configurationBuilder);
    }
    
    @Test

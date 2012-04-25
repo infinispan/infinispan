@@ -50,7 +50,11 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName: String = "hotRodDistSync"
 
-   override protected def createCacheConfig: Configuration = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
+   override protected def createCacheConfig: Configuration = {
+      val cfg = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
+      cfg.fluent().l1().disable() // Disable L1 explicitly
+      cfg
+   }
 
    override protected def protocolVersion = 10
 
@@ -107,7 +111,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          log.trace("Get key and verify that's v6-*")
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
-         newClient.stop
+         killClient(newClient)
          stopClusteredServer(newServer)
          waitAddressCacheRemoval(addressRemovalLatches)
       }

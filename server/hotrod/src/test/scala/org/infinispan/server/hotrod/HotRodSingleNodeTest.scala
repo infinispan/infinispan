@@ -32,6 +32,7 @@ import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.util.ByteArrayKey
+import org.infinispan.server.core.test.ServerTestingUtil._
 
 /**
  * Base test class for single node Hot Rod tests.
@@ -50,9 +51,13 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       val cacheManager = createTestCacheManager
       cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration)
       advancedCache = cacheManager.getCache[ByteArrayKey, CacheValue](cacheName).getAdvancedCache
+      cacheManager
+   }
+
+   protected override def setup() {
+      super.setup()
       hotRodServer = createStartHotRodServer(cacheManager)
       hotRodClient = connectClient
-      cacheManager
    }
 
    protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
@@ -64,7 +69,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       log.debug("Test finished, close cache, client and Hot Rod server")
       super.destroyAfterClass
       shutdownClient
-      hotRodServer.stop
+      killServer(hotRodServer)
    }
 
    protected def server = hotRodServer
@@ -73,7 +78,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
 
    protected def jmxDomain = hotRodJmxDomain
 
-   protected def shutdownClient: ChannelFuture = hotRodClient.stop
+   protected def shutdownClient: ChannelFuture = killClient(hotRodClient)
 
    protected def connectClient: HotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
 }

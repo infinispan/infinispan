@@ -28,7 +28,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.InfinispanDirectory;
@@ -63,8 +63,8 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = CacheTestSupport.createTestConfiguration();
-      createClusteredCaches(2, CACHE_NAME, configuration);
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      createClusteredCaches(2, CACHE_NAME, configurationBuilder);
    }
    
    @BeforeMethod

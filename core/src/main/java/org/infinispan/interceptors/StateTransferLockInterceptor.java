@@ -78,14 +78,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       }
       boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
       } catch (StateTransferLockReacquisitionException e) {
          release = false;
-         return signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       } finally {
          if (release) {
             stateTransferLock.releaseForCommand(ctx, command);
@@ -96,14 +96,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       }
       boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
       } catch (StateTransferLockReacquisitionException e) {
          release = false;
-         return signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       } finally {
          if (release) {
             stateTransferLock.releaseForCommand(ctx, command);
@@ -114,14 +114,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       }
       boolean release = true;
       try {
          return handleWithRetries(ctx, command, -1);
       } catch (StateTransferLockReacquisitionException e) {
          release = false;
-         return signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       } finally {
          if (release) {
             stateTransferLock.releaseForCommand(ctx, command);
@@ -132,14 +132,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       }
       boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
       } catch (StateTransferLockReacquisitionException e) {
          release = false;
-         return signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       } finally {
          if (release) {
             stateTransferLock.releaseForCommand(ctx, command);
@@ -174,14 +174,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       }
       boolean release = true;
       try {
          return handleWithRetries(ctx, command, rpcTimeout);
       } catch (StateTransferLockReacquisitionException e) {
          release = false;
-         return signalStateTransferInProgress();
+         return signalStateTransferInProgress(ctx);
       } finally {
          if (release) {
             stateTransferLock.releaseForCommand(ctx, command);
@@ -195,9 +195,14 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
     * If this happens on a remote node however the originator will catch the exception and retry the command.
     * @return
     */
-   private Object signalStateTransferInProgress() {
-      int viewId = stateTransferLock.getBlockingCacheViewId();
-      throw new StateTransferInProgressException(viewId, "Timed out waiting for the state transfer lock, state transfer in progress for view " + viewId);
+   private Object signalStateTransferInProgress(InvocationContext ctx) {
+         int viewId = stateTransferLock.getBlockingCacheViewId();
+      if (ctx.isOriginLocal()) {
+         throw new StateTransferInProgressException(viewId, "Timed out waiting for the state transfer lock, state transfer in progress for view " + viewId);
+      } else {
+         throw new StateTransferInProgressException(viewId, "State transfer in progress on target node for view " + viewId
+               + ", returning to the originator to allow state transfer to proceed.");
+      }
    }
 
    private Object handleWithRetries(InvocationContext ctx, VisitableCommand command, long timeoutMillis) throws Throwable {

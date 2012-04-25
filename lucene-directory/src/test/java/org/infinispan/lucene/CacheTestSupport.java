@@ -25,8 +25,9 @@ package org.infinispan.lucene;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -35,11 +36,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,18 +66,57 @@ public abstract class CacheTestSupport {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
 
-   public static Configuration createTestConfiguration() {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-      c.setSyncReplTimeout(10000);
-      c.setLockAcquisitionTimeout(10000);
-      c.setSyncCommitPhase(true);
-      c.setL1CacheEnabled(true);
-      c.setExposeJmxStatistics(false);
-      c.setSyncRollbackPhase(true);
-      c.setEnableDeadlockDetection(false);
-      c.setInvocationBatchingEnabled(true);
-      return c;
+   public static ConfigurationBuilder createTestConfiguration() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder
+            .clustering()
+               .cacheMode(CacheMode.DIST_SYNC)
+               .stateTransfer()
+                  .fetchInMemoryState(true)
+               .l1()
+                  .enable()
+                  .enableOnRehash()
+               .sync()
+                  .replTimeout(10000)
+            .transaction()
+               .syncCommitPhase(true)
+               .syncRollbackPhase(true)
+            .locking()
+               .lockAcquisitionTimeout(10000)
+            .invocationBatching()
+               .enable()
+            .deadlockDetection()
+               .disable()
+            .jmxStatistics()
+               .disable()
+            ;
+      return builder;
+   }
+
+   public static CacheContainer createLocalCacheManager() {
+      ConfigurationBuilder localCacheConfigurationBuilder = createLocalCacheConfiguration();
+      Configuration configuration = localCacheConfigurationBuilder.build();
+      return new DefaultCacheManager(configuration);
+   }
+
+   public static ConfigurationBuilder createLocalCacheConfiguration() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder
+            .clustering()
+               .cacheMode(CacheMode.LOCAL)
+            .transaction()
+               .syncCommitPhase(true)
+               .syncRollbackPhase(true)
+            .locking()
+               .lockAcquisitionTimeout(10000)
+            .invocationBatching()
+               .enable()
+            .deadlockDetection()
+               .disable()
+            .jmxStatistics()
+               .disable()
+            ;
+      return builder;
    }
 
    protected static File createDummyDocToIndex(String fileName, int sz) throws Exception {
@@ -124,8 +165,9 @@ public abstract class CacheTestSupport {
    protected static void doReadOperation(Directory d) throws Exception {
       IndexSearcher search = null;
       try {
+         IndexReader indexReader = IndexReader.open(d);
          // this is a read
-         search = new IndexSearcher(d, true);
+         search = new IndexSearcher(indexReader);
          // dummy query that probably won't return anything
          Term term = new Term( "path", "good" );
          TermQuery termQuery = new TermQuery(term);
@@ -137,28 +179,16 @@ public abstract class CacheTestSupport {
       }
    }
 
-   public static CacheContainer createLocalCacheManager() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      Configuration cfg = new Configuration();
-      cfg.setCacheMode(CacheMode.LOCAL);
-      cfg.setEnableDeadlockDetection(false);
-      cfg.setExposeJmxStatistics(false);
-      cfg.setL1CacheEnabled(false);
-      cfg.setWriteSkewCheck(false);
-      cfg.setInvocationBatchingEnabled(true);
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg);
-   }
-   
    public static void initializeDirectory(Directory directory) throws IOException {
-      IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, true, MaxFieldLength.UNLIMITED);
-      iwriter.setUseCompoundFile(false);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iwriter = new IndexWriter(directory, indexWriterConfig);
       iwriter.commit();
       iwriter.close();
       //reopen to check for index
-      IndexSearcher searcher = new IndexSearcher(directory, true);
-      searcher.close();
+      IndexReader reader = IndexReader.open(directory);
+      reader.close();
    }
-   
+
    /**
     * Used in test to remove all documents containing some term
     * 
@@ -166,7 +196,8 @@ public abstract class CacheTestSupport {
     * @param string
     */
    public static void removeByTerm(Directory dir, String term) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       iw.deleteDocuments(new Term("body", term));
       iw.commit();
       iw.close();
@@ -183,7 +214,8 @@ public abstract class CacheTestSupport {
    public static void assertTextIsFoundInIds(Directory dir, String term, Integer... validDocumentIds) throws IOException {
       int expectedResults = validDocumentIds.length;
       Set<Integer> expectedDocumendIds = new HashSet<Integer>(Arrays.asList(validDocumentIds));
-      IndexSearcher searcher = new IndexSearcher(dir,true);
+      IndexReader reader = IndexReader.open(dir);
+      IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);
       assert docs.totalHits == expectedResults;
@@ -196,6 +228,7 @@ public abstract class CacheTestSupport {
          assert expectedDocumendIds.contains(idFoundElement);
       }
       searcher.close();
+      reader.close();
    }
 
    /**
@@ -207,7 +240,8 @@ public abstract class CacheTestSupport {
     * @throws IOException
     */
    public static void writeTextToIndex(Directory dir, int id, String text) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       Document doc = new Document();
       doc.add(new Field("id", String.valueOf(id), Field.Store.YES, Field.Index.NOT_ANALYZED));
       doc.add(new Field("body", text, Field.Store.NO, Field.Index.ANALYZED));
@@ -215,10 +249,15 @@ public abstract class CacheTestSupport {
       iw.commit();
       iw.close();
    }
-   
+
+   /**
+    * Optimizing an index is not recommended nowadays, still it's an interesting
+    * byte-shuffling exercise to test.
+    */
    public static void optimizeIndex(Directory dir) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
-      iw.optimize();
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
+      iw.forceMerge(1, true);
       iw.close();
    }
    
@@ -239,5 +278,24 @@ public abstract class CacheTestSupport {
       sb.append("\n");
       System.out.println(sb.toString());
    }
-   
+
+   /**
+    * We should remove this very soon, but it's currently being needed by the JDBC
+    * CacheLoader as there is no new alternative for programmatic configuration.
+    */
+   @Deprecated
+   public static org.infinispan.config.Configuration createLegacyTestConfiguration() {
+      org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
+      c.setCacheMode(org.infinispan.config.Configuration.CacheMode.DIST_SYNC);
+      c.setSyncReplTimeout(10000);
+      c.setLockAcquisitionTimeout(10000);
+      c.setSyncCommitPhase(true);
+      c.setL1CacheEnabled(true);
+      c.setExposeJmxStatistics(false);
+      c.setSyncRollbackPhase(true);
+      c.setEnableDeadlockDetection(false);
+      c.setInvocationBatchingEnabled(true);
+      return c;
+   }
+
 }

@@ -31,7 +31,7 @@ import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -48,10 +48,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 @SuppressWarnings("unchecked")
 public class ClusteredCacheFactory {
 
-   private final BlockingQueue<Configuration> requests = new SynchronousQueue<Configuration>();
+   private final BlockingQueue<ConfigurationBuilder> requests = new SynchronousQueue<ConfigurationBuilder>();
    private final BlockingQueue<Cache> results = new SynchronousQueue<Cache>();
    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-   private final Configuration cfg;
+   private final ConfigurationBuilder cfg;
    
    @GuardedBy("this") private boolean started = false;
    @GuardedBy("this") private boolean stopped = false;
@@ -61,7 +61,7 @@ public class ClusteredCacheFactory {
     * 
     * @param cfg defines the configuration used to build the caches
     */
-   public ClusteredCacheFactory(Configuration cfg) {
+   public ClusteredCacheFactory(ConfigurationBuilder cfg) {
       this.cfg = cfg;
    }
 
@@ -108,7 +108,7 @@ public class ClusteredCacheFactory {
       public void run() {
          while (true) {
             try {
-               Configuration configuration = requests.take();
+               ConfigurationBuilder configuration = requests.take();
                CacheContainer cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(configuration);
                Cache cache = cacheContainer.getCache();
                results.put(cache);

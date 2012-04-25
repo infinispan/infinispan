@@ -68,6 +68,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
@@ -354,7 +355,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          try {
             f.get();
          } catch (Exception e) {
-            if (log.isInfoEnabled()) log.failedInvalidatingRemoteCache(e);
+            // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
+            if (!(e.getCause() instanceof SuspectException)) {
+               log.failedInvalidatingRemoteCache(e);
+            }
          }
       }
    }
@@ -517,7 +521,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             		invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),
                                                                             returnValue, ctx.getOrigin(), !(command instanceof RemoveCommand));
             		if (sync) {
-                     invalidationFuture.get(); // wait for the inval command to complete
+                     try {
+                        invalidationFuture.get(); // wait for the inval command to complete
+                     } catch (ExecutionException ee) {
+                        // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
+                        if (!(ee.getCause() instanceof SuspectException)) {
+                           throw ee.getCause();
+                        }
+                     }
                      if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
             		}
             	}
