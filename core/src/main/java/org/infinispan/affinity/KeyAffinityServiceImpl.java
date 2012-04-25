@@ -144,6 +144,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             }
          }
          existingKeyCount.decrementAndGet();
+         log.tracef("Returning key %s for address %s", result, address);
          return result;
       } finally {
          if (queue.size() < bufferSize * THRESHOLD + 1) {
@@ -285,7 +286,10 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             return false;
 
          boolean added = queue.offer(key);
-         if (added) existingKeyCount.incrementAndGet();
+         if (added) {
+            existingKeyCount.incrementAndGet();
+            log.tracef("Added key %s for address %s", key, address);
+         }
          return added;
       }
 
