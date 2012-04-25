@@ -35,6 +35,9 @@ import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.commons.hash.MurmurHash3
+import org.infinispan.util.ByteArrayKey
+import org.infinispan.server.core.CacheValue
+import org.infinispan.util.concurrent.ConcurrentMapFactory
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -228,13 +231,25 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
  */
 object ManagerInstance {
    var instance: EmbeddedCacheManager = null
+   private val knownCaches : java.util.Map[String, Cache[String, Any]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
 
    def getCache(name: String): Cache[String, Any] = {
-      if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !instance.getCacheNames.contains(name))
+      val isKnownCache = knownCaches.containsKey(name);
+      if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
 
-      if (name == BasicCacheContainer.DEFAULT_CACHE_NAME) instance.getCache[String, Any]
-      else instance.getCache(name)
+      var rv: Cache[String, Any] = null
+      if (isKnownCache) {
+         rv = knownCaches.get(name)
+      } else {
+         if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
+            rv = instance.getCache[String, Any]
+         else
+            rv = instance.getCache(name)
+
+         knownCaches.put(name, rv)
+      }
+      rv
    }
 
    def getEntry(cacheName: String, key: String): Any = getCache(cacheName).get(key)
