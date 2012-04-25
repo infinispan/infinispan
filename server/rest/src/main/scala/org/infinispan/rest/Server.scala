@@ -35,9 +35,8 @@ import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.commons.hash.MurmurHash3
-import org.infinispan.util.ByteArrayKey
-import org.infinispan.server.core.CacheValue
 import org.infinispan.util.concurrent.ConcurrentMapFactory
+import javax.ws.rs._
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -238,18 +237,18 @@ object ManagerInstance {
       if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
 
-      var rv: Cache[String, Any] = null
       if (isKnownCache) {
-         rv = knownCaches.get(name)
+         knownCaches.get(name)
       } else {
-         if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
-            rv = instance.getCache[String, Any]
-         else
-            rv = instance.getCache(name)
+         val rv =
+            if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
+               instance.getCache[String, Any]()
+            else
+               instance.getCache[String, Any](name)
 
          knownCaches.put(name, rv)
+         rv
       }
-      rv
    }
 
    def getEntry(cacheName: String, key: String): Any = getCache(cacheName).get(key)
