@@ -266,7 +266,11 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       val ch = ctx.getChannel
-      val errorResponse = createErrorResponse(e.getCause)
+      val cause = e.getCause
+      // Log it just in case the channel is closed or similar
+      debug(cause, "Exception caught")
+
+      val errorResponse = createErrorResponse(cause)
       if (errorResponse != null) {
          errorResponse match {
             case a: Array[Byte] => ch.write(wrappedBuffer(a))

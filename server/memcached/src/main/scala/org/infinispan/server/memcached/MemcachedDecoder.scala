@@ -39,9 +39,10 @@ import transport.NettyTransport
 import DecoderState._
 import java.lang.StringBuilder
 import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorruptedException}
+import org.jboss.netty.channel.Channel
+import org.infinispan.util.Util
 import org.infinispan.server.memcached.TextProtocolUtil._
 import scala.Predef._
-import org.jboss.netty.channel.Channel
 
 /**
  * A Memcached protocol specific decoder
@@ -641,7 +642,7 @@ private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
 private object RequestResolver extends Log {
    private val isTrace = isTraceEnabled
    def toRequest(commandName: String, endOfOp: Boolean, buffer: ChannelBuffer): Enumeration#Value = {
-      if (isTrace) trace("Operation: %s", commandName)
+      if (isTrace) trace("Operation: '%s'", commandName)
       val op = commandName match {
          case "get" => GetRequest
          case "set" => PutRequest
@@ -660,8 +661,12 @@ private object RequestResolver extends Log {
          case "verbosity" => VerbosityRequest
          case "quit" => QuitRequest
          case _ => {
-            if (!endOfOp)
-               skipLine(buffer) // Read rest of line to clear the operation
+            if (!endOfOp) {
+               val line = readDiscardedLine(buffer) // Read rest of line to clear the operation
+               debug("Unexpected operation '%s', rest of line contains: %s",
+                  commandName, line)
+            }
+
             throw new UnknownOperationException("Unknown operation: " + commandName);
          }
       }

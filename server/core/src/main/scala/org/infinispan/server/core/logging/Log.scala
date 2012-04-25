@@ -45,6 +45,8 @@ trait Log {
 
    def debug(msg: => String, param1: Any) = log.debugf(msg, param1)
 
+   def debug(t: Throwable, msg: => String) = log.debugf(t, msg)
+
    def debug(t: Throwable, msg: => String, param1: Any) = log.debugf(t, msg, param1)
 
    def debug(msg: => String, param1: Any, param2: Any) =
