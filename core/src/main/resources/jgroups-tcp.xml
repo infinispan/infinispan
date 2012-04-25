@@ -44,7 +44,7 @@
         thread_pool.min_threads="2"
         thread_pool.max_threads="30"
         thread_pool.keep_alive_time="60000"
-        thread_pool.queue_enabled="false"
+        thread_pool.queue_enabled="true"
         thread_pool.queue_max_size="100"
         thread_pool.rejection_policy="Discard"
 
