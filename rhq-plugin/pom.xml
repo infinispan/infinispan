@@ -32,7 +32,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.4-SNAPSHOT</version>
+      <version>5.1.5-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
