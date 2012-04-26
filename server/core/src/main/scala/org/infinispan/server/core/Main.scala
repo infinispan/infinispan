@@ -61,7 +61,7 @@ object Main extends Log {
    val PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT = "infinispan.server.topology.update_timeout"
    val PROP_KEY_CACHE_MANAGER_CLASS = "infinispan.server.cache_manager_class"
    val HOST_DEFAULT = "127.0.0.1"
-   val WORKER_THREADS_DEFAULT = 20 * Runtime.getRuntime.availableProcessors()
+   val WORKER_THREADS_DEFAULT = 2 * Runtime.getRuntime.availableProcessors()
    val IDLE_TIMEOUT_DEFAULT = -1
    val TCP_NO_DELAY_DEFAULT = true
    val SEND_BUF_SIZE_DEFAULT = 0
