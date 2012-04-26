@@ -545,8 +545,7 @@ public final class Util {
    public static String hexDump(byte[] buffer) {
       StringBuilder buf = new StringBuilder(buffer.length << 1);
       for (byte b : buffer)
-         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
-            .append(HEX_VALUES.charAt((b & 0x0F)));
+         addHexByte(buf, b);
 
       return buf.toString();
    }
@@ -556,13 +555,16 @@ public final class Util {
       int pos = buffer.position();
       buffer.get(data);
       buffer.position(pos);
-      // TODO: Remove code dup
       StringBuilder buf = new StringBuilder(buffer.remaining() + 22);
       for (byte b : data)
-         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
-            .append(HEX_VALUES.charAt((b & 0x0F)));
+         addHexByte(buf, b);
 
       return buf.toString();
+   }
+
+   private static void addHexByte(StringBuilder buf, byte b) {
+      buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+         .append(HEX_VALUES.charAt((b & 0x0F)));
    }
 
    public static Double constructDouble(Class<?> type, Object o) {
