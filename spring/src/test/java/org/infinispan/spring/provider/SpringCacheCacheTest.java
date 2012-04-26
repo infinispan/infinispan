@@ -59,11 +59,11 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
 
    protected final static String CACHE_NAME = "testCache";
 
-   private final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> fb = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+   protected final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> fb = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
 
-   private org.infinispan.Cache<Object, Object> nativeCache;
+   protected org.infinispan.Cache<Object, Object> nativeCache;
 
-   private Cache cache;
+   protected Cache cache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -123,7 +123,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       assertNull(this.cache.get("enescu"));
    }
 
-   private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
+   protected org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
       this.fb.setInfinispanEmbeddedCacheManager(cacheManager);
       this.fb.setBeanName(CACHE_NAME);
       this.fb.setCacheName(CACHE_NAME);
@@ -131,7 +131,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       return this.fb.getObject();
    }
 
-   private Cache createCache(final org.infinispan.Cache<Object, Object> nativeCache) {
+   protected Cache createCache(final org.infinispan.Cache<Object, Object> nativeCache) {
       return new SpringCache(nativeCache);
    }
 

@@ -44,7 +44,7 @@ import org.springframework.util.Assert;
 public class SpringCache implements Cache {
    protected final Log logger = LogFactory.getLog(getClass());
 
-   private final org.infinispan.api.BasicCache<Object, Object> nativeCache;
+   protected final org.infinispan.api.BasicCache<Object, Object> nativeCache;
 
    /**
     * @param nativeCache

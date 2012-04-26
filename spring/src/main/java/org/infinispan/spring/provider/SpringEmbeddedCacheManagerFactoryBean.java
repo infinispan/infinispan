@@ -73,6 +73,7 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
          implements FactoryBean<SpringEmbeddedCacheManager>, InitializingBean, DisposableBean {
 
    private SpringEmbeddedCacheManager cacheManager;
+   private boolean useAsynchronousCacheOperations = false;
 
    // ------------------------------------------------------------------------
    // org.springframework.beans.factory.InitializingBean
@@ -87,7 +88,7 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
 
       final EmbeddedCacheManager nativeEmbeddedCacheManager = createBackingEmbeddedCacheManager();
       this.cacheManager = new SpringEmbeddedCacheManager(nativeEmbeddedCacheManager);
-
+      this.cacheManager.setUseAsynchronousCacheOperations(useAsynchronousCacheOperations);
       this.logger.info("Successfully initialized SpringEmbeddedCacheManager instance ["
                + this.cacheManager + "]");
    }
@@ -143,4 +144,24 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
          this.cacheManager.stop();
       }
    }
+
+
+   public boolean isUseAsynchronousCacheOperations() {
+      return useAsynchronousCacheOperations;
+   }
+
+   /**
+    *
+    * Set a value indicating if the SpringCache's returned by this CacheManager should use
+    * using a {@link SpringAsynchronousCache} rather than a {@link SpringCache}
+    *
+    * Setting this value only affects any future calls to {@link SpringEmbeddedCacheManager#getCache(String)}.
+    *
+    * The default value is false.
+    *
+    * @param useAsynchronousCacheOperations
+    */
+    public void setUseAsynchronousCacheOperations(boolean useAsynchronousCacheOperations) {
+       this.useAsynchronousCacheOperations = useAsynchronousCacheOperations;
+    }
 }

@@ -77,6 +77,7 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
          implements FactoryBean<SpringRemoteCacheManager>, InitializingBean, DisposableBean {
 
    private SpringRemoteCacheManager springRemoteCacheManager;
+   private boolean useAsynchronousCacheOperations = false;
 
    // ------------------------------------------------------------------------
    // org.springframework.beans.factory.InitializingBean
@@ -144,4 +145,20 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
          this.springRemoteCacheManager.stop();
       }
    }
+
+    /**
+     *
+     * Set a value indicating if the SpringCache's returned by this CacheManager should use
+     * using a {@link SpringAsynchronousCache} rather than a {@link SpringCache}
+     *
+     * Setting this value only affects any future calls to {@link SpringEmbeddedCacheManager#getCache(String)}.
+     *
+     * The default value is false.
+     *
+     * @param useAsynchronousCacheOperations
+     */
+     public void setUseAsynchronousCacheOperations(boolean useAsynchronousCacheOperations) {
+        this.useAsynchronousCacheOperations = useAsynchronousCacheOperations;
+     }
+
 }
