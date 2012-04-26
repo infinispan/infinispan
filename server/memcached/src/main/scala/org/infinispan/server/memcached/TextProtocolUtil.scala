@@ -124,7 +124,7 @@ object TextProtocolUtil {
          ""
    }
 
-   private def readableBytes(buffer: ChannelBuffer): Int =
+   def readableBytes(buffer: ChannelBuffer): Int =
       buffer.writerIndex - buffer.readerIndex
 
    @tailrec
