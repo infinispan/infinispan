@@ -26,6 +26,7 @@ package org.infinispan.spring.mock;
 import java.io.IOException;
 
 import org.infinispan.io.ByteBuffer;
+import org.infinispan.marshall.BufferSizePredictor;
 import org.infinispan.marshall.Marshaller;
 
 public final class MockMarshaller implements Marshaller {
@@ -61,4 +62,10 @@ public final class MockMarshaller implements Marshaller {
    public boolean isMarshallable(final Object o) {
       return false;
    }
+
+   @Override
+   public BufferSizePredictor getBufferSizePredictor(Object o) {
+      return null;
+   }
+
 }

@@ -44,7 +44,6 @@ import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.BufferSizePredictor;
-import org.infinispan.marshall.BufferSizePredictorFactory;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
@@ -117,7 +116,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    private ExposedByteArrayOutputStream marshallParameters(
          CacheRpcCommand cmd, StreamingMarshaller marshaller) throws IOException {
-      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
+      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
       int estimatedSize = sizePredictor.nextSize(cmd);
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput output = marshaller.startObjectOutput(baos, true, estimatedSize);
