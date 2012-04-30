@@ -93,7 +93,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration defaultClusteredConfig = org.infinispan.test.AbstractCacheTest
             .getDefaultClusteredConfig(CacheMode.DIST_SYNC, false);
-      defaultClusteredConfig.setInvocationBatchingEnabled(true);
+      defaultClusteredConfig.setInvocationBatchingEnabled(false);
       TransportFlags transportFlags = new TransportFlags().withMerge(true);
 
       writingNode = addClusterEnabledCacheManager(defaultClusteredConfig, transportFlags);

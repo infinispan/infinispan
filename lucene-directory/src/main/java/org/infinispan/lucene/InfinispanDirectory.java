@@ -234,12 +234,10 @@ public class InfinispanDirectory extends Directory {
       } while (true);
       
       // rename metadata first
-      boolean batching = metadataCache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
       FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
-      if (batching) metadataCache.endBatch(true);
       
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);

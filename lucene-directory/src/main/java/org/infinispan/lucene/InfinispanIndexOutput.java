@@ -192,7 +192,6 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() {
-      final boolean microbatch = chunksCache.startBatch();
       if (currentChunkNumber==0) {
          //store current chunk, possibly resizing it
          storeCurrentBuffer(true);
@@ -208,7 +207,6 @@ public final class InfinispanIndexOutput extends IndexOutput {
       file.touch();
       metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
-      if (microbatch) chunksCache.endBatch(true);
       if (trace) {
          log.tracef("Closed IndexOutput for %s", fileKey);
       }

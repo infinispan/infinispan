@@ -39,6 +39,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -158,7 +159,8 @@ public class PerformanceCompareStressTest {
 
    @BeforeMethod
    public void beforeTest() {
-      cacheFactory = TestCacheManagerFactory.createClusteredCacheManager(CacheTestSupport.createTestConfiguration());
+      cacheFactory = TestCacheManagerFactory.createClusteredCacheManager(
+            CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL));
       cacheFactory.start();
       cache = cacheFactory.getCache();
       cache.clear();
