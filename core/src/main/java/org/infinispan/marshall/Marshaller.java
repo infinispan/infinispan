@@ -110,5 +110,17 @@ public interface Marshaller {
     * @throws Exception if while checking whether the object was serializable or not, an exception arose
     */
    boolean isMarshallable(Object o) throws Exception;
+
+   /**
+    * Returns a marshalled payload size predictor for a particular type.
+    * Accurate prediction of a type's serialized payload size helps avoid
+    * unnecessary copying and speeds up application performance.
+    *
+    * @param o Object for which serialized predictor will be returned
+    * @return an instance of {@link BufferSizePredictor}
+    * @throws NullPointerException if o is null
+    */
+   BufferSizePredictor getBufferSizePredictor(Object o);
+
 }
 

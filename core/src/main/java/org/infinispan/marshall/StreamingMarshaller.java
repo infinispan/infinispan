@@ -45,8 +45,6 @@ import java.io.OutputStream;
 @ThreadSafe
 public interface StreamingMarshaller extends Marshaller {
    
-   void stop();
-
    /**
     * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data 
     * outputs when multiple objectToObjectStream() calls will be made before the stream is closed by calling finishObjectOutput().</p>
@@ -135,5 +133,19 @@ public interface StreamingMarshaller extends Marshaller {
     */
    Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException;
 
+   /**
+    * TODO
+    *
+    * @param is
+    * @return
+    * @throws IOException
+    * @throws ClassNotFoundException
+    */
    Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException;
+
+   /**
+    * TODO
+    */
+   void stop();
+
 }

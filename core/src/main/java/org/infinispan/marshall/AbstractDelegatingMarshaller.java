@@ -95,4 +95,9 @@ public abstract class AbstractDelegatingMarshaller implements StreamingMarshalle
       return marshaller.isMarshallable(o);
    }
 
+   @Override
+   public BufferSizePredictor getBufferSizePredictor(Object o) {
+      return marshaller.getBufferSizePredictor(o);
+   }
+
 }
