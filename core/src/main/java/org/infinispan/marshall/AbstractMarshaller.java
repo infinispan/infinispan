@@ -36,7 +36,12 @@ import java.io.InputStream;
  */
 public abstract class AbstractMarshaller implements Marshaller {
 
-   protected static final int DEFAULT_BUF_SIZE = 512;
+   protected final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
+
+   @Override
+   public BufferSizePredictor getBufferSizePredictor(Object o) {
+      return marshallableTypeHints.getBufferSizePredictor(o.getClass());
+   }
 
    /**
     * This is a convenience method for converting an object into a {@link org.infinispan.io.ByteBuffer} which takes
@@ -52,25 +57,36 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
-      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
-      int estimatedSize = sizePredictor.nextSize(obj);
-      ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
-      int length = byteBuffer.getLength();
-      // If the prediction is way off, then trim it
-      if (estimatedSize > (length * 4)) {
-         byte[] buffer = trimBuffer(byteBuffer);
-         byteBuffer = new ByteBuffer(buffer, 0, buffer.length);
+      if (obj != null) {
+         BufferSizePredictor sizePredictor = marshallableTypeHints
+               .getBufferSizePredictor(obj.getClass());
+         int estimatedSize = sizePredictor.nextSize(obj);
+         ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
+         int length = byteBuffer.getLength();
+         // If the prediction is way off, then trim it
+         if (estimatedSize > (length * 4)) {
+            byte[] buffer = trimBuffer(byteBuffer);
+            byteBuffer = new ByteBuffer(buffer, 0, buffer.length);
+         }
+         sizePredictor.recordSize(length);
+         return byteBuffer;
+      } else {
+         return objectToBuffer(null, 1);
       }
-      sizePredictor.recordSize(length);
-      return byteBuffer;
    }
 
    @Override
    public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
-      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
-      byte[] bytes = objectToByteBuffer(o, sizePredictor.nextSize(o));
-      sizePredictor.recordSize(bytes.length);
-      return bytes;
+      int estimatedSize = 0;
+      if (o != null) {
+         BufferSizePredictor sizePredictor = marshallableTypeHints
+               .getBufferSizePredictor(o.getClass());
+         byte[] bytes = objectToByteBuffer(o, sizePredictor.nextSize(o));
+         sizePredictor.recordSize(bytes.length);
+         return bytes;
+      } else {
+         return objectToByteBuffer(null, 1);
+      }
    }
 
    @Override
