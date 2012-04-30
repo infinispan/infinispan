@@ -31,6 +31,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -44,10 +45,14 @@ import org.testng.annotations.Test;
 public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
    
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration(getTransactionsMode());
       createClusteredCaches(2, "lucene", configurationBuilder);
    }
-   
+
+   protected TransactionMode getTransactionsMode() {
+      return TransactionMode.NON_TRANSACTIONAL;
+   }
+
    public void testLuceneIndexLocking() throws IOException {
       final String commonIndexName = "myIndex";
       LockFactory lockManagerA = makeLockFactory(cache(0,"lucene"), commonIndexName);

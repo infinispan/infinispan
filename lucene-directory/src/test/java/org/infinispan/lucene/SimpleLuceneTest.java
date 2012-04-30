@@ -32,6 +32,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -48,7 +49,8 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      ConfigurationBuilder configurationBuilder =
+            CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL);
       createClusteredCaches(2, "lucene", configurationBuilder);
    }
    

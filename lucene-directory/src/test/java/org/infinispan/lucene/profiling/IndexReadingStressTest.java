@@ -51,6 +51,7 @@ import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -80,7 +81,8 @@ public class IndexReadingStressTest {
    
    private static final String indexName = "tempIndexName";
 
-   private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
+   private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(
+         CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL));
 
    @Test
    public void profileTestRAMDirectory() throws InterruptedException, IOException {

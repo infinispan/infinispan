@@ -43,6 +43,7 @@ import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,10 +64,11 @@ public abstract class CacheTestSupport {
    private static final Log log = LogFactory.getLog(CacheTestSupport.class);
 
    protected static CacheContainer createTestCacheManager() {
-      return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
+      return TestCacheManagerFactory.createClusteredCacheManager(
+            createTestConfiguration( TransactionMode.NON_TRANSACTIONAL) );
    }
 
-   public static ConfigurationBuilder createTestConfiguration() {
+   public static ConfigurationBuilder createTestConfiguration(TransactionMode transactionMode) {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder
             .clustering()
@@ -79,12 +81,11 @@ public abstract class CacheTestSupport {
                .sync()
                   .replTimeout(10000)
             .transaction()
-               .syncCommitPhase(true)
-               .syncRollbackPhase(true)
+               .transactionMode(transactionMode)
             .locking()
                .lockAcquisitionTimeout(10000)
             .invocationBatching()
-               .enable()
+               .disable()
             .deadlockDetection()
                .disable()
             .jmxStatistics()
@@ -105,12 +106,11 @@ public abstract class CacheTestSupport {
             .clustering()
                .cacheMode(CacheMode.LOCAL)
             .transaction()
-               .syncCommitPhase(true)
-               .syncRollbackPhase(true)
+               .transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .locking()
                .lockAcquisitionTimeout(10000)
             .invocationBatching()
-               .enable()
+               .disable()
             .deadlockDetection()
                .disable()
             .jmxStatistics()
@@ -294,7 +294,7 @@ public abstract class CacheTestSupport {
       c.setExposeJmxStatistics(false);
       c.setSyncRollbackPhase(true);
       c.setEnableDeadlockDetection(false);
-      c.setInvocationBatchingEnabled(true);
+      c.setInvocationBatchingEnabled(false);
       return c;
    }
 
