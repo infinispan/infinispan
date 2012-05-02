@@ -119,10 +119,16 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       }
       if (address == null)
          throw new NullPointerException("Null address not supported!");
-      BlockingQueue<K> queue = address2key.get(address);
-      if (queue == null)
-         throw new IllegalStateException("Address " + address + " is no longer in the cluster");
 
+      BlockingQueue<K> queue = null;
+      maxNumberInvariant.readLock().lock();
+      try {
+         queue = address2key.get(address);
+         if (queue == null)
+            throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+      } finally {
+         maxNumberInvariant.readLock().unlock();
+      }
       try {
          K result = null;
          while (result == null && !keyGenWorker.isStopped()) {
@@ -197,13 +203,10 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    }
 
    public void handleViewChange(TopologyChangedEvent<?, ?> vce) {
-      if (vce.isPre())
-         return;
-
       log.tracef("TopologyChangedEvent received: %s", vce);
       maxNumberInvariant.writeLock().lock();
       try {
-         address2key.clear(); //wee need to drop everything as key-mapping data is stale due to view change
+         address2key.clear(); //we need to drop everything as key-mapping data is stale due to view change
          addQueuesForAddresses(vce.getConsistentHashAtEnd().getCaches());
          resetNumberOfKeys();
          keyProducerStartLatch.open();

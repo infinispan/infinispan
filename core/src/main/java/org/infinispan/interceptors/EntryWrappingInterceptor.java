@@ -20,11 +20,21 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -39,6 +49,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +66,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected DataContainer dataContainer;
    protected ClusteringDependentLogic cll;
    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
+   private CommandsFactory commandFactory;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
 
@@ -64,10 +76,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
+   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll, CommandsFactory commandFactory) {
       this.entryFactory =  entryFactory;
       this.dataContainer = dataContainer;
       this.cll = cll;
+      this.commandFactory = commandFactory;
    }
 
    @Override
@@ -217,15 +230,18 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         boolean notWrapped = false;
-         for (Object key : command.getMap().keySet()) {
+         Map<Object, Object> newMap = new HashMap<Object, Object>(4);
+         for (Map.Entry<Object, Object> e: command.getMap().entrySet()) {
+            Object key = e.getKey();
             if (cll.localNodeIsOwner(key)) {
                entryFactory.wrapEntryForPut(ctx, key, null, true);
-               notWrapped = true;
+               newMap.put(key, e.getValue());
             }
          }
-         if (notWrapped)
-            invokeNextInterceptor(ctx, command);
+         if (newMap.size() > 0) {
+            PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap, command.getLifespanMillis(), command.getMaxIdleTimeMillis(), command.getFlags());
+            invokeNextInterceptor(ctx, clonedCommand);
+         }
          return null;
       }
 

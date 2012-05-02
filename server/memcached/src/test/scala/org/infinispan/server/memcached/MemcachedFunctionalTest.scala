@@ -481,7 +481,10 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(resp)
    }
 
-   def testUnknownCommand = assertError(send("blah\r\n"))
+   def testUnknownCommand {
+      assertError(send("blah\r\n"))
+      assertError(send("blah boo poo goo zoo\r\n"))
+   }
 
    def testUnknownCommandPipelined {
       val responses = sendMulti("bogus\r\ndelete a\r\n", 2, true)
