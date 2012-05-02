@@ -158,7 +158,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       Class<?> clazz = o.getClass();
-      boolean containsMarshallable = marshallableTypeHints.containsMarshallable(clazz);
+      boolean containsMarshallable = marshallableTypeHints.isKnownMarshallable(clazz);
       if (containsMarshallable) {
          return marshallableTypeHints.isMarshallable(clazz);
       } else {
