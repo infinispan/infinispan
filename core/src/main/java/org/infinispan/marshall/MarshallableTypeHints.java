@@ -19,7 +19,8 @@
 
 package org.infinispan.marshall;
 
-import java.util.concurrent.ConcurrentHashMap;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
+
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -39,7 +40,7 @@ public final class MarshallableTypeHints {
     * known to be marshallable or not is advantageous.
     */
    private final ConcurrentMap<Class<?>, MarshallingType> typeHints =
-         new ConcurrentHashMap<Class<?>, MarshallingType>();
+         ConcurrentMapFactory.makeConcurrentMap();
 
    /**
     * Get the serialized form size predictor for a particular type.
@@ -68,7 +69,7 @@ public final class MarshallableTypeHints {
     * @return true if the type has been marked as marshallable at all, false
     * if no attempt has been made to mark the type as marshallable.
     */
-   public boolean containsMarshallable(Class<? extends Object> type) {
+   public boolean isKnownMarshallable(Class<? extends Object> type) {
       return typeHints.containsKey(type);
    }
 
@@ -94,7 +95,7 @@ public final class MarshallableTypeHints {
       if (marshallingType != null && marshallingType.isMarshallable != isMarshallable) {
          typeHints.replace(type, new MarshallingType(
                isMarshallable, marshallingType.sizePredictor));
-      } else {
+      } else if (marshallingType == null) {
          typeHints.putIfAbsent(type, new MarshallingType(
                isMarshallable, new AdaptiveBufferSizePredictor()));
       }
