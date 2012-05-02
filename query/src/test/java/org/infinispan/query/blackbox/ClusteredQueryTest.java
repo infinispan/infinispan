@@ -73,12 +73,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       FluentConfiguration cacheCfg = getDefaultClusteredConfig(DIST_SYNC).fluent();
-      cacheCfg.indexing().indexLocalOnly(true)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      cacheCfg.indexing().indexLocalOnly(true).addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg
-               .build());
+      List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg.build());
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
@@ -181,10 +179,27 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
          previousAge = person.getAge();
       }
    }
-   
+
    public void testGetResultSizeList() throws ParseException {
       populateCache();
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+   }
+
+   public void testPagination() throws ParseException {
+      populateCache();
+
+      cacheQuery.firstResult(2);
+      cacheQuery.maxResults(1);
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      List<Object> results = cacheQuery.list();
+      assert results.size() == 1;
+      assert cacheQuery.getResultSize() == 4;
+      assert ((Person) (results.get(0))).getAge() == 45;
    }
 
    private void populateCache() throws ParseException {

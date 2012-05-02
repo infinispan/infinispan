@@ -52,12 +52,29 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private final ExecutorService asyncExecutor;
 
+   // like QueryHits.DEFAULT_TOP_DOC_RETRIEVAL_SIZE = 100
+   private int maxResults = 100;
+
+   private int firstResult = 0;
+
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
-            ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
+         ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler,
+         Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
-      hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
-               .targetedEntities(Arrays.asList(classes));
+      hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery).targetedEntities(Arrays.asList(classes));
+   }
+
+   @Override
+   public CacheQuery maxResults(int maxResults) {
+      this.maxResults = maxResults;
+      return super.maxResults(maxResults);
+   }
+
+   @Override
+   public CacheQuery firstResult(int firstResult) {
+      this.firstResult = firstResult;
+      return this;
    }
 
    @Override
@@ -84,11 +101,12 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public QueryIterator iterator(int fetchSize) throws SearchException {
+      hSearchQuery.maxResults(getNodeMaxResults());
       ClusteredQueryCommand command = ClusteredQueryCommand
                .createEagerIterator(hSearchQuery, cache);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
-      DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize,
+      DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize, maxResults, firstResult
                topDocsResponses, cache);
 
       return it;
@@ -96,15 +114,26 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public QueryIterator lazyIterator(int fetchSize) {
+      hSearchQuery.maxResults(getNodeMaxResults());
       UUID lazyItId = UUID.randomUUID();
       ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache,
                lazyItId);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
-      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize,
+      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize, maxResults, firstResult
                lazyItId, topDocsResponses, asyncExecutor, cache);
 
       return it;
+   }
+
+   /**
+    * Each node will have to send (firstResult + maxResults) results. So we can merge results and
+    * fetch the correct results.
+    * 
+    * @return
+    */
+   private int getNodeMaxResults() {
+      return firstResult + maxResults;
    }
 
    private HashMap<UUID, ClusteredTopDocs> broadcastQuery(ClusteredQueryCommand command) {
@@ -116,8 +145,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
       for (Object response : responses) {
          QueryResponse queryResponse = (QueryResponse) response;
-         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(),
-                  queryResponse.getNodeUUID());
+         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(), queryResponse.getNodeUUID());
 
          resultSize += queryResponse.getResultSize();
          topDocs.setNodeAddress(queryResponse.getAddress());
