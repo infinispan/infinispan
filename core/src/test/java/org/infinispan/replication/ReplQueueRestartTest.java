@@ -57,13 +57,11 @@ public class ReplQueueRestartTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       c.setUseReplQueue(true);
 
-
-      rqi.injectDependencies(ses, rpc, c, commandsFactory);
+      rqi.injectDependencies(ses, rpc, c, commandsFactory, "");
 
       rqi.start();
 
       rqi.stop();
-
-
    }
+
 }
