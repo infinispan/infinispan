@@ -22,6 +22,9 @@
  */
 package org.infinispan.context;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -31,6 +34,9 @@ import org.infinispan.config.Configuration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
 
 /**
  * Available flags, which may be set on a per-invocation basis.  These are provided using the {@link AdvancedCache}
@@ -66,6 +72,11 @@ import org.infinispan.loaders.CacheStore;
  *    <li> {@link #PUT_FOR_EXTERNAL_READ} - flags the invocation as a {@link Cache#putForExternalRead(Object, Object)}
  *                                          call, as opposed to a regular {@link Cache#put(Object, Object)}.</li>
  * </ul>
+ *
+ * When making modifications to these enum, do not change the order of
+ * enumerations, so always append any new enumerations after the last one.
+ * Finally, enumerations should not be removed.
+ *
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
@@ -192,4 +203,35 @@ public enum Flag {
          return flags;
       }
    }
+
+   public static class Externalizer extends AbstractExternalizer<Flag> {
+
+      @Override
+      public Integer getId() {
+         return Ids.FLAG;
+      }
+
+      @Override
+      public Set<Class<? extends Flag>> getTypeClasses() {
+         return Util.<Class<? extends Flag>>asSet(Flag.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, Flag object) throws IOException {
+         output.writeByte(object.ordinal());
+      }
+
+      @Override
+      public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         byte flagByte = input.readByte();
+         try {
+            // values() cached by Class.getEnumConstants()
+            return Flag.values()[flagByte];
+         } catch (ArrayIndexOutOfBoundsException e) {
+            throw new IllegalStateException("Unknown flag index: " + flagByte);
+         }
+      }
+
+   }
+
 }

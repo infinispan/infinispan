@@ -53,6 +53,7 @@ import org.infinispan.container.entries.versioned.VersionedTransientCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
@@ -295,6 +296,8 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new CacheView.Externalizer());
       addInternalExternalizer(new LockInfo.Externalizer());
+
+      addInternalExternalizer(new Flag.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {
