@@ -26,6 +26,7 @@ package org.infinispan.marshall;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 
 /**
  * A test pojo that is marshalled using Infinispan's
@@ -55,10 +56,7 @@ public class PojoWithSerializeWith {
 
       PojoWithSerializeWith that = (PojoWithSerializeWith) o;
 
-      if (pojo != null ? !pojo.equals(that.pojo) : that.pojo != null)
-         return false;
-
-      return true;
+      return !(pojo != null ? !pojo.equals(that.pojo) : that.pojo != null);
    }
 
    @Override
@@ -66,7 +64,7 @@ public class PojoWithSerializeWith {
       return pojo != null ? pojo.hashCode() : 0;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<PojoWithSerializeWith> {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<PojoWithSerializeWith>, Serializable {
       @Override
       public void writeObject(ObjectOutput output, PojoWithSerializeWith object) throws IOException {
          PojoWithAttributes.writeObject(output, object.pojo);
