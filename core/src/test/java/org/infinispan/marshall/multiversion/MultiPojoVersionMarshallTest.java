@@ -46,6 +46,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
@@ -369,7 +370,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       public String plateNumber;
    }
 
-   public static class CarExternalizer implements Externalizer<Car> {
+   public static class CarExternalizer implements Externalizer<Car>, Serializable {
       @Override
       public void writeObject(ObjectOutput output, Car object) throws IOException {
          output.writeObject(object.plateNumber);
@@ -388,7 +389,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       public int age;
    }
 
-   public static class PersonExternalizer implements Externalizer<Person> {
+   public static class PersonExternalizer implements Externalizer<Person>, Serializable {
       @Override
       public void writeObject(ObjectOutput output, Person object) throws IOException {
          output.writeInt(object.age);
@@ -408,7 +409,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       public int number;
    }
 
-   public static class HouseExternalizer implements Externalizer<House> {
+   public static class HouseExternalizer implements Externalizer<House>, Serializable {
       @Override
       public void writeObject(ObjectOutput output, House object) throws IOException {
          output.writeInt(object.number);
@@ -427,7 +428,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    public static enum MarshallingMethod {
       INFINISPAN,
       JAVA,
-      JBOSS_MARSHALLING;
+      JBOSS_MARSHALLING
    }
 
 }
