@@ -22,10 +22,13 @@
  */
 package org.infinispan.remoting;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.AsyncConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -73,6 +76,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    private CommandsFactory commandsFactory;
    private volatile ScheduledFuture<?> scheduledFuture;
    private boolean trace;
+   private String cacheName;
 
    /**
     * @return true if this replication queue is enabled, false otherwise.
@@ -84,11 +88,19 @@ public class ReplicationQueueImpl implements ReplicationQueue {
 
    @Inject
    public void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
-                                   RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory) {
+         RpcManager rpcManager, org.infinispan.config.Configuration configuration,
+         CommandsFactory commandsFactory, Cache cache) {
+      injectDependencies(executor, rpcManager, configuration, commandsFactory, cache.getName());
+   }
+
+   public void injectDependencies(ScheduledExecutorService executor,
+         RpcManager rpcManager, org.infinispan.config.Configuration configuration,
+         CommandsFactory commandsFactory, String cacheName) {
       this.rpcManager = rpcManager;
-      this.configuration = configuration;
+      this.configuration = LegacyConfigurationAdaptor.adapt(configuration);
       this.commandsFactory = commandsFactory;
       this.scheduledExecutor = executor;
+      this.cacheName = cacheName;
    }
 
    /**
@@ -97,19 +109,20 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Override
    @Start
    public void start() {
-      long interval = configuration.getReplQueueInterval();
+      AsyncConfiguration async = configuration.clustering().async();
+      long interval = async.replQueueInterval();
       trace = log.isTraceEnabled();
       if (trace)
          log.tracef("Starting replication queue, with interval %d and maxElements %s", interval, maxElements);
 
-      this.maxElements = configuration.getReplQueueMaxElements();
+      this.maxElements = async.replQueueMaxElements();
       // check again
-      enabled = configuration.isUseReplQueue();
+      enabled = async.useReplQueue();
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-               LogFactory.pushNDC(configuration.getName(), trace);
+               LogFactory.pushNDC(cacheName, trace);
                try {
                   flush();
                } finally {
@@ -159,7 +172,9 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             log.tracef("Flushing %s elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
-            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());
+            rpcManager.invokeRemotely(null, multipleRpcCommand,
+                  ResponseMode.getAsyncResponseMode(configuration),
+                  configuration.clustering().sync().replTimeout());
          } catch (Throwable t) {
             log.failedReplicatingQueue(toReplicate.size(), t);
          }
@@ -172,6 +187,10 @@ public class ReplicationQueueImpl implements ReplicationQueue {
       List<ReplicableCommand> toReplicate = new LinkedList<ReplicableCommand>();
       elements.drainTo(toReplicate);
       return toReplicate;
+   }
+
+   protected Configuration getConfiguration() {
+      return configuration;
    }
 
    @Override
