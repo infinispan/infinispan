@@ -83,7 +83,9 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    @Start
    protected void start() {
-      storeAsBinary = configuration.isStoreAsBinary() && (configuration.isStoreKeysAsBinary() || configuration.isStoreValuesAsBinary());
+      storeAsBinary = cacheConfiguration.storeAsBinary().enabled()
+            && (cacheConfiguration.storeAsBinary().storeKeysAsBinary()
+                      || cacheConfiguration.storeAsBinary().storeValuesAsBinary());
    }
 
    @Override
@@ -134,7 +136,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
       // of lazy deserialization or when an async store is in place. So, if
       // any cache store is configured, check whether it'll be skipped
       return ctx.isOriginLocal()
-            && configuration.getCacheMode().isClustered()
+            && cacheConfiguration.clustering().cacheMode().isClustered()
             && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 
@@ -142,8 +144,8 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
       // If the cache is local, the interceptor should only be enabled in case
       // of lazy deserialization or when an async store is in place. So, if
       // any cache store is configured, check whether it'll be skipped
-      return !configuration.getCacheMode().isClustered()
-            && configuration.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig() != null
+      return !cacheConfiguration.clustering().cacheMode().isClustered()
+            && !cacheConfiguration.loaders().cacheLoaders().isEmpty()
             && !ctx.hasFlag(Flag.SKIP_CACHE_STORE);
    }
 
@@ -153,7 +155,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    private boolean getMightGoRemote(InvocationContext ctx, Object key) {
       return ctx.isOriginLocal()
-            && configuration.getCacheMode().isDistributed()
+            && cacheConfiguration.clustering().cacheMode().isDistributed()
             && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
             && !distManager.getLocality(key).isLocal();
    }

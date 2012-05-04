@@ -24,11 +24,13 @@
 package org.infinispan.transaction;
 
 import net.jcip.annotations.GuardedBy;
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -106,13 +108,14 @@ public class TransactionTable {
     */
    private volatile int minTxViewId = CACHE_STOPPED_VIEW_ID;
    private volatile int currentViewId = CACHE_STOPPED_VIEW_ID;
+   private String cacheName;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
                           TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic) {
+                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -124,17 +127,18 @@ public class TransactionTable {
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.commandsFactory = commandsFactory;
       this.clusteringLogic = clusteringDependentLogic;
+      this.cacheName = cache.getName();
    }
 
    @Start
    private void start() {
-      final int concurrencyLevel = configuration.getConcurrencyLevel();
+      final int concurrencyLevel = configuration.locking().concurrencyLevel();
       localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-      if (configuration.getCacheMode().isClustered()) {
+      if (configuration.clustering().cacheMode().isClustered()) {
          minViewRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
          remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-         cleanupService.start(configuration, rpcManager, invoker);
+         cleanupService.start(cacheName, rpcManager, invoker);
          cm.addListener(cleanupService);
          cm.addListener(this);
          notifier.addListener(cleanupService);
@@ -174,8 +178,9 @@ public class TransactionTable {
 
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator, commandsFactory,
-                                                                  rpcManager, this, clusteringLogic, configuration);
+         SynchronizationAdapter sync = new SynchronizationAdapter(
+               localTransaction, txCoordinator, commandsFactory, rpcManager,
+               this, clusteringLogic, configuration);
          if (transactionSynchronizationRegistry != null) {
             try {
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
@@ -230,7 +235,7 @@ public class TransactionTable {
 
       for (GlobalTransaction gtx : toKill) {
          log.tracef("Killing remote transaction originating on leaver %s", gtx);
-         RollbackCommand rc = new RollbackCommand(configuration.getName(), gtx);
+         RollbackCommand rc = new RollbackCommand(cacheName, gtx);
          rc.init(invoker, icc, TransactionTable.this);
          try {
             rc.perform(null);
@@ -329,7 +334,7 @@ public class TransactionTable {
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
    public void remoteTransactionCommitted(GlobalTransaction gtx) {
-      if (configuration.isSecondPhaseAsync()) {
+      if (Configurations.isSecondPhaseAsync(configuration)) {
          removeRemoteTransaction(gtx);
       }
    }
@@ -444,8 +449,8 @@ public class TransactionTable {
 
    private void shutDownGracefully() {
       if (log.isDebugEnabled())
-         log.debugf("Wait for on-going transactions to finish for %s.", Util.prettyPrintTime(configuration.getCacheStopTimeout(), TimeUnit.MILLISECONDS));
-      long failTime = currentMillisFromNanotime() + configuration.getCacheStopTimeout();
+         log.debugf("Wait for on-going transactions to finish for %s.", Util.prettyPrintTime(configuration.transaction().cacheStopTimeout(), TimeUnit.MILLISECONDS));
+      long failTime = currentMillisFromNanotime() + configuration.transaction().cacheStopTimeout();
       boolean txsOnGoing = areTxsOnGoing();
       while (txsOnGoing && currentMillisFromNanotime() < failTime) {
          try {

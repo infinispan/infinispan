@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import java.io.Serializable;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -26,14 +26,14 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
 
    private static final String BASE = WithClassLoaderTest.class.getName() + "$";
    private static final String CAR = BASE + "Car";
-   private ClassLoader systemCl;
+   protected ClassLoader systemCl;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.storeAsBinary().enable()
             .clustering()
-            .cacheMode(org.infinispan.configuration.cache.CacheMode.REPL_SYNC);
+               .cacheMode(org.infinispan.configuration.cache.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cm0 = createClusteredCacheManager(builder);
       cacheManagers.add(cm0);
 

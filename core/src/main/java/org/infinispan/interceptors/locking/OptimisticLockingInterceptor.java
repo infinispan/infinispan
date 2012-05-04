@@ -37,8 +37,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.Configuration;
-import org.infinispan.container.DataContainer;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
@@ -92,9 +91,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    
    @Start
    public void start() {
-      if (configuration.getCacheMode() == Configuration.CacheMode.LOCAL && 
-            configuration.isWriteSkewCheck() &&
-            configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ) {
+      if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
+            cacheConfiguration.locking().writeSkewCheck() &&
+            cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ) {
          lockAcquisitionVisitor = new LocalWriteSkewCheckingLockAcquisitionVisitor();
          needToMarkReads = true;
       } else {

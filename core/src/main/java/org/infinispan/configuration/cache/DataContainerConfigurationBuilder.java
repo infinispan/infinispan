@@ -31,7 +31,7 @@ import org.infinispan.util.TypedProperties;
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder<DataContainerConfiguration> {
 
-   // TODO provide a default here
+   // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;
    private Properties properties = new Properties();
    

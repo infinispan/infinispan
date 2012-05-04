@@ -23,19 +23,15 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -43,7 +39,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.concurrent.ConcurrentMap;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
@@ -70,11 +65,11 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
          //System.out.println("Output file is:\n" + baos.toString());
-         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()))){
+         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()))) {
             @Override
             public void call() throws Exception {
-               Configuration defaultConfig = cm.getDefaultConfiguration();
-               GlobalConfiguration globalConfig = cm.getGlobalConfiguration();
+               org.infinispan.config.Configuration defaultConfig = cm.getDefaultConfiguration();
+               org.infinispan.config.GlobalConfiguration globalConfig = cm.getGlobalConfiguration();
                assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
                assert defaultConfig.getLockAcquisitionTimeout() == 234000;
                assert defaultConfig.getConcurrencyLevel() == 510;
@@ -82,14 +77,14 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
                assert !defaultConfig.isSyncCommitPhase();
                assert defaultConfig.isSyncRollbackPhase();
                assert defaultConfig.isExposeJmxStatistics();
-               assert globalConfig.getShutdownHookBehavior().equals(GlobalConfiguration.ShutdownHookBehavior.DONT_REGISTER);
+               assert globalConfig.getShutdownHookBehavior().equals(org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DONT_REGISTER);
                assert globalConfig.getAsyncListenerExecutorProperties().get("maxThreads").equals("123");
                assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
                assert !defaultConfig.isInvocationBatchingEnabled();
                assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
                assert defaultConfig.isStoreAsBinary();
                assert globalConfig.getClusterName().equals("JBossCache-cluster");
-               assert defaultConfig.getCacheMode().equals(Configuration.CacheMode.INVALIDATION_SYNC);
+               assert defaultConfig.getCacheMode().equals(org.infinispan.config.Configuration.CacheMode.INVALIDATION_SYNC);
                assert defaultConfig.getStateRetrievalTimeout() == 2120000;
                assert defaultConfig.getSyncReplTimeout() == 22220000;
                assert defaultConfig.getEvictionStrategy().equals(EvictionStrategy.LRU);
@@ -97,19 +92,17 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
                assert defaultConfig.getExpirationMaxIdle() == 1001 : "Received " + defaultConfig.getExpirationLifespan();
                assert defaultConfig.getExpirationWakeUpInterval() == 50015;
 
-               ConcurrentMap<String, Configuration> configurationOverrides = (ConcurrentMap<String, Configuration>) TestingUtil.extractField(cm, "configurationOverrides");
-
-               Configuration regionOne = configurationOverrides.get("/org/jboss/data1");
+               Configuration regionOne = cm.getCacheConfiguration("/org/jboss/data1");
                assert regionOne != null;
-               assert regionOne.getEvictionStrategy().equals(EvictionStrategy.LRU);
-               assert regionOne.getExpirationMaxIdle() == 2002;
-               assert regionOne.getExpirationWakeUpInterval() == 50015;
+               assert regionOne.eviction().strategy() == EvictionStrategy.LRU;
+               assert regionOne.expiration().maxIdle() == 2002;
+               assert regionOne.expiration().wakeUpInterval() == 50015;
 
-               Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
+               Configuration regionTwo = cm.getCacheConfiguration("/org/jboss/data2");
                assert regionTwo != null;
-               assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
-               assert regionTwo.getEvictionMaxEntries() == 3003;
-               assert regionTwo.getExpirationWakeUpInterval() == 50015;
+               assert regionTwo.eviction().strategy() == EvictionStrategy.FIFO;
+               assert regionTwo.eviction().maxEntries() == 3003;
+               assert regionTwo.expiration().wakeUpInterval() == 50015;
 
 
                CacheLoaderManagerConfig loaderManagerConfig = defaultConfig.getCacheLoaderManagerConfig();

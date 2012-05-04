@@ -25,7 +25,7 @@ package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -70,8 +70,8 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Start (priority = 8)
    public void init() {
-      useRepeatableRead = configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
-      localModeWriteSkewCheck = configuration.isWriteSkewCheck();
+      useRepeatableRead = configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+      localModeWriteSkewCheck = configuration.locking().writeSkewCheck();
    }
 
    @Override

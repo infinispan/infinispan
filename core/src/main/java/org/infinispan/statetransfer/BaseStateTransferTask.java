@@ -19,7 +19,7 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -80,7 +80,8 @@ public abstract class BaseStateTransferTask {
       this.chOld = chOld;
       this.statePushFuture = new AggregatingNotifyingFutureBuilder(null, members.size());
       // Ignore chunk sizes <= 0
-      this.stateTransferChunkSize = configuration.getStateRetrievalChunkSize() > 0 ? configuration.getStateRetrievalChunkSize() : Integer.MAX_VALUE;
+      int chunkSize = configuration.clustering().stateTransfer().chunkSize();
+      this.stateTransferChunkSize = chunkSize > 0 ? chunkSize : Integer.MAX_VALUE;
    }
 
    public void performStateTransfer() throws Exception {
@@ -117,7 +118,7 @@ public abstract class BaseStateTransferTask {
          if (sync) {
             while (running) {
                try {
-                  lock.wait(configuration.getCacheStopTimeout());
+                  lock.wait(configuration.transaction().cacheStopTimeout());
                } catch (InterruptedException e) {
                   // restore the interrupted flag
                   Thread.currentThread().interrupt();

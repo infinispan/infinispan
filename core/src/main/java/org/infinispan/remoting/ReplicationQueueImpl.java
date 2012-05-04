@@ -28,7 +28,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.configuration.cache.AsyncConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -88,16 +87,15 @@ public class ReplicationQueueImpl implements ReplicationQueue {
 
    @Inject
    public void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
-         RpcManager rpcManager, org.infinispan.config.Configuration configuration,
-         CommandsFactory commandsFactory, Cache cache) {
+              RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory, Cache cache) {
       injectDependencies(executor, rpcManager, configuration, commandsFactory, cache.getName());
    }
 
    public void injectDependencies(ScheduledExecutorService executor,
-         RpcManager rpcManager, org.infinispan.config.Configuration configuration,
+         RpcManager rpcManager, Configuration configuration,
          CommandsFactory commandsFactory, String cacheName) {
       this.rpcManager = rpcManager;
-      this.configuration = LegacyConfigurationAdaptor.adapt(configuration);
+      this.configuration = configuration;
       this.commandsFactory = commandsFactory;
       this.scheduledExecutor = executor;
       this.cacheName = cacheName;
@@ -109,15 +107,15 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Override
    @Start
    public void start() {
-      AsyncConfiguration async = configuration.clustering().async();
-      long interval = async.replQueueInterval();
+      AsyncConfiguration asyncCfg = configuration.clustering().async();
+      long interval = asyncCfg.replQueueInterval();
       trace = log.isTraceEnabled();
       if (trace)
          log.tracef("Starting replication queue, with interval %d and maxElements %s", interval, maxElements);
 
-      this.maxElements = async.replQueueMaxElements();
+      this.maxElements = asyncCfg.replQueueMaxElements();
       // check again
-      enabled = async.useReplQueue();
+      enabled = asyncCfg.useReplQueue();
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override

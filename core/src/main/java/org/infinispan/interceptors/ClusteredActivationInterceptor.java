@@ -19,7 +19,7 @@
 
 package org.infinispan.interceptors;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -33,7 +33,7 @@ import org.infinispan.remoting.transport.Transport;
  * @since 5.1
  */
 public class ClusteredActivationInterceptor extends ActivationInterceptor {
-   private Configuration.CacheMode cacheMode;
+   private CacheMode cacheMode;
    private boolean remoteNodeMayNeedToLoad;
    private Transport transport;
    private DistributionManager distributionManager;
@@ -47,11 +47,11 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
 
    @Start(priority = 15)
    private void startClusteredActivationInterceptor() {
-      cacheMode = configuration.getCacheMode();
+      cacheMode = cacheConfiguration.clustering().cacheMode();
       // For now the coordinator/primary data owner may need to load from the cache store, even if
       // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
       // happen if running in distributed mode and eviction is enabled.
-      remoteNodeMayNeedToLoad = configuration.isWriteSkewCheck() && cacheMode.isClustered();
+      remoteNodeMayNeedToLoad = cacheConfiguration.locking().writeSkewCheck() && cacheMode.isClustered();
    }
 
    @Override

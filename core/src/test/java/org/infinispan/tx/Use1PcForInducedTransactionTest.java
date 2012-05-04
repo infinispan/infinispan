@@ -41,7 +41,6 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       c.fluent().transaction().use1PcForAutoCommitTransactions(true);
       assert c.isUse1PcForAutoCommitTransactions();

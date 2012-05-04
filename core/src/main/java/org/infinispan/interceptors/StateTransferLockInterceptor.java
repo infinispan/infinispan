@@ -18,7 +18,6 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -30,7 +29,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -71,8 +70,8 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    public void init(StateTransferLock stateTransferLock, Configuration configuration) {
       this.stateTransferLock = stateTransferLock;
       // no need to retry for asynchronous caches
-      this.rpcTimeout = configuration.getCacheMode().isSynchronous()
-            ? configuration.getSyncReplTimeout() : 0;
+      this.rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
+            ? configuration.clustering().sync().replTimeout() : 0;
    }
 
    @Override

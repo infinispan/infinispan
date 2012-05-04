@@ -1,7 +1,8 @@
 package org.infinispan.marshall;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -23,10 +24,10 @@ public class CacheMarshaller extends AbstractDelegatingMarshaller {
    }
 
    @Inject
-   public void inject(Configuration cfg, InvocationContextContainer icc,
+   public void inject(Cache cache, Configuration cfg, InvocationContextContainer icc,
             ExternalizerTable extTable, GlobalConfiguration globalCfg) {
       ((VersionAwareMarshaller) this.marshaller).inject(
-            cfg, null, icc, extTable, globalCfg);
+            cache, cfg, null, icc, extTable, globalCfg);
    }
 
    @Override

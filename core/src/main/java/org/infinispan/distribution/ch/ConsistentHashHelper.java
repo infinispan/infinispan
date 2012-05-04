@@ -23,7 +23,8 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import java.util.Arrays;
@@ -51,11 +52,13 @@ public class ConsistentHashHelper {
     * @param c        configuration
     * @return a new consistent hash instance of the same type
     */
-   public static ConsistentHash removeAddress(ConsistentHash ch, Address toRemove, Configuration c) {
+   public static ConsistentHash removeAddress(ConsistentHash ch, Address toRemove,
+            Configuration c, boolean withTopology) {
       if (ch instanceof UnionConsistentHash)
-         return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c);
+         return removeAddressFromUnionConsistentHash((
+                  UnionConsistentHash) ch, toRemove, c, withTopology);
       else {
-         ConsistentHash newCH = constructConsistentHashInstance(c);
+         ConsistentHash newCH = constructConsistentHashInstance(c, withTopology);
          Set<Address> caches = new HashSet<Address>(ch.getCaches());
          caches.remove(toRemove);
          newCH.setCaches(caches);
@@ -63,16 +66,24 @@ public class ConsistentHashHelper {
       }
    }
 
-   private static ConsistentHash constructConsistentHashInstance(Configuration c) {
-      Class<? extends ConsistentHash> chClass = Util.loadClass(c.getConsistentHashClass(), c.getClassLoader());
-      Hash h = (Hash) Util.getInstance(c.getHashFunctionClass(), c.getClassLoader());
-      return constructConsistentHashInstance(chClass, h, c.getNumVirtualNodes(), new GroupManagerImpl(c.getGroupers()));
+   private static ConsistentHash constructConsistentHashInstance(
+            Configuration c, boolean withTopology) {
+      HashConfiguration hashCfg = c.clustering().hash();
+      return constructConsistentHashInstance(hashCfg.consistentHash(),
+            hashCfg.hash(), hashCfg.numVirtualNodes(),
+            new GroupManagerImpl(hashCfg.groups().groupers()), withTopology);
    }
 
    private static ConsistentHash constructConsistentHashInstance(
-            Class<? extends ConsistentHash> clazz, Hash hashFunction,
-            int numVirtualNodes, GroupManager groupManager) {
-      ConsistentHash ch = Util.getInstance(clazz);
+            ConsistentHash ch, Hash hashFunction, int numVirtualNodes,
+            GroupManager groupManager, boolean withTopology) {
+      if (ch == null) {
+         if (withTopology)
+            ch = new TopologyAwareConsistentHash();
+         else
+            ch = new DefaultConsistentHash();
+      }
+
       if (ch instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
          wch.setHashFunction(hashFunction);
@@ -95,9 +106,10 @@ public class ConsistentHashHelper {
     * @param c        configuration
     * @return a new UnionConsistentHash instance
     */
-   public static UnionConsistentHash removeAddressFromUnionConsistentHash(UnionConsistentHash uch, Address toRemove, Configuration c) {
-      ConsistentHash newFirstCH = removeAddress(uch.getOldConsistentHash(), toRemove, c);
-      ConsistentHash newSecondCH = removeAddress(uch.getNewConsistentHash(), toRemove, c);
+   public static UnionConsistentHash removeAddressFromUnionConsistentHash(
+            UnionConsistentHash uch, Address toRemove, Configuration c, boolean withTopology) {
+      ConsistentHash newFirstCH = removeAddress(uch.getOldConsistentHash(), toRemove, c, withTopology);
+      ConsistentHash newSecondCH = removeAddress(uch.getNewConsistentHash(), toRemove, c, withTopology);
       return new UnionConsistentHash(newFirstCH, newSecondCH);
    }
 
@@ -109,8 +121,9 @@ public class ConsistentHashHelper {
     * @param addresses with which to populate the consistent hash
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses) {
-      ConsistentHash ch = constructConsistentHashInstance(c);
+   public static ConsistentHash createConsistentHash(Configuration c,
+            boolean withTopology, Collection<Address> addresses) {
+      ConsistentHash ch = constructConsistentHashInstance(c, withTopology);
       ch.setCaches(toSet(addresses));
       return ch;
    }
@@ -123,10 +136,11 @@ public class ConsistentHashHelper {
     * @param addresses     with which to populate the consistent hash
     *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, Address... moreAddresses) {
+   public static ConsistentHash createConsistentHash(Configuration c,
+            boolean withTopology, Collection<Address> addresses, Address... moreAddresses) {
       Set<Address> caches = new HashSet<Address>(addresses);
       caches.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(c, caches);
+      return createConsistentHash(c, withTopology, caches);
    }
 
    /**
@@ -138,10 +152,11 @@ public class ConsistentHashHelper {
     * @param moreAddresses to add to the list of addresses
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, Collection<Address> moreAddresses) {
+   public static ConsistentHash createConsistentHash(Configuration c,
+            boolean withTopology, Collection<Address> addresses, Collection<Address> moreAddresses) {
       Set<Address> caches = new HashSet<Address>(addresses);
       caches.addAll(moreAddresses);
-      return createConsistentHash(c, caches);
+      return createConsistentHash(c, withTopology, caches);
    }
 
    /**
@@ -156,13 +171,16 @@ public class ConsistentHashHelper {
       Hash hf = null;
       int numVirtualNodes = 1;
       GroupManager groupManager = null;
+      boolean withTopology = false;
       if (template instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wTemplate = (AbstractWheelConsistentHash) template;
          hf = wTemplate.hashFunction;
          numVirtualNodes = wTemplate.numVirtualNodes;
          groupManager = wTemplate.groupManager;
+         withTopology = true;
       }
-      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes, groupManager);
+      ConsistentHash ch = constructConsistentHashInstance(
+            Util.getInstance(template.getClass()), hf, numVirtualNodes, groupManager, withTopology);
       if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       return ch;
    }
@@ -186,4 +204,5 @@ public class ConsistentHashHelper {
       if (c instanceof Set) return (Set<Address>) c;
       return new HashSet<Address>(c);
    }
+
 }

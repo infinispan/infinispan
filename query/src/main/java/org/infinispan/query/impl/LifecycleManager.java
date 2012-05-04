@@ -30,8 +30,9 @@ import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -66,9 +67,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       Configuration cfg = cr.getComponent(Configuration.class);
-      if (cfg.isIndexingEnabled()) {
+      if (cfg.indexing().enabled()) {
          log.registeringQueryInterceptor();
-         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.getIndexingProperties(), cr);
+         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
       }
    }
@@ -78,21 +79,25 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (queryInterceptor == null) {
          queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
          cr.registerComponent(queryInterceptor, QueryInterceptor.class);
-         CustomInterceptorPosition customInterceptorPosition = cfg.fluent()
-               .customInterceptors()
-               .add(queryInterceptor);
-         if (!cfg.isTransactionalCache()) {
-            customInterceptorPosition.after(NonTransactionalLockingInterceptor.class);
-         } else if (cfg.getTransactionLockingMode() == LockingMode.OPTIMISTIC) {
-            customInterceptorPosition.after(OptimisticLockingInterceptor.class);
+
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         InterceptorConfigurationBuilder interceptorBuilder =
+               builder.customInterceptors().addInterceptor();
+         interceptorBuilder.interceptor(queryInterceptor);
+
+         if (!cfg.transaction().transactionMode().isTransactional()) {
+            interceptorBuilder.after(NonTransactionalLockingInterceptor.class);
+         } else if (cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+            interceptorBuilder.after(OptimisticLockingInterceptor.class);
          } else {
-            customInterceptorPosition.after(PessimisticLockingInterceptor.class);
+            interceptorBuilder.after(PessimisticLockingInterceptor.class);
          }
+         cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
       }
    }
 
    private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchFactoryIntegrator searchFactory) {
-      if ( cfg.isIndexLocalOnly() ) {
+      if ( cfg.indexing().indexLocalOnly() ) {
          return new LocalQueryInterceptor(searchFactory);
       }
       else {
@@ -103,7 +108,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
-      boolean indexingEnabled = configuration.isIndexingEnabled();
+      boolean indexingEnabled = configuration.indexing().enabled();
       if ( ! indexingEnabled ) {
          if ( verifyChainContainsQueryInterceptor(cr) ) {
             throw new IllegalStateException( "It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found" );

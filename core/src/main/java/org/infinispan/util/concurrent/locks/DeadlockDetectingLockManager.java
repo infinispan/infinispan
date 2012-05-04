@@ -71,8 +71,8 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    @Start
    public void init() {
-      spinDuration = configuration.getDeadlockDetectionSpinDuration();
-      exposeJmxStats = configuration.isExposeJmxStatistics();
+      spinDuration = configuration.deadlockDetection().spinDuration();
+      exposeJmxStats = configuration.jmxStatistics().enabled();
    }
 
    @Override

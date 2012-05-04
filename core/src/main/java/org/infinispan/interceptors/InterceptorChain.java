@@ -389,12 +389,12 @@ public class InterceptorChain {
     * Returns all the interceptors that have the fully qualified name of their class equal with the supplied class
     * name.
     */
-   public List<CommandInterceptor> getInterceptorsWithClassName(String name) {
+   public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
       // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor iterator = firstInChain;
       List<CommandInterceptor> result = new ArrayList<CommandInterceptor>(2);
       while (iterator != null) {
-         if (iterator.getClass().getName().equals(name)) result.add(iterator);
+         if (iterator.getClass() == clazz) result.add(iterator);
          iterator = iterator.getNext();
       }
       return result;

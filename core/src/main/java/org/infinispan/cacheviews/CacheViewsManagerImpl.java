@@ -22,7 +22,7 @@ package org.infinispan.cacheviews;
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -131,7 +131,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       this.transport = transport;
       this.asyncTransportExecutor = e;
       // TODO Try to implement a "total view installation time budget" instead of the current per-operation timeout
-      this.timeout = globalConfiguration.getDistributedSyncTimeout();
+      this.timeout = globalConfiguration.transport().distributedSyncTimeout();
    }
 
    // Start after JGroupsTransport so that we have a view already

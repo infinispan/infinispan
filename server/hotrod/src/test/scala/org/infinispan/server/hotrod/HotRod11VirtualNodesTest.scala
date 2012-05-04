@@ -34,6 +34,6 @@ class HotRod11VirtualNodesTest extends HotRod11DistributionTest {
    override protected def createCacheConfig: Configuration =
       super.createCacheConfig.fluent.clustering.hash.numVirtualNodes(virtualNodes).build
 
-   override protected def virtualNodes = 10
+   override protected def virtualNodes = 1
 
 }

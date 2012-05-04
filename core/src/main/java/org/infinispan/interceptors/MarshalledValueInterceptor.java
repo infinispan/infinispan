@@ -93,8 +93,8 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
 
    @Start
    protected void start() {
-      wrapKeys = configuration.isStoreKeysAsBinary();
-      wrapValues = configuration.isStoreValuesAsBinary();
+      wrapKeys = cacheConfiguration.storeAsBinary().storeKeysAsBinary();
+      wrapValues = cacheConfiguration.storeAsBinary().storeValuesAsBinary();
    }
 
    @Override

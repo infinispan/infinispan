@@ -24,7 +24,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -281,31 +281,37 @@ public class TransactionFactory {
 
    @Start
    public void start() {
-      boolean dldEnabled = configuration.isDeadlockDetectionEnabled();
-      boolean xa = !configuration.isUseSynchronizationForTransactions();
-      boolean recoveryEnabled = configuration.isTransactionRecoveryEnabled();
-      init(dldEnabled, recoveryEnabled, xa);
-      isClustered = configuration.getCacheMode().isClustered();
+      boolean dldEnabled = configuration.deadlockDetection().enabled();
+      boolean xa = !configuration.transaction().useSynchronization();
+      boolean recoveryEnabled = configuration.transaction().recovery().enabled();
+      boolean batchingEnabled = configuration.invocationBatching().enabled();
+      init(dldEnabled, recoveryEnabled, xa, batchingEnabled);
+      isClustered = configuration.clustering().cacheMode().isClustered();
       if (recoveryEnabled) {
          Transport transport = rpcManager != null ? rpcManager.getTransport() : null;
          clusterIdGenerator = new ClusterIdGenerator(cm, transport);
       }
    }
 
-   public void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa) {
-      if (dldEnabled && recoveryEnabled && xa) {
-         txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
-      } else if (dldEnabled && !recoveryEnabled && xa) {
-         txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
-      } else if (dldEnabled && !recoveryEnabled && !xa) {
-         txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
-      } else  if (!dldEnabled && recoveryEnabled && xa) {
-         txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
-      } else if (!dldEnabled && !recoveryEnabled && xa) {
-         txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
-      } else if (!dldEnabled && !recoveryEnabled && !xa) {
+   public void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa, boolean batchingEnabled) {
+      if (batchingEnabled) {
          txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+      } else {
+         if (dldEnabled && recoveryEnabled && xa) {
+            txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
+         } else if (dldEnabled && !recoveryEnabled && xa) {
+            txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
+         } else if (dldEnabled && !recoveryEnabled && !xa) {
+            txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
+         } else  if (!dldEnabled && recoveryEnabled && xa) {
+            txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
+         } else if (!dldEnabled && !recoveryEnabled && xa) {
+            txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
+         } else if (!dldEnabled && !recoveryEnabled && !xa) {
+            txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+         }
       }
+
       log.tracef("Setting factory enum to %s", txFactoryEnum);
 
       if (txFactoryEnum == null) {

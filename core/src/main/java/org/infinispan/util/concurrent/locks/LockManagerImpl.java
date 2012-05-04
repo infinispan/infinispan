@@ -22,12 +22,11 @@
  */
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.marshall.MarshalledValue;
@@ -39,7 +38,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -97,7 +95,7 @@ public class LockManagerImpl implements LockManager {
 
    protected long getLockAcquisitionTimeout(InvocationContext ctx) {
       return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-            0 : configuration.getLockAcquisitionTimeout();
+            0 : configuration.locking().lockAcquisitionTimeout();
    }
 
    @Override
@@ -153,7 +151,7 @@ public class LockManagerImpl implements LockManager {
    @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")
    @Metric(displayName = "Concurrency level", dataType = DataType.TRAIT)
    public int getConcurrencyLevel() {
-      return configuration.getConcurrencyLevel();
+      return configuration.locking().concurrencyLevel();
    }
 
    @Override

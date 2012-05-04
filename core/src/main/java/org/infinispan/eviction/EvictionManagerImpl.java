@@ -23,7 +23,8 @@
 package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.config.Configuration;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -59,29 +60,39 @@ public class EvictionManagerImpl implements EvictionManager {
    private CacheStore cacheStore;
    private CacheNotifier cacheNotifier;
    private boolean enabled;
+   private String cacheName;
 
    @Inject
-   public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
-            Configuration configuration, DataContainer dataContainer,
+   public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)
+         ScheduledExecutorService executor, Cache cache, Configuration cfg, DataContainer dataContainer,
+         CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier) {
+      initialize(executor, cache.getName(), cfg, dataContainer,
+            cacheLoaderManager, cacheNotifier);
+   }
+
+   void initialize(ScheduledExecutorService executor,
+            String cacheName, Configuration cfg, DataContainer dataContainer,
             CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier) {
       this.executor = executor;
-      this.configuration = configuration;
+      this.configuration = cfg;
+      this.cacheName = cacheName;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.cacheNotifier = cacheNotifier;
    }
 
+
    @Start(priority = 55)
    // make sure this starts after the CacheLoaderManager
    public void start() {
       // first check if eviction is enabled!
-      enabled = configuration.isExpirationReaperEnabled();
+      enabled = configuration.expiration().reaperEnabled();
       if (enabled) {
          if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()) {
             cacheStore = cacheLoaderManager.getCacheStore();
          }
          // Set up the eviction timer task
-         long expWakeUpInt = configuration.getExpirationWakeUpInterval();
+         long expWakeUpInt = configuration.expiration().wakeUpInterval();
          if (expWakeUpInt <= 0) {
             log.notStartingEvictionThread();
          } else {
@@ -142,7 +153,7 @@ public class EvictionManagerImpl implements EvictionManager {
    class ScheduledTask implements Runnable {
       @Override
       public void run() {
-         LogFactory.pushNDC(configuration.getName(), trace);
+         LogFactory.pushNDC(cacheName, trace);
          try {
             processEviction();
          } finally {

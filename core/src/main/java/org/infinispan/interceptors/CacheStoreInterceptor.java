@@ -33,7 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -78,7 +78,7 @@ import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
-   CacheLoaderManagerConfig loaderConfig = null;
+   LoadersConfiguration loaderConfig = null;
    private Map<GlobalTransaction, Integer> txStores;
    private Map<GlobalTransaction, Set<Object>> preparingTxs;
    final AtomicLong cacheStores = new AtomicLong(0);
@@ -102,10 +102,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Start(priority = 15)
    protected void start() {
       store = loaderManager.getCacheStore();
-      this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
-      loaderConfig = configuration.getCacheLoaderManagerConfig();
-      txStores = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
-      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
+      this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      loaderConfig = cacheConfiguration.loaders();
+      int concurrencyLevel = cacheConfiguration.locking().concurrencyLevel();
+      txStores = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
+      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
    }
 
    /**
@@ -113,12 +114,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
     */
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader does not implement cache store
-      if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
+      if ((!ctx.isOriginLocal() && loaderConfig.shared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
          log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
       }
 
-      if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
+      if (loaderConfig.shared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
          log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
       }

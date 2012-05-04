@@ -23,6 +23,7 @@
 
 package org.infinispan.distribution.virtualnodes;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
@@ -44,7 +45,6 @@ public class VNodesTachFunctionalTest extends DistSyncFuncTest {
 
    @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
       int index = cacheManagers.size();
       String rack;
       String machine;
@@ -73,9 +73,10 @@ public class VNodesTachFunctionalTest extends DistSyncFuncTest {
             throw new RuntimeException("Bad!");
          }
       }
-      GlobalConfiguration globalConfiguration = cm.getGlobalConfiguration();      
-      globalConfiguration.setRackId(rack);
-      globalConfiguration.setMachineId(machine);
+      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
+      gc.setRackId(rack);
+      gc.setMachineId(machine);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, new Configuration());
       cacheManagers.add(cm);
       return cm;
    }

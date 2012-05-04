@@ -159,8 +159,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       this.cl = cl;
    }
 
-
-
+   /**
+    * Use the {@link org.infinispan.configuration.global.GlobalConfigurationBuilder}
+    * hierarchy to configure Infinispan cache managers fluently.
+    */
+   @Deprecated
    public FluentGlobalConfiguration fluent() {
       return fluentGlobalConfig;
    }

@@ -107,6 +107,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             throw new ConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
                   + clustering().cacheMode() + " cannot be used with write-skew checking");
       }
+
+      if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel == IsolationLevel.NONE)
+         isolationLevel = IsolationLevel.READ_COMMITTED;
+
+      if (isolationLevel == IsolationLevel.READ_UNCOMMITTED)
+         isolationLevel = IsolationLevel.READ_COMMITTED;
+
+      if (isolationLevel == IsolationLevel.SERIALIZABLE)
+         isolationLevel = IsolationLevel.REPEATABLE_READ;
    }
 
    @Override

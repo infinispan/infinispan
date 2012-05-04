@@ -168,7 +168,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
          log.trace("Skipping cache store since the call contain a skip cache store flag");
          return true;
       }
-      if (loaderConfig.isShared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+      if (loaderConfig.shared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
          log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
       }
       return false;
@@ -180,7 +180,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     */
    @Override
    protected boolean skipKey(Object key) {
-      if (loaderConfig.isShared()) {
+      if (loaderConfig.shared()) {
          if (!dm.getPrimaryLocation(key).equals(address)) {
             log.trace("Skipping cache store since the cache loader is shared " +
                   "and the caller is not the first owner of the key");

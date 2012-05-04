@@ -44,5 +44,9 @@ package org.infinispan.transaction;
  */
 public enum TransactionMode {
    NON_TRANSACTIONAL,
-   TRANSACTIONAL
+   TRANSACTIONAL;
+
+   public boolean isTransactional() {
+      return this == TRANSACTIONAL;
+   }
 }

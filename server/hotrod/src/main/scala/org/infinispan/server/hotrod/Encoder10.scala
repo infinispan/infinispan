@@ -119,12 +119,12 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
                val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
                   val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-                  val config = cache.getConfiguration
-                  if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
+                  val config = cache.getCacheConfiguration
+                  if (r.clientIntel == 2 || !config.clustering().cacheMode().isDistributed) {
                      TopologyAwareResponse(lastViewId)
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     HashDistAwareResponse(lastViewId, config.getNumOwners,
+                     HashDistAwareResponse(lastViewId, config.clustering().hash().numOwners(),
                            DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
                   }
                } else null
@@ -177,7 +177,7 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
       // cluster members * num virtual nodes. Otherwise, rely on the default
       // when virtual nodes is disabled which is '1'.
       val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-      val numVNodes = cache.getConfiguration.getNumVirtualNodes
+      val numVNodes = cache.getCacheConfiguration.clustering().hash().numVirtualNodes()
 
       val clusterMembers = addressCache.getCacheManager.getMembers
       val totalNumServers = clusterMembers.size * numVNodes

@@ -30,16 +30,12 @@ import static org.infinispan.test.TestingUtil.withTx;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStore;
-import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStoreConfig;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.MultipleCacheManagersTest;

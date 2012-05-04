@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class CustomInterceptorsConfiguration {
 
-   private final List<InterceptorConfiguration> interceptors;
+   private List<InterceptorConfiguration> interceptors;
 
    CustomInterceptorsConfiguration(List<InterceptorConfiguration> interceptors) {
       this.interceptors = interceptors;
@@ -45,6 +45,11 @@ public class CustomInterceptorsConfiguration {
     */
    public List<InterceptorConfiguration> interceptors() {
       return interceptors;
+   }
+
+   public CustomInterceptorsConfiguration interceptors(List<InterceptorConfiguration> interceptors) {
+      this.interceptors = interceptors;
+      return this;
    }
 
    @Override

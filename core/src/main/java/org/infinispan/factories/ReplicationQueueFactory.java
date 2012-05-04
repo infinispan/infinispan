@@ -22,11 +22,8 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.ReplicationQueue;
-import org.infinispan.remoting.ReplicationQueueImpl;
-import org.infinispan.util.Util;
 
 /**
  * Factory for ReplicationQueue.
@@ -39,16 +36,8 @@ public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory i
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if ((!configuration.getCacheMode().isSynchronous()) && configuration.isUseReplQueue()) {
-         String type = configuration.getReplQueueClass();
-         if (type == null || type.equals(ReplicationQueueImpl.class.getName()))
-            return componentType.cast(new ReplicationQueueImpl());
-         else
-            try {
-               return componentType.cast(Util.loadClass(type, configuration.getClassLoader()).newInstance());
-            } catch (Exception e) {
-               throw new ConfigurationException(e);
-            }
+      if ((!configuration.clustering().cacheMode().isSynchronous()) && configuration.clustering().async().useReplQueue()) {
+         return componentType.cast(configuration.clustering().async().replQueue());
       } else {
          return null;
       }

@@ -195,6 +195,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.accept(new InjectComponentRegistryVisitor(cr));
    }
 
+   /**
+    * Use the {@link org.infinispan.configuration.cache.ConfigurationBuilder}
+    * hierarchy to configure Infinispan caches fluently.
+    */
+   @Deprecated
    public FluentConfiguration fluent() {
       return fluentConfig;
    }

@@ -24,7 +24,8 @@ package org.infinispan.distribution;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -83,6 +84,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private StateTransferManager stateTransferManager;
 
    private volatile ConsistentHash consistentHash;
+   private GlobalConfiguration globalCfg;
 
    /**
     * Default constructor
@@ -92,23 +94,25 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf, CacheNotifier cacheNotifier,
-                    StateTransferManager stateTransferManager) {
+                    StateTransferManager stateTransferManager, GlobalConfiguration globalCfg) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.cf = cf;
       this.cacheNotifier = cacheNotifier;
       this.stateTransferManager = stateTransferManager;
+      this.globalCfg = globalCfg;
    }
 
    // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
-      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, Collections.singleton(rpcManager.getAddress()));
+      consistentHash = ConsistentHashHelper.createConsistentHash(configuration,
+            globalCfg.transport().hasTopologyInfo(), Collections.singleton(rpcManager.getAddress()));
    }
 
    private int getReplCount() {
-      return configuration.getNumOwners();
+      return configuration.clustering().hash().numOwners();
    }
 
    private Address getAddress() {
@@ -161,8 +165,8 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void transformForL1(CacheEntry entry) {
-      if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.getL1Lifespan())
-         entry.setLifespan(configuration.getL1Lifespan());
+      if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan())
+         entry.setLifespan(configuration.clustering().l1().lifespan());
    }
 
    @Override
@@ -175,7 +179,7 @@ public class DistributionManagerImpl implements DistributionManager {
       targets.retainAll(rpcManager.getTransport().getMembers());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, getAddress());
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-                                                                   configuration.getSyncReplTimeout(), true, filter);
+                                                                   configuration.clustering().sync().replTimeout(), true, filter);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {

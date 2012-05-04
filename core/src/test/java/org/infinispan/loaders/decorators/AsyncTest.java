@@ -170,7 +170,7 @@ public class AsyncTest extends AbstractInfinispanTest {
    public void testTransactionalModificationsHappenInDiffThread(Method m) throws Exception {
       try {
          final TransactionFactory gtf = new TransactionFactory();
-         gtf.init(false, false, true);
+         gtf.init(false, false, true, false);
          final String k1 = k(m, 1), k2 = k(m, 2), v1 = v(m, 1), v2 = v(m, 2);
          final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
          final CyclicBarrier barrier = new CyclicBarrier(2);
@@ -223,7 +223,7 @@ public class AsyncTest extends AbstractInfinispanTest {
    public void testTransactionalModificationsAreCoalesced(Method m) throws Exception {
       try {
          final TransactionFactory gtf = new TransactionFactory();
-         gtf.init(false, false, true);
+         gtf.init(false, false, true, false);
          final String k1 = k(m, 1), k2 = k(m, 2), k3 = k(m, 3), v1 = v(m, 1), v2 = v(m, 2), v3 = v(m, 3);
          final AtomicInteger storeCount = new AtomicInteger();
          final AtomicInteger removeCount = new AtomicInteger();
