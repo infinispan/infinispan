@@ -1,9 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -12,36 +8,35 @@
  *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
+
 package org.infinispan.io;
 
-import net.jcip.annotations.NotThreadSafe;
-
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-
 /**
- * Extends ByteArrayOutputStream, but exposes the internal buffer. Using this, callers don't need to call toByteArray()
- * which copies the internal buffer. <p> Also overrides the superclass' behavior of always doubling the size of the
- * internal buffer any time more capacity is needed.  This class doubles the size until the internal buffer reaches a
- * configurable max size (default is 4MB), after which it begins growing the buffer in 25% increments.  This is intended
- * to help prevent an OutOfMemoryError during a resize of a large buffer. </p> <p> A version of this class was
- * originally created by Bela Ban as part of the JGroups library. </p> This class is not threadsafe as it will not
- * support concurrent readers and writers.
- * <p/>
+ * A byte stream that can be written to and expanded on the fly, not dissimilar to {@link ExposedByteArrayOutputStream}
+ * but with the benefit of not having to allocate unnecessary byte arrays byt not extending {@link java.io.ByteArrayOutputStream}.
  *
- * @author <a href="mailto://brian.stansberry@jboss.com">Brian Stansberry</a>
- * @since 4.0
+ * @author Manik Surtani
+ * @since 5.1
  */
-@NotThreadSafe
-public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+public class ExpandableMarshalledValueByteStream extends MarshalledValueByteStream {
+   /**
+    * The buffer where data is stored.
+    */
+   private byte buf[];
+
+   /**
+    * The number of valid bytes in the buffer.
+    */
+   private int count;
+
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
     */
@@ -49,18 +44,17 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
 
    private int maxDoublingSize = DEFAULT_DOUBLING_SIZE;
 
-   public ExposedByteArrayOutputStream() {
-      super();
+   public ExpandableMarshalledValueByteStream() {
+      this(32);
    }
 
-   public ExposedByteArrayOutputStream(int size) {
-      super(size);
-   }
+   public ExpandableMarshalledValueByteStream(int size) {
+      if (size < 0) {
+         throw new IllegalArgumentException("Negative initial size: "
+                                                  + size);
+      }
+      buf = new byte[size];
 
-   public ExposedByteArrayOutputStream(byte[] bytes) {
-      if (bytes == null || bytes.length == 0) throw new IllegalArgumentException("Null or empty byte arrays not allowed");
-      buf = bytes;
-      count = bytes.length;
    }
 
    /**
@@ -71,8 +65,8 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     *                        than 100%
     * @throws IllegalArgumentException if size is negative.
     */
-   public ExposedByteArrayOutputStream(int size, int maxDoublingSize) {
-      super(size);
+   public ExpandableMarshalledValueByteStream(int size, int maxDoublingSize) {
+      this(size);
       this.maxDoublingSize = maxDoublingSize;
    }
 
@@ -80,7 +74,8 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     * Gets the internal buffer array. Note that the length of this array will almost certainly be longer than the data
     * written to it; call <code>size()</code> to get the number of bytes of actual data.
     */
-   public final byte[] getRawBuffer() {
+   @Override
+   public final byte[] getRaw() {
       return buf;
    }
 
@@ -142,7 +137,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
       else
          return Math.max(curSize + (curSize >> 2), minNewSize);
    }
-   
+
    /**
     * Overriden only to avoid unneeded synchronization
     */
@@ -153,13 +148,14 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
 
    @Override
    public boolean equals(Object thatObject) {
-      if (thatObject instanceof ExposedByteArrayOutputStream) {
-         ExposedByteArrayOutputStream that = (ExposedByteArrayOutputStream) thatObject;
+      if (thatObject instanceof MarshalledValueByteStream) {
+         MarshalledValueByteStream that = (MarshalledValueByteStream) thatObject;
          if (this == that) return true;
-         if (this.buf == that.buf) return true;
-         if (this.count != that.count) return false;
-         for (int i=0; i<count; i++) {
-            if (this.buf[i] != that.buf[i]) return false;
+         byte[] thoseBytes = that.getRaw();
+         if (this.buf == thoseBytes) return true;
+         if (this.count != that.size()) return false;
+         for (int i = 0; i < count; i++) {
+            if (this.buf[i] != thoseBytes[i]) return false;
          }
          return true;
       } else {
