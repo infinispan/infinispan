@@ -132,6 +132,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       JdbcStringBasedCacheStoreConfig csConfig = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       csConfig.setFetchPersistentState(true);
       csConfig.setKey2StringMapperClass(mapperName);
+      csConfig.getProperties().setProperty("key2StringMapperClass", mapperName);
 
       CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
       cacheLoaders.setPreload(preload);

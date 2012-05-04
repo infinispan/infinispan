@@ -22,8 +22,7 @@
  */
 package org.infinispan.transaction.lookup;
 
-
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -47,8 +46,8 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    public void init(Configuration configuration) {
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       try {
-         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", configuration.getClassLoader()).getMethod("transactionManager");
-         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", configuration.getClassLoader()).getMethod("userTransaction");
+         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", configuration.classLoader()).getMethod("transactionManager");
+         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", configuration.classLoader()).getMethod("userTransaction");
       } catch (SecurityException e) {
          throw new RuntimeException(e);
       } catch (NoSuchMethodException e) {

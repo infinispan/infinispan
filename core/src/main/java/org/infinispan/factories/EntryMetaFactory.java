@@ -37,11 +37,11 @@ public class EntryMetaFactory extends AbstractNamedCacheComponentFactory impleme
    public <T> T construct(Class<T> componentType) {
 
       // If we are repeatable-read and have write skew checking enabled and are clustered, lets create an appropriate EntryFactory.
-      boolean useVersioning = configuration.getCacheMode().isClustered() &&
-            configuration.isTransactionalCache() &&
-            configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ &&
-            configuration.isWriteSkewCheck() &&
-            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC;
+      boolean useVersioning = configuration.clustering().cacheMode().isClustered() &&
+            configuration.transaction().transactionMode().isTransactional() &&
+            configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
+            configuration.locking().writeSkewCheck() &&
+            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC;
 
       if (componentType.equals(EntryFactory.class)) {
          if (useVersioning)

@@ -39,7 +39,7 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
 
    @Start
    public void checkStatisticsUsed() {
-      setStatisticsEnabled(configuration.isExposeJmxStatistics());
+      setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
    }
 
    /**

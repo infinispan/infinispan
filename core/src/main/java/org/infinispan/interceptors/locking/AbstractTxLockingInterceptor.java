@@ -30,6 +30,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -178,7 +179,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       if (checkForPendingLocks) {
          getLog().tracef("Checking for pending locks and then locking key %s", key);
 
-         long expectedEndTime = nowMillis() + configuration.getLockAcquisitionTimeout();
+         long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
 
          // Check local transactions first
          for (CacheTransaction ct: txTable.getLocalTransactions()) {
@@ -216,7 +217,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    private boolean releaseLockOnTxCompletion(TxInvocationContext ctx) {
-      return ctx.isOriginLocal() || configuration.isSecondPhaseAsync();
+      return ctx.isOriginLocal() || Configurations.isSecondPhaseAsync(cacheConfiguration);
    }
 
    private long nowMillis() {

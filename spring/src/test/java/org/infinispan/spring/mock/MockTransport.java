@@ -24,7 +24,7 @@
 package org.infinispan.spring.mock;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;

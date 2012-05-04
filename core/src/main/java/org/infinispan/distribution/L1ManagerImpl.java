@@ -25,9 +25,9 @@ package org.infinispan.distribution;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -92,17 +92,17 @@ public class L1ManagerImpl implements L1Manager {
    
    @Start (priority = 3)
    public void start() {
-      this.threshold = configuration.getL1InvalidationThreshold();
-      this.rpcTimeout = configuration.getSyncReplTimeout();
-      this.l1Lifespan = configuration.getL1Lifespan();
-      if (configuration.getL1InvalidationCleanupTaskFrequency() > 0) {
+      this.threshold = configuration.clustering().l1().invalidationThreshold();
+      this.rpcTimeout = configuration.clustering().sync().replTimeout();
+      this.l1Lifespan = configuration.clustering().l1().lifespan();
+      if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
          scheduledRequestorsCleanupTask = scheduledExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                cleanUpRequestors();
             }
-         }, configuration.getL1InvalidationCleanupTaskFrequency(),
-            configuration.getL1InvalidationCleanupTaskFrequency(), TimeUnit.MILLISECONDS);
+         }, configuration.clustering().l1().cleanupTaskFrequency(),
+               configuration.clustering().l1().cleanupTaskFrequency(), TimeUnit.MILLISECONDS);
       } else {
          log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");
       }

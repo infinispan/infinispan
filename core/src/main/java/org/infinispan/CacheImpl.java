@@ -39,10 +39,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -145,6 +145,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private TransactionTable txTable;
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
+   private GlobalConfiguration globalCfg;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -167,7 +168,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
                                   EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
-                                  LockManager lockManager) {
+                                  LockManager lockManager,
+                                  GlobalConfiguration globalCfg) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -189,6 +191,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       this.recoveryManager = recoveryManager;
       this.txCoordinator = txCoordinator;
       this.lockManager = lockManager;
+      this.globalCfg = globalCfg;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -389,14 +392,13 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    @Deprecated
-   public Configuration getConfiguration() {
-      return config;
+   public org.infinispan.config.Configuration getConfiguration() {
+      return LegacyConfigurationAdaptor.adapt(config);
    }
    
    @Override
-   public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
-      // TODO Once we switch to the new configuration as the canonical configuration, we can remove the adaptor
-      return LegacyConfigurationAdaptor.adapt(config);
+   public Configuration getCacheConfiguration() {
+      return config;
    }
 
    @Override
@@ -421,7 +423,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    private InvocationContext getInvocationContextForRead(Transaction tx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader, int keyCount) {
-      if (config.isTransactionalCache()) {
+      if (config.transaction().transactionMode().isTransactional()) {
          Transaction transaction = tx == null ? getOngoingTransaction() : tx;
          //if we are in the scope of a transaction than return a transactional context. This is relevant e.g.
          // FORCE_WRITE_LOCK is used on read operations - in that case, the lock is held for the the transaction's
@@ -442,9 +444,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       InvocationContext invocationContext;
       boolean txInjected = false;
       final boolean isPutForExternalRead = isPutForExternalRead(explicitFlags);
-      if (config.isTransactionalCache() && !isPutForExternalRead) {
+      if (config.transaction().transactionMode().isTransactional() && !isPutForExternalRead) {
          Transaction transaction = getOngoingTransaction();
-         if (transaction == null && config.isTransactionAutoCommit()) {
+         if (transaction == null && config.transaction().autoCommit()) {
             try {
                transactionManager.begin();
                transaction = transactionManager.getTransaction();
@@ -493,7 +495,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    boolean lock(Collection<? extends K> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      if (!config.isTransactionalCache())
+      if (!config.transaction().transactionMode().isTransactional())
          throw new UnsupportedOperationException("Calling lock() on non-transactional caches is not allowed");
 
       if (keys == null || keys.isEmpty()) {
@@ -519,8 +521,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @Operation(displayName = "Starts cache.")
    public void start() {
       componentRegistry.start();
-      defaultLifespan = config.getExpirationLifespan();
-      defaultMaxIdleTime = config.getExpirationMaxIdle();
+      defaultLifespan = config.expiration().lifespan();
+      defaultMaxIdleTime = config.expiration().maxIdle();
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
@@ -601,7 +603,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public boolean startBatch() {
-      if (!config.isInvocationBatchingEnabled()) {
+      if (!config.invocationBatching().enabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
       }
       return batchContainer.startBatch();
@@ -609,7 +611,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public void endBatch(boolean successful) {
-      if (!config.isInvocationBatchingEnabled()) {
+      if (!config.invocationBatching().enabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
       }
       batchContainer.endBatch(successful);
@@ -646,7 +648,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(this));
+      return "Cache '" + name + "'@" + (config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(this));
    }
 
    @Override
@@ -686,7 +688,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config);
+      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config, name);
    }
 
    @Override
@@ -936,8 +938,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          // if we can't skip the cacheloader, we really want a thread for async.
          return false;
       }
-      CacheMode cacheMode = config.getCacheMode();
-      if (!cacheMode.isDistributed()) {
+      if (!config.clustering().cacheMode().isDistributed()) {
          //in these cluster modes we won't RPC for a get, so no need to fork a thread.
          return true;
       } else if (flags != null && (flags.contains(Flag.SKIP_REMOTE_LOOKUP) || flags.contains(Flag.CACHE_MODE_LOCAL))) {
@@ -949,7 +950,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {
-      boolean hasCacheLoaderConfig = config.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig() != null;
+      boolean hasCacheLoaderConfig = !config.loaders().cacheLoaders().isEmpty();
       return !hasCacheLoaderConfig
             || (hasCacheLoaderConfig && flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
    }
@@ -989,7 +990,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          Transaction transaction = null;
          if (transactionManager != null) {
             transaction = transactionManager.getTransaction();
-            if (transaction == null && config.isInvocationBatchingEnabled()) {
+            if (transaction == null && config.invocationBatching().enabled()) {
                transaction = batchContainer.getBatchTransaction();
             }
          }
@@ -1034,7 +1035,16 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public ClassLoader getClassLoader() {
-      return config.getClassLoader();
+      ClassLoader cl = config.classLoader();
+      if (cl != null)
+         // The classloader has been set for this configuration
+         return cl;
+      else if (cl == null && globalCfg.classLoader() != null)
+         // The classloader is not set for this configuration, and we have a global config
+         return globalCfg.classLoader();
+      else
+         // Return the default CL
+         return Thread.currentThread().getContextClassLoader();
    }
 
    @Override

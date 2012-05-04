@@ -74,14 +74,15 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
                val lastViewId = server.getViewId
                if (r.topologyId != lastViewId) {
                   val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-                  val config = cache.getConfiguration
-                  if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
+                  val config = cache.getCacheConfiguration
+                  if (r.clientIntel == 2 || !config.clustering().cacheMode().isDistributed) {
                      TopologyAwareResponse(lastViewId)
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     HashDistAware11Response(lastViewId, config.getNumOwners,
+                     val hashCfg = config.clustering().hash()
+                     HashDistAware11Response(lastViewId, hashCfg.numOwners(),
                            DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE,
-                           config.getNumVirtualNodes)
+                           config.clustering().hash().numVirtualNodes())
                   }
                } else null
             }

@@ -39,14 +39,14 @@ import org.infinispan.statetransfer.StateTransferManager;
 public class StateTransferManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {
-      if (!configuration.getCacheMode().isClustered())
+      if (!configuration.clustering().cacheMode().isClustered())
          return null;
 
-      if (configuration.getCacheMode().isDistributed())
+      if (configuration.clustering().cacheMode().isDistributed())
          return componentType.cast(new DistributedStateTransferManagerImpl());
-      else if (configuration.getCacheMode().isReplicated())
+      else if (configuration.clustering().cacheMode().isReplicated())
          return componentType.cast(new ReplicatedStateTransferManagerImpl());
-      else if (configuration.getCacheMode().isInvalidation())
+      else if (configuration.clustering().cacheMode().isInvalidation())
          return componentType.cast(new DummyInvalidationStateTransferManagerImpl());
       else
          return null;

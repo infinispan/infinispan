@@ -45,9 +45,8 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
    private Key2StringMapper key2StringMapper;
 
    public JdbcStringBasedCacheStoreConfig(ConnectionFactoryConfig connectionFactoryConfig, TableManipulation tableManipulation) {
-      this();
-      this.connectionFactoryConfig = connectionFactoryConfig;
-      this.tableManipulation = tableManipulation;
+      super(connectionFactoryConfig, tableManipulation);
+      this.cacheLoaderClassName = JdbcStringBasedCacheStore.class.getName();
    }
 
    public JdbcStringBasedCacheStoreConfig() {
@@ -84,11 +83,14 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
     * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
     * to this prefix in order to enforce unique table names for each cache.
     */
-   public void setStringsTableNamePrefix(String stringsTableNamePrefix) {
+   public void setTableNamePrefix(String stringsTableNamePrefix) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTableNamePrefix(stringsTableNamePrefix);
    }
 
+   public void setStringsTableNamePrefix(String stringsTableNamePrefix) {
+      setTableNamePrefix(stringsTableNamePrefix);
+   }
 
    @Override
    public JdbcStringBasedCacheStoreConfig clone() {

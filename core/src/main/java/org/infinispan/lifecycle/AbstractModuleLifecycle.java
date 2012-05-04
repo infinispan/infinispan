@@ -22,8 +22,8 @@
  */
 package org.infinispan.lifecycle;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 
@@ -36,8 +36,15 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * @version 4.0
  */
 public class AbstractModuleLifecycle implements ModuleLifecycle {
+
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      // a no-op
+   }
+
+   @Override
+   @Deprecated
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, org.infinispan.config.GlobalConfiguration globalConfiguration) {
       // a no-op
    }
 
@@ -58,6 +65,12 @@ public class AbstractModuleLifecycle implements ModuleLifecycle {
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
+      // a no-op
+   }
+
+   @Override
+   @Deprecated
+   public void cacheStarting(ComponentRegistry cr, org.infinispan.config.Configuration configuration, String cacheName) {
       // a no-op
    }
 

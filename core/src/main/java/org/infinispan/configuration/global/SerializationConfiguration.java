@@ -18,8 +18,6 @@
  */
 package org.infinispan.configuration.global;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.marshall.AdvancedExternalizer;
@@ -38,7 +36,7 @@ public class SerializationConfiguration {
          ClassResolver classResolver) {
       this.marshaller = marshaller;
       this.version = version;
-      this.advancedExternalizers = Collections.unmodifiableMap(new HashMap<Integer, AdvancedExternalizer<?>>(advancedExternalizers));
+      this.advancedExternalizers = advancedExternalizers;
       this.classResolver = classResolver;
    }
 

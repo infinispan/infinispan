@@ -27,6 +27,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -166,7 +167,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void start() {
-      props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
+      props = TypedProperties.toTypedProperties(configuration.transport().properties());
 
       if (log.isInfoEnabled())
          log.startingJGroupsChannel();
@@ -179,7 +180,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    protected void startJGroupsChannelIfNeeded() {
       if (startChannel) {
-         String clusterName = configuration.getClusterName();
+         String clusterName = configuration.transport().clusterName();
          try {
             channel.connect(clusterName);
          } catch (Exception e) {
@@ -190,7 +191,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             // Normally this would be done by CacheManagerJmxRegistration but
             // the channel is not started when the cache manager starts but
             // when first cache starts, so it's safer to do it here.
-            globalStatsEnabled = configuration.isExposeGlobalJmxStatistics();
+            globalStatsEnabled = configuration.globalJmxStatistics().enabled();
             if (globalStatsEnabled) {
                String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
                mbeanServer = JmxUtil.lookupMBeanServer(configuration);
@@ -252,9 +253,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void initChannel() {
+      final TransportConfiguration transportCfg = configuration.transport();
       if (channel == null) {
          buildChannel();
-         String transportNodeName = configuration.getTransportNodeName();
+         String transportNodeName = transportCfg.nodeName();
          if (transportNodeName != null && transportNodeName.length() > 0) {
             long range = Short.MAX_VALUE * 2;
             long randomInRange = (long) ((Math.random() * range) % range) + 1;
@@ -269,20 +271,23 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
       // JGroups
-      if (configuration.hasTopologyInfo()) {
+      if (transportCfg.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
          if (startChannel) {
             ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
-
                @Override
                public org.jgroups.Address generateAddress() {
-                  return TopologyUUID.randomUUID(channel.getName(), configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
+                  return TopologyUUID.randomUUID(channel.getName(),
+                        transportCfg.siteId(), transportCfg.rackId(),
+                        transportCfg.machineId());
                }
             });
          } else {
             if (channel.getAddress() instanceof TopologyUUID) {
                TopologyUUID topologyAddress = (TopologyUUID) channel.getAddress();
-               if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getRackId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+               if (!transportCfg.siteId().equals(topologyAddress.getSiteId())
+                     || !transportCfg.rackId().equals(topologyAddress.getRackId())
+                     || !transportCfg.machineId().equals(topologyAddress.getMachineId())) {
                   throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
                }
             } else {
@@ -312,7 +317,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
 
             try {
-               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.getClassLoader());
+               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.classLoader());
                channel = lookup.getJGroupsChannel(props);
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
@@ -323,14 +328,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);
             }
-            if (configuration.isStrictPeerToPeer() && !startChannel) {
+            if (configuration.transport().strictPeerToPeer() && !startChannel) {
                log.warnStrictPeerToPeerWithInjectedChannel();
             }
          }
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
-            URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader());
+            URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.classLoader());
             if (conf == null) {
                throw new CacheConfigurationException(CONFIGURATION_FILE
                         + " property specifies value " + conf + " that could not be read!",
@@ -368,7 +373,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
+            channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
          } catch (Exception e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }

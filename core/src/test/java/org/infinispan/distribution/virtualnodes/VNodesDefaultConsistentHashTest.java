@@ -22,7 +22,7 @@
  */
 package org.infinispan.distribution.virtualnodes;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertEqualsNoOrder;
@@ -41,10 +40,12 @@ import static org.testng.Assert.assertEqualsNoOrder;
 public class VNodesDefaultConsistentHashTest extends AbstractInfinispanTest {
 
    public DefaultConsistentHash createConsistentHash(List<Address> servers, int numVirtualNodes) {
-      Configuration c = new Configuration().fluent()
-            .hash().consistentHashClass(DefaultConsistentHash.class).numVirtualNodes(numVirtualNodes)
-            .build();
-      return (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(c, servers);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash()
+            .consistentHash(new DefaultConsistentHash())
+            .numVirtualNodes(numVirtualNodes);
+      return (DefaultConsistentHash)
+            ConsistentHashHelper.createConsistentHash(builder.build(), false, servers);
    }
 
    public void testEveryNumOwners() {

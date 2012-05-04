@@ -185,7 +185,6 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration deConfiguration) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(deConfiguration);
       int index = cacheManagers.size();
       String rack;
       String machine;
@@ -219,9 +218,10 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
             throw new RuntimeException("Bad!");
          }
       }
-      GlobalConfiguration globalConfiguration = cm.getGlobalConfiguration();
-      globalConfiguration.setRackId(rack);
-      globalConfiguration.setMachineId(machine);
+      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
+      gc.setRackId(rack);
+      gc.setMachineId(machine);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, deConfiguration);
       cacheManagers.add(cm);
       return cm;
    }

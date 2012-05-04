@@ -22,7 +22,7 @@ import static java.util.Arrays.asList;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
-   private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+   private ClassLoader classLoader;
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final DataContainerConfigurationBuilder dataContainer;

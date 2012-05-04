@@ -26,7 +26,8 @@ import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
@@ -51,9 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 
 /**
  * A global component registry where shared components are stored.
@@ -97,7 +95,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
-      super(configuration.getClassLoader()); // registers the default classloader
+      super(configuration.classLoader()); // registers the default classloader
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
 
       // Load up the component metadata
@@ -113,7 +111,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
-         moduleProperties.loadModuleCommandHandlers(configuration.getClassLoader());
+         moduleProperties.loadModuleCommandHandlers(configuration.classLoader());
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
@@ -144,11 +142,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected void addShutdownHook() {
       ArrayList<MBeanServer> al = MBeanServerFactory.findMBeanServer(null);
-      boolean registerShutdownHook = (globalConfiguration.getShutdownHookBehavior() == DEFAULT && al.isEmpty())
-            || globalConfiguration.getShutdownHookBehavior() == REGISTER;
+      ShutdownHookBehavior shutdownHookBehavior = globalConfiguration.shutdown().hookBehavior();
+      boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && al.isEmpty())
+            || shutdownHookBehavior == ShutdownHookBehavior.REGISTER;
 
       if (registerShutdownHook) {
-         log.tracef("Registering a shutdown hook.  Configured behavior = %s", globalConfiguration.getShutdownHookBehavior());
+         log.tracef("Registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
          shutdownHook = new Thread() {
             @Override
             public void run() {
@@ -164,7 +163,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          Runtime.getRuntime().addShutdownHook(shutdownHook);
       } else {
 
-         log.tracef("Not registering a shutdown hook.  Configured behavior = %s", globalConfiguration.getShutdownHookBehavior());
+         log.tracef("Not registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
       }
    }
 

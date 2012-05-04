@@ -74,7 +74,6 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest {
       assert f != null;
       assert f.get().equals(value);
 
-
       f = nonOwnerCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).getAsync(key);
       assert f != null;
       assert f.get() == null;

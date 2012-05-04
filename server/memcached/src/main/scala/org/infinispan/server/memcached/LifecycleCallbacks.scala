@@ -25,8 +25,8 @@ package org.infinispan.server.memcached
 
 import org.infinispan.lifecycle.AbstractModuleLifecycle
 import org.infinispan.factories.GlobalComponentRegistry
-import org.infinispan.config.GlobalConfiguration
 import org.infinispan.server.core.ExternalizerIds._
+import org.infinispan.configuration.global.GlobalConfiguration
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -38,7 +38,7 @@ import org.infinispan.server.core.ExternalizerIds._
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
-      globalCfg.fluent.serialization.addAdvancedExternalizer(
+      globalCfg.serialization().advancedExternalizers().put(
          MEMCACHED_CACHE_VALUE, new MemcachedValue.Externalizer)
 
 }

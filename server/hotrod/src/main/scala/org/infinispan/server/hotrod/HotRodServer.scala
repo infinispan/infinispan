@@ -23,7 +23,6 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
-import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
@@ -32,13 +31,13 @@ import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{TypedProperties, ByteArrayKey}
 import org.infinispan.server.core.Main._
-import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
-import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.Cache
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.remoting.transport.{Transport, Address}
 import org.infinispan.util.concurrent.ConcurrentMapFactory
+import org.infinispan.loaders.cluster.ClusterCacheLoader
+import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -135,36 +134,32 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
       cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
          createTopologyCacheConfig(typedProps,
-            cacheManager.getGlobalConfiguration.getDistributedSyncTimeout))
+            cacheManager.getGlobalConfiguration.getDistributedSyncTimeout).build())
    }
 
-   protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+   protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
       val lockTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, TOPO_LOCK_TIMEOUT_DEFAULT, true)
       val replTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, TOPO_REPL_TIMEOUT_DEFAULT, true)
       val doStateTransfer = typedProps.getBooleanProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, TOPO_STATE_TRANSFER_DEFAULT, true)
       topologyUpdateTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT, TOPO_UPDATE_TIMEOUT_DEFAULT, true)
 
-      val topologyCacheConfig = new Configuration
-      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setUseReplQueue(false) // Avoid getting mixed up with default config
-      topologyCacheConfig.setSyncReplTimeout(replTimeout) // Milliseconds
-      topologyCacheConfig.setLockAcquisitionTimeout(lockTimeout) // Milliseconds
-      topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
-      topologyCacheConfig.setExpirationLifespan(-1); // No maximum lifespan
-      topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
+      val builder = new ConfigurationBuilder
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(replTimeout)
+             .locking().lockAcquisitionTimeout(lockTimeout)
+             .eviction().strategy(EvictionStrategy.NONE)
+             .expiration().lifespan(-1).maxIdle(-1)
+
       if (doStateTransfer) {
-         topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
-         // State transfer timeout should be bigger than the distributed lock timeout
-         topologyCacheConfig.setStateRetrievalTimeout(distSyncTimeout + replTimeout)
+         builder.clustering().stateTransfer().fetchInMemoryState(true)
+                 .timeout(distSyncTimeout + replTimeout)
       } else {
-         // Otherwise configure a cluster cache loader
-         val loaderConfigs = new CacheLoaderManagerConfig
-         val clusterLoaderConfig = new ClusterCacheLoaderConfig
-         clusterLoaderConfig.setRemoteCallTimeout(replTimeout)
-         loaderConfigs.addCacheLoaderConfig(clusterLoaderConfig)
-         topologyCacheConfig.setCacheLoaderManagerConfig(loaderConfigs)
+         val loaderProps = new Properties()
+         loaderProps.setProperty("remoteCallTimeout", replTimeout.toString)
+         builder.loaders().addCacheLoader().cacheLoader(new ClusterCacheLoader)
+                 .withProperties(loaderProps)
       }
-      topologyCacheConfig
+
+      builder
    }
 
    def isCacheNameKnown(cacheName: String) = {

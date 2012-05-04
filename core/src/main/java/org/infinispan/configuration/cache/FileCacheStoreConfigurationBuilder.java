@@ -19,9 +19,11 @@
 
 package org.infinispan.configuration.cache;
 
+import java.beans.PropertyEditorSupport;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -114,6 +116,8 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    @Override
    public AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> withProperties(Properties p) {
       this.properties = p;
+      // TODO: Remove this and any sign of properties when switching to new cache store configs
+      XmlConfigHelper.setValues(this, properties, false, true);
       return this;
    }
 
@@ -170,4 +174,34 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
             '}';
    }
 
+   // IMPORTANT! Below is a temporary measure to convert properties into
+   // instances of the right class. Please remove when switching cache store
+   // config over to new config.
+
+   /**
+    * Property editor for fsync mode configuration. It's automatically
+    * registered the {@link java.beans.PropertyEditorManager} so that it can
+    * transform text based modes into its corresponding enum value.
+    */
+   @Deprecated
+   public static class FsyncModeEditor extends PropertyEditorSupport {
+      private FsyncMode mode;
+
+      @Override
+      public void setAsText(String text) throws IllegalArgumentException {
+         if (text.equals("default"))
+            mode = FsyncMode.DEFAULT;
+         else if (text.equals("perWrite"))
+            mode = FsyncMode.PER_WRITE;
+         else if (text.equals("periodic"))
+            mode = FsyncMode.PERIODIC;
+         else
+            throw new IllegalArgumentException("Unknown fsyncMode value: " + text);
+      }
+
+      @Override
+      public Object getValue() {
+         return mode;
+      }
+   }
 }

@@ -51,7 +51,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    @Start
    public void init() {
-      defaultSynchronous = configuration.getCacheMode().isSynchronous();
+      defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
    }
 
    @Override

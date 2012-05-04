@@ -22,7 +22,7 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
@@ -41,10 +41,13 @@ import static org.testng.Assert.assertEquals;
 public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
    public DefaultConsistentHash createConsistentHash(List<Address> servers) {
-      Configuration c = new Configuration().fluent()
-            .hash().consistentHashClass(DefaultConsistentHash.class)
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash()
+            .consistentHash(new DefaultConsistentHash())
+            .numVirtualNodes(1)
             .build();
-      return (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(c, servers);
+      return (DefaultConsistentHash)
+            ConsistentHashHelper.createConsistentHash(builder.build(), false, servers);
    }
 
    public void testSimpleHashing() {

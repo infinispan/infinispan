@@ -23,9 +23,12 @@
 
 package org.infinispan.lucene;
 
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.marshall.AdvancedExternalizer;
+
+import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -39,14 +42,12 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      globalCfg.fluent()
-         .serialization()
-            .addAdvancedExternalizer(new ChunkCacheKey.Externalizer())
-            .addAdvancedExternalizer(new FileCacheKey.Externalizer())
-            .addAdvancedExternalizer(new FileListCacheKey.Externalizer())
-            .addAdvancedExternalizer(new FileMetadata.Externalizer())
-            .addAdvancedExternalizer(new FileReadLockKey.Externalizer())
-         .build();
+      Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      externalizerMap.put(null, new ChunkCacheKey.Externalizer());
+      externalizerMap.put(null, new FileCacheKey.Externalizer());
+      externalizerMap.put(null, new FileListCacheKey.Externalizer());
+      externalizerMap.put(null, new FileMetadata.Externalizer());
+      externalizerMap.put(null, new FileReadLockKey.Externalizer());
    }
 
 }

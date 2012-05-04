@@ -22,6 +22,10 @@
  */
 package org.infinispan.loaders.jdbc;
 
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+
+import java.util.Properties;
+
 /**
  * An abstract configuration for JDBC cache stores which have support for locking.
  *
@@ -39,6 +43,23 @@ public abstract class AbstractNonDelegatingJdbcCacheStoreConfig extends Abstract
 
    protected TableManipulation tableManipulation = new TableManipulation();
    protected boolean manageConnectionFactory = true;
+
+   protected AbstractNonDelegatingJdbcCacheStoreConfig() {
+   }
+
+   protected AbstractNonDelegatingJdbcCacheStoreConfig(ConnectionFactoryConfig connectionFactoryConfig, TableManipulation tableManipulation) {
+      super(connectionFactoryConfig);
+      this.tableManipulation = tableManipulation;
+
+      Properties p = this.getProperties();
+      setProperty(tableManipulation.getTableNamePrefix(), "tableNamePrefix", p);
+      setProperty(tableManipulation.getIdColumnName(), "idColumnName", p);
+      setProperty(tableManipulation.getIdColumnType(), "idColumnType", p);
+      setProperty(tableManipulation.getDataColumnName(), "dataColumnName", p);
+      setProperty(tableManipulation.getDataColumnType(), "dataColumnType", p);
+      setProperty(tableManipulation.getTimestampColumnName(), "timestampColumnName", p);
+      setProperty(tableManipulation.getTimestampColumnType(), "timestampColumnType", p);
+   }
 
    /**
     * Sets the name of the table where data will be stored.

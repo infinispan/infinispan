@@ -25,7 +25,6 @@ package org.infinispan.transaction;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
@@ -67,6 +66,7 @@ public class StaleTransactionCleanupService {
 
    private TransactionTable transactionTable;
    private InterceptorChain invoker;
+   private String cacheName;
 
    public StaleTransactionCleanupService(TransactionTable transactionTable) {
       this.transactionTable = transactionTable;
@@ -106,7 +106,7 @@ public class StaleTransactionCleanupService {
       // for remote transactions, release locks for which we are no longer an owner
       // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
       log.tracef("Unlocking keys for which we are no longer an owner");
-      int numOwners = transactionTable.configuration.getNumOwners();
+      int numOwners = transactionTable.configuration.clustering().hash().numOwners();
       for (RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
          GlobalTransaction gtx = remoteTx.getGlobalTransaction();
          List<Object> keys = new ArrayList<Object>();
@@ -122,7 +122,6 @@ public class StaleTransactionCleanupService {
          if (keys.size() > 0) {
             log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
             Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
-            String cacheName = transactionTable.configuration.getName();
             LockControlCommand unlockCmd = new LockControlCommand(keys, cacheName, flags, gtx);
             unlockCmd.init(invoker, transactionTable.icc, transactionTable);
             unlockCmd.setUnlock(true);
@@ -170,17 +169,18 @@ public class StaleTransactionCleanupService {
       }
    }
 
-   public void start(final Configuration configuration, final RpcManager rpcManager, InterceptorChain interceptorChain) {
+   public void start(final String cacheName, final RpcManager rpcManager, InterceptorChain interceptorChain) {
       this.invoker = interceptorChain;
       ThreadFactory tf = new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
             String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
-            Thread th = new Thread(r, "LockBreakingService," + configuration.getName() + "," + address);
+            Thread th = new Thread(r, "LockBreakingService," + cacheName + "," + address);
             th.setDaemon(true);
             return th;
          }
       };
+      this.cacheName = cacheName;
       lockBreakingService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), tf,
                                                    new ThreadPoolExecutor.CallerRunsPolicy());
    }

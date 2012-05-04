@@ -31,7 +31,6 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 import org.infinispan.util.{TypedProperties, Util}
-import org.infinispan.config.Configuration
 import org.testng.Assert._
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
@@ -40,6 +39,8 @@ import org.infinispan.remoting.transport.Address
 import java.util.concurrent.{TimeUnit, CountDownLatch}
 import collection.mutable.ListBuffer
 import org.jboss.netty.channel.ChannelFuture
+import org.infinispan.configuration.cache.ConfigurationBuilder
+import scala.Byte
 
 /**
  * Test utils for Hot Rod tests.
@@ -89,13 +90,12 @@ object HotRodTestingUtil extends Log {
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
       info("Start server in port %d", port)
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
             if (delay > 0)
                Thread.sleep(delay)
 
             val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
-            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }
@@ -120,10 +120,9 @@ object HotRodTestingUtil extends Log {
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
             val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
-            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }

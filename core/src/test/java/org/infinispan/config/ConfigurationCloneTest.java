@@ -40,7 +40,7 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration defaultConfig = cacheManager.defineConfiguration("default", new Configuration());
       Configuration clone = defaultConfig.clone();
       assert clone.equals(defaultConfig);
-      clone.setEvictionMaxEntries(Integer.MAX_VALUE);
+      clone.setEvictionMaxEntries(123);
       String name = method.getName() + "-default";
       cacheManager.defineConfiguration(name, clone);
       cacheManager.getCache(name);
@@ -50,7 +50,7 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration defaultConfig = cacheManager.getCache("default").getConfiguration();
       Configuration clone = defaultConfig.clone();
       assert clone.equals(defaultConfig);
-      clone.setEvictionMaxEntries(Integer.MAX_VALUE);
+      clone.setEvictionMaxEntries(456);
       String name = method.getName() + "-default";
       cacheManager.defineConfiguration(name, clone);
       cacheManager.getCache(name);
@@ -61,14 +61,14 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration defaultConfig = cacheManager.defineConfiguration(name + "-default", new Configuration());
       Configuration clone = defaultConfig.clone();
       assert clone.equals(defaultConfig);
-      clone.setEvictionMaxEntries(Integer.MAX_VALUE);
+      clone.setEvictionMaxEntries(789);
       cacheManager.defineConfiguration(name + "-new-default", clone);
       cacheManager.getCache(name + "-new-default");
 
       Configuration otherDefaultConfig = cacheManager.getCache(name + "-default").getConfiguration();
       Configuration otherClone = otherDefaultConfig.clone();
       assert otherClone.equals(otherDefaultConfig);
-      otherClone.setEvictionMaxEntries(Integer.MAX_VALUE - 1);
+      otherClone.setEvictionMaxEntries(788);
       
       try {
          cacheManager.defineConfiguration(name + "-new-default", otherClone);

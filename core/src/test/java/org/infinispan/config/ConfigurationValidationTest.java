@@ -65,7 +65,7 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       EmbeddedCacheManager ecm = null;
       try {
          Configuration c = new Configuration();
-         c.setCacheMode(DIST_SYNC);
+         c.setCacheMode(DIST_ASYNC);
          c.setUseReplQueue(true);
          ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
          ecm.getCache();
@@ -74,20 +74,6 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test (expectedExceptions = ConfigurationException.class)
-   public void testSyncAndReplQueue() {
-      EmbeddedCacheManager ecm = null;
-      try {
-         Configuration c = new Configuration();
-         c.setCacheMode(REPL_SYNC);
-         c.setUseReplQueue(true);
-         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
-         ecm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(ecm);
-      }
-   }
-   
    @Test (expectedExceptions = ConfigurationException.class)
    public void testEvictionOnButWithoutMaxEntries() {
       EmbeddedCacheManager ecm = null;

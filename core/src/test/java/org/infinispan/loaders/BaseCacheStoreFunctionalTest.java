@@ -84,8 +84,6 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
 
          Cache first = localCacheManager.getCache("first");
          Cache second = localCacheManager.getCache("second");
-         assert first.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
-         assert second.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
 
          first.start();
          second.start();

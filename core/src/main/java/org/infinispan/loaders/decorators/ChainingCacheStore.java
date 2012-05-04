@@ -23,6 +23,9 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.AbstractLoaderConfiguration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -30,7 +33,6 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.modifications.Modification;
 
 import java.io.ObjectInput;
@@ -58,8 +60,8 @@ import java.util.Set;
 public class ChainingCacheStore implements CacheStore {
 
    // linked hash sets used since it provides fast (O(1)) iteration, maintains order and provides O(1) lookups to values as well.
-   LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>(2);
-   LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>(2);
+   LinkedHashMap<CacheLoader, AbstractLoaderConfiguration> loaders = new LinkedHashMap<CacheLoader, AbstractLoaderConfiguration>(2);
+   LinkedHashMap<CacheStore, AbstractLoaderConfiguration> stores = new LinkedHashMap<CacheStore, AbstractLoaderConfiguration>(2);
 
    @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
@@ -69,9 +71,8 @@ public class ChainingCacheStore implements CacheStore {
    @Override
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
-      for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         if (!(e.getValue() instanceof CacheStoreConfig)) continue;
-         if (((CacheStoreConfig) e.getValue()).isFetchPersistentState()) {
+      for (Map.Entry<CacheStore, AbstractLoaderConfiguration> e : stores.entrySet()) {
+         if (e.getValue().fetchPersistentState()) {
             e.getKey().fromStream(inputStream);
             // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
             break;
@@ -82,9 +83,8 @@ public class ChainingCacheStore implements CacheStore {
    @Override
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
-      for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         if (!(e.getValue() instanceof CacheStoreConfig)) continue;
-         if (((CacheStoreConfig) e.getValue()).isFetchPersistentState()) {
+      for (Map.Entry<CacheStore, AbstractLoaderConfiguration> e : stores.entrySet()) {
+         if (e.getValue().fetchPersistentState()) {
             e.getKey().toStream(outputStream);
             // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
             break;
@@ -131,8 +131,8 @@ public class ChainingCacheStore implements CacheStore {
 
    @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
-      for (Map.Entry<CacheLoader, CacheLoaderConfig> e : loaders.entrySet()) {
-         e.getKey().init(e.getValue(), cache, m);
+      for (Map.Entry<CacheLoader, AbstractLoaderConfiguration> e : loaders.entrySet()) {
+         e.getKey().init(LegacyConfigurationAdaptor.adapt(e.getValue()), cache, m);
       }
    }
 
@@ -196,20 +196,20 @@ public class ChainingCacheStore implements CacheStore {
       for (CacheLoader l : loaders.keySet()) l.stop();
    }
 
-   public void addCacheLoader(CacheLoader loader, CacheLoaderConfig config) {
+   public void addCacheLoader(CacheLoader loader, AbstractLoaderConfiguration config) {
       loaders.put(loader, config);
       if (loader instanceof CacheStore) stores.put((CacheStore) loader, config);
    }
 
    public void purgeIfNecessary() throws CacheLoaderException {
-      for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         CacheLoaderConfig value = e.getValue();
-         if (value instanceof CacheStoreConfig && ((CacheStoreConfig) value).isPurgeOnStartup())
+      for (Map.Entry<CacheStore, AbstractLoaderConfiguration> e : stores.entrySet()) {
+         AbstractLoaderConfiguration value = e.getValue();
+         if (value.purgeOnStartup())
             e.getKey().clear();
       }
    }
 
-   public LinkedHashMap<CacheStore, CacheLoaderConfig> getStores() {
+   public LinkedHashMap<CacheStore, AbstractLoaderConfiguration> getStores() {
       return stores;
    }
 

@@ -73,13 +73,14 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       cache = cacheManager.getCache("AsyncStoreInMemory");
       assert "value".equals(cache.get("key1"));
    }
-   
+
    public static class SlowCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
       public SlowCacheStoreConfig() {
          setCacheLoaderClassName(SlowCacheStore.class.getName());
       }
    }
 
+   @CacheLoaderMetadata(configurationClass = SlowCacheStoreConfig.class)
    public static class SlowCacheStore extends DummyInMemoryCacheStore {
       private void insertDelay() {
          TestingUtil.sleepThread(100);

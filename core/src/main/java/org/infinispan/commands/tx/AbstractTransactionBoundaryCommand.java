@@ -22,7 +22,6 @@
  */
 package org.infinispan.commands.tx;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -52,19 +51,10 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
-   protected Configuration configuration;
    private Address origin;
 
    public AbstractTransactionBoundaryCommand(String cacheName) {
       this.cacheName = cacheName;
-   }
-
-   public void injectComponents(Configuration configuration) {
-      this.configuration = configuration;
-   }
-
-   public Configuration getConfiguration() {
-      return configuration;
    }
 
    public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {

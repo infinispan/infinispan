@@ -49,14 +49,14 @@ public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManager
 
    @Override
    protected long getTimeout() {
-      return configuration.getStateRetrievalTimeout();
+      return configuration.clustering().stateTransfer().timeout();
    }
 
    @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
       // The user will not be able to configure the consistent hash in replicated mode
       // We are always going to use the default consistent hash function.
-      return ConsistentHashHelper.createConsistentHash(configuration, members);
+      return ConsistentHashHelper.createConsistentHash(configuration, withTopology, members);
    }
 
    @Override

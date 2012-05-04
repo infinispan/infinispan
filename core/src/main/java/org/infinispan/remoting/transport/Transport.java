@@ -23,7 +23,7 @@
 package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;

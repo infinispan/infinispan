@@ -19,7 +19,8 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -89,7 +90,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
       } else {
          log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
 
-         if (configuration.isStateTransferEnabled() && !initialView) {
+         if (Configurations.isStateTransferEnabled(configuration) && !initialView) {
             // Contains the state to be pushed to the joiners. The state is a collection of cache entries
             // We're keeping it inside a ByRef so that the replicate() method can reset it when it pushes a chunk
             // The transfer is on a separate thread so we can't modify the collection itself

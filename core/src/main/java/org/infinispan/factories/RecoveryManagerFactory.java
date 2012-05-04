@@ -24,10 +24,12 @@
 package org.infinispan.factories;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -57,13 +59,12 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    @SuppressWarnings("unchecked")
    public <RecoveryManager> RecoveryManager construct(Class<RecoveryManager> componentType) {
       checkAsyncCache(configuration);
-      boolean recoveryEnabled = configuration.isTransactionRecoveryEnabled();
-      String cacheName = configuration.getName() == null ? CacheContainer.DEFAULT_CACHE_NAME : configuration.getName();
+      boolean recoveryEnabled = configuration.transaction().recovery().enabled();
       if (recoveryEnabled) {
-         String recoveryCacheName = configuration.getTransactionRecoveryCacheName();
+         String recoveryCacheName = configuration.transaction().recovery().recoveryInfoCacheName();
          log.tracef("Using recovery cache name %s", recoveryCacheName);
          EmbeddedCacheManager cm = componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-         boolean useDefaultCache = recoveryCacheName.equals(Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
+         boolean useDefaultCache = recoveryCacheName.equals(RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE);
 
          //if use a defined cache
          if (!useDefaultCache) {
@@ -78,27 +79,28 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
                cm.defineConfiguration(recoveryCacheName, config);
             }
          }
-         return (RecoveryManager) buildRecoveryManager(cacheName, recoveryCacheName, cm, useDefaultCache);
+         return (RecoveryManager) buildRecoveryManager(componentRegistry.getCacheName(),
+               recoveryCacheName, cm, useDefaultCache);
       } else {
          return null;
       }
    }
 
    private void checkAsyncCache(Configuration configuration) {
-      if (configuration.isTransactionRecoveryEnabled() && !configuration.getCacheMode().isSynchronous()) {
+      if (configuration.transaction().recovery().enabled() && !configuration.clustering().cacheMode().isSynchronous()) {
          throw new ConfigurationException("Recovery for async caches is not supported!");
       }
    }
 
    private Configuration getDefaultRecoveryCacheConfig() {
-      Configuration config = new Configuration();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
       //the recovery cache should not participate in main cache's transactions, especially because removals
       // from this cache are executed in the context of a finalised transaction and cause issues.
-      config.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
-      config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
-      config.fluent().recovery().disable();
-      return config;
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      builder.clustering().cacheMode(CacheMode.LOCAL);
+      builder.expiration().lifespan(DEFAULT_EXPIRY);
+      builder.transaction().recovery().disable();
+      return builder.build();
    }
 
    private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
