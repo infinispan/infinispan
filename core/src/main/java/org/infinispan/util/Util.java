@@ -60,6 +60,7 @@ public final class Util {
 
    private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
    /**
     * <p>
