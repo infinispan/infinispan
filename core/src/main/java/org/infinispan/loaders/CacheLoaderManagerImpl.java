@@ -22,6 +22,23 @@
  */
 package org.infinispan.loaders;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.REMOVE_DATA_ON_STOP;
+import static org.infinispan.context.Flag.SKIP_CACHE_STATUS_CHECK;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import static org.infinispan.context.Flag.SKIP_INDEXING;
+import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.config.CacheLoaderManagerConfig;
@@ -45,14 +62,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    Configuration configuration;
@@ -61,16 +70,18 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    StreamingMarshaller m;
    CacheLoader loader;
    InvocationContextContainer icc;
+   TransactionManager transactionManager;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache,
                       @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                      Configuration configuration, InvocationContextContainer icc) {
+                      Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
       this.icc = icc;
+      this.transactionManager = transactionManager;
    }
 
    @Override
@@ -133,7 +144,17 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       if (clmConfig != null) {
          try {
             loader = createCacheLoader();
-            if (loader != null) loader.start();
+            Transaction xaTx = null;
+            if (transactionManager != null) {
+               xaTx = transactionManager.suspend();
+            }
+            try {
+               if (loader != null) loader.start();
+            } finally {
+               if (transactionManager != null && xaTx != null) {
+                  transactionManager.resume(xaTx);
+               }
+            }
             purgeLoaders(false);
          } catch (Exception e) {
             throw new CacheException("Unable to start cache loaders", e);
