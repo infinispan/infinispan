@@ -156,7 +156,7 @@ public class TestingUtil {
       // give it 1 second to start rehashing
       // TODO Should look at the last committed view instead and check if it contains all the caches
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 30000; // 30 seconds?
+      int gracetime = 120000; // 120 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), CacheViewsManager.class);
