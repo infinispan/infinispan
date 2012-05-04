@@ -540,6 +540,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertEquals("23", o);
    }
 
+   public void testFlagMarshalling() throws Exception {
+      marshallAndAssertEquality(Arrays.asList(Flag.values()));
+   }
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
