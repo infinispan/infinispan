@@ -46,10 +46,10 @@ public class DistributedLazyIterator extends DistributedIterator {
 
    private static final Log log = LogFactory.getLog(DistributedLazyIterator.class);
 
-   public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, UUID id,
-            HashMap<UUID, ClusteredTopDocs> topDocsResponses,
-            ExecutorService asyncExecutor, AdvancedCache<?,?> cache) {
-      super(sort, fetchSize, resultSize, topDocsResponses, cache);
+   public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, UUID id,
+         HashMap<UUID, ClusteredTopDocs> topDocsResponses, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache) {
+      super(sort, fetchSize, resultSize, maxResults, firstResult, topDocsResponses, cache);
+
       this.queryId = id;
       this.asyncExecutor = asyncExecutor;
    }

@@ -187,6 +187,23 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
    }
 
+   public void testPagination() throws ParseException {
+      populateCache();
+
+      cacheQuery.firstResult(2);
+      cacheQuery.maxResults(1);
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      List<Object> results = cacheQuery.list();
+      assert results.size() == 1;
+      assert cacheQuery.getResultSize() == 4;
+      assert ((Person) (results.get(0))).getAge() == 45;
+   }
+
    private void populateCache() throws ParseException {
       prepareTestData();
       Query[] queries = new Query[2];
