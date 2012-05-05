@@ -26,6 +26,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -87,7 +88,10 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
    @Override
    public List<Address> getNewMembers() {
-      return newMembers;
+      if(newMembers != null){
+         return newMembers;
+      }
+      return Collections.emptyList();
    }
 
    public void setNewMembers(List<Address> newMembers) {
@@ -100,7 +104,10 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
    @Override
    public List<Address> getOldMembers() {
-      return this.oldMembers;
+      if(oldMembers != null){
+         return oldMembers;
+      }
+      return Collections.emptyList();
    }
 
    @Override
