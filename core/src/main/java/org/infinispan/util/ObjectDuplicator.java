@@ -41,7 +41,7 @@ public class ObjectDuplicator {
    @SuppressWarnings("unchecked")
    public static <K, V> Map<K, V> duplicateMap(Map<K, V> original) {
       if (original instanceof FastCopyHashMap)
-         return (Map<K, V>) ((FastCopyHashMap<K, V>) original).clone();
+         return ((FastCopyHashMap<K, V>) original).clone();
       if (original instanceof HashMap)
          return (Map<K, V>) ((HashMap<K, V>) original).clone();
       if (original instanceof TreeMap)

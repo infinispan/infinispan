@@ -342,7 +342,7 @@ public class ReflectionUtil {
    public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> ann) {
       while (true) {
          // first check class
-         T a = (T) clazz.getAnnotation(ann);
+         T a = clazz.getAnnotation(ann);
          if (a != null) return a;
 
          // check interfaces

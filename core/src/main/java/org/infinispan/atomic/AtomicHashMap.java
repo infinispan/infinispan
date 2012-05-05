@@ -169,7 +169,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
    @Override
    @SuppressWarnings("unchecked")
    public void clear() {
-      FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
+      FastCopyHashMap<K, V> originalEntries = delegate.clone();
       ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
       getDelta().addOperation(op);
       delegate.clear();

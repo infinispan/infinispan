@@ -34,10 +34,14 @@ import java.util.List;
  */
 public interface ViewChangedEvent extends Event {
    /**
-    * @return the new view associated with this view change.
+    * @return the new view associated with this event. It returns never null.
     */
    List<Address> getNewMembers();
 
+   /**
+    *
+    * @return the old view associated with this event. It returns never null.
+    */
    List<Address> getOldMembers();
 
    Address getLocalAddress();
