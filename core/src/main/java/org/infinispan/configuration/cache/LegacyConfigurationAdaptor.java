@@ -234,7 +234,7 @@ public class LegacyConfigurationAdaptor {
             acsc.setProperties(p);
             if (p != null) XmlConfigHelper.setValues(clc, p, false, true);
             if (loader instanceof LoaderConfiguration)
-               acsc.purgerThreads(((LoaderConfiguration) loader).purgerThreads());
+               acsc.purgerThreads(loader.purgerThreads());
          }
          
          legacy.loaders().addCacheLoader(clc);
