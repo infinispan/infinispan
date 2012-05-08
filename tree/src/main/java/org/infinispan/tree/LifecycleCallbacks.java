@@ -23,9 +23,12 @@
 
 package org.infinispan.tree;
 
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.marshall.AdvancedExternalizer;
+
+import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -40,9 +43,9 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      globalCfg.fluent().serialization()
-         .addAdvancedExternalizer(1000, new NodeKey.Externalizer())
-         .addAdvancedExternalizer(1001, new Fqn.Externalizer());
+      Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      externalizerMap.put(1000, new NodeKey.Externalizer());
+      externalizerMap.put(1001, new Fqn.Externalizer());
    }
 
 }

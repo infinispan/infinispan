@@ -19,7 +19,7 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
@@ -110,12 +110,12 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
          log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
       }
 
-      if (configuration.isRehashEnabled() && !initialView) {
+      if (configuration.clustering().stateTransfer().fetchInMemoryState() && !initialView) {
 
          // notify listeners that a rehash is about to start
          cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
 
-         int numOwners = configuration.getNumOwners();
+         int numOwners = configuration.clustering().hash().numOwners();
 
          // Contains the state to be pushed to various servers. The state is a hashmap of servers to entry collections
          final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
@@ -188,7 +188,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       // update the distribution manager's consistent hash
       dm.setConsistentHash(chNew);
 
-      if (configuration.isRehashEnabled() && !initialView) {
+      if (configuration.clustering().stateTransfer().fetchInMemoryState() && !initialView) {
          // now we can invalidate the keys
          stateTransferManager.invalidateKeys(keysToRemove);
 

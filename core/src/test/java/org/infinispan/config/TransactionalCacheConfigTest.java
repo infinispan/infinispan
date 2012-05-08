@@ -24,12 +24,10 @@
 package org.infinispan.config;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -125,22 +123,6 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
       c.setInvocationBatchingEnabled(true);
       assert c.isTransactionalCache();
-   }
-
-   public void testTransactionalCacheWithoutTransactionManagerLookup() {
-      Configuration c = new Configuration();
-      assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-
-      DefaultCacheManager dcm = new DefaultCacheManager(c);
-      try {
-         dcm.getCache();
-         assert false : "This should not start as the cache doesn't have a TM configured.";
-      } catch (CacheException e) {
-         e.printStackTrace();
-      } finally {
-         TestingUtil.killCacheManagers(dcm);
-      }
    }
 
    public void testInvocationBatchingAndInducedTm() throws Exception {

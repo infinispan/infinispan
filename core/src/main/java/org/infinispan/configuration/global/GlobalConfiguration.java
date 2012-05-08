@@ -23,6 +23,8 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.Version;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * <p>
@@ -39,6 +41,7 @@ import org.infinispan.Version;
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
  *
  */
+@Scope(Scopes.GLOBAL)
 public class GlobalConfiguration {
 
    /**

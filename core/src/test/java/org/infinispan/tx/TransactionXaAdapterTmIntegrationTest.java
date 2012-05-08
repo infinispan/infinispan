@@ -22,7 +22,9 @@
  */
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -52,23 +54,24 @@ public class TransactionXaAdapterTmIntegrationTest {
    private TransactionXaAdapter xaAdapter;
    private DummyXid xid;
    private UUID uuid = UUID.randomUUID();
+   private TransactionCoordinator txCoordinator;
 
    @BeforeMethod
    public void setUp() {
       txTable = new XaTransactionTable();
       TransactionFactory gtf = new TransactionFactory();
-      gtf.init(false, false, true);
+      gtf.init(false, false, true, false);
       globalTransaction = gtf.newGlobalTransaction(null, false);
       localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1);
       xid = new DummyXid(uuid);
       localTx.setXid(xid);
       txTable.addLocalTransactionMapping(localTx);      
 
-      configuration = new Configuration();
+      configuration = new ConfigurationBuilder().build();
       TransactionCoordinator txCoordinator = new TransactionCoordinator();
       txCoordinator.init(null, null, null, null, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
-                                           new ClusteringDependentLogic.AllNodesLogic(), configuration);
+                                           new ClusteringDependentLogic.AllNodesLogic(), configuration, "");
    }
 
    public void testPrepareOnNonexistentXid() {
@@ -112,12 +115,14 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testOnePhaseCommitConfigured() throws XAException {
-      configuration.setCacheMode(Configuration.CacheMode.INVALIDATION_ASYNC);//this would force 1pc
+      Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
+      txCoordinator.init(null, null, null, null, configuration);
       assert XAResource.XA_OK == xaAdapter.prepare(xid);
    }
 
    public void test1PcAndNonExistentXid() {
-      configuration.setCacheMode(Configuration.CacheMode.INVALIDATION_ASYNC);
+      Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
+      txCoordinator.init(null, null, null, null, configuration);
       try {
          DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, false);
@@ -128,7 +133,8 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void test1PcAndNonExistentXid2() {
-      configuration.setCacheMode(Configuration.CacheMode.DIST_SYNC);
+      Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+      txCoordinator.init(null, null, null, null, configuration);
       try {
          DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, true);

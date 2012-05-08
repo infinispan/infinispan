@@ -127,9 +127,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Start
    public void start() {
-      isL1CacheEnabled = configuration.isL1CacheEnabled();
-      needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-      isPessimisticCache = configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
+      isL1CacheEnabled = cacheConfiguration.clustering().l1().enabled();
+      needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
+      isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
    }
 
    // ---- READ commands
@@ -222,7 +222,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                // This should be fail-safe
                try {
-                  long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
+                  long l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
+                  long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
                   PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
                   lockAndWrap(ctx, key, ice);
                   invokeNextInterceptor(ctx, put);
@@ -351,7 +352,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {
-      if (f != null && configuration.isSyncCommitPhase()) {
+      if (f != null && cacheConfiguration.transaction().syncCommitPhase()) {
          try {
             f.get();
          } catch (Exception e) {
@@ -369,7 +370,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
       // By default, use the configured commit sync settings
-      boolean syncCommitPhase = configuration.isSyncCommitPhase();
+      boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
       for (Address a : preparedOn) {
          if (!recipients.contains(a)) {
             // However if we have prepared on some nodes and are now committing on different nodes, make sure we
@@ -431,7 +432,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, configuration.isSyncRollbackPhase(), true);
+         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, cacheConfiguration.transaction().syncRollbackPhase(), true);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -543,7 +544,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     */
    private boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
       List<Address> recipients;
-      return configuration.getNumOwners() == 1 && (recipients = recipientGenerator.generateRecipients()) != null && recipients.size() == 1 && recipients.get(0).equals(rpcManager.getTransport().getAddress());
+      return cacheConfiguration.clustering().hash().numOwners() == 1
+            && (recipients = recipientGenerator.generateRecipients()) != null
+            && recipients.size() == 1
+            && recipients.get(0).equals(rpcManager.getTransport().getAddress());
    }
 
    interface KeyGenerator {

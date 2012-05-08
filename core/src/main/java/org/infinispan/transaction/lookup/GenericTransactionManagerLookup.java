@@ -22,7 +22,7 @@
  */
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.Util;
@@ -111,7 +111,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    @Override
    public TransactionManager getTransactionManager() {
       if (!lookupDone)
-         doLookups(configuration.getClassLoader());
+         doLookups(configuration.classLoader());
       if (tm != null)
          return tm;
       if (lookupFailed) {

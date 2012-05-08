@@ -161,7 +161,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 4; i++) {
          InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
          HitsAwareCacheManagersTest.HitCountInterceptor interceptor =
-               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClassName(HitsAwareCacheManagersTest.HitCountInterceptor.class.getName()).get(0);
+               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
          if (interceptor.getHits() == 1) {
             result.add(address(i));
          }

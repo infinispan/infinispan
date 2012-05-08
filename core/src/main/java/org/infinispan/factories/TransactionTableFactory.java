@@ -34,12 +34,16 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
  * @since 5.0
  */
 @DefaultFactoryFor(classes = {TransactionTable.class})
+@SuppressWarnings("unused")
 public class TransactionTableFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
    public <T> T construct(Class<T> componentType) {
-      if (!configuration.isUseSynchronizationForTransactions()) {
-         if (configuration.isTransactionRecoveryEnabled()) {
+      if (configuration.invocationBatching().enabled())
+         return (T) new TransactionTable();
+
+      if (!configuration.transaction().useSynchronization()) {
+         if (configuration.transaction().recovery().enabled()) {
             return (T) new RecoveryAwareTransactionTable();
          } else {
             return (T) new XaTransactionTable();

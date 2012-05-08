@@ -57,7 +57,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -336,7 +336,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                   initializeReplicableCommand(nested, false);
                }
             pc.markTransactionAsRemote(isRemote);
-            if (configuration.isEnableDeadlockDetection() && isRemote) {
+            if (configuration.deadlockDetection().enabled() && isRemote) {
                DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
                transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
             }
@@ -364,11 +364,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
             lcc.markTransactionAsRemote(isRemote);
-            if (configuration.isEnableDeadlockDetection() && isRemote) {
+            if (configuration.deadlockDetection().enabled() && isRemote) {
                DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();
                RemoteTransaction transaction = txTable.getRemoteTransaction(gtx);
                if (transaction != null) {
-                  if (!configuration.getCacheMode().isDistributed()) {
+                  if (!configuration.clustering().cacheMode().isDistributed()) {
                      Set<Object> keys = txTable.getLockedKeysForRemoteTransaction(gtx);
                      GlobalTransaction gtx2 = transaction.getGlobalTransaction();
                      ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(keys);
@@ -382,7 +382,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case StateTransferControlCommand.COMMAND_ID:
             StateTransferControlCommand rcc = (StateTransferControlCommand) c;
-            rcc.init(stateTransferManager, configuration, dataContainer, this);
+            rcc.init(stateTransferManager, dataContainer, this);
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;

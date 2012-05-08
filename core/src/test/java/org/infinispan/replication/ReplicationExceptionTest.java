@@ -21,13 +21,6 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-/*
- *
- * JBoss, the OpenSource J2EE webOS
- *
- * Distributable under LGPL license.
- * See terms of license at gnu.org.
- */
 package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
@@ -178,8 +171,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          }
       }, 0);
 
-      cache1.getConfiguration().setSyncReplTimeout(10);
-      cache2.getConfiguration().setSyncReplTimeout(10);
+      cache1.getCacheConfiguration().clustering().sync().replTimeout(10);
+      cache2.getCacheConfiguration().clustering().sync().replTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       cache1.put("k", "v");

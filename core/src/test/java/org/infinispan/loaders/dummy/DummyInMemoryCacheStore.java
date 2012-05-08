@@ -382,5 +382,16 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          super.purgeSynchronously(purgeSynchronously);
          return this;
       }
+
+      @Override
+      public Properties getProperties() {
+         Properties p = super.getProperties();
+         p.setProperty("debug", Boolean.toString(debug));
+         if (storeName != null)
+            p.setProperty("storeName", storeName);
+         if (failKey != null) // TODO: Find a better way...
+            p.setProperty("storeName", failKey.toString());
+         return p;
+      }
    }
 }

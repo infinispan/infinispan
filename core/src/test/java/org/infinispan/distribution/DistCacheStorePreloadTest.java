@@ -30,6 +30,8 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * Test preloading with a distributed cache.
  *
@@ -61,7 +63,6 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
    }
 
    public void testPreloadOnStart() throws CacheLoaderException {
-
       for (int i = 0; i < NUM_KEYS; i++) {
          c1.put("k" + i, "v" + i);
       }
@@ -78,7 +79,7 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
       waitForClusterToForm();
 
       DataContainer dc2 = c2.getAdvancedCache().getDataContainer();
-      assert dc2.size() == NUM_KEYS : "Expected all the cache store entries to be preloaded on the second cache";
+      assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());
 
       for (int i = 0; i < NUM_KEYS; i++) {
          assertOwnershipAndNonOwnership("k" + i, true);

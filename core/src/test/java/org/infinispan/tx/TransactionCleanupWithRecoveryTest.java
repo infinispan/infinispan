@@ -7,17 +7,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
-
-import java.util.Collection;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "TransactionCleanupWithRecoveryTest")
 public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTest {
@@ -28,7 +23,7 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
             .clustering().mode(Configuration.CacheMode.REPL_SYNC)
             .locking()
             .concurrencyLevel(10000).isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(100L).useLockStriping(false).writeSkewCheck(true)
+            .lockAcquisitionTimeout(100L).useLockStriping(false).writeSkewCheck(false)
             .transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
             .recovery()

@@ -32,7 +32,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -98,7 +99,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          throws TimeoutException, InterruptedException {
       // may need to resend, so make the commit command synchronous
       // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true);
       if (!responses.isEmpty()) {
          List<Address> resendTo = new LinkedList<Address>();
          for (Map.Entry<Address, Response> r : responses.entrySet()) {
@@ -132,14 +133,14 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    }
 
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
-      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+      boolean async = cacheConfiguration.clustering().cacheMode() == CacheMode.REPL_ASYNC;
       rpcManager.broadcastRpcCommand(command, !async, false);
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
-         rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
+      if (shouldInvokeRemoteTxCommand(ctx) && !Configurations.isOnePhaseCommit(cacheConfiguration)) {
+         rpcManager.broadcastRpcCommand(command, cacheConfiguration.transaction().syncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }

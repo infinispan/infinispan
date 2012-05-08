@@ -34,18 +34,15 @@ public class HashConfiguration {
    private final int numVirtualNodes;
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
-   // For use by the LegacyConfigurationAdapter
-   final boolean activated;
 
    HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
-                     GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration, boolean activated) {
+                     GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
       this.consistentHash = consistentHash;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numVirtualNodes = numVirtualNodes;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
-      this.activated = activated;
    }
 
    /**
@@ -127,8 +124,7 @@ public class HashConfiguration {
    @Override
    public String toString() {
       return "HashConfiguration{" +
-            "activated=" + activated +
-            ", consistentHash=" + consistentHash +
+            "consistentHash=" + consistentHash +
             ", hash=" + hash +
             ", numOwners=" + numOwners +
             ", numVirtualNodes=" + numVirtualNodes +
@@ -144,7 +140,6 @@ public class HashConfiguration {
 
       HashConfiguration that = (HashConfiguration) o;
 
-      if (activated != that.activated) return false;
       if (numOwners != that.numOwners) return false;
       if (numVirtualNodes != that.numVirtualNodes) return false;
       if (consistentHash != null ? !consistentHash.equals(that.consistentHash) : that.consistentHash != null)
@@ -167,7 +162,6 @@ public class HashConfiguration {
       result = 31 * result + numVirtualNodes;
       result = 31 * result + (groupsConfiguration != null ? groupsConfiguration.hashCode() : 0);
       result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
-      result = 31 * result + (activated ? 1 : 0);
       return result;
    }
 

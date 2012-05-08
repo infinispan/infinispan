@@ -26,7 +26,8 @@ package org.infinispan.server.core
 import org.infinispan.lifecycle.AbstractModuleLifecycle
 import org.infinispan.server.core.ExternalizerIds._
 import org.infinispan.factories.{ComponentRegistry, GlobalComponentRegistry}
-import org.infinispan.config.{Configuration, GlobalConfiguration}
+import org.infinispan.configuration.global.GlobalConfiguration
+import org.infinispan.configuration.cache.Configuration
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -41,9 +42,10 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
       addExternalizer(globalCfg)
 
    override def cacheStarting(cr: ComponentRegistry, cfg: Configuration, cacheName: String) =
-      cfg.fluent.storeAsBinary.disable
+      cfg.storeAsBinary().enabled(false)
 
    private[core] def addExternalizer(globalCfg : GlobalConfiguration) =
-      globalCfg.fluent.serialization
-         .addAdvancedExternalizer(SERVER_CACHE_VALUE, new CacheValue.Externalizer)
+      globalCfg.serialization().advancedExternalizers().put(
+         SERVER_CACHE_VALUE, new CacheValue.Externalizer)
+
 }

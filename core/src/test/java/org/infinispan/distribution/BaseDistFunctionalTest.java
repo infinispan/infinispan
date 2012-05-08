@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -124,9 +125,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
       try {
-         Configuration c = new Configuration();
-         c.setConsistentHashClass(DefaultConsistentHash.class.getName());
-         return ConsistentHashHelper.createConsistentHash(c, servers);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().hash()
+            .consistentHash(new DefaultConsistentHash());
+         return ConsistentHashHelper.createConsistentHash(builder.build(), false, servers);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {
@@ -351,7 +353,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected ConsistentHash getNonUnionConsistentHash(Cache<?, ?> c, long timeout) {
       long expTime = System.currentTimeMillis() + timeout;
       while (System.currentTimeMillis() < expTime) {
-         ConsistentHash ch = getDistributionManager(c).getConsistentHash();
+         ConsistentHash ch = c.getAdvancedCache().getDistributionManager().getConsistentHash();
          if (!(ch instanceof UnionConsistentHash)) return ch;
          TestingUtil.sleepThread(100);
       }

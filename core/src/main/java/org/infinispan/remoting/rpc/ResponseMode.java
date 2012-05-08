@@ -22,7 +22,7 @@
  */
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 
 /**
  * Represents different handling mechanisms when dealing with remote command responses. 
@@ -49,13 +49,7 @@ public enum ResponseMode {
       return this == ASYNCHRONOUS || this == ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
    }
 
-   @Deprecated
    public static ResponseMode getAsyncResponseMode(Configuration c) {
-      return c.isUseAsyncMarshalling() ? ResponseMode.ASYNCHRONOUS
-            : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
-   }
-
-   public static ResponseMode getAsyncResponseMode(org.infinispan.configuration.cache.Configuration c) {
       return c.clustering().async().asyncMarshalling() ? ResponseMode.ASYNCHRONOUS
             : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
    }

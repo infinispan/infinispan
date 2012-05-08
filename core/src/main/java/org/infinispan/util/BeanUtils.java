@@ -50,6 +50,23 @@ public class BeanUtils {
    }
 
    /**
+    * Retrieves a setter name based on a field name passed in
+    *
+    * @param fieldName field name to find setter for
+    * @return name of setter method
+    */
+   public static String fluentSetterName(String fieldName) {
+      StringBuilder sb = new StringBuilder();
+      if (fieldName != null && fieldName.length() > 0) {
+         sb.append(fieldName.substring(0, 1));
+         if (fieldName.length() > 1) {
+            sb.append(fieldName.substring(1));
+         }
+      }
+      return sb.toString();
+   }
+
+   /**
     * Returns a getter for a given class
     *
     * @param componentClass class to find getter for

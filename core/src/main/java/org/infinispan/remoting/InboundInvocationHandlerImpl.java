@@ -27,13 +27,12 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -56,7 +55,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private EmbeddedCacheManager embeddedCacheManager;
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
    private CacheViewsManager cacheViewsManager;
@@ -69,11 +67,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr,
-                      EmbeddedCacheManager embeddedCacheManager, Transport transport,
+   public void inject(GlobalComponentRegistry gcr, Transport transport,
                       GlobalConfiguration globalConfiguration, CacheViewsManager cacheViewsManager) {
       this.gcr = gcr;
-      this.embeddedCacheManager = embeddedCacheManager;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
       this.cacheViewsManager = cacheViewsManager;
@@ -102,7 +98,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
-         if (!globalConfiguration.isStrictPeerToPeer()) {
+         if (!globalConfiguration.transport().strictPeerToPeer()) {
             if (trace) log.tracef("Strict peer to peer off, so silently ignoring that %s cache is not defined", cacheName);
             return null;
          }

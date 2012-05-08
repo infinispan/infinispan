@@ -31,7 +31,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -86,9 +86,11 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Inject
    public void injectDependencies(Configuration config) {
-      pessimisticLocking =  config.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
-      isSync = config.getCacheMode().isSynchronous();
-      lockTimeout = config.getCacheMode().isDistributed() ? config.getRehashWaitTime() : config.getStateRetrievalTimeout();
+      pessimisticLocking =  config.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      isSync = config.clustering().cacheMode().isSynchronous();
+      lockTimeout = config.clustering().cacheMode().isDistributed() ?
+            config.clustering().hash().rehashWait() :
+            config.clustering().stateTransfer().timeout();
    }
 
    @Override

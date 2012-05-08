@@ -29,7 +29,8 @@ import static org.testng.Assert.assertEquals;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -51,7 +52,7 @@ import org.testng.annotations.Test;
 public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
    DeadlockDetectingLockManagerMock lockManager;
-   Configuration config = new Configuration();
+   Configuration config = new ConfigurationBuilder().build();
    private LockContainer lc;
    private static final int SPIN_DURATION = 1000;
    private DldGlobalTransaction lockOwner;
@@ -68,10 +69,10 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       InvocationContext nonTx = new NonTxInvocationContext();
 
       Lock mockLock = mock(Lock.class);
-      when(lc.acquireLock(nonTx.getLockOwner(), "k", config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).thenReturn(mockLock).thenReturn(null);
+      when(lc.acquireLock(nonTx.getLockOwner(), "k", config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).thenReturn(mockLock).thenReturn(null);
 
-      assert lockManager.lockAndRecord("k", nonTx, config.getLockAcquisitionTimeout());
-      assert !lockManager.lockAndRecord("k", nonTx, config.getLockAcquisitionTimeout());
+      assert lockManager.lockAndRecord("k", nonTx, config.locking().lockAcquisitionTimeout());
+      assert !lockManager.lockAndRecord("k", nonTx, config.locking().lockAcquisitionTimeout());
 
    }
 
@@ -84,7 +85,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       lockManager.setOwner(Thread.currentThread() );
       //next lock acquisition will succeed
 
-      assert lockManager.lockAndRecord("k", localTxContext, config.getLockAcquisitionTimeout());
+      assert lockManager.lockAndRecord("k", localTxContext, config.locking().lockAcquisitionTimeout());
       assert lockManager.getOverlapWithNotDeadlockAwareLockOwners() == 1;
    }
 
@@ -105,7 +106,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       lockManager.setOwner(lockOwner);
       lockManager.setOwnsLock(true);
       try {
-         lockManager.lockAndRecord("k", localTxContext, config.getLockAcquisitionTimeout());
+         lockManager.lockAndRecord("k", localTxContext, config.locking().lockAcquisitionTimeout());
          assert false;
       } catch (DeadlockDetectedException e) {
          //expected

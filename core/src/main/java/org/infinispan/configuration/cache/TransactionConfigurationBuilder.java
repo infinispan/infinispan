@@ -46,7 +46,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup;
+   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
@@ -227,14 +227,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    void validate() {
-      if (transactionManagerLookup == null) {
-         if (!getBuilder().invocationBatching().enabled) {
-            transactionManagerLookup = new GenericTransactionManagerLookup();
-         } else {
-            if (!useSynchronization) log.debug("Switching to Synchronization based enlistment.");
-            useSynchronization = true;
-         }
-      }
    }
 
    @Override

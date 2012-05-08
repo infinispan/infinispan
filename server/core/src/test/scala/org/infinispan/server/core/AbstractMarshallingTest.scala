@@ -25,11 +25,11 @@ package org.infinispan.server.core
 import org.testng.annotations.{AfterClass, BeforeTest}
 import java.util.Random
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
-import org.infinispan.config.GlobalConfiguration
 import org.infinispan.test.TestingUtil
 import org.infinispan.marshall.AbstractDelegatingMarshaller
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.configuration.global.GlobalConfigurationBuilder
 
 /**
  * Abstract class to help marshalling tests in different server modules.
@@ -45,8 +45,7 @@ abstract class AbstractMarshallingTest {
    @BeforeTest(alwaysRun=true)
    def setUp {
       // Manual addition of externalizers to replication what happens in fully functional tests
-      val globalCfg = new GlobalConfiguration
-      new LifecycleCallbacks().addExternalizer(globalCfg)
+      new LifecycleCallbacks().addExternalizer(new GlobalConfigurationBuilder().build())
       cm = TestCacheManagerFactory.createLocalCacheManager(false)
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }

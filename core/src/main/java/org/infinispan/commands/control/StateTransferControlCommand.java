@@ -25,7 +25,6 @@ package org.infinispan.commands.control;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -67,7 +66,6 @@ public class StateTransferControlCommand extends BaseRpcCommand {
 
    // cache components
    StateTransferManager stateTransferManager;
-   Configuration configuration;
    DataContainer dataContainer;
    CommandsFactory commandsFactory;
    private static final Log log = LogFactory.getLog(StateTransferControlCommand.class);
@@ -96,10 +94,9 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       this.viewId = viewId;
    }
 
-   public void init(StateTransferManager stateTransferManager, Configuration configuration, DataContainer dataContainer,
+   public void init(StateTransferManager stateTransferManager, DataContainer dataContainer,
                     CommandsFactory commandsFactory) {
       this.stateTransferManager = stateTransferManager;
-      this.configuration = configuration;
       this.dataContainer = dataContainer;
       this.commandsFactory = commandsFactory;
    }
@@ -107,7 +104,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       final boolean trace = log.isTraceEnabled();
-      LogFactory.pushNDC(configuration.getName(), trace);
+      LogFactory.pushNDC(cacheName, trace);
       stateTransferManager.waitForJoinToStart();
       try {
          switch (type) {

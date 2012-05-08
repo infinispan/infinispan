@@ -19,7 +19,7 @@
 
 package org.infinispan.distribution.virtualnodes;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -82,12 +82,12 @@ public class VNodesCHPerfTest extends AbstractInfinispanTest {
    }
 
    private ConsistentHash createConsistentHash(int numNodes) {
-      Configuration c = new Configuration();
-      c.fluent().hash()
-            .consistentHashClass(DefaultConsistentHash.class)
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash()
+            .consistentHash(new DefaultConsistentHash())
             .numVirtualNodes(10);
       Set<Address> addresses = createAddresses(numNodes);
-      return ConsistentHashHelper.createConsistentHash(c, addresses);
+      return ConsistentHashHelper.createConsistentHash(builder.build(), false, addresses);
    }
 
    public void testDistribution() {

@@ -413,6 +413,7 @@ public class XmlConfigHelper {
       for (Map.Entry<?, ?> entry : attribs.entrySet()) {
          String propName = (String) entry.getKey();
          String setter = BeanUtils.setterName(propName);
+         String fluentSetter = BeanUtils.fluentSetterName(propName);
 
          try {
             Method method;
@@ -438,7 +439,7 @@ public class XmlConfigHelper {
          boolean setterFound = false;
          // if we get here, we could not find a String or Element setter.
          for (Method m : objectClass.getMethods()) {
-            if (setter.equals(m.getName())) {
+            if (setter.equals(m.getName()) || fluentSetter.equals(m.getName())) {
                Class<?> paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
                   log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);

@@ -22,7 +22,8 @@
  */
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
@@ -41,7 +42,7 @@ import javax.transaction.TransactionManager;
 @Test(testName = "tx.TransactionManagerLookupTest", groups = "unit")
 public class TransactionManagerLookupTest extends AbstractInfinispanTest {
    
-   Configuration configuration = new Configuration();
+   Configuration configuration = new ConfigurationBuilder().build();
 
    public void testGenericTransactionManagerLookup() throws Exception {
       GenericTransactionManagerLookup lookup = new GenericTransactionManagerLookup();

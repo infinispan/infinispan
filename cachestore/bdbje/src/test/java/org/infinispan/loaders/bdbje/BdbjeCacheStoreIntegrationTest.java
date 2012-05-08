@@ -54,7 +54,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    private TransactionFactory gts = new TransactionFactory();
 
    public BdbjeCacheStoreIntegrationTest() {
-      gts.init(false, false, true);
+      gts.init(false, false, true, false);
    }
 
    @BeforeClass

@@ -117,7 +117,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    private final TransactionFactory gtf = new TransactionFactory();
 
    public VersionAwareMarshallerTest() {
-      gtf.init(false, false, true);
+      gtf.init(false, false, true, false);
    }
 
    @BeforeTest

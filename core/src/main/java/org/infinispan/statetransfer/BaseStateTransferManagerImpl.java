@@ -19,13 +19,15 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.Cache;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -92,6 +94,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private CommandBuilder commandBuilder;
    protected TransactionTable transactionTable;
    private LockContainer<?> lockContainer;
+   private String cacheName;
+   private GlobalConfiguration globalCfg;
+   protected boolean withTopology;
 
    public BaseStateTransferManagerImpl() {
    }
@@ -100,7 +105,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
-                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer) {
+                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer, Cache cache,
+                    GlobalConfiguration globalCfg) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -113,16 +119,18 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.cacheViewsManager = cacheViewsManager;
       this.transactionTable = transactionTable;
       this.lockContainer = lockContainer;
+      this.cacheName = cache.getName();
+      this.globalCfg = globalCfg;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
    @Start(priority = 60)
    private void start() throws Exception {
-      if (configuration.isTransactionalCache() &&
-            configuration.isEnableVersioning() &&
-            configuration.isWriteSkewCheck() &&
-            configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC &&
-            configuration.getCacheMode().isClustered()) {
+      if (configuration.transaction().transactionMode().isTransactional() &&
+            configuration.versioning().enabled() &&
+            configuration.locking().writeSkewCheck() &&
+            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC &&
+            configuration.clustering().cacheMode().isClustered()) {
 
          // We need to use a special form of PutKeyValueCommand that can apply versions too.
          commandBuilder = new CommandBuilder() {
@@ -140,10 +148,12 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          };
       }
 
+      this.withTopology = globalCfg.transport().hasTopologyInfo();
+
       if (trace) log.tracef("Starting state transfer manager on " + getAddress());
 
       // set up the old CH, but it shouldn't be used until we get the prepare call
-      cacheViewsManager.join(configuration.getName(), this);
+      cacheViewsManager.join(cacheName, this);
    }
 
    protected abstract ConsistentHash createConsistentHash(List<Address> members);
@@ -165,7 +175,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          tempTask.cancelStateTransfer(true);
          stateTransferTask = null;
       }
-      cacheViewsManager.leave(configuration.getName());
+      cacheViewsManager.leave(cacheName);
       joinStartedLatch.countDown();
       joinCompletedLatch.countDown();
       stateTransferInProgressLatch.open();
@@ -316,7 +326,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Override
    public void prepareView(CacheView pendingView, CacheView committedView) throws Exception {
-      log.tracef("Received new cache view: %s %s", configuration.getName(), pendingView);
+      log.tracef("Received new cache view: %s %s", cacheName, pendingView);
 
       joinStartedLatch.countDown();
 

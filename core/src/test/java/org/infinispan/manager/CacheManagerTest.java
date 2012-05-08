@@ -36,6 +36,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -143,16 +144,20 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       assert c.equalsIgnoreName(cm.getDefaultConfiguration()) ;
       
       c = cm.defineConfiguration("cache1", "does-not-exist-cache", new org.infinispan.config.Configuration());
-      assert c.equalsIgnoreName(cm.getDefaultConfiguration());
+       assert c.equalsIgnoreName(cm.getDefaultConfiguration());
    }
 
    public void testDefiningConfigurationWithTemplateName() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
 
       org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
+      c.setL1CacheEnabled(false);
+      c.setL1OnRehash(false);
+      c.fluent().hash().numVirtualNodes(48);
+      c.setTransactionManagerLookup(new GenericTransactionManagerLookup());
       c.setIsolationLevel(IsolationLevel.NONE);
       org.infinispan.config.Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
-      assert oneCacheConfiguration.equalsIgnoreName(c) ;
+      assert oneCacheConfiguration.equalsIgnoreName(c);
       assert oneCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
       c = new org.infinispan.config.Configuration();

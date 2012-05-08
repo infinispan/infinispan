@@ -219,7 +219,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert gc.transport().transport() instanceof JGroupsTransport;
       assert gc.transport().clusterName().equals("infinispan-cluster");
       // Should be "Jalapeno" but it's overriden by the test cache manager factory
-      assert gc.transport().nodeName().contains("NodeB");
+      assert gc.transport().nodeName().contains("Node");
       assert gc.transport().distributedSyncTimeout() == 50000;
 
       assert gc.shutdown().hookBehavior().equals(ShutdownHookBehavior.REGISTER);
@@ -300,7 +300,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert loaderCfg.fetchPersistentState();
       assert loaderCfg.ignoreModifications();
       assert loaderCfg.purgeOnStartup();
-      assert loaderCfg.location().equals("/tmp/FileCacheStore-Location");
+      assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
       assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.PERIODIC;
       assert loaderCfg.fsyncInterval() == 2000;
       assert loaderCfg.singletonStore().pushStateTimeout() == 20000;

@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.Set;
@@ -46,10 +47,21 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(getClusterConfig(), 3);
-      updatedSiteInfo(manager(0), "s0", "r0", "m0");
-      updatedSiteInfo(manager(1), "s1", "r1", "m1");
-      updatedSiteInfo(manager(2), "s2", "r2", "m2");
+      GlobalConfiguration gc1 = GlobalConfiguration.getClusteredDefault();
+      updatedSiteInfo(gc1, "s0", "r0", "m0");
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(gc1, getClusterConfig());
+      cacheManagers.add(cm1);
+
+      GlobalConfiguration gc2 = GlobalConfiguration.getClusteredDefault();
+      updatedSiteInfo(gc2, "s1", "r1", "m1");
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(gc2, getClusterConfig());
+      cacheManagers.add(cm2);
+
+      GlobalConfiguration gc3 = GlobalConfiguration.getClusteredDefault();
+      updatedSiteInfo(gc3, "s2", "r2", "m2");
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createCacheManager(gc3, getClusterConfig());
+      cacheManagers.add(cm3);
+
       log.info("Here it starts");
       waitForClusterToForm();
       log.info("Here it ends");
@@ -59,8 +71,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
    }
 
-   private void updatedSiteInfo(EmbeddedCacheManager embeddedCacheManager, String s, String r, String m) {
-      GlobalConfiguration gc = embeddedCacheManager.getGlobalConfiguration();
+   private void updatedSiteInfo(GlobalConfiguration gc, String s, String r, String m) {
       gc.setSiteId(s);
       gc.setRackId(r);
       gc.setMachineId(m);

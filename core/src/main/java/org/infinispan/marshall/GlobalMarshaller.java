@@ -1,6 +1,6 @@
 package org.infinispan.marshall;
 
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -26,7 +26,7 @@ public class GlobalMarshaller extends AbstractDelegatingMarshaller {
    public void inject(ClassLoader loader, ExternalizerTable extTable,
             GlobalConfiguration globalCfg) {
       ((VersionAwareMarshaller) this.marshaller).inject(
-            null, loader, null, extTable, globalCfg);
+            null, null, loader, null, extTable, globalCfg);
    }
 
    @Override

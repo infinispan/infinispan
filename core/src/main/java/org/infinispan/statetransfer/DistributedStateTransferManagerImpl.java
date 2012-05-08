@@ -73,12 +73,12 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
 
    @Override
    protected long getTimeout() {
-      return configuration.getRehashWaitTime();
+      return configuration.clustering().hash().rehashWait();
    }
 
    @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
-      return ConsistentHashHelper.createConsistentHash(configuration, members);
+      return ConsistentHashHelper.createConsistentHash(configuration, withTopology, members);
    }
 
    public void invalidateKeys(List<Object> keysToRemove) {
@@ -106,8 +106,9 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
 
    @Override
    public boolean isLocationInDoubt(Object key) {
-      return isStateTransferInProgress() && !chOld.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners())
-            && chNew.isKeyLocalToAddress(getAddress(), key, configuration.getNumOwners());
+      int numOwners = configuration.clustering().hash().numOwners();
+      return isStateTransferInProgress() && !chOld.isKeyLocalToAddress(getAddress(), key, numOwners)
+            && chNew.isKeyLocalToAddress(getAddress(), key, numOwners);
    }
 }
 

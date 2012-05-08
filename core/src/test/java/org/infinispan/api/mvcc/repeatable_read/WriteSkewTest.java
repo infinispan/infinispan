@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -107,6 +108,8 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void testCheckWriteSkew() throws Exception {
       Configuration writeSkewCheck = new Configuration();
       writeSkewCheck.setWriteSkewCheck(true);
+      writeSkewCheck.setVersioningScheme(VersioningScheme.SIMPLE);
+      writeSkewCheck.setEnableVersioning(true);
       cacheManager.defineConfiguration("writeSkewCheck", writeSkewCheck);
       cache = cacheManager.getCache("writeSkewCheck");
       postStart();
@@ -116,6 +119,8 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void testWriteSkewWithOnlyPut() throws Exception {
       Configuration writeSkewCheck = new Configuration();
       writeSkewCheck.setWriteSkewCheck(true);
+      writeSkewCheck.setVersioningScheme(VersioningScheme.SIMPLE);
+      writeSkewCheck.setEnableVersioning(true);
       cacheManager.defineConfiguration("writeSkewCheckWithOnlyPut", writeSkewCheck);
       cache = cacheManager.getCache("writeSkewCheckWithOnlyPut");
       postStart();
