@@ -4,7 +4,6 @@ import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.concurrent.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;
@@ -23,7 +22,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.concurrent.ConcurrentMap;
 
 import static org.infinispan.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
 import static org.infinispan.util.Util.EMPTY_OBJECT_ARRAY;
@@ -62,14 +60,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
          return new PerThreadInstanceHolder(cfg);
       }
    };
-
-   /**
-    * Cache of classes that are considered to be marshallable. Since checking
-    * whether a type is marshallable requires attempting to marshalling them,
-    * a cache for the types that are known to be marshallable or not is
-    * advantageous.
-    */
-   private final ConcurrentMap<Class<?>, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class<?>, Boolean>();
 
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
@@ -168,9 +158,9 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       Class<?> clazz = o.getClass();
-      Object isClassMarshallable = isMarshallableMap.get(clazz);
-      if (isClassMarshallable != null) {
-         return (Boolean) isClassMarshallable;
+      boolean containsMarshallable = marshallableTypeHints.isKnownMarshallable(clazz);
+      if (containsMarshallable) {
+         return marshallableTypeHints.isMarshallable(clazz);
       } else {
          if (isMarshallableCandidate(o)) {
             boolean isMarshallable = true;
@@ -180,7 +170,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
                isMarshallable = false;
                throw e;
             } finally {
-               isMarshallableMap.putIfAbsent(clazz, isMarshallable);
+               marshallableTypeHints.markMarshallable(clazz, isMarshallable);
             }
             return isMarshallable;
          }
@@ -191,7 +181,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    @Override
    public void stop() {
        // Clear class cache
-      isMarshallableMap.clear();
+      marshallableTypeHints.clear();
    }
 
    protected boolean isMarshallableCandidate(Object o) {
