@@ -48,7 +48,7 @@ public final class MarshallableTypeHints {
     * @param type Marshallable type for which serialized form size will be predicted
     * @return an instance of {@link BufferSizePredictor}
     */
-   public BufferSizePredictor getBufferSizePredictor(Class<? extends Object> type) {
+   public BufferSizePredictor getBufferSizePredictor(Class<?> type) {
       MarshallingType marshallingType = typeHints.get(type);
       if (marshallingType == null) {
          marshallingType = new MarshallingType(false, new AdaptiveBufferSizePredictor());
@@ -69,14 +69,20 @@ public final class MarshallableTypeHints {
     * @return true if the type has been marked as marshallable at all, false
     * if no attempt has been made to mark the type as marshallable.
     */
-   public boolean isKnownMarshallable(Class<? extends Object> type) {
+   public boolean isKnownMarshallable(Class<?> type) {
       return typeHints.containsKey(type);
    }
 
    /**
-    * Returns whether a type can be serialized.
+    * Returns whether a type can be serialized. In order for a type to be
+    * considered marshallable, the type must have been marked as marshallable
+    * using the {@link #markMarshallable(Class, boolean)} method earlier,
+    * passing true as parameter. If a type has not yet been marked as
+    * marshallable, this method will return false.
+    *
+    * If you simply want to find out whether this
     */
-   public boolean isMarshallable(Class<? extends Object> type) {
+   public boolean isMarshallable(Class<?> type) {
       MarshallingType marshallingType = typeHints.get(type);
       if (marshallingType != null)
          return marshallingType.isMarshallable;
@@ -90,7 +96,7 @@ public final class MarshallableTypeHints {
     * @param type Class to mark as serializable or non-serializable
     * @param isMarshallable Whether the type can be marshalled or not.
     */
-   public void markMarshallable(Class<? extends Object> type, boolean isMarshallable) {
+   public void markMarshallable(Class<?> type, boolean isMarshallable) {
       MarshallingType marshallingType = typeHints.get(type);
       if (marshallingType != null && marshallingType.isMarshallable != isMarshallable) {
          typeHints.replace(type, new MarshallingType(
