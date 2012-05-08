@@ -134,17 +134,19 @@ public interface StreamingMarshaller extends Marshaller {
    Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException;
 
    /**
-    * TODO
+    * Unmarshall an object from an {@link InputStream}
     *
-    * @param is
-    * @return
-    * @throws IOException
-    * @throws ClassNotFoundException
+    * @param is stream to unmarshall from
+    * @return the unmarshalled object instance
+    * @throws IOException if unmarshalling cannot complete due to some I/O error
+    * @throws ClassNotFoundException if the class of the object trying to unmarshall is unknown
     */
    Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException;
 
    /**
-    * TODO
+    * Stop the marshaller. Implementations of this method should clear up
+    * any cached data, or close any resources while marshalling/unmarshalling
+    * that have not been already closed.
     */
    void stop();
 
