@@ -161,6 +161,45 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       }            
    }
    
+   public void testInvokeAny() throws Exception {
+
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      Integer result = des.invokeAny(tasks);
+      assert result == 1;
+      
+      tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      result = des.invokeAny(tasks);
+      assert result == 1;
+   }
+   
+   public void testInvokeAll() throws Exception {
+
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      List<Future<Integer>> list = des.invokeAll(tasks);
+      assert list.size() == 1;
+      Future<Integer> future = list.get(0);
+      assert future.get() == 1;
+      
+      tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      
+      list = des.invokeAll(tasks);
+      assert list.size() == 3;
+      for (Future<Integer> f : list) {
+         assert f.get() == 1;
+      }            
+   }
+   
    /**
     * Tests Callable isolation as it gets invoked across the cluster
     * https://issues.jboss.org/browse/ISPN-1041
