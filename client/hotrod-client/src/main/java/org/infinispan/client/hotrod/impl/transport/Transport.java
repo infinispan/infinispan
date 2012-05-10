@@ -22,6 +22,9 @@
  */
 package org.infinispan.client.hotrod.impl.transport;
 
+import java.net.InetAddress;
+import java.net.SocketAddress;
+
 /**
  * Transport abstraction.
  *
@@ -70,4 +73,15 @@ public interface Transport {
    void writeString(String string);
 
    byte[] dumpStream();
+
+   /**
+    * Returns the address of the endpoint this transport is connected to, or
+    * <code>null</code> if it is unconnected.
+    *
+    * @return a <code>SocketAddress</code> reprensenting the remote endpoint
+    *         of this transport, or <code>null</code> if it is not connected
+    *         yet.
+    */
+   SocketAddress getRemoteSocketAddress();
+
 }

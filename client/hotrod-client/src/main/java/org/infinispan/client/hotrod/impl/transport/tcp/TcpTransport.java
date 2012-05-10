@@ -32,8 +32,10 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -323,4 +325,10 @@ public class TcpTransport extends AbstractTransport {
       }
       return os.toByteArray();
    }
+
+   @Override
+   public SocketAddress getRemoteSocketAddress() {
+      return socket.getRemoteSocketAddress();
+   }
+
 }
