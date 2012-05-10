@@ -135,7 +135,7 @@
       <version.mysql.driver>5.1.9</version.mysql.driver>
       <version.netty>3.2.3.Final</version.netty>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
-      <version.resteasy>2.0-beta-2</version.resteasy>
+      <version.resteasy>2.0.1.GA</version.resteasy>
 <!--
       <version.rhq.pluginAnnotations>4.0.0-SNAPSHOT</version.rhq.pluginAnnotations>
       <version.rhq.plugingen>4.0.0-SNAPSHOT</version.rhq.plugingen>
