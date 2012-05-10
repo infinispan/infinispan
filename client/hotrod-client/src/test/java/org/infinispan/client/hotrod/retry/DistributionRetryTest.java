@@ -48,7 +48,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "hotrod.retry.DistributionRetryTest", groups = "functional")
+@Test(testName = "hotrod.retry.DistributionRetryTest", groups = "functional", enabled = false, description = "Re-enabled after ISPN-1427")
 public class DistributionRetryTest extends AbstractRetryTest {
 
    @Override
