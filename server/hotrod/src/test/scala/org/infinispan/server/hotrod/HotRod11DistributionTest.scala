@@ -48,7 +48,7 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
 
    override protected def protocolVersion = 11
 
-   protected def virtualNodes = 1
+   protected def virtualNodes = 48
 
    def testDistributedPutWithTopologyChanges(m: Method) {
       var resp = clients.head.ping(3, 0)
