@@ -176,9 +176,31 @@ public class Codec10 implements Codec {
       int hashSpace = transport.readVInt();
       int clusterSize = transport.readVInt();
 
-      localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+      Map<SocketAddress, Set<Integer>> servers2Hash = computeNewHashes(
+            transport, localLog, newTopologyId, numKeyOwners,
+            hashFunctionVersion, hashSpace, clusterSize);
+
+      if (localLog.isInfoEnabled()) {
+         localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
+               servers2Hash.keySet());
+      }
+      transport.getTransportFactory().updateServers(servers2Hash.keySet());
+      if (hashFunctionVersion == 0) {
+         localLog.trace("Not using a consistent hash function (hash function version == 0).");
+      } else {
+         transport.getTransportFactory().updateHashFunction(
+               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
+      }
+   }
+
+   protected Map<SocketAddress, Set<Integer>> computeNewHashes(Transport transport,
+         Log localLog, int newTopologyId, int numKeyOwners,
+         short hashFunctionVersion, int hashSpace, int clusterSize) {
+      if (localLog.isTraceEnabled()) {
+         localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                        "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
                  newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
+      }
 
       Map<SocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<SocketAddress, Set<Integer>>();
 
@@ -196,16 +218,7 @@ public class Codec10 implements Codec {
          hashes.add(hashCode);
          localLog.tracef("Hash code is: %d", hashCode);
       }
-
-      if (localLog.isInfoEnabled()) {
-         localLog.newTopology(servers2Hash.keySet());
-      }
-      transport.getTransportFactory().updateServers(servers2Hash.keySet());
-      if (hashFunctionVersion == 0) {
-         localLog.trace("Not using a consistent hash function (hash function version == 0).");
-      } else {
-         transport.getTransportFactory().updateHashFunction(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
-      }
+      return servers2Hash;
    }
 
 }
