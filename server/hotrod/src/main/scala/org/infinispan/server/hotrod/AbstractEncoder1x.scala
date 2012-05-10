@@ -39,6 +39,8 @@ import org.infinispan.configuration.cache.Configuration
  */
 abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants with Log {
 
+   import HotRodServer._
+
    override def writeHeader(r: Response, buf: ChannelBuffer,
            addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
       val topologyResp = getTopologyResponse(r, addressCache, server)
@@ -117,10 +119,14 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          r.clientIntel match {
             case 2 | 3 => {
                val lastViewId = server.getViewId
-               // Only send new topology when request topology id is older,
-               // otherwise it can result in receiving old topologies and
-               // potentially trying to connect to servers that are down.
-               if (r.topologyId < lastViewId)
+               // Topology is only considered to be outdated when it's older
+               // (smaller value), than the one sent by the client. If the
+               // comparison was only done on whether the view id was different,
+               // it could result in receiving old topologies and potentially
+               // trying to connect to servers that are down.
+               // Besides, make sure that a view has actually been set! In other
+               // words, check against default value to see if it's higher.
+               if (lastViewId >= DEFAULT_VIEW_ID && r.topologyId < lastViewId)
                   generateTopologyResponse(r, addressCache, server, lastViewId)
                else null
             }
@@ -169,7 +175,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             // cluster members * num virtual nodes. Otherwise, rely on the default
             // when virtual nodes is disabled which is '1'.
             val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
-            val numVNodes = cache.getCacheConfiguration.clustering().hash().numVirtualNodes()
+            val numVNodes = cache.getConfiguration.getNumVirtualNodes
 
             val clusterMembers = members.getCacheManager.getMembers
             val totalNumServers = clusterMembers.size * numVNodes
