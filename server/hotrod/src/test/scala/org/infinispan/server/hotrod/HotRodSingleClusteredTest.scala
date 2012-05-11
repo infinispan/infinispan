@@ -29,7 +29,8 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.test.MultipleCacheManagersTest
 import test.HotRodTestingUtil._
 import org.infinispan.test.AbstractCacheTest._
-import org.testng.annotations.{BeforeClass, Test}
+import org.testng.annotations.{AfterClass, BeforeClass, Test}
+import org.infinispan.server.core.test.ServerTestingUtil._
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSingleClusteredTest")
 class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
@@ -50,6 +51,14 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
       super.createBeforeClass()
       hotRodServer = startHotRodServer(cacheManagers.get(0))
       hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
+   }
+
+   @AfterClass(alwaysRun = true)
+   override def destroy {
+      log.debug("Test finished, close client, server, and cache managers")
+      killClient(hotRodClient)
+      killServer(hotRodServer)
+      super.destroy
    }
 
    def testPutGet(m: Method) {

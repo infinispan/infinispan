@@ -27,12 +27,12 @@ import org.infinispan.server.core.CacheValue
 import test.HotRodClient
 import org.infinispan.AdvancedCache
 import test.HotRodTestingUtil._
-import org.testng.annotations.AfterClass
 import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.server.core.test.ServerTestingUtil._
+import org.testng.annotations.{Test, AfterClass}
 
 /**
  * Base test class for single node Hot Rod tests.
@@ -54,6 +54,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       cacheManager
    }
 
+   @Test(enabled = false)
    protected override def setup() {
       super.setup()
       hotRodServer = createStartHotRodServer(cacheManager)
