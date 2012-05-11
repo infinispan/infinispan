@@ -717,7 +717,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Passivation configured without an eviction policy being selected. " +
-      "Only manually evicted entities will be pasivated.", id = 152)
+      "Only manually evicted entities will be passivated.", id = 152)
    void passivationWithoutEviction();
 
    @LogMessage(level = WARN)
