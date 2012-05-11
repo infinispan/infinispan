@@ -66,8 +66,8 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"))
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"))
 
-      assertEquals(s.get("totalBytesRead").get, "86")
-      assertEquals(s.get("totalBytesWritten").get, "180")
+      assertTrue(s.get("totalBytesRead").get.toInt != 0)
+      assertTrue(s.get("totalBytesWritten").get.toInt != 0)
 
       assertSuccess(client.assertGet(m), v(m))
       s = client.stats
