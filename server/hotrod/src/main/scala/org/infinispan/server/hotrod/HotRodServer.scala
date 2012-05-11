@@ -37,7 +37,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.remoting.transport.{Transport, Address}
 import org.infinispan.util.concurrent.ConcurrentMapFactory
 import org.infinispan.loaders.cluster.ClusterCacheLoader
-import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -51,12 +52,15 @@ import org.infinispan.configuration.cache.{Configuration, CacheMode, Configurati
  * @since 4.1
  */
 class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
+
+   import HotRodServer._
+
    private var isClustered: Boolean = _
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
-   private var viewId: Int = _
+   private var viewId: Int = DEFAULT_VIEW_ID
    private val knownCaches : java.util.Map[String, Cache[ByteArrayKey, CacheValue]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
    private val isTrace = isTraceEnabled
 
@@ -80,7 +84,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
       val defaultPort = 11222
-      isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
+
+      // 1. Start default cache and the endpoint before adding self to
+      // topology in order to avoid topology updates being used before
+      // endpoint is available.
+      super.start(properties, cacheManager, defaultPort)
+
+      isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
       if (isClustered) {
          val typedProps = TypedProperties.toTypedProperties(properties)
          defineTopologyCacheConfig(cacheManager, typedProps)
@@ -94,14 +104,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
-
-      super.start(properties, cacheManager, defaultPort)
    }
 
    override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
          sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
       // Start predefined caches
-      preStartCaches
+      preStartCaches()
 
       super.startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
    }
@@ -110,7 +118,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheManager.getCache()
    }
 
-   private def preStartCaches {
+   private def preStartCaches() {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
          if (cacheName != HotRodServer.ADDRESS_CACHE_NAME) {
@@ -134,7 +142,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
       cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
          createTopologyCacheConfig(typedProps,
-            cacheManager.getGlobalConfiguration.getDistributedSyncTimeout).build())
+            cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
    }
 
    protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
@@ -211,5 +219,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 }
 
 object HotRodServer {
+
    val ADDRESS_CACHE_NAME = "___hotRodTopologyCache"
+   val DEFAULT_VIEW_ID = -1
+
 }

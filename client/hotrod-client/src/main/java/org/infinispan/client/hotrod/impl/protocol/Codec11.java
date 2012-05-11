@@ -48,31 +48,28 @@ public class Codec11 extends Codec10 {
    }
 
    @Override
-   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
-      final Log localLog = getLog();
-      int newTopologyId = transport.readVInt();
-      topologyId.set(newTopologyId);
-      int numKeyOwners = transport.readUnsignedShort();
-      short hashFctVersion = transport.readByte();
-      ConsistentHash ch = null;
-      if (hashFctVersion != 0)
-         ch = transport.getTransportFactory().getConsistentHashFactory()
-               .newConsistentHash(hashFctVersion);
-      else
-         localLog.trace("Not using a consistent hash function (hash function version == 0)");
-
-      int hashSpace = transport.readVInt();
-      int clusterSize = transport.readVInt();
+   protected Map<SocketAddress, Set<Integer>> computeNewHashes(Transport transport,
+         Log localLog, int newTopologyId, int numKeyOwners,
+         short hashFunctionVersion, int hashSpace, int clusterSize) {
       // New in 1.1
       int numVirtualNodes = transport.readVInt();
 
-      localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-            "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
-            newTopologyId, numKeyOwners, hashFctVersion, hashSpace, clusterSize,
-            numVirtualNodes);
+      if (localLog.isTraceEnabled()) {
+         localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+               "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
+               newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize,
+               numVirtualNodes);
+      }
 
       Map<SocketAddress, Set<Integer>> servers2Hash =
             new LinkedHashMap<SocketAddress, Set<Integer>>();
+
+      ConsistentHash ch = null;
+      if (hashFunctionVersion != 0)
+         ch = transport.getTransportFactory().getConsistentHashFactory()
+               .newConsistentHash(hashFunctionVersion);
+      else
+         localLog.trace("Not using a consistent hash function (hash function version == 0)");
 
       for (int i = 0; i < clusterSize; i++) {
          String host = transport.readString();
@@ -81,22 +78,13 @@ public class Codec11 extends Codec10 {
          int baseHashCode = transport.read4ByteInt();
          int normalizedHashCode = getNormalizedHash(baseHashCode, ch);
          localLog.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
-                    host, port, baseHashCode, normalizedHashCode);
+               host, port, baseHashCode, normalizedHashCode);
          cacheHashCode(servers2Hash, host, port, normalizedHashCode);
          if (numVirtualNodes > 1)
             calcVirtualHashCodes(baseHashCode, numVirtualNodes, servers2Hash, host, port, ch);
       }
 
-      if (localLog.isInfoEnabled()) {
-         localLog.newTopology(servers2Hash.keySet());
-      }
-      transport.getTransportFactory().updateServers(servers2Hash.keySet());
-      if (hashFctVersion == 0) {
-         localLog.trace("Not using a consistent hash function (hash function version == 0)");
-      } else {
-         transport.getTransportFactory().updateHashFunction(
-               servers2Hash, numKeyOwners, hashFctVersion, hashSpace);
-      }
+      return servers2Hash;
    }
 
    @Override

@@ -53,9 +53,9 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
       val r = msg.asInstanceOf[Response]
       val buf = dynamicBuffer
       val encoder = r.version match {
-         case VERSION_10 => Encoder10
-         case VERSION_11 => Encoder11
-         case 0 => Encoder10 // TODO: Assume most up to date when 1.1 ready!
+         case VERSION_10 => Encoders.Encoder10
+         case VERSION_11 => Encoders.Encoder11
+         case 0 => Encoders.Encoder11
       }
 
       r.version match {
