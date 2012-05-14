@@ -66,7 +66,7 @@ import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REG
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
-   private static boolean versionLogged = false;
+   private static volatile boolean versionLogged = false;
    /**
     * Hook to shut down the cache when the JVM exits.
     */
