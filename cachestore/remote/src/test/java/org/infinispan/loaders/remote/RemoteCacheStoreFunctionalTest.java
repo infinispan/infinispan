@@ -66,16 +66,18 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
 
    @Override
    public void testPreloadAndExpiry() {
-      assert true : "Remote cache store does not support preload";
+      // No-op, since remote cache store does not support preload
    }
 
    @Override
    public void testPreloadStoredAsBinary() {
-      assert true : "Remote cache store does not support store as binary since Hot Rod already stores them as binary";
+      // No-op, remote cache store does not support store as binary
+      // since Hot Rod already stores them as binary
    }
 
    @Override
    public void testTwoCachesSameCacheStore() {
       //not applicable
    }
+
 }
