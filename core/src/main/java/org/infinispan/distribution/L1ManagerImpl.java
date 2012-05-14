@@ -114,7 +114,6 @@ public class L1ManagerImpl implements L1Manager {
    }
 
    private void cleanUpRequestors() {
-      int sz = requestors.size();
       long expiryTime = System.currentTimeMillis() - l1Lifespan;
       for (Map.Entry<Object, ConcurrentMap<Address, Long>> entry: requestors.entrySet()) {
          Object key = entry.getKey();
