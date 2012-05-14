@@ -114,7 +114,7 @@ public final class MarshallableTypeHints {
       typeHints.clear();
    }
 
-   private class MarshallingType {
+   private static class MarshallingType {
 
       final boolean isMarshallable;
       final BufferSizePredictor sizePredictor;
