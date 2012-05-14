@@ -40,7 +40,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class LazyInitializingScheduledExecutorService implements ScheduledExecutorService {
 
-   private ScheduledExecutorService delegate;
+   private volatile ScheduledExecutorService delegate;
    private final ScheduledExecutorFactory factory;
    private final Properties executorProperties;
 
