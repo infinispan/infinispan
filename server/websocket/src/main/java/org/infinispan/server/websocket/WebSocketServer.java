@@ -30,7 +30,6 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -38,7 +37,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
-import org.infinispan.server.core.transport.CustomReplayingDecoder;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
@@ -46,6 +44,7 @@ import org.infinispan.server.websocket.handlers.RemoveHandler;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -76,7 +75,7 @@ public class WebSocketServer extends AbstractProtocolServer {
       return null;
    }
 
-   public CustomReplayingDecoder getDecoder() {
+   public ChannelHandler getDecoder() {
       return null;
    }
 
