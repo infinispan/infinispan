@@ -754,6 +754,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       boolean removed = cs.remove(key2);
       assert !removed;
+      
+      assert cs.remove(key);
    }
 
    public static class Pojo implements Serializable {
