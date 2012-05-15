@@ -25,7 +25,7 @@ package org.infinispan.tree;
 
 import org.infinispan.AbstractDelegatingCacheImpl;
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheImpl;
+import org.infinispan.Cache;
 import org.infinispan.DecoratedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -58,10 +58,18 @@ public class CacheAdapter<K, V> extends AbstractDelegatingCacheImpl<K, V> {
    }
 
    public static <K, V> CacheAdapter<K, V> createAdapter(AdvancedCache<K, V> advancedCache, TreeContextContainer tcc) {
-      if (advancedCache instanceof CacheAdapter)
+      if (advancedCache instanceof CacheAdapter) {
          return (CacheAdapter<K, V>) advancedCache;
-      else
+      } else if (advancedCache instanceof DecoratedCache) {
+         DecoratedCache dc = (DecoratedCache) advancedCache;
+         Cache<K, V> delegate = dc.getDelegate();
+         if (delegate instanceof AdvancedCache)
+            return new DecoratedCacheAdapter<K, V>((AdvancedCache) delegate, tcc, dc.getFlags());
+         else
+            return new DecoratedCacheAdapter<K, V>(delegate.getAdvancedCache(), tcc, dc.getFlags());
+      } else {
          return new CacheAdapter<K, V>(advancedCache, tcc);
+      }
    }
 
    @Override

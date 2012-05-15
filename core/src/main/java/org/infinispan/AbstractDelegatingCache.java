@@ -372,4 +372,8 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public String toString() {
       return cache.toString();
    }
+
+   public Cache<K, V> getDelegate() {
+      return cache;
+   }
 }
