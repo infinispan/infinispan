@@ -22,6 +22,7 @@
  */
 package org.infinispan.api.tree;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
@@ -60,13 +61,9 @@ public class FlagTest extends MultipleCacheManagersTest {
    public void testTreeCacheLocalPut() throws Exception {
       final Fqn fqn = Fqn.fromElements("TEST");
       treeCache1.put(fqn, KEY, "1", Flag.CACHE_MODE_LOCAL);
-      log.fatal("------- Phase 1 --------");
       treeCache2.put(fqn, KEY, "2", Flag.CACHE_MODE_LOCAL);
-      log.fatal("------- Phase 2 --------");
       assert "2".equals(treeCache2.get(fqn, KEY)) : "treeCache2 was updated locally";
-      log.fatal("------- Phase 3 --------");
       assert "1".equals(treeCache1.get(fqn, KEY)) : "treeCache1 should not be invalidated in case of LOCAL put in treeCache2";
-      log.fatal("------- Phase 4 --------");
 
       String fqnString = "fqnAsString";
       treeCache1.put(fqnString, KEY, "3", Flag.CACHE_MODE_LOCAL);
@@ -75,4 +72,15 @@ public class FlagTest extends MultipleCacheManagersTest {
       assert "3".equals(treeCache1.get(fqnString, KEY)) : "treeCache1 should not be invalidated in case of LOCAL put in treeCache2";
    }
 
+   public void testWithFlags() {
+      AdvancedCache localCache1 = cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      AdvancedCache localCache2 = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      TreeCache treeCache1 = new TreeCacheFactory().createTreeCache(localCache1);
+      TreeCache treeCache2 = new TreeCacheFactory().createTreeCache(localCache2);
+      final Fqn fqn = Fqn.fromElements("TEST_WITH_FLAGS");
+      treeCache1.put(fqn, KEY, "1");
+      treeCache2.put(fqn, KEY, "2");
+      assert "2".equals(treeCache2.get(fqn, KEY)) : "treeCache2 was updated locally";
+      assert "1".equals(treeCache1.get(fqn, KEY)) : "treeCache1 should not be invalidated in case of LOCAL put in treeCache2";
+   }
 }

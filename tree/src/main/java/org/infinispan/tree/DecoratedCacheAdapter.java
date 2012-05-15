@@ -34,6 +34,11 @@ public class DecoratedCacheAdapter<K, V> extends CacheAdapter<K, V> {
       if (flags != null && flags.length > 0) this.flags.addAll(Arrays.asList(flags));
    }
 
+   DecoratedCacheAdapter(AdvancedCache advancedCache, TreeContextContainer tcc, EnumSet<Flag> flags) {
+      super(advancedCache, tcc);
+      if (flags != null) this.flags.addAll(flags);
+   }
+
    @Override
    protected EnumSet<Flag> getFlags() {
       if (tcc.getTreeContext() == null)
