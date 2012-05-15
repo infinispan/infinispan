@@ -49,8 +49,6 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected volatile long coinToss;
 
-   protected volatile boolean isMarkedForRollback;
-
    protected transient volatile Object localLockIntention;
 
    protected volatile Collection<Object> remoteLockIntention = emptySet();
@@ -100,7 +98,6 @@ public class DldGlobalTransaction extends GlobalTransaction {
    public String toString() {
       return "DldGlobalTransaction{" +
             "coinToss=" + coinToss +
-            ", isMarkedForRollback=" + isMarkedForRollback +
             ", lockIntention=" + localLockIntention +
             ", affectedKeys=" + remoteLockIntention +
             ", locksAtOrigin=" + locksAtOrigin +
