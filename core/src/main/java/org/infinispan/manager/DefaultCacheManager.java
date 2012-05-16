@@ -809,11 +809,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    
    @Override
    public Configuration getCacheConfiguration(String name) {
-      Configuration c = configurationOverrides.get(name);
-      if (c == null)
-         return null;
-      else
-         return c;
+      return configurationOverrides.get(name);
    }
 
    @Override
