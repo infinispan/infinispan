@@ -43,11 +43,11 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(null, new ChunkCacheKey.Externalizer());
-      externalizerMap.put(null, new FileCacheKey.Externalizer());
-      externalizerMap.put(null, new FileListCacheKey.Externalizer());
-      externalizerMap.put(null, new FileMetadata.Externalizer());
-      externalizerMap.put(null, new FileReadLockKey.Externalizer());
+      externalizerMap.put(ExternalizerIds.CHUNK_CACHE_KEY, new ChunkCacheKey.Externalizer());
+      externalizerMap.put(ExternalizerIds.FILE_CACHE_KEY, new FileCacheKey.Externalizer());
+      externalizerMap.put(ExternalizerIds.FILE_LIST_CACHE_KEY, new FileListCacheKey.Externalizer());
+      externalizerMap.put(ExternalizerIds.FILE_METADATA, new FileMetadata.Externalizer());
+      externalizerMap.put(ExternalizerIds.FILE_READLOCK_KEY, new FileReadLockKey.Externalizer());
    }
 
 }
