@@ -136,7 +136,7 @@
       <version.jbossjta>4.16.3.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.1.0.GA</version.jboss.logging>
-      <version.jboss.logging.processor>1.0.1.Final</version.jboss.logging.processor>
+      <version.jboss.logging.processor>1.0.3.Final</version.jboss.logging.processor>
       <version.jboss.logmanager>1.2.0.GA</version.jboss.logmanager>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
