@@ -20,6 +20,8 @@
 package org.infinispan.marshall;
 
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,6 +34,9 @@ import java.util.concurrent.ConcurrentMap;
  * @since 5.1
  */
 public final class MarshallableTypeHints {
+
+   private static final Log log = LogFactory.getLog(MarshallableTypeHints.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * Cache of classes that are considered to be marshallable alongside their
@@ -51,10 +56,17 @@ public final class MarshallableTypeHints {
    public BufferSizePredictor getBufferSizePredictor(Class<?> type) {
       MarshallingType marshallingType = typeHints.get(type);
       if (marshallingType == null) {
-         marshallingType = new MarshallingType(false, new AdaptiveBufferSizePredictor());
+         // Initialise with isMarshallable to null, meaning it's unknown
+         marshallingType = new MarshallingType(null, new AdaptiveBufferSizePredictor());
          MarshallingType prev = typeHints.putIfAbsent(type, marshallingType);
-         if (prev != null)
+         if (prev != null) {
             marshallingType = prev;
+         } else {
+            if (trace) {
+               log.tracef("Cache a buffer size predictor for '%s' assuming " +
+                     "its serializability is unknown", type.getName());
+            }
+         }
       }
       return marshallingType.sizePredictor;
    }
@@ -70,7 +82,8 @@ public final class MarshallableTypeHints {
     * if no attempt has been made to mark the type as marshallable.
     */
    public boolean isKnownMarshallable(Class<?> type) {
-      return typeHints.containsKey(type);
+      MarshallingType marshallingType = typeHints.get(type);
+      return marshallingType != null && marshallingType.isMarshallable != null;
    }
 
    /**
@@ -79,13 +92,13 @@ public final class MarshallableTypeHints {
     * using the {@link #markMarshallable(Class, boolean)} method earlier,
     * passing true as parameter. If a type has not yet been marked as
     * marshallable, this method will return false.
-    *
-    * If you simply want to find out whether this
     */
    public boolean isMarshallable(Class<?> type) {
       MarshallingType marshallingType = typeHints.get(type);
-      if (marshallingType != null)
-         return marshallingType.isMarshallable;
+      if (marshallingType != null) {
+         Boolean marshallable = marshallingType.isMarshallable;
+         return marshallable != null ? marshallable.booleanValue() : false;
+      }
 
       return false;
    }
@@ -97,13 +110,22 @@ public final class MarshallableTypeHints {
     * @param isMarshallable Whether the type can be marshalled or not.
     */
    public void markMarshallable(Class<?> type, boolean isMarshallable) {
-      MarshallingType marshallingType = typeHints.get(type);
-      if (marshallingType != null && marshallingType.isMarshallable != isMarshallable) {
-         typeHints.replace(type, new MarshallingType(
-               isMarshallable, marshallingType.sizePredictor));
-      } else if (marshallingType == null) {
-         typeHints.putIfAbsent(type, new MarshallingType(
-               isMarshallable, new AdaptiveBufferSizePredictor()));
+      MarshallingType marshallType = typeHints.get(type);
+      if (marshallableUpdateRequired(isMarshallable, marshallType)) {
+         boolean replaced = typeHints.replace(type, marshallType, new MarshallingType(
+               Boolean.valueOf(isMarshallable), marshallType.sizePredictor));
+         if (replaced && trace) {
+            log.tracef("Replacing '%s' type to be marshallable=%b",
+                  type.getName(), isMarshallable);
+         }
+      } else if (marshallType == null) {
+         if (trace) {
+            log.tracef("Cache '%s' type to be marshallable=%b",
+                  type.getName(), isMarshallable);
+         }
+
+         typeHints.put(type, new MarshallingType(
+               Boolean.valueOf(isMarshallable), new AdaptiveBufferSizePredictor()));
       }
    }
 
@@ -114,16 +136,44 @@ public final class MarshallableTypeHints {
       typeHints.clear();
    }
 
+   private boolean marshallableUpdateRequired(boolean isMarshallable,
+         MarshallingType marshallType) {
+      return marshallType != null &&
+            (marshallType.isMarshallable == null ||
+                   marshallType.isMarshallable.booleanValue() != isMarshallable);
+   }
+
    private static class MarshallingType {
 
-      final boolean isMarshallable;
+      final Boolean isMarshallable;
       final BufferSizePredictor sizePredictor;
 
-      private MarshallingType(boolean marshallable, BufferSizePredictor sizePredictor) {
+      private MarshallingType(Boolean marshallable, BufferSizePredictor sizePredictor) {
          isMarshallable = marshallable;
          this.sizePredictor = sizePredictor;
       }
 
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         MarshallingType that = (MarshallingType) o;
+
+         if (isMarshallable != null ? !isMarshallable.equals(that.isMarshallable) : that.isMarshallable != null)
+            return false;
+         if (sizePredictor != null ? !sizePredictor.equals(that.sizePredictor) : that.sizePredictor != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = isMarshallable != null ? isMarshallable.hashCode() : 0;
+         result = 31 * result + (sizePredictor != null ? sizePredictor.hashCode() : 0);
+         return result;
+      }
    }
 
 }
