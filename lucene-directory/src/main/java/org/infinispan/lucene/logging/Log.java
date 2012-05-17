@@ -51,4 +51,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Unable to commit work done", id = 15003)
    void unableToCommitTransaction(@Cause Exception e);
 
+   @Message(value = "Unexpected format of key in String form: '%s'", id = 15004)
+   IllegalArgumentException keyMappperUnexpectedStringFormat(String key);
+
 }

@@ -70,6 +70,15 @@ public final class ChunkCacheKey implements Serializable {
    }
 
    /**
+    * Get the bufferSize.
+    * 
+    * @return the bufferSize.
+    */
+   public int getBufferSize() {
+      return bufferSize;
+   }
+
+   /**
     * Get the indexName.
     * 
     * @return the indexName.
