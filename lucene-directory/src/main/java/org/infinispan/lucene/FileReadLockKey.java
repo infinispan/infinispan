@@ -40,7 +40,7 @@ import org.infinispan.util.Util;
  * @author Sanne Grinovero
  * @since 4.0
  */
-public final class FileReadLockKey implements Serializable {
+public final class FileReadLockKey implements Serializable, IndexScopedKey {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 7789410500198851940L;
