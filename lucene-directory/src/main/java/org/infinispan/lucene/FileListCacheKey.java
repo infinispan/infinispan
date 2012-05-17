@@ -59,7 +59,12 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
    public String getIndexName() {
       return indexName;
    }
-   
+
+   @Override
+   public Object accept(KeyVisitor visitor) throws Exception {
+      return visitor.visit(this);
+   }
+
    @Override
    public int hashCode() {
       return hashCode;
