@@ -24,9 +24,6 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -49,8 +46,6 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:

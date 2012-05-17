@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class AdaptiveBufferSizePredictor implements BufferSizePredictor {
 
-   private static final Log log = LogFactory.getLog(MarshallableTypeHints.class);
+   private static final Log log = LogFactory.getLog(AdaptiveBufferSizePredictor.class);
    private static final boolean isTrace = log.isTraceEnabled();
 
    static final int DEFAULT_MINIMUM = 16;
