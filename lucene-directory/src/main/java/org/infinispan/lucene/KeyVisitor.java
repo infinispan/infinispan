@@ -19,15 +19,21 @@
 package org.infinispan.lucene;
 
 /**
- * Mostly used for internal abstraction: common type for all keys which need name scoping for different indexes.
+ * All objects being used as keys to store entries by the Lucene Directory
+ * implement {@link IndexScopedKey} which enforces visitability with a
+ * {@link KeyVisitor<T>}. Various components use this to visit each key.
  * 
  * @author Sanne Grinovero
  * @since 5.2
  */
-public interface IndexScopedKey {
+public interface KeyVisitor<T> {
 
-   String getIndexName();
+   T visit(FileListCacheKey fileListCacheKey) throws Exception;
 
-   <T> T accept(KeyVisitor<T> visitor) throws Exception;
+   T visit(ChunkCacheKey chunkCacheKey) throws Exception;
+
+   T visit(FileCacheKey fileCacheKey) throws Exception;
+
+   T visit(FileReadLockKey fileReadLockKey) throws Exception;
 
 }

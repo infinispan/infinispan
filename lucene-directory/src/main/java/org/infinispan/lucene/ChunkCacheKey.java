@@ -87,6 +87,11 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
       return indexName;
    }
 
+   @Override
+   public Object accept(KeyVisitor visitor) throws Exception {
+      return visitor.visit(this);
+   }
+
    /**
     * Get the fileName.
     * 

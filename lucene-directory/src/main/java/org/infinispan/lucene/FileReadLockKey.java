@@ -78,6 +78,11 @@ public final class FileReadLockKey implements Serializable, IndexScopedKey {
    }
 
    @Override
+   public Object accept(KeyVisitor visitor) throws Exception {
+      return visitor.visit(this);
+   }
+
+   @Override
    public int hashCode() {
       return hashCode;
    }
