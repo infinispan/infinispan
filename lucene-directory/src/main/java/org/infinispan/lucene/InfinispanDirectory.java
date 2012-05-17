@@ -220,22 +220,24 @@ public class InfinispanDirectory extends Directory {
    public void renameFile(String from, String to) {
       ensureOpen();
 
+      final FileCacheKey fromKey = new FileCacheKey(indexName, from);
+      final FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+      final int bufferSize = metadata.getBufferSize();
       // preparation: copy all chunks to new keys
       int i = -1;
       Object ob;
       do {
-         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i);
+         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
          ob = chunksCache.get(fromChunkKey);
          if (ob == null) {
             break;
          }
-         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
+         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
          chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(toChunkKey, ob);
       } while (true);
-      
+
       // rename metadata first
-      FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
       

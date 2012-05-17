@@ -47,14 +47,16 @@ public final class ChunkCacheKey implements Serializable {
    private final int chunkId;
    private final String indexName;
    private final String fileName;
+   private final int bufferSize;
    private final int hashCode;
 
-   public ChunkCacheKey(String indexName, String fileName, int chunkId) {
+   public ChunkCacheKey(final String indexName, final String fileName, final int chunkId, final int bufferSize) {
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
       this.fileName = fileName;
       this.chunkId = chunkId;
+      this.bufferSize = bufferSize;
       this.hashCode = generatedHashCode();
    }
 
@@ -91,10 +93,10 @@ public final class ChunkCacheKey implements Serializable {
    }
 
    private int generatedHashCode() {
+      //bufferSize and indexName excluded from computation: not very relevant
       final int prime = 31;
-      int result = prime + chunkId;
-      result = prime * result + fileName.hashCode();
-      return prime * result + indexName.hashCode();
+      int result = prime + fileName.hashCode();
+      return prime * result + chunkId; //adding chunkId as last is better
    }
 
    @Override
@@ -120,24 +122,26 @@ public final class ChunkCacheKey implements Serializable {
     */
    @Override
    public String toString() {
-      return fileName + "|" + chunkId + "|" + indexName;
+      return fileName + "|" + chunkId + "|" + bufferSize + "|" + indexName;
    }
 
    public static final class Externalizer extends AbstractExternalizer<ChunkCacheKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, ChunkCacheKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final ChunkCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
          UnsignedNumeric.writeUnsignedInt(output, key.chunkId);
+         UnsignedNumeric.writeUnsignedInt(output, key.bufferSize);
       }
 
       @Override
-      public ChunkCacheKey readObject(ObjectInput input) throws IOException {
-         String indexName = input.readUTF();
-         String fileName = input.readUTF();
-         int chunkId = UnsignedNumeric.readUnsignedInt(input);
-         return new ChunkCacheKey(indexName, fileName, chunkId);
+      public ChunkCacheKey readObject(final ObjectInput input) throws IOException {
+         final String indexName = input.readUTF();
+         final String fileName = input.readUTF();
+         final int chunkId = UnsignedNumeric.readUnsignedInt(input);
+         final int bufferSize = UnsignedNumeric.readUnsignedInt(input);
+         return new ChunkCacheKey(indexName, fileName, chunkId, bufferSize);
       }
 
       @Override

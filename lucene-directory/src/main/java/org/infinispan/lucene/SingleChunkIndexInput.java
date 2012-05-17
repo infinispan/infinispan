@@ -45,7 +45,7 @@ final public class SingleChunkIndexInput extends IndexInput {
 
    public SingleChunkIndexInput(final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata) {
       super(fileKey.getFileName());
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0, fileMetadata.getBufferSize());
       byte[] b = (byte[]) chunksCache.get(key);
       if (b == null) {
          buffer = new byte[0];

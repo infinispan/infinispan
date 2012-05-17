@@ -135,8 +135,10 @@ public class DirectoryIntegrityCheck {
       String indexName = fileCacheKey.getIndexName();
       String fileName = fileCacheKey.getFileName();
       long accumulator = 0;
+      FileMetadata metadata = (FileMetadata) cache.get(fileCacheKey);
+      int bufferSize = metadata.getBufferSize();
       for (int i = 0;; i++) {
-         ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i);
+         ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize);
          byte[] buffer = (byte[]) cache.get(chunkKey);
          if (buffer == null) {
             assert cache.containsKey(chunkKey)==false;
@@ -157,9 +159,11 @@ public class DirectoryIntegrityCheck {
          Thread.sleep(10);
          maxWaitForCondition -= 10;
          allok=true;
-         if (cache.get(new FileCacheKey(indexName, fileName))!=null) allok=false;
+         FileMetadata metadata = (FileMetadata) cache.get(new FileCacheKey(indexName, fileName));
+         if (metadata!=null) allok=false;
          for (int i = 0; i < 100; i++) {
-            ChunkCacheKey key = new ChunkCacheKey(indexName, fileName, i);
+            //bufferSize set to 0 as metadata might not be available, and it's not part of equals/hashcode anyway.
+            ChunkCacheKey key = new ChunkCacheKey(indexName, fileName, i, 0);
             if (cache.get(key)!=null) allok=false;
          }
       }
@@ -179,7 +183,7 @@ public class DirectoryIntegrityCheck {
       long totalFileSize = metadata.getSize();
       int chunkNumbers = (int)(totalFileSize / chunkSize);
       for (int i = 0; i < chunkNumbers; i++) {
-         Assert.assertNotNull(cache.get(new ChunkCacheKey(indexName, fileName, i)));
+         Assert.assertNotNull(cache.get(new ChunkCacheKey(indexName, fileName, i, metadata.getBufferSize())));
       }
       FileReadLockKey readLockKey = new FileReadLockKey(indexName,fileName);
       Object value = cache.get(readLockKey);

@@ -51,7 +51,7 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
    @Test
    public void testChunkCacheKeyExternalizer() throws IOException {
-      ChunkCacheKey key = new ChunkCacheKey("myIndex", "filename", 5);
+      ChunkCacheKey key = new ChunkCacheKey("myIndex", "filename", 5, 1000);
       verifyExternalizerForType(key, ChunkCacheKey.Externalizer.class);
    }
 
