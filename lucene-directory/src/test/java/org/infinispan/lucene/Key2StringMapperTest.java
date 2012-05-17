@@ -48,7 +48,7 @@ public class Key2StringMapperTest {
    
    @Test
    public void loadChunkCacheKey() {
-      Assert.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34), mapper.getKeyMapping("sgments0.gen|34|my addressbook"));
+      Assert.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000), mapper.getKeyMapping("sgments0.gen|34|16000000|my addressbook"));
    }
    
    @Test

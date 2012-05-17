@@ -81,11 +81,11 @@ public final class InfinispanIndexOutput extends IndexOutput {
       }
    }
    
-   private byte[] getChunkById(FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
+   private byte[] getChunkById(FileCacheKey fileKey, int chunkNumber, int bufferSize) {
       if (file.getNumberOfChunks() <= chunkNumber) {
          return new byte[bufferSize];
       }
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize);
       byte[] readBuffer = (byte[]) chunksCache.get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];
@@ -112,7 +112,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       storeCurrentBuffer(false);// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
-      buffer = getChunkById(fileKey, currentChunkNumber, bufferSize, file);
+      buffer = getChunkById(fileKey, currentChunkNumber, bufferSize);
       positionInBuffer = 0;
    }
 
@@ -179,7 +179,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
     * @param chunkNumber
     */
    private void storeBufferAsChunk(final byte[] bufferToFlush, final int chunkNumber) {
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize);
       if (trace) log.tracef("Storing segment chunk: %s", key);
       chunksCacheForStorage.put(key, bufferToFlush);
    }
@@ -228,7 +228,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       if (requestedChunkNumber != currentChunkNumber) {
          storeCurrentBuffer(false);
          if (requestedChunkNumber != 0) {
-            buffer = getChunkById(fileKey, requestedChunkNumber, bufferSize, file);
+            buffer = getChunkById(fileKey, requestedChunkNumber, bufferSize);
          }
          else {
             buffer = firstChunkBuffer;

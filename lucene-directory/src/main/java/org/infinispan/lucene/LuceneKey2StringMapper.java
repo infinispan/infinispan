@@ -73,7 +73,7 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
       if (key == null) {
          throw new IllegalArgumentException("Not supporting null keys");
       }
-      // ChunkCacheKey: fileName + "|" + chunkId + "|" + indexName;
+      // ChunkCacheKey: fileName + "|" + chunkId + "|" + bufferSize "|" + indexName
       // FileCacheKey : fileName + "|M|"+ indexName;
       // FileListCacheKey : "*|" + indexName;
       // FileReadLockKey : fileName + "|RL|"+ indexName;
@@ -81,17 +81,21 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
          return new FileListCacheKey(key.substring(2));
       } else {
          String[] split = singlePipePattern.split(key);
-         if (split.length != 3) {
+         if (split.length != 3 && split.length != 4) {
             throw new IllegalArgumentException("Unexpected format of key in String form: " + key);
          } else {
             if ("M".equals(split[1])) {
+               if (split.length != 3) throw new IllegalArgumentException("Unexpected format of key in String form: " + key);
                return new FileCacheKey(split[2], split[0]);
             } else if ("RL".equals(split[1])) {
+               if (split.length != 3) throw new IllegalArgumentException("Unexpected format of key in String form: " + key);
                return new FileReadLockKey(split[2], split[0]);
             } else {
+               if (split.length != 4) throw new IllegalArgumentException("Unexpected format of key in String form: " + key);
                try {
-                  int parsedInt = Integer.parseInt(split[1]);
-                  return new ChunkCacheKey(split[2], split[0], parsedInt);
+                  int chunkId = Integer.parseInt(split[1]);
+                  int bufferSize = Integer.parseInt(split[1]);
+                  return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
                } catch (NumberFormatException nfe) {
                   throw new IllegalArgumentException("Unexpected format of key in String form: " + key, nfe);
                }
