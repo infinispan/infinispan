@@ -75,6 +75,13 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-core</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.scala-lang</groupId>
          <artifactId>scala-library</artifactId>
          <scope>test</scope>

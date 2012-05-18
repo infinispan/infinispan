@@ -33,7 +33,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -51,6 +50,9 @@ import java.util.Random;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -105,10 +107,10 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       assert manager(1).getCache() != null;
       assert manager(2).getCache() != null;
 
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 3, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
+      blockUntilViewReceived(manager(0).getCache(), 3, 10000);
+      blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
+      blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
+      blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
 
       manager(0).getCache().put("k", "v");
       manager(0).getCache().get("k").equals("v");
@@ -125,7 +127,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       remoteCacheManager = new RemoteCacheManager(props);
       remoteCache = remoteCacheManager.getCache();
 
-      tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      tcpConnectionFactory = (TcpTransportFactory) extractField(remoteCacheManager, "transportFactory");
    }
 
    protected void setHotRodProtocolVersion(Properties props) {
@@ -135,23 +137,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      try {
-         if (remoteCacheManager != null) remoteCacheManager.stop();
-      } finally {
-         try {
-            try {
-               if (hotRodServer1 != null) hotRodServer1.stop();
-            } finally {
-               try {
-                  if (hotRodServer2 != null) hotRodServer2.stop();
-               } finally {
-                  if (hotRodServer3 != null) hotRodServer3.stop();
-               }
-            }
-         } finally {
-            super.destroy();
-         }
-      }
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+      super.destroy();
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {

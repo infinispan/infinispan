@@ -25,6 +25,7 @@ package org.infinispan.loaders.remote;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -125,7 +126,10 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public boolean remove(Object key) throws CacheLoaderException {
-      return remoteCache.remove(key) != null;
+      // Less than ideal, but RemoteCache, since it extends Cache, can only
+      // know whether the operation succeded based on whether the previous
+      // value is null or not.
+      return remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove(key) != null;
    }
 
    @Override
