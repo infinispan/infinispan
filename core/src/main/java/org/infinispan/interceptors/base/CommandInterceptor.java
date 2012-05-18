@@ -29,7 +29,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -70,15 +69,6 @@ public abstract class CommandInterceptor extends AbstractVisitor {
 
    protected Configuration cacheConfiguration;
 
-   /**
-    * This configuration object is deprecated and can only be used in read-only
-    * mode. That means that changes to it won't be applied. If you want to make
-    * changes to the configuration, please use the {@link #cacheConfiguration}
-    * instance.
-    */
-   @Deprecated
-   protected org.infinispan.config.Configuration configuration;
-
    protected Log getLog() {
       return LogFactory.getLog(CommandInterceptor.class);
    }
@@ -86,7 +76,6 @@ public abstract class CommandInterceptor extends AbstractVisitor {
    @Inject
    private void injectConfiguration(Configuration configuration) {
       this.cacheConfiguration = configuration;
-      this.configuration = LegacyConfigurationAdaptor.adapt(cacheConfiguration);
    }
 
    /**

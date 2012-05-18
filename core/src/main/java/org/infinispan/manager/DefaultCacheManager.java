@@ -269,7 +269,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), true);
+      this(globalConfiguration, defaultConfiguration, true);
    }
 
    /**
@@ -758,7 +758,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    private void unregisterCacheMBean(Cache<?, ?> cache) {
-      if (cache.getConfiguration().isExposeJmxStatistics()) {
+      if (cache.getCacheConfiguration().jmxStatistics().enabled()) {
          cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class)
                  .unregisterCacheMBean();
       }
