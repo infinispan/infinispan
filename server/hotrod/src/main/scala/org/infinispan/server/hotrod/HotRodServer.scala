@@ -39,6 +39,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.remoting.transport.{Transport, Address}
 import org.infinispan.util.concurrent.ConcurrentMapFactory
+import annotation.tailrec
+import org.infinispan.context.Flag
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -136,7 +138,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
-      addressCache.put(clusterAddress, address)
+      addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD)
+              .put(clusterAddress, address)
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
@@ -210,12 +213,44 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       def viewIdUpdate(event: CacheEntryEvent[Address, ServerAddress]) {
          // Only update view id once cache has been updated
          if (!event.isPre) {
-            val localViewId = transport.getViewId
-            setViewId(localViewId)
-            if (isTrace) {
-               log.tracef("Address cache had %s for key %s. View id is now %d",
-                          event.getType, event.getKey, localViewId)
+            val cachedAddresses = event.getCache.keySet()
+            val clusterMembers = transport.getMembers
+            val newAddr = event.getKey
+            if (isCacheAndViewSynched(clusterMembers.iterator(), cachedAddresses, newAddr)) {
+               // Once the address cache has all the nodes in the view
+               val localViewId = transport.getViewId
+               setViewId(localViewId)
+               if (isTrace) {
+                  trace("Address cache had %s for key %s. View id is now %d",
+                     event.getType, event.getKey, localViewId)
+               }
+            } else if (isTrace) {
+               tracef("View [%s] (id=%d) is not yet fully present in address" +
+                       " cache [%s], with [%s] new joining node.",
+                  clusterMembers, transport.getViewId, cachedAddresses, newAddr)
             }
+         }
+      }
+
+      /**
+       * Check whether the address cache and the JGroups view are synched.
+       * They are considered to be synched when all the addresses in the
+       * JGroups view are present in the address cache.
+       *
+       * This check is necessary to make sure that the view id is only
+       * updated once the cache contains all the members in the cluster,
+       * otherwise partial views could be returned leading to uneven request
+       * balancing.
+       */
+      @tailrec
+      private def isCacheAndViewSynched(clusterIt: java.util.Iterator[Address],
+              addrs: java.util.Set[Address], newAddr: Address): Boolean = {
+         if (!clusterIt.hasNext) true
+         else {
+            val clusterAddr = clusterIt.next()
+            if (!addrs.contains(clusterAddr)
+                    && !newAddr.equals(clusterAddr)) false
+            else isCacheAndViewSynched(clusterIt, addrs, newAddr)
          }
       }
 
