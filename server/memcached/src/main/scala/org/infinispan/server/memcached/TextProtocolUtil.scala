@@ -98,7 +98,7 @@ object TextProtocolUtil {
 
    @tailrec
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
-      var next = buffer.readByte 
+      var next = buffer.readByte
       if (next == SP) { // Space
          (sb.toString.trim, false)
       }
@@ -148,20 +148,18 @@ object TextProtocolUtil {
 
    @tailrec
    def skipLine(buffer: ChannelBuffer) {
-      if (readableBytes(buffer) > 0) {
-         var next = buffer.readByte
-         if (next == CR) { // CR
-            next = buffer.readByte
-            if (next == LF) { // LF
-               return
-            } else {
-               skipLine(buffer)
-            }
-         } else if (next == LF) { //LF
+      var next = buffer.readByte
+      if (next == CR) { // CR
+         next = buffer.readByte
+         if (next == LF) { // LF
             return
          } else {
             skipLine(buffer)
          }
+      } else if (next == LF) { //LF
+         return
+      } else {
+         skipLine(buffer)
       }
    }
 
