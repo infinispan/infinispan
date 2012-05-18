@@ -26,13 +26,8 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,14 +36,12 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.net.SocketTimeoutException;
-import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * This test is used to verify that clients get a timeout when the server does
@@ -90,8 +83,8 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
 
    @AfterClass
    public void destroyRemoteCacheFactory() {
-      remoteCacheManager.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
    }
 
    @Test(expectedExceptions = SocketTimeoutException.class)

@@ -33,6 +33,9 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -57,8 +60,8 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
 
    @AfterTest(alwaysRun = true)
    public void release() {
-      if (cacheManager != null) cacheManager.stop();
-      if (hotrodServer != null) hotrodServer.stop();
+      killCacheManagers(cacheManager);
+      killServers(hotrodServer);
    }
 
    public void testGetCacheOperations() {

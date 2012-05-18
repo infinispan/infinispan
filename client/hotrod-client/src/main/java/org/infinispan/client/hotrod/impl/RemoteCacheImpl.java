@@ -371,6 +371,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       RemoveOperation removeOperation = operationsFactory.newRemoveOperation(obj2bytes(key, true));
       byte[] existingValue = (byte[]) removeOperation.execute();
+      // TODO: It sucks that you need the prev value to see if it works...
+      // We need to find a better API for RemoteCache...
       return (V) bytes2obj(existingValue);
    }
 
