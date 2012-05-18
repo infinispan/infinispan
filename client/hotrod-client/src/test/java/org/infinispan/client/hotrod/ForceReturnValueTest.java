@@ -29,6 +29,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertNull;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -44,20 +47,24 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cache = cacheManager.getCache();
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
-
-      remoteCacheManager = new RemoteCacheManager("localhost",hotrodServer.getPort());
-      remoteCache = remoteCacheManager.getCache();
-      return cacheManager;
+      // This method should be limited to starting the cache manager, to avoid
+      // leaks as a result of code after creating the cache manager failing.
+      return TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      remoteCacheManager = new RemoteCacheManager("localhost",hotrodServer.getPort());
+      remoteCache = remoteCacheManager.getCache();
+   }
 
-   @AfterClass
-   public void testDestroyRemoteCacheFactory() {
-      remoteCacheManager.stop();
-      hotrodServer.stop();
+   @AfterClass(alwaysRun = true)
+   public void destroy() {
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
+      super.teardown();
    }
 
    public void testPut() {
@@ -72,6 +79,11 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
       assert remoteCache.get("aKey").equals("aValue");
       assert "aValue".equals(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove("aKey"));
       assert !remoteCache.containsKey("aKey");
+   }
+
+   public void testRemoveNonExistForceReturnPrevious() {
+      assertNull(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove("aKey"));
+      remoteCache.put("k", "v");
    }
 
    public void testContains() {

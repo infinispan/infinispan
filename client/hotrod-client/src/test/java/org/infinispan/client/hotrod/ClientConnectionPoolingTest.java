@@ -31,7 +31,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,6 +43,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.testng.AssertJUnit.assertEquals;
+
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -110,8 +112,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool) TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
+      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) extractField(remoteCacheManager, "transportFactory");
+      connectionPool = (GenericKeyedObjectPool) extractField(tcpConnectionFactory, "connectionPool");
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
@@ -125,8 +127,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() throws ExecutionException, InterruptedException {
-      hotRodServer1.stop();
-      hotRodServer2.stop();
+      killServers(hotRodServer1, hotRodServer2);
 
       workerThread1.stop();
       workerThread2.stop();
@@ -142,7 +143,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       workerThread5.awaitTermination();
       workerThread6.awaitTermination();
 
-      remoteCacheManager.stop();
+      killRemoteCacheManager(remoteCacheManager);
    }
 
    @Test
