@@ -243,7 +243,7 @@ public class LegacyConfigurationAdaptor {
          if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
             clc = Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
          } else {
-            AbstractCacheStoreConfig acsc = new AbstractCacheStoreConfig();
+            AbstractCacheLoaderConfig acsc = new AbstractCacheLoaderConfig();
             acsc.setCacheLoaderClassName(((LoaderConfiguration) loader).cacheLoader().getClass().getName());
             clc = acsc;
          }
