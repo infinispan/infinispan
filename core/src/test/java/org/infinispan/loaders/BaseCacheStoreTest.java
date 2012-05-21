@@ -26,6 +26,7 @@ import static java.util.Collections.emptySet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -105,10 +107,12 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod(alwaysRun = false)
-   public void assertNoLocksHeld() {
+   public void assertNoLocksHeld(Method m) {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {
-         assert ((LockSupportCacheStore) cs).getTotalLockCount() == 0;
+         assert ((LockSupportCacheStore) cs).getTotalLockCount() == 0 :
+               "Lock count for test method " + m.getName() + " is "
+                     + ((LockSupportCacheStore) cs).getTotalLockCount();
       }
    }
 
