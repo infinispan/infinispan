@@ -47,7 +47,7 @@ import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.Test;
 
 /**
- * Tests the behaivour of the client upon a socket timeout exception
+ * Tests the behaviour of the client upon a socket timeout exception
  * and any invocation after that.
  *
  * @author Galder Zamarreño
