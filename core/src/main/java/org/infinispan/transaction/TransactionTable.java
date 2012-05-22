@@ -126,7 +126,8 @@ public class TransactionTable {
       this.clusteringLogic = clusteringDependentLogic;
    }
 
-   @Start
+   @Start(priority = 9) // Start before cache loader manager
+   @SuppressWarnings("unused")
    private void start() {
       final int concurrencyLevel = configuration.getConcurrencyLevel();
       localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
