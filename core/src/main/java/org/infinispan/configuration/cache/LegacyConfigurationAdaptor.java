@@ -287,6 +287,10 @@ public class LegacyConfigurationAdaptor {
          if (loader instanceof LoaderConfiguration)
             acsc.purgerThreads(loader.purgerThreads());
       }
+      else if (clc instanceof CacheLoaderConfig) {
+         Properties p = loader.properties();
+         if (p != null) XmlConfigHelper.setValues(clc, p, false, true);
+      }
       return clc;
    }
 
