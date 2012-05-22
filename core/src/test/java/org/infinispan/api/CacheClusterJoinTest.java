@@ -66,7 +66,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       assert 2 == memb1.size();
       assert memb1.equals(memb2);
 
-      cm1.stop();
+      TestingUtil.killCacheManagers(cm1);
       TestingUtil.blockUntilViewsReceived(50000, false, cm2);
       memb2 = cm2.getMembers();
       assert 1 == memb2.size();
@@ -82,7 +82,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       cm2.getCache("cache"); // this will make sure any lazy components are started.
       assert cm1.isCoordinator();
       assert !cm2.isCoordinator();
-      cm1.stop();
+      TestingUtil.killCacheManagers(cm1);
       // wait till cache2 gets the view change notification
       TestingUtil.blockUntilViewsReceived(50000, false, cm2);
       assert cm2.isCoordinator();

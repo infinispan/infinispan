@@ -115,7 +115,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     *
     * @param names List of names
     */
-   private Fqn(List<Object> names) {
+   private Fqn(List<?> names) {
       if (names != null)
          elements = names.toArray();
       else

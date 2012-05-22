@@ -24,6 +24,7 @@ package org.infinispan.loaders.jdbc;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.util.TypedProperties;
 
 import java.util.Properties;
 
@@ -114,8 +115,16 @@ public abstract class AbstractJdbcCacheStoreConfig extends LockSupportCacheStore
    }
 
    protected void setProperty(String properyValue, String propertyName, Properties p) {
-      if (properyValue != null)
-         p.setProperty(propertyName, properyValue);
+      if (properyValue != null) {
+         try {
+            p.setProperty(propertyName, properyValue);
+         } catch (UnsupportedOperationException e) {
+            // Most likely immutable, so let's work around that
+            TypedProperties writableProperties = new TypedProperties(p);
+            writableProperties.setProperty(propertyName, properyValue);
+            setProperties(writableProperties);
+         }
+      }
    }
 
 }

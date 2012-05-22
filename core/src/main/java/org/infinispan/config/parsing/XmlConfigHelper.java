@@ -467,7 +467,8 @@ public class XmlConfigHelper {
                }
             }
          }
-         if (!setterFound && failOnMissingSetter)
+         // Skip hot rod properties ...
+         if (!setterFound && failOnMissingSetter && !propName.startsWith("infinispan.client.hotrod"))
             throw new ConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter " + propName + " on class [" + objectClass + "]");
       }
    }
