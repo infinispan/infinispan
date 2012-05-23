@@ -7,6 +7,7 @@
         <indexing enabled="true">
             <properties>
                 <property name="hibernate.search.default.directory_provider" value="someDefault" />
+                <property name="hibernate.search.lucene_version" value="LUCENE_36" />
             </properties>
         </indexing>
     </default>
@@ -21,6 +22,7 @@
         <indexing enabled="true" indexLocalOnly="false">
             <properties>
                 <property name="hibernate.search.default.directory_provider" value="ram" />
+                <property name="hibernate.search.lucene_version" value="LUCENE_36" />
             </properties>
         </indexing>
     </namedCache>
@@ -30,6 +32,7 @@
             <properties>
                 <property name="hibernate.search.default.directory_provider" value="filesystem" />
                 <property name="hibernate.search.cats.exclusive_index_use" value="true" />
+                <property name="hibernate.search.lucene_version" value="LUCENE_36" />
             </properties>
         </indexing>
     </namedCache>
