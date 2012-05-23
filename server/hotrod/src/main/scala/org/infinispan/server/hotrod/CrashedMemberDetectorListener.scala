@@ -58,11 +58,12 @@ class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server
          val goneMembers = oldMembers.filterNot(newMembers contains _)
          if (!goneMembers.isEmpty) {
             // Consider doing removeAsync and then waiting for all removals...
-            if (!addressCache.getStatus.isTerminated)
+            if (addressCache.getStatus.allowInvocations()) {
                goneMembers.foreach(addressCache.remove(_))
-            // Only update view id once we've removed all addresses to
-            // guarantee that the cache will be up to date
-            updateViewdId(e)
+               // Only update view id once we've removed all addresses to
+               // guarantee that the cache will be up to date
+               updateViewdId(e)
+            }
          }
       } catch {
          case t: Throwable => logErrorDetectingCrashedMember(t)
