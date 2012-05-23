@@ -200,6 +200,7 @@ public class ExternalizerTable implements ObjectTable {
                      readerIndex), new InterruptedException());
             } else if (gcr.getStatus().isStopping() || gcr.getStatus().isTerminated()) {
                log.tracef("Cache manager is shutting down and type (id=%d) cannot be resolved (thread not interrupted)", readerIndex);
+               return null; // Temporary measure until AS7-3180 is fixed
             } else {
                throw new CacheException(String.format(
                      "Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)",

@@ -198,8 +198,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (isValid(req)) {
          ReplicableCommand cmd = null;
          try {
-            cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            return executeCommand(cmd, req);
+            Object o = req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
+            if (o != null) {
+               cmd = (ReplicableCommand) o;
+               return executeCommand(cmd, req);
+            }
+
+            return null; // Temporary measure until AS7-3180 is fixed
          } catch (InterruptedException e) {
             log.warnf("Shutdown while handling command %s", cmd);
             return new ExceptionResponse(new CacheException("Cache is shutting down"));
