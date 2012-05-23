@@ -25,8 +25,10 @@ package org.infinispan.query.config;
 import java.io.IOException;
 import java.util.Map;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -34,69 +36,60 @@ import org.testng.annotations.Test;
 public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testConfigurationFileParsing() throws IOException {
-      InfinispanConfiguration cfg = InfinispanConfiguration.newInfinispanConfiguration("configuration-parsing-test.xml", this.getClass().getClassLoader());
-      cfg.parseGlobalConfiguration();
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test.xml");
+      Configuration defaultConfiguration = holder.getDefaultConfigurationBuilder().build();
 
-      final Configuration defaultConfiguration = cfg.parseDefaultConfiguration();
-      defaultConfiguration.assertValid();
-      assert defaultConfiguration.getIndexingProperties().size() == 0;
-      assert defaultConfiguration.isIndexingEnabled() == false;
+      assert defaultConfiguration.indexing().properties().size() == 0;
+      assert defaultConfiguration.indexing().enabled() == false;
 
-      final Map<String, Configuration> namedConfigurations = cfg.parseNamedConfigurations();
+      final Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
 
-      final Configuration simpleCfg = namedConfigurations.get("simple");
-      simpleCfg.assertValid();
-      assert simpleCfg.isIndexingEnabled() == false;
-      assert simpleCfg.getIndexingProperties().size() == 0;
+      final Configuration simpleCfg = namedConfigurations.get("simple").build();
+      assert simpleCfg.indexing().enabled() == false;
+      assert simpleCfg.indexing().properties().size() == 0;
 
-      final Configuration memoryCfg = namedConfigurations.get("memory-searchable");
-      memoryCfg.assertValid();
-      assert memoryCfg.isIndexingEnabled();
-      assert memoryCfg.getIndexingProperties().size() == 1;
-      assert memoryCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("ram");
+      final Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
+      assert memoryCfg.indexing().enabled();
+      assert memoryCfg.indexing().properties().size() == 2;
+      assert memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("ram");
 
-      final Configuration diskCfg = namedConfigurations.get("disk-searchable");
-      diskCfg.assertValid();
-      assert diskCfg.isIndexingEnabled();
-      assert diskCfg.getIndexingProperties().size() == 2;
-      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
-      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
+      final Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
+      assert diskCfg.indexing().enabled();
+      assert diskCfg.indexing().properties().size() == 3;
+      assert diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
+      assert diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
    }
 
    public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {
-      InfinispanConfiguration cfg = InfinispanConfiguration.newInfinispanConfiguration("configuration-parsing-test-enbledInDefault.xml", this.getClass().getClassLoader());
-      cfg.parseGlobalConfiguration();
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test-enbledInDefault.xml");
+      Configuration defaultConfiguration = holder.getDefaultConfigurationBuilder().build();
 
-      final Configuration defaultConfiguration = cfg.parseDefaultConfiguration();
-      defaultConfiguration.assertValid();
-      assert defaultConfiguration.getIndexingProperties().size() == 1;
-      assert defaultConfiguration.isIndexingEnabled();
-      assert defaultConfiguration.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("someDefault");
+      assert defaultConfiguration.indexing().properties().size() == 2;
+      assert defaultConfiguration.indexing().enabled();
+      assert defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("someDefault");
 
-      final Map<String, Configuration> namedConfigurations = cfg.parseNamedConfigurations();
+      final Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
 
-      final Configuration nonSearchableCfg = namedConfigurations.get("not-searchable");
-      nonSearchableCfg.assertValid();
-      assert nonSearchableCfg.isIndexingEnabled() == false;
+      final Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
+      assert nonSearchableCfg.indexing().enabled() == false;
 
-      final Configuration simpleCfg = namedConfigurations.get("simple");
-      simpleCfg.assertValid();
-      assert simpleCfg.isIndexingEnabled() == false;
-      assert simpleCfg.getIndexingProperties().size() == 0;
+      final Configuration simpleCfg = namedConfigurations.get("simple").build();
+      assert simpleCfg.indexing().enabled() == true;
+      assert simpleCfg.indexing().properties().size() == 2;
 
-      final Configuration memoryCfg = namedConfigurations.get("memory-searchable");
-      memoryCfg.assertValid();
-      assert memoryCfg.isIndexingEnabled();
-      assert memoryCfg.isIndexLocalOnly() == false;
-      assert memoryCfg.getIndexingProperties().size() == 1;
-      assert memoryCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("ram");
+      final Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
+      assert memoryCfg.indexing().enabled();
+      assert memoryCfg.indexing().indexLocalOnly() == false;
+      assert memoryCfg.indexing().properties().size() == 2;
+      assert memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("ram");
 
-      final Configuration diskCfg = namedConfigurations.get("disk-searchable");
-      diskCfg.assertValid();
-      assert diskCfg.isIndexingEnabled();
-      assert diskCfg.isIndexLocalOnly();
-      assert diskCfg.getIndexingProperties().size() == 2;
-      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
-      assert diskCfg.getIndexingProperties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
+      final Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
+      assert diskCfg.indexing().enabled();
+      assert diskCfg.indexing().indexLocalOnly();
+      assert diskCfg.indexing().properties().size() == 3;
+      assert diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
+      assert diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
    }
 }
