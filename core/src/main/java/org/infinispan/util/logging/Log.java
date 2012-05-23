@@ -857,4 +857,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while processing a commit in a two-phase transaction", id = 188)
    void errorProcessing2pcCommitCommand(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "While stopping a cache or cache manager, one of its components failed to stop", id = 189)
+   void componentFailedToStop(@Cause Throwable e);
+
 }

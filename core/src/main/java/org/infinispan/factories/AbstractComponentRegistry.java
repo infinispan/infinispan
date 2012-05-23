@@ -671,7 +671,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       for (PrioritizedMethod em : stopMethods) {
          if (traceEnabled)
             getLog().tracef("Invoking stop method %s on component %s", em.metadata.getMethod(), em.component.getName());
-         em.invoke();
+         try {
+            em.invoke();
+         } catch (Throwable t) {
+            getLog().componentFailedToStop(t);
+         }
       }
 
       destroy();
