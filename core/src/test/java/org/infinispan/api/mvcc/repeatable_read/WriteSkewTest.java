@@ -71,7 +71,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void setUp() {
       Configuration c = new Configuration();
       c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      c.setLockAcquisitionTimeout(200);
+      c.setLockAcquisitionTimeout(3000);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       cacheManager = TestCacheManagerFactory.createCacheManager(c);
    }
