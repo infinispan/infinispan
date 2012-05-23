@@ -479,7 +479,11 @@ public class LegacyConfigurationAdaptor {
          .transactionSynchronizationRegistryLookup(legacy.getTransactionSynchronizationRegistryLookup())
          .useEagerLocking(legacy.isUseEagerLocking())
          .useSynchronization(legacy.isUseSynchronizationForTransactions());
-      
+
+      builder.versioning()
+            .enabled(legacy.isEnableVersioning())
+            .scheme(legacy.getVersioningScheme());
+
       builder.transaction().recovery().enabled(legacy.isTransactionRecoveryEnabled());
         
       builder.unsafe().unreliableReturnValues(legacy.isUnsafeUnreliableReturnValues());
