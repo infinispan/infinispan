@@ -54,6 +54,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S sendBufSize(int sendBufSize);
 
    /**
+    * Configures SSL
+    */
+   SslConfigurationBuilder ssl();
+
+   /**
     * Configures this builder using the specified properties
     */
    S withProperties(Properties properties);

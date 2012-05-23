@@ -58,9 +58,9 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    private val pipeline =
       if (configuration.idleTimeout > 0)
-         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, configuration.idleTimeout)
+         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, configuration.ssl, configuration.idleTimeout)
       else // Idle timeout logic is disabled with -1 or 0 values
-         new NettyChannelPipelineFactory(server, encoder, this)
+         new NettyChannelPipelineFactory(server, encoder, this, configuration.ssl)
 
    private val masterPool = new NioServerBossPool(Executors.newCachedThreadPool, 1, new ThreadNameDeterminer {
      override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {

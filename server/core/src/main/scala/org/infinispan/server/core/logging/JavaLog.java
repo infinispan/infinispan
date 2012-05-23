@@ -22,6 +22,7 @@
 
 package org.infinispan.server.core.logging;
 
+import org.infinispan.config.ConfigurationException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -89,4 +90,22 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
 
    @Message(value = "Send Buffer Size can't be lower than 0: %d", id = 5013)
    IllegalArgumentException illegalSendBufferSize(int sendBufSize);
+
+   @Message(value = "SSL Enabled but no KeyStore or KeyManagers specified", id = 5014)
+   ConfigurationException noSSLKeyManagerConfiguration();
+
+   @Message(value = "SSL Enabled but no TrustStore or TrustManagers specified", id = 5015)
+   ConfigurationException noSSLTrustManagerConfiguration();
+
+   @Message(value = "A password is required to open the KeyStore '%s'", id = 5016)
+   ConfigurationException missingKeyStorePassword(String keyStore);
+
+   @Message(value = "A password is required to open the TrustStore '%s'", id = 5017)
+   ConfigurationException missingTrustStorePassword(String trustStore);
+
+   @Message(value = "Cannot configure both keyStoreFileName and keyManagers at the same time", id = 5018)
+   ConfigurationException xorKeyStoreConfiguration();
+
+   @Message(value = "Cannot configure both trustStoreFileName and trustManagers at the same time", id = 5019)
+   ConfigurationException xorTrustStoreConfiguration();
 }

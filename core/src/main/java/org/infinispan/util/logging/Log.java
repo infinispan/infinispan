@@ -873,5 +873,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Custom interceptor '%s' doesn't specify a position", id = 225)
    ConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
+
+   @Message(value = "Error while initializing SSL context", id = 226)
+   ConfigurationException sslInitializationException(@Cause Throwable e);
 }
 

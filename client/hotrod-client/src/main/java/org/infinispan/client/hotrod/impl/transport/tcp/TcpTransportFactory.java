@@ -32,12 +32,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.SSLContext;
+
 import net.jcip.annotations.ThreadSafe;
 
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
+import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
@@ -46,6 +49,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.util.SslContextFactory;
 import org.infinispan.util.Util;
 
 /**
@@ -74,6 +78,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int soTimeout;
    private volatile int connectTimeout;
    private volatile int transportCount;
+   private volatile SSLContext sslContext;
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger topologyId) {
@@ -89,6 +94,12 @@ public class TcpTransportFactory implements TransportFactory {
          tcpNoDelay = configuration.tcpNoDelay();
          soTimeout = configuration.socketTimeout();
          connectTimeout = configuration.connectionTimeout();
+
+         if (configuration.ssl().enabled()) {
+            SslConfiguration ssl = configuration.ssl();
+            sslContext = SslContextFactory.getContext(ssl.keyManagers(), ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.trustManagers(), ssl.trustStoreFileName(), ssl.trustStorePassword());
+         }
+
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", servers);
             log.debugf("Load balancer class: %s", balancer.getClass().getName());
@@ -336,6 +347,11 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public int getConnectTimeout() {
       return connectTimeout;
+   }
+
+   @Override
+   public SSLContext getSSLContext() {
+      return sslContext;
    }
 
    /**

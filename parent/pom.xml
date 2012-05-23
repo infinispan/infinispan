@@ -166,7 +166,7 @@
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.8.5</version.mockito>
       <version.mysql.driver>5.1.19</version.mysql.driver>
-      <version.netty>3.6.1.Final</version.netty>
+      <version.netty>3.6.5.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.3.2.Final</version.resteasy>
       <version.rhq>4.2.0</version.rhq>

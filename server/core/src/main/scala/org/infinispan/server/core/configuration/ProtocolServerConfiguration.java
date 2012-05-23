@@ -30,15 +30,17 @@ public abstract class ProtocolServerConfiguration {
    private final int idleTimeout;
    private final int recvBufSize;
    private final int sendBufSize;
+   private final SslConfiguration ssl;
    private final boolean tcpNoDelay;
    private final int workerThreads;
 
-   protected ProtocolServerConfiguration(String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, boolean tcpNoDelay, int workerThreads) {
+   protected ProtocolServerConfiguration(String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
       this.host = host;
       this.port = port;
       this.idleTimeout = idleTimeout;
       this.recvBufSize = recvBufSize;
       this.sendBufSize = sendBufSize;
+      this.ssl = ssl;
       this.tcpNoDelay = tcpNoDelay;
       this.workerThreads = workerThreads;
    }
@@ -63,6 +65,10 @@ public abstract class ProtocolServerConfiguration {
       return sendBufSize;
    }
 
+   public SslConfiguration ssl() {
+      return ssl;
+   }
+
    public boolean tcpNoDelay() {
       return tcpNoDelay;
    }
@@ -73,8 +79,8 @@ public abstract class ProtocolServerConfiguration {
 
    @Override
    public String toString() {
-      return "ServerConfiguration [host=" + host + ", port=" + port + ", idleTimeout=" + idleTimeout + ", recvBufSize=" + recvBufSize + ", sendBufSize=" + sendBufSize
-            + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + "]";
+      return "ProtocolServerConfiguration [host=" + host + ", port=" + port + ", idleTimeout=" + idleTimeout + ", recvBufSize=" + recvBufSize + ", sendBufSize=" + sendBufSize
+            + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + "]";
    }
 
 }

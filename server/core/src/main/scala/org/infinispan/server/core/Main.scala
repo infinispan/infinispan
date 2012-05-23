@@ -57,6 +57,12 @@ object Main extends Log {
    val PROP_KEY_RECV_BUF_SIZE = "infinispan.server.recv_buf_size"
    val PROP_KEY_PROXY_HOST = "infinispan.server.proxy_host"
    val PROP_KEY_PROXY_PORT = "infinispan.server.proxy_port"
+   val PROP_KEY_USE_SSL = "infinispan.server.use_ssl"
+   val PROP_KEY_NEED_CLIENT_AUTH = "infinispan.server.need_client_auth"
+   val PROP_KEY_KEY_STORE_FILE_NAME = "infinispan.server.key_store_file_name"
+   val PROP_KEY_KEY_STORE_PASSWORD = "infinispan.server.key_store_password"
+   val PROP_KEY_TRUST_STORE_FILE_NAME = "infinispan.server.trust_store_file_name"
+   val PROP_KEY_TRUST_STORE_PASSWORD = "infinispan.server.trust_store_password"
    val PROP_KEY_TOPOLOGY_LOCK_TIMEOUT = "infinispan.server.topology.lock_timeout"
    val PROP_KEY_TOPOLOGY_REPL_TIMEOUT = "infinispan.server.topology.repl_timeout"
    val PROP_KEY_TOPOLOGY_STATE_TRANSFER = "infinispan.server.topology.state_transfer"
@@ -68,6 +74,8 @@ object Main extends Log {
    val TCP_NO_DELAY_DEFAULT = true
    val SEND_BUF_SIZE_DEFAULT = 0
    val RECV_BUF_SIZE_DEFAULT = 0
+   val USE_SSL_DEFAULT = false
+   val NEED_CLIENT_AUTH_DEFAULT = false
    val TOPO_LOCK_TIMEOUT_DEFAULT = 10000L
    val TOPO_REPL_TIMEOUT_DEFAULT = 10000L
    val TOPO_UPDATE_TIMEOUT_DEFAULT = 30000L

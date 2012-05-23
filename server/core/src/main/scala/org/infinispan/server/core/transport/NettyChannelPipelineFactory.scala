@@ -23,7 +23,11 @@
 package org.infinispan.server.core.transport
 
 import org.jboss.netty.channel._
+import org.jboss.netty.handler.ssl.SslHandler
 import org.infinispan.server.core.ProtocolServer
+import org.infinispan.server.core.configuration.SslConfiguration
+import javax.net.ssl.SSLEngine
+import org.infinispan.util.SslContextFactory
 
 /**
  * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that
@@ -35,11 +39,14 @@ import org.infinispan.server.core.ProtocolServer
  */
 class NettyChannelPipelineFactory(server: ProtocolServer,
                                   encoder: ChannelDownstreamHandler,
-                                  transport: NettyTransport)
+                                  transport: NettyTransport,
+                                  ssl: SslConfiguration)
       extends ChannelPipelineFactory {
 
    override def getPipeline: ChannelPipeline = {
       val pipeline = Channels.pipeline
+      if (ssl.enabled())
+         pipeline.addLast("ssl", new SslHandler(createSslEngine(ssl)))
       pipeline.addLast("decoder", server.getDecoder)
       if (encoder != null)
          pipeline.addLast("encoder", encoder)
@@ -49,6 +56,11 @@ class NettyChannelPipelineFactory(server: ProtocolServer,
 
    def stop {
       // No-op
+   }
+
+   def createSslEngine(ssl: SslConfiguration): SSLEngine = {
+         val sslContext = SslContextFactory.getContext(ssl.keyManagers(), ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.trustManagers(), ssl.trustStoreFileName(), ssl.trustStorePassword())
+         SslContextFactory.getEngine(sslContext, false, ssl.needClientAuth())
    }
 
 }

@@ -37,6 +37,8 @@ import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.net.ssl.SSLContext;
+
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -74,15 +76,21 @@ public class TcpTransport extends AbstractTransport {
       super(transportFactory);
       this.serverAddress = serverAddress;
       try {
-         socketChannel = SocketChannel.open();
-         socket = socketChannel.socket();
+         if (transportFactory.getSSLContext() != null) {
+            SSLContext sslContext = transportFactory.getSSLContext();
+            socketChannel = null; // We don't use a SocketChannel in the SSL case
+            socket = sslContext.getSocketFactory().createSocket();
+         } else {
+            socketChannel = SocketChannel.open();
+            socket = socketChannel.socket();
+         }
          socket.connect(serverAddress, transportFactory.getConnectTimeout());
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setSoTimeout(transportFactory.getSoTimeout());
          socketInputStream = new BufferedInputStream(socket.getInputStream(), socket.getReceiveBufferSize());
          // ensure we don't send a packet for every output byte
          socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());
-      } catch (IOException e) {
+      } catch (Exception e) {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
          throw new TransportException(message, e, serverAddress);
@@ -331,6 +339,7 @@ public class TcpTransport extends AbstractTransport {
       return socket.getRemoteSocketAddress();
    }
 
+   @Override
    public void invalidate() {
       invalid = true;
    }

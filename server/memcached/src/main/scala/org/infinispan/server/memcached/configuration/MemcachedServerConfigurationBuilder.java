@@ -41,7 +41,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(host, port, idleTimeout, recvBufSize, sendBufSize, tcpNoDelay, workerThreads);
+      return new MemcachedServerConfiguration(host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
    }
 
    public MemcachedServerConfiguration build(boolean validate) {
