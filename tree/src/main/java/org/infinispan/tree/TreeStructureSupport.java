@@ -35,18 +35,22 @@ public class TreeStructureSupport extends AutoBatchSupport {
    private static final Log log = LogFactory.getLog(TreeStructureSupport.class);
 
    protected final AdvancedCache<NodeKey, AtomicMap<?, ?>> cache;
-   protected final TreeContextContainer tcc = new TreeContextContainer();
 
    @SuppressWarnings("unchecked")
    public TreeStructureSupport(AdvancedCache<?, ?> cache, BatchContainer batchContainer) {
-      this.cache = (AdvancedCache<NodeKey, AtomicMap<?, ?>>) CacheAdapter.createAdapter(cache, tcc);
+      this.cache = (AdvancedCache<NodeKey, AtomicMap<?, ?>>) cache;
       this.batchContainer = batchContainer;
    }
 
    public boolean exists(Fqn f) {
+      return exists(cache, f);
+   }
+
+   protected boolean exists(AdvancedCache<?, ?> cache, Fqn f) {
       startAtomic();
       try {
-         return cache.containsKey(new NodeKey(f, NodeKey.Type.DATA)) && cache.containsKey(new NodeKey(f, NodeKey.Type.STRUCTURE));
+         return cache.containsKey(new NodeKey(f, NodeKey.Type.DATA))
+               && cache.containsKey(new NodeKey(f, NodeKey.Type.STRUCTURE));
       }
       finally {
          endAtomic();
@@ -79,9 +83,36 @@ public class TreeStructureSupport extends AutoBatchSupport {
       }
    }
 
+   protected boolean createNodeInCache(AdvancedCache<?, ?> cache, Fqn fqn) {
+      startAtomic();
+      try {
+         NodeKey dataKey = new NodeKey(fqn, NodeKey.Type.DATA);
+         NodeKey structureKey = new NodeKey(fqn, NodeKey.Type.STRUCTURE);
+         if (cache.containsKey(dataKey) && cache.containsKey(structureKey)) return false;
+         Fqn parent = fqn.getParent();
+         if (!fqn.isRoot()) {
+            if (!exists(cache, parent)) createNodeInCache(cache, parent);
+            AtomicMap<Object, Fqn> parentStructure = getStructure(cache, parent);
+            parentStructure.put(fqn.getLastElement(), fqn);
+         }
+         getAtomicMap(cache, structureKey);
+         getAtomicMap(cache, dataKey);
+         if (log.isTraceEnabled()) log.tracef("Created node %s", fqn);
+         return true;
+      }
+      finally {
+         endAtomic();
+      }
+   }
+
    AtomicMap<Object, Fqn> getStructure(Fqn fqn) {
       return getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
    }
+
+   private AtomicMap<Object, Fqn> getStructure(AdvancedCache<?, ?> cache, Fqn fqn) {
+      return getAtomicMap(cache, new NodeKey(fqn, NodeKey.Type.STRUCTURE));
+   }
+
 
    public static boolean isLocked(LockManager lockManager, Fqn fqn) {
       return ((lockManager.isLocked(new NodeKey(fqn, NodeKey.Type.STRUCTURE)) &&
@@ -118,7 +149,11 @@ public class TreeStructureSupport extends AutoBatchSupport {
    }
 
    protected final <K, V> AtomicMap<K, V> getAtomicMap(NodeKey key) {
-      return AtomicMapLookup.getAtomicMap(cache, key, tcc);
+      return AtomicMapLookup.getAtomicMap(cache, key);
+   }
+
+   protected final <K, V> AtomicMap<K, V> getAtomicMap(AdvancedCache<?, ?> cache, NodeKey key) {
+      return AtomicMapLookup.getAtomicMap((AdvancedCache<NodeKey, AtomicMap<?, ?>>) cache, key);
    }
 
 }

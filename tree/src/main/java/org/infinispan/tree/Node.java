@@ -237,7 +237,7 @@ public interface Node<K, V> {
     */
    boolean replace(K key, V oldValue, V newValue);
 
-   boolean replace(K key, V oldValue, V value, Flag... flags);
+   boolean replace(K key, V oldValue, V newValue, Flag... flags);
 
 
    /**
