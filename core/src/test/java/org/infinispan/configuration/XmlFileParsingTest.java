@@ -200,14 +200,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testVersioning() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
-      "<default>\n" +
-      "<locking isolationLevel=\"REPEATABLE_READ\" lockAcquisitionTimeout=\"15000\" writeSkewCheck=\"true\"/>\n" +
-      "<transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" transactionMode=\"TRANSACTIONAL\" lockingMode=\"OPTIMISTIC\"/>\n" +
-      "<invocationBatching enabled=\"true\"/>\n" +
-      "<versioning versioningScheme=\"SIMPLE\" enabled=\"true\"/>\n" +
-      "<clustering mode=\"LOCAL\"/>\n" +
-      "</default>\n" +
-      "</infinispan>\n" + INFINISPAN_END_TAG;
+         "<default>\n" +
+         "<locking isolationLevel=\"REPEATABLE_READ\" lockAcquisitionTimeout=\"15000\" writeSkewCheck=\"true\"/>\n" +
+         "<transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" transactionMode=\"TRANSACTIONAL\" lockingMode=\"OPTIMISTIC\"/>\n" +
+         "<invocationBatching enabled=\"true\"/>\n" +
+         "<versioning versioningScheme=\"SIMPLE\" enabled=\"true\"/>\n" +
+         "<clustering mode=\"LOCAL\"/>\n" +
+         "</default>\n" + INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
       EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
       cm.getDefaultCacheConfiguration();
