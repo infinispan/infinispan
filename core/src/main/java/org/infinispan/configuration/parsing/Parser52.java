@@ -64,8 +64,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
@@ -77,8 +75,6 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
  * @since 5.2
  */
 public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Log log = LogFactory.getLog(Parser52.class);
 
    private static final Namespace NAMESPACES[] = {
       new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 2),

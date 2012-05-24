@@ -29,7 +29,7 @@ import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -114,14 +114,11 @@ public class AbstractEmbeddedCacheManagerFactory {
       return templateConfiguration;
    }
 
-   private ConfigurationContainer loadConfigurationFromFile(final Resource configFileLocation)
-            throws ConfigurationException, IOException {
+   private ConfigurationContainer loadConfigurationFromFile(final Resource configFileLocation) throws ConfigurationException, IOException {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
       final InputStream configFileInputStream = configFileLocation.getInputStream();
       try {
-         ConfigurationBuilderHolder parsed = 
-               new Parser(Thread.currentThread().getContextClassLoader())
-                     .parse(configFileInputStream);
-
+         ConfigurationBuilderHolder parsed = parserRegistry.parse(configFileInputStream);
          return new ConfigurationContainer(parsed);
       } finally {
          configFileInputStream.close();

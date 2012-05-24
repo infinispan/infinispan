@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -268,17 +269,13 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, configuration, new Configuration(), enforceJmxDomain);
    }
 
-   public static EmbeddedCacheManager createCacheManager(Configuration.CacheMode mode, boolean indexing) {
-      GlobalConfiguration gc = mode.isClustered() ? GlobalConfiguration.getClusteredDefault() : GlobalConfiguration.getNonClusteredDefault();
-      Configuration c = new Configuration();
-      FluentConfiguration fluentConfiguration = c.fluent();
-      if (indexing) {
-         //The property is not really needed as it defaults to the same value,
-         //but since it's recommended we set it explicitly to avoid logging a noisy warning.
-         fluentConfiguration.indexing().addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      }
-      fluentConfiguration.mode(mode);
-      return createCacheManager(gc, fluentConfiguration.build());
+   public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+         .clustering()
+            .cacheMode(mode)
+         .indexing().enabled(indexing);
+      return createCacheManager(builder);
    }
 
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {

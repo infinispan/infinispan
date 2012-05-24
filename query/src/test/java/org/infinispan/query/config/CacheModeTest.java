@@ -22,7 +22,7 @@
  */
 package org.infinispan.query.config;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -33,23 +33,24 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.config.CacheModeTest")
 public class CacheModeTest extends AbstractInfinispanTest {
+
    public void testLocal() {
-      doTest(Configuration.CacheMode.LOCAL);
+      doTest(CacheMode.LOCAL);
    }
 
    public void testReplicated() {
-      doTest(Configuration.CacheMode.REPL_SYNC);
+      doTest(CacheMode.REPL_SYNC);
    }
 
    public void testInvalidated() {
-      doTest(Configuration.CacheMode.INVALIDATION_SYNC);
+      doTest(CacheMode.INVALIDATION_SYNC);
    }
 
    public void testDistributed() {
-      doTest(Configuration.CacheMode.DIST_SYNC);
+      doTest(CacheMode.DIST_SYNC);
    }
 
-   private void doTest(Configuration.CacheMode m) {
+   private void doTest(CacheMode m) {
       CacheContainer cc = null;
       try {
          cc = TestCacheManagerFactory.createCacheManager(m, true);
