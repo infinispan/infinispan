@@ -130,7 +130,8 @@ public class TransactionTable {
       this.cacheName = cache.getName();
    }
 
-   @Start
+   @Start(priority = 9) // Start before cache loader manager
+   @SuppressWarnings("unused")
    private void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
