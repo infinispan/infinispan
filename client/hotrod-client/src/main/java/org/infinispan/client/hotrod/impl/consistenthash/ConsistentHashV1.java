@@ -23,6 +23,7 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -45,8 +46,11 @@ import org.jboss.logging.BasicLogger;
 public class ConsistentHashV1 implements ConsistentHash {
 
    private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashV1.class);
-   
+
    private final SortedMap<Integer, SocketAddress> positions = new TreeMap<Integer, SocketAddress>();
+
+   private volatile int[] hashes;
+   private volatile SocketAddress[] addresses;
 
    private int hashSpace;
 
@@ -58,7 +62,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace) {
-      for (Map.Entry<SocketAddress, Set<Integer>> entry : servers2Hash.entrySet()){
+      for (Map.Entry<SocketAddress, Set<Integer>> entry : servers2Hash.entrySet()) {
          SocketAddress addr = entry.getKey();
          for (Integer hash : entry.getValue()) {
             SocketAddress prev = positions.put(hash, addr);
@@ -68,6 +72,14 @@ public class ConsistentHashV1 implements ConsistentHash {
       }
 
       log.tracef("Positions (%d entries) are: %s", positions.size(), positions);
+
+      hashes = new int[servers2Hash.size()];
+      Iterator<Integer> it = positions.keySet().iterator();
+      for (int i = 0; i < hashes.length; i++) {
+         hashes[i] = it.next();
+      }
+      addresses = positions.values().toArray(new SocketAddress[servers2Hash.size()]);
+
       this.hashSpace = hashSpace;
       this.numKeyOwners = numKeyOwners;
    }
@@ -78,37 +90,32 @@ public class ConsistentHashV1 implements ConsistentHash {
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
 
-      SortedMap<Integer, SocketAddress> candidates = positions.tailMap(hash % hashSpace);
-      if (log.isTraceEnabled()) {
-         log.tracef("Found possible candidates: %s", candidates);
-      }
-      int index = getIndex();
-      if (candidates.size() <= index) {
-         int newIndex = index - candidates.size();
-         SocketAddress socketAddress = getItemAtPosition(newIndex, positions);
-         if (log.isTraceEnabled()) {
-            log.tracef("Over the wheel, returning member: %s", socketAddress);
-         }
-         return socketAddress;
+      int normalisedHashForKey = hash % hashSpace;
+
+      int mainOwner = getHashIndex(normalisedHashForKey);
+      int randomOwner = getIndex();
+
+      int indexToReturn = (mainOwner + randomOwner) % hashes.length;
+
+      return addresses[indexToReturn];
+   }
+
+   private int getHashIndex(int normalisedHashForKey) {
+      int result = Arrays.binarySearch(hashes, normalisedHashForKey);
+      if (result > 0) {//the normalisedHashForKey has an exact match in the hashes array
+         return result;
       } else {
-         SocketAddress socketAddress = getItemAtPosition(index, candidates);
-         if (log.isTraceEnabled()) {
-            log.tracef("Found candidate: %s", socketAddress);
+         //see javadoc for Arrays.binarySearch, @return tag in particular
+         if (result == (-hashes.length - 1)) {
+            return 0;
+         } else {
+            return -result - 1;
          }
-         return socketAddress;
       }
    }
 
    private int getIndex() {
       return rnd.nextInt(Math.min(numKeyOwners, positions.size()));
-   }
-
-   private SocketAddress getItemAtPosition(int position, SortedMap<Integer, SocketAddress> map) {
-      Iterator<Map.Entry<Integer,SocketAddress>> iterator = map.entrySet().iterator();
-      for (int i = 0; i < position; i++) {
-         iterator.next();
-      }
-      return iterator.next().getValue();
    }
 
    public void setHash(Hash hash) {
@@ -119,5 +126,4 @@ public class ConsistentHashV1 implements ConsistentHash {
    public int getNormalizedHash(Object key) {
       return Util.getNormalizedHash(key, hash);
    }
-
 }
