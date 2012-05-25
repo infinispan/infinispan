@@ -75,7 +75,7 @@ import java.util.Set;
 /**
  * A persistent <code>CacheLoader</code> based on Apache Cassandra project. See
  * http://cassandra.apache.org/
- * 
+ *
  * @author Tristan Tarrant
  */
 @CacheLoaderMetadata(configurationClass = CassandraCacheStoreConfig.class)
@@ -528,8 +528,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
          SlicePredicate predicate = new SlicePredicate();
          predicate.setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER, ByteBufferUtil
                   .bytes(System.currentTimeMillis()), false, SLICE_SIZE));
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+
          for (boolean complete = false; !complete;) {
+            Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(SLICE_SIZE);
             // Get all columns
             List<ColumnOrSuperColumn> slice = cassandraClient.get_slice(expirationKey,
                      expirationColumnParent, predicate, readConsistencyLevel);
@@ -546,8 +547,8 @@ public class CassandraCacheStore extends AbstractCacheStore {
                addMutation(mutationMap, expirationKey, config.expirationColumnFamily,
                         ByteBuffer.wrap(scol.getName()), null, null);
             }
+            cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
          }
-         cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       } finally {
