@@ -274,8 +274,16 @@ public class TestCacheManagerFactory {
       builder
          .clustering()
             .cacheMode(mode)
-         .indexing().enabled(indexing);
-      return createCacheManager(builder);
+         .indexing()
+            .enabled(indexing)
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+         ;
+      if (mode.isClustered()) {
+         return createClusteredCacheManager(builder);
+      }
+      else {
+         return createCacheManager(builder);
+      }
    }
 
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {
