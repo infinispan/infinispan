@@ -215,7 +215,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "<versioning versioningScheme=\"SIMPLE\" enabled=\"true\"/>\n" +
             "<clustering mode=\"LOCAL\"/>\n" +
             "</default>\n" +
-            "</infinispan>\n" + INFINISPAN_END_TAG;
+            INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
       EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
       cm.getDefaultCacheConfiguration();
