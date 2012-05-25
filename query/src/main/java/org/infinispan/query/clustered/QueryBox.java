@@ -25,9 +25,7 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
-import org.infinispan.query.logging.Log;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -63,8 +61,6 @@ public class QueryBox {
 
    // the local cache instance
    private AdvancedCache<?, ?> cache;
-
-   private static final Log log = LogFactory.getLog(QueryBox.class, Log.class);
 
    private KeyTransformationHandler keyTransformationHandler;
 

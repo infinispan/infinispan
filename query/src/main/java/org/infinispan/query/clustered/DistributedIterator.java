@@ -89,7 +89,7 @@ public class DistributedIterator extends AbstractIterator {
          if (scoreDoc == null) {
             return;
          }
-         ClusteredTopDocs topDoc = rechargeQueue(scoreDoc);
+         rechargeQueue(scoreDoc);
       }
    }
 
