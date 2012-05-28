@@ -257,7 +257,7 @@ public class ResourceDMBean implements DynamicMBean {
       }
 
       if (opInfo == null) {
-         final String msg = "Operation " + name + " not in ModelMBeanInfo";
+         final String msg = "Operation " + name + " not amongst operations in " + opInfos;
          throw new MBeanException(new ServiceNotFoundException(msg), msg);
       }
 
