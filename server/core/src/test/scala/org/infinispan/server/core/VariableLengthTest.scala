@@ -26,6 +26,7 @@ import org.testng.annotations.Test
 import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
 import transport.ExtendedChannelBuffer._
+import org.infinispan.util.Util
 
 /**
  * Variable length number test.
@@ -110,6 +111,15 @@ class VariableLengthTest {
       assert(buffer.writerIndex == 0)
       writeUnsignedLong(9223372036854775807L, buffer)
       readUnsignedInt(buffer)
+   }
+
+   @Test(enabled = false)
+   def testPrintHexadecimalVint {
+      val buffer = ChannelBuffers.directBuffer(1024)
+      assert(buffer.writerIndex == 0)
+      writeUnsignedLong(512, buffer)
+      println(Util.hexDump(buffer.toByteBuffer))
+      println
    }
 
 //   def test2pow63() {

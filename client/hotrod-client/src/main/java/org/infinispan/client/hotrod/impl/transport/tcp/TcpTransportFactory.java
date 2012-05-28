@@ -196,9 +196,9 @@ public class TcpTransportFactory implements TransportFactory {
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
             log.tracef("Current list: %s", servers);
-            log.tracef("New list: ", newServers);
-            log.tracef("Added servers: ", addedServers);
-            log.tracef("Removed servers: ", failedServers);
+            log.tracef("New list: %s", newServers);
+            log.tracef("Added servers: %s", addedServers);
+            log.tracef("Removed servers: %s", failedServers);
          }
          if (failedServers.isEmpty() && newServers.isEmpty()) {
             log.debug("Same list of servers, not changing the pool");
