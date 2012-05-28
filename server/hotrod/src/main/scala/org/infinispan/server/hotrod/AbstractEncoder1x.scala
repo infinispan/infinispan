@@ -220,6 +220,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       buffer.writeByte(hashFct) // Hash function
       writeUnsignedInt(hashSpace, buffer) // Hash space
       writeUnsignedInt(numServers, buffer)
+      trace("Topology will contain %d addresses", numServers)
    }
 
 }

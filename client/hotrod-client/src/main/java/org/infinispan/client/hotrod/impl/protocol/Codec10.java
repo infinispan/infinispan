@@ -180,11 +180,12 @@ public class Codec10 implements Codec {
             transport, localLog, newTopologyId, numKeyOwners,
             hashFunctionVersion, hashSpace, clusterSize);
 
+      Set<SocketAddress> socketAddresses = servers2Hash.keySet();
       if (localLog.isInfoEnabled()) {
          localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
-               servers2Hash.keySet());
+               socketAddresses.size(), socketAddresses);
       }
-      transport.getTransportFactory().updateServers(servers2Hash.keySet());
+      transport.getTransportFactory().updateServers(socketAddresses);
       if (hashFunctionVersion == 0) {
          localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
