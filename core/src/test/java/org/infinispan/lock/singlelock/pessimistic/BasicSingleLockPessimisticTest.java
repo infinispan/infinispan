@@ -111,7 +111,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       } catch (Throwable e) {
          //ignore
       } finally {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       assertNotLocked(k1);
@@ -132,14 +132,14 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       } catch (Throwable e) {
          //expected
       } finally {
-         tm(1).suspend();
+         tm(1).rollback();
       }
       assertNotLocked(k1);
 
       eventually(new AbstractInfinispanTest.Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0);
+            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(1, 0, 0);
          }
       });
 
