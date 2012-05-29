@@ -102,7 +102,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    private int getHashIndex(int normalisedHashForKey) {
       int result = Arrays.binarySearch(hashes, normalisedHashForKey);
-      if (result > 0) {//the normalisedHashForKey has an exact match in the hashes array
+      if (result >= 0) {//the normalisedHashForKey has an exact match in the hashes array
          return result;
       } else {
          //see javadoc for Arrays.binarySearch, @return tag in particular
