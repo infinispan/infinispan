@@ -106,16 +106,13 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       //distributionManager.getTransactionLogger().enable();
       stateTransferLock.blockNewTransactions(newViewId);
 
-      if (trace) {
-         log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
-      }
+      if (trace) log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
+      int numOwners = configuration.getNumOwners();
 
       if (configuration.isRehashEnabled() && !initialView) {
 
          // notify listeners that a rehash is about to start
          cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
-
-         int numOwners = configuration.getNumOwners();
 
          // Contains the state to be pushed to various servers. The state is a hashmap of servers to entry collections
          final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
@@ -156,8 +153,30 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
          
          // And wait for all the push RPCs to end
          finishPushingState();
+      } else if (initialView) {
+         // Only remove data from the cache store if the cache store is not shared
+         CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
+         if (cacheStore != null) {
+            if (trace) log.trace("Non-shared cache store, cleaning up persisted entries that we don't own after we joined the cache");
+            for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+               if (!chNew.isKeyLocalToAddress(self, key, numOwners)) {
+                  keysToRemove.add(key);
+               }
+            }
+         }
+
+         checkIfCancelled();
+
+         if (trace) log.trace("Cleaning up preloaded entries (if preloading) that we don't own after we joined the cache");
+         for (InternalCacheEntry ice : dataContainer) {
+            if (!chNew.isKeyLocalToAddress(self, ice.getKey(), numOwners)) {
+               keysToRemove.add(ice.getKey());
+            }
+         }
+         if (trace) log.tracef("Keys to remove after join is complete: %s", keysToRemove.size());
+
       } else {
-         if (!initialView) log.trace("Rehash not enabled, so not pushing state");
+         if (trace) log.trace("Rehash not enabled, so not pushing state");
       }
    }
 
@@ -188,11 +207,13 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       // update the distribution manager's consistent hash
       dm.setConsistentHash(chNew);
 
-      if (configuration.isRehashEnabled() && !initialView) {
+      if (configuration.isRehashEnabled()) {
          // now we can invalidate the keys
          stateTransferManager.invalidateKeys(keysToRemove);
 
-         cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+         if (!initialView) {
+            cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+         }
       }
 
       super.commitStateTransfer();
