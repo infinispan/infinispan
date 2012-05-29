@@ -50,7 +50,7 @@ import org.testng.annotations.Test;
 public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTest {
 
    // createCacheManager executes before any @BeforeClass defined in the class, so simply use standard tmp folder.
-   private final String tmpDirectory = TestingUtil.tmpDirectory("/tmp", this);
+   private final String tmpDirectory = TestingUtil.tmpDirectory(this);
 
    private Cache cache1, cache2;
 

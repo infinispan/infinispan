@@ -153,7 +153,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
             .addCacheLoader(
                new FileCacheStoreConfig()
                   .purgeOnStartup(true)
-                  .location("/tmp2").streamBufferSize(1615)
+                  .location("/tmp/2").streamBufferSize(1615)
                   .asyncStore()
                      .threadPoolSize(14).flushLockTimeout(777L)
                      .shutdownTimeout(666L)
@@ -304,7 +304,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert dummyStoreConfig.isPurgeSynchronously();
 
       FileCacheStoreConfig storeConfig = (FileCacheStoreConfig) c.getCacheLoaders().get(0);
-      assertEquals("/tmp2", storeConfig.getLocation());
+      assertEquals("/tmp/2", storeConfig.getLocation());
       assert 1615 == storeConfig.getStreamBufferSize();
       assert storeConfig.isPurgeOnStartup();
       assert 14 == storeConfig.getAsyncStoreConfig().getThreadPoolSize();
