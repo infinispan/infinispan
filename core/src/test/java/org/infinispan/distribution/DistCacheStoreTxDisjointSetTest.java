@@ -24,7 +24,8 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -47,17 +48,18 @@ import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.setCacheLoaderManagerConfig(new CacheLoaderManagerConfig(new DummyInMemoryCacheStore.Cfg("DistCacheStoreTxDisjointSetTest0")));
-      addClusterEnabledCacheManager(c);
-
-      c.setCacheLoaderManagerConfig(new CacheLoaderManagerConfig(new DummyInMemoryCacheStore.Cfg("DistCacheStoreTxDisjointSetTest1")));
-      addClusterEnabledCacheManager(c);
-
-      c.setCacheLoaderManagerConfig(new CacheLoaderManagerConfig(new DummyInMemoryCacheStore.Cfg("DistCacheStoreTxDisjointSetTest2")));
-      addClusterEnabledCacheManager(c);
+      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest0"));
+      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest1"));
+      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest2"));
 
       waitForClusterToForm();
+   }
+
+   private ConfigurationBuilder buildCacheConfig(String storeName) {
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cb.clustering().hash().numVirtualNodes(1);
+      cb.loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore(storeName));
+      return cb;
    }
 
    public void testDisjointSetTransaction() throws Exception {
