@@ -87,7 +87,7 @@ public class TestingUtil {
 
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
-   public static final String TEST_PATH = "target" + separator + "tempFiles";
+   public static final String TEST_PATH = "infinispanTempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
@@ -1125,20 +1125,17 @@ public class TestingUtil {
    }
 
    /**
-    * Creates a path to a temp directory based on a base directory and a test.
+    * Creates a path to a unique (per test) temporary directory.
+    * By default, the directory is created in the platform's temp directory, but the location
+    * can be overridden with the {@code infinispan.test.tmpdir} system property.
     *
-    * @param basedir may be null, if relative directories are to be used.
-    * @param test    test that requires this directory.
+    * @param test  test that requires this directory.
     *
-    * @return a path, relative or absolute.
+    * @return an absolute path
     */
-   public static String tmpDirectory(String basedir, AbstractInfinispanTest test) {
-      String prefix = "";
-      if (basedir != null) {
-         prefix = basedir;
-         if (!prefix.endsWith(separator)) prefix += separator;
-      }
-      return prefix + TEST_PATH + separator + test.getClass().getSimpleName();
+   public static String tmpDirectory(AbstractInfinispanTest test) {
+      String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
+      return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 
    public static String k(Method method, int index) {
