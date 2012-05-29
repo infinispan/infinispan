@@ -229,6 +229,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
             return false;
          }
          return true;
-      }          
+      }
+
+      @Override
+      public String toString() {
+         //This is used by logger messages when debugging
+         return "ApplyDeltaCommand#DeltaCompositeKey[deltaAwareValueKey=" + deltaAwareValueKey + ", entryKey=" + entryKey + ']';
+      }
    }
 }
