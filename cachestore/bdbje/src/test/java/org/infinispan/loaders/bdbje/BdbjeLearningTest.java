@@ -99,9 +99,8 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
    private String tmpDirectory;
 
    @BeforeTest
-   @Parameters("basedir")
-   protected void setUpTempDir(@Optional("/tmp") String basedir) {
-      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
+   protected void setUpTempDir() {
+      tmpDirectory = TestingUtil.tmpDirectory(this);
    }
 
    @AfterTest

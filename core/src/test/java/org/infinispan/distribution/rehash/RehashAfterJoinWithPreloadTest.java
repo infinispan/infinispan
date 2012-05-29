@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 /**
  * Test with a distributed cache (numOwners=1), a shared cache store and 'preload' enabled
  * (ISPN-1964).
- * 
+ *
  * @author Carsten Lohmann
  */
 @Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional")
@@ -50,7 +50,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    private final String testCacheName = "testCache" + getClass().getSimpleName();
 
-   private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory("/tmp", this);
+   private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this);
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -141,7 +141,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       log.debug("----------------------------------------------------");
       for (int i = 0; i < getCacheManagers().size(); i++) {
          log.debug(" Content of Cache with CacheManager #" + i + " (" + address(i) + ", all members: "
-                  + manager(i).getMembers() + ")");
+               + manager(i).getMembers() + ")");
          Cache<String, String> testCache = manager(i).getCache(testCacheName);
          for (String key : testCache.keySet()) {
             log.debug("  key: " + key + "  value: " + testCache.get(key));
