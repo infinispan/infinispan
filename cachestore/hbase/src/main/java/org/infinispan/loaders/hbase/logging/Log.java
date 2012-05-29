@@ -31,7 +31,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 
 /**
  * Log abstraction for the HBase store. For this module, message ids
- * ranging from 3001 to 4000 inclusively have been reserved.
+ * ranging from 18001 to 19000 inclusively have been reserved.
  *
  * @author Justin Hayes
  * @since 5.2
@@ -40,7 +40,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error removing key %s", id = 3001)
+   @Message(value = "Error removing key %s", id = 18001)
    void errorRemovingKey(Object key, @Cause Exception e);
 
 }
