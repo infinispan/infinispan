@@ -152,7 +152,7 @@ public class ConsistentHashV1Test {
       v1.getServer(new byte[0]);
    }
 
-   public class DummyHash implements Hash {
+   public static class DummyHash implements Hash {
 
       public int value;
 
