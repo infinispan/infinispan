@@ -132,7 +132,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
          cache(0).put(k, "v1");
          assert false;
       } catch (Exception e) {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       tm(1).resume(transaction);

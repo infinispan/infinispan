@@ -214,8 +214,6 @@ public class TxInterceptor extends CommandInterceptor {
          if (ctx.isOriginLocal() && ctx.isInTxScope() && !ctx.hasFlag(Flag.FAIL_SILENTLY)) {
             TxInvocationContext txCtx = (TxInvocationContext) ctx;
             txCtx.getTransaction().setRollbackOnly();
-            final LocalTransaction cacheTransaction = (LocalTransaction) txCtx.getCacheTransaction();
-            txTable.removeLocalTransaction(cacheTransaction);
          }
          throw throwable;
       }
