@@ -117,7 +117,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
          // ByteMan apparently supports testng since 1.5.1 but no clear
          // example out there, with more time it should be considered.
          String threadName = Thread.currentThread().getName();
-         if (threadName.startsWith("HotRodServerWorker")) {
+         if (threadName.startsWith("HotRod")) {
             log.info("Thread is a HotRod server worker thread, so force wait");
             try {
                // Wait a max of 3 minutes, otherwise socket timeout's not working
