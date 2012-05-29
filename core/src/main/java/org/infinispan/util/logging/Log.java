@@ -67,8 +67,8 @@ import static org.jboss.logging.Logger.Level.*;
  * Infinispan's log abstraction layer on top of JBoss Logging.
  * <p/>
  * It contains explicit methods for all INFO or above levels so that they can
- * be internationalized. For the core module, message ids ranging from 00001
- * to 2000 inclusively have been reserved.
+ * be internationalized. For the core module, message ids ranging from 0001
+ * to 1000 inclusively have been reserved.
  * <p/>
  * <code> Log log = LogFactory.getLog( getClass() ); </code> The above will get
  * you an instance of <tt>Log</tt>, which can be used to generate log messages
