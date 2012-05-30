@@ -821,6 +821,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    @Deprecated public static interface JmxStatisticsConfig extends FluentTypes {}
 
    @Deprecated public static interface InvocationBatchingConfig extends FluentTypes {
+
+      InvocationBatchingConfig disable();
+
    }
 }
 

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2012 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this library; if not, write to the Free Software
+  ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA
+  -->
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+      xmlns="urn:infinispan:config:5.1">
+
+   <global>
+      <evictionScheduledExecutor
+            factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+         <properties>
+            <property name="threadNamePrefix" value="EvictionThread" />
+         </properties>
+      </evictionScheduledExecutor>
+      <globalJmxStatistics allowDuplicateDomains="true"
+                           enabled="true" jmxDomain="org.infinispan" cacheManagerName="SampleCacheManager" />
+   </global>
+
+   <default>
+      <locking isolationLevel="READ_COMMITTED"
+               lockAcquisitionTimeout="20000" writeSkewCheck="false"
+               concurrencyLevel="5000" useLockStriping="false" />
+
+      <transaction
+            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+            syncRollbackPhase="false" syncCommitPhase="false" useEagerLocking="false"
+            eagerLockSingleNode="false" />
+
+      <jmxStatistics enabled="true" />
+
+      <invocationBatching enabled="true" />
+   </default>
+
+   <namedCache name="named" >
+      <transaction transactionMode="TRANSACTIONAL" autoCommit="false" lockingMode="OPTIMISTIC"/>
+      <storeAsBinary enabled="true" storeValuesAsBinary="true" storeKeysAsBinary="false"/>
+   </namedCache>
+
+   <namedCache name="cachedMock">
+      <transaction transactionMode="NON_TRANSACTIONAL"/>
+      <eviction maxEntries="50" strategy="NONE" />
+      <expiration lifespan="600000" wakeUpInterval="600000" />
+      <invocationBatching enabled="false" />
+      <storeAsBinary enabled="true" storeKeysAsBinary="true" storeValuesAsBinary="true"/>
+   </namedCache>
+
+
+</infinispan>

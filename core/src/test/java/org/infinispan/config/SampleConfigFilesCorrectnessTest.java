@@ -135,7 +135,8 @@ public class SampleConfigFilesCorrectnessTest {
                   "Property ec2.bucket could not be replaced as intended",
                   "S3_PING could not be substituted",
                   "This might lead to performance problems. Please set your", // TCP and UDP send/recv buffer warnings
-                  "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use"
+                  "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use",
+                  "unable to find an address other than loopback for IP version IPv4"
             };
       String unknownWarning;
 
