@@ -176,6 +176,8 @@ public class LegacyConfigurationAdaptor {
          
       if (config.invocationBatching().enabled())
          legacy.invocationBatching();
+      else
+         legacy.invocationBatching().disable();
 
       if (config.jmxStatistics().enabled())
          legacy.jmxStatistics();
