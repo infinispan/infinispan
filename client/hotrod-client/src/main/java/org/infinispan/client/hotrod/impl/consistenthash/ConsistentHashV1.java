@@ -58,7 +58,16 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    private int numKeyOwners;
 
-   private Random rnd = new Random();
+   private final Random rnd;
+
+
+   public ConsistentHashV1(Random rnd) {
+      this.rnd = rnd;
+   }
+
+   public ConsistentHashV1() {
+      this(new Random());
+   }
 
    @Override
    public void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace) {
@@ -71,14 +80,15 @@ public class ConsistentHashV1 implements ConsistentHash {
          }
       }
 
-      log.tracef("Positions (%d entries) are: %s", positions.size(), positions);
+      int hashWheelSize = positions.size();
+      log.tracef("Positions (%d entries) are: %s", hashWheelSize, positions);
 
-      hashes = new int[servers2Hash.size()];
+      hashes = new int[hashWheelSize];
       Iterator<Integer> it = positions.keySet().iterator();
-      for (int i = 0; i < hashes.length; i++) {
+      for (int i = 0; i < hashWheelSize; i++) {
          hashes[i] = it.next();
       }
-      addresses = positions.values().toArray(new SocketAddress[servers2Hash.size()]);
+      addresses = positions.values().toArray(new SocketAddress[hashWheelSize]);
 
       this.hashSpace = hashSpace;
       this.numKeyOwners = numKeyOwners;
