@@ -35,12 +35,12 @@ import java.util.Set;
  * account.
  * <p/>
  * One purpose of grouping cache data into separate nodes is to minimize transaction locking interference, and increase
- * concurrency.  So for example, when multiple threads or possibly distributed caches are acccessing different accounts
+ * concurrency.  So for example, when multiple threads or possibly distributed caches are accessing different accounts
  * simultaneously.
  * <p/>
  * A node has references to its children, parent (each node except the root - defined by {@link Fqn#ROOT} - has a single
  * parent) and data contained within the node (as key/value pairs).  The data access methods are similar to the
- * collections {@link Map} interface, but some are read-only or return copies of the underlying the data.
+ * collections {@link Map} interface, but some are read-only or return copies of the underlying data.
  * <p/>
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani (manik AT jboss DOT org)</a>
@@ -50,9 +50,9 @@ import java.util.Set;
 @ThreadSafe
 public interface Node<K, V> {
    /**
-    * Returns the parent node. If this is the root node, this method returns <code>null</code>.
+    * Returns the parent node. If this is the root node, this method returns <code>this</code>.
     *
-    * @return the parent node, or null if this is the root node
+    * @return the parent node, or self if this is the root node
     */
    Node<K, V> getParent();
 
