@@ -43,7 +43,7 @@ import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 5.1
  */
-public class DeltaAwareCacheEntry implements CacheEntry {
+public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    private static final Log log = LogFactory.getLog(DeltaAwareCacheEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -63,6 +63,16 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       this.wrappedEntry = wrappedEntry;
       this.uncommittedChanges = new AtomicHashMap();
       this.deltas = new LinkedList<Delta>();
+   }
+
+   @Override
+   public byte getStateFlags() {
+      return flags;
+   }
+
+   @Override
+   public void copyStateFlagsFrom(StateChangingEntry other) {
+      this.flags = other.getStateFlags();
    }
 
    public void appendDelta(Delta d) {

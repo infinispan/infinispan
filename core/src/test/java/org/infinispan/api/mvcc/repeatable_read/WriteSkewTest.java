@@ -25,7 +25,10 @@ package org.infinispan.api.mvcc.repeatable_read;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
+import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -37,6 +40,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -44,7 +48,6 @@ import org.testng.annotations.Test;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,15 +68,21 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected LockManager lockManager;
    protected InvocationContextContainer icc;
    protected EmbeddedCacheManager cacheManager;
-   protected Cache cache;
+   protected volatile Cache cache;
 
    @BeforeTest
    public void setUp() {
-      Configuration c = new Configuration();
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      c.setLockAcquisitionTimeout(3000);
-      c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder
+         .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+         .locking()
+            .lockAcquisitionTimeout(3000)
+            .isolationLevel(IsolationLevel.REPEATABLE_READ);
+      // The default cache is NOT write skew enabled.
+      cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
+      configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+      cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
    @AfterTest
@@ -96,33 +105,67 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       LockAssert.assertNoLocks(lockManager, icc);
    }
 
+   private void setCacheWithWriteSkewCheck() {
+      cache = cacheManager.getCache("writeSkew");
+   }
+
+   private void setCacheWithoutWriteSkewCheck() {
+      // Use the default cache here.
+      cache = cacheManager.getCache();
+   }
+
    public void testDontCheckWriteSkew() throws Exception {
-      Configuration noWriteSkewCheck = new Configuration();
-      noWriteSkewCheck.setWriteSkewCheck(false);
-      cacheManager.defineConfiguration("noWriteSkewCheck", noWriteSkewCheck);
-      cache = cacheManager.getCache("noWriteSkewCheck");
+      setCacheWithoutWriteSkewCheck();
       postStart();
       doTest(true);
    }
 
    public void testCheckWriteSkew() throws Exception {
-      Configuration writeSkewCheck = new Configuration();
-      writeSkewCheck.setWriteSkewCheck(true);
-      writeSkewCheck.setVersioningScheme(VersioningScheme.SIMPLE);
-      writeSkewCheck.setEnableVersioning(true);
-      cacheManager.defineConfiguration("writeSkewCheck", writeSkewCheck);
-      cache = cacheManager.getCache("writeSkewCheck");
+      setCacheWithWriteSkewCheck();
       postStart();
       doTest(false);
    }
 
+   /**
+    * Verifies we can insert and then remove a value in the same transaction.
+    * See also ISPN-2075.
+    */
+   public void testDontFailOnImmediateRemoval() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+      tm.begin();
+      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value");
+      Assert.assertEquals(cache.get("testDontOnImmediateRemoval-Key"), "testDontOnImmediateRemoval-Value");
+      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value-Second");
+      cache.remove("testDontOnImmediateRemoval-Key");
+      tm.commit();
+   }
+
+   /**
+    * Verifies we can create a new AtomicMap, use it and then remove it while in the same transaction
+    * See also ISPN-2075.
+    */
+   public void testDontFailOnImmediateRemovalOfAtomicMaps() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+      final String key = "key1";
+      final String subKey = "subK";
+      tm.begin();
+      FineGrainedAtomicMap fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      fineGrainedAtomicMap.put(subKey, "some value");
+      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      fineGrainedAtomicMap.get(subKey);
+      fineGrainedAtomicMap.put(subKey, "v");
+      fineGrainedAtomicMap.put(subKey + 2, "v2");
+      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      Object object = fineGrainedAtomicMap.get(subKey);
+      Assert.assertEquals( "v", object);
+      AtomicMapLookup.removeAtomicMap(cache, key);
+      tm.commit();
+   }
+
    public void testWriteSkewWithOnlyPut() throws Exception {
-      Configuration writeSkewCheck = new Configuration();
-      writeSkewCheck.setWriteSkewCheck(true);
-      writeSkewCheck.setVersioningScheme(VersioningScheme.SIMPLE);
-      writeSkewCheck.setEnableVersioning(true);
-      cacheManager.defineConfiguration("writeSkewCheckWithOnlyPut", writeSkewCheck);
-      cache = cacheManager.getCache("writeSkewCheckWithOnlyPut");
+      setCacheWithWriteSkewCheck();
       postStart();
 
       tm.begin();
@@ -174,6 +217,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       final CountDownLatch threadSignal = new CountDownLatch(2);
 
       Thread w1 = new Thread("Writer-1, WriteSkewTest") {
+         @Override
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -195,6 +239,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       };
 
       Thread w2 = new Thread("Writer-2, WriteSkewTest") {
+         @Override
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -266,6 +311,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          this.barrier = barrier;
       }
 
+      @Override
       public Void call() throws Exception {
          try {
             log.debug("Wait for all executions paths to be ready to perform calls");

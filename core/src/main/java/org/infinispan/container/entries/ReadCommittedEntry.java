@@ -58,6 +58,16 @@ public class ReadCommittedEntry implements MVCCEntry {
       this.lifespan = lifespan;
    }
 
+   @Override
+   public byte getStateFlags() {
+      return flags;
+   }
+
+   @Override
+   public void copyStateFlagsFrom(StateChangingEntry other) {
+      this.flags = other.getStateFlags();
+   }
+
    // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
    // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
