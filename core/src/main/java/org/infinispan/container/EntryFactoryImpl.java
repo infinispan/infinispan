@@ -34,6 +34,7 @@ import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.container.entries.StateChangingEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -82,9 +83,16 @@ public class EntryFactoryImpl implements EntryFactory {
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          if (useRepeatableRead) {
-            MVCCEntry mvccEntry = cacheEntry == null ?
-                  createWrappedEntry(key, null, null, false, false, -1) :
-                  createWrappedEntry(key, cacheEntry.getValue(), cacheEntry.getVersion(), false, false, cacheEntry.getLifespan());
+            MVCCEntry mvccEntry = null;
+            if (cacheEntry == null) {
+               mvccEntry = createWrappedEntry(key, null, null, false, false, -1);
+            } else {
+               mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), cacheEntry.getVersion(), false, false, cacheEntry.getLifespan());
+               // If the original entry has changeable state, copy state flags to the new MVCC entry.
+               if (cacheEntry instanceof StateChangingEntry && mvccEntry != null)
+                  mvccEntry.copyStateFlagsFrom((StateChangingEntry) cacheEntry);
+            }
+
             if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
             return mvccEntry;
          } else if (cacheEntry != null) { // if not in transaction and repeatable read, or simply read committed (regardless of whether in TX or not), do not wrap
@@ -228,6 +236,10 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private MVCCEntry wrapMvccEntryForRemove(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
       MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), cacheEntry.getVersion(), false, true, cacheEntry.getLifespan());
+      // If the original entry has changeable state, copy state flags to the new MVCC entry.
+      if (cacheEntry instanceof StateChangingEntry)
+         mvccEntry.copyStateFlagsFrom((StateChangingEntry) cacheEntry);
+
       ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
    }
