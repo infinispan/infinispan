@@ -24,6 +24,7 @@ package org.infinispan.container.entries;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
+import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.container.versioning.EntryVersion;
@@ -65,14 +66,14 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
       if (actualValue != null && actualValue != valueToCompare) {
          log.unableToCopyEntryForUpdate(getKey());
-         throw new CacheException("Detected write skew.");
+         throw new WriteSkewException("Detected write skew.");
       }
 
       if (ice == null && !isCreated()) {
          // We still have a write-skew here.  When this wrapper was created there was an entry in the data container
          // (hence isCreated() == false) but 'ice' is now null.
          log.unableToCopyEntryForUpdate(getKey());
-         throw new CacheException("Detected write skew - concurrent removal of entry!");
+         throw new WriteSkewException("Detected write skew - concurrent removal of entry!");
       }
    }
 }
