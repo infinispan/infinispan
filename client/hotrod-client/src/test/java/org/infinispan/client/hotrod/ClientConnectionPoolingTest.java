@@ -161,6 +161,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertEquals(true, connectionPool.getLifo());
    }
 
+   @Test(enabled = false, description = "Random failure, ISPN-2079 tracking it")
    public void testMaxActiveReached() throws Exception {
       workerThread1.put("k1", "v1");
       workerThread1.put("k2", "v2");
