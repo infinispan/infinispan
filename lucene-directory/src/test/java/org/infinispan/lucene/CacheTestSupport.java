@@ -129,10 +129,13 @@ public abstract class CacheTestSupport {
       assert newFileCreated;
       Random r = new Random();
       FileWriter fw = new FileWriter(dummyDocToIndex);
-      for (int i = 0; i < sz; i++) {
-         fw.write(Integer.toHexString(r.nextInt(16)));
+      try {
+         for (int i = 0; i < sz; i++) {
+            fw.write(Integer.toHexString(r.nextInt(16)));
+         }
+      } finally {
+         fw.close();
       }
-      fw.close();
       dummyDocToIndex.deleteOnExit();
       return dummyDocToIndex;
    }
