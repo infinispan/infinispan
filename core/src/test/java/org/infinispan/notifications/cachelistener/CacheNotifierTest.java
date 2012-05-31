@@ -23,6 +23,7 @@
 
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -30,6 +31,7 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
@@ -127,6 +129,24 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
       verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
       verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
+   }
+   
+   public void testReplaceNotification() throws Exception {
+      initCacheData(Collections.singletonMap("key", "value"));
+
+      cache.replace("key", "value", "value2");
+
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq(false), isA(InvocationContext.class));
+   }
+   
+   public void testReplaceNoNotificationOnNoChange() throws Exception {
+      initCacheData(Collections.singletonMap("key", "value"));
+
+      cache.replace("key", "value2", "value3");
+
+      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value2"), eq(true), any(InvocationContext.class));
+      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"), eq(false), any(InvocationContext.class));
    }
 
    public void testNonexistentVisit() throws Exception {
