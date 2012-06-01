@@ -24,23 +24,23 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.config.Configuration.CacheMode
-import org.infinispan.notifications.Listener
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.Properties
 import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{TypedProperties, ByteArrayKey}
 import org.infinispan.server.core.Main._
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
-import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.Cache
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
-import org.infinispan.remoting.transport.{Transport, Address}
+import org.infinispan.remoting.transport.Address
 import org.infinispan.util.concurrent.ConcurrentMapFactory
 import annotation.tailrec
-import org.infinispan.context.Flag
+import org.infinispan.context.{InvocationContext, Flag}
+import org.infinispan.commands.write.PutKeyValueCommand
+import org.infinispan.interceptors.base.BaseCustomInterceptor
+import org.infinispan.interceptors.EntryWrappingInterceptor
+import org.infinispan.config.{CustomInterceptorConfig, CacheLoaderManagerConfig, Configuration}
+import java.util.{Collections, Properties}
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -131,8 +131,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
       addressCache = cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME)
-      addressCache.addListener(new ViewIdUpdater(
-            addressCache.getAdvancedCache.getRpcManager.getTransport))
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(host, port)
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
@@ -162,6 +160,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
       topologyCacheConfig.setExpirationLifespan(-1); // No maximum lifespan
       topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
+      // Set custom interceptor to update view for HotRod clients
+      val cic = new CustomInterceptorConfig(new ViewIdUpdater(), false, false,
+            -1, null, classOf[EntryWrappingInterceptor].getName)
+      topologyCacheConfig.setCustomInterceptors(Collections.singletonList(cic))
+
       if (doStateTransfer) {
          topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
          // State transfer timeout should be bigger than the distributed lock timeout
@@ -200,41 +203,46 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private[hotrod] def getAddressCache = addressCache
 
    /**
-    * Listener that provides guarantees for view id updates. So, a view id will
-    * only be considered to have changed once the address cache has been
-    * updated to add an address from the cache. That way, when the encoder
-    * makes the view id comparison (client provided vs server side view id),
-    * it has the guarantees that the address cache has already been updated.
+    * Cache interceptor that provides guarantees for view id updates. So, a
+    * view id will only be considered to have changed once the address cache
+    * has been updated to add an address from the cache. That way, when the
+    * encoder makes the view id comparison (client provided vs server side
+    * view id), it has the guarantees that the address cache has already been
+    * updated.
+    *
+    * The choice of using interceptor (rather than a cache listener) is
+    * intentional because the consistency it provides stronger guarantees on
+    * the visibility of cache state than a cache listener.
     */
-   @Listener
-   class ViewIdUpdater(transport: Transport) {
+   private class ViewIdUpdater extends BaseCustomInterceptor {
 
-      @CacheEntryCreated
-      def viewIdUpdate(event: CacheEntryEvent[Address, ServerAddress]) {
-         // Only update view id once cache has been updated
-         if (!event.isPre) {
-            val cachedAddresses = event.getCache.keySet()
-            val clusterMembers = transport.getMembers
-            val newAddr = event.getKey
-            if (isCacheAndViewSynched(clusterMembers.iterator(), cachedAddresses, newAddr)) {
-               // Once the address cache has all the nodes in the view
-               val localViewId = transport.getViewId
-               setViewId(localViewId)
-               if (isTrace) {
-                  trace("Address cache had %s for key %s. View id is now %d",
-                     event.getType, event.getKey, localViewId)
-               }
-            } else if (isTrace) {
-               tracef("View [%s] (id=%d) is not yet fully present in address" +
-                       " cache [%s], with [%s] new joining node.",
-                  clusterMembers, transport.getViewId, cachedAddresses, newAddr)
+      override def visitPutKeyValueCommand(ctx: InvocationContext,
+              cmd: PutKeyValueCommand): AnyRef = {
+         // First, let the put execute
+         val ret = super.visitPutKeyValueCommand(ctx, cmd)
+         // The key set contains the new address too
+         val cachedAddresses = cache.keySet()
+         val transport = embeddedCacheManager.getTransport
+         val clusterMembers = transport.getMembers
+         if (isCacheAndViewSynched(clusterMembers.iterator(), cachedAddresses)) {
+            // Once the address cache has all the nodes in the view
+            val localViewId = transport.getViewId
+            setViewId(localViewId)
+            if (isTrace) {
+               trace("Address cache added %s for cluster address %s. View id is now %d",
+                  cmd.getKey, cmd.getValue, localViewId)
             }
+         } else if (isTrace) {
+            tracef("View [%s] (id=%d) is not yet fully present in address" +
+                    " cache [%s], with [%s] new joining node.",
+               clusterMembers, transport.getViewId, cachedAddresses, cmd.getKey)
          }
+         ret
       }
 
       /**
-       * Check whether the address cache and the JGroups view are synched.
-       * They are considered to be synched when all the addresses in the
+       * Check whether the address cache and the JGroups view are synced.
+       * They are considered to be synced when all the addresses in the
        * JGroups view are present in the address cache.
        *
        * This check is necessary to make sure that the view id is only
@@ -244,17 +252,19 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
        */
       @tailrec
       private def isCacheAndViewSynched(clusterIt: java.util.Iterator[Address],
-              addrs: java.util.Set[Address], newAddr: Address): Boolean = {
+              addrs: java.util.Set[_]): Boolean = {
          if (!clusterIt.hasNext) true
          else {
             val clusterAddr = clusterIt.next()
-            if (!addrs.contains(clusterAddr)
-                    && !newAddr.equals(clusterAddr)) false
-            else isCacheAndViewSynched(clusterIt, addrs, newAddr)
+            if (!addrs.contains(clusterAddr))
+               false
+            else
+               isCacheAndViewSynched(clusterIt, addrs)
          }
       }
 
    }
+
 }
 
 object HotRodServer {
