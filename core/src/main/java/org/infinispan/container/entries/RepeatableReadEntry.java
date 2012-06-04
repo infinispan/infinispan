@@ -22,7 +22,6 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;

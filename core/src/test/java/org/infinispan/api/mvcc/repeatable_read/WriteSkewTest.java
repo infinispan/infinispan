@@ -27,7 +27,6 @@ import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.atomic.FineGrainedAtomicMap;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;
@@ -45,6 +44,7 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -60,6 +60,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -68,7 +69,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected LockManager lockManager;
    protected InvocationContextContainer icc;
    protected EmbeddedCacheManager cacheManager;
-   protected volatile Cache cache;
+   protected volatile Cache<String, String> cache;
 
    @BeforeTest
    public void setUp() {
@@ -127,6 +128,115 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    }
 
    /**
+    * Tests write skew with two concurrent transactions that each execute two put() operations. One put() is done on the
+    * same key to create a write skew. The second put() is only needed to avoid optimizations done by
+    * OptimisticLockingInterceptor for single modification transactions and force it reach the code path that triggers
+    * ISPN-2092.
+    *
+    * @throws Exception
+    */
+   public void testCheckWriteSkewWithMultipleModifications() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      final AtomicInteger successes = new AtomicInteger();
+      final AtomicInteger rollbacks = new AtomicInteger();
+
+      final CountDownLatch latch1 = new CountDownLatch(1);
+      final CountDownLatch latch2 = new CountDownLatch(1);
+      final CountDownLatch latch3 = new CountDownLatch(1);
+
+      Thread t1 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch1.await();
+
+               tm.begin();
+               try {
+                  try {
+                     cache.get("k1");
+                     cache.put("k1", "v1");
+                     cache.put("k2", "thread 1");
+                  } finally {
+                     latch2.countDown();
+                  }
+                  latch3.await();
+                  tm.commit(); //this is expected to fail
+                  successes.incrementAndGet();
+               } catch (Exception e) {
+                  if (e instanceof RollbackException) {
+                     rollbacks.incrementAndGet();
+                  }
+
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                  if (tm.getTransaction() != null) {
+                     try {
+                        tm.rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+         }
+      }, "WriteSkewTest.Thread-1");
+
+      Thread t2 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch2.await();
+
+               tm.begin();
+               try {
+                  try {
+                     cache.get("k1");
+                     cache.put("k1", "v2");
+                     cache.put("k3", "thread 2");
+                     tm.commit();
+                     successes.incrementAndGet();
+                  } finally {
+                     latch3.countDown();
+                  }
+               } catch (Exception e) {
+                  if (e instanceof RollbackException) {
+                     rollbacks.incrementAndGet();
+                  }
+
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                  if (tm.getTransaction() != null) {
+                     try {
+                        tm.rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+         }
+      }, "WriteSkewTest.Thread-2");
+
+      t1.start();
+      t2.start();
+      latch1.countDown();
+      t1.join();
+      t2.join();
+
+      log.trace("successes= " + successes.get());
+      log.trace("rollbacks= " + rollbacks.get());
+
+      Assert.assertTrue(cache.containsKey("k1"));
+      Assert.assertEquals("v2", cache.get("k1"));
+      Assert.assertEquals(1, successes.get());
+      Assert.assertEquals(1, rollbacks.get());
+   }
+
+   /**
     * Verifies we can insert and then remove a value in the same transaction.
     * See also ISPN-2075.
     */
@@ -139,6 +249,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value-Second");
       cache.remove("testDontOnImmediateRemoval-Key");
       tm.commit();
+      Assert.assertFalse(cache.containsKey("testDontOnImmediateRemoval-Key"));
    }
 
    /**
@@ -151,7 +262,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       final String key = "key1";
       final String subKey = "subK";
       tm.begin();
-      FineGrainedAtomicMap fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
       fineGrainedAtomicMap.put(subKey, "some value");
       fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
       fineGrainedAtomicMap.get(subKey);

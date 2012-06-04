@@ -67,6 +67,10 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public byte getStateFlags() {
+      if (wrappedEntry instanceof StateChangingEntry) {
+         return ((StateChangingEntry)wrappedEntry).getStateFlags();
+      }
+
       return flags;
    }
 
