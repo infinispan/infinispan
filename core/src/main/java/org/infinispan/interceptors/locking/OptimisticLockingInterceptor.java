@@ -126,7 +126,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          } else {
             log.tracef("Using lock reordering, order is: %s", orderedKeys);
             acquireAllLocks(ctx, orderedKeys);
-            ctx.addAllAffectedKeys(Arrays.asList(orderedKeys));
          }
       }
       return invokeNextAndCommitIf1Pc(ctx, command);
@@ -272,14 +271,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private class LocalWriteSkewCheckingLockAcquisitionVisitor extends LockAcquisitionVisitor {
       @Override
       protected void performWriteSkewCheck(TxInvocationContext ctx, Object key) {
-         CacheEntry ce = ctx.lookupEntry(key);
-         if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
-               ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
-         }
+         performLocalWriteSkewCheck(ctx, key);
       }
    }
-   
-   
+
+   private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
+      CacheEntry ce = ctx.lookupEntry(key);
+      if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
+         ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
+      }
+   }
+
    private Object[] sort(WriteCommand[] writes) {
       Set<Object> set = new HashSet<Object>();
       for (WriteCommand wc: writes) {
@@ -310,7 +312,11 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    private void acquireAllLocks(TxInvocationContext ctx, Object[] orderedKeys) throws InterruptedException {
-      for (Object key: orderedKeys) lockAndRegisterBackupLock(ctx, key);
+      for (Object key: orderedKeys) {
+         lockAndRegisterBackupLock(ctx, key);
+         performLocalWriteSkewCheck(ctx, key);
+         ctx.addAffectedKey(key);
+      }
    }
 
    private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

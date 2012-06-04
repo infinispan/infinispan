@@ -19,7 +19,6 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
