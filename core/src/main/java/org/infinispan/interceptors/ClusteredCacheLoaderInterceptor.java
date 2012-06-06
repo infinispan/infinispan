@@ -20,10 +20,13 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Transport;
+
+import java.util.Set;
 
 /**
  * The same as a regular cache loader interceptor, except that it contains additional logic to force loading from the
@@ -35,7 +38,7 @@ import org.infinispan.remoting.transport.Transport;
 public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
    private Configuration.CacheMode cacheMode;
-   private boolean remoteNodeMayNeedToLoad;
+   private boolean isWriteSkewConfigured;
    private Transport transport;
    private DistributionManager distributionManager;
 
@@ -52,12 +55,12 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
       // For now the coordinator/primary data owner may need to load from the cache store, even if
       // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
       // happen if running in distributed mode and eviction is enabled.
-      remoteNodeMayNeedToLoad = configuration.isWriteSkewCheck() && cacheMode.isClustered();
+      isWriteSkewConfigured = configuration.isWriteSkewCheck() && cacheMode.isClustered();
    }
 
    @Override
-   protected boolean isPrimaryOwner(Object key) {
-      return remoteNodeMayNeedToLoad && ((cacheMode.isReplicated() && transport.isCoordinator()) ||
+   protected boolean forceLoad(Object key, Set<Flag> flags) {
+      return isWriteSkewConfigured && ((cacheMode.isReplicated() && transport.isCoordinator()) ||
             (cacheMode.isDistributed() && distributionManager.getPrimaryLocation(key).equals(transport.getAddress())));
    }
 }

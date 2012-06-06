@@ -23,7 +23,6 @@
 package org.infinispan.atomic;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.DecoratedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -49,7 +48,7 @@ import java.util.Set;
  * reader MVCC model used in the {@link org.infinispan.container.entries.MVCCEntry} implementations for the core data
  * container, which closely follow software transactional memory approaches to dealing with concurrency.
  * <br /><br />
- * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean)}
+ * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean, org.infinispan.context.FlagContainer)}}
  * should be used to retrieve an instance of this proxy.
  * <br /><br />
  * Typically proxies are only created by the {@link AtomicMapLookup} helper, and would not be created by end-user code
@@ -78,7 +77,18 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
-      this.cacheForWriting = this.cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD);
+
+      Flag[] flags = new Flag[2];
+      flags[0] = Flag.SKIP_REMOTE_LOOKUP;
+      // When passivation is enabled, cache loader needs to attempt to load
+      // the previous value in order to merge it if necessary, so mark atomic
+      // hash map writes as delta writes
+      if (cache.getCacheConfiguration().loaders().passivation())
+         flags[1] = Flag.DELTA_WRITE;
+      else
+         flags[1] = Flag.SKIP_CACHE_LOAD;
+
+      this.cacheForWriting = this.cache.withFlags(flags);
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       this.flagContainer = flagContainer;

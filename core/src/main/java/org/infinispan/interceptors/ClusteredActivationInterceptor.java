@@ -20,10 +20,13 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Transport;
+
+import java.util.Set;
 
 /**
  * The same as a regular cache loader interceptor, except that it contains additional logic to force loading from the
@@ -33,8 +36,9 @@ import org.infinispan.remoting.transport.Transport;
  * @since 5.1
  */
 public class ClusteredActivationInterceptor extends ActivationInterceptor {
+
    private Configuration.CacheMode cacheMode;
-   private boolean remoteNodeMayNeedToLoad;
+   private boolean isWriteSkewConfigured;
    private Transport transport;
    private DistributionManager distributionManager;
 
@@ -51,12 +55,32 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
       // For now the coordinator/primary data owner may need to load from the cache store, even if
       // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
       // happen if running in distributed mode and eviction is enabled.
-      remoteNodeMayNeedToLoad = configuration.isWriteSkewCheck() && cacheMode.isClustered();
+      isWriteSkewConfigured = configuration.isWriteSkewCheck() && cacheMode.isClustered();
    }
 
    @Override
-   protected boolean isPrimaryOwner(Object key) {
-      return remoteNodeMayNeedToLoad && ((cacheMode.isReplicated() && transport.isCoordinator()) ||
-                                               (cacheMode.isDistributed() && distributionManager.getPrimaryLocation(key).equals(transport.getAddress())));
+   protected boolean forceLoad(Object key, Set<Flag> flags) {
+      return isDeltaWrite(flags) || (isWriteSkewConfigured && isPrimaryOwner(key));
    }
+
+   /**
+    * Finding out whether a node is primary owner of a particular key is
+    * relevant when trying to do write checks in a clustered environment
+    * where passivation is enabled. This is important in order to compare
+    * previous values.
+    */
+   private boolean isPrimaryOwner(Object key) {
+      return ((cacheMode.isReplicated() && transport.isCoordinator()) ||
+                 (cacheMode.isDistributed() && distributionManager.getPrimaryLocation(key).equals(transport.getAddress())));
+   }
+
+   /**
+    * Indicates whether the operation is a delta write. If it is, the
+    * previous value needs to be loaded from the cache store so that
+    * it can be merged.
+    */
+   private boolean isDeltaWrite(Set<Flag> flags) {
+      return (flags != null && flags.contains(Flag.DELTA_WRITE));
+   }
+
 }
