@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -76,8 +77,8 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       this.transport = transport;
    }
 
-   @Start(priority = 25)
-   // after the distribution manager!
+   @Start(priority = 25) // after the distribution manager!
+   @SuppressWarnings("unused")
    private void setAddress() {
       this.address = transport.getAddress();
    }
@@ -148,6 +149,15 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      // Clear is not key specific, so take into account origin of call
+      if ((ctx.isOriginLocal() || !loaderConfig.shared()) && !skip(ctx) && !ctx.isInTxScope())
+         clearCacheStore();
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or, - The
     * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
@@ -159,7 +169,8 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
-   private boolean skip(InvocationContext ctx) {
+   @Override
+   protected boolean skip(InvocationContext ctx) {
       if (store == null) {
          log.trace("Skipping cache store because the cache loader does not implement CacheStore");
          return true;
