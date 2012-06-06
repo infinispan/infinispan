@@ -93,7 +93,7 @@ public class TreeProfileTest {
       cache = new TreeCacheImpl(c);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       TreeTestingUtil.killTreeCaches(cache);
       TestingUtil.killCacheManagers(cacheContainer);

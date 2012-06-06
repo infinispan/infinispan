@@ -81,7 +81,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       return cacheManager;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(loaderInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
       threadMBeanServer.invoke(storeInterceptorObjName, "resetStatistics", new Object[0], new String[0]);

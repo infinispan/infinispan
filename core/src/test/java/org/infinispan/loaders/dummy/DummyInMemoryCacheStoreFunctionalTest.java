@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "loaders.dummy.DummyInMemoryCacheStoreFunctionalTest")
 public class DummyInMemoryCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       DummyInMemoryCacheStore.stores.remove(getClass().getName());
    }

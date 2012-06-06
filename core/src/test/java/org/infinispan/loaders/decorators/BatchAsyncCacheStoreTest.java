@@ -126,7 +126,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
       new File(tmpDirectory).mkdirs();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
    }

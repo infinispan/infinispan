@@ -128,7 +128,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void tearDown() {
       cm.stop();
    }

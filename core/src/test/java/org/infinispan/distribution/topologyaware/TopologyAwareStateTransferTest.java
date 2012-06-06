@@ -62,7 +62,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       addresses = addressSet.toArray(new Address[addressSet.size()]);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
    }

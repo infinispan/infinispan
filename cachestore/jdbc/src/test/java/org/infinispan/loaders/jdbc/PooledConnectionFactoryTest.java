@@ -44,7 +44,7 @@ public class PooledConnectionFactoryTest {
 
    private PooledConnectionFactory factory;
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void destroyFacotry() {
       factory.stop();
    }

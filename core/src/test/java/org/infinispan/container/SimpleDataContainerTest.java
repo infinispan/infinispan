@@ -48,7 +48,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc = createContainer();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       dc = null;
    }

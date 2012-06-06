@@ -77,7 +77,7 @@ public class HBaseCacheStoreTestStandalone {
       }
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void tearDown() throws Exception {
       CACHE.clear();
       CACHE.stop();

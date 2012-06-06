@@ -46,7 +46,7 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
       }
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public static void cleanup() throws IOException {
       if (USE_EMBEDDED) {
          EmbeddedServerHelper.teardown();

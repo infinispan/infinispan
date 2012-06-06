@@ -43,7 +43,7 @@ public class BdbjeCacheStoreConfigTest {
         config = new BdbjeCacheStoreConfig();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() throws CacheLoaderException {
         config = null;
     }

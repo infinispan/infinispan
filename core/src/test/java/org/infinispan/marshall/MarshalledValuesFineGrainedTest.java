@@ -42,7 +42,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    final CustomClass key = new CustomClass("key");
    final CustomClass value = new CustomClass("value");
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void cleanup() {
       TestingUtil.killCacheManagers(ecm);
       ecm = null;
