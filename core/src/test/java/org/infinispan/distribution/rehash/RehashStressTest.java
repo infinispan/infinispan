@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 @Test(testName = "org.infinispan.RehashStressTest", enabled = false)
 public class RehashStressTest extends AbstractInfinispanTest {
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void stopAllCacheManageres() {
         while (!cacheManagers.isEmpty()) {
             cacheManagers.poll().stop();

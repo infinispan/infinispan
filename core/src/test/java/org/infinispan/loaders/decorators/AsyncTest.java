@@ -79,7 +79,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws CacheLoaderException {
       if (store != null) store.stop();
    }

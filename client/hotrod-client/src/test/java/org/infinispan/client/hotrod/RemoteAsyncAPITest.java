@@ -60,7 +60,7 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
       return cm;
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();

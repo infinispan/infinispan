@@ -111,7 +111,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       super.destroy();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       Pojo.serializationCount = 0;
       Pojo.deserializationCount = 0;

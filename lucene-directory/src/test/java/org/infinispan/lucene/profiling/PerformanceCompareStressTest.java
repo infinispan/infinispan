@@ -166,7 +166,7 @@ public class PerformanceCompareStressTest {
       cache.clear();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void afterTest() {
       TestingUtil.killCaches(cache);
       TestingUtil.killCacheManagers(cacheFactory);

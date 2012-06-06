@@ -48,7 +48,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

@@ -75,7 +75,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyRemoteCacheFactory() {
       remoteCacheManager.stop();
       hotrodServer.stop();

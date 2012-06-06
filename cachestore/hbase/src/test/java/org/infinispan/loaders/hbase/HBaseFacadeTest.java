@@ -151,7 +151,7 @@ public class HBaseFacadeTest {
 
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void tearDown() throws Exception {
       HBF.deleteTable(TABLE_MESSAGE);
    }

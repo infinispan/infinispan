@@ -83,7 +83,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       return new RemoteCacheManager(config);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyRemoteCacheFactory() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);

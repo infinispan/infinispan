@@ -84,7 +84,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       cm.stop();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyManager() {
       TestingUtil.killCacheManagers(cache.getCacheManager());
    }

@@ -163,7 +163,7 @@ public class IndexReadingStressTest {
       cacheFactory.start();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public static void afterTest() {
       cacheFactory.stop();
       TestingUtil.recursiveFileRemove(indexName);

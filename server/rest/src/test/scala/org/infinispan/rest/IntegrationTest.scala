@@ -63,7 +63,7 @@ class IntegrationTest {
       ServerInstance.start()
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    def tearDown() = {
       ServerInstance.stop()
    }

@@ -102,12 +102,12 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void cleanUp() {
       ex.shutdownNow();
       kas.stop();
