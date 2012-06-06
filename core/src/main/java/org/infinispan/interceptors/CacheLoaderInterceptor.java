@@ -49,6 +49,7 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
@@ -128,7 +129,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected boolean isPrimaryOwner(Object key) {
+   protected boolean forceLoad(Object key, Set<Flag> flags) {
       return false;
    }
 
@@ -139,7 +140,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
       // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && !isPrimaryOwner(key)) return false;
+      if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return false;
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
