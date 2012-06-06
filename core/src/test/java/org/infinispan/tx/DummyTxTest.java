@@ -69,11 +69,14 @@ public class DummyTxTest extends SingleCacheManagerTest {
    public void testConcurrentRemove() throws Exception {
       cache.put("k1", "v1");
 
-      // multiple threads will try to remove "k1" and commit. we expect only one to succeed
+      // multiple threads will try to remove "k1" and commit.
+      // we expect only one to succeed. others will either rollback due to write skew
+      // or do nothing (because the key is already gone)
 
       final int numThreads = 5;
       final AtomicInteger removed = new AtomicInteger();
       final AtomicInteger rolledBack = new AtomicInteger();
+      final AtomicInteger didNothing = new AtomicInteger();
 
       final CountDownLatch latch = new CountDownLatch(1);
       Thread[] threads = new Thread[numThreads];
@@ -92,15 +95,17 @@ public class DummyTxTest extends SingleCacheManagerTest {
                      if (success) {
                         removed.incrementAndGet();
                      }
+                     else {
+                        didNothing.incrementAndGet();
+                     }
                   } catch (Throwable e) {
                      if (e instanceof RollbackException) {
                         rolledBack.incrementAndGet();
-                     }
-
-                     // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-                     if (tm().getTransaction() != null) {
+                     } else if (tm().getTransaction() != null) {
+                        // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
                         try {
                            tm().rollback();
+                           rolledBack.incrementAndGet();
                         } catch (SystemException e1) {
                            log.error("Failed to rollback", e1);
                         }
@@ -122,9 +127,10 @@ public class DummyTxTest extends SingleCacheManagerTest {
 
       log.trace("removed= " + removed.get());
       log.trace("rolledBack= " + rolledBack.get());
+      log.trace("didNothing= " + didNothing.get());
 
       assertFalse(cache.containsKey("k1"));
       assertEquals(1, removed.get());
-      assertEquals(numThreads - 1, rolledBack.get());
+      assertEquals(numThreads - 1, rolledBack.get() + didNothing.get());
    }
 }
