@@ -53,7 +53,7 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
       shared = true;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
          System.out.println("Clearing stats for cache store on cache "+ c);

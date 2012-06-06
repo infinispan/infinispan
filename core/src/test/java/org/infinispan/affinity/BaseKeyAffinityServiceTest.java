@@ -57,7 +57,7 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    protected ExecutorService executor  = Executors.newSingleThreadExecutor(threadFactory);
    protected KeyAffinityServiceImpl<Object> keyAffinityService;
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void stopExecutorService() throws InterruptedException {
       keyAffinityService.stop();
       executor.shutdown();

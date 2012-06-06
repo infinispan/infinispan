@@ -49,7 +49,7 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    void shutdown() {
       remoteCacheManager.stop();
       remoteCacheManager = null;

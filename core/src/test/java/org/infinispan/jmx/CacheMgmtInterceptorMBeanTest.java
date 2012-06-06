@@ -68,7 +68,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(mgmtInterceptor, "resetStatistics", new Object[0], new String[0]);
    }

@@ -74,7 +74,7 @@ public class ServerErrorTest extends SingleCacheManagerTest {
       return new RemoteCacheManager(config);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void shutDownHotrod() {
       remoteCacheManager.stop();
       hotrodServer.stop();

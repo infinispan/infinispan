@@ -73,7 +73,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyRemoteCacheFactory() {
       remoteCacheManager.stop();
       hotrodServer.stop();

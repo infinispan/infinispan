@@ -65,7 +65,7 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
       killServers(hotrodServer);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();

@@ -77,12 +77,12 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       m = new GenericJBossMarshaller();
    }
 
-   @AfterTest   
+   @AfterTest(alwaysRun = true)
    public void destroyMarshaller() {
       m = null;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
    }

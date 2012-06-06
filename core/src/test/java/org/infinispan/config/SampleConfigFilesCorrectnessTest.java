@@ -62,7 +62,7 @@ public class SampleConfigFilesCorrectnessTest {
       log4jLogger.addAppender(appender);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDownTest() {
       Logger log4jLogger = Logger.getRootLogger();
       log4jLogger.setLevel(oldLevel);
