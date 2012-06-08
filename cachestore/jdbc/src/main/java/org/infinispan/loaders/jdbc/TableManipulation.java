@@ -445,6 +445,7 @@ public class TableManipulation implements Cloneable {
                break;
             case DB2:
             case DB2_390:
+            case DERBY:
                loadSomeRowsSql = String.format("SELECT %s, %s FROM %s FETCH FIRST ? ROWS ONLY", dataColumnName, idColumnName, getTableName());
                break;
             case INFORMIX:
@@ -461,7 +462,7 @@ public class TableManipulation implements Cloneable {
                loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             default:
-               // the MySQL-style LIMIT clause
+               // the MySQL-style LIMIT clause (works for PostgreSQL too)
                loadSomeRowsSql = String.format("SELECT %s, %s FROM %s LIMIT ?", dataColumnName, idColumnName, getTableName());
                break;
          }
