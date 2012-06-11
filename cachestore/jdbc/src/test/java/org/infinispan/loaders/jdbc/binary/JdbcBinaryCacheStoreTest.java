@@ -81,6 +81,12 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.stop();
    }
 
+   @Test(enabled = false, description = "See ISPN-2102")
+   @Override
+   public void testPurgeExpired() throws Exception {
+      super.testPurgeExpired();
+   }
+
    public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
