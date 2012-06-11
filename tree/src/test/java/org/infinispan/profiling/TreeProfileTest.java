@@ -77,7 +77,7 @@ public class TreeProfileTest {
    private CacheContainer cacheContainer;
 
 
-   protected TreeCache cache;
+   protected TreeCache<String, Object> cache;
 
 
    @BeforeMethod
@@ -90,7 +90,7 @@ public class TreeProfileTest {
       cfg.setIsolationLevel(IsolationLevel.READ_COMMITTED);
       cacheContainer = TestCacheManagerFactory.createCacheManager(cfg);
       Cache c = cacheContainer.getCache();
-      cache = new TreeCacheImpl(c);
+      cache = new TreeCacheImpl<String, Object>(c);
    }
 
    @AfterMethod(alwaysRun = true)

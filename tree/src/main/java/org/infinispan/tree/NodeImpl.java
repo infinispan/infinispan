@@ -108,7 +108,6 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public Map<K, V> getData() {
       return getData(cache);
    }
@@ -119,7 +118,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    private Map<K, V> getData(AdvancedCache<?, ?> cache) {
-      return Collections.unmodifiableMap(new HashMap(getDataInternal(cache)));
+      return Collections.unmodifiableMap(new HashMap<K, V>(getDataInternal(cache)));
    }
 
    @Override
@@ -525,7 +524,6 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   @SuppressWarnings("unchecked")
    AtomicMap<K, V> getDataInternal() {
       return getAtomicMap(dataKey);
    }
@@ -534,7 +532,6 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return getAtomicMap(cache, dataKey);
    }
 
-   @SuppressWarnings("unchecked")
    AtomicMap<Object, Fqn> getStructure() {
       return getAtomicMap(structureKey);
    }

@@ -27,8 +27,8 @@ import org.infinispan.tree.TreeCache;
 import java.util.Collection;
 
 public class TreeTestingUtil {
-   public static void killTreeCaches(Collection treeCaches) {
-      if (treeCaches != null) killTreeCaches((TreeCache[]) treeCaches.toArray(new TreeCache[]{}));
+   public static void killTreeCaches(Collection<TreeCache> treeCaches) {
+      if (treeCaches != null) killTreeCaches((TreeCache[])treeCaches.toArray());
    }
 
    public static void killTreeCaches(TreeCache... treeCaches) {

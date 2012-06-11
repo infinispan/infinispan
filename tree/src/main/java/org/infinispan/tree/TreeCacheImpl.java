@@ -48,9 +48,9 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
 
    public TreeCacheImpl(AdvancedCache<?, ?> cache) {
       super(cache, cache.getBatchContainer());
-      if (cache.getConfiguration().isIndexingEnabled())
+      if (cache.getCacheConfiguration().indexing().enabled())
          throw new ConfigurationException("TreeCache cannot be used with a Cache instance configured to use indexing!");
-      assertBatchingSupported(cache.getConfiguration());
+      assertBatchingSupported(cache.getCacheConfiguration());
       createRoot();
    }
 

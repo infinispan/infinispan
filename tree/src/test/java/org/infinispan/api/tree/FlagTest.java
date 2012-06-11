@@ -41,8 +41,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "api.tree.FlagTest")
 public class FlagTest extends MultipleCacheManagersTest {
-   private Cache cache1, cache2;
-   private TreeCache treeCache1, treeCache2;
+   private Cache<String, String> cache1, cache2;
+   private TreeCache<String, String> treeCache1, treeCache2;
    private static final String KEY = "key";
    private static final Log log = LogFactory.getLog(FlagTest.class);
 
@@ -73,10 +73,10 @@ public class FlagTest extends MultipleCacheManagersTest {
    }
 
    public void testWithFlags() {
-      AdvancedCache localCache1 = cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
-      AdvancedCache localCache2 = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
-      TreeCache treeCache1 = new TreeCacheFactory().createTreeCache(localCache1);
-      TreeCache treeCache2 = new TreeCacheFactory().createTreeCache(localCache2);
+      AdvancedCache<String, String> localCache1 = cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      AdvancedCache<String, String> localCache2 = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      TreeCache<String, String> treeCache1 = new TreeCacheFactory().createTreeCache(localCache1);
+      TreeCache<String, String> treeCache2 = new TreeCacheFactory().createTreeCache(localCache2);
       final Fqn fqn = Fqn.fromElements("TEST_WITH_FLAGS");
       treeCache1.put(fqn, KEY, "1");
       treeCache2.put(fqn, KEY, "2");
