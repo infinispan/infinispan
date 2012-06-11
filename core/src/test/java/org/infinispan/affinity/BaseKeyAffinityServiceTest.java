@@ -47,7 +47,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
+public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
 
    protected ThreadFactory threadFactory = new ThreadFactory() {
       public Thread newThread(Runnable r) {
