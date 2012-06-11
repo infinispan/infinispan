@@ -88,8 +88,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       Fqn fqn = Fqn.fromString("/JSESSIONID/1010.10.5:3000/1234567890/1");
-      cache1.getCache().getConfiguration().setSyncCommitPhase(true);
-      cache2.getCache().getConfiguration().setSyncCommitPhase(true);
+      cache1.getCache().getCacheConfiguration().transaction().syncCommitPhase(true);
+      cache2.getCache().getCacheConfiguration().transaction().syncCommitPhase(true);
 
 
       cache1.put(fqn, "age", 38);
