@@ -77,4 +77,10 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
       super.testLoadAndStoreMarshalledValues();
    }
 
+   @Test(enabled = false, description = "See ISPN-2085")
+   @Override
+   public void testOnePhaseCommit() throws CacheLoaderException {
+      super.testOnePhaseCommit();
+   }
+
 }
