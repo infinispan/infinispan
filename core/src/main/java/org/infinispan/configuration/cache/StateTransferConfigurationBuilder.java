@@ -75,6 +75,14 @@ public class StateTransferConfigurationBuilder extends
       return this;
    }
 
+   /**
+    * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
+    * caches, before throwing an exception and aborting startup.
+    */
+   public StateTransferConfigurationBuilder timeout(long l, TimeUnit unit) {
+      return timeout(unit.toMillis(l));
+   }
+
    @Override
    void validate() {
       // certain combinations are illegal, such as state transfer + invalidation

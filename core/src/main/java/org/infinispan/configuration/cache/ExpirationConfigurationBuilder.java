@@ -46,6 +46,16 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
+    * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
+    * milliseconds. -1 means the entries never expire.
+    *
+    * Note that this can be overridden on a per-entry basis by using the Cache API.
+    */
+   public ExpirationConfigurationBuilder lifespan(long l, TimeUnit unit) {
+      return lifespan(unit.toMillis(l));
+   }
+
+   /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
     * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
     * 
@@ -54,6 +64,16 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    public ExpirationConfigurationBuilder maxIdle(long l) {
       this.maxIdle = l;
       return this;
+   }
+
+   /**
+    * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
+    * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
+    *
+    * Note that this can be overridden on a per-entry basis by using the Cache API.
+    */
+   public ExpirationConfigurationBuilder maxIdle(long l, TimeUnit unit) {
+      return maxIdle(unit.toMillis(l));
    }
 
    /**
@@ -94,6 +114,15 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    public ExpirationConfigurationBuilder wakeUpInterval(long l) {
       this.wakeUpInterval = l;
       return this;
+   }
+
+   /**
+    * Interval (in milliseconds) between subsequent runs to purge expired entries from memory and
+    * any cache stores. If you wish to disable the periodic eviction process altogether, set
+    * wakeupInterval to -1.
+    */
+   public ExpirationConfigurationBuilder wakeUpInterval(long l, TimeUnit unit) {
+      return wakeUpInterval(unit.toMillis(l));
    }
 
    @Override

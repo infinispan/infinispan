@@ -73,6 +73,14 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    /**
+    * If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds
+    * that the process of pushing the in-memory state to the underlying cache loader should take.
+    */
+   public SingletonStoreConfigurationBuilder pushStateTimeout(long l, TimeUnit unit) {
+      return pushStateTimeout(unit.toMillis(l));
+   }
+
+   /**
     * If true, when a node becomes the coordinator, it will transfer in-memory state to the
     * underlying cache store. This can be very useful in situations where the coordinator crashes
     * and there's a gap in time until the new coordinator is elected.

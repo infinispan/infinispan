@@ -42,6 +42,14 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
    }
    
    /**
+    * Time period that determines how often is lock acquisition attempted within maximum time
+    * allowed to acquire a particular lock
+    */
+   public DeadlockDetectionConfigurationBuilder spinDuration(long l, TimeUnit unit) {
+      return spinDuration(unit.toMillis(l));
+   }
+
+   /**
     * Enable deadlock detection
     */
    public DeadlockDetectionConfigurationBuilder enable() {

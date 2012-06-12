@@ -85,6 +85,19 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+    * remote and local transactions to finish. The amount of time to wait for is defined by the
+    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+    * because even if a new transaction was started just before the cache was stopped, this could
+    * only last as long as the transaction timeout allows it.
+    * <p/>
+    * This configuration property may be adjusted at runtime
+    */
+   public TransactionConfigurationBuilder cacheStopTimeout(long l, TimeUnit unit) {
+      return cacheStopTimeout(unit.toMillis(l));
+   }
+
+   /**
     * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
     * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
     * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node

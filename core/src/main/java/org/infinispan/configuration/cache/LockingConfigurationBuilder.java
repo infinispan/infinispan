@@ -72,6 +72,13 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
+    * Maximum time to attempt a particular lock acquisition
+    */
+   public LockingConfigurationBuilder lockAcquisitionTimeout(long l, TimeUnit unit) {
+      return lockAcquisitionTimeout(unit.toMillis(l));
+   }
+
+   /**
     * If true, a pool of shared locks is maintained for all entries that need to be locked.
     * Otherwise, a lock is created per entry in the cache. Lock striping helps control memory
     * footprint but may reduce concurrency in the system.

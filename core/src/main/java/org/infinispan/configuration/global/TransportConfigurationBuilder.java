@@ -99,6 +99,16 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    /**
+    * Timeout for coordinating cluster formation when nodes join or leave the cluster.
+    *
+    * @param distributedSyncTimeout
+    * @return
+    */
+   public TransportConfigurationBuilder distributedSyncTimeout(long distributedSyncTimeout, TimeUnit unit) {
+      return distributedSyncTimeout(unit.toMillis(distributedSyncTimeout));
+   }
+
+   /**
     * Class that represents a network transport. Must implement
     * org.infinispan.remoting.transport.Transport
     *

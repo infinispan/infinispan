@@ -62,6 +62,10 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       return this;
    }
 
+   public FileCacheStoreConfigurationBuilder fsyncInterval(long fsyncInterval, TimeUnit unit) {
+      return fsyncInterval(unit.toMillis(fsyncInterval));
+   }
+
    public FileCacheStoreConfigurationBuilder fsyncMode(FsyncMode fsyncMode) {
       this.fsyncMode = fsyncMode;
       return this;
@@ -106,6 +110,10 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    public FileCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout) {
       this.lockAcquistionTimeout = lockAcquistionTimeout;
       return this;
+   }
+
+   public FileCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout, TimeUnit unit) {
+      return lockAcquistionTimeout(unit.toMillis(lockAcquistionTimeout));
    }
 
    public FileCacheStoreConfigurationBuilder lockConcurrencyLevel(int lockConcurrencyLevel) {
