@@ -85,6 +85,14 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    /**
+    * If useReplQueue is set to true, this attribute controls how often the asynchronous thread used
+    * to flush the replication queue runs.
+    */
+   public AsyncConfigurationBuilder replQueueInterval(long interval, TimeUnit unit) {
+      return replQueueInterval(unit.toMillis(interval));
+   }
+
+   /**
     * If useReplQueue is set to true, this attribute can be used to trigger flushing of the queue
     * when it reaches a specific threshold.
     */

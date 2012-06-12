@@ -67,6 +67,14 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
    }
 
    /**
+    * Timeout to acquire the lock which guards the state to be flushed to the cache store
+    * periodically. The timeout can be adjusted for a running cache.
+    */
+   public AsyncLoaderConfigurationBuilder flushLockTimeout(long l, TimeUnit unit) {
+      return flushLockTimeout(unit.toMillis(l));
+   }
+
+   /**
     * Sets the size of the modification queue for the async store. If updates are made at a rate
     * that is faster than the underlying cache store can process this queue, then the async store
     * behaves like a synchronous store for that period, blocking until the queue can accept more
@@ -85,6 +93,15 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
    public AsyncLoaderConfigurationBuilder shutdownTimeout(long l) {
       this.shutdownTimeout = l;
       return this;
+   }
+
+   /**
+    * Timeout to stop the cache store. When the store is stopped it's possible that some
+    * modifications still need to be applied; you likely want to set a very large timeout to make
+    * sure to not loose data
+    */
+   public AsyncLoaderConfigurationBuilder shutdownTimeout(long l, TimeUnit unit) {
+      return shutdownTimeout(unit.toMillis(l));
    }
 
    /**

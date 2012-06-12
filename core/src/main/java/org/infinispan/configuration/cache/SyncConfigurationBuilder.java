@@ -42,6 +42,14 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
       return this;
    }
 
+   /**
+    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * the call is aborted and an exception is thrown.
+    */
+   public SyncConfigurationBuilder replTimeout(long l, TimeUnit unit) {
+      return replTimeout(unit.toMillis(l));
+   }
+
    @Override
    void validate() {
       
