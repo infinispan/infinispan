@@ -25,11 +25,14 @@ package org.infinispan.cdi;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.solder.bean.generic.ApplyScope;
 import org.jboss.solder.bean.generic.Generic;
 import org.jboss.solder.bean.generic.GenericConfiguration;
 
+import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.AnnotatedMember;
@@ -66,6 +69,9 @@ public class AdvancedCacheProducer {
 
    @Inject
    private CacheEventBridge cacheEventBridge;
+   
+   @Inject
+   private InfinispanExtension infinispanExtension;
 
    private CacheContainer getCacheContainer() {
       if (cacheContainer.isUnsatisfied()) {
@@ -77,7 +83,11 @@ public class AdvancedCacheProducer {
 
    @Produces
    @ApplyScope
-   public <K, V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager) {
+   public <K, V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheManagers) {
+      
+      // lazy register stuff
+      infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
+       
       final String name = configureCache.value();
       Cache<K, V> cache;
 

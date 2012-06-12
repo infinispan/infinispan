@@ -22,6 +22,40 @@
  */
 package org.infinispan.cdi;
 
+import static org.jboss.solder.bean.Beans.getQualifiers;
+import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
+import static org.jboss.solder.reflection.Reflections.getRawType;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.cache.annotation.CachePut;
+import javax.cache.annotation.CacheRemoveAll;
+import javax.cache.annotation.CacheRemoveEntry;
+import javax.cache.annotation.CacheResult;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.BeforeBeanDiscovery;
+import javax.enterprise.inject.spi.BeforeShutdown;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.enterprise.inject.spi.ProcessInjectionTarget;
+import javax.enterprise.inject.spi.ProcessProducer;
+import javax.enterprise.inject.spi.Producer;
+import javax.enterprise.util.AnnotationLiteral;
+
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.interceptor.CachePutInterceptor;
 import org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor;
@@ -42,40 +76,6 @@ import org.jboss.solder.bean.ContextualLifecycle;
 import org.jboss.solder.beanManager.BeanManagerAware;
 import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
-import javax.cache.annotation.CachePut;
-import javax.cache.annotation.CacheRemoveAll;
-import javax.cache.annotation.CacheRemoveEntry;
-import javax.cache.annotation.CacheResult;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.AfterDeploymentValidation;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
-import javax.enterprise.inject.spi.BeforeShutdown;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.enterprise.inject.spi.ProcessInjectionTarget;
-import javax.enterprise.inject.spi.ProcessProducer;
-import javax.enterprise.inject.spi.Producer;
-import javax.enterprise.util.AnnotationLiteral;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import static org.jboss.solder.bean.Beans.getQualifiers;
-import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
-import static org.jboss.solder.reflection.Reflections.getRawType;
-
 /**
  * The Infinispan CDI extension class.
  *
@@ -89,7 +89,10 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
    private static BeanManagerController bmc;
   
    private final Set<ConfigurationHolder> configurations;
-   private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;   
+   private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
+   
+   private volatile Boolean registered = false;
+   
    InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
       this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
@@ -202,34 +205,42 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
       }
    }
 
-   void registerCacheConfigurations(@Observes AfterDeploymentValidation event, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
-      final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
-      final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
-
-      for (ConfigurationHolder oneConfigurationHolder : configurations) {
-         final String cacheName = oneConfigurationHolder.getName();
-         final Configuration cacheConfiguration = oneConfigurationHolder.getProducer().produce(ctx);
-         final Set<Annotation> cacheQualifiers = oneConfigurationHolder.getQualifiers();
-
-         // if a specific cache manager is defined for this cache we use it
-         final Instance<EmbeddedCacheManager> specificCacheManager = cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
-         final EmbeddedCacheManager cacheManager = specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
-
-         // the default configuration is registered by the default cache manager producer
-         if (!cacheName.trim().isEmpty()) {
-            if (cacheConfiguration != null) {
-               cacheManager.defineConfiguration(cacheName, cacheConfiguration);
-               log.cacheConfigurationDefined(cacheName, cacheManager);
-            } else if (!cacheManager.getCacheNames().contains(cacheName)) {
-               cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultCacheConfiguration());
-               log.cacheConfigurationDefined(cacheName, cacheManager);
+   public void registerCacheConfigurations(CacheManagerEventBridge eventBridge, Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
+      if (!registered) {
+         synchronized (registered) {
+            if (!registered) {
+               registered = true;
+               final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
+               final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
+          
+               for (ConfigurationHolder oneConfigurationHolder : configurations) {
+                  final String cacheName = oneConfigurationHolder.getName();
+                  final Configuration cacheConfiguration = oneConfigurationHolder.getProducer().produce(ctx);
+                  final Set<Annotation> cacheQualifiers = oneConfigurationHolder.getQualifiers();
+           
+                  // if a specific cache manager is defined for this cache we use it
+                  final Instance<EmbeddedCacheManager> specificCacheManager = cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
+                  final EmbeddedCacheManager cacheManager = specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
+           
+                  // the default configuration is registered by the default cache manager producer
+                  if (!cacheName.trim().isEmpty()) {
+                     if (cacheConfiguration != null) {
+                        cacheManager.defineConfiguration(cacheName, cacheConfiguration);
+                        log.cacheConfigurationDefined(cacheName, cacheManager);
+                     } else if (!cacheManager.getCacheNames().contains(cacheName)) {
+                        cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultCacheConfiguration());
+                        log.cacheConfigurationDefined(cacheName, cacheManager);
+                     }
+                  }
+           
+                  // register cache manager observers
+                  eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
+               }
             }
          }
-
-         // register cache manager observers
-         eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
       }
    }
+   
    
    public static BeanManagerController getBeanManagerController() {
       if (bmc == null) {
