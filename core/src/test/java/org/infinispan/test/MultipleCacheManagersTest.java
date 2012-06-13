@@ -26,6 +26,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
@@ -188,6 +189,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder defaultConfig) {
+      return addClusterEnabledCacheManager(globalBuilder, defaultConfig, new TransportFlags());
+   }
+
    /**
     * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
     * the current thread.  Uses a default clustered cache manager global config.
@@ -210,22 +215,30 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder, flags);
+      cacheManagers.add(cm);
+      return cm;
+   }
+
    /**
     * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
     * @param mode cache mode to use
     * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return an embedded cache manager
     */
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
       return addClusterEnabledCacheManager(mode, transactional, new TransportFlags());
    }
 
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional, TransportFlags flags) {
       Configuration configuration = getDefaultClusteredConfig(mode, transactional);
       return addClusterEnabledCacheManager(configuration, flags);
    }
 
-
+   @Deprecated
    protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
    }
@@ -234,10 +247,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
    }
 
+   protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(globalBuilder, builder);
+   }
+
+   @Deprecated
    protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
    }
 
+   @Deprecated
    protected void createCluster(Configuration.CacheMode mode, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
    }
