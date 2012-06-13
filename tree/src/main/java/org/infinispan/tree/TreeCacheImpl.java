@@ -270,7 +270,15 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
 
       // Depth first.  Lets start with getting the node we want.
       startAtomic();
+      boolean success = false;
       try {
+         // check that parent's structure map contains the node to be moved. in case of optimistic locking this
+         // ensures the write skew is properly detected if some other thread removes the child
+         Node<K, V> parent = getNode(cache, nodeToMoveFqn.getParent());
+         if (!parent.hasChild(nodeToMoveFqn.getLastElement())) {
+            if (trace) log.trace("The parent does not have the child that needs to be moved. Returning...");
+            return;
+         }
          Node<K, V> nodeToMove = getNode(cache.withFlags(Flag.FORCE_WRITE_LOCK), nodeToMoveFqn);
          if (nodeToMove == null) {
             if (trace) log.trace("Did not find the node that needs to be moved. Returning...");
@@ -295,8 +303,13 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
             move(cache, oldChildFqn, newFqn);
          }
          removeNode(cache, nodeToMoveFqn);
+         success = true;
       } finally {
-         endAtomic();
+         if (success) {
+            endAtomic();
+         } else {
+            failAtomic();
+         }
       }
       log.tracef("Successfully moved node '%s' to '%s'", nodeToMoveFqn, newParentFqn);
    }

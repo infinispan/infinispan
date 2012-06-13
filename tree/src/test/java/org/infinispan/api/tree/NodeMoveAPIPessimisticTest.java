@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,36 +20,28 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.batch;
+package org.infinispan.api.tree;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
- * Enables for automatic batching.
+ * Exercises and tests the new move() api using pessimistic locking.
  *
- * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 4.0
+ * @author anistor@redhat.com
  */
-@NotThreadSafe
-public abstract class AutoBatchSupport {
-   protected BatchContainer batchContainer;
+@Test(groups = "functional", testName = "api.tree.NodeMoveAPIPessimisticTest")
+public class NodeMoveAPIPessimisticTest extends BaseNodeMoveAPITest {
 
-   protected static void assertBatchingSupported(Configuration c) {
-      if (!c.invocationBatching().enabled())
-         throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
-   }
-
-   protected void startAtomic() {
-      batchContainer.startBatch(true);
-   }
-
-   protected void endAtomic() {
-      batchContainer.endBatch(true, true);
-   }
-
-   protected void failAtomic() {
-      batchContainer.endBatch(true, false);
+   @Override
+   protected ConfigurationBuilder createConfigurationBuilder() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().invocationBatching().enable()
+            .locking().lockAcquisitionTimeout(1000)
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .transaction().lockingMode(LockingMode.PESSIMISTIC);
+      return cb;
    }
 }

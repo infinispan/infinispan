@@ -23,7 +23,7 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.api.mvcc.LockAssert;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContextContainer;
@@ -43,22 +43,19 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import javax.transaction.*;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 import static org.testng.AssertJUnit.*;
 
 /**
- * Excercises and tests the new move() api
+ * Exercises and tests the new move() api.
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani</a>
  */
-@Test(groups = "functional", testName = "api.tree.NodeMoveAPITest")
-public class NodeMoveAPITest extends SingleCacheManagerTest {
+public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    protected final Log log = LogFactory.getLog(getClass());
 
    protected static final Fqn A = Fqn.fromString("/a"), B = Fqn.fromString("/b"), C = Fqn.fromString("/c"), D = Fqn.fromString("/d"), E = Fqn.fromString("/e");
@@ -77,18 +74,18 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      Configuration c = new Configuration().fluent()
-            .stateRetrieval().fetchInMemoryState(false)
-            .invocationBatching()
-            .locking().lockAcquisitionTimeout(1000L)
-            .build();
-      cm.defineConfiguration("test", c);
+      cm.defineConfiguration("test", createConfigurationBuilder().build());
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);
-      treeCache = new TreeCacheImpl(cache);
+      treeCache = new TreeCacheImpl<Object, Object>(cache);
       dc = TestingUtil.extractComponent(cache, DataContainer.class);
       return cm;
    }
+
+   /**
+    * Various subclasses will provide a suitable cache configuration builder.
+    */
+   protected abstract ConfigurationBuilder createConfigurationBuilder();
 
    public void testBasicMove() {
       Node<Object, Object> rootNode = treeCache.getRoot();
@@ -297,7 +294,6 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
 
       checkLocksDeep();
 
-
       tm.commit();
 
       assertNoLocks();
@@ -323,8 +319,8 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
    public void testConcurrency() throws InterruptedException {
       Node<Object, Object> rootNode = treeCache.getRoot();
 
-      final int N = 3;// number of threads
-      final int loops = 1 << 6;// number of loops
+      final int N = 5;// number of threads
+      final int loops = 64;// number of loops
       // tests a tree structure as such:
       // /a
       // /b
@@ -352,16 +348,16 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       final Random rnd = new Random();
 
       for (int i = 0; i < N; i++) {
-         movers[i] = new Thread("Mover-" + i) {
+         movers[i] = new Thread(getClass().getSimpleName() + ".Mover-" + i) {
             public void run() {
                try {
                   latch.await();
                }
                catch (InterruptedException e) {
+                  // ignore
                }
 
                for (int counter = 0; counter < loops; counter++) {
-
                   treeCache.move(NODE_X.getFqn(), NODES[rnd.nextInt(NODES.length)].getFqn());
                   TestingUtil.sleepRandom(250);
                   treeCache.move(NODE_Y.getFqn(), NODES[rnd.nextInt(NODES.length)].getFqn());
@@ -398,12 +394,112 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
          }
       }
 
-      log.fatal("Tree: " + TreeStructureSupport.printTree(treeCache, true));
+      log.info("Tree: " + TreeStructureSupport.printTree(treeCache, true));
 
       assertTrue("Should have found x", found_x);
       assertTrue("Should have found y", found_y);
       assertFalse("Should have only found x once", found_x_again);
       assertFalse("Should have only found y once", found_y_again);
+   }
+
+   public void testConcurrencySimple() throws InterruptedException {
+      // set up the initial structure
+      // /a
+      // /b
+      // /c
+      Node<Object, Object> rootNode = treeCache.getRoot();
+      final Fqn FQN_A = A, FQN_B = B, FQN_C = C;
+      Node nodeA = rootNode.addChild(FQN_A);
+      Node nodeB = rootNode.addChild(FQN_B);
+      rootNode.addChild(FQN_C);
+
+      final CountDownLatch latch1 = new CountDownLatch(1);
+      final CountDownLatch latch2 = new CountDownLatch(1);
+      final CountDownLatch latch3 = new CountDownLatch(1);
+
+      // tries to move C under B right after another thread already moved C under A
+      Thread t1 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch1.await();
+
+               tm().begin();
+               try {
+                  try {
+                     // ensure we already 'see' node C in this tx. this is what actually triggers the issue.
+                     treeCache.getNode(FQN_C);
+                  } finally {
+                     latch2.countDown();
+                  }
+                  latch3.await();
+                  treeCache.move(FQN_C, FQN_B);
+                  tm().commit(); //this is expected to fail
+               } catch (Exception e) {
+                  if (tm().getTransaction() != null) {
+                     // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                     try {
+                        tm().rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               log.error(ex);
+            }
+         }
+      }, getClass().getSimpleName() + ".Mover-1");
+
+      // moves C under A successfully
+      Thread t2 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch2.await();
+
+               tm().begin();
+               try {
+                  try {
+                     treeCache.move(FQN_C, FQN_A);
+                     tm().commit();
+                  } finally {
+                     latch3.countDown();
+                  }
+               } catch (Exception e) {
+                  if (tm().getTransaction() != null) {
+                     // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                     try {
+                        tm().rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               log.error(ex);
+            }
+         }
+      }, getClass().getSimpleName() + ".Mover-2");
+
+      t1.start();
+      t2.start();
+      latch1.countDown();
+      t1.join();
+      t2.join();
+
+      assertNoLocks();
+
+      int foundC = 0;
+      for (Node n : new Node[] {rootNode, nodeA, nodeB}) {
+         if (n.hasChild(FQN_C)) {
+            foundC++;
+         }
+      }
+
+      log.trace("Tree: " + TreeStructureSupport.printTree(treeCache, true));
+
+      assertEquals("Should have found C only once", 1, foundC);
    }
 
    public void testMoveInSamePlace() {
