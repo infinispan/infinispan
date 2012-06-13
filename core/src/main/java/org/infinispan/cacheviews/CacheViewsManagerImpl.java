@@ -230,7 +230,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          final CacheViewControlCommand cmd = new CacheViewControlCommand(cacheName,
                CacheViewControlCommand.Type.REQUEST_LEAVE, self);
          // ignore any response from the other members
-         transport.invokeRemotely(members, cmd, ResponseMode.ASYNCHRONOUS, timeout, false, null);
+         // still, the call has to be synchronous or the externalizer table might stop before we serialize the command
+         transport.invokeRemotely(members, cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null);
       } catch (Exception e) {
          log.debugf(e, "%s: Error while leaving cache view", cacheName);
       }
