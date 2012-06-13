@@ -157,10 +157,10 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    L1Configuration create() {
       boolean finalOnRehash;
       if (onRehash != null) {
-         finalOnRehash = onRehash.booleanValue();
+         finalOnRehash = onRehash;
       } else {
          finalOnRehash = false;
-         if (enabled && onRehash == null) {
+         if (enabled) {
             log.debug("L1 is enabled and L1OnRehash was not defined, enabling it");
             finalOnRehash = true;
          }
