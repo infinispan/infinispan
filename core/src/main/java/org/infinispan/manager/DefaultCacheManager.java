@@ -413,7 +413,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       if (namedCacheFile != null) {
          ConfigurationBuilderHolder namedConfigurationBuilderHolder = parserRegistry.parseFile(namedCacheFile);
          Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-         defineConfiguration(entry.getKey(), entry.getValue().build());
+         configurationOverrides.put(entry.getKey(), entry.getValue().build());
       }
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());

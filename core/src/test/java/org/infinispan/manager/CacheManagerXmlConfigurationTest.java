@@ -24,8 +24,10 @@ package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -38,6 +40,7 @@ import java.io.IOException;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -167,6 +170,23 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       } finally {
          cm.stop();
       }
+   }
+
+   public void testCreateWithMultipleXmlFiles() throws Exception {
+      String xmlFile = "configs/local-singlenamedcache-test.xml";
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(
+            xmlFile, xmlFile, xmlFile)) {
+         @Override
+         public void call() throws Exception {
+            Cache<Object, Object> c = cm.getCache();
+            assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1111;
+            Cache<Object, Object> c2 = cm.getCache("localCache");
+            assert c2.getCacheConfiguration().locking().lockAcquisitionTimeout() == 22222;
+            GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
+            assert globalCfg.asyncListenerExecutor().properties()
+                  .get("threadNamePrefix").equals("Any-AsyncListenerThread");
+         }
+      });
    }
 
 }

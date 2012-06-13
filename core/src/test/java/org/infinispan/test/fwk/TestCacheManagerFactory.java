@@ -110,6 +110,10 @@ public class TestCacheManagerFactory {
       return fromStream(is, keepJmxDomainName);
    }
 
+   public static EmbeddedCacheManager fromXml(String globalXmlFile, String defaultXmlFile, String namedXmlFile) throws IOException {
+      return new DefaultCacheManager(globalXmlFile, defaultXmlFile, namedXmlFile, true);
+   }
+
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
       return fromStream(is, false);
    }
