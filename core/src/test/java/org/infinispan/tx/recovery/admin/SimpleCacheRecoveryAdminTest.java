@@ -101,7 +101,6 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    }
 
-   @Test(enabled = false, description = "See ISPN-2113")
    public void testForceCommitOnOtherNode() throws Exception {
       String inDoubt = showInDoubtTransactions(0);
 
@@ -184,9 +183,19 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
             return (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0);
          }
       });
-      RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
-      assertEquals(rm.getInDoubtTransactions().size(), 0);
-      assertEquals(rm.getPreparedTransactionsFromCluster().all().length, 0);
+      final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return rm.getInDoubtTransactions().size() == 0;
+         }
+      });
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return rm.getPreparedTransactionsFromCluster().all().length == 0;
+         }
+      });
    }
 
 
