@@ -396,6 +396,17 @@ public class TestingUtil {
       blockUntilViewReceived(cache, groupSize, timeout, true);
    }
 
+   /**
+    * Loops, continually calling {@link #areCacheViewsComplete(Cache[])} until
+    * it either returns true or a default timeout has elapsed.
+    *
+    * @param groupSize number of caches expected in the group
+    */
+   public static void blockUntilViewReceived(Cache cache, int groupSize) {
+      // Default 10 seconds
+      blockUntilViewReceived(cache, groupSize, 10000, true);
+   }
+
    public static void blockUntilViewReceived(Cache cache, int groupSize, long timeout, boolean barfIfTooManyMembersInView) {
       long failTime = System.currentTimeMillis() + timeout;
 

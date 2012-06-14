@@ -107,7 +107,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       assert manager(1).getCache() != null;
       assert manager(2).getCache() != null;
 
-      blockUntilViewReceived(manager(0).getCache(), 3, 10000);
+      blockUntilViewReceived(manager(0).getCache(), 3);
       blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
       blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
       blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
