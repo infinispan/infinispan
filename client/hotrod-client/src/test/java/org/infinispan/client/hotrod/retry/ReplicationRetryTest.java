@@ -25,10 +25,12 @@ package org.infinispan.client.hotrod.retry;
 import static org.testng.Assert.assertEquals;
 
 import java.net.SocketAddress;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -48,13 +50,12 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       }
    }
 
-   @Test(enabled = false, description = "See ISPN-2111")
    public void testPut() {
 
       validateSequenceAndStopServer();
       resetStats();
 
-      assert "v".equals(remoteCache.put("k", "v0"));
+      assertEquals(remoteCache.put("k", "v0"), "v");
       for (int i = 1; i < 100; i++) {
          assertEquals("v" + (i-1), remoteCache.put("k", "v"+i));
       }
@@ -141,13 +142,17 @@ public class ReplicationRetryTest extends AbstractRetryTest {
 
       resetStats();
       expectedServer = strategy.getServers()[strategy.getNextPosition()];
-      remoteCache.put("k","v");
+      assertEquals("v", remoteCache.put("k","v"));
       assertOnlyServerHit(expectedServer);
 
       //this would be the next server to be shutdown
       expectedServer = strategy.getServers()[strategy.getNextPosition()];
       HotRodServer toStop = addr2hrServer.get(expectedServer);
       toStop.stop();
+      for (Iterator<EmbeddedCacheManager> ecmIt = cacheManagers.iterator(); ecmIt.hasNext();) {
+         if (ecmIt.next().getAddress().equals(expectedServer)) ecmIt.remove();
+      }
+      waitForClusterToForm();
    }
 
    @Override
