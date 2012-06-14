@@ -49,7 +49,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
+@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = false)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    public static final String A_B_NAME = "a_b_name";
