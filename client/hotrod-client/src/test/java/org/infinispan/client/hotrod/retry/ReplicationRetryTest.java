@@ -48,6 +48,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       }
    }
 
+   @Test(enabled = false, description = "See ISPN-2111")
    public void testPut() {
 
       validateSequenceAndStopServer();
