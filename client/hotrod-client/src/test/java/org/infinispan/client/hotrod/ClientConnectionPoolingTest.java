@@ -161,7 +161,6 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertEquals(true, connectionPool.getLifo());
    }
 
-   @Test(enabled = false, description = "Random failure, ISPN-2079 tracking it")
    public void testMaxActiveReached() throws Exception {
       workerThread1.put("k1", "v1");
       workerThread1.put("k2", "v2");
@@ -193,27 +192,36 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          workerThread1.putAsync("k3", "v3");
          workerThread2.putAsync("k4", "v4");
          log.info("Async calls for k3 and k4 is done.");
-         // give the worker thread some time to start their requests
-         Thread.sleep(100);
-         assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
-         assertEquals(1, connectionPool.getNumActive(hrServ2Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return 1 == connectionPool.getNumActive(hrServ1Addr) &&
+               1 == connectionPool.getNumActive(hrServ2Addr) &&
+               0 == connectionPool.getNumIdle(hrServ1Addr) &&
+               0 == connectionPool.getNumIdle(hrServ2Addr);
+            }
+         });
+
 
          // another operation for each server, creating new connections
          workerThread3.putAsync("k5", "v5");
          workerThread4.putAsync("k6", "v6");
-         Thread.sleep(100);
-         assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
-         assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return 2 == connectionPool.getNumActive(hrServ1Addr) &&
+                     2 == connectionPool.getNumActive(hrServ2Addr) &&
+                     0 == connectionPool.getNumIdle(hrServ1Addr) &&
+                     0 == connectionPool.getNumIdle(hrServ2Addr);
+            }
+         });
 
          // we've reached the connection pool limit, the new operations will block
          // until a connection is released
          workerThread5.putAsync("k7", "v7");
          workerThread6.putAsync("k8", "v8");
-         Thread.sleep(100);
+         Thread.sleep(2000); //sleep a bit longer to make sure the async threads do their job
          assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
          assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
          assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
