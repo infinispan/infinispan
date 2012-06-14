@@ -26,6 +26,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.test.TestingUtil.*;
 
 import java.lang.reflect.Method;
+import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -67,14 +68,15 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
             new TimeoutInducingInterceptor(), false, false, -1,
             EntryWrappingInterceptor.class.getName(), "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
+      return TestCacheManagerFactory.createCacheManager(cfg);
+   }
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
-
       remoteCacheManager = new RemoteCacheManager(getClientProperties());
       remoteCache = remoteCacheManager.getCache();
-
-      return cacheManager;
    }
 
    protected Properties getClientProperties() {
@@ -98,17 +100,11 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
          remoteCache.put("FailFailFail", "whatever...");
       } catch (HotRodClientException e) {
          // ignore
+         assert e.getCause() instanceof SocketTimeoutException;
       }
 
-      for (int i = 0; i < 200; i++) {
-         try {
-            remoteCache.put(k(m, i), v(m, i));
-            assert remoteCache.get(k(m, i)).equals(v(m, i));
-         } catch (Exception e) {
-            log.error("Error sending request after server failure", e);
-            throw e;
-         }
-      }
+      // What counts is that socket timeout exception kicks in, operations
+      // after that do not add anything to the socket timeout test
    }
 
    public static class TimeoutInducingInterceptor extends CommandInterceptor {
