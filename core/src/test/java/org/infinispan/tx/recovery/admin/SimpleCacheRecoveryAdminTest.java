@@ -101,6 +101,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    }
 
+   @Test(enabled = false, description = "See ISPN-2113")
    public void testForceCommitOnOtherNode() throws Exception {
       String inDoubt = showInDoubtTransactions(0);
 

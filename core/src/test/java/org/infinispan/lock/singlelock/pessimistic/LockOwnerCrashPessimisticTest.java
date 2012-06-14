@@ -45,7 +45,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.pessimistic.LockOwnerCrashPessimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.pessimistic.LockOwnerCrashPessimisticTest", enabled = false, description = "See ISPN-2113")
 @CleanupAfterMethod
 public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
