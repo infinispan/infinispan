@@ -40,7 +40,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
 
    /**
     * Set embedded cassandra up and spawn it in a new thread.
-    * 
+    *
     * @throws TTransportException
     * @throws IOException
     * @throws InterruptedException
@@ -75,12 +75,6 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
    @Test(expectedExceptions = UnsupportedKeyTypeException.class)
    public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
       super.testLoadAndStoreMarshalledValues();
-   }
-
-   @Test(enabled = false, description = "See ISPN-2085")
-   @Override
-   public void testOnePhaseCommit() throws CacheLoaderException {
-      super.testOnePhaseCommit();
    }
 
 }

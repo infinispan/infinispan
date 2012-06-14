@@ -424,8 +424,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
       try {
          cassandraClient = dataSource.getConnection();
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(
-                  2);
+         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
          store0(entry, mutationMap);
 
          cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
@@ -558,40 +557,6 @@ public class CassandraCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
-      Cassandra.Client cassandraClient = null;
-
-      try {
-         cassandraClient = dataSource.getConnection();
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-
-         for (Modification m : mods) {
-            switch (m.getType()) {
-               case STORE:
-                  store0(((Store) m).getStoredEntry(), mutationMap);
-                  break;
-               case CLEAR:
-                  clear();
-                  break;
-               case REMOVE:
-                  remove0(ByteBufferUtil.bytes(hashKey(((Remove) m).getKey())), mutationMap);
-                  break;
-               default:
-                  throw new AssertionError();
-            }
-         }
-
-         cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
-
-      } catch (Exception e) {
-         throw new CacheLoaderException(e);
-      } finally {
-         dataSource.releaseConnection(cassandraClient);
-      }
-
-   }
-
-   @Override
    public String toString() {
       return "CassandraCacheStore";
    }
@@ -648,7 +613,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
       } else { // Insert/update
          ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
          if (superColumn != null) {
-            List<Column> columns = new ArrayList<Column>();
+            List<Column> columns = new ArrayList<Column>(1);
             Column col = new Column(columnName);
             col.setValue(value);
             col.setTimestamp(microTimestamp());
