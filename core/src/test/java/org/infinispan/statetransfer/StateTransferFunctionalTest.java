@@ -39,6 +39,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -97,7 +98,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       private static final long serialVersionUID = 6361429803359702822L;
       
-      private transient int count;
+      private volatile boolean doDelay = false;
 
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
          in.defaultReadObject();
@@ -106,20 +107,20 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       private void writeObject(ObjectOutputStream out) throws IOException {
          out.defaultWriteObject();
 
-         // RPC is first serialization, ST is second
-         if (count++ == 0)
-            return;
-
-         try {
-            // This sleep is not required for the test to function,
-            // however it improves the possibility of finding errors
-            // (since it keeps the tx log going)
-            Thread.sleep(2000);
-         }
-         catch (InterruptedException e) {
+         if (doDelay) {
+            try {
+               // Delay state transfer
+               Thread.sleep(2000);
+            }
+            catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
          }
       }
 
+      public void enableDelay() {
+         doDelay = true;
+      }
    }
 
    private static class WritingThread extends Thread {
@@ -130,7 +131,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       private TransactionManager tm;
 
       WritingThread(Cache<Object, Object> cache, boolean tx) {
-         super("WriterThread,StateTransferFunctionalTest");
+         super("WriterThread," + cache.getCacheManager().getAddress());
          this.cache = cache;
          this.tx = tx;
          if (tx) tm = TestingUtil.getTransactionManager(cache);
@@ -144,15 +145,26 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       public void run() {
          int c = 0;
          while (!stop) {
+            boolean success = false;
             try {
                if (tx)
                   tm.begin();
                cache.put("test" + c, c++);
                if (tx)
                   tm.commit();
+               success = true;
             } catch (Exception e) {
                c--;
+               log.errorf("Error writing key test%s", c, e);
                stopThread();
+            } finally {
+               if (tx && !success) {
+                  try {
+                     tm.rollback();
+                  } catch (SystemException e) {
+                     log.error(e);
+                  }
+               }
             }
          }
          result = c;
@@ -246,7 +258,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test(enabled = false, description = "See ISPN-2106")
    public void testSTWithThirdWritingNonTxCache(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -254,7 +265,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test(enabled = false, description = "See ISPN-2106")
    public void testSTWithThirdWritingTxCache(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -321,7 +331,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       writeInitialData(cache1);
 
       // Delay the transient copy, so that we get a more thorough log test
-      cache1.put("delay", new DelayTransfer());
+      DelayTransfer value = new DelayTransfer();
+      cache1.put("delay", value);
+      value.enableDelay();
 
       WritingThread writerThread = new WritingThread(cache3, tx);
       writerThread.start();
@@ -366,7 +378,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       writeInitialData(cache1);
       // Delay the transient copy, so that we get a more thorough log test
-      cache1.put("delay", new DelayTransfer());
+      DelayTransfer value = new DelayTransfer();
+      cache1.put("delay", value);
+      value.enableDelay();
 
       WritingThread writerThread = new WritingThread(cache1, tx);
       writerThread.start();
@@ -434,10 +448,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       }
 
       void waitForJoin(long timeout, Cache... caches) throws InterruptedException {
-         // Pause to give caches time to see each other
-         TestingUtil.blockUntilViewsReceived(timeout, caches);
          // Wait for either a merge or view change to happen
          latch.await(timeout, TimeUnit.MILLISECONDS);
+         // Wait for the state transfer to end
+         TestingUtil.waitForRehashToComplete(caches);
       }
 
       private boolean isStateTransferred() {
