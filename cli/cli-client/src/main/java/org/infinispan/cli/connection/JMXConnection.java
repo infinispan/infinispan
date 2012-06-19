@@ -47,6 +47,7 @@ public class JMXConnection implements Connection {
    private static final QueryExp INTERPRETER_QUERY = createObjectName("*:type=CacheManager,component=Interpreter,name=*");
    private JMXConnector jmxConnector;
    private Map<String, ObjectInstance> cacheManagers;
+   private Map<String, String> sessions;
    private String activeCacheManager;
    private final JMXUrl serviceUrl;
    private MBeanServerConnection mbsc;
@@ -70,6 +71,7 @@ public class JMXConnection implements Connection {
       }
       cacheManagers = Collections.unmodifiableMap(cacheManagers);
       activeCacheManager = cacheManagers.keySet().iterator().next();
+      sessions = new HashMap<String, String>();
    }
 
    @Override
@@ -131,9 +133,14 @@ public class JMXConnection implements Connection {
    @Override
    public void execute(Context context) {
       ObjectInstance manager = cacheManagers.get(activeCacheManager);
+      String sessionId = sessions.get(activeCacheManager);
       try {
-         String result = (String) mbsc.invoke(manager.getObjectName(), "execute", new String[] { context
-               .getCommandBuffer().toString() }, new String[] { String.class.getName() });
+         if(sessionId==null) {
+            sessionId = (String) mbsc.invoke(manager.getObjectName(), "createSessionId", new Object[0], new String[0]);
+            sessions.put(activeCacheManager, sessionId);
+         }
+         String result = (String) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, context
+               .getCommandBuffer().toString() }, new String[] { String.class.getName(), String.class.getName() });
          if (result != null) {
             context.println(result);
          }
