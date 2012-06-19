@@ -20,17 +20,24 @@ package org.infinispan.cli.interpreter.session;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.batch.BatchContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 public class SessionImpl implements Session {
-   final EmbeddedCacheManager cacheManager;
-   Cache<?, ?> cache;
+   private final EmbeddedCacheManager cacheManager;
+   private final String id;
+   private Cache<?, ?> cache;
+   private long timestamp;
 
-   public SessionImpl(EmbeddedCacheManager cacheManager) {
+   public SessionImpl(final EmbeddedCacheManager cacheManager, final String id) {
       this.cacheManager = cacheManager;
+      this.id = id;
+      timestamp = System.nanoTime();
+   }
+
+   @Override
+   public String getId() {
+      return id;
    }
 
    @Override
@@ -42,7 +49,7 @@ public class SessionImpl implements Session {
    }
 
    @Override
-   public Cache<?, ?> getCache(String cacheName) {
+   public Cache<?, ?> getCache(final String cacheName) {
       Cache<Object, Object> c = cacheManager.getCache(cacheName, false);
       if (c == null) {
          throw new IllegalArgumentException("No cache named " + cacheName);
@@ -51,7 +58,7 @@ public class SessionImpl implements Session {
    }
 
    @Override
-   public void setCacheName(String cacheName) {
+   public void setCacheName(final String cacheName) {
       cache = getCache(cacheName);
    }
 
@@ -61,9 +68,10 @@ public class SessionImpl implements Session {
       for (String cacheName : cacheManager.getCacheNames()) {
          resetCache(cacheManager.getCache(cacheName));
       }
+      timestamp = System.nanoTime();
    }
 
-   private void resetCache(Cache<Object, Object> cache) {
+   private void resetCache(final Cache<Object, Object> cache) {
       if (cache.getCacheConfiguration().invocationBatching().enabled()) {
          cache.endBatch(false);
       }
@@ -74,5 +82,10 @@ public class SessionImpl implements Session {
          }
       } catch (Exception e) {
       }
+   }
+
+   @Override
+   public long getTimestamp() {
+      return timestamp;
    }
 }

@@ -46,7 +46,22 @@ public interface Session {
    void setCacheName(String cacheName);
 
    /**
-    * Resets the session, by aborting any dangling batches and transactions
+    * Resets the session, by aborting any dangling batches and transactions and updating the timestamp
     */
    void reset();
+
+   /**
+    * Returns the time the session was last accessed
+    *
+    * @return
+    */
+   long getTimestamp();
+
+   /**
+    * Returns the unique id of this session
+    * FIXME Comment this
+    *
+    * @return
+    */
+   String getId();
 }
