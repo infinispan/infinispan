@@ -31,7 +31,8 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -395,10 +396,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
             ftx.init(txTable, lockManager, recoveryManager);
             break;
-         case MapReduceCommand.COMMAND_ID:
-            MapReduceCommand mrc = (MapReduceCommand)c;
-            mrc.init(this, interceptorChain, icc, distributionManager,cache.getAdvancedCache().getRpcManager().getAddress());
+         case MapCombineCommand.COMMAND_ID:
+            MapCombineCommand mrc = (MapCombineCommand)c;
+            mrc.init(this, interceptorChain, icc, distributionManager,cache.getCacheManager(), cache.getAdvancedCache().getRpcManager().getAddress());
             break;
+         case ReduceCommand.COMMAND_ID:
+            ReduceCommand reduceCommand = (ReduceCommand)c;
+            reduceCommand.init(this, interceptorChain, icc, cache.getAdvancedCache().getRpcManager().getAddress());
+            break;   
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
@@ -413,6 +418,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ApplyDeltaCommand.COMMAND_ID:
             break;
+         case CreateCacheCommand.COMMAND_ID:
+            CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
+            createCacheCommand.init(cache.getCacheManager());
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -476,8 +484,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys) {
-      return new MapReduceCommand(m, r, cacheName, keys);
+   public MapCombineCommand buildMapCombineCommand(String taskId, Mapper m, Reducer r, Collection keys) {
+      return new MapCombineCommand(taskId, m, r, cacheName, keys);
    }
 
    @Override
@@ -493,5 +501,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
       return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);
+   }
+
+   @Override
+   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName) {
+      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName);
+   }
+
+   @Override
+   public ReduceCommand buildReduceCommand(String taskId, Reducer r, Collection keys) {
+      return new ReduceCommand(taskId, r, taskId, keys);
    }
 }

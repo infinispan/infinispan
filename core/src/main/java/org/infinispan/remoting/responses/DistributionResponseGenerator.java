@@ -24,7 +24,8 @@ package org.infinispan.remoting.responses;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -63,7 +64,9 @@ public class DistributionResponseGenerator implements ResponseGenerator {
             // check if this is successful.
             WriteCommand wc = (WriteCommand) c;
             return handleWriteCommand(wc, returnValue);
-         } else if (commandId == MapReduceCommand.COMMAND_ID || commandId == DistributedExecuteCommand.COMMAND_ID) {
+         } else if (commandId == MapCombineCommand.COMMAND_ID ||
+                  commandId == ReduceCommand.COMMAND_ID ||
+                  commandId == DistributedExecuteCommand.COMMAND_ID) {
             // Even null values should be wrapped in this case.
             return SuccessfulResponse.create(returnValue);
          } else if (c.isReturnValueExpected()) {

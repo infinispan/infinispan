@@ -22,7 +22,7 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distexec.SimpleFourNodesMapReduceTest")
@@ -30,7 +30,7 @@ public class SimpleFourNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
-      createClusteredCaches(4, cacheName(), cfg);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
+      createClusteredCaches(4, cacheName(), builder);
    }
 }

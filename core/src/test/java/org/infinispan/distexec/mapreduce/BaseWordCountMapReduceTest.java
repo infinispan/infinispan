@@ -29,8 +29,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -50,16 +50,17 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       cleanup = CleanupPhase.AFTER_TEST;
    }
 
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.DIST_SYNC;
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
    }
    
    protected String cacheName(){
       return "mapreducecache";
    }
    
+   @SuppressWarnings({ "rawtypes", "unchecked" })
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
-            Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer)
+            Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer, boolean useCombiner)
             throws Exception {
       Cache c1 = cache(0, cacheName());
       Cache c2 = cache(1, cacheName());
@@ -84,6 +85,9 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
 
       MapReduceTask<String, String, String, Integer> task = new MapReduceTask<String, String, String, Integer>(c1);
       task.mappedWith(mapper).reducedWith(reducer);
+      if(useCombiner)
+         task.combinedWith(reducer);
+      
       if(keys != null && keys.length>0){
          task.onKeys(keys);
       } 
@@ -91,16 +95,19 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    }
    
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[]) throws Exception{
-      return invokeMapReduce(keys,new WordCountMapper(), new WordCountReducer());
+      return invokeMapReduce(keys, false);
+   }
+   
+   public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[], boolean useCombiner) throws Exception{
+      return invokeMapReduce(keys,new WordCountMapper(), new WordCountReducer(), useCombiner);
    }
    
    @Test(expectedExceptions={IllegalStateException.class})
    public void testImproperCacheStateForMapReduceTask() throws Exception {
 
-      GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
-      Configuration c = new Configuration();
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
          @Override
          public void call() throws Exception {
             Cache<Object, Object> cache = cm.getCache();
@@ -119,6 +126,26 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       assert count == 2;
    }
    
+   public void testinvokeMapReduceOnAllKeysWithCombiner() throws Exception {
+      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null, true);
+      Map<String, Integer> mapReduce = task.execute();
+      Integer count = mapReduce.get("Infinispan");
+      assert count == 3;
+      count = mapReduce.get("RedHat");
+      assert count == 2;
+   }
+   
+   public void testCombinerDoesNotChangeResult() throws Exception {
+      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null, true);
+      Map<String, Integer> mapReduce = task.execute();
+      
+ 
+      MapReduceTask<String,String,String,Integer> task2 = invokeMapReduce(null, false);
+      Map<String, Integer> mapReduce2 = task2.execute();
+      assert mapReduce2.get("Infinispan") == mapReduce.get("Infinispan");
+      assert mapReduce2.get("RedHat") == mapReduce.get("RedHat");      
+   }
+   
    /**
     * Tests isolation as mapper and reducer get invoked across the cluster
     * https://issues.jboss.org/browse/ISPN-1041
@@ -126,7 +153,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
     * @throws Exception
     */
    public void testMapperReducerIsolation() throws Exception{
-      invokeMapReduce(null, new IsolationMapper(), new IsolationReducer());
+      invokeMapReduce(null, new IsolationMapper(), new IsolationReducer(), false);
    }
    
    public void testinvokeMapReduceOnAllKeysAsync() throws Exception {

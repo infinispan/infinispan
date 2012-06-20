@@ -23,7 +23,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -37,12 +38,13 @@ public class BookSearchTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() {
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      createClusteredCaches(4, cfg);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      createClusteredCaches(4, "bookSearch" ,builder);
    }
 
+   @SuppressWarnings({ "rawtypes", "unchecked" })
    public void testBookSearch() {
-      Cache c1 = cache(0);
+      Cache c1 = cache(0, "bookSearch");
       c1.put("1",
                new Book("Seam in Action",
                         "Dan Allen",
@@ -56,11 +58,13 @@ public class BookSearchTest extends MultipleCacheManagersTest {
                         "Paolo Perrotta",
                         "The Pragmatic Programmers"));
       for (int i = 0; i < 4; i++) {
-         verifySearch( cache( i ) );
+         verifySearch( cache( i,  "bookSearch" ) );
       }
    }
 
+   @SuppressWarnings({ "rawtypes", "unchecked" })   
    private void verifySearch(Cache cache) {
+      
       MapReduceTask<String, Book, String, Book> queryTask = new MapReduceTask<String, Book, String, Book>(cache);
 
       queryTask
@@ -74,6 +78,8 @@ public class BookSearchTest extends MultipleCacheManagersTest {
 
    static class TitleBookSearcher implements Mapper<String, Book, String, Book> {
 
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -7443288752468217500L;
       final String title;
 
       public TitleBookSearcher(String title) {
@@ -89,6 +95,9 @@ public class BookSearchTest extends MultipleCacheManagersTest {
    }
 
    static class BookReducer implements Reducer<String, Book> {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 5686049814166522660L;
 
       @Override
       public Book reduce(String reducedKey, Iterator<Book> iter) {
