@@ -26,14 +26,12 @@ package org.infinispan.query.queries.faceting;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 
 /**
  * @author Hardy Ferentschik
  */
 @Indexed
-@ProvidedId
 public class Car {
 
    @Field(analyze=Analyze.NO)

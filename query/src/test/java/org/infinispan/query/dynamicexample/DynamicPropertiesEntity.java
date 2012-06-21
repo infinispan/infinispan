@@ -25,13 +25,12 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-@ProvidedId @Indexed
+@Indexed
 public class DynamicPropertiesEntity {
 
    private final Map<String,String> properties = new HashMap<String, String>();

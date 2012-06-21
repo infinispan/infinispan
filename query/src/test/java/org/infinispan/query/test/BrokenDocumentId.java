@@ -25,12 +25,10 @@ package org.infinispan.query.test;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 
 /**
  * @author Navin Surtani
  */
-@ProvidedId
 @Indexed
 public class BrokenDocumentId {
    @DocumentId

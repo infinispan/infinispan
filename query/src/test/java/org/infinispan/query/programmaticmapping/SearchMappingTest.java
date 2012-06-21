@@ -25,7 +25,6 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.Environment;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
@@ -55,7 +54,7 @@ public class SearchMappingTest {
    @Test
    public void testSearchMapping() {
       final SearchMapping mapping = new SearchMapping();
-      mapping.entity(BondPVO.class).indexed().providedId()
+      mapping.entity(BondPVO.class).indexed()
             .property("id", ElementType.METHOD).field()
             .property("name", ElementType.METHOD).field()
             .property("isin", ElementType.METHOD).field();
@@ -155,7 +154,6 @@ public class SearchMappingTest {
    }
 
    @Indexed
-   @ProvidedId
    public static final class BondPVO2 {
 
       @Field

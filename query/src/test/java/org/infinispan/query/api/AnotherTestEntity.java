@@ -21,9 +21,7 @@ package org.infinispan.query.api;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 
-@ProvidedId
 @Indexed(index="indexB")
 public class AnotherTestEntity {
 

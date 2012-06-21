@@ -24,7 +24,6 @@ package org.infinispan.query.tx;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -82,7 +81,6 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
       m_transactionManager.commit();
    }
 
-   @ProvidedId
    @Indexed(index = "SessionIndex")
    public class Session {
       private String m_id;
