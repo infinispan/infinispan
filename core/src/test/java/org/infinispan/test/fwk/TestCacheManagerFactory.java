@@ -240,6 +240,10 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, globalBuilder, builder, false);
    }
 
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, boolean keepJmxDomain) {
+      return newDefaultCacheManager(true, globalBuilder, builder, keepJmxDomain);
+   }
+
    /**
     * Creates a cache manager and amends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)
     * during running tests in parallel.
@@ -327,6 +331,20 @@ public class TestCacheManagerFactory {
     */
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain) {
       return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, builder);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      amendGlobalConfiguration(globalBuilder, new TransportFlags());
+      globalBuilder.globalJmxStatistics()
+               .jmxDomain(jmxDomain)
+               .mBeanServerLookup(new PerThreadMBeanServerLookup())
+               .enabled(exposeGlobalJmx);
+      return createCacheManager(globalBuilder, builder, true);
    }
 
    /**
