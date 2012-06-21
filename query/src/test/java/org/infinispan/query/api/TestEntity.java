@@ -23,10 +23,8 @@ package org.infinispan.query.api;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 
-@ProvidedId
 @Indexed(index="indexA")
 public class TestEntity {
 

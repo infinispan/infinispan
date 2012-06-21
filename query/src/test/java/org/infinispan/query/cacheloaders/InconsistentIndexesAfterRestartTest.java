@@ -25,7 +25,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -131,7 +130,6 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
         return q.list();
     }
 
-    @ProvidedId
     @Indexed
     public static class SEntity implements Serializable {
 

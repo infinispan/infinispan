@@ -23,9 +23,8 @@ import java.io.Serializable;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 
-@ProvidedId @Indexed
+@Indexed
 public class Book implements Serializable {
 
    @Field String title;
