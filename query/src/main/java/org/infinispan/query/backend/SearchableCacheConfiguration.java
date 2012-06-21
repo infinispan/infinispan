@@ -118,4 +118,9 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       return false;
    }
 
+   @Override
+   public boolean isIdProvidedImplicit() {
+      return true;
+   }
+
 }
