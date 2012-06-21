@@ -49,7 +49,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)
-   void failedClearingJdbcCacheStore(@Cause SQLException e);
+   void failedClearingJdbcCacheStore(@Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "I/O failure while integrating state into store", id = 8002)

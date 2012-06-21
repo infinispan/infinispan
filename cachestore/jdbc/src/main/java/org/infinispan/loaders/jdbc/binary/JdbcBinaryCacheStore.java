@@ -352,8 +352,15 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                if (log.isTraceEnabled()) {
                   log.tracef("Adding bucket keyed %s for purging.", key);
                }
-               InputStream binaryStream = rs.getBinaryStream(1);
-               Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+               Bucket bucket = null;
+               try {
+                  InputStream binaryStream = rs.getBinaryStream(1);
+                  bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+               } catch (Exception ex) {
+                  // If something goes wrong during unmarshalling, unlock the key before rethrowing
+                  unlock(key);
+                  throw ex;
+               }
                bucket.setBucketId(key);
                expiredBuckets.add(bucket);
             } else {
@@ -362,7 +369,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                }
             }
          }
-      } catch (SQLException ex) {
+      } catch (Exception ex) {
          //if something happens make sure buckets locks are being release
          releaseLocks(expiredBuckets);
          connectionFactory.releaseConnection(conn);
