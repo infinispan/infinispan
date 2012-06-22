@@ -91,7 +91,8 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
    private final Set<ConfigurationHolder> configurations;
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
    
-   private volatile Boolean registered = false;
+   private volatile boolean registered = false;
+   private final Object registerLock = new Object();
    
    InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
@@ -207,9 +208,8 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
 
    public void registerCacheConfigurations(CacheManagerEventBridge eventBridge, Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
       if (!registered) {
-         synchronized (registered) {
+         synchronized (registerLock) {
             if (!registered) {
-               registered = true;
                final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
                final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
           
@@ -236,6 +236,9 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
                   // register cache manager observers
                   eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
                }
+
+               // only set registered to true at the end to keep other threads waiting until we have finished registration
+               registered = true;
             }
          }
       }
