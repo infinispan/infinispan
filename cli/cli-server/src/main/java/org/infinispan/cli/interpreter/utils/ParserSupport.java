@@ -40,11 +40,28 @@ public final class ParserSupport {
     * @param timeUnit
     * @return
     */
-   public static long millis(String time, String timeUnit) {
+   public static long millis(final String time, final String timeUnit) {
       return TIMEUNITS.get(timeUnit).toMillis(Long.parseLong(time));
    }
 
-   public static String unquote(String s) {
-      return s != null ? s.substring(1, s.length() - 1) : null;
+   public static long millis(final String time) {
+      int s = time.length() - 1;
+      for (; time.charAt(s) > '9'; s--) {
+      }
+      return millis(time.substring(0, s + 1), time.substring(s + 1));
+   }
+
+   public static String unquote(final String s) {
+      if (s == null || s.length() < 2) {
+         return s;
+      }
+      char first = s.charAt(0);
+      char last = s.charAt(s.length() - 1);
+      if (first == last && (first == '\'' || first == '"')) {
+         return s.substring(1, s.length() - 1);
+      } else {
+         return s;
+      }
+
    }
 }

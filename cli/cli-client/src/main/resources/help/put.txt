@@ -30,8 +30,8 @@ an optional idle timeout (using the time value notation described below)
 .SH DATA TYPES
 The CLI understands the following types:
 .IP string
-a string must be enclosed between single (') or double (") quotes, 
-e.g. 'a string' 
+strings can either be quoted between single (') or double (") quotes, or left unquoted. In this case it must not contain spaces, punctuation and cannot begin with a number  
+e.g. 'a string', key001 
 .IP int
 an integer is identified by a sequence of decimal digits, e.g. 256
 .IP long

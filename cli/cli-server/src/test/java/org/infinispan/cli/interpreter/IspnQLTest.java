@@ -38,7 +38,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test
+@Test(groups = "functional", testName="cli-server.IspnQLTest")
 public class IspnQLTest {
    Session session;
    Cache cache;
@@ -57,6 +57,14 @@ public class IspnQLTest {
 
    public void testPutStatement() throws IOException, RecognitionException {
       IspnQLParser parser = createParser("put 'a' 'b';");
+      parser.statements();
+      PutStatement s = (PutStatement) parser.statements.get(0);
+      s.execute(session);
+      verify(cache).put("a", "b");
+   }
+
+   public void testPutStatementUnquoted() throws IOException, RecognitionException {
+      IspnQLParser parser = createParser("put a b;");
       parser.statements();
       PutStatement s = (PutStatement) parser.statements.get(0);
       s.execute(session);
@@ -89,7 +97,17 @@ public class IspnQLTest {
       verify(cache).put("a", "b");
    }
 
-   private IspnQLParser createParser(String testString) throws IOException {
+   public void testPutCacheQualifierUnquoted() throws IOException, RecognitionException {
+      IspnQLParser parser = createParser("put myCache.a b;");
+      parser.statements();
+      PutStatement s = (PutStatement) parser.statements.get(0);
+      when(session.getCache("myCache")).thenReturn(cache);
+      s.execute(session);
+      verify(session).getCache("myCache");
+      verify(cache).put("a", "b");
+   }
+
+   private IspnQLParser createParser(final String testString) throws IOException {
       CharStream stream = new ANTLRStringStream(testString);
       IspnQLLexer lexer = new IspnQLLexer(stream);
       CommonTokenStream tokens = new CommonTokenStream(lexer);
