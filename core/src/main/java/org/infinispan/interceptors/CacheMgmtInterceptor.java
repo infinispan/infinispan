@@ -108,12 +108,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map<Object, Object> data = command.getMap();
-      long t1 = System.nanoTime();
-      Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.nanoTime();
-      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
-      if (ctx.isOriginLocal() && data != null && !data.isEmpty()) {
+      final Map<Object, Object> data = command.getMap();
+      final long t1 = System.nanoTime();
+      final Object retval = invokeNextInterceptor(ctx, command);
+      final long t2 = System.nanoTime();
+      final long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
+      if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
          storeTimes.getAndAdd(intervalMilliseconds);
          stores.getAndAdd(data.size());
       }
