@@ -28,6 +28,12 @@ import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 
+/**
+ * LocateStatement locates an entry in the cluster
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class LocateStatement implements Statement {
    final KeyData keyData;
 
@@ -37,12 +43,7 @@ public class LocateStatement implements Statement {
 
    @Override
    public Result execute(Session session) throws StatementException {
-      Cache<Object, Object> cache;
-      if (keyData.getCacheName() != null) {
-         cache = (Cache<Object, Object>) session.getCache(keyData.getCacheName());
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if(distributionManager!=null) {
          List<Address> addresses = distributionManager.locate(keyData.getKey());

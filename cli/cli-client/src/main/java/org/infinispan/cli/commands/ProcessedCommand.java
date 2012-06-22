@@ -28,14 +28,31 @@ public class ProcessedCommand {
    final String line;
    final List<Argument> arguments;
    final boolean commandComplete;
+   final int cursorPosition;
+   final int currentArgument;
 
-   public ProcessedCommand(final String raw) {
+   public ProcessedCommand(String raw) {
+      this(raw, raw.length());
+   }
+
+   public ProcessedCommand(String raw, int cursorPosition) {
+      this.cursorPosition = cursorPosition;
       this.commandComplete = ltrim(raw).indexOf(' ') > 0;
-      this.line = raw.trim();
+      raw = raw.trim();
+      this.line = raw.endsWith(";") ? raw.substring(0, raw.length()-1) : raw;
       int sep = this.line.indexOf(' ');
       command = sep > 0 ? this.line.substring(0, sep) : this.line;
       arguments = new ArrayList<Argument>();
       splitArguments(sep > 0 ? this.line.substring(sep + 1) : "", sep + 1);
+      int c = -1;
+      for (Argument arg : arguments) {
+         if (cursorPosition>arg.getOffset()) {
+            c++;
+         } else {
+            break;
+         }
+      }
+      this.currentArgument = c;
    }
 
    private String ltrim(String s) {
@@ -72,6 +89,14 @@ public class ProcessedCommand {
 
    public List<Argument> getArguments() {
       return arguments;
+   }
+
+   public Argument getArgument(int n) {
+      return (n >=0 && n < arguments.size()) ? arguments.get(n) : null;
+   }
+
+   public Argument getCurrentArgument() {
+      return getArgument(currentArgument);
    }
 
    public boolean isCommandComplete() {

@@ -40,12 +40,7 @@ public class GetStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      Cache<Object, Object> cache;
-      if (keyData.getCacheName() != null) {
-         cache = (Cache<Object, Object>) session.getCache(keyData.getCacheName());
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       Object value = cache.get(keyData.key);
       if (value==null) {
          return new StringResult("null");

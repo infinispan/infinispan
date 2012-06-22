@@ -113,9 +113,11 @@ statement returns [Statement stmt]
    | cacheStatement { $stmt = $cacheStatement.stmt; }
    | clearStatement { $stmt = $clearStatement.stmt; }
    | commitTransactionStatement { $stmt = $commitTransactionStatement.stmt; }
+   | createStatement { $stmt = $createStatement.stmt; }
    | endBatchStatement { $stmt = $endBatchStatement.stmt; }
    | evictStatement { $stmt = $evictStatement.stmt; }
    | getStatement { $stmt = $getStatement.stmt; }
+   | infoStatement { $stmt = $infoStatement.stmt; }
    | locateStatement { $stmt = $locateStatement.stmt; }
    | putIfAbsentStatement { $stmt = $putIfAbsentStatement.stmt; }
    | putStatement { $stmt = $putStatement.stmt; }
@@ -123,6 +125,8 @@ statement returns [Statement stmt]
    | replaceStatement { $stmt = $replaceStatement.stmt; }
    | rollbackTransactionStatement { $stmt = $rollbackTransactionStatement.stmt; }
    | startBatchStatement { $stmt = $startBatchStatement.stmt; }
+   | statsStatement { $stmt = $statsStatement.stmt; }
+   | upgradeStatement { $stmt = $upgradeStatement.stmt; }
    ;
 
 
@@ -139,13 +143,17 @@ cacheStatement returns [CacheStatement stmt]
    ;
 
 clearStatement returns [ClearStatement stmt]
-   : CLEAR (EOL | ';')! { $stmt = new ClearStatement(); }
+   : CLEAR (cacheName = STRINGLITERAL)?(EOL | ';')! { $stmt = new ClearStatement(unquote($cacheName.text)); }
    ;
 
 commitTransactionStatement returns [CommitTransactionStatement stmt]
    : COMMIT (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new CommitTransactionStatement(unquote($cacheName.text)); }
    ;
 
+createStatement returns [CreateStatement stmt]
+   : CREATE cacheName = STRINGLITERAL (LIKE baseCacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new CreateStatement(unquote($cacheName.text), unquote($baseCacheName.text)); }
+   ;
+   
 endBatchStatement returns [EndBatchStatement stmt]
    : END (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new EndBatchStatement(unquote($cacheName.text), true); }
    ;
@@ -156,6 +164,10 @@ evictStatement returns [EvictStatement stmt]
 
 getStatement returns [GetStatement stmt]
    : GET key = keyIdentifier (EOL | ';')! { $stmt = new GetStatement($key.key); }
+   ;
+
+infoStatement returns [InfoStatement stmt]
+   : INFO (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new InfoStatement(unquote($cacheName.text)); }
    ;
 
 locateStatement returns [LocateStatement stmt]
@@ -186,6 +198,14 @@ startBatchStatement returns [StartBatchStatement stmt]
    : START (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new StartBatchStatement(unquote($cacheName.text)); }
    ;
 
+statsStatement returns [StatsStatement stmt]
+   : STATS opts = statementOptions (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new StatsStatement($opts.options, unquote($cacheName.text)); }
+   ;
+
+upgradeStatement returns [UpgradeStatement stmt]
+   : UPGRADE opts = statementOptions (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new UpgradeStatement($opts.options, unquote($cacheName.text)); }
+   ;
+
 expirationClause returns [ExpirationData exp]
    : EXPIRES expires = timeLiteral (MAXIDLE idle = timeLiteral)? { $exp = new ExpirationData($expires.l, $idle.l); }
    ;
@@ -193,6 +213,17 @@ expirationClause returns [ExpirationData exp]
 keyIdentifier returns [KeyData key]
    : STRINGLITERAL '.' literal { $key = new KeyData(unquote($STRINGLITERAL.text), $literal.o); }
    | literal { $key = new KeyData($literal.o); }
+   ;
+
+statementOptions returns [List<Option> options]
+@init {
+   $options = new ArrayList<Option>();
+}
+   : ( statementOption { $options.add($statementOption.option); } )*
+   ;
+
+statementOption returns [Option option]
+   : '--' STRINGLITERAL { $option = new Option(unquote($STRINGLITERAL.text)); }
    ;
 
 literal returns [Object o]
@@ -250,11 +281,14 @@ BEGIN:   'begin';
 CACHE:   'cache';
 CLEAR:   'clear';
 COMMIT:  'commit';
+CREATE:  'create';
 END:     'end';
 EVICT:   'evict';
 EXPIRES: 'expires';
 FALSE:   'false';
 GET:     'get';
+INFO:    'info';
+LIKE:    'like';
 LOCATE:  'locate';
 MAXIDLE: 'maxidle';
 NULL:    'null';
@@ -264,7 +298,9 @@ REMOVE:  'remove';
 REPLACE: 'replace';
 ROLLBACK:'rollback';
 START:   'start';
+STATS:   'stats';
 TRUE:    'true';
+UPGRADE: 'upgrade';
 
 INTLITERAL
    : IntegerNumber

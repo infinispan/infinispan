@@ -23,6 +23,13 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ *
+ * CacheStatement shows the currently selected cache or selects a cache to be used as default for CLI operations
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class CacheStatement implements Statement {
 
    final String cacheName;
@@ -33,11 +40,11 @@ public class CacheStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      if(cacheName!=null) {
-         session.setCacheName(cacheName);
+      if (cacheName != null) {
+         session.setCurrentCache(cacheName);
          return EmptyResult.RESULT;
       } else {
-         return new StringResult(session.getCache().getName());
+         return new StringResult(session.getCurrentCache().getName());
       }
    }
 

@@ -16,22 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.interpreter.statement;
+package org.infinispan.cli.connection.jmx;
 
-import javax.transaction.TransactionManager;
+import org.infinispan.cli.connection.Connection;
+import org.infinispan.cli.connection.Connector;
 
-import org.infinispan.Cache;
-import org.infinispan.cli.interpreter.session.Session;
+public class JMXConnector implements Connector {
 
-public abstract class AbstractTransactionStatement implements Statement {
-   final String cacheName;
-
-   public AbstractTransactionStatement(final String cacheName) {
-      this.cacheName = cacheName;
+   public JMXConnector() {
    }
 
-   protected TransactionManager getTransactionManager(Session session) {
-      Cache<Object, Object> cache = session.getCache(cacheName);
-      return cache.getAdvancedCache().getTransactionManager();
+   @Override
+   public Connection getConnection(final String connectionString) {
+      try {
+         return new JMXConnection(new JMXConnection.JMXUrl(connectionString));
+      } catch (Exception e) {
+         return null;
+      }
    }
+
+
 }

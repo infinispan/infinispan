@@ -19,8 +19,14 @@
 package org.infinispan.cli.interpreter.session;
 
 import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 public interface Session {
+
+   /**
+    * Obtains the CacheManager to which this session is attached
+    */
+   EmbeddedCacheManager getCacheManager();
 
    /**
     *
@@ -28,22 +34,30 @@ public interface Session {
     *
     * @return cache
     */
-   Cache<?, ?> getCache();
+   <K, V> Cache<K, V> getCurrentCache();
 
    /**
-    * Returns a named cache
+    * Returns a named cache. If the cacheName parameter is null, the current cache is returned
     *
     * @param cacheName
     * @return the cache identified by cacheName
     */
-   Cache<?, ?> getCache(String cacheName);
+   <K, V> Cache<K, V> getCache(String cacheName);
 
    /**
     * Sets the current cache.
     *
     * @param cacheName
     */
-   void setCacheName(String cacheName);
+   void setCurrentCache(String cacheName);
+
+   /**
+    * Creates a new cache
+    *
+    * @param cacheName the name of the new cache
+    * @param baseCacheName the existing named cache to use for defaults
+    */
+   void createCache(String cacheName, String baseCacheName);
 
    /**
     * Resets the session, by aborting any dangling batches and transactions and updating the timestamp
@@ -59,7 +73,6 @@ public interface Session {
 
    /**
     * Returns the unique id of this session
-    * FIXME Comment this
     *
     * @return
     */

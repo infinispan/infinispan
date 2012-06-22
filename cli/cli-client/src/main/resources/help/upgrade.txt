@@ -1,0 +1,13 @@
+.SH SYNOPSIS
+.B upgrade [
+.I --dumpkeys
+.B ] [
+.I cachename
+.B ]
+.SH DESCRIPTION
+Performs an upgrade command on the specified cache 
+.SH ARGUMENTS
+.IP --dumpkeys
+Performs the dump of all the keys in the cache to a known entry 
+.IP cachename
+(optional) the name of the cache on which to invoke the specified upgrade command

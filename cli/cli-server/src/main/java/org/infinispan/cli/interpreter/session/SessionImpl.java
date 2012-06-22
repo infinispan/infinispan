@@ -20,8 +20,16 @@ package org.infinispan.cli.interpreter.session;
 
 import javax.transaction.TransactionManager;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
+import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.CreateCacheCommand;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.rpc.RpcManager;
 
 public class SessionImpl implements Session {
    private final EmbeddedCacheManager cacheManager;
@@ -36,21 +44,31 @@ public class SessionImpl implements Session {
    }
 
    @Override
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
+   }
+
+   @Override
    public String getId() {
       return id;
    }
 
    @Override
-   public Cache<?, ?> getCache() {
+   public <K, V> Cache<K, V> getCurrentCache() {
       if (cache == null) {
          cache = cacheManager.getCache();
       }
-      return cache;
+      return (Cache<K, V>) cache;
    }
 
    @Override
-   public Cache<?, ?> getCache(final String cacheName) {
-      Cache<Object, Object> c = cacheManager.getCache(cacheName, false);
+   public <K, V> Cache<K, V> getCache(final String cacheName) {
+      Cache<K, V> c;
+      if (cacheName != null) {
+         c = cacheManager.getCache(cacheName, false);
+      } else {
+         c = getCurrentCache();
+      }
       if (c == null) {
          throw new IllegalArgumentException("No cache named " + cacheName);
       }
@@ -58,8 +76,46 @@ public class SessionImpl implements Session {
    }
 
    @Override
-   public void setCacheName(final String cacheName) {
+   public void setCurrentCache(final String cacheName) {
       cache = getCache(cacheName);
+   }
+
+   @Override
+   public void createCache(String cacheName, String baseCacheName) {
+      Configuration configuration;
+      if (baseCacheName != null) {
+         configuration = cacheManager.getCacheConfiguration(baseCacheName);
+         if (configuration == null) {
+            throw new IllegalArgumentException("A cache named " + baseCacheName + " doesn't exist");
+         }
+      } else {
+         configuration = cacheManager.getDefaultCacheConfiguration();
+         baseCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
+      }
+      if (cacheManager.cacheExists(cacheName)) {
+         throw new IllegalArgumentException("A cache named " + cacheName + " already exists");
+      }
+      if (configuration.clustering().cacheMode().isClustered()) {
+         AdvancedCache<?, ?> clusteredCache = cacheManager.getCache(baseCacheName).getAdvancedCache();
+         RpcManager rpc = clusteredCache.getRpcManager();
+         CommandsFactory factory = clusteredCache.getComponentRegistry().getComponent(CommandsFactory.class);
+
+         CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
+
+         try{
+            rpc.invokeRemotely(null, ccc, true, false);
+            ccc.init(cacheManager);
+            ccc.perform(null);
+         }
+         catch (Throwable e) {
+            throw new CacheException("Could not create cache on all clustered nodes", e);
+         }
+      } else {
+         ConfigurationBuilder b = new ConfigurationBuilder();
+         b.read(configuration);
+         cacheManager.defineConfiguration(cacheName, b.build());
+         cacheManager.getCache(cacheName);
+      }
    }
 
    @Override

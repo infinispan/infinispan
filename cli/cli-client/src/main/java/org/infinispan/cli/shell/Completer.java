@@ -49,7 +49,7 @@ public class Completer implements Completion {
             }
          }
       } else {
-         ProcessedCommand procCmd = new ProcessedCommand(buffer);
+         ProcessedCommand procCmd = new ProcessedCommand(buffer, op.getCursor());
          if(!procCmd.isCommandComplete()) {
             // A possibly incomplete command in the buffer, return the commands that match
             for(String name : context.getCommandRegistry().getCommandNames()) {
@@ -61,12 +61,15 @@ public class Completer implements Completion {
          } else {
             Command command = context.getCommandRegistry().getCommand(procCmd.getCommand());
             if(command.isAvailable(context)) {
+               op.setOffset(op.getCursor());
                for(Argument arg : procCmd.getArguments()) {
                   if(arg.getOffset()<op.getCursor()) {
                      op.setOffset(arg.getOffset());
-                  } else
+                  } else {
                      break;
+                  }
                }
+               addPrefixMatches(procCmd.getCurrentArgument(), command.getOptions(), candidates);
                command.complete(context, procCmd, candidates);
             }
          }
@@ -74,10 +77,11 @@ public class Completer implements Completion {
       Collections.sort(candidates);
    }
 
-   public static void addPrefixMatches(String prefix, Collection<String> all, List<String> candidates) {
-      if(prefix==null) {
+   public static void addPrefixMatches(Argument argument, Collection<String> all, List<String> candidates) {
+      if(argument==null) {
          candidates.addAll(all);
       } else {
+         String prefix = argument.getValue();
          for(String s : all) {
             if(s.startsWith(prefix)) {
                candidates.add(s);

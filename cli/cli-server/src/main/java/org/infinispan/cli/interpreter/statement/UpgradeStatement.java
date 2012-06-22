@@ -18,20 +18,44 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
-import javax.transaction.TransactionManager;
+import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.result.EmptyResult;
+import org.infinispan.cli.interpreter.result.Result;
+import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.upgrade.RollingUpgradeManager;
 
-public abstract class AbstractTransactionStatement implements Statement {
+/**
+ * Performs operation related to rolling upgrades
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class UpgradeStatement implements Statement {
+
    final String cacheName;
+   final private List<Option> options;
 
-   public AbstractTransactionStatement(final String cacheName) {
+   public UpgradeStatement(List<Option> options, String cacheName) {
+      this.options = options;
       this.cacheName = cacheName;
    }
 
-   protected TransactionManager getTransactionManager(Session session) {
+   @Override
+   public Result execute(Session session) throws StatementException {
       Cache<Object, Object> cache = session.getCache(cacheName);
-      return cache.getAdvancedCache().getTransactionManager();
+      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      for (Option opt : options) {
+         if ("dumpkeys".equals(opt.getName())) {
+            upgradeManager.recordKnownGlobalKeyset();
+         } else {
+            throw new StatementException("Unknown option "+opt.getName());
+         }
+      }
+
+      return EmptyResult.RESULT;
    }
+
 }

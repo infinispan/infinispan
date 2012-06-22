@@ -31,7 +31,7 @@ public class Disconnect extends AbstractCommand {
 
    @Override
    public boolean isAvailable(Context context) {
-      return !context.isConnected();
+      return context.isConnected();
    }
 
    @Override

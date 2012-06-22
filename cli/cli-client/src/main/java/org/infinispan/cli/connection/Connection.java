@@ -36,4 +36,6 @@ public interface Connection extends Closeable {
    void setActiveContainer(String name);
 
    void execute(Context context);
+
+   Collection<String> getAvailableCaches();
 }

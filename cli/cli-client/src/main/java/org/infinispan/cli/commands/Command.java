@@ -25,6 +25,8 @@ import org.infinispan.cli.Context;
 public interface Command {
    String getName();
 
+   List<String> getOptions();
+
    boolean isAvailable(Context context);
 
    void execute(Context context, ProcessedCommand commandLine);

@@ -9,9 +9,11 @@ org.infinispan.cli.commands.server.Begin
 org.infinispan.cli.commands.server.Cache
 org.infinispan.cli.commands.server.Clear
 org.infinispan.cli.commands.server.Commit
+org.infinispan.cli.commands.server.Create
 org.infinispan.cli.commands.server.End
 org.infinispan.cli.commands.server.Evict
 org.infinispan.cli.commands.server.Get
+org.infinispan.cli.commands.server.Info
 org.infinispan.cli.commands.server.Locate
 org.infinispan.cli.commands.server.Put
 org.infinispan.cli.commands.server.PutIfAbsent
@@ -19,3 +21,5 @@ org.infinispan.cli.commands.server.Remove
 org.infinispan.cli.commands.server.Replace
 org.infinispan.cli.commands.server.Rollback
 org.infinispan.cli.commands.server.Start
+org.infinispan.cli.commands.server.Stats
+org.infinispan.cli.commands.server.Upgrade

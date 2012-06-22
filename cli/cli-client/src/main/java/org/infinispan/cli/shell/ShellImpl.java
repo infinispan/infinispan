@@ -21,7 +21,12 @@ package org.infinispan.cli.shell;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 import org.fusesource.jansi.Ansi;
 import org.infinispan.cli.Config;
@@ -37,7 +42,6 @@ import org.infinispan.cli.io.ConsoleIOAdapter;
 import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
 import org.jboss.jreadline.console.Console;
-import org.jboss.jreadline.console.settings.Settings;
 
 /**
  *
@@ -50,27 +54,35 @@ public class ShellImpl implements Shell {
    private Config config;
    private Console console;
    private Context context;
+   private ShellMode mode = ShellMode.INTERACTIVE;
+   private String inputFile;
 
    @Override
-   public void init(String[] args) throws Exception {
+   public void init(final String[] args) throws Exception {
       // Initialize the context for simple standard I/O
       context = new ContextImpl(new StreamIOAdapter(), new CommandBufferImpl());
-      String sopts = "hc:v";
-      LongOpt[] lopts = new LongOpt[] {
-            new LongOpt("connect", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
+      String sopts = "c:f:hv";
+      LongOpt[] lopts = new LongOpt[] { new LongOpt("connect", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
+            new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
             new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
-            new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'),
-      };
+            new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'), };
       Getopt g = new Getopt("ispn-cli", args, sopts, lopts);
       int c;
       while ((c = g.getopt()) != -1) {
          switch (c) {
-         case 'c': {
+         case 'c':
             Connection connection = ConnectionFactory.getConnection(g.getOptarg());
             connection.connect(context);
             context.setConnection(connection);
             break;
-         }
+         case 'f':
+            inputFile = g.getOptarg();
+            if ("-".equals(inputFile) || new File(inputFile).isFile()) {
+               mode = ShellMode.BATCH;
+            } else {
+               exitWithError("File '%s' doesn't exist or is not a file", g.getOptarg());
+            }
+            break;
          case 'h':
             help();
             break;
@@ -79,19 +91,44 @@ public class ShellImpl implements Shell {
             break;
          }
       }
-      config = new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
-      config.load();
-      Settings settings = Settings.getInstance();
-      settings.setReadInputrc(false);
+   }
 
-      // FIXME: only if we're going interactive
-      console = new Console(settings);
-      context.setOutputAdapter(new ConsoleIOAdapter(console));
-      console.addCompletion(new Completer(context));
+   private void exitWithError(final String format, final Object... args) {
+      System.err.printf(format, args);
+      System.exit(1);
    }
 
    @Override
-   public void run() {
+   public void run() throws IOException {
+      switch (mode) {
+      case BATCH:
+         batchRun();
+         break;
+      case INTERACTIVE:
+         interactiveRun();
+         break;
+      }
+   }
+
+   private void batchRun() throws IOException {
+      Reader r = "-".equals(inputFile) ? new InputStreamReader(System.in) : new FileReader(inputFile);
+      BufferedReader br = new BufferedReader(r);
+      try {
+         for (String line = br.readLine(); line != null; line = br.readLine()) {
+            execute(line);
+         }
+      } finally {
+         br.close();
+      }
+   }
+
+   private void interactiveRun() throws IOException {
+      config = new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
+      config.load();
+      console = new Console();
+      context.setOutputAdapter(new ConsoleIOAdapter(console));
+      console.addCompletion(new Completer(context));
+
       while (!context.isQuitting()) {
          try {
             context.refreshProperties();
@@ -113,13 +150,13 @@ public class ShellImpl implements Shell {
       }
    }
 
-   private void execute(String line) {
+   private void execute(final String line) {
       ProcessedCommand parsed = new ProcessedCommand(line);
       Command command = context.getCommandRegistry().getCommand(parsed.getCommand());
       if (command != null) {
          command.execute(context, parsed);
       } else {
-         context.println("Command " + parsed.getCommand() + " unknown or not available");
+         context.error("Command " + parsed.getCommand() + " unknown or not available");
       }
    }
 
@@ -193,6 +230,9 @@ public class ShellImpl implements Shell {
       System.out.println("Options:");
       System.out.println("  -c, --connect=URL       connects to a running instance of Infinispan. Currently only ");
       System.out.println("                          supports JMX via the following URL format: jmx://host:port");
+      System.out.println("  -f, --file=FILE         reads input from the specified file instead of using ");
+      System.out.println("                          interactive mode. If FILE is '-', then commands will be read");
+      System.out.println("                          from stdin");
       System.out.println("  -h, --help              shows this help page");
       System.out.println("  -v, --version           shows version information");
       System.exit(0);

@@ -24,7 +24,6 @@ import javax.management.ObjectName;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ComponentsJmxRegistration;

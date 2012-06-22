@@ -1,0 +1,10 @@
+.SH SYNOPSIS
+.B info [
+.I cachename
+.B ]
+.SH DESCRIPTION
+Shows information about the specified cache or about the active cache manager
+.SH ARGUMENTS
+.IP cachename
+(optional) the name of the cache for which information will be printed. If 
+omitted, information about the active cache manager will be shown 

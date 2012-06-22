@@ -25,6 +25,13 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ *
+ * CommitTransactionStatement commits a running transaction
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class CommitTransactionStatement extends AbstractTransactionStatement {
    public CommitTransactionStatement(final String cacheName) {
       super(cacheName);

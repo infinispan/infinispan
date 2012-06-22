@@ -40,12 +40,7 @@ public class RemoveStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      Cache<Object, Object> cache;
-      if (keyData.getCacheName() != null) {
-         cache = (Cache<Object, Object>) session.getCache(keyData.getCacheName());
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       if (value == null) {
          cache.remove(keyData.getKey());
       } else {

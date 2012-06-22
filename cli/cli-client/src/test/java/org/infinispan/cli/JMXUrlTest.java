@@ -16,22 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.interpreter.statement;
+package org.infinispan.cli;
 
-import javax.transaction.TransactionManager;
+import org.infinispan.cli.connection.jmx.JMXConnection.JMXUrl;
+import org.testng.annotations.Test;
 
-import org.infinispan.Cache;
-import org.infinispan.cli.interpreter.session.Session;
+@Test(groups="functional", testName="cli.shell.JMXUrlTest")
+public class JMXUrlTest {
 
-public abstract class AbstractTransactionStatement implements Statement {
-   final String cacheName;
-
-   public AbstractTransactionStatement(final String cacheName) {
-      this.cacheName = cacheName;
+   public void testValidJMXUrl() {
+      JMXUrl jmxUrl = new JMXUrl("jmx://localhost:12345");
+      assert jmxUrl.getUrl().equals("service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi");
    }
 
-   protected TransactionManager getTransactionManager(Session session) {
-      Cache<Object, Object> cache = session.getCache(cacheName);
-      return cache.getAdvancedCache().getTransactionManager();
+   @Test(expectedExceptions=IllegalArgumentException.class)
+   public void testInvalidJMXUrl() {
+      new JMXUrl("hotrod://localhost:12345");
    }
 }

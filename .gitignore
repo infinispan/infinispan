@@ -34,4 +34,7 @@ rhq-plugin.xml
 *.idx
 # Persisted metadata
 *.dat
-
+# Antlr-generated
+IspnQLLexer.java
+IspnQLParser.java
+IspnQL.tokens
