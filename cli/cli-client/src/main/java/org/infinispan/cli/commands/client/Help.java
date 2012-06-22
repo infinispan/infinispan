@@ -21,6 +21,7 @@ package org.infinispan.cli.commands.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.AbstractCommand;
@@ -45,7 +46,8 @@ public class Help extends AbstractCommand {
    public void execute(Context context, ProcessedCommand commandLine) {
       switch (commandLine.getArguments().size()) {
       case 0:
-         for (String name : context.getCommandRegistry().getCommandNames()) {
+         TreeSet<String> commandNames = new TreeSet<String>(context.getCommandRegistry().getCommandNames());
+         for (String name : commandNames) {
             context.println(name);
          }
          break;
@@ -76,17 +78,6 @@ public class Help extends AbstractCommand {
 
    @Override
    public void complete(Context context, ProcessedCommand procCmd, List<String> candidates) {
-      switch (procCmd.getArguments().size()) {
-      case 0: {
-         Completer.addPrefixMatches(null, context.getCommandRegistry().getCommandNames(), candidates);
-         break;
-      }
-      case 1: {
-         Completer.addPrefixMatches(procCmd.getArguments().get(0).getValue(), context.getCommandRegistry().getCommandNames(), candidates);
-         break;
-      }
-      default:
-         break;
-      }
+      Completer.addPrefixMatches(procCmd.getCurrentArgument(), context.getCommandRegistry().getCommandNames(), candidates);
    }
 }

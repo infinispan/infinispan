@@ -16,22 +16,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.interpreter.statement;
+package org.infinispan.cli.commands.server;
 
-import javax.transaction.TransactionManager;
+import java.util.Arrays;
+import java.util.List;
 
-import org.infinispan.Cache;
-import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.cli.Context;
+import org.infinispan.cli.commands.ProcessedCommand;
+import org.infinispan.cli.shell.Completer;
 
-public abstract class AbstractTransactionStatement implements Statement {
-   final String cacheName;
+public class Upgrade extends AbstractServerCommand {
+   private static final List<String> OPTIONS = Arrays.asList("--dumpkeys");
 
-   public AbstractTransactionStatement(final String cacheName) {
-      this.cacheName = cacheName;
+   @Override
+   public String getName() {
+      return "upgrade";
    }
 
-   protected TransactionManager getTransactionManager(Session session) {
-      Cache<Object, Object> cache = session.getCache(cacheName);
-      return cache.getAdvancedCache().getTransactionManager();
+   @Override
+   public List<String> getOptions() {
+      return OPTIONS;
+   }
+
+   @Override
+   public int nesting() {
+      return 0;
+   }
+
+   @Override
+   public void complete(final Context context, final ProcessedCommand procCmd, final List<String> candidates) {
+      Completer.addPrefixMatches(procCmd.getCurrentArgument(), context.getConnection().getAvailableCaches(), candidates);
    }
 }

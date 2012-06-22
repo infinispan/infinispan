@@ -137,6 +137,23 @@ public class InterpreterTest extends SingleCacheManagerTest {
       assert a.equals("c");
    }
 
+   public void testCreateLocal() throws Exception {
+      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
+      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      String sessionId = interpreter.createSessionId();
+      interpreter.execute(sessionId, "create newcache;");
+      assert cacheManager.cacheExists("newcache");
+      interpreter.execute(sessionId, "create anothercache like newcache;");
+      assert cacheManager.cacheExists("anothercache");
+   }
+
+   public void testUpgrade() throws Exception {
+      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
+      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      String sessionId = interpreter.createSessionId();
+      interpreter.execute(sessionId, "upgrade --dumpkeys;");
+   }
+
    @Test(expectedExceptions=IllegalArgumentException.class)
    public void testInvalidSession() throws Exception {
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);

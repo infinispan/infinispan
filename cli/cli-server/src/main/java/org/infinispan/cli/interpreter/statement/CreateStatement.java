@@ -18,20 +18,30 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
-import javax.transaction.TransactionManager;
-
-import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.result.EmptyResult;
+import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.session.Session;
 
-public abstract class AbstractTransactionStatement implements Statement {
+/**
+ * CreateStatement creates a new cache based on the configuration of an existing cache.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class CreateStatement implements Statement {
+
    final String cacheName;
+   final String baseCacheName;
 
-   public AbstractTransactionStatement(final String cacheName) {
+   public CreateStatement(String cacheName, String baseCacheName) {
       this.cacheName = cacheName;
+      this.baseCacheName = baseCacheName;
    }
 
-   protected TransactionManager getTransactionManager(Session session) {
-      Cache<Object, Object> cache = session.getCache(cacheName);
-      return cache.getAdvancedCache().getTransactionManager();
+   @Override
+   public Result execute(Session session) {
+      session.createCache(cacheName, baseCacheName);
+      return EmptyResult.RESULT;
    }
+
 }

@@ -27,6 +27,13 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ *
+ * BeginTransactionStatement begins a transaction
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class BeginTransactionStatement extends AbstractTransactionStatement {
    public BeginTransactionStatement(final String cacheName) {
       super(cacheName);

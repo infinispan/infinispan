@@ -18,37 +18,48 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
-import javax.transaction.TransactionManager;
-
-import org.infinispan.cli.interpreter.result.EmptyResult;
+import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
+import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- * Rolls back a running transaction
+ *
+ * InfoStatement shows configuration information about the specified cache or about the active cache manager
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class RollbackTransactionStatement extends AbstractTransactionStatement {
+public class InfoStatement implements Statement {
 
-   public RollbackTransactionStatement(final String cacheName) {
-      super(cacheName);
+   final String cacheName;
+
+   public InfoStatement(String cacheName) {
+      this.cacheName = cacheName;
    }
 
    @Override
-   public Result execute(Session session) throws StatementException {
-      TransactionManager tm = getTransactionManager(session);
-      if (tm == null) {
-         throw new StatementException("Cannot retrieve a transaction manager for the cache");
-      }
-      try {
-         tm.rollback();
-         return EmptyResult.RESULT;
-      } catch (Exception e) {
-         throw new StatementException("Cannot rollback transaction: " + e.getMessage());
+   public Result execute(final Session session) throws StatementException {
+      if (cacheName != null) {
+         return cacheInfo(session);
+      } else {
+         return cacheManagerInfo(session);
       }
    }
 
+   private Result cacheManagerInfo(Session session) {
+      EmbeddedCacheManager cacheManager = session.getCacheManager();
+      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      return new StringResult(globalConfiguration.toString());
+   }
+
+   private Result cacheInfo(Session session) {
+      Cache<?, ?> cache = session.getCache(cacheName);
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      return new StringResult(cacheConfiguration.toString());
+   }
 }

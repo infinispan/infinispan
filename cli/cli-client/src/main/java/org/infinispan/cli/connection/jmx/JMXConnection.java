@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.connection;
+package org.infinispan.cli.connection.jmx;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -42,6 +42,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.infinispan.cli.Context;
+import org.infinispan.cli.connection.Connection;
 
 public class JMXConnection implements Connection {
    private static final QueryExp INTERPRETER_QUERY = createObjectName("*:type=CacheManager,component=Interpreter,name=*");
@@ -52,8 +53,8 @@ public class JMXConnection implements Connection {
    private final JMXUrl serviceUrl;
    private MBeanServerConnection mbsc;
 
-   public JMXConnection(String connectionString) {
-      serviceUrl = new JMXUrl(connectionString);
+   public JMXConnection(final JMXUrl serviceUrl) {
+      this.serviceUrl = serviceUrl;
    }
 
    @Override
@@ -117,11 +118,11 @@ public class JMXConnection implements Connection {
       }
    }
 
-   public Collection<String> getAvailableCacheNames() {
+   @Override
+   public Collection<String> getAvailableCaches() {
       ObjectInstance manager = cacheManagers.get(activeCacheManager);
       try {
-         String[] cacheNames = (String[]) mbsc.invoke(manager.getObjectName(), "getCacheNames", new Object[0],
-               new String[0]);
+         String[] cacheNames = (String[]) mbsc.getAttribute(manager.getObjectName(), "cacheNames");
          List<String> cacheList = Arrays.asList(cacheNames);
          Collections.sort(cacheList);
          return cacheList;
@@ -158,7 +159,7 @@ public class JMXConnection implements Connection {
       }
    }
 
-   private static ObjectName createObjectName(final String name) {
+   private static ObjectName createObjectName(String name) {
       try {
          return new ObjectName(name);
       } catch (MalformedObjectNameException e) {
@@ -175,11 +176,11 @@ public class JMXConnection implements Connection {
 
    public static class JMXUrl {
       private static final Pattern JMX_URL = Pattern
-            .compile("^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)");
-      private String hostname;
-      private int port;
-      private String username;
-      private String password;
+            .compile("^(?:(?![^:@]+:[^:@/]*@)(jmx):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)");
+      private final String hostname;
+      private final int port;
+      private final String username;
+      private final String password;
 
       public String getUrl() {
          return "service:jmx:rmi:///jndi/rmi://" + hostname + ":" + port + "/jmxrmi";
@@ -187,8 +188,9 @@ public class JMXConnection implements Connection {
 
       public JMXUrl(String connectionString) {
          Matcher matcher = JMX_URL.matcher(connectionString);
-         if (!matcher.matches())
+         if (!matcher.matches()) {
             throw new IllegalArgumentException(connectionString);
+         }
          username = matcher.group(4);
          password = matcher.group(5);
          hostname = matcher.group(6);

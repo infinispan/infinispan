@@ -25,6 +25,12 @@ import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ * Replaces an existing entry in the cache
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class ReplaceStatement implements Statement {
    final KeyData keyData;
    final Object oldValue;
@@ -51,12 +57,7 @@ public class ReplaceStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      Cache<Object, Object> cache;
-      if (keyData.getCacheName()!=null) {
-         cache = (Cache<Object, Object>) session.getCache(keyData.getCacheName());
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       if (expires == null) {
          if(oldValue!=null) {
             cache.replace(keyData.getKey(), oldValue, newValue);

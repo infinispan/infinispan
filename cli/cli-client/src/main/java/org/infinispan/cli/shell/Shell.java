@@ -18,6 +18,8 @@
  */
 package org.infinispan.cli.shell;
 
+import java.io.IOException;
+
 import org.infinispan.cli.Context;
 
 
@@ -32,7 +34,7 @@ public interface Shell {
 
    void init(String[] args) throws Exception;
 
-   void run();
+   void run() throws IOException;
 
    String getCWD();
 

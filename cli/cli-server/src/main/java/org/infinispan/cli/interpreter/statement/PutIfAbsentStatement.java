@@ -25,6 +25,12 @@ import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ * PutIfAbsentStatement puts an entry in the cache only if its key is not already present
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class PutIfAbsentStatement implements Statement {
    final KeyData keyData;
    final Object value;
@@ -45,12 +51,7 @@ public class PutIfAbsentStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      Cache<Object, Object> cache;
-      if (keyData.getCacheName()!=null) {
-         cache = (Cache<Object, Object>) session.getCache(keyData.getCacheName());
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       if (expires == null) {
          cache.putIfAbsent(keyData.getKey(), value);
       } else if (maxIdle == null) {

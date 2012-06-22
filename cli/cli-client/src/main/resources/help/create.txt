@@ -1,0 +1,13 @@
+.SH SYNOPSIS
+.B create [
+.I cachename
+.B ] [ like 
+.I baseCacheName
+.B ]
+.SH DESCRIPTION
+Creates a new cache based on the configuration of an existing cache. 
+.SH ARGUMENTS
+.IP cachename
+the name of the cache to create
+.IP baseCacheName
+(optional) the name of the cache from which to get the configuration. If unspecified, the default cache configuration will be used

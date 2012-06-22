@@ -24,6 +24,12 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
 
+/**
+ * Starts a new batch
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
 public class StartBatchStatement implements Statement {
    final String cacheName;
 
@@ -33,12 +39,7 @@ public class StartBatchStatement implements Statement {
 
    @Override
    public Result execute(Session session) {
-      Cache<Object, Object> cache;
-      if (cacheName!=null) {
-         cache = (Cache<Object, Object>) session.getCache(cacheName);
-      } else {
-         cache = (Cache<Object, Object>) session.getCache();
-      }
+      Cache<Object, Object> cache = session.getCache(cacheName);
       boolean b = cache.startBatch();
       return b ? EmptyResult.RESULT : new StringResult("Batch for cache already started");
    }

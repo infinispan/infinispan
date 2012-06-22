@@ -55,19 +55,7 @@ public class Container extends AbstractCommand {
 
    @Override
    public void complete(Context context, ProcessedCommand procCmd, List<String> candidates) {
-      switch (procCmd.getArguments().size()) {
-      case 0: {
-         Completer.addPrefixMatches(null, context.getConnection().getAvailableContainers(), candidates);
-         break;
-      }
-      case 1: {
-         Completer.addPrefixMatches(procCmd.getArguments().get(0).getValue(), context.getConnection().getAvailableContainers(), candidates);
-         break;
-      }
-      default:
-         break;
-      }
+      Completer.addPrefixMatches(procCmd.getCurrentArgument(), context.getConnection().getAvailableContainers(), candidates);
    }
-
 
 }
