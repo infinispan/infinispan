@@ -25,6 +25,8 @@ package org.infinispan.io;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,6 +44,9 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
  * @author Marko Luksa
  */
 public class GridFilesystem {
+
+   private static final Log log = LogFactory.getLog(GridFilesystem.class);
+
    protected final Cache<String, byte[]> data;
    protected final Cache<String, GridFile.Metadata> metadata;
    protected final int defaultChunkSize;
@@ -54,6 +59,10 @@ public class GridFilesystem {
     * @param defaultChunkSize the default size of the file chunks
     */
    public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata, int defaultChunkSize) {
+      if(metadata.getCacheConfiguration().clustering().cacheMode().isClustered() &&
+            !metadata.getCacheConfiguration().clustering().cacheMode().isSynchronous()){
+         log.warn("Cache used for Grid metadata should be synchronous.");
+      }
       this.data = data;
       this.metadata = metadata;
       this.defaultChunkSize = defaultChunkSize;

@@ -33,6 +33,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -102,8 +105,33 @@ public class GridFile extends File {
    }
 
    @Override
+   public String getCanonicalPath() throws IOException {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public File getCanonicalFile() throws IOException {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
    public boolean isAbsolute() {
       return getPath().startsWith(SEPARATOR);
+   }
+
+   @Override
+   public boolean renameTo(File dest) {
+      // implementing this based on the current storage structure is complex and very expensive.
+      // a redesign is nessesary, especially must be avoid storing paths as key
+      // maybe file name + reference to the parent in metadata and as key is used a uuid, so movements or renames
+      // are only affected on the current file. metadata should also contain list of uuids of the corresponding data chunks
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public void deleteOnExit() {
+      // there exists no pre-CacheShutdown event, so unable to remove the entry
+      throw new UnsupportedOperationException("Not implemented");
    }
 
    private String convertToAbsolute(String path) {
@@ -167,7 +195,7 @@ public class GridFile extends File {
          return false;
       if (!checkParentDirs(getAbsolutePath(), false))
          throw new IOException("Cannot create file " + getAbsolutePath() + " (parent dir does not exist)");
-      metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getAbsolutePath(), new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.FILE));
+      metadataCache.put(getAbsolutePath(), new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.FILE));
       return true;
    }
 
@@ -176,6 +204,11 @@ public class GridFile extends File {
       return delete(false); // asynchronous delete by default
    }
 
+   /**
+    *
+    * @deprecated create GridFilesystem instance with additional FORCE_SYNCHRONOUS flag, if operations should be executed synchronously
+    */
+   @Deprecated
    public boolean delete(boolean synchronous) {
       if (!exists())
          return false;
@@ -211,7 +244,7 @@ public class GridFile extends File {
          boolean parentsExist = checkParentDirs(getAbsolutePath(), alsoCreateParentDirs);
          if (!parentsExist)
             return false;
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).put(getAbsolutePath(),new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
+         metadataCache.put(getAbsolutePath(),new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
          return true;
       }
       catch (IOException e) {
@@ -241,6 +274,20 @@ public class GridFile extends File {
    public long lastModified() {
       Metadata metadata = getMetadata();
       return metadata == null ? 0 : metadata.getModificationTime();
+   }
+
+   @Override
+   public boolean setLastModified(long time) {
+      if (time < 0){
+         throw new IllegalArgumentException("Negative time");
+      }
+      Metadata metadata = getMetadata();
+      if(metadata == null){
+         return false;
+      }
+      metadata.setModificationTime(time);
+      metadataCache.put(getAbsolutePath(), metadata);
+      return true;
    }
 
    @Override
@@ -401,6 +448,26 @@ public class GridFile extends File {
    }
 
    @Override
+   public boolean canRead() {
+      return isFile();
+   }
+
+   @Override
+   public boolean canWrite() {
+      return isFile();
+   }
+
+   @Override
+   public boolean isHidden() {
+      return false;
+   }
+
+   @Override
+   public boolean canExecute() {
+      return false;
+   }
+
+   @Override
    public int compareTo(File file) {
       return getAbsolutePath().compareTo(file.getAbsolutePath());
    }
@@ -408,6 +475,73 @@ public class GridFile extends File {
    @Override
    public int hashCode() {
       return getAbsolutePath().hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return "GridFile{" +
+            "path='" + path + '\'' +
+            '}';
+   }
+
+   @Override
+   public URL toURL() throws MalformedURLException {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public URI toURI() {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setReadOnly() {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setWritable(boolean writable, boolean ownerOnly) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setWritable(boolean writable) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setReadable(boolean readable, boolean ownerOnly) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setReadable(boolean readable) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setExecutable(boolean executable, boolean ownerOnly) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public boolean setExecutable(boolean executable) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public long getTotalSpace() {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public long getFreeSpace() {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
+   public long getUsableSpace() {
+      throw new UnsupportedOperationException("Not implemented");
    }
 
    private Metadata exists(String key) {
