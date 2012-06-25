@@ -82,7 +82,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    }
 
    @Indexed(index = "SessionIndex")
-   public class Session {
+   public static class Session {
       private String m_id;
 
       public Session(String id) {
