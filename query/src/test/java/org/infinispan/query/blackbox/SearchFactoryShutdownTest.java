@@ -24,15 +24,13 @@ package org.infinispan.query.blackbox;
 
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 
 /**
  * Ensures the search factory is properly shut down.
@@ -47,10 +45,16 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
       CacheContainer cc = null;
 
       try {
-         Configuration c = SingleCacheManagerTest.getDefaultClusteredConfig(LOCAL, true);
-         c.fluent().indexing().indexLocalOnly(false)
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-         cc = TestCacheManagerFactory.createCacheManager(c);
+         ConfigurationBuilder cfg = new ConfigurationBuilder();
+         cfg
+            .transaction()
+               .transactionMode(TransactionMode.TRANSACTIONAL)
+            .indexing()
+               .enable()
+               .indexLocalOnly(false)
+               .addProperty("hibernate.search.default.directory_provider", "ram")
+               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+         cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();
          SearchFactoryIntegrator sfi = TestingUtil.extractComponent(cache, SearchFactoryIntegrator.class);
 
