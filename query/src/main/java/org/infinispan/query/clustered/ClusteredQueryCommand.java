@@ -40,6 +40,7 @@ import java.util.UUID;
 public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
+   private static final Integer ZERO = Integer.valueOf(0);
 
    private ClusteredQueryCommandType commandType;
 
@@ -52,7 +53,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    private UUID lazyQueryId;
 
    // for retrieve keys on a lazy query
-   private Integer docIndex = 0;
+   private Integer docIndex = ZERO;
 
    private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
       super(cacheName);

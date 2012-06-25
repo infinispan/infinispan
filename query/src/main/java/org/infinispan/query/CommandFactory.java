@@ -40,7 +40,7 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
       Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(1);
-      map.put(ClusteredQueryCommand.COMMAND_ID, ClusteredQueryCommand.class);
+      map.put(Byte.valueOf(ClusteredQueryCommand.COMMAND_ID), ClusteredQueryCommand.class);
       return map;
    }
 
