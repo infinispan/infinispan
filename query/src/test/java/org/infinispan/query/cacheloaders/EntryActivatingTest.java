@@ -28,7 +28,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -55,7 +55,6 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
    Cache<String, Country> cache;
    CacheStore store;
-   Configuration cfg;
    CacheContainer cm;
    SearchManager search;
    QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
@@ -108,18 +107,18 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    }
 
    private void recreateCacheManager() {
-      cfg = new Configuration()
-      .fluent()
-         .loaders()
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.loaders()
+            .preload(true)
             .passivation(true)
-            .addCacheLoader(
-                  new DummyInMemoryCacheStore.Cfg().storeName(
-                        this.getClass().getName()).purgeOnStartup(false))
-                  .preload(true)
-            .indexing()
-               .addProperty("hibernate.search.default.directory_provider", "ram")
-               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
-      .build();
+            .addCacheLoader()
+               .cacheLoader( new DummyInMemoryCacheStore() )
+               .purgeOnStartup(true)
+         .indexing()
+            .enable()
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+         ;
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class)
