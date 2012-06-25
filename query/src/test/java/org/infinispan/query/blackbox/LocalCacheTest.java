@@ -35,7 +35,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -55,7 +55,6 @@ import junit.framework.Assert;
 import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheTest")
@@ -326,9 +325,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
    
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      FluentConfiguration cfg = getDefaultClusteredConfig(LOCAL, true).fluent();
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
+            .enable()
             .indexLocalOnly(false)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
@@ -395,7 +395,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cache.put(anotherGrassEaterKey, anotherGrassEater);
    }
    
-   protected void enhanceConfig(FluentConfiguration c) {
+   protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
    }
 
