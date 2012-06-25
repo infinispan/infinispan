@@ -58,7 +58,7 @@ public interface NewConsistentHash {
     *
     * @return set of node addresses.
     */
-   List<Address> getNodes();
+   List<Address> getMembers();
 
    /**
     * Should be equivalent to return the first element of {@link #locateOwners}.

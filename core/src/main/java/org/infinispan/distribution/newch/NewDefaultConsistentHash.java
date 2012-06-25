@@ -49,7 +49,7 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
       // assume the user will not modify the collections after passing them to the constructor
-      this.members = members;
+      this.members = new ArrayList<Address>(members);
       this.ownerLists = new Address[numSegments][];
       for (int i = 0; i < numSegments; i++) {
          this.ownerLists[i] = theOwnerLists[i].toArray(ADDRESS_ARRAY_TEMPLATE);
@@ -82,7 +82,7 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
    }
 
    @Override
-   public List<Address> getNodes() {
+   public List<Address> getMembers() {
       return members;
    }
 
@@ -123,6 +123,25 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
             return true;
       }
       return false;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      NewDefaultConsistentHash that = (NewDefaultConsistentHash) o;
+
+      if (numOwners != that.numOwners) return false;
+      if (numSegments != that.numSegments) return false;
+      if (!hashFunction.equals(that.hashFunction)) return false;
+      if (!members.equals(that.members)) return false;
+      for (int i = 0; i < numSegments; i++) {
+         if (!Arrays.equals(ownerLists[i], that.ownerLists[i]))
+            return false;
+      }
+
+      return true;
    }
 
    @Override
