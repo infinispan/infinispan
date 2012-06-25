@@ -31,24 +31,6 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public interface NewConsistentHashFactory {
-
-   /**
-    * Check if the ownership of keys would be properly balanced in the {@code existingCH}
-    * consistent hash, if the list of members was changed to {@code newMembers}.
-    *
-    * <p>This method will almost always return {@code true} if some members left or joined.
-    * However, an implementation may decide to perform rebalancing in multiple steps, so
-    * it may return {@true} even if the members stay the same. A client should call
-    * {@code createConsistentHash()} in a loop until {@code needNewConsistentHash()}
-    * returns false to ensure that the keys are properly balanced.
-    *
-    * @param existingCH An existing consistent hash instance, may be {@code null}.
-    *               If null, the method will return {@code true}.
-    * @param newMembers A list of addresses representing the new cache members.
-    * @return {@code true} if a new consistent hash should be created.
-    */
-   boolean needNewConsistentHash(NewConsistentHash existingCH, List<Address> newMembers);
-
    /**
     * Create a new consistent hash instance.
     *
@@ -62,12 +44,34 @@ public interface NewConsistentHashFactory {
    NewConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members);
 
    /**
-    * Create a new consistent hash instance. The new instance will have the same number of owners
-    * and number of segments as the base CH.
+    * Create a new consistent hash instance, based on an existing instance, but with a new list of members.
+    * <p/>
+    * This method will not assign any new owners, so it will not require a state transfer.
+    * The only exception is if a segment doesn't have any owners in the new members list - but there isn't
+    * anyone to transfer that segment from, so that won't require a state transfer either.
     *
-    * @param baseCH An existing consistent hash instance, may be {@code null}.
-    *               If non-null, the factory will do its best to maintain existing ownership.
+    * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param newMembers A list of addresses representing the new cache members.
+    * @return A new {@link NewConsistentHash} instance, or {@code baseCH} if the existing instance
+    *         does not need any changes.
     */
-   NewConsistentHash createConsistentHash(NewConsistentHash baseCH, List<Address> newMembers);
+   NewConsistentHash updateConsistentHashMembers(NewConsistentHash baseCH, List<Address> newMembers);
+
+   /**
+    * Create a new consistent hash instance, based on an existing instance, but "balanced" according to
+    * the implementation's rules.
+    * <p/>
+    * If {@code baseCH} is {@code true}, only add new owners - don't remove any old owners/primary
+    * owners. It must be possible to switch from the "intermediary" consistent hash that includes the
+    * old owners to the new consistent hash without any state transfer.
+    * <p/>
+    * {@code rebalanceConsistentHash(rebalanceConsistentHash(ch, true), false)} must be equivalent to
+    * as {@code rebalanceConsistentHash(ch, false)}.
+    *
+    * @param baseCH An existing consistent hash instance, should not be {@code null}
+    * @param keepExistingOwners If {@code true}, only add new owners - don't remove any old owners owners.
+    * @return A new {@link NewConsistentHash} instance, or {@code baseCH} if the existing instance
+    *         does not need any changes.
+    */
+   NewConsistentHash rebalanceConsistentHash(NewConsistentHash baseCH, boolean keepExistingOwners);
 }
