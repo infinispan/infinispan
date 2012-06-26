@@ -25,7 +25,7 @@ package org.infinispan.query.tx;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,13 +43,14 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent()
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      m_cacheManager = TestCacheManagerFactory.createCacheManager(c);
+            .enable()
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      m_cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       m_cache = m_cacheManager.getCache();
       m_transactionManager = m_cache.getAdvancedCache().getTransactionManager();
       return m_cacheManager;
@@ -82,7 +83,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    }
 
    @Indexed(index = "SessionIndex")
-   public class Session {
+   public static class Session {
       private String m_id;
 
       public Session(String id) {

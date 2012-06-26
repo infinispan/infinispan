@@ -22,7 +22,7 @@
  */
 package org.infinispan.query.blackbox;
 
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -33,10 +33,10 @@ import org.testng.annotations.Test;
  */
 @Test (groups = "functional")
 public class MarshalledValueClusteredQueryTest extends ClusteredCacheTest {
-   
+
    @Override
-   protected void enhanceConfig(FluentConfiguration c) {
-      c.storeAsBinary();
+   protected void enhanceConfig(ConfigurationBuilder c) {
+      c.storeAsBinary().enabled(true);
    }
-   
+
 }

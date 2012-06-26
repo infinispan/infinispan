@@ -29,7 +29,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.facet.Facet;
 import org.hibernate.search.query.facet.FacetingRequest;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -38,6 +38,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -45,20 +46,23 @@ import static junit.framework.Assert.assertEquals;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @author Hardy Ferentschik
  */
+@Test(groups = "functional", testName = "query.faceting.SimpleFacetingTest")
 public class SimpleFacetingTest extends SingleCacheManagerTest {
    
-   private final String indexFieldName = "cubicCapacity";
-   private final String facetName = "ccs";
+   private static final String indexFieldName = "cubicCapacity";
+   private static final String facetName = "ccs";
    
    private SearchManager qf;
    
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent()
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram");
-      return TestCacheManagerFactory.createCacheManager(c);
+            .enable()
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
    
    @BeforeClass
