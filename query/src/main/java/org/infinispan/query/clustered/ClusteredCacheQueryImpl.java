@@ -86,18 +86,23 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public int getResultSize() {
+      int accumulator;
       if (resultSize == null) {
          ClusteredQueryCommand command = ClusteredQueryCommand.getResultSize(hSearchQuery, cache);
 
          ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
          List<QueryResponse> responses = invoker.broadcast(command);
 
-         resultSize = 0;
+         accumulator = 0;
          for (QueryResponse response : responses) {
-            resultSize += response.getResultSize();
+            accumulator += response.getResultSize();
          }
+         resultSize = Integer.valueOf(accumulator);
       }
-      return resultSize;
+      else {
+         accumulator = resultSize.intValue();
+      }
+      return accumulator;
    }
 
    @Override
