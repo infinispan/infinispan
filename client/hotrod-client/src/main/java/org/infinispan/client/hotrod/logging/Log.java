@@ -75,9 +75,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
    void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not connect to server: %s", id = 4008)
-   void couldNotConnectToServer(InetSocketAddress serverAddress, @Cause IOException e);
+//  id = 4008 is now logged to TRACE(ISPN-1794)
 
    @LogMessage(level = WARN)
    @Message(value = "Issues closing socket for %s: %s", id = 4009)
