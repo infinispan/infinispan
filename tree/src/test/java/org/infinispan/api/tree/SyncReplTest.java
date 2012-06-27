@@ -31,8 +31,9 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
@@ -52,10 +53,10 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    private TreeCache<Object, Object> cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setInvocationBatchingEnabled(true);
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cb.invocationBatching().enable();
 
-      createClusteredCaches(2, "replSync", c);
+      createClusteredCaches(2, "replSync", cb);
 
       Cache c1 = cache(0, "replSync");
       Cache c2 = cache(1, "replSync");

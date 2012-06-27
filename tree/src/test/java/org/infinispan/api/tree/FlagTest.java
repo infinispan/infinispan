@@ -24,7 +24,8 @@ package org.infinispan.api.tree;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.tree.Fqn;
@@ -48,9 +49,9 @@ public class FlagTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_SYNC, true);
-      c.setInvocationBatchingEnabled(true);
-      createClusteredCaches(2, "invalidatedFlagCache", c);
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true);
+      cb.invocationBatching().enable();
+      createClusteredCaches(2, "invalidatedFlagCache", cb);
       cache1 = cache(0, "invalidatedFlagCache");
       cache2 = cache(1, "invalidatedFlagCache");
       TreeCacheFactory tcf = new TreeCacheFactory();

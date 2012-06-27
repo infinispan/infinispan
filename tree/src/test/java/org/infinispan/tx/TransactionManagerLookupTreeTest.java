@@ -22,7 +22,7 @@
  */
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,10 +38,10 @@ public class TransactionManagerLookupTreeTest extends TransactionManagerLookupTe
    protected void doTest(TransactionManagerLookup tml) {
       EmbeddedCacheManager ecm = null;
       try {
-         Configuration c = new Configuration();
-         c.setTransactionManagerLookup(tml);
-         c.setInvocationBatchingEnabled(true);
-         ecm = TestCacheManagerFactory.createCacheManager(c);
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.transaction().transactionManagerLookup(tml)
+               .invocationBatching().enable();
+         ecm = TestCacheManagerFactory.createCacheManager(cb);
          TreeCache<Object, Object> tc = new TreeCacheFactory().createTreeCache(ecm.<Object, Object>getCache());
          tc.put("/a/b/c", "k", "v");
          assert "v".equals(tc.get("/a/b/c", "k"));

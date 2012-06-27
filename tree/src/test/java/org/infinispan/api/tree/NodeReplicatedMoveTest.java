@@ -30,7 +30,8 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tree.Fqn;
@@ -54,10 +55,10 @@ public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {
    TransactionManager tm1;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      c.setInvocationBatchingEnabled(true);
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cb.invocationBatching().enable();
 
-      createClusteredCaches(2, "replSync", c);
+      createClusteredCaches(2, "replSync", cb);
 
       Cache c1 = cache(0, "replSync");
       Cache c2 = cache(1, "replSync");
