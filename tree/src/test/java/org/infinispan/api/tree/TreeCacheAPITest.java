@@ -25,7 +25,6 @@ package org.infinispan.api.tree;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -66,9 +65,9 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = new Configuration();
-      c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.invocationBatching().enable();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cb);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl<String, String>(flatcache);

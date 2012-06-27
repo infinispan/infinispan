@@ -38,7 +38,7 @@ public class NodeMoveAPIPessimisticTest extends BaseNodeMoveAPITest {
    @Override
    protected ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().invocationBatching().enable()
+      cb.invocationBatching().enable()
             .locking().lockAcquisitionTimeout(1000)
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .transaction().lockingMode(LockingMode.PESSIMISTIC);

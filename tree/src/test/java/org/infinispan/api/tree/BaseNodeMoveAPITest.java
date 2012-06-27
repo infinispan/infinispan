@@ -43,6 +43,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 import javax.transaction.*;
 import java.util.Random;
@@ -55,6 +56,7 @@ import static org.testng.AssertJUnit.*;
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani</a>
  */
+@Test(groups = "functional", testName = "api.tree.BaseNodeMoveAPITest")
 public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    protected final Log log = LogFactory.getLog(getClass());
 

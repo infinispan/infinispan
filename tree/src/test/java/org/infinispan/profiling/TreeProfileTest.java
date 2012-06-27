@@ -23,7 +23,8 @@
 package org.infinispan.profiling;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.profiling.testinternals.FqnGenerator;
 import org.infinispan.profiling.testinternals.Generator;
@@ -82,13 +83,13 @@ public class TreeProfileTest {
 
    @BeforeMethod
    public void setUp() {
-      Configuration cfg = new Configuration();
-      cfg.setInvocationBatchingEnabled(true);
-      cfg.setCacheMode(Configuration.CacheMode.LOCAL);
-      cfg.setConcurrencyLevel(2000);
-      cfg.setLockAcquisitionTimeout(120000);
-      cfg.setIsolationLevel(IsolationLevel.READ_COMMITTED);
-      cacheContainer = TestCacheManagerFactory.createCacheManager(cfg);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.invocationBatching().enable()
+            .clustering().cacheMode(CacheMode.LOCAL)
+            .locking().concurrencyLevel(2000)
+            .lockAcquisitionTimeout(120000)
+            .isolationLevel(IsolationLevel.READ_COMMITTED);
+      cacheContainer = TestCacheManagerFactory.createCacheManager(cb);
       Cache c = cacheContainer.getCache();
       cache = new TreeCacheImpl<String, Object>(c);
    }
@@ -270,7 +271,7 @@ public class TreeProfileTest {
 
       public void run() {
          Fqn fqn = Generator.getRandomElement(fqns);
-         long d = 0, st = 0;
+         long d = 0, st;
          try {
             switch (mode) {
                case PUT:

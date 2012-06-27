@@ -22,7 +22,7 @@
  */
 package org.infinispan.api.tree;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,10 +38,10 @@ public class LazyDeserializationTreeCacheTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setInvocationBatchingEnabled(true);
-      c.setUseLazyDeserialization(true);
-      return TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(true);
+      cb.invocationBatching().enable()
+            .storeAsBinary().enable();
+      return TestCacheManagerFactory.createCacheManager(cb);
    }
 
    public void testStartTreeCache() {
