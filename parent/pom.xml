@@ -233,6 +233,17 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-lucene-directory</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-query</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <version>${project.version}</version>
          </dependency>
