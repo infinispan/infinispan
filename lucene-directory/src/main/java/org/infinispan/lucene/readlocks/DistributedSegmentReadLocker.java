@@ -66,9 +66,9 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       if (indexName == null)
          throw new IllegalArgumentException("index name must not be null");
       this.indexName = indexName;
-      this.locksCache = locksCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
-      this.chunksCache = chunksCache.getAdvancedCache();
-      this.metadataCache = metadataCache.getAdvancedCache();
+      this.locksCache = locksCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD, Flag.SKIP_INDEXING);
+      this.chunksCache = chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+      this.metadataCache = metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       verifyCacheHasNoEviction(this.locksCache);
    }
 
