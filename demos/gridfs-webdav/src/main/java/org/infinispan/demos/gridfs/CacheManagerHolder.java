@@ -27,15 +27,15 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import java.io.IOException;
 
 /**
  * A bootstrapping startup listener which creates and holds a cache instance
  */
-public class CacheManagerHolder extends HttpServlet {
+public class CacheManagerHolder implements ServletContextListener {
 
    private static final Log log = LogFactory.getLog(CacheManagerHolder.class);
 
@@ -47,9 +47,10 @@ public class CacheManagerHolder extends HttpServlet {
    public static String dataCacheName, metadataCacheName;
 
    @Override
-   public void init(ServletConfig cfg) throws ServletException {
-      super.init(cfg);
-      String cfgFile = cfg.getInitParameter(CFG_PROPERTY);
+   public void contextInitialized(ServletContextEvent servletContextEvent) {
+      ServletContext servletContext = servletContextEvent.getServletContext();
+
+      String cfgFile = servletContext.getInitParameter(CFG_PROPERTY);
       if (cfgFile == null)
          cacheContainer = new DefaultCacheManager();
       else {
@@ -61,7 +62,14 @@ public class CacheManagerHolder extends HttpServlet {
          }
       }
 
-      dataCacheName = cfg.getInitParameter(DATA_CACHE_NAME_PROPERTY);
-      metadataCacheName = cfg.getInitParameter(METADATA_CACHE_NAME_PROPERTY);
+      dataCacheName = servletContext.getInitParameter(DATA_CACHE_NAME_PROPERTY);
+      metadataCacheName = servletContext.getInitParameter(METADATA_CACHE_NAME_PROPERTY);
+   }
+
+   @Override
+   public void contextDestroyed(ServletContextEvent servletContextEvent) {
+      if(cacheContainer != null){
+         cacheContainer.stop();
+      }
    }
 }
