@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  ~ 
+  ~ Author: Sanne Grinovero
+ -->
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+    xmlns="urn:infinispan:config:5.2">
+
+    <!-- *************************** -->
+    <!-- System-wide global settings -->
+    <!-- *************************** -->
+
+    <global>
+
+        <globalJmxStatistics
+            enabled="true"
+            cacheManagerName="QueryEnabledGrid"
+            />
+
+        <!-- If the transport is omitted, there is no way to create distributed or clustered
+            caches. There is no added cost to defining a transport but not creating a cache that uses one,
+            since the transport is created and initialized lazily. -->
+        <transport
+            clusterName="Infinispan-Query-Cluster"
+            >
+
+            <!-- Note that the JGroups transport uses sensible defaults if no configuration 
+                property is defined. See the JGroupsTransport javadocs for more flags -->
+        </transport>
+
+    </global>
+
+    <!-- *************************************** -->
+    <!--  Default Cache, with indexing enabled.  -->
+    <!-- *************************************** -->
+    <default>
+
+        <locking
+            lockAcquisitionTimeout="20000"
+            writeSkewCheck="false"
+            concurrencyLevel="500"
+            useLockStriping="false" />
+
+        <!-- This element specifies that the cache is clustered. modes supported: distribution 
+            (d), replication (r) or invalidation (i). Don't use invalidation to store Lucene indexes (as 
+            with Hibernate Search DirectoryProvider). Replication is recommended for best performance of 
+            Lucene indexes, but make sure you have enough memory to store the index in your heap.
+            Also distribution scales much better than replication on high number of nodes in the cluster. -->
+        <clustering
+            mode="replication">
+
+            <!-- Prefer loading all data at startup than later -->
+            <stateTransfer
+                timeout="480000"
+                fetchInMemoryState="true" />
+
+            <!-- Network calls are synchronous by default -->
+            <sync
+                replTimeout="20000" />
+        </clustering>
+
+        <jmxStatistics
+            enabled="true" />
+
+        <eviction
+            maxEntries="-1"
+            strategy="NONE" />
+
+        <expiration
+            maxIdle="-1" />
+
+        <indexing enabled="true" indexLocalOnly="true">
+            <properties>
+
+                <!-- Use our custom IndexManager; TODO autoinject by default? -->
+                <property name="hibernate.search.default.indexmanager" value="org.infinispan.query.indexmanager.InfinispanIndexManager" />
+
+                <!-- specify the managed index is to be shared across the nodes -->
+                <property name="hibernate.search.default.directory_provider" value="infinispan" />
+
+                <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
+                <property name="hibernate.search.default.exclusive_index_use" value="false" />
+
+                <!-- Use latest Lucene version -->
+                <property name="hibernate.search.lucene_version" value="LUCENE_36" />
+            </properties>
+        </indexing>
+    </default>
+
+    
+    <!-- ******************************************************************************* -->
+    <!-- Individually configured "named" caches.                                         -->
+    <!--                                                                                 -->
+    <!-- While default configuration happens to be fine with similar settings across the -->
+    <!-- three caches, they should generally be different in a production environment.   -->
+    <!--                                                                                 -->
+    <!-- Current settings could easily lead to OutOfMemory exception as a CacheStore     -->
+    <!-- should be enabled, and maybe distribution is more suited for LuceneIndexesData. -->
+    <!-- ******************************************************************************* -->
+
+    <!-- *************************************** -->
+    <!--  Cache to store Lucene's file metadata  -->
+    <!-- *************************************** -->
+    <namedCache
+        name="LuceneIndexesMetadata">
+        <clustering
+            mode="replication">
+            <stateTransfer
+                fetchInMemoryState="true" />
+            <sync
+                replTimeout="25000" />
+        </clustering>
+        <indexing enabled="false" />
+    </namedCache>
+
+    <!-- **************************** -->
+    <!--  Cache to store Lucene data  -->
+    <!-- **************************** -->
+    <namedCache
+        name="LuceneIndexesData">
+        <clustering
+            mode="replication">
+            <stateTransfer
+                fetchInMemoryState="true" />
+            <sync
+                replTimeout="25000" />
+        </clustering>
+        <indexing enabled="false" />
+    </namedCache>
+
+    <!-- ***************************** -->
+    <!--  Cache to store Lucene locks  -->
+    <!-- ***************************** -->
+    <namedCache
+        name="LuceneIndexesLocking">
+        <clustering
+            mode="replication">
+            <stateTransfer
+                fetchInMemoryState="true" />
+            <sync
+                replTimeout="25000" />
+        </clustering>
+        <indexing enabled="false" />
+    </namedCache>
+
+</infinispan>

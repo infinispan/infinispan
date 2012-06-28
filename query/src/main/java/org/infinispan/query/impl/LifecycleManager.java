@@ -34,12 +34,14 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CommandInitializer;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -148,8 +150,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
        SearchFactoryIntegrator searchFactory = cr.getComponent(SearchFactoryIntegrator.class);
        //defend against multiple initialization:
        if (searchFactory==null) {
+          GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
+          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
           // Set up the search factory for Hibernate Search first.
-          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties);
+          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
           searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
           cr.registerComponent(searchFactory, SearchFactoryIntegrator.class);
        }
