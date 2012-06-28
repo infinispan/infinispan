@@ -475,6 +475,12 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-infinispan</artifactId>
+            <version>${version.hibernate.search}</version>
+            <optional>true</optional>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
             <version>${version.hibernate.search}</version>
             <type>test-jar</type>
