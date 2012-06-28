@@ -256,13 +256,8 @@ public class QueryInterceptor extends CommandInterceptor {
          return;
       }
       if (locked) {
-         Set<Class<?>> existingClasses = knownClasses.keySet();
-         int index = existingClasses.size();
-         Class<?>[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
-         for (Class<?> toAddClass : toAdd) {
-            all[index++] = toAddClass;
-         }
-         searchFactory.addClasses(all);
+         Class[] array = toAdd.toArray(new Class[toAdd.size()]);
+         searchFactory.addClasses(array);
          for (Class<?> type : toAdd) {
             if (searchFactory.getIndexBindingForEntity(type) != null) {
                knownClasses.put(type, Boolean.TRUE);
@@ -310,5 +305,10 @@ public class QueryInterceptor extends CommandInterceptor {
 
    public KeyTransformationHandler getKeyTransformationHandler() {
       return keyTransformationHandler;
+   }
+
+   public void enableClasses(Set<Class> knownIndexedTypes) {
+      Class[] classes = knownIndexedTypes.toArray(new Class[knownIndexedTypes.size()]);
+      enableClasses(classes);
    }
 }

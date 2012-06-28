@@ -21,10 +21,14 @@
  */
 package org.infinispan.query;
 
+import org.hibernate.search.SearchFactory;
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
+import org.infinispan.query.indexmanager.IndexUpdateCommand;
 
 /**
  * Initializes query module remote commands
@@ -35,15 +39,24 @@ import org.infinispan.query.clustered.ClusteredQueryCommand;
 public class CommandInitializer implements ModuleCommandInitializer {
 
    private Cache<?, ?> cache;
+   private SearchFactoryImplementor searchFactoryImplementor;
+   private QueryInterceptor queryInterceptor;
    
    public void setCache(Cache<?, ?> cache){
       this.cache = cache;
+      SearchManager searchManager = Search.getSearchManager(cache);
+      SearchFactory searchFactory = searchManager.getSearchFactory();
+      searchFactoryImplementor = (SearchFactoryImplementor) searchFactory;
+      queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
    }
    
    @Override
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
       if (c instanceof ClusteredQueryCommand){
           ((ClusteredQueryCommand) c).injectComponents(cache);
+      }
+      else if (c instanceof IndexUpdateCommand) {
+         ((IndexUpdateCommand) c).injectComponents(searchFactoryImplementor, queryInterceptor);
       }
    }
 

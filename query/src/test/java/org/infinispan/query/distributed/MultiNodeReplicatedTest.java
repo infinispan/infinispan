@@ -1,7 +1,7 @@
 /* 
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @authors tag. All rights reserved.
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
+ * as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -16,19 +16,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.query;
+package org.infinispan.query.distributed;
+
+import org.testng.annotations.Test;
 
 /**
- * The Query module is using custom RPC commands; to make sure the used command ids
- * are unique all numbers are defined here, and should stay in the range 100-119
- * which is the reserved range for this module.
- *
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * Similar to MultiNodeDistributedTest, but using a replicated configuration both for
+ * the indexed cache and for the storage of the index data.
+ * 
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
-public interface ModuleCommandIds {
+@Test(groups = "functional", testName = "query.distributed.MultiNodeReplicatedTest")
+public class MultiNodeReplicatedTest extends MultiNodeDistributedTest {
 
-   public static final byte CLUSTERED_QUERY = 101;
-
-   public static final byte UPDATE_INDEX = 102;
+   @Override
+   protected String getConfigurationResourceName() {
+      return "dynamic-indexing-replication.xml";
+   }
 
 }
