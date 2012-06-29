@@ -146,6 +146,7 @@ public class MapReduceCommand extends BaseRpcCommand {
             GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key,
                      ctx.getFlags());
             command.setReturnCacheEntry(false);
+            ctx = getInvocationContext(context); 
             Object value = invoker.invoke(ctx, command);
             mapper.map(key, value, collector);
          }
