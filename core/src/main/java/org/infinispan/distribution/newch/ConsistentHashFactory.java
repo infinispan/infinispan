@@ -25,12 +25,12 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Factory for {@link NewConsistentHash} instances.
+ * Factory for {@link ConsistentHash} instances.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-public interface NewConsistentHashFactory {
+public interface ConsistentHashFactory {
    /**
     * Create a new consistent hash instance.
     *
@@ -41,7 +41,7 @@ public interface NewConsistentHashFactory {
     *                    of segments for performance, or may ignore the parameter altogether.
     * @param members A list of addresses representing the new cache members.
     */
-   NewConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members);
+   ConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members);
 
    /**
     * Create a new consistent hash instance, based on an existing instance, but with a new list of members.
@@ -52,10 +52,10 @@ public interface NewConsistentHashFactory {
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param newMembers A list of addresses representing the new cache members.
-    * @return A new {@link NewConsistentHash} instance, or {@code baseCH} if the existing instance
+    * @return A new {@link ConsistentHash} instance, or {@code baseCH} if the existing instance
     *         does not need any changes.
     */
-   NewConsistentHash updateConsistentHashMembers(NewConsistentHash baseCH, List<Address> newMembers);
+   ConsistentHash updateConsistentHashMembers(ConsistentHash baseCH, List<Address> newMembers);
 
    /**
     * Create a new consistent hash instance, based on an existing instance, but "balanced" according to
@@ -70,8 +70,8 @@ public interface NewConsistentHashFactory {
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param keepExistingOwners If {@code true}, only add new owners - don't remove any old owners owners.
-    * @return A new {@link NewConsistentHash} instance, or {@code baseCH} if the existing instance
+    * @return A new {@link ConsistentHash} instance, or {@code baseCH} if the existing instance
     *         does not need any changes.
     */
-   NewConsistentHash rebalanceConsistentHash(NewConsistentHash baseCH, boolean keepExistingOwners);
+   ConsistentHash rebalanceConsistentHash(ConsistentHash baseCH, boolean keepExistingOwners);
 }

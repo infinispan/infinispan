@@ -27,11 +27,10 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A consistent hash algorithm implementation. Implementations would typically be constructed via a
- * {@link NewConsistentHashFactory}.
+ * {@link ConsistentHashFactory}.
  *
  * A consistent hash assigns each key a list of owners; the number of owners is defined at creation time,
  * but the consistent hash is free to return a smaller or a larger number of owners, depending on
@@ -45,7 +44,7 @@ import java.util.Map;
  * @author Dan Berindei
  * @since 4.0
  */
-public interface NewConsistentHash {
+public interface ConsistentHash {
 
    /**
     * @return The configured number of owners for each key. Note that {code @getOwners(key)} may return

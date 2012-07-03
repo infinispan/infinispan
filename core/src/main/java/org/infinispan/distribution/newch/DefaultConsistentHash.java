@@ -29,12 +29,12 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Default {@link NewConsistentHash} implementation.
+ * Default {@link ConsistentHash} implementation.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
+public class DefaultConsistentHash implements AdvancedConsistentHash {
    private static final Address[] ADDRESS_ARRAY_TEMPLATE = new Address[0];
 
    private final Hash hashFunction;
@@ -43,8 +43,8 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
    private final List<Address> members;
    private final Address[][] ownerLists;
 
-   public NewDefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
-                                   List<Address>[] theOwnerLists) {
+   public DefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
+                                List<Address>[] theOwnerLists) {
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
@@ -130,7 +130,7 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      NewDefaultConsistentHash that = (NewDefaultConsistentHash) o;
+      DefaultConsistentHash that = (DefaultConsistentHash) o;
 
       if (numOwners != that.numOwners) return false;
       if (numSegments != that.numSegments) return false;
@@ -146,7 +146,7 @@ public class NewDefaultConsistentHash implements NewAdvancedConsistentHash {
 
    @Override
    public String toString() {
-      return "NewDefaultConsistentHash{" +
+      return "DefaultConsistentHash{" +
             "members=" + members +
             ", numOwners=" + numOwners +
             ", numSegments=" + numSegments +
