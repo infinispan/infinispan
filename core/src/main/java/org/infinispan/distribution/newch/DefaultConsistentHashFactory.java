@@ -33,17 +33,17 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Creates a new instance of {@link NewDefaultConsistentHash}.
+ * Creates new instances of {@link DefaultConsistentHash}.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory {
+public class DefaultConsistentHashFactory implements ConsistentHashFactory {
 
-   private static final Log log = LogFactory.getLog(NewDefaultConsistentHashFactory.class);
+   private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
 
    @Override
-   public NewConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
+   public ConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
 
       if (numOwners <= 0)
          throw new IllegalArgumentException("The number of owners should be greater than 0");
@@ -59,7 +59,7 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
          ownerLists[i] = new ArrayList<Address>(actualNumOwners);
          ownerLists[i].add(members.get(i % members.size()));
       }
-      NewDefaultConsistentHash baseCH = new NewDefaultConsistentHash(hashFunction, numSegments, numOwners, members, ownerLists);
+      DefaultConsistentHash baseCH = new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, ownerLists);
 
       // use the CH update algorithm to get an even spread
       // (round robin didn't work properly with numSegments = 8, numOwners = 2, and numNodes = 5)
@@ -67,17 +67,17 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
    }
 
    @Override
-   public NewConsistentHash updateConsistentHashMembers(NewConsistentHash baseCH, List<Address> newMembers) {
+   public ConsistentHash updateConsistentHashMembers(ConsistentHash baseCH, List<Address> newMembers) {
       if (newMembers.equals(baseCH.getMembers()))
          return baseCH;
 
-      NewDefaultConsistentHash baseDCH = (NewDefaultConsistentHash) baseCH;
+      DefaultConsistentHash baseDCH = (DefaultConsistentHash) baseCH;
       return removeLeavers(baseCH, newMembers, baseDCH);
    }
 
    @Override
-   public NewConsistentHash rebalanceConsistentHash(NewConsistentHash baseCH, boolean keepExistingOwners) {
-      NewDefaultConsistentHash baseDCH = (NewDefaultConsistentHash) baseCH;
+   public ConsistentHash rebalanceConsistentHash(ConsistentHash baseCH, boolean keepExistingOwners) {
+      DefaultConsistentHash baseDCH = (DefaultConsistentHash) baseCH;
 
       // The goal of this phase is to assign new owners to the segments so that
       // * num_owners(s) == numOwners, for each segment s
@@ -102,15 +102,15 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
       addPrimaryOwners(nodes, numSegments, stats, ownerLists, intOwnerLists);
       addBackupOwners(numSegments, numOwners, nodes, intOwnerLists, ownerLists, stats);
 
-      NewDefaultConsistentHash ch;
+      DefaultConsistentHash ch;
       if (keepExistingOwners) {
-         ch = new NewDefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, intOwnerLists);
+         ch = new DefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, intOwnerLists);
          if (ch.equals(baseDCH))
             return baseDCH;
          else
             return ch;
       } else {
-         ch = new NewDefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, ownerLists);
+         ch = new DefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, ownerLists);
       }
 
       // the interface javadoc specifies that we should return the base CH if we didn't change anything
@@ -159,7 +159,7 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
       }
    }
 
-   private List<Address>[] extractOwnerLists(NewDefaultConsistentHash ch) {
+   private List<Address>[] extractOwnerLists(DefaultConsistentHash ch) {
       int numSegments = ch.getNumSegments();
       List<Address>[] ownerLists = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
@@ -378,8 +378,8 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
       return result;
    }
 
-   private NewConsistentHash removeLeavers(NewConsistentHash baseCH, List<Address> newMembers,
-                                           NewDefaultConsistentHash baseDCH) {
+   private ConsistentHash removeLeavers(ConsistentHash baseCH, List<Address> newMembers,
+                                           DefaultConsistentHash baseDCH) {
       int numSegments = baseDCH.getNumSegments();
 
       // we can assume leavers are far fewer than members, so it makes sense to check for leavers
@@ -400,11 +400,11 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
       if (segmentsWithZeroOwners) {
          assignSegmentsWithZeroOwners(baseDCH, newMembers, newOwnerLists);
       }
-      return new NewDefaultConsistentHash(baseDCH.getHashFunction(), numSegments, baseDCH.getNumOwners(),
+      return new DefaultConsistentHash(baseDCH.getHashFunction(), numSegments, baseDCH.getNumOwners(),
             newMembers, newOwnerLists);
    }
 
-   private void assignSegmentsWithZeroOwners(NewDefaultConsistentHash baseDCH, List<Address> newMembers,
+   private void assignSegmentsWithZeroOwners(DefaultConsistentHash baseDCH, List<Address> newMembers,
                                              List<Address>[] ownerLists) {
       CHStatistics stats = computeStatistics(baseDCH, newMembers);
       int actualNumOwners = Math.min(baseDCH.getNumOwners(), newMembers.size());
@@ -457,7 +457,7 @@ public class NewDefaultConsistentHashFactory implements NewConsistentHashFactory
       }
    }
 
-   private CHStatistics computeStatistics(NewDefaultConsistentHash ch, List<Address> nodes) {
+   private CHStatistics computeStatistics(DefaultConsistentHash ch, List<Address> nodes) {
       CHStatistics stats = new CHStatistics(nodes);
       for (int i = 0; i < ch.getNumSegments(); i++) {
          List<Address> owners = ch.locateOwnersForSegment(i);

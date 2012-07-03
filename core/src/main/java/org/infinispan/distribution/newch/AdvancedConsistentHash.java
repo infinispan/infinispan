@@ -39,7 +39,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
-public interface NewAdvancedConsistentHash extends NewConsistentHash {
+public interface AdvancedConsistentHash extends ConsistentHash {
 
    /**
     * @return The actual number of hash wheel segments. Note that it may not be the same as the number
