@@ -230,7 +230,7 @@ public class MapReduceCommand extends BaseRpcCommand {
    }
    
    private InvocationContext getInvocationContext(InvocationContext ctx) {
-      return  ctx == null ? icc.createRemoteInvocationContext(localAddress):ctx;      
+      return  ctx == null ? icc.createNonTxInvocationContext():ctx;      
    }
    
    /**
