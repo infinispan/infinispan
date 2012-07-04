@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -27,6 +27,7 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A consistent hash algorithm implementation. Implementations would typically be constructed via a
@@ -82,9 +83,9 @@ public interface ConsistentHash {
     *
     *
     * @param keys keys to locate.
-    * @return list of nodes that own at least one of the keys.
+    * @return set of nodes that own at least one of the keys.
     */
-   Collection<Address> locateAllOwners(Collection<Object> keys);
+   Set<Address> locateAllOwners(Collection<Object> keys);
 
    /**
     * Test to see whether a key is owned by a given node.

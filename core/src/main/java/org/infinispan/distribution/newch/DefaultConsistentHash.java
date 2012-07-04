@@ -19,11 +19,7 @@
 
 package org.infinispan.distribution.newch;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
@@ -35,24 +31,26 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public class DefaultConsistentHash implements AdvancedConsistentHash {
-   private static final Address[] ADDRESS_ARRAY_TEMPLATE = new Address[0];
 
    private final Hash hashFunction;
    private final int numSegments;
    private final int numOwners;
    private final List<Address> members;
-   private final Address[][] ownerLists;
+   private final Address[][] segmentOwners;
 
    public DefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
-                                List<Address>[] theOwnerLists) {
+                                List<Address>[] segmentOwners) {
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
       // assume the user will not modify the collections after passing them to the constructor
       this.members = new ArrayList<Address>(members);
-      this.ownerLists = new Address[numSegments][];
+      this.segmentOwners = new Address[numSegments][];
       for (int i = 0; i < numSegments; i++) {
-         this.ownerLists[i] = theOwnerLists[i].toArray(ADDRESS_ARRAY_TEMPLATE);
+         if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {
+            throw new IllegalArgumentException("Segment owner list cannot be null or empty");
+         }
+         this.segmentOwners[i] = segmentOwners[i].toArray(new Address[segmentOwners[i].size()]);
       }
    }
 
@@ -66,19 +64,19 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
    }
 
    @Override
-   public int getHashWheelSegment(Object key) {
+   public int getSegment(Object key) {
       return Math.abs(hashFunction.hash(key) % numSegments);
    }
 
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
       // TODO Optimize away the new ArrayList, write instead an array-backed readonly list
-      return new ArrayList<Address>(Arrays.asList(ownerLists[segmentId]));
+      return new ArrayList<Address>(Arrays.asList(segmentOwners[segmentId]));
    }
 
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
-      return ownerLists[segmentId][0];
+      return segmentOwners[segmentId][0];
    }
 
    @Override
@@ -93,32 +91,32 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
 
    @Override
    public Address locatePrimaryOwner(Object key) {
-      return locatePrimaryOwnerForSegment(getHashWheelSegment(key));
+      return locatePrimaryOwnerForSegment(getSegment(key));
    }
 
    @Override
    public List<Address> locateOwners(Object key) {
-      return locateOwnersForSegment(getHashWheelSegment(key));
+      return locateOwnersForSegment(getSegment(key));
    }
 
    @Override
-   public Collection<Address> locateAllOwners(Collection<Object> keys) {
+   public Set<Address> locateAllOwners(Collection<Object> keys) {
       // Use a HashSet assuming most of the time the number of keys is small.
-      HashSet<Integer> segments = new HashSet<Integer>(keys.size());
+      HashSet<Integer> segments = new HashSet<Integer>();
       for (Object key : keys) {
-         segments.add(getHashWheelSegment(key));
+         segments.add(getSegment(key));
       }
-      HashSet<Address> owners = new HashSet<Address>(segments.size());
+      HashSet<Address> owners = new HashSet<Address>();
       for (Integer segment : segments) {
-         owners.addAll(locateOwnersForSegment(segment));
+         Collections.addAll(owners, segmentOwners[segment]);
       }
       return owners;
    }
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      int segment = getHashWheelSegment(key);
-      for (Address a : ownerLists[segment]) {
+      int segment = getSegment(key);
+      for (Address a : segmentOwners[segment]) {
          if (a.equals(nodeAddress))
             return true;
       }
@@ -137,7 +135,7 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
       if (!hashFunction.equals(that.hashFunction)) return false;
       if (!members.equals(that.members)) return false;
       for (int i = 0; i < numSegments; i++) {
-         if (!Arrays.equals(ownerLists[i], that.ownerLists[i]))
+         if (!Arrays.equals(segmentOwners[i], that.segmentOwners[i]))
             return false;
       }
 

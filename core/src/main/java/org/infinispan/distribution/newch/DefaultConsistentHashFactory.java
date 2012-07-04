@@ -19,13 +19,7 @@
 
 package org.infinispan.distribution.newch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
@@ -36,48 +30,51 @@ import org.infinispan.util.logging.LogFactory;
  * Creates new instances of {@link DefaultConsistentHash}.
  *
  * @author Dan Berindei
+ * @author anistor@redhat.com
  * @since 5.2
  */
-public class DefaultConsistentHashFactory implements ConsistentHashFactory {
+public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
 
    @Override
-   public ConsistentHash createConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
-
+   public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
       if (numOwners <= 0)
          throw new IllegalArgumentException("The number of owners should be greater than 0");
-      if (numSegments < members.size())
-         throw new IllegalArgumentException("The number of segments should be greater than " +
-               "or equal to the number of members");
 
       int actualNumOwners = Math.min(numOwners, members.size());
 
       // initialize the owner lists with the primary owners
-      List<Address>[] ownerLists = new List[numSegments];
+      List<Address>[] segmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         ownerLists[i] = new ArrayList<Address>(actualNumOwners);
-         ownerLists[i].add(members.get(i % members.size()));
+         segmentOwners[i] = new ArrayList<Address>(actualNumOwners);
+         segmentOwners[i].add(members.get(i % members.size()));
       }
-      DefaultConsistentHash baseCH = new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, ownerLists);
+      DefaultConsistentHash baseCH = new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, segmentOwners);
 
       // use the CH update algorithm to get an even spread
       // (round robin didn't work properly with numSegments = 8, numOwners = 2, and numNodes = 5)
-      return rebalanceConsistentHash(baseCH, false);
+      return actualNumOwners > 1 ? rebalance(baseCH) : baseCH;
    }
 
+   /**
+    * Leavers are removed and segments without owners are assigned new owners. Joiners might get some of the un-owned
+    * segments but otherwise they are not taken into account (that should happen during a rebalance).
+    *
+    * @param baseCH An existing consistent hash instance, should not be {@code null}
+    * @param newMembers A list of addresses representing the new cache members.
+    * @return
+    */
    @Override
-   public ConsistentHash updateConsistentHashMembers(ConsistentHash baseCH, List<Address> newMembers) {
+   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> newMembers) {
       if (newMembers.equals(baseCH.getMembers()))
          return baseCH;
 
-      DefaultConsistentHash baseDCH = (DefaultConsistentHash) baseCH;
-      return removeLeavers(baseCH, newMembers, baseDCH);
+      return removeLeavers(baseCH, newMembers);
    }
 
    @Override
-   public ConsistentHash rebalanceConsistentHash(ConsistentHash baseCH, boolean keepExistingOwners) {
-      DefaultConsistentHash baseDCH = (DefaultConsistentHash) baseCH;
+   public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
 
       // The goal of this phase is to assign new owners to the segments so that
       // * num_owners(s) == numOwners, for each segment s
@@ -87,37 +84,57 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
       // to remove owners so that
       // * num_segments_primary_owned(n) <= ceil(numSegments/numNodes) for each node n
       // * num_segments_owned(n) <= ceil(numSegments*numOwners/numNodes) for each node n
-      Hash hashFunction = baseDCH.getHashFunction();
-      int requestedNumOwners = baseDCH.getNumOwners();
-      List<Address> nodes = baseDCH.getMembers();
-      int numOwners = Math.min(requestedNumOwners, nodes.size());
-      int numSegments = baseDCH.getNumSegments();
+      Hash hashFunction = baseCH.getHashFunction();
+      List<Address> nodes = baseCH.getMembers();
 
-      CHStatistics stats = computeStatistics(baseDCH, nodes);
+      CHStatistics stats = computeStatistics(baseCH, nodes);
 
       // Copy the owners list out of the old CH
-      List<Address>[] ownerLists = extractOwnerLists(baseDCH);
-      List<Address>[] intOwnerLists = copyOwnerLists(ownerLists);
+      List<Address>[] ownerLists = extractSegmentOwners(baseCH);
+      List<Address>[] intOwnerLists = extractSegmentOwners(baseCH);
 
-      addPrimaryOwners(nodes, numSegments, stats, ownerLists, intOwnerLists);
-      addBackupOwners(numSegments, numOwners, nodes, intOwnerLists, ownerLists, stats);
+      addPrimaryOwners(nodes, baseCH.getNumSegments(), stats, ownerLists, intOwnerLists);
+      addBackupOwners(baseCH.getNumOwners(), nodes, baseCH.getNumSegments(), stats, ownerLists, intOwnerLists);
 
-      DefaultConsistentHash ch;
-      if (keepExistingOwners) {
-         ch = new DefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, intOwnerLists);
-         if (ch.equals(baseDCH))
-            return baseDCH;
-         else
-            return ch;
-      } else {
-         ch = new DefaultConsistentHash(hashFunction, numSegments, requestedNumOwners, nodes, ownerLists);
+      DefaultConsistentHash ch = new DefaultConsistentHash(hashFunction, baseCH.getNumSegments(), baseCH.getNumOwners(),
+            nodes, ownerLists);
+
+      // we should return the base CH if we didn't change anything
+      return ch.equals(baseCH) ? baseCH : ch;
+   }
+
+   /**
+    * Merges two consistent hash objects that have the same number of segments, numOwners and hash function.
+    */
+   @Override
+   public DefaultConsistentHash union(DefaultConsistentHash dch1, DefaultConsistentHash dch2) {
+      if (!dch1.getHashFunction().equals(dch2.getHashFunction())) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
+      }
+      if (dch1.getNumSegments() != dch2.getNumSegments()) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
+      }
+      if (dch1.getNumOwners() != dch2.getNumOwners()) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same number of owners");
       }
 
-      // the interface javadoc specifies that we should return the base CH if we didn't change anything
-      if (ch.equals(baseDCH))
-         return baseDCH;
-      else
-         return ch;
+      List<Address> members = new ArrayList<Address>(dch1.getMembers());
+      List<Address>[] segmentOwners = extractSegmentOwners(dch1);
+
+      mergeLists(members, dch2.getMembers());
+      for (int i = 0; i < segmentOwners.length; i++) {
+         mergeLists(segmentOwners[i], dch2.locateOwnersForSegment(i));
+      }
+
+      return new DefaultConsistentHash(dch1.getHashFunction(), dch1.getNumSegments(), dch1.getNumOwners(), members, segmentOwners);
+   }
+
+   private void mergeLists(List<Address> list1, List<Address> list2) {
+      for (Address a2 : list2) {
+         if (!list1.contains(a2)) {
+            list1.add(a2);
+         }
+      }
    }
 
    private void addPrimaryOwners(List<Address> nodes, int numSegments, CHStatistics stats, List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
@@ -154,29 +171,29 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
                stats.decPrimaryOwned(primaryOwner);
                stats.incPrimaryOwned(newPrimaryOwner);
             }
-
          }
       }
    }
 
-   private List<Address>[] extractOwnerLists(DefaultConsistentHash ch) {
+   private List<Address>[] extractSegmentOwners(DefaultConsistentHash ch) {
       int numSegments = ch.getNumSegments();
-      List<Address>[] ownerLists = new List[numSegments];
+      List<Address>[] segmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         ownerLists[i] = new ArrayList<Address>(ch.locateOwnersForSegment(i));
+         segmentOwners[i] = ch.locateOwnersForSegment(i);
       }
-      return ownerLists;
+      return segmentOwners;
    }
 
-   private void addBackupOwners(int numSegments, int numOwners, List<Address> nodes,
-                                   List<Address>[] intOwnerLists, List<Address>[] ownerLists, CHStatistics stats) {
-      Map<Address, Integer> expectedOwned = computeExpectedOwned(nodes, numOwners, numSegments);
+   private void addBackupOwners(int numOwners, List<Address> nodes, int numSegments, CHStatistics stats,
+                                List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
+      int actualNumOwners = Math.min(numOwners, nodes.size());
+      Map<Address, Integer> expectedOwned = computeExpectedOwned(nodes, actualNumOwners, numSegments);
 
       // Iterate backwards over the segments
-      // If we find a segment with > numOwners owners, and an owner has > expectedOwned segments, remove it
+      // If we find a segment with more owners than actualNumOwners and an owner has > expectedOwned segments, remove it
       for (int i = numSegments - 1; i >= 0; i--) {
          for (int j = ownerLists[i].size() - 1; j >= 1; j--) {
-            if (ownerLists[i].size() <= numOwners)
+            if (ownerLists[i].size() <= actualNumOwners)
                break;
 
             Address owner = ownerLists[i].get(j);
@@ -196,7 +213,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
          for (int j = ownerLists[i].size() - 1; j >= 1; j--) {
             Address owner = ownerLists[i].get(j);
             int owned = stats.getOwned(owner);
-            if (owned > expectedOwned.get(owner) || ownerLists[i].size() > numOwners) {
+            if (owned > expectedOwned.get(owner) || ownerLists[i].size() > actualNumOwners) {
                // We don't actually remove anything in the intermediary CH
                ownerLists[i].remove(j);
                stats.decOwned(owner);
@@ -207,7 +224,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
       // Now we know there are no segments with > numOwners owners, we can start adding back owners
       List<Address> newOwners = computeNewOwners(nodes, stats, expectedOwned);
       for (int i = 0; i < numSegments; i++) {
-         for (int j = ownerLists[i].size(); j < numOwners; j++) {
+         for (int j = ownerLists[i].size(); j < actualNumOwners; j++) {
             Address newOwner = removeNotOneOf(newOwners, ownerLists[i]);
 
             if (newOwner != null) {
@@ -327,8 +344,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
       return expectedPrimaryOwned;
    }
 
-   private Map<Address, Integer> computeExpectedOwned(List<Address> nodes, int numOwners,
-                                                      int numSegments) {
+   private Map<Address, Integer> computeExpectedOwned(List<Address> nodes, int numOwners, int numSegments) {
       int numNodes = nodes.size();
 
       // Compute how many segments each node has to own.
@@ -344,103 +360,92 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
       return expectedOwned;
    }
 
-   private List<Address>[] copyOwnerLists(List<Address>[] ownerLists) {
-      List<Address>[] copy = new List[ownerLists.length];
-      for (int i = 0; i < ownerLists.length; i++) {
-         copy[i] = new ArrayList<Address>(ownerLists[i]);
-      }
-      return copy;
-   }
-
-   private Address removeOneOf(Collection<Address> list, Collection<Address> searchFor) {
-      Address result = null;
+   private Address removeOneOf(List<Address> list, List<Address> searchFor) {
       for (Iterator<Address> it = list.iterator(); it.hasNext(); ) {
          Address element = it.next();
          if (searchFor.contains(element)) {
-            result = element;
             it.remove();
-            break;
+            return element;
          }
       }
-      return result;
+      return null;
    }
 
-   private Address removeNotOneOf(Collection<Address> list, Collection<Address> searchFor) {
-      Address result = null;
+   private Address removeNotOneOf(List<Address> list, List<Address> searchFor) {
       for (Iterator<Address> it = list.iterator(); it.hasNext(); ) {
          Address element = it.next();
          if (!searchFor.contains(element)) {
-            result = element;
             it.remove();
-            break;
+            return element;
          }
       }
-      return result;
+      return null;
    }
 
-   private ConsistentHash removeLeavers(ConsistentHash baseCH, List<Address> newMembers,
-                                           DefaultConsistentHash baseDCH) {
-      int numSegments = baseDCH.getNumSegments();
+   /**
+    * Remove all leavers and if some segments no longer have any owners assign them some owners.
+    *
+    * @param baseCH
+    * @param newMembers
+    * @return
+    */
+   private DefaultConsistentHash removeLeavers(DefaultConsistentHash baseCH, List<Address> newMembers) {
+      int numSegments = baseCH.getNumSegments();
 
-      // we can assume leavers are far fewer than members, so it makes sense to check for leavers
+      // we assume leavers are far fewer than members, so it makes sense to check for leavers
       List<Address> leavers = new ArrayList<Address>(baseCH.getMembers());
       leavers.removeAll(newMembers);
 
       // remove leavers
       boolean segmentsWithZeroOwners = false;
-      List<Address>[] newOwnerLists = new List[numSegments];
+      List<Address>[] newSegmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = new ArrayList<Address>(baseDCH.locateOwnersForSegment(i));
+         List<Address> owners = baseCH.locateOwnersForSegment(i);
          owners.removeAll(leavers);
          segmentsWithZeroOwners |= owners.isEmpty();
-         newOwnerLists[i] = owners;
+         newSegmentOwners[i] = owners;
       }
 
       // if there are segments with 0 owners, fix them
       if (segmentsWithZeroOwners) {
-         assignSegmentsWithZeroOwners(baseDCH, newMembers, newOwnerLists);
+         assignSegmentsWithZeroOwners(baseCH, newMembers, newSegmentOwners);
       }
-      return new DefaultConsistentHash(baseDCH.getHashFunction(), numSegments, baseDCH.getNumOwners(),
-            newMembers, newOwnerLists);
+      return new DefaultConsistentHash(baseCH.getHashFunction(), numSegments, baseCH.getNumOwners(),
+            newMembers, newSegmentOwners);
    }
 
    private void assignSegmentsWithZeroOwners(DefaultConsistentHash baseDCH, List<Address> newMembers,
-                                             List<Address>[] ownerLists) {
+                                             List<Address>[] segmentOwners) {
       CHStatistics stats = computeStatistics(baseDCH, newMembers);
       int actualNumOwners = Math.min(baseDCH.getNumOwners(), newMembers.size());
       int numSegments = baseDCH.getNumSegments();
       Map<Address, Integer> expectedPrimaryOwnedSegments = computeExpectedPrimaryOwned(newMembers, numSegments);
       Map<Address, Integer> expectedOwnedSegments = computeExpectedOwned(newMembers, actualNumOwners, numSegments);
       for (int i = 0; i < numSegments; i++) {
-         if (ownerLists[i].size() == 0) {
+         if (segmentOwners[i].isEmpty()) {
             // this segment doesn't have any owners, choose new ones
             List<Address> newOwners = new ArrayList<Address>(actualNumOwners);
 
             // pick the primary owner first
             // We pick the first node that doesn't "primary own" maxPrimaryOwnedSegments.
-            // This algorithm will always a primary owner for a segment, because maxPrimaryOwnedSegments
+            // This algorithm will always pick a primary owner for a segment, because maxPrimaryOwnedSegments
             // is always recomputed so that numNodes * maxPrimaryOwnedSegments >= numSegments
             // It might leave some nodes with < minPrimaryOwnedSegments, but that's ok at this stage
-            for (int j = 0; j < newMembers.size(); j++) {
-               Address a = newMembers.get(j);
+            Address primaryOwner = null;
+            for (Address a : newMembers) {
+               primaryOwner = a;
                if (stats.getPrimaryOwned(a) < expectedPrimaryOwnedSegments.get(a)) {
-                  newOwners.add(a);
-                  stats.incPrimaryOwned(a);
-                  stats.incOwned(a);
                   break;
                }
             }
-            if (newOwners.isEmpty()) {
-               log.debugf("Could not find a primary owner for segment %d, base ch = %s, new members = %s",
-                     i, baseDCH, newMembers);
-               throw new IllegalStateException("Could not find a primary owner!");
-            }
+            newOwners.add(primaryOwner);
+            stats.incPrimaryOwned(primaryOwner);
+            stats.incOwned(primaryOwner);
 
             // then the backup owners
             // start again from the beginning so that we don't have to wrap around
             if (actualNumOwners > 1) {
-               for (int j = 0; j < newMembers.size(); j++) {
-                  Address a = newMembers.get(j);
+               for (Address a : newMembers) {
                   if (stats.getOwned(a) < expectedOwnedSegments.get(a) && !newOwners.contains(a)) {
                      newOwners.add(a);
                      stats.incOwned(a);
@@ -452,7 +457,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
             // we might have < numOwners owners at this point, if the base CH wasn't properly balanced
             // (i.e. some nodes owned > maxOwnedSegment)
             // but as long as we have at least one owner we're going to be fine
-            ownerLists[i] = newOwners;
+            segmentOwners[i] = newOwners;
          }
       }
    }
@@ -463,13 +468,12 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory {
          List<Address> owners = ch.locateOwnersForSegment(i);
          for (int j = 0; j < owners.size(); j++) {
             Address address = owners.get(j);
-            if (!nodes.contains(address))
-               continue;
-
-            if (j == 0) {
-               stats.incPrimaryOwned(address);
+            if (nodes.contains(address)) {
+               if (j == 0) {
+                  stats.incPrimaryOwned(address);
+               }
+               stats.incOwned(address);
             }
-            stats.incOwned(address);
          }
       }
       return stats;
