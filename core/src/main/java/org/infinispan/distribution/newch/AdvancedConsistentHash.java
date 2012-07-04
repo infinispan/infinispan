@@ -27,7 +27,7 @@ import org.infinispan.remoting.transport.Address;
 /**
  * This interface gives access to some implementation details of the consistent hash.
  *
- * Our consistent hashes work by splitting the hash wheel (the set of possible hash codes) into
+ * Our consistent hashes work by splitting the hash space (the set of possible hash codes) into
  * fixed segments and then assigning those segments to nodes dynamically. The number of segments
  * is defined at creation time, and the mapping of keys to segments never changes.
  * The mapping of segments to nodes does change as the membership of the cache changes.
@@ -42,23 +42,23 @@ import org.infinispan.remoting.transport.Address;
 public interface AdvancedConsistentHash extends ConsistentHash {
 
    /**
-    * @return The actual number of hash wheel segments. Note that it may not be the same as the number
+    * @return The actual number of hash space segments. Note that it may not be the same as the number
     *         of segments passed in at creation time.
     */
    int getNumSegments();
 
    /**
-    * @return The hash wheel segment that a key maps to.
+    * @return The hash space segment that a key maps to.
     */
-   int getHashWheelSegment(Object key);
+   int getSegment(Object key);
 
    /**
-    * @return All the nodes that own a given hash wheel segment.
+    * @return All the nodes that own a given hash space segment. The returned list is a copy of the internal list.
     */
    List<Address> locateOwnersForSegment(int segmentId);
 
    /**
-    * @return The primary owner of a given hash wheel segment.
+    * @return The primary owner of a given hash space segment. This is equivalent to {@code locateOwnersForSegment(segmentId).get(0)} but is more efficient
     */
    Address locatePrimaryOwnerForSegment(int segmentId);
 }
