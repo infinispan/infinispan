@@ -882,6 +882,17 @@
          <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
          <url>https://repository.jboss.org/nexus/content/groups/public</url>
       </pluginRepository>
+      <pluginRepository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>jboss-public-thirdparty-snapshots</id>
+         <name>JBoss Public third party snapshots plugin repositories</name>
+         <url>https://repository.jboss.org/nexus/content/groups/public-thirdparty-snapshots</url>
+      </pluginRepository>
    </pluginRepositories>
    <build>
       <directory>${buildDirectory}</directory>
@@ -935,7 +946,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
-               <version>2.12</version>
+               <version>2.13-SNAPSHOT</version>
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
@@ -1301,7 +1312,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
-            <version>2.12</version>
+            <version>2.13-SNASPHOT</version>
          </plugin>
          <!-- Findbugs report -->
          <plugin>
