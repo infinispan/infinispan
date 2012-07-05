@@ -54,7 +54,7 @@ import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheE
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.newch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -275,6 +275,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new PutOperation.Externalizer());
       addInternalExternalizer(new RemoveOperation.Externalizer());
       addInternalExternalizer(new ClearOperation.Externalizer());
+      addInternalExternalizer(new org.infinispan.distribution.ch.DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new UnionConsistentHash.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());

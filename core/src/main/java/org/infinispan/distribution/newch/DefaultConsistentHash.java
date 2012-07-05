@@ -19,13 +19,19 @@
 
 package org.infinispan.distribution.newch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 /**
- * Default {@link ConsistentHash} implementation.
+ * Default {@link ConsistentHash} implementation. This object is immutable.
  *
  * @author Dan Berindei
  * @since 5.2
@@ -43,7 +49,6 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
-      // assume the user will not modify the collections after passing them to the constructor
       this.members = new ArrayList<Address>(members);
       this.segmentOwners = new Address[numSegments][];
       for (int i = 0; i < numSegments; i++) {
@@ -149,5 +154,42 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
             ", numOwners=" + numOwners +
             ", numSegments=" + numSegments +
             '}';
+   }
+
+   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
+
+      @Override
+      public void writeObject(ObjectOutput output, DefaultConsistentHash ch) throws IOException {
+         output.writeInt(ch.numSegments);
+         output.writeInt(ch.numOwners);
+         output.writeObject(ch.members);
+         output.writeObject(ch.hashFunction);
+         output.writeObject(ch.segmentOwners);
+      }
+
+      @Override
+      public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         int numSegments = unmarshaller.readInt();
+         int numOwners = unmarshaller.readInt();
+         List<Address> members = (List<Address>) unmarshaller.readObject();
+         Hash hash = (Hash) unmarshaller.readObject();
+         Address[][] segmentOwners = (Address[][]) unmarshaller.readObject();
+
+         List<Address>[] segmentOwnerList = new List[segmentOwners.length];
+         for (int i = 0; i < segmentOwners.length; i++) {
+            segmentOwnerList[i] = Arrays.asList(segmentOwners[i]);
+         }
+         return new DefaultConsistentHash(hash, numSegments, numOwners, members, segmentOwnerList);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEFAULT_CONSISTENT_HASH;
+      }
+
+      @Override
+      public Set<Class<? extends DefaultConsistentHash>> getTypeClasses() {
+         return Util.<Class<? extends DefaultConsistentHash>>asSet(DefaultConsistentHash.class);
+      }
    }
 }
