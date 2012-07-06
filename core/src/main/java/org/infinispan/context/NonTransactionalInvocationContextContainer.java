@@ -73,6 +73,7 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
       NonTxInvocationContext ctx = new NonTxInvocationContext();
       ctx.setOrigin(origin);
+      ctx.setOriginLocal(true);
       ctxHolder.set(ctx);
       return ctx;
    }
