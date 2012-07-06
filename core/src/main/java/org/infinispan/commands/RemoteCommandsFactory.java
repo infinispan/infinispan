@@ -30,7 +30,8 @@ import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -206,9 +207,12 @@ public class RemoteCommandsFactory {
             case GetInDoubtTransactionsCommand.COMMAND_ID:
                command = new GetInDoubtTransactionsCommand(cacheName);
                break;
-            case MapReduceCommand.COMMAND_ID:
-               command = new MapReduceCommand(cacheName);
+            case MapCombineCommand.COMMAND_ID:
+               command = new MapCombineCommand(cacheName);
                break;
+            case ReduceCommand.COMMAND_ID:
+               command = new ReduceCommand(cacheName);
+               break;   
             case GetInDoubtTxInfoCommand.COMMAND_ID:
                command = new GetInDoubtTxInfoCommand(cacheName);
                break;
@@ -218,6 +222,9 @@ public class RemoteCommandsFactory {
             case CacheViewControlCommand.COMMAND_ID:
                command = new CacheViewControlCommand(cacheName);
                break;                      
+            case CreateCacheCommand.COMMAND_ID:
+               command = new CreateCacheCommand(cacheName);   
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

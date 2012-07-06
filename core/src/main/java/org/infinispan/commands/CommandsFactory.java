@@ -29,7 +29,8 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -335,15 +336,23 @@ public interface CommandsFactory {
    <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
    
    /**
-    * Builds a MapReduceCommand used for migration and execution of MapReduce tasks.
+    * Builds a MapCombineCommand used for migration and map phase execution of MapReduce tasks.
     * 
     * @param m Mapper for MapReduceTask
-    * @param r Reducer for MapReduceTask
-    * @param sender sender's Address
+    * @param r Combiner for MapReduceTask
     * @param keys keys used in MapReduceTask
-    * @return a MapReduceCommand
+    * @return created MapCombineCommand
     */
-   MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys);
+   MapCombineCommand buildMapCombineCommand(String taskId, Mapper m, Reducer r, Collection keys);
+   
+   /**
+    * Builds a ReduceCommand used for migration and reduce phase execution of MapReduce tasks.
+    * 
+    * @param r Reducer for MapReduceTask
+    * @param keys keys used in MapReduceTask
+    * @return created ReduceCommand
+    */
+   ReduceCommand buildReduceCommand(String taskId, Reducer r, Collection keys);
 
    /**
     * @see GetInDoubtTxInfoCommand
@@ -371,4 +380,13 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
+   
+   /**
+    * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
+    * 
+    * @param cacheName name of the cache to construct and start
+    * @param cacheConfigurationName configuration name for the cache to create/start
+    * @return created CreateCacheCommand 
+    */
+   CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
 }
