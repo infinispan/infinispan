@@ -1,14 +1,13 @@
 @echo off
 
 setlocal enabledelayedexpansion
+set ISPN_HOME=%~dp0
+set ISPN_HOME="%ISPN_HOME%.."
 
-set LIB=
-for %%f in (..\modules\cli-client\lib\*.jar) do set LIB=!LIB!;%%f
-rem echo libs: %LIB%
-
-set CP=%LIB%
-set CP=..\modules\cli-client\infinispan-cli-client.jar;%CP%
+set /p CP=<%ISPN_HOME%\modules\cli-client\runtime-classpath.txt
+set CP=%CP::=;%
+set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
+set CP=%ISPN_HOME%\modules\cli-client\infinispan-cli-client.jar;%CP%
+rem echo libs: %CP%
 
 java -classpath "%CP%" org.infinispan.cli.Main %*
-
-:fileEnd

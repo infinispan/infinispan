@@ -55,7 +55,9 @@
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
-            	<attachClasses>true</attachClasses>
+               <!-- we also pack WEB-INF/classes separately so JDG can use infinispan-server-rest-x.y.z-classes.jar
+               to build a custom server war rather than use the war generated here -->
+               <attachClasses>true</attachClasses>
             </configuration>
          </plugin>
       </plugins>

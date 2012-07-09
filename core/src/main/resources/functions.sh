@@ -52,6 +52,8 @@ function add_classpath() {
       fi
     elif [[ -f "$E" && "$E" =~ \.([Jj][Aa][Rr]|[Zz][Ii][Pp])$ ]]; then
       CLASSPATH="$CLASSPATH:$E"
+    elif [[ -f "$E" && "$E" =~ /runtime-classpath\.txt$ ]]; then
+      CLASSPATH=$CLASSPATH:`eval echo $(<$E)`
     fi
 
     if [[ "$CLASSPATH" =~ ^: ]]; then
