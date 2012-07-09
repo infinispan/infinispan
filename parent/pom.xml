@@ -49,11 +49,11 @@
    </developers>
    <mailingLists>
       <mailingList>
-         <name>Infinispan Commit Notificatons</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
-         <post>infinispan-commits@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
+         <name>Infinispan Issues</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+         <post>infinispan-issues@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
       </mailingList>
       <mailingList>
          <name>Infinispan Developers</name>
@@ -917,14 +917,14 @@
                <version>${version.maven.bundle}</version>
             </plugin>
             <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <version>2.2-beta-3</version>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-assembly-plugin</artifactId>
+               <version>2.3</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
-               <version>2.0</version>
+               <version>2.4</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -952,7 +952,7 @@
                <artifactId>maven-war-plugin</artifactId>
                <version>2.1.1</version>
                <configuration>
-                  <attachClasses>true</attachClasses>
+                  <attachClasses>false</attachClasses>
                </configuration>
             </plugin>
             <plugin>
@@ -1328,6 +1328,39 @@
       </plugins>
    </reporting>
    <profiles>
+      <profile>
+         <id>distribution</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
+
+         <build>
+            <plugins>
+               <!-- generate target/runtime-classpath.txt, to be included in bundle -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>create-classpath</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                           <includeScope>runtime</includeScope>
+                           <excludeScope>test</excludeScope>
+                           <!-- all jar paths are relative to bin dir inside the distribution bundle -->
+                           <prefix>$ISPN_HOME/lib</prefix>
+                           <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
          <id>extras</id>
          <activation>

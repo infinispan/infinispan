@@ -2,11 +2,9 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath "${ISPN_HOME}"/*.jar
-add_classpath "${ISPN_HOME}/etc"
-add_classpath "${ISPN_HOME}/etc/config-samples/ec2-demo"
-add_classpath "${ISPN_HOME}/lib"
-add_classpath "${ISPN_HOME}/modules"
+add_classpath ${ISPN_HOME}/etc
+add_classpath ${ISPN_HOME}/etc/config-samples/ec2-demo
+add_classpath ${ISPN_HOME}/modules/demos/ec2/runtime-classpath.txt
 
 if [[ ! -e ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat ]]; then
   gunzip ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat.gz > /dev/null

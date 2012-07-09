@@ -2,7 +2,8 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath "${ISPN_HOME}/modules/cli-client"
+add_classpath ${ISPN_HOME}/modules/cli-client/*.jar
+add_classpath ${ISPN_HOME}/modules/cli-client/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
 

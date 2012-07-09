@@ -1,29 +1,18 @@
 @echo off
 
-:noenvreset
-set my_classpath=
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\lib\*.jar"') do (
-		call set my_classpath=%%my_classpath%%;%%~f)
-	)
-set my_classpath=%my_classpath:~1%
+setlocal enabledelayedexpansion
+set ISPN_HOME=%~dp0
+set ISPN_HOME="%ISPN_HOME%.."
 
-set my_classpath=%my_classpath%;..\infinispan-core.jar
-
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\demos\gui\*.jar"') do (
-                call set my_classpath=%%my_classpath%%;%%~f)
-        )
-set my_classpath=%my_classpath:~1%
-
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\demos\gui\lib\*.jar"') do (
-                call set my_classpath=%%my_classpath%%;%%~f)
-        )
-set my_classpath=%my_classpath:~1%
+set /p CP=<%ISPN_HOME%\modules\demos\gui\runtime-classpath.txt
+set CP=%CP::=;%
+set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
+set CP=%ISPN_HOME%\modules\demos\gui\infinispan-gui-demo.jar;%CP%
+rem echo libs: %CP%
 
 :test
 set /a "TESTPORT=%RANDOM%+2000"
 netstat -an | findstr ":%TESTPORT% "
 if %ERRORLEVEL%==0 goto test
 
-java -cp "%my_classpath%" -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=%TESTPORT% -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml -Dsun.nio.ch.bugLevel="" org.infinispan.demo.InfinispanDemo
-
-
+java -cp "%CP%" -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=%TESTPORT% -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=%ISPN_HOME%\etc\log4j.xml -Dsun.nio.ch.bugLevel="" org.infinispan.demo.InfinispanDemo

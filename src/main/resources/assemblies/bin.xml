@@ -38,21 +38,22 @@
    + doc (release notes, etc from src/main/release)
 -->
 <assembly
-      xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+      xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+      xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
    <id>bin</id>
+
+   <baseDirectory>${project.artifactId}-${project.version}-bin</baseDirectory>
 
    <formats>
       <format>zip</format>
    </formats>
 
    <moduleSets>
+      <!-- Core module -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-api</include>
-            <include>org.infinispan:infinispan-commons</include>
             <include>org.infinispan:infinispan-core</include>
          </includes>
          <sources>
@@ -129,12 +130,20 @@
                      <include>**/*.txt</include>
                   </includes>
                </fileSet>
-            </fileSets>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
+            </fileSets>
          </sources>
 
          <binaries>
-            <outputDirectory></outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
@@ -143,7 +152,7 @@
             <dependencySets>
                <dependencySet>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -208,7 +217,7 @@
                   <includes>
                      <include>**/*.html</include>
                   </includes>
-               </fileSet>               
+               </fileSet>
 
                <fileSet>
                   <directory>src/main/resources</directory>
@@ -230,6 +239,16 @@
                      <include>**/*.txt</include>
                   </includes>
                </fileSet>
+
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
          </sources>
 
@@ -242,8 +261,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -252,7 +269,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -340,6 +357,15 @@
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -356,8 +382,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -368,13 +392,14 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/demos/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
          </binaries>
       </moduleSet>
 
+      <!-- REST server war -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
@@ -444,6 +469,15 @@
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -458,6 +492,18 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <lineEnding>keep</lineEnding>
+                  <outputDirectory>modules/cdi</outputDirectory>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
+            </fileSets>
          </sources>
 
          <!-- All modules except core and Webapp modules -->
@@ -472,8 +518,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -484,7 +528,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/cdi/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
