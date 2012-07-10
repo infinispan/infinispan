@@ -24,6 +24,7 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
+import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -197,7 +198,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      throw new CacheException("Explicit locking is not allowed with optimistic caches!");
+      throw new InvalidCacheUsageException(
+            "Explicit locking is not allowed with optimistic caches!");
    }
 
    private class LockAcquisitionVisitor extends AbstractVisitor {

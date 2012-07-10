@@ -24,6 +24,7 @@ package org.infinispan.interceptors;
 
 
 import org.infinispan.CacheException;
+import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
@@ -130,6 +131,8 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
             try {
                return invokeNextInterceptor(ctx, command);
+            } catch (InvalidCacheUsageException ex) {
+               throw ex; // Propagate back client usage errors regardless of flag
             } catch (Throwable th) {
                // If we are shutting down there is every possibility that the invocation fails.
                suppressExceptions = suppressExceptions || shuttingDown;

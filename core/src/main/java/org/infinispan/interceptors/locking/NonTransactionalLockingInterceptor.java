@@ -24,6 +24,7 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
+import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -127,7 +128,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    private void assertNonTransactional(InvocationContext ctx) {
       //this only happens if the cache is used in a transaction's scope
       if (ctx.isInTxScope()) {
-         throw new CacheException("This is a non-transactional cache and cannot be accessed with a transactional InvocationContext.");
+         throw new InvalidCacheUsageException(
+               "This is a non-transactional cache and cannot be accessed with a transactional InvocationContext.");
       }
    }
 }
