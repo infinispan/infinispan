@@ -47,15 +47,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class GlobalTransaction implements Cloneable {
 
-   private static final long serialVersionUID = 8011434781266976149L;
+   private static final AtomicLong sid = new AtomicLong(0);
 
-   private static AtomicLong sid = new AtomicLong(0);
+   protected long id = -1;
 
-   long id = -1;
-
-   protected transient Address addr = null;
-   private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
-   private transient boolean remote = false;
+   protected Address addr = null;
+   private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
+   private boolean remote = false;
 
    /**
     * empty ctor used by externalization.
@@ -84,7 +82,6 @@ public class GlobalTransaction implements Cloneable {
    public void setRemote(boolean remote) {
       this.remote = remote;
    }
-
 
    @Override
    public int hashCode() {
