@@ -122,7 +122,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       //Important: this only connects to one of the two servers!
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
-      props.put("infinispan.client.hotrod.ping_on_startup", "false");
+      props.put("infinispan.client.hotrod.ping_on_startup", "true");
       setHotRodProtocolVersion(props);
       remoteCacheManager = new RemoteCacheManager(props);
       remoteCache = remoteCacheManager.getCache();
@@ -143,7 +143,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {
-      assert tcpConnectionFactory.getServers().size() == 3;
+      assertEquals(3, tcpConnectionFactory.getServers().size());
       for (int i = 0; i < 10; i++) {
          remoteCache.put("k", "v");
          if (tcpConnectionFactory.getServers().size() == 3) break;
@@ -158,7 +158,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       remoteCache.put("k", "v");
       assert remoteCache.get("k").equals("v");
    }
-
 
    @Test(dependsOnMethods = "testCorrectSetup")
    public void testHashFunctionReturnsSameValues() {
