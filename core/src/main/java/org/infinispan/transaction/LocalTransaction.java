@@ -163,7 +163,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return "LocalTransaction{" +
             "remoteLockedNodes=" + remoteLockedNodes +
             ", isMarkedForRollback=" + isMarkedForRollback +
-            ", transaction=" + transaction +
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
             ", viewId=" + viewId +
