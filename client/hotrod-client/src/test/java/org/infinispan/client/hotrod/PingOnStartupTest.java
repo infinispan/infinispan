@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import java.util.Properties;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,12 +51,14 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testTopologyFetched() throws Exception {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
-      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.server_list",
+            "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
       props.put("timeBetweenEvictionRunsMillis", "500");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
+            TestingUtil.extractField(remoteCacheManager, "transportFactory");
       for (int i = 0; i < 10; i++) {
          try {
             if (tcpConnectionFactory.getServers().size() == 1) {
@@ -73,15 +76,34 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testTopologyNotFetched() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
-      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.server_list",
+            "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
+            TestingUtil.extractField(remoteCacheManager, "transportFactory");
       try {
          assertEquals(1, tcpConnectionFactory.getServers().size());
       } finally {
          remoteCacheManager.stop();
       }
    }
+
+   public void testGetCacheWithPingOnStartupDisabled() {
+      Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
+      props.put("infinispan.client.hotrod.server_list",
+            "boomoo:12345;localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "false");
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
+
+      try {
+         RemoteCache<Object, Object> cache = remoteCacheManager.getCache();
+         assertFalse(cache.containsKey("k"));
+      } finally {
+         remoteCacheManager.stop();
+      }
+   }
+
 }
