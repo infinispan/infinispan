@@ -46,6 +46,11 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
 
    public DefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
                                 List<Address>[] segmentOwners) {
+      if (numSegments <= 1)
+         throw new IllegalArgumentException("The number of segments must be strictly positive");
+      if (numOwners <= 1)
+         throw new IllegalArgumentException("The number of owners must be strictly positive");
+
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
