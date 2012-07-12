@@ -49,7 +49,7 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    protected final AtomicInteger topologyId;
    
-   private final Codec codec;
+   protected final Codec codec;
 
    private static final byte NO_TX = 0;
    private static final byte XA_TX = 1;
