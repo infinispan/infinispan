@@ -134,8 +134,26 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, cacheNameBytes, topologyId, flags(), size);
    }
 
+   /**
+    * Construct a ping request directed to a particular node.
+    *
+    * @param transport represents the node to which the operation is directed
+    * @return a ping operation for a particular node
+    */
    public PingOperation newPingOperation(Transport transport) {
       return new PingOperation(codec, topologyId, transport, cacheNameBytes);
+   }
+
+   /**
+    * Construct a fault tolerant ping request. This operation should be capable
+    * to deal with nodes being down, so it will find the first node successful
+    * node to respond to the ping.
+    *
+    * @return a ping operation for the cluster
+    */
+   public FaultTolerantPingOperation newFaultTolerantPingOperation() {
+      return new FaultTolerantPingOperation(
+            codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
 
    private Flag[] flags() {
