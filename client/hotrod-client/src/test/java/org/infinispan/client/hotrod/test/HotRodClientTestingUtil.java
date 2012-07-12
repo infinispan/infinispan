@@ -34,6 +34,11 @@ public class HotRodClientTestingUtil {
 
    private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class, Log.class);
 
+   /**
+    * Kills a remote cache manager.
+    *
+    * @param rcm the remote cache manager instance to kill
+    */
    public static void killRemoteCacheManager(RemoteCacheManager rcm) {
       try {
          if (rcm != null) rcm.stop();
@@ -42,6 +47,11 @@ public class HotRodClientTestingUtil {
       }
    }
 
+   /**
+    * Kills a group of Hot Rod servers.
+    *
+    * @param servers the group of Hot Rod servers to kill
+    */
    public static void killServers(HotRodServer... servers) {
       if (servers != null) {
          for (HotRodServer server : servers) {
@@ -51,6 +61,23 @@ public class HotRodClientTestingUtil {
                log.warn("Error stopping Hot Rod server", t);
             }
          }
+      }
+   }
+
+   /**
+    * Invoke a task using a remote cache manager. This method guarantees that
+    * the remote manager used in the task will be cleaned up after the task has
+    * completed, regardless of the task outcome.
+    *
+    * @param c task to execute
+    * @throws Exception if the task fails somehow
+    */
+   public static void withRemoteCacheManager(RemoteCacheManagerCallable c)
+         throws Exception {
+      try {
+         c.call();
+      } finally {
+         killRemoteCacheManager(c.rcm);
       }
    }
 

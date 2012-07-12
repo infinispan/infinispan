@@ -23,11 +23,14 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.URL;
@@ -40,23 +43,26 @@ import java.util.Properties;
 @Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional" )
 public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
-   EmbeddedCacheManager cacheManager = null;
-   HotRodServer hotrodServer = null;
+   HotRodServer hotrodServer;
    int port;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createLocalCacheManager(false);
+   }
+
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
-      return cacheManager;
    }
 
    @AfterTest(alwaysRun = true)
    public void release() {
       try {
-         if (cacheManager != null) cacheManager.stop();
-         if (hotrodServer != null) hotrodServer.stop();
+         TestingUtil.killCacheManagers(cacheManager);
+         HotRodClientTestingUtil.killServers(hotrodServer);
       } catch (Exception e) {
          e.printStackTrace();
       }
