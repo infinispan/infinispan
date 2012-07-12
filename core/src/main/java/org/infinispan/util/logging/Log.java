@@ -24,6 +24,7 @@ package org.infinispan.util.logging;
 
 import org.infinispan.CacheException;
 import org.infinispan.cacheviews.CacheView;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -385,7 +386,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Caught exception when handling command %s", id = 71)
-   void exceptionHandlingCommand(CacheRpcCommand cmd, @Cause Throwable t);
+   void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed replicating %d elements in replication queue", id = 72)
