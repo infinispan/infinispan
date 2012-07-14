@@ -27,9 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
@@ -42,813 +43,622 @@ import org.testng.annotations.Test;
  * <p>
  * Test {@link ConfigurationOverrides}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 public class ConfigurationOverridesTest {
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
-   public final void configurationOverridesShouldOverrideDeadlockSpinDetectionDurationPropIfExplicitlySet()
-            throws Exception {
+   public final void configurationOverridesShouldOverrideDeadlockSpinDetectionDurationPropIfExplicitlySet() throws Exception {
       final long expectedDeadlockSpinDetectionDuration = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setDeadlockDetectionSpinDuration(expectedDeadlockSpinDetectionDuration);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set deadlockDetectionSpinDuration. However, it didn't.",
-                        expectedDeadlockSpinDetectionDuration,
-                        defaultConfiguration.getDeadlockDetectionSpinDuration());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set deadlockDetectionSpinDuration. However, it didn't.",
+                  expectedDeadlockSpinDetectionDuration,
+                  configuration.deadlockDetection().spinDuration());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEnableDeadlockDetectionPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedEnableDeadlockDetection = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEnableDeadlockDetection(expectedEnableDeadlockDetection);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set enableDeadlockDetection property. However, it didn't.",
-                        expectedEnableDeadlockDetection,
-                        defaultConfiguration.isDeadlockDetectionEnabled());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set enableDeadlockDetection property. However, it didn't.",
+                  expectedEnableDeadlockDetection,
+                  configuration.deadlockDetection().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideUseLockStripingPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedUseLockStriping = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUseLockStriping(expectedUseLockStriping);
-      final Configuration defaultConfiguration = new Configuration();
-
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set useLockStriping property. However, it didn't.",
-                        expectedUseLockStriping, defaultConfiguration.isUseLockStriping());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set useLockStriping property. However, it didn't.",
+                  expectedUseLockStriping,
+                  configuration.locking().useLockStriping());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideUnsafeUnreliableReturnValuesPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedUnsafeUnreliableReturnValues = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUnsafeUnreliableReturnValues(expectedUnsafeUnreliableReturnValues);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
 
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set unsafeUnreliableReturnValues property. However, it didn't.",
-                        expectedUnsafeUnreliableReturnValues,
-                        defaultConfiguration.isUnsafeUnreliableReturnValues());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set unsafeUnreliableReturnValues property. However, it didn't.",
+                  expectedUnsafeUnreliableReturnValues,
+                  configuration.unsafe().unreliableReturnValues());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideRehashRpcTimeoutPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedRehashRpcTimeout = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setRehashRpcTimeout(expectedRehashRpcTimeout);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set rehashRpcTimeout property. However, it didn't.",
-                        expectedRehashRpcTimeout, defaultConfiguration.getRehashRpcTimeout());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set rehashRpcTimeout property. However, it didn't.",
+                  expectedRehashRpcTimeout,
+                  configuration.clustering().stateTransfer().timeout());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideWriteSkewCheckPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedWriteSkewCheck = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setWriteSkewCheck(expectedWriteSkewCheck);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set writeSkewCheck property. However, it didn't.",
-                        expectedWriteSkewCheck, defaultConfiguration.isWriteSkewCheck());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set writeSkewCheck property. However, it didn't.",
+                  expectedWriteSkewCheck,
+                  configuration.locking().writeSkewCheck());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideConcurrencyLevelPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final int expectedConcurrencyLevel = 10000;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setConcurrencyLevel(expectedConcurrencyLevel);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ConcurrencyLevel property. However, it didn't.",
-                        expectedConcurrencyLevel, defaultConfiguration.getConcurrencyLevel());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ConcurrencyLevel property. However, it didn't.",
+                  expectedConcurrencyLevel,
+                  configuration.locking().concurrencyLevel());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideReplQueueMaxElementsPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final int expectedReplQueueMaxElements = 10000;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setReplQueueMaxElements(expectedReplQueueMaxElements);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueMaxElements property. However, it didn't.",
-                        expectedReplQueueMaxElements,
-                        defaultConfiguration.getReplQueueMaxElements());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueMaxElements property. However, it didn't.",
+                  expectedReplQueueMaxElements,
+                  configuration.clustering().async().replQueueMaxElements());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideReplQueueIntervalPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedReplQueueInterval = 10000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setReplQueueInterval(expectedReplQueueInterval);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueInterval property. However, it didn't.",
-                        expectedReplQueueInterval, defaultConfiguration.getReplQueueInterval());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueInterval property. However, it didn't.",
+                  expectedReplQueueInterval,
+                  configuration.clustering().async().replQueueInterval());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setReplQueueClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideReplQueueClassPropIfExplicitlySet()
-            throws Exception {
-      final String expectedReplQueueClass = "repl.queue.Class";
+         throws Exception {
+      final String expectedReplQueueClass = "repl.queue.Class";//FIXME create one
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setReplQueueClass(expectedReplQueueClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueClass property. However, it didn't.",
-                        expectedReplQueueClass, defaultConfiguration.getReplQueueClass());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ReplQueueClass property. However, it didn't.",
+                  expectedReplQueueClass,
+                  configuration.clustering().async().replQueue().getClass());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
-   public final void configurationOverridesShouldOverrideExposeJmxStatisticsPropIfExplicitlySet()
-            throws Exception {
+   public final void configurationOverridesShouldOverrideExposeJmxStatisticsPropIfExplicitlySet() throws Exception {
       final boolean expectedExposeJmxStatistics = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setExposeJmxStatistics(expectedExposeJmxStatistics);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ExposeJmxStatistics property. However, it didn't.",
-                        expectedExposeJmxStatistics, defaultConfiguration.isExposeJmxStatistics());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ExposeJmxStatistics property. However, it didn't.",
+                  expectedExposeJmxStatistics,
+                  configuration.jmxStatistics().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideInvocationBatchingEnabledPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedInvocationBatchingEnabled = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setInvocationBatchingEnabled(expectedInvocationBatchingEnabled);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set InvocationBatchingEnabled property. However, it didn't.",
-                        expectedInvocationBatchingEnabled,
-                        defaultConfiguration.isInvocationBatchingEnabled());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set InvocationBatchingEnabled property. However, it didn't.",
+                  expectedInvocationBatchingEnabled,
+                  configuration.invocationBatching().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideFetchInMemoryStatePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedFetchInMemoryState = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setFetchInMemoryState(expectedFetchInMemoryState);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set FetchInMemoryState property. However, it didn't.",
-                        expectedFetchInMemoryState, defaultConfiguration.isFetchInMemoryState());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set FetchInMemoryState property. However, it didn't.",
+                  expectedFetchInMemoryState,
+                  configuration.clustering().stateTransfer().fetchInMemoryState());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideAlwaysProvideInMemoryStatePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedAlwaysProvideInMemoryState = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setAlwaysProvideInMemoryState(expectedAlwaysProvideInMemoryState);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set AlwaysProvideInMemoryState property. However, it didn't.",
-                        expectedAlwaysProvideInMemoryState,
-                        defaultConfiguration.isAlwaysProvideInMemoryState());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set AlwaysProvideInMemoryState property. However, it didn't.",
+                  expectedAlwaysProvideInMemoryState,
+                  configuration.clustering().stateTransfer().fetchInMemoryState());//FIXME
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideLockAcquisitionTimeoutPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedLockAcquisitionTimeout = 1000000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setLockAcquisitionTimeout(expectedLockAcquisitionTimeout);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set LockAcquisitionTimeout property. However, it didn't.",
-                        expectedLockAcquisitionTimeout,
-                        defaultConfiguration.getLockAcquisitionTimeout());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set LockAcquisitionTimeout property. However, it didn't.",
+                  expectedLockAcquisitionTimeout,
+                  configuration.locking().lockAcquisitionTimeout());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideSyncReplTimeoutPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedSyncReplTimeout = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setSyncReplTimeout(expectedSyncReplTimeout);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set SyncReplTimeout property. However, it didn't.",
-                        expectedSyncReplTimeout, defaultConfiguration.getSyncReplTimeout());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set SyncReplTimeout property. However, it didn't.",
+                  expectedSyncReplTimeout,
+                  configuration.clustering().stateTransfer().timeout());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setCacheModeString(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideCacheModeStringPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedCacheModeString = CacheMode.LOCAL.name();
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setCacheModeString(expectedCacheModeString);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set CacheModeString property. However, it didn't.",
-                        expectedCacheModeString, defaultConfiguration.getCacheModeString());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set CacheModeString property. However, it didn't.",
+                  expectedCacheModeString,
+                  configuration.clustering().cacheModeString());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionWakeUpIntervalPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedExpirationWakeUpInterval = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setExpirationWakeUpInterval(expectedExpirationWakeUpInterval);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionWakeUpInterval property. However, it didn't.",
-                        expectedExpirationWakeUpInterval,
-                        defaultConfiguration.getExpirationWakeUpInterval());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionWakeUpInterval property. However, it didn't.",
+                  expectedExpirationWakeUpInterval,
+                  configuration.expiration().wakeUpInterval());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setEvictionStrategy(org.infinispan.eviction.EvictionStrategy)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionStrategyPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final EvictionStrategy expectedEvictionStrategy = EvictionStrategy.LIRS;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionStrategy(expectedEvictionStrategy);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionStrategy property. However, it didn't.",
-                        expectedEvictionStrategy, defaultConfiguration.getEvictionStrategy());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionStrategy property. However, it didn't.",
+                  expectedEvictionStrategy,
+                  configuration.eviction().strategy());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setEvictionStrategyClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionStrategyClassPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedEvictionStrategyClass = "LRU";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionStrategyClass(expectedEvictionStrategyClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionStrategyClass property. However, it didn't.",
-                        EvictionStrategy.LRU, defaultConfiguration.getEvictionStrategy());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionStrategyClass property. However, it didn't.",
+                  EvictionStrategy.LRU,
+                  configuration.eviction().strategy());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setEvictionThreadPolicy(org.infinispan.eviction.EvictionThreadPolicy)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionThreadPolicyPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final EvictionThreadPolicy expectedEvictionThreadPolicy = EvictionThreadPolicy.PIGGYBACK;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionThreadPolicy(expectedEvictionThreadPolicy);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionThreadPolicy property. However, it didn't.",
-                        expectedEvictionThreadPolicy,
-                        defaultConfiguration.getEvictionThreadPolicy());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionThreadPolicy property. However, it didn't.",
+                  expectedEvictionThreadPolicy,
+                  configuration.eviction().threadPolicy());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setEvictionThreadPolicyClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionThreadPolicyClassPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedEvictionThreadPolicyClass = "PIGGYBACK";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionThreadPolicyClass(expectedEvictionThreadPolicyClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionThreadPolicyClass property. However, it didn't.",
-                        EvictionThreadPolicy.PIGGYBACK,
-                        defaultConfiguration.getEvictionThreadPolicy());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionThreadPolicyClass property. However, it didn't.",
+                  EvictionThreadPolicy.PIGGYBACK,
+                  configuration.eviction().threadPolicy());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideEvictionMaxEntriesPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final int expectedEvictionMaxEntries = 1000000;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setEvictionMaxEntries(expectedEvictionMaxEntries);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EvictionMaxEntries property. However, it didn't.",
-                        expectedEvictionMaxEntries, defaultConfiguration.getEvictionMaxEntries());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set EvictionMaxEntries property. However, it didn't.",
+                  expectedEvictionMaxEntries,
+                  configuration.eviction().maxEntries());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideExpirationLifespanPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedExpirationLifespan = 1000000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setExpirationLifespan(expectedExpirationLifespan);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ExpirationLifespan property. However, it didn't.",
-                        expectedExpirationLifespan, defaultConfiguration.getExpirationLifespan());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ExpirationLifespan property. However, it didn't.",
+                  expectedExpirationLifespan,
+                  configuration.expiration().lifespan());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideExpirationMaxIdlePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedExpirationMaxIdle = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setExpirationMaxIdle(expectedExpirationMaxIdle);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ExpirationMaxIdle property. However, it didn't.",
-                        expectedExpirationMaxIdle, defaultConfiguration.getExpirationMaxIdle());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ExpirationMaxIdle property. However, it didn't.",
+                  expectedExpirationMaxIdle,
+                  configuration.expiration().maxIdle());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setTransactionManagerLookupClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideTransactionManagerLookupClassPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedTransactionManagerLookupClass = "expected.transaction.manager.lookup.Class";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setTransactionManagerLookupClass(expectedTransactionManagerLookupClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set TransactionManagerLookupClass property. However, it didn't.",
-                        expectedTransactionManagerLookupClass,
-                        defaultConfiguration.getTransactionManagerLookupClass());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set TransactionManagerLookupClass property. However, it didn't.",
+                  expectedTransactionManagerLookupClass,
+                  configuration.transaction().transactionManagerLookup());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setTransactionManagerLookup(org.infinispan.transaction.lookup.TransactionManagerLookup)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideTransactionManagerLookupPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final TransactionManagerLookup expectedTransactionManagerLookup = new JBossTransactionManagerLookup();
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setTransactionManagerLookup(expectedTransactionManagerLookup);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set TransactionManagerLookup property. However, it didn't.",
-                        expectedTransactionManagerLookup,
-                        defaultConfiguration.getTransactionManagerLookup());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set TransactionManagerLookup property. However, it didn't.",
+                  expectedTransactionManagerLookup,
+                  configuration.transaction().transactionManagerLookup());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setCacheLoaderManagerConfig(org.infinispan.config.CacheLoaderManagerConfig)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideCacheLoaderManagerConfigPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final CacheLoaderManagerConfig expectedCacheLoaderManagerConfig = new CacheLoaderManagerConfig();
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setCacheLoaderManagerConfig(expectedCacheLoaderManagerConfig);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertSame(
-                        "ConfigurationOverrides should have overridden default value with explicitly set CacheLoaderManagerConfig property. However, it didn't.",
-                        expectedCacheLoaderManagerConfig,
-                        defaultConfiguration.getCacheLoaderManagerConfig());
+            .assertSame(
+                  "ConfigurationOverrides should have overridden default value with explicitly set CacheLoaderManagerConfig property. However, it didn't.",
+                  expectedCacheLoaderManagerConfig,
+                  configuration.loaders().cacheLoaders());//FIXME
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideSyncCommitPhasePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedSyncCommitPhase = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setSyncCommitPhase(expectedSyncCommitPhase);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set SyncCommitPhase property. However, it didn't.",
-                        expectedSyncCommitPhase, defaultConfiguration.isSyncCommitPhase());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set SyncCommitPhase property. However, it didn't.",
+                  expectedSyncCommitPhase,
+                  configuration.transaction().syncCommitPhase());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideSyncRollbackPhasePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedSyncRollbackPhase = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setSyncRollbackPhase(expectedSyncRollbackPhase);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set SyncRollbackPhase property. However, it didn't.",
-                        expectedSyncRollbackPhase, defaultConfiguration.isSyncRollbackPhase());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set SyncRollbackPhase property. However, it didn't.",
+                  expectedSyncRollbackPhase,
+                  configuration.transaction().syncRollbackPhase());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideUseEagerLockingPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedUseEagerLocking = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUseEagerLocking(expectedUseEagerLocking);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set UseEagerLocking property. However, it didn't.",
-                        expectedUseEagerLocking, defaultConfiguration.isUseEagerLocking());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set UseEagerLocking property. However, it didn't.",
+                  expectedUseEagerLocking,
+                  configuration.transaction().useEagerLocking());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
-   public final void configurationOverridesShouldOverrideEagerLockSingleNodePropIfExplicitlySet()
-            throws Exception {
-      final boolean expectedEagerLockSingleNode = true;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setEagerLockSingleNode(expectedEagerLockSingleNode);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set EagerLockSingleNode property. However, it didn't.",
-                        expectedEagerLockSingleNode, defaultConfiguration.isEagerLockSingleNode());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideUseReplQueuePropIfExplicitlySet()
-            throws Exception {
+   public final void configurationOverridesShouldOverrideUseReplQueuePropIfExplicitlySet() throws Exception {
       final boolean expectedUseReplQueue = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUseReplQueue(expectedUseReplQueue);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set UseReplQueue property. However, it didn't.",
-                        expectedUseReplQueue, defaultConfiguration.isUseReplQueue());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set UseReplQueue property. However, it didn't.",
+                  expectedUseReplQueue,
+                  configuration.clustering().async().useReplQueue());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setIsolationLevel(org.infinispan.util.concurrent.IsolationLevel)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideIsolationLevelPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final IsolationLevel expectedIsolationLevel = IsolationLevel.SERIALIZABLE;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setIsolationLevel(expectedIsolationLevel);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set IsolationLevel property. However, it didn't.",
-                        expectedIsolationLevel, defaultConfiguration.getIsolationLevel());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set IsolationLevel property. However, it didn't.",
+                  expectedIsolationLevel,
+                  configuration.locking().isolationLevel());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideStateRetrievalTimeoutPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedStateRetrievalTimeout = 1000000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setStateRetrievalTimeout(expectedStateRetrievalTimeout);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalTimeout property. However, it didn't.",
-                        expectedStateRetrievalTimeout,
-                        defaultConfiguration.getStateRetrievalTimeout());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideStateRetrievalLogFlushTimeoutPropIfExplicitlySet()
-            throws Exception {
-      final long expectedStateRetrievalLogFlushTimeout = 1000000L;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setStateRetrievalLogFlushTimeout(expectedStateRetrievalLogFlushTimeout);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalLogFlushTimeout property. However, it didn't.",
-                        expectedStateRetrievalLogFlushTimeout,
-                        defaultConfiguration.getStateRetrievalLogFlushTimeout());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideStateRetrievalMaxNonProgressingLogWritesPropIfExplicitlySet()
-         throws Exception {
-      final int expectedStateRetrievalMaxNonProgressingLogWrites = 123456;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest
-            .setStateRetrievalMaxNonProgressingLogWrites(expectedStateRetrievalMaxNonProgressingLogWrites);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
             .assertEquals(
-                  "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalMaxNonProgressingLogWrites property. However, it didn't.",
-                  expectedStateRetrievalMaxNonProgressingLogWrites,
-                  defaultConfiguration.getStateRetrievalMaxNonProgressingLogWrites());
+                  "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalTimeout property. However, it didn't.",
+                  expectedStateRetrievalTimeout,
+                  configuration.clustering().stateTransfer().timeout());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideStateRetrievalChunkSizePropIfExplicitlySet()
          throws Exception {
@@ -857,356 +667,237 @@ public class ConfigurationOverridesTest {
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest
             .setStateRetrievalChunkSize(expectedStateRetrievalChunkSize);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
             .assertEquals(
                   "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalChunkSize property. However, it didn't.",
                   expectedStateRetrievalChunkSize,
-                  defaultConfiguration.getStateRetrievalChunkSize());
+                  configuration.clustering().stateTransfer().chunkSize());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideStateRetrievalInitialRetryWaitTimePropIfExplicitlySet()
-            throws Exception {
-      final long expectedStateRetrievalInitialRetryWaitTime = 987665L;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest
-               .setStateRetrievalInitialRetryWaitTime(expectedStateRetrievalInitialRetryWaitTime);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalInitialRetryWaitTime property. However, it didn't.",
-                        expectedStateRetrievalInitialRetryWaitTime,
-                        defaultConfiguration.getStateRetrievalInitialRetryWaitTime());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideStateRetrievalRetryWaitTimeIncreaseFactorPropIfExplicitlySet()
-            throws Exception {
-      final int expectedStateRetrievalRetryWaitTimeIncreaseFactor = 987432;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest
-               .setStateRetrievalRetryWaitTimeIncreaseFactor(expectedStateRetrievalRetryWaitTimeIncreaseFactor);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalRetryWaitTimeIncreaseFactor property. However, it didn't.",
-                        expectedStateRetrievalRetryWaitTimeIncreaseFactor,
-                        defaultConfiguration.getStateRetrievalRetryWaitTimeIncreaseFactor());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
-   @Test
-   public final void configurationOverridesShouldOverrideStateRetrievalNumRetriesPropIfExplicitlySet()
-            throws Exception {
-      final int expectedStateRetrievalNumRetries = 765123;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setStateRetrievalNumRetries(expectedStateRetrievalNumRetries);
-      final Configuration defaultConfiguration = new Configuration();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-
-      AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set StateRetrievalNumRetries property. However, it didn't.",
-                        expectedStateRetrievalNumRetries,
-                        defaultConfiguration.getStateRetrievalNumRetries());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setIsolationLevelClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideIsolationLevelClassPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedIsolationLevelClass = "REPEATABLE_READ";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setIsolationLevelClass(expectedIsolationLevelClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set IsolationLevelClass property. However, it didn't.",
-                        IsolationLevel.REPEATABLE_READ, defaultConfiguration.getIsolationLevel());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set IsolationLevelClass property. However, it didn't.",
+                  IsolationLevel.REPEATABLE_READ, configuration.locking().isolationLevel());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideUseLazyDeserializationPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedUseLazyDeserialization = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUseLazyDeserialization(expectedUseLazyDeserialization);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set UseLazyDeserialization property. However, it didn't.",
-                        expectedUseLazyDeserialization, defaultConfiguration.isStoreAsBinary());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set UseLazyDeserialization property. However, it didn't.",
+                  expectedUseLazyDeserialization, configuration.storeAsBinary().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideL1CacheEnabledPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedL1CacheEnabled = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setL1CacheEnabled(expectedL1CacheEnabled);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set L1CacheEnabled property. However, it didn't.",
-                        expectedL1CacheEnabled, defaultConfiguration.isL1CacheEnabled());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set L1CacheEnabled property. However, it didn't.",
+                  expectedL1CacheEnabled, configuration.clustering().l1().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideL1LifespanPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedL1Lifespan = 2300446L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setL1Lifespan(expectedL1Lifespan);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set L1Lifespan property. However, it didn't.",
-                        expectedL1Lifespan, defaultConfiguration.getL1Lifespan());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set L1Lifespan property. However, it didn't.",
+                  expectedL1Lifespan, configuration.clustering().l1().lifespan());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideL1OnRehashPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedL1OnRehash = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setL1OnRehash(expectedL1OnRehash);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set L1OnRehash property. However, it didn't.",
-                        expectedL1OnRehash, defaultConfiguration.isL1OnRehash());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set L1OnRehash property. However, it didn't.",
+                  expectedL1OnRehash, configuration.clustering().l1().onRehash());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setConsistentHashClass(java.lang.String)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideConsistentHashClassPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final String expectedConsistentHashClass = "expected.consistent.hash.Class";
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setConsistentHashClass(expectedConsistentHashClass);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set ConsistentHashClass property. However, it didn't.",
-                        expectedConsistentHashClass, defaultConfiguration.getConsistentHashClass());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set ConsistentHashClass property. However, it didn't.",
+                  expectedConsistentHashClass, configuration.clustering().hash().consistentHash().getClass().getName());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideNumOwnersPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final int expectedNumOwners = 675443;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setNumOwners(expectedNumOwners);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set NumOwners property. However, it didn't.",
-                        expectedNumOwners, defaultConfiguration.getNumOwners());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set NumOwners property. However, it didn't.",
+                  expectedNumOwners, configuration.clustering().hash().numOwners());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideRehashEnabledPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedRehashEnabled = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setRehashEnabled(expectedRehashEnabled);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set RehashEnabled property. However, it didn't.",
-                        expectedRehashEnabled, defaultConfiguration.isRehashEnabled());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set RehashEnabled property. However, it didn't.",
+                  expectedRehashEnabled, configuration.clustering().stateTransfer().fetchInMemoryState());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideRehashWaitTimePropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final long expectedRehashWaitTime = 1232778L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setRehashWaitTime(expectedRehashWaitTime);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set RehashWaitTime property. However, it didn't.",
-                        expectedRehashWaitTime, defaultConfiguration.getRehashWaitTime());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set RehashWaitTime property. However, it didn't.",
+                  expectedRehashWaitTime, configuration.clustering().stateTransfer().timeout());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideUseAsyncMarshallingPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedUseAsyncMarshalling = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setUseAsyncMarshalling(expectedUseAsyncMarshalling);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set UseAsyncMarshalling property. However, it didn't.",
-                        expectedUseAsyncMarshalling, defaultConfiguration.isUseAsyncMarshalling());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set UseAsyncMarshalling property. However, it didn't.",
+                  expectedUseAsyncMarshalling, configuration.clustering().async().asyncMarshalling());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideIndexingEnabledPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedIndexingEnabled = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setIndexingEnabled(expectedIndexingEnabled);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set IndexingEnabled property. However, it didn't.",
-                        expectedIndexingEnabled, defaultConfiguration.isIndexingEnabled());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set IndexingEnabled property. However, it didn't.",
+                  expectedIndexingEnabled, configuration.indexing().enabled());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationOverrides#applyOverridesTo(org.infinispan.config.Configuration)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideIndexLocalOnlyPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final boolean expectedIndexLocalOnly = true;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setIndexLocalOnly(expectedIndexLocalOnly);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set IndexLocalOnly property. However, it didn't.",
-                        expectedIndexLocalOnly, defaultConfiguration.isIndexLocalOnly());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set IndexLocalOnly property. However, it didn't.",
+                  expectedIndexLocalOnly, configuration.indexing().indexLocalOnly());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.embedded.InfinispanConfigurationFactoryBean#setCustomInterceptors(java.util.List)}
-    * .
-    */
    @Test
    public final void configurationOverridesShouldOverrideCustomInterceptorsPropIfExplicitlySet()
-            throws Exception {
+         throws Exception {
       final CustomInterceptorConfig customInterceptor = new CustomInterceptorConfig();
       final List<CustomInterceptorConfig> expectedCustomInterceptors = Arrays
-               .asList(customInterceptor);
+            .asList(customInterceptor);
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setCustomInterceptors(expectedCustomInterceptors);
-      final Configuration defaultConfiguration = new Configuration();
+      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
+      Configuration configuration = defaultConfiguration.build();
 
       AssertJUnit
-               .assertEquals(
-                        "ConfigurationOverrides should have overridden default value with explicitly set CustomInterceptors property. However, it didn't.",
-                        expectedCustomInterceptors, defaultConfiguration.getCustomInterceptors());
+            .assertEquals(
+                  "ConfigurationOverrides should have overridden default value with explicitly set CustomInterceptors property. However, it didn't.",
+                  expectedCustomInterceptors, configuration.customInterceptors().interceptors());
    }
 }

@@ -38,6 +38,11 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
       return this;
    }
 
+   public InvocationBatchingConfigurationBuilder enable(boolean enable) {
+      this.enabled = enable;
+      return this;
+   }
+
    @Override
    void validate() {
       if (enabled && getBuilder().transaction().transactionMode != null && getBuilder().transaction().transactionMode.equals(NON_TRANSACTIONAL))

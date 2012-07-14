@@ -136,10 +136,10 @@
         <transport clusterName="infinispan-cluster" machineId="m1" rackId="r1" nodeName="Node-A">
          <!-- Use the property below to point to a specific JGroups configuration file on your classpath -->
          <!--
-         <properties>
-            <property name="configurationFile" value="jgroups-tcp.xml" />
-         </properties>
          -->
+            <properties>
+               <property name="configurationFile" value="jgroups-tcp.xml" />
+            </properties>
         </transport>
 
       <!--

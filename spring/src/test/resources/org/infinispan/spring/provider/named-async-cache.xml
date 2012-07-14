@@ -133,14 +133,14 @@
             http://docs.jboss.org/infinispan/4.2/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
 
       -->
-        <transport clusterName="infinispan-cluster" machineId="m1" rackId="r1" nodeName="Node-A">
-         <!-- Use the property below to point to a specific JGroups configuration file on your classpath -->
-         <!--
-         <properties>
-            <property name="configurationFile" value="jgroups-tcp.xml" />
-         </properties>
-         -->
-        </transport>
+         <transport clusterName="infinispan-cluster" machineId="m1" rackId="r1" nodeName="Node-A">
+           <!-- Use the property below to point to a specific JGroups configuration file on your classpath -->
+           <!--
+           -->
+            <properties>
+               <property name="configurationFile" value="jgroups-tcp.xml" />
+            </properties>
+         </transport>
 
       <!--
          Used to customize the marshaller used to serialize objects and deserialize byte streams.
