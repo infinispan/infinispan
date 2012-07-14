@@ -30,18 +30,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Properties;
 
-import javax.management.MBeanServer;
-
 import org.infinispan.Cache;
-import org.infinispan.Version;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockMarshaller;
 import org.infinispan.spring.mock.MockScheduleExecutorFactory;
@@ -102,13 +98,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
                getClass());
 
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean() {
-         @Override
-         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
-            return TestCacheManagerFactory.createCacheManager(
-                  template.globalConfiguration, template.defaultConfiguration);
-         }
-      };
+      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
       objectUnderTest.afterPropertiesSet();
 
@@ -119,8 +109,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                springEmbeddedCacheManager);
       final SpringCache cacheDefinedInCustomConfiguration = springEmbeddedCacheManager
                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-      final Configuration configuration = ((Cache)cacheDefinedInCustomConfiguration.getNativeCache())
-               .getConfiguration();
+      final org.infinispan.configuration.cache.Configuration configuration = ((Cache)cacheDefinedInCustomConfiguration.getNativeCache())
+               .getCacheConfiguration();
       assertEquals(
                "The cache named ["
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
@@ -128,7 +118,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "
                         + "the configuration file when instantiating SpringEmbeddedCacheManager.",
-               CacheMode.REPL_ASYNC, configuration.getCacheMode());
+               org.infinispan.configuration.cache.CacheMode.REPL_ASYNC,
+               configuration.clustering().cacheMode());
       springEmbeddedCacheManager.stop();
    }
 
@@ -204,9 +195,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean() {
          @Override
-         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
-            return TestCacheManagerFactory.createCacheManager(
-                  template.globalConfiguration, template.defaultConfiguration);
+         protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+            return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
          }
       };
       objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
@@ -274,12 +264,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void springEmbeddedCacheManagerFactoryBeanShouldUseMBeanServerLookupClassPropIfExplicitlySet()
             throws Exception {
-      final MBeanServerLookup expectedMBeanServerLookup = new MBeanServerLookup() {
-         @Override
-         public MBeanServer getMBeanServer(final Properties properties) {
-            return null;
-         }
-      };
+      final MBeanServerLookup expectedMBeanServerLookup = new PlatformMBeanServerLookup();
 
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMBeanServerLookupClass(expectedMBeanServerLookup.getClass().getName());
@@ -287,9 +272,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",
-               expectedMBeanServerLookup.getClass().getName(), springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration().getMBeanServerLookup());
+            "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",
+            expectedMBeanServerLookup.getClass().getName(), springEmbeddedCacheManager
+            .getNativeCacheManager().getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -462,7 +447,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void springEmbeddedCacheManagerFactoryBeanShouldUseReplicationQueueScheduledExecutorFactoryClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedReplicationQueueScheduledExecutorFactoryClass = MockExecutorFatory.class
+      final String expectedReplicationQueueScheduledExecutorFactoryClass = MockScheduleExecutorFactory.class
                .getName();
 
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();

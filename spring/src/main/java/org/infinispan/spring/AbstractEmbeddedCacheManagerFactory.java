@@ -23,27 +23,31 @@
 
 package org.infinispan.spring;
 
-import org.infinispan.config.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
+import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
 
 /**
  * <p>
@@ -53,11 +57,10 @@ import java.util.*;
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
  */
 public class AbstractEmbeddedCacheManagerFactory {
 
-   protected final Log logger = LogFactory.getLog(getClass());
+   protected static final Log logger = LogFactory.getLog(AbstractEmbeddedCacheManagerFactory.class);
 
    private Resource configurationFileLocation;
 
@@ -69,60 +72,22 @@ public class AbstractEmbeddedCacheManagerFactory {
    // Create fully configured EmbeddedCacheManager instance
    // ------------------------------------------------------------------------
 
-   protected EmbeddedCacheManager createBackingEmbeddedCacheManager()
-            throws ConfigurationException, IOException {
-      final ConfigurationContainer templateConfiguration = createTemplateConfiguration();
-
-      this.globalConfigurationOverrides.applyOverridesTo(templateConfiguration.globalConfiguration);
-      this.configurationOverrides.applyOverridesTo(templateConfiguration.defaultConfiguration);
-
-      final EmbeddedCacheManager nativeEmbeddedCacheManager = createCacheManager(templateConfiguration);
-      for (final Map.Entry<String, Configuration> namedCacheConfig : templateConfiguration.namedCaches
-               .entrySet()) {
-         nativeEmbeddedCacheManager.defineConfiguration(namedCacheConfig.getKey(),
-                  namedCacheConfig.getValue());
-      }
-
-      return nativeEmbeddedCacheManager;
-   }
-
-   protected EmbeddedCacheManager createCacheManager(ConfigurationContainer templateConfiguration) {
-      return new DefaultCacheManager(
-               templateConfiguration.globalConfiguration,
-               templateConfiguration.defaultConfiguration);
-   }
-
-   // ------------------------------------------------------------------------
-   // Create ConfigurationContainer
-   // ------------------------------------------------------------------------
-
-   protected ConfigurationContainer createTemplateConfiguration() throws ConfigurationException,
-            IOException {
-      final ConfigurationContainer templateConfiguration;
-      if (this.configurationFileLocation == null) {
-         this.logger
-                  .info("No configuration file has been given. Using Infinispan's default settings.");
-         final GlobalConfiguration standardGlobalConfiguration = new GlobalConfiguration();
-         final Configuration standardDefaultConfiguration = new Configuration();
-         templateConfiguration = new ConfigurationContainer(standardGlobalConfiguration,
-                  standardDefaultConfiguration, new HashMap<String, Configuration>());
+   protected EmbeddedCacheManager createBackingEmbeddedCacheManager() throws ConfigurationException, IOException {
+      EmbeddedCacheManager cm;
+      if (configurationFileLocation != null) {
+         return new DefaultCacheManager(configurationFileLocation.getInputStream());
       } else {
-         this.logger.info("Using Infinispan configuration file located at ["
-                  + this.configurationFileLocation + "]");
-         templateConfiguration = loadConfigurationFromFile(this.configurationFileLocation);
+         final GlobalConfigurationBuilder globalCfgBuilder = new GlobalConfigurationBuilder();
+         final ConfigurationBuilder cacheCfgBuilder = new ConfigurationBuilder();
+         this.globalConfigurationOverrides.applyOverridesTo(globalCfgBuilder);
+         this.configurationOverrides.applyOverridesTo(cacheCfgBuilder);
+         cm = createCacheManager(globalCfgBuilder, cacheCfgBuilder);
+         return cm;
       }
-      return templateConfiguration;
    }
 
-   private ConfigurationContainer loadConfigurationFromFile(final Resource configFileLocation) throws ConfigurationException, IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
-      final InputStream configFileInputStream = configFileLocation.getInputStream();
-      try {
-         ConfigurationBuilderHolder parsed = parserRegistry.parse(configFileInputStream);
-         return new ConfigurationContainer(parsed);
-      } finally {
-         configFileInputStream.close();
-      }
+   protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return new DefaultCacheManager( globalBuilder.build(), builder.build() );
    }
 
    // ------------------------------------------------------------------------
@@ -637,8 +602,8 @@ public class AbstractEmbeddedCacheManagerFactory {
     * @param eagerLockSingleNode
     * @see org.infinispan.spring.ConfigurationOverrides#setEagerLockSingleNode(java.lang.Boolean)
     */
+   @Deprecated
    public void setEagerLockSingleNode(final Boolean eagerLockSingleNode) {
-      this.configurationOverrides.setEagerLockSingleNode(eagerLockSingleNode);
    }
 
    /**
@@ -666,14 +631,6 @@ public class AbstractEmbeddedCacheManagerFactory {
    }
 
    /**
-    * @param stateRetrievalLogFlushTimeout
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalLogFlushTimeout(java.lang.Long)
-    */
-   public void setStateRetrievalLogFlushTimeout(final Long stateRetrievalLogFlushTimeout) {
-      this.configurationOverrides.setStateRetrievalLogFlushTimeout(stateRetrievalLogFlushTimeout);
-   }
-
-   /**
     * @param stateRetrievalMaxNonProgressingLogWrites
     * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalMaxNonProgressingLogWrites(java.lang.Integer)
     */
@@ -693,31 +650,13 @@ public class AbstractEmbeddedCacheManagerFactory {
    }
 
    /**
-    * @param stateRetrievalRetryWaitTimeIncreaseFactor
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalRetryWaitTimeIncreaseFactor(java.lang.Integer)
-    */
-   public void setStateRetrievalRetryWaitTimeIncreaseFactor(
-            final Integer stateRetrievalRetryWaitTimeIncreaseFactor) {
-      this.configurationOverrides
-               .setStateRetrievalRetryWaitTimeIncreaseFactor(stateRetrievalRetryWaitTimeIncreaseFactor);
-   }
-
-   /**
     * @param stateRetrievalChunkSize
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalRetryWaitTimeIncreaseFactor(java.lang.Integer)
+    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalChunkSize(java.lang.Integer)
     */
    public void setStateRetrievalChunkSize(
          final Integer stateRetrievalChunkSize) {
       this.configurationOverrides
             .setStateRetrievalChunkSize(stateRetrievalChunkSize);
-   }
-
-   /**
-    * @param stateRetrievalNumRetries
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalNumRetries(java.lang.Integer)
-    */
-   public void setStateRetrievalNumRetries(final Integer stateRetrievalNumRetries) {
-      this.configurationOverrides.setStateRetrievalNumRetries(stateRetrievalNumRetries);
    }
 
    /**
@@ -828,37 +767,6 @@ public class AbstractEmbeddedCacheManagerFactory {
    // Helper classes
    // ------------------------------------------------------------------------
 
-   protected static final class ConfigurationContainer {
-
-      public final GlobalConfiguration globalConfiguration;
-
-      public final Configuration defaultConfiguration;
-
-      public final Map<String, Configuration> namedCaches;
-
-      ConfigurationContainer(final GlobalConfiguration globalConfiguration,
-               final Configuration defaultConfiguration,
-               final Map<String, Configuration> namedCaches) {
-         this.globalConfiguration = globalConfiguration.clone();
-         this.defaultConfiguration = defaultConfiguration.clone();
-         this.namedCaches = Collections.unmodifiableMap(namedCaches);
-      }
-
-      ConfigurationContainer(ConfigurationBuilderHolder parsed) {
-         this(LegacyGlobalConfigurationAdaptor.adapt(parsed.getGlobalConfigurationBuilder().build()),
-               LegacyConfigurationAdaptor.adapt(parsed.getDefaultConfigurationBuilder().build()),
-               extractNamedCfgs(parsed));
-      }
-
-      private static Map<String, Configuration> extractNamedCfgs(ConfigurationBuilderHolder parsed) {
-         Map<String, ConfigurationBuilder> ncbs = parsed.getNamedConfigurationBuilders();
-         Map<String, Configuration> namedCfgs = new HashMap(ncbs.size());
-         for (Map.Entry<String, ConfigurationBuilder> entry : ncbs.entrySet())
-            namedCfgs.put(entry.getKey(), LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
-         return namedCfgs;
-      }
-   }
-
    protected static final class GlobalConfigurationOverrides {
 
       private final Log logger = LogFactory.getLog(getClass());
@@ -917,159 +825,169 @@ public class AbstractEmbeddedCacheManagerFactory {
 
       private Short marshallVersion;
 
-      public void applyOverridesTo(final GlobalConfiguration globalConfigurationToOverride) {
+      public void applyOverridesTo(final GlobalConfigurationBuilder globalConfigurationToOverride) {
          this.logger.debug("Applying configuration overrides to GlobalConfiguration ["
                   + globalConfigurationToOverride + "] ...");
 
          if (this.exposeGlobalJmxStatistics != null) {
             this.logger.debug("Overriding property [exposeGlobalJmxStatistics] with new value ["
                      + this.exposeGlobalJmxStatistics + "]");
-            globalConfigurationToOverride
-                     .setExposeGlobalJmxStatistics(this.exposeGlobalJmxStatistics);
+            globalConfigurationToOverride.globalJmxStatistics().enabled(this.exposeGlobalJmxStatistics);
          }
          if (this.mBeanServerProperties != null) {
             this.logger.debug("Overriding property [mBeanServerProperties] with new value ["
                      + this.mBeanServerProperties + "]");
-            globalConfigurationToOverride.setMBeanServerProperties(this.mBeanServerProperties);
+            globalConfigurationToOverride.globalJmxStatistics().withProperties(this.mBeanServerProperties);
          }
          if (this.jmxDomain != null) {
             this.logger.debug("Overriding property [jmxDomain] with new value [" + this.jmxDomain
                      + "]");
-            globalConfigurationToOverride.setJmxDomain(this.jmxDomain);
+            globalConfigurationToOverride.globalJmxStatistics().jmxDomain(this.jmxDomain);
          }
          if (this.mBeanServerLookupClass != null) {
             this.logger.debug("Overriding property [mBeanServerLookupClass] with new value ["
                      + this.mBeanServerLookupClass + "]");
-            globalConfigurationToOverride.setMBeanServerLookup(this.mBeanServerLookupClass);
+            globalConfigurationToOverride.globalJmxStatistics().mBeanServerLookup(
+                  Util.<MBeanServerLookup>getInstance(this.mBeanServerLookupClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.mBeanServerLookup != null) {
             this.logger.debug("Overriding property [mBeanServerLookup] with new value ["
                      + this.mBeanServerLookup + "]");
-            globalConfigurationToOverride.setMBeanServerLookup(this.mBeanServerLookup);
+            globalConfigurationToOverride.globalJmxStatistics().mBeanServerLookup(this.mBeanServerLookup);
          }
          if (this.allowDuplicateDomains != null) {
             this.logger.debug("Overriding property [allowDuplicateDomains] with new value ["
                      + this.allowDuplicateDomains + "]");
-            globalConfigurationToOverride.setAllowDuplicateDomains(this.allowDuplicateDomains);
+            globalConfigurationToOverride.globalJmxStatistics().allowDuplicateDomains(this.allowDuplicateDomains);
          }
          if (this.cacheManagerName != null) {
             this.logger.debug("Overriding property [cacheManagerName] with new value ["
                      + this.cacheManagerName + "]");
-            globalConfigurationToOverride.setCacheManagerName(this.cacheManagerName);
+            globalConfigurationToOverride.globalJmxStatistics().cacheManagerName(this.cacheManagerName);
          }
          if (this.clusterName != null) {
             this.logger.debug("Overriding property [clusterName] with new value ["
                      + this.clusterName + "]");
-            globalConfigurationToOverride.setClusterName(this.clusterName);
+            globalConfigurationToOverride.transport().clusterName(this.clusterName);
          }
          if (this.machineId != null) {
             this.logger.debug("Overriding property [machineId] with new value [" + this.machineId
                      + "]");
-            globalConfigurationToOverride.setMachineId(this.machineId);
+            globalConfigurationToOverride.transport().machineId(this.machineId);
          }
          if (this.rackId != null) {
             this.logger.debug("Overriding property [rackId] with new value [" + this.rackId + "]");
-            globalConfigurationToOverride.setRackId(this.rackId);
+            globalConfigurationToOverride.transport().rackId(this.rackId);
          }
          if (this.siteId != null) {
             this.logger.debug("Overriding property [siteId] with new value [" + this.siteId + "]");
-            globalConfigurationToOverride.setSiteId(this.siteId);
+            globalConfigurationToOverride.transport().siteId(this.siteId);
          }
          if (this.strictPeerToPeer != null) {
             this.logger.debug("Overriding property [strictPeerToPeer] with new value ["
                      + this.strictPeerToPeer + "]");
-            globalConfigurationToOverride.setStrictPeerToPeer(this.strictPeerToPeer);
+            globalConfigurationToOverride.transport().strictPeerToPeer(this.strictPeerToPeer);
          }
          if (this.distributedSyncTimeout != null) {
             this.logger.debug("Overriding property [distributedSyncTimeout] with new value ["
                      + this.distributedSyncTimeout + "]");
-            globalConfigurationToOverride.setDistributedSyncTimeout(this.distributedSyncTimeout);
+            globalConfigurationToOverride.transport().distributedSyncTimeout(this.distributedSyncTimeout);
          }
          if (this.transportClass != null) {
             this.logger.debug("Overriding property [transportClass] with new value ["
                      + this.transportClass + "]");
-            globalConfigurationToOverride.setTransportClass(this.transportClass);
+            globalConfigurationToOverride.transport().transport(
+                  Util.<Transport>getInstance(this.transportClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.transportNodeName != null) {
             this.logger.debug("Overriding property [transportNodeName] with new value ["
                      + this.transportNodeName + "]");
-            globalConfigurationToOverride.setTransportNodeName(this.transportNodeName);
+            globalConfigurationToOverride.transport().nodeName(this.transportNodeName);
          }
          if (this.asyncListenerExecutorFactoryClass != null) {
             this.logger
                      .debug("Overriding property [asyncListenerExecutorFactoryClass] with new value ["
                               + this.asyncListenerExecutorFactoryClass + "]");
-            globalConfigurationToOverride
-                     .setAsyncListenerExecutorFactoryClass(this.asyncListenerExecutorFactoryClass);
+            globalConfigurationToOverride.asyncListenerExecutor().factory(
+                  Util.<ExecutorFactory>getInstance(this.asyncListenerExecutorFactoryClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.asyncTransportExecutorFactoryClass != null) {
             this.logger
                      .debug("Overriding property [asyncTransportExecutorFactoryClass] with new value ["
                               + this.asyncTransportExecutorFactoryClass + "]");
-            globalConfigurationToOverride
-                     .setAsyncTransportExecutorFactoryClass(this.asyncTransportExecutorFactoryClass);
+            globalConfigurationToOverride.asyncTransportExecutor().factory(
+                  Util.<ExecutorFactory>getInstance(this.asyncTransportExecutorFactoryClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.evictionScheduledExecutorFactoryClass != null) {
             this.logger
                      .debug("Overriding property [evictionScheduledExecutorFactoryClass] with new value ["
                               + this.evictionScheduledExecutorFactoryClass + "]");
-            globalConfigurationToOverride
-                     .setEvictionScheduledExecutorFactoryClass(this.evictionScheduledExecutorFactoryClass);
+            globalConfigurationToOverride.evictionScheduledExecutor().factory(
+                  Util.<ScheduledExecutorFactory>getInstance(this.evictionScheduledExecutorFactoryClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.replicationQueueScheduledExecutorFactoryClass != null) {
             this.logger
                      .debug("Overriding property [replicationQueueScheduledExecutorFactoryClass] with new value ["
                               + this.replicationQueueScheduledExecutorFactoryClass + "]");
-            globalConfigurationToOverride
-                     .setReplicationQueueScheduledExecutorFactoryClass(this.replicationQueueScheduledExecutorFactoryClass);
+            globalConfigurationToOverride.replicationQueueScheduledExecutor().factory(
+                  Util.<ScheduledExecutorFactory>getInstance(this.replicationQueueScheduledExecutorFactoryClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.marshallerClass != null) {
             this.logger.debug("Overriding property [marshallerClass] with new value ["
                      + this.marshallerClass + "]");
-            globalConfigurationToOverride.setMarshallerClass(this.marshallerClass);
+            globalConfigurationToOverride.serialization().marshaller(
+                  Util.<Marshaller>getInstance(this.marshallerClass,
+                        Thread.currentThread().getContextClassLoader()));
          }
          if (this.transportProperties != null) {
             this.logger.debug("Overriding property [transportProperties] with new value ["
                      + this.transportProperties + "]");
-            globalConfigurationToOverride.setTransportProperties(this.transportProperties);
+            globalConfigurationToOverride.transport().withProperties(this.transportProperties);
          }
          if (this.shutdownHookBehavior != null) {
             this.logger.debug("Overriding property [shutdownHookBehavior] with new value ["
                      + this.shutdownHookBehavior + "]");
-            globalConfigurationToOverride.setShutdownHookBehavior(this.shutdownHookBehavior);
+            globalConfigurationToOverride.shutdown().hookBehavior(
+                  ShutdownHookBehavior.valueOf(this.shutdownHookBehavior));
          }
          if (this.asyncListenerExecutorProperties != null) {
             this.logger
                      .debug("Overriding property [asyncListenerExecutorProperties] with new value ["
                               + this.asyncListenerExecutorProperties + "]");
-            globalConfigurationToOverride
-                     .setAsyncListenerExecutorProperties(this.asyncListenerExecutorProperties);
+            globalConfigurationToOverride.asyncListenerExecutor().withProperties(
+                  this.asyncListenerExecutorProperties);
          }
          if (this.asyncTransportExecutorProperties != null) {
             this.logger
                      .debug("Overriding property [asyncTransportExecutorProperties] with new value ["
                               + this.asyncTransportExecutorProperties + "]");
-            globalConfigurationToOverride
-                     .setAsyncTransportExecutorProperties(this.asyncTransportExecutorProperties);
+            globalConfigurationToOverride.asyncTransportExecutor().withProperties(
+                  this.asyncTransportExecutorProperties);
          }
          if (this.evictionScheduledExecutorProperties != null) {
             this.logger
                      .debug("Overriding property [evictionScheduledExecutorProperties] with new value ["
                               + this.evictionScheduledExecutorProperties + "]");
-            globalConfigurationToOverride
-                     .setEvictionScheduledExecutorProperties(this.evictionScheduledExecutorProperties);
+            globalConfigurationToOverride.evictionScheduledExecutor()
+                  .withProperties(this.evictionScheduledExecutorProperties);
          }
          if (this.replicationQueueScheduledExecutorProperties != null) {
             this.logger
                      .debug("Overriding property [replicationQueueScheduledExecutorProperties] with new value ["
                               + this.replicationQueueScheduledExecutorProperties + "]");
-            globalConfigurationToOverride
-                     .setReplicationQueueScheduledExecutorProperties(this.replicationQueueScheduledExecutorProperties);
+            globalConfigurationToOverride.replicationQueueScheduledExecutor()
+                  .withProperties(this.replicationQueueScheduledExecutorProperties);
          }
          if (this.marshallVersion != null) {
             this.logger.debug("Overriding property [marshallVersion] with new value ["
                      + this.marshallVersion + "]");
-            globalConfigurationToOverride.fluent().serialization().version(this.marshallVersion);
+            globalConfigurationToOverride.serialization().version(this.marshallVersion);
          }
 
          this.logger.debug("Finished applying configuration overrides to GlobalConfiguration ["

@@ -53,6 +53,11 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
       return this;
    }
 
+   public AsyncConfigurationBuilder asyncMarshalling(boolean async) {
+      this.asyncMarshalling = async;
+      return this;
+   }
+
    /**
     * Enables synchronous marshalling. You can find more information at <a
     * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"

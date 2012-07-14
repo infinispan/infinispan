@@ -119,6 +119,11 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       return this;
    }
 
+   public L1ConfigurationBuilder l1OnRehash(boolean l1OnRehash) {
+      this.onRehash = l1OnRehash;
+      return this;
+   }
+
    public L1ConfigurationBuilder enable() {
       this.enabled = true;
       return this;
