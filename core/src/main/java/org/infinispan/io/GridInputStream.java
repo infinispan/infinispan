@@ -55,7 +55,7 @@ public class GridInputStream extends InputStream {
          else if (isLastChunk())
             endReached = true;
       }
-      int retval = currentBuffer[localIndex++];
+      int retval = 0x0ff&currentBuffer[localIndex++];
       index++;
       return retval;
    }
