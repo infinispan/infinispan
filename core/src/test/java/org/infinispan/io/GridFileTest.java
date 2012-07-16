@@ -261,7 +261,24 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(numberOfChunksInCache(), 1);
    }
 
-   public void testLastModified() throws Exception {
+    //ISPN-2157
+    public void testWriteAndReadNegativeByte() throws Exception {
+        String filePath = "negative.dat";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(-1);
+        }finally{
+            out.close();
+        }
+        InputStream in = fs.getInput(filePath);
+        try{
+            assertEquals(in.read(), 255);
+        }finally{
+            in.close();
+        }
+    }
+
+    public void testLastModified() throws Exception {
       assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
 
       long time1 = System.currentTimeMillis();
