@@ -31,7 +31,8 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -64,6 +65,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
@@ -123,6 +125,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateTransferManager stateTransferManager;
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
+   private MapReduceManager mapReduceManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -132,7 +135,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager,
-                                 InternalEntryFactory entryFactory) {
+                                 InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -146,6 +149,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateTransferManager = stateTransferManager;
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
+      this.mapReduceManager = mapReduceManager;
    }
 
    @Start(priority = 1)
@@ -395,10 +399,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
             ftx.init(txTable, lockManager, recoveryManager);
             break;
-         case MapReduceCommand.COMMAND_ID:
-            MapReduceCommand mrc = (MapReduceCommand)c;
-            mrc.init(this, interceptorChain, icc, distributionManager,cache.getAdvancedCache().getRpcManager().getAddress());
+         case MapCombineCommand.COMMAND_ID:
+            MapCombineCommand mrc = (MapCombineCommand)c;
+            mrc.init(mapReduceManager);
             break;
+         case ReduceCommand.COMMAND_ID:
+            ReduceCommand reduceCommand = (ReduceCommand)c;
+            reduceCommand.init(mapReduceManager);
+            break;   
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
@@ -413,6 +421,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ApplyDeltaCommand.COMMAND_ID:
             break;
+         case CreateCacheCommand.COMMAND_ID:
+            CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
+            createCacheCommand.init(cache.getCacheManager());
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -476,8 +487,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys) {
-      return new MapReduceCommand(m, r, cacheName, keys);
+   public <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
+            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
+            Collection<KIn> keys) {
+      return new MapCombineCommand<KIn, VIn, KOut, VOut>(taskId, m, r, cacheName, keys);
    }
 
    @Override
@@ -493,5 +506,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
       return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);
+   }
+
+   @Override
+   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName) {
+      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName);
+   }
+
+   @Override
+   public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
+            String destintationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
+      return new ReduceCommand<KOut, VOut>(taskId, r, destintationCache, keys);
    }
 }

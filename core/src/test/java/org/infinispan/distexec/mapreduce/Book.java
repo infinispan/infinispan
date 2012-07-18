@@ -30,6 +30,9 @@ import java.io.Serializable;
  */
 public class Book implements Serializable {
 
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 201181615056852234L;
+   
    final String title;
    final String author;
    final String editor;

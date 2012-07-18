@@ -19,11 +19,13 @@
 
 package org.infinispan.marshall.exts;
 
+import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -78,13 +80,14 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(
-            MapReduceCommand.class, LockControlCommand.class,
+            MapCombineCommand.class, ReduceCommand.class, LockControlCommand.class,
             StateTransferControlCommand.class, ClusteredGetCommand.class,
             MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
             TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-            CacheViewControlCommand.class, VersionedPrepareCommand.class, VersionedCommitCommand.class);
+            CacheViewControlCommand.class, VersionedPrepareCommand.class, CreateCacheCommand.class, 
+            VersionedCommitCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
