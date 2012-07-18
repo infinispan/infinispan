@@ -22,7 +22,6 @@
  */
 package org.infinispan.test.fwk;
 
-import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
@@ -38,11 +37,9 @@ import javax.transaction.UserTransaction;
 public class TransactionSetup {
 
    static {
-      //make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
+      // make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
       // so you need to set this before classloading the transaction system and can't change it within the same vm.
-
-      arjPropertyManager.getCoordinatorEnvironmentBean().setCommunicationStore(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
-      arjPropertyManager.getObjectStoreEnvironmentBean().setObjectStoreType(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
+      JBossTransactionsUtils.setVolatileStores();
    }
 
    private interface Operations {

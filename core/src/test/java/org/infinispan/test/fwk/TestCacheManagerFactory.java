@@ -33,7 +33,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -144,14 +143,32 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, globalConfiguration, c, false);
    }
 
+   /**
+    * @deprecated Use {@link #markAsTransactional(
+    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
+    * instead
+    */
+   @Deprecated
    private static void markAsTransactional(boolean transactional, Configuration c) {
       c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+      if (transactional)
+         // Set volatile stores just in case...
+         JBossTransactionsUtils.setVolatileStores();
    }
 
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
       builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+      if (transactional)
+         // Set volatile stores just in case...
+         JBossTransactionsUtils.setVolatileStores();
    }
 
+   /**
+    * @deprecated Use {@link #updateTransactionSupport(
+    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
+    * instead
+    */
+   @Deprecated
    private static void updateTransactionSupport(Configuration c) {
       if (c.isTransactionalCache()) amendJTA(c);
    }
@@ -160,6 +177,11 @@ public class TestCacheManagerFactory {
       if (transactional) amendJTA(builder);
    }
 
+   /**
+    * @deprecated Use {@link #amendJTA(
+    * org.infinispan.configuration.cache.ConfigurationBuilder)} instead
+    */
+   @Deprecated
    private static void amendJTA(Configuration c) {
       if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
          c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
