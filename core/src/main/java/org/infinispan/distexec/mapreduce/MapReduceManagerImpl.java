@@ -23,6 +23,7 @@ import static org.infinispan.distexec.mapreduce.MapReduceTask.DEFAULT_TMP_CACHE_
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,9 +41,13 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
@@ -64,13 +69,15 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
    private Address localAddress;
    private EmbeddedCacheManager cacheManager;
+   private CacheLoaderManager cacheLoaderManager;
    
    MapReduceManagerImpl() {
    }
    
    @Inject
-   public void init(EmbeddedCacheManager cacheManager) {     
+   public void init(EmbeddedCacheManager cacheManager,  CacheLoaderManager cacheLoaderManager) {     
       this.cacheManager = cacheManager;
+      this.cacheLoaderManager = cacheLoaderManager;
       this.localAddress = cacheManager.getAddress();
    }
    
@@ -133,21 +140,43 @@ public class MapReduceManagerImpl implements MapReduceManager {
    protected <KIn, VIn, KOut, VOut> CollectableCollector<KOut, VOut> map(MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
       Cache<KIn, VIn> cache = cacheManager.getCache(mcc.getCacheName());
       Set<KIn> keys = mcc.getKeys();
+      Set<KIn> inputKeysCopy = null;
       Mapper<KIn, VIn, KOut, VOut> mapper = mcc.getMapper();
-      boolean noInputKeys = keys == null || keys.isEmpty();      
-      Collection<KIn> inputKeys = keys;
-      if (noInputKeys) {
-         inputKeys = filterNodeLocal(cache.keySet(), cache.getAdvancedCache().getDistributionManager());
+      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();      
+      boolean inputKeysSpecified = keys != null && !keys.isEmpty();
+      Set <KIn> inputKeys = keys;      
+      if (!inputKeysSpecified) {
+         inputKeys = filterLocalPrimaryOwner(cache.keySet(), dm);
+      } else {
+         inputKeysCopy = new HashSet<KIn>(keys);
       }
       // hook map function into lifecycle and execute it
-      log.tracef("For m/r task %s invoking mapper %s at %s",  mcc.getTaskId(), mcc, localAddress);
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();     
       DefaultCollector<KOut, VOut> collector = new DefaultCollector<KOut, VOut>();
+      log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, inputKeys);
       try {
          taskLifecycleService.onPreExecute(mapper);
          for (KIn key : inputKeys) {           
             VIn value = cache.get(key);
             mapper.map(key, value, collector);
+            if (inputKeysSpecified) {
+               inputKeysCopy.remove(key);
+            }
+         }
+         Set<KIn> keysFromCacheLoader = null;
+         if (inputKeysSpecified) {
+            // load only specified remaining input keys - iff in CL and pinned to this primary owner
+            keysFromCacheLoader = filterLocalPrimaryOwner(inputKeysCopy, dm);
+         } else {
+            // load everything from CL pinned to this primary owner
+            keysFromCacheLoader = filterLocalPrimaryOwner(loadAllKeysFromCacheLoaderUsingFilter(inputKeys), dm);
+         }   
+         log.tracef("For m/r task %s cache loader input keys %s", mcc.getTaskId(), keysFromCacheLoader);
+         for (KIn key : keysFromCacheLoader) {            
+            VIn value = loadValueFromCacheLoader(key);            
+            if(value != null){
+               mapper.map(key, value, collector);
+            }
          }
       } finally {
          taskLifecycleService.onPostExecute(mapper);
@@ -155,7 +184,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return collector;            
    }
    
-   private <KIn, VIn, KOut, VOut> Set<KOut> combine(MapCombineCommand<KIn, VIn, KOut, VOut> mcc,
+   protected <KIn, VIn, KOut, VOut> Set<KOut> combine(MapCombineCommand<KIn, VIn, KOut, VOut> mcc,
             CollectableCollector<KOut, VOut> collector) throws Exception{
       
       String taskId =  mcc.getTaskId();      
@@ -291,7 +320,45 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
       return result;
    }
+      
+   @SuppressWarnings("unchecked")
+   protected <KIn> Set<KIn> loadAllKeysFromCacheLoaderUsingFilter(Set<KIn> filterOutSet) {      
+      Set<KIn> keysInCL = Collections.<KIn> emptySet();
+      CacheLoader cl = resolveCacheLoader();
+      if (cl != null) {
+         try {
+            keysInCL = (Set<KIn>) cl.loadAllKeys((Set<Object>) filterOutSet);
+         } catch (CacheLoaderException e) {
+            throw new CacheException("Could not load key/value entries from cacheloader", e);
+         }
+      }
+      return keysInCL;
+   }
    
+   @SuppressWarnings("unchecked")
+   protected <KIn, KOut> KOut loadValueFromCacheLoader(KIn key) {      
+      KOut value = null;
+      CacheLoader cl = resolveCacheLoader();
+      if (cl != null) {
+         try {
+            InternalCacheEntry entry = cl.load(key);
+            if (entry != null) {
+               value = (KOut) entry.getValue();
+            }
+         } catch (CacheLoaderException e) {
+            throw new CacheException("Could not load key/value entries from cacheloader", e);
+         }
+      }
+      return value;
+   }
+   
+   protected CacheLoader resolveCacheLoader(){
+      CacheLoader cl = null;
+      if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()){ 
+         cl = cacheLoaderManager.getCacheLoader();
+      }
+      return cl;
+   }
    
    public <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, String taskId,
             Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
@@ -313,8 +380,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return addressToKey;
    }
    
-   private <KIn> List<KIn> filterNodeLocal(Set<KIn> nodeLocalKeys, DistributionManager dm) {    
-      List<KIn> selectedKeys = new ArrayList<KIn>();
+   protected <KIn> Set<KIn> filterLocalPrimaryOwner(Set<KIn> nodeLocalKeys, DistributionManager dm) {    
+      Set<KIn> selectedKeys = new HashSet<KIn>();
       for (KIn key : nodeLocalKeys) {
          Address primaryLocation = dm.getPrimaryLocation(key);
          if (primaryLocation != null && primaryLocation.equals(localAddress)) {
