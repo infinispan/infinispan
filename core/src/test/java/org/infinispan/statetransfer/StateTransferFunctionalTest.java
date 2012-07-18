@@ -25,11 +25,6 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -46,8 +41,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -183,10 +177,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = cm1.getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node = new JoiningNode();
+      JoiningNode node = new JoiningNode(createCacheManager());
       cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
-      node.verifyStateTransfer(cache2);
+      node.verifyStateTransfer(new CacheVerifier(cache2));
 
       logTestEnd(m);
    }
@@ -199,10 +193,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = cacheManager1.getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node = new JoiningNode();
+      JoiningNode node = new JoiningNode(createCacheManager());
       cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
-      node.verifyStateTransfer(cache2);
+      node.verifyStateTransfer(new CacheVerifier(cache2));
 
       cacheManager1.defineConfiguration("otherCache", config.clone());
       cacheManager1.getCache("otherCache");
@@ -216,16 +210,16 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode();
+      JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
 
       cache1.put("delay", new StateTransferFunctionalTest.DelayTransfer());
 
       node2.waitForJoin(60000, cache1, cache2);
-      node2.verifyStateTransfer(cache2);
+      node2.verifyStateTransfer(new CacheVerifier(cache2));
 
-      final JoiningNode node3 = new JoiningNode();
-      final JoiningNode node4 = new JoiningNode();
+      final JoiningNode node3 = new JoiningNode(createCacheManager());
+      final JoiningNode node4 = new JoiningNode(createCacheManager());
 
       Thread t1 = new Thread(new Runnable() {
          public void run() {
@@ -252,8 +246,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       node3.waitForJoin(120000, cache1, cache2, cache3, cache4);
       node4.waitForJoin(120000, cache1, cache2, cache3, cache4);
 
-      node3.verifyStateTransfer(cache3);
-      node4.verifyStateTransfer(cache4);
+      node3.verifyStateTransfer(new CacheVerifier(cache3));
+      node4.verifyStateTransfer(new CacheVerifier(cache4));
 
       logTestEnd(m);
    }
@@ -300,10 +294,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode();
+      JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
       node2.waitForJoin(60000, cache1, cache2);
-      node2.verifyStateTransfer(cache2);
+      node2.verifyStateTransfer(new CacheVerifier(cache2));
 
       cache2.stop();
       cache2.start();
@@ -324,7 +318,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       log.infof("%s %s - %s", m.getName(), lifecycle, testCount);
    }
 
-   private void thirdWritingCacheTest(boolean tx) throws InterruptedException {
+   private void thirdWritingCacheTest(boolean tx) throws Exception {
       Cache<Object, Object> cache1, cache2, cache3;
       cache1 = createCacheManager().getCache(cacheName);
       cache3 = createCacheManager().getCache(cacheName);
@@ -340,7 +334,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       WritingThread writerThread = new WritingThread(cache3, tx);
       writerThread.start();
 
-      JoiningNode node2 = new JoiningNode();
+      JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
 
       node2.waitForJoin(60000, cache1, cache2, cache3);
@@ -348,7 +342,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       writerThread.stopThread();
       writerThread.join();
 
-      node2.verifyStateTransfer(cache2);
+      node2.verifyStateTransfer(new CacheVerifier(cache2));
 
       int count = writerThread.result();
 
@@ -374,7 +368,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       c.put(A_C_AGE, FORTY);
    }
 
-   private void writingThreadTest(boolean tx) throws InterruptedException {
+   private void writingThreadTest(boolean tx) throws Exception {
       Cache<Object, Object> cache1, cache2;
       cache1 = createCacheManager().getCache(cacheName);
 
@@ -388,7 +382,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       writerThread.start();
       verifyInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode();
+      JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
       node2.waitForJoin(60000, cache1, cache2);
 
@@ -396,7 +390,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       writerThread.join();
 
       verifyInitialData(cache1);
-      node2.verifyStateTransfer(cache2);
+      node2.verifyStateTransfer(new CacheVerifier(cache2));
 
       int count = writerThread.result();
 
@@ -404,65 +398,18 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
          assert new Integer(c).equals(cache2.get("test" + c)) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
    }
 
-   @Listener
-   public static class MergeOrViewChangeListener {
-      // The latch provides the visibility guarantees
-      public boolean merged;
-      // The latch provides the visibility guarantees
-      public boolean viewChanged;
-      private final CountDownLatch latch;
+   public class CacheVerifier implements Callable<Void> {
 
-      public MergeOrViewChangeListener(CountDownLatch latch) {
-         this.latch = latch;
+      private final Cache<Object, Object> cache;
+
+      public CacheVerifier(Cache<Object, Object> cache) {
+         this.cache = cache;
       }
 
-      @Merged
-      public void mergedView(MergeEvent me) {
-         log.infof("View merged received %s", me);
-         merged = true;
-         latch.countDown();
-      }
-
-      @ViewChanged
-      public void viewChanged(ViewChangedEvent e) {
-         log.infof("View change received %s", e);
-         viewChanged = true;
-         latch.countDown();
-      }
-
-   }
-
-   private class JoiningNode {
-
-      private final EmbeddedCacheManager cm;
-      private final CountDownLatch latch;
-      private final MergeOrViewChangeListener listener;
-
-      private JoiningNode() {
-         cm = createCacheManager();
-         latch = new CountDownLatch(1);
-         listener = new MergeOrViewChangeListener(latch);
-         cm.addListener(listener);
-      }
-
-      Cache getCache(String cacheName) {
-         return cm.getCache(cacheName);
-      }
-
-      void waitForJoin(long timeout, Cache... caches) throws InterruptedException {
-         // Wait for either a merge or view change to happen
-         latch.await(timeout, TimeUnit.MILLISECONDS);
-         // Wait for the state transfer to end
-         TestingUtil.waitForRehashToComplete(caches);
-      }
-
-      private boolean isStateTransferred() {
-         return !listener.merged;
-      }
-
-      void verifyStateTransfer(Cache cache) {
-         if (isStateTransferred())
-            StateTransferFunctionalTest.this.verifyInitialData(cache);
+      @Override
+      public Void call() throws Exception {
+         verifyInitialData(cache);
+         return null;
       }
 
    }

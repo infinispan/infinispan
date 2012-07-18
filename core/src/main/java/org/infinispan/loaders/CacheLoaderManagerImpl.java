@@ -31,7 +31,10 @@ import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +50,7 @@ import org.infinispan.configuration.cache.LoaderConfiguration;
 import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.ComponentName;
@@ -189,17 +193,23 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                throw new CacheException("Unable to preload!", e);
             }
 
-            for (InternalCacheEntry e : state) {
-               if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
-                  cache.getAdvancedCache()
-                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, IGNORE_RETURN_VALUES, SKIP_INDEXING)
-                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
-               } else {
-                  cache.getAdvancedCache()
-                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_INDEXING)
-                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
-               }
+            List<Flag> flags = new ArrayList(Arrays.asList(
+                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES));
+
+            if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
+               flags.add(SKIP_CACHE_STORE);
+               if (!localIndexingEnabled())
+                  flags.add(SKIP_INDEXING);
+            } else {
+               flags.add(SKIP_INDEXING);
             }
+
+            AdvancedCache<Object, Object> flaggedCache = cache.getAdvancedCache()
+                  .withFlags(flags.toArray(new Flag[]{}));
+
+            for (InternalCacheEntry e : state)
+               flaggedCache.put(e.getKey(), e.getValue(),
+                     e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (debugTiming) {
                final long stop = System.nanoTime();
@@ -207,6 +217,10 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
          }
       }
+   }
+
+   private boolean localIndexingEnabled() {
+      return configuration.indexing().enabled() && configuration.indexing().indexLocalOnly();
    }
 
    private Set<InternalCacheEntry> loadState() throws CacheLoaderException {

@@ -29,7 +29,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-import java.util.LinkedList;
 import java.util.List;
 
 @Test (testName = "loaders.SharedCacheStoreTest", groups = "functional")
@@ -50,13 +49,6 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
       // don't create the caches here, we want them to join the cluster one by one
    }
 
-   private List<CacheStore> cachestores() {
-      List<CacheStore> l = new LinkedList<CacheStore>();
-      for (Cache<?, ?> c: caches())
-         l.add(TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore());
-      return l;
-   }
-
    public void testUnnecessaryWrites() throws CacheLoaderException {
       cache(0).put("key", "value");
 
@@ -66,7 +58,8 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> c: caches())
          assert "value".equals(c.get("key"));
 
-      for (CacheStore cs: cachestores()) {
+      List<CacheStore> cachestores = TestingUtil.cachestores(caches());
+      for (CacheStore cs: cachestores) {
          assert cs.containsKey("key");
          DummyInMemoryCacheStore dimcs = (DummyInMemoryCacheStore) cs;
          assert dimcs.stats().get("clear") == 0: "Cache store should not be cleared, purgeOnStartup is false";
@@ -78,7 +71,7 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> c: caches())
          assert c.get("key") == null;
 
-      for (CacheStore cs: cachestores()) {
+      for (CacheStore cs: cachestores) {
          assert !cs.containsKey("key");
          DummyInMemoryCacheStore dimcs = (DummyInMemoryCacheStore) cs;
          assert dimcs.stats().get("remove") == 1: "Entry should have been removed from the cache store just once, but was removed " + dimcs.stats().get("store") + " times";

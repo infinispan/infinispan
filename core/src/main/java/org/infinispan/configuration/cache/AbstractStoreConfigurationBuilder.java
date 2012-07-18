@@ -122,10 +122,15 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    public void validate() {
       async.validate();
       singletonStore.validate();
+      ConfigurationBuilder builder = getBuilder();
       if (!loaders().shared() && !fetchPersistentState && !purgeOnStartup
-            && getBuilder().clustering().cacheMode().isClustered())
+            && builder.clustering().cacheMode().isClustered())
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
-   }
 
+      if (loaders().shared() && !loaders().preload()
+            && builder.indexing().enabled()
+            && builder.indexing().indexLocalOnly())
+         log.localIndexingWithSharedCacheLoaderRequiresPreload();
+   }
 
 }
