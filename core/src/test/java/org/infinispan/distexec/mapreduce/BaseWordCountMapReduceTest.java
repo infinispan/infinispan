@@ -100,6 +100,12 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return new MapReduceTask<String, String, String, Integer>(c);
    }
    
+   public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
+            Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer)
+            throws Exception {
+      return invokeMapReduce(keys, mapper, reducer, true);
+   }
+   
    @SuppressWarnings({ "rawtypes", "unchecked" })
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
             Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer, boolean useCombiner)

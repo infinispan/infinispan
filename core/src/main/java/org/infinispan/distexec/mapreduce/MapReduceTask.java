@@ -30,6 +30,7 @@ import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -437,10 +438,18 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          //TODO in parallel with futures
          mergeResponse(mapPhasesResult, response);
       }
-      for (Entry<KOut, List<VOut>> e : mapPhasesResult.entrySet()) {         
-         //TODO in parallel with futures
-         reducedResult.put(e.getKey(), reducer.reduce(e.getKey(), e.getValue().iterator()));
-      }  
+      //hook into lifecycle
+      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+      log.tracef("For m/r task %s invoking %s locally", taskId, reducer);
+      try {
+         taskLifecycleService.onPreExecute(reducer);
+         for (Entry<KOut, List<VOut>> e : mapPhasesResult.entrySet()) {
+            // TODO in parallel with futures
+            reducedResult.put(e.getKey(), reducer.reduce(e.getKey(), e.getValue().iterator()));
+         }
+      } finally {
+         taskLifecycleService.onPostExecute(reducer);
+      }
       return reducedResult;
    }
    
