@@ -43,6 +43,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       super(Configuration.CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
+   @Test(enabled = false, description = "See ISPN-2161")
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
