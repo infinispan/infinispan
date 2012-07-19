@@ -206,6 +206,12 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
       localOnlyPut(this.<Integer, String>cache(1), 2, "v2");
    }
 
+   @Test(enabled = false, description = "See ISPN-2160")
+   @Override
+   public void testSharedCounter() {
+      super.testSharedCounter();
+   }
+
    private void localOnlyPut(Cache<Integer, String> cache, Integer k, String v) {
       cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put(k, v);
    }

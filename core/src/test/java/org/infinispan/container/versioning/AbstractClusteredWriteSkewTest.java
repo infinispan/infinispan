@@ -29,8 +29,16 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.testng.Assert.*;
 
 @Test(testName = "container.versioning.AbstractClusteredWriteSkewTest", groups = "functional")
 public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManagersTest {
@@ -68,7 +76,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
    // This test is based on a contribution by Pedro Ruivo of INESC-ID, working on the Cloud-TM project.
    public void testSharedCounter() {
-      int counterMaxValue = 1000;
+      int counterMaxValue = 200;
       Cache<String, Integer> c1 = cache(0);
       Cache<String, Integer> c2 = cache(1);
 
@@ -83,19 +91,27 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       //return value of add() method
       ConcurrentSkipListSet<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<Integer>();
 
-      //create both threads (simulate a node)
-      IncrementCounterThread ict1 = new IncrementCounterThread("Node-1", c1, uniqueValuesIncremented, counterMaxValue);
-      IncrementCounterThread ict2 = new IncrementCounterThread("Node-2", c2, uniqueValuesIncremented, counterMaxValue);
+      //create both threads (each of them incrementing the counter on one node)
+      Future<Boolean> f1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
+      Future<Boolean> f2 = fork(new IncrementCounterTask(c2, uniqueValuesIncremented, counterMaxValue));
 
       try {
-         //start and wait to finish
-         ict1.start();
-         ict2.start();
+         // wait to finish
+         Boolean unique1 = f1.get(30, TimeUnit.SECONDS);
+         Boolean unique2 = f2.get(30, TimeUnit.SECONDS);
 
-         ict1.join();
-         ict2.join();
+         // check is any duplicate value has been detected
+         assertTrue(unique1, c1.getName() + " has put a duplicate value");
+         assertTrue(unique2, c2.getName() + " has put a duplicate value");
       } catch (InterruptedException e) {
          assert false : "Interrupted exception while running the test";
+      } catch (ExecutionException e) {
+         fail("Exception running updater threads", e);
+      } catch (TimeoutException e) {
+         fail("Timed out waiting for updater threads");
+      } finally {
+         f1.cancel(true);
+         f2.cancel(true);
       }
 
       //check if all caches obtains the counter_max_values
@@ -103,22 +119,17 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
             " in cache 1";
       assert c2.get("counter") >= counterMaxValue : "Final value is less than " + counterMaxValue +
             " in cache 2";
-
-      //check is any duplicate value is detected
-      assert ict1.result : ict1.getName() + " has put a duplicate value";
-      assert ict2.result : ict2.getName() + " has put a duplicate value";
    }
 
-   private static class IncrementCounterThread extends Thread {
+   private class IncrementCounterTask implements Callable<Boolean> {
       private Cache<String, Integer> cache;
       private ConcurrentSkipListSet<Integer> uniqueValuesSet;
       private TransactionManager transactionManager;
       private int lastValue;
-      private boolean result = true;
+      private boolean unique = true;
       private int counterMaxValue;
 
-      public IncrementCounterThread(String name, Cache<String, Integer> cache, ConcurrentSkipListSet<Integer> uniqueValuesSet, int counterMaxValue) {
-         super(name);
+      public IncrementCounterTask(Cache<String, Integer> cache, ConcurrentSkipListSet<Integer> uniqueValuesSet, int counterMaxValue) {
          this.cache = cache;
          this.transactionManager = cache.getAdvancedCache().getTransactionManager();
          this.uniqueValuesSet = uniqueValuesSet;
@@ -127,33 +138,36 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       }
 
       @Override
-      public void run() {
-         while (lastValue < counterMaxValue) {
+      public Boolean call() {
+         while (lastValue < counterMaxValue && !Thread.interrupted()) {
             try {
+               //start transaction, get the counter value, increment and put it again
+               //check for duplicates in case of success
+               transactionManager.begin();
+
+               Integer value = cache.get("counter");
+               value = value + 1;
+               lastValue = value;
+
+               cache.put("counter", value);
+
+               transactionManager.commit();
+
+               unique = uniqueValuesSet.add(value);
+            } catch (Exception e) {
                try {
-                  //start transaction, get the counter value, increment and put it again
-                  //check for duplicates in case of success
-                  transactionManager.begin();
-
-                  Integer value = cache.get("counter");
-                  value = value + 1;
-                  lastValue = value;
-
-                  cache.put("counter", value);
-
-                  transactionManager.commit();
-
-                  result = uniqueValuesSet.add(value);
-               } catch (Throwable t) {
                   //lets rollback
-                  transactionManager.rollback();
+                  if (transactionManager.getStatus() != Status.STATUS_NO_TRANSACTION)
+                     transactionManager.rollback();
+               } catch (Throwable t) {
+                  //the only possible exception is thrown by the rollback. just ignore it
+                  log.trace("Exception during rollback", t);
                }
-            } catch (Throwable t) {
-               //the only possible exception is thrown by the rollback. just ignore it
             } finally {
-               assert result : "Duplicate value found in " + getName() + " (value=" + lastValue + ")";
+               assertTrue(unique, "Duplicate value found in " + address(cache) + " (value=" + lastValue + ")");
             }
          }
+         return unique;
       }
    }
 }

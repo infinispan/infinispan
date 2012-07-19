@@ -33,6 +33,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
@@ -245,6 +246,11 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(numberOfMetadataEntries(), 0);
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testDeleteOnExit() {
+      fs.getFile("nonsuch.txt").deleteOnExit();
+   }
+
    public void testOverwritingFileDoesNotLeaveExcessChunksInCache() throws Exception {
       assertEquals(numberOfChunksInCache(), 0);
 
@@ -254,6 +260,22 @@ public class GridFileTest extends SingleCacheManagerTest {
       writeToFile("leak.txt", "12345", 5);           // file length = 5, chunkSize = 5
       assertEquals(numberOfChunksInCache(), 1);
    }
+    //ISPN-2157
+    public void testWriteAndReadNegativeByte() throws Exception {
+        String filePath = "negative.dat";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(-1);
+        }finally{
+            out.close();
+        }
+        InputStream in = fs.getInput(filePath);
+        try{
+            assertEquals(in.read(), 255);
+        }finally{
+            in.close();
+        }
+    }
 
    public void testSkipAndAvailable() throws Exception {
         String filePath = "skip.dat";
@@ -294,6 +316,13 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       assertTrue(time1 <= file.lastModified());
       assertTrue(file.lastModified() <= time2);
+   }
+
+   public void testSetLastModified() throws IOException {
+      assertFalse(fs.getFile("nonsuch").setLastModified(23));
+      File file = createFile("file.txt");
+      assertTrue(file.setLastModified(42));
+      assertEquals(fs.getFile("file.txt").lastModified(), 42);
    }
 
    public void testList() throws Exception {
@@ -437,6 +466,11 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertFalse(fs.getFile("file.txt").isAbsolute());
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testRenameTo(){
+      fs.getFile("file.txt").renameTo(null);
+   }
+
    public void testLeadingSeparatorIsOptional() throws IOException {
       File gridFile = fs.getFile("file.txt");
       assert gridFile.createNewFile();
@@ -470,6 +504,98 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertTrue(fs.getFile("foo.txt").equals(fs.getFile("/foo.txt")));
       assertFalse(fs.getFile("foo.txt").equals(fs.getFile("FOO.TXT")));
       assertFalse(fs.getFile("/foo.txt").equals(new File("/foo.txt")));
+   }
+
+   public void testCanRead() throws Exception {
+      File gridFile = fs.getFile("file.txt");
+      assert gridFile.createNewFile();
+      assertTrue(gridFile.canRead());
+      assertFalse(fs.getFile("nonsuch.txt").canRead());
+   }
+
+   public void testCanWrite() throws Exception {
+      File gridFile = fs.getFile("file.txt");
+      assert gridFile.createNewFile();
+      assertTrue(gridFile.canWrite());
+      assertFalse(fs.getFile("nonsuch.txt").canWrite());
+   }
+
+   public void testIsHidden(){
+      assertFalse(fs.getFile("nonsuch.txt").isHidden());
+   }
+
+   public void testCanExecute(){
+      assertFalse(fs.getFile("nonsuch.txt").isHidden());
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testGetCanonicalPath() throws IOException {
+      fs.getFile("nonsuch.txt").getCanonicalPath();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testGetCanonicalFile() throws IOException {
+      fs.getFile("nonsuch.txt").getCanonicalFile();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testToURL() throws MalformedURLException {
+      fs.getFile("nonsuch.txt").toURL();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testToURI() {
+      fs.getFile("nonsuch.txt").toURI();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetReadOnly() {
+      fs.getFile("nonsuch.txt").setReadOnly();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetWritable() {
+      fs.getFile("nonsuch.txt").setWritable(true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetWritable2() {
+      fs.getFile("nonsuch.txt").setWritable(true, true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetReadable() {
+      fs.getFile("nonsuch.txt").setReadable(true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetReadable2() {
+      fs.getFile("nonsuch.txt").setReadable(true, true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetExecutable() {
+      fs.getFile("nonsuch.txt").setExecutable(true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetExecutable2() {
+      fs.getFile("nonsuch.txt").setExecutable(true,  true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testGetTotalSpace() {
+      fs.getFile("nonsuch.txt").getTotalSpace();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testGetFreeSpace() {
+      fs.getFile("nonsuch.txt").getFreeSpace();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testGetUsableSpace() {
+      fs.getFile("nonsuch.txt").getUsableSpace();
    }
 
    private String getStringFromChannel(ReadableByteChannel channel, int length) throws IOException {
