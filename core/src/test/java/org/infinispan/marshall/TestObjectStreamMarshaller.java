@@ -104,9 +104,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      byte[] newBytes = new byte[length];
-      System.arraycopy(buf, offset, newBytes, 0, length);
-      return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf)));
+      return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf, offset, length)));
    }
 
    @Override
