@@ -205,14 +205,14 @@ def upload_artifacts(base_dir, version):
 def unzip_archive(version):
   os.chdir("./target/distribution")
   ## Grab the distribution archive and un-arch it
-  shutil.rmtree("infinispan-%s" % version, ignore_errors = True)
+  shutil.rmtree("infinispan-%s-all" % version, ignore_errors = True)
   if settings['verbose']:
     subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
   else:
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
 def update_javadoc_tracker(base_dir, version):
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
 
@@ -229,7 +229,7 @@ def upload_javadocs(base_dir, version):
 
 def upload_schema(base_dir, version):
   """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
-  os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/etc/schema" % (base_dir, version))
   
   ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
@@ -240,7 +240,7 @@ def upload_configdocs(base_dir, version):
   """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
 
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
   os.rename("configdocs", "%s/configdocs" % version_short)
