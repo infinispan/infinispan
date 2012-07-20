@@ -168,7 +168,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
+         // Regardless of whether is conditional so that
+         // write skews can be detected in both cases.
+         markKeyAsRead(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
