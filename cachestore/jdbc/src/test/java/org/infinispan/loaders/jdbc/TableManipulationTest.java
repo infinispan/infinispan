@@ -158,6 +158,13 @@ public class TableManipulationTest {
       assert !tableManipulation.tableExists(connection);
    }
 
+   public void testTableQuoting() throws Exception {
+      tableManipulation.setCacheName("my.cache");
+      assert !existsTable(connection, tableManipulation.getTableName());
+      tableManipulation.createTable(connection);
+      assert existsTable(connection, tableManipulation.getTableName());
+   }
+
    static boolean existsTable(Connection connection, String tableName) throws Exception {
       Statement st = connection.createStatement();
       ResultSet rs = null;
