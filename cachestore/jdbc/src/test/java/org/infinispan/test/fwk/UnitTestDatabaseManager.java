@@ -56,18 +56,17 @@ public class UnitTestDatabaseManager {
    private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
    private static final String NON_EXISTENT_DRIVER = "non.existent.Driver";
+   private static final DatabaseType dt;
 
    static {
       String driver = "";
-      DatabaseType dt = DatabaseType.H2;
       try {
-         if (!DB_TYPE.equalsIgnoreCase("H2")) {
-            if (DB_TYPE.equalsIgnoreCase("mysql")) {
-               driver = Driver.class.getName();
-               dt = DatabaseType.MYSQL;
-            } else {
-               driver = H2_DRIVER;
-            }
+         if (DB_TYPE.equalsIgnoreCase("mysql")) {
+            driver = Driver.class.getName();
+            dt = DatabaseType.MYSQL;
+         } else {
+            driver = H2_DRIVER;
+            dt = DatabaseType.H2;
          }
          try {
             Class.forName(driver);
@@ -153,17 +152,17 @@ public class UnitTestDatabaseManager {
 
 
    public static TableManipulation buildStringTableManipulation() {
-
-      return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
+      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
               "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
-
+      tableManipulation.databaseType = dt;
+      return tableManipulation;
    }
 
    public static TableManipulation buildBinaryTableManipulation() {
-
-      return new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN",
+      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN",
               "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
-
+      tableManipulation.databaseType = dt;
+      return tableManipulation;
    }
 
    /**

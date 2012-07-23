@@ -82,6 +82,7 @@ public class TableManipulation implements Cloneable {
    public DatabaseType databaseType;
    private String loadAllKeysBinarySql;
    private String loadAllKeysStringSql;
+   private String identifierQuoteString;
 
    public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
@@ -355,9 +356,23 @@ public class TableManipulation implements Cloneable {
          if (tableNamePrefix == null || cacheName == null) {
             throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
          }
-         tableName = tableNamePrefix + "_" + cacheName.replace(".", "_");
+         tableName = getIdentifierQuoteString() + tableNamePrefix + "_" + cacheName.replace(".", "_") + getIdentifierQuoteString();
       }
       return tableName;
+   }
+
+   public String getIdentifierQuoteString() {
+      if (identifierQuoteString == null) {
+         switch (getDatabaseType()) {
+         case MYSQL:
+            identifierQuoteString = "`";
+            break;
+         default:
+            identifierQuoteString = "\"";
+            break;
+         }
+      }
+      return identifierQuoteString;
    }
 
    public String getTableNamePrefix() {
