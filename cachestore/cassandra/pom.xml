@@ -26,7 +26,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.5-SNAPSHOT</version>
+      <version>5.1.6-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-cassandra</artifactId>
