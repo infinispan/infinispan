@@ -35,7 +35,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "singlelock.replicated.pessimistic.InitiatorCrashPessimisticReplTest")
+@Test(groups = "functional", testName = "singlelock.replicated.pessimistic.InitiatorCrashPessimisticReplTest", enabled = false, description = "See ISPN-2161")
 @CleanupAfterMethod
 public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticReplTest {
 
@@ -43,9 +43,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       super(Configuration.CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
-   @Test(enabled = false, description = "See ISPN-2161")
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
-
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       txControlInterceptor.prepareProgress.countDown();
       advancedCache(1).addInterceptor(txControlInterceptor, 1);
