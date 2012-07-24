@@ -26,40 +26,31 @@ package org.infinispan.topology;
  * @since 5.2
  */
 public class CacheJoinInfo {
-   private String consistentHashFactoryClass;
-   private int numSegments;
-   private int numOwners;
-   private int timeout;
+   private final String consistentHashFactoryClass;
+   private final int numSegments;
+   private final int numOwners;
+   private final int timeout;
+
+   public CacheJoinInfo(String consistentHashFactoryClass, int numSegments, int numOwners, int timeout) {
+      this.consistentHashFactoryClass = consistentHashFactoryClass;
+      this.numSegments = numSegments;
+      this.numOwners = numOwners;
+      this.timeout = timeout;
+   }
 
    public String getConsistentHashFactoryClass() {
       return consistentHashFactoryClass;
-   }
-
-   public void setConsistentHashFactoryClass(String consistentHashFactoryClass) {
-      this.consistentHashFactoryClass = consistentHashFactoryClass;
    }
 
    public int getNumSegments() {
       return numSegments;
    }
 
-   public void setNumSegments(int numSegments) {
-      this.numSegments = numSegments;
-   }
-
    public int getNumOwners() {
       return numOwners;
    }
 
-   public void setNumOwners(int numOwners) {
-      this.numOwners = numOwners;
-   }
-
    public int getTimeout() {
       return timeout;
-   }
-
-   public void setTimeout(int timeout) {
-      this.timeout = timeout;
    }
 }

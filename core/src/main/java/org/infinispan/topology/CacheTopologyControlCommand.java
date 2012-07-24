@@ -78,8 +78,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.cacheName = null;
    }
 
-   public CacheTopologyControlCommand(String cacheName) {
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender) {
       this.cacheName = cacheName;
+      this.type = type;
+      this.sender = sender;
    }
 
    public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheJoinInfo joinInfo) {
