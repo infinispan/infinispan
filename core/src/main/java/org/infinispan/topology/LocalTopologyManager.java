@@ -37,7 +37,7 @@ interface LocalTopologyManager {
     * Forwards the join request to the coordinator.
     * @return The current consistent hash.
     */
-   CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm) throws Exception;
+   Object join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm) throws Exception;
 
    /**
     * Forwards the leave request to the coordinator.

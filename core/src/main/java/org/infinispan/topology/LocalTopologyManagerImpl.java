@@ -68,7 +68,7 @@ class LocalTopologyManagerImpl implements LocalTopologyManager {
       double endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
       while (true) {
          try {
-            return executeOnCoordinator(command, timeout);
+            return (CacheTopology) executeOnCoordinator(command, timeout);
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
             if (endTime <= System.nanoTime()) {
@@ -112,20 +112,28 @@ class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    @Override
    public void handleRebalance(String cacheName, int topologyId, ConsistentHash pendingCH) {
-      // The coordinator can change during the state transfer, so we make the rebalance RPC async
-      // and we send the response as a different command.
-      // Note that if the coordinator changes again after we sent the command, we will get another
-      // query for the status of our running caches. So we don't need to retry if the command failed.
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.LEAVE, transport.getAddress(), null);
+      CacheTopologyHandler handler = runningCaches.get(cacheName);
       try {
-         executeOnCoordinatorAsync(command);
-      } catch (Exception e) {
-         log.debugf(e, "Error sending the rebalance completed notification for cache %s to coordinator", cacheName);
+         handler.rebalance(topologyId, pendingCH);
+      } finally {
+         // TODO If there was an exception, propagate the exception back to the coordinator
+         // We don't want to block further rebalancing just because we got an exception on one node
+
+         // The coordinator can change during the state transfer, so we make the rebalance RPC async
+         // and we send the response as a different command.
+         // Note that if the coordinator changes again after we sent the command, we will get another
+         // query for the status of our running caches. So we don't need to retry if the command failed.
+         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(), null);
+         try {
+            executeOnCoordinatorAsync(command);
+         } catch (Exception e) {
+            log.debugf(e, "Error sending the rebalance completed notification for cache %s to coordinator", cacheName);
+         }
       }
    }
 
-   private CacheTopology executeOnCoordinator(ReplicableCommand command, int timeout)
+   private Object executeOnCoordinator(ReplicableCommand command, int timeout)
          throws Exception {
       if (transport.isCoordinator()) {
          try {
@@ -142,11 +150,12 @@ class LocalTopologyManagerImpl implements LocalTopologyManager {
       if (response != null && !response.isSuccessful()) {
          throw new CacheException("Bad response received from coordinator: " + response);
       }
-      return (CacheTopology) ((SuccessfulResponse) response).getResponseValue();
+      return ((SuccessfulResponse) response).getResponseValue();
    }
 
    private void executeOnCoordinatorAsync(ReplicableCommand command)
          throws Exception {
+      // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
          try {
             command.perform(null);
@@ -156,9 +165,9 @@ class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
 
       Address coordinator = transport.getCoordinator();
-      Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-            command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, false, null);
       // ignore the responses
+      transport.invokeRemotely(Collections.singleton(coordinator),
+            command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, false, null);
    }
 
 }
