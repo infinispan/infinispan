@@ -258,6 +258,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "See ISPN-2106")
    public void testSTWithThirdWritingNonTxCache(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -265,6 +266,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "See ISPN-2106")
    public void testSTWithThirdWritingTxCache(Method m) throws Exception {
       testCount++;
       logTestStart(m);
