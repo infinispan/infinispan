@@ -80,6 +80,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       // This impl only really sets up a configuration for use later.
       config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
@@ -97,7 +98,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static class DelayTransfer implements Serializable {
 
       private static final long serialVersionUID = 6361429803359702822L;
-      
+
       private volatile boolean doDelay = false;
 
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -142,6 +143,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
          return result;
       }
 
+      @Override
       public void run() {
          int c = 0;
          while (!stop) {
@@ -228,6 +230,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       final JoiningNode node4 = new JoiningNode();
 
       Thread t1 = new Thread(new Runnable() {
+         @Override
          public void run() {
             node3.getCache(cacheName);
          }
@@ -236,6 +239,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       t1.start();
 
       Thread t2 = new Thread(new Runnable() {
+         @Override
          public void run() {
             node4.getCache(cacheName);
          }
@@ -274,7 +278,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test (timeOut = 120000)
+   @Test (enabled = false, timeOut = 120000)
    public void testSTWithWritingNonTxThread(Method m) throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       testCount++;
@@ -283,7 +287,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test (timeOut = 120000)
+   @Test (enabled = false, timeOut = 120000)
    public void testSTWithWritingTxThread(Method m) throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       testCount++;
