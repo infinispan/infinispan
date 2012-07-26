@@ -106,8 +106,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          globalConfiguration = configuration;
 
          registerComponent(this, GlobalComponentRegistry.class);
-         registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
+         registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
