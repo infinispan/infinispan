@@ -19,20 +19,24 @@
 
 package org.infinispan.topology;
 
+import java.io.Serializable;
+
 /**
  * This class contains the information that a cache needs to supply to the coordinator when starting up.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-public class CacheJoinInfo {
+public class CacheJoinInfo implements Serializable {
    private final String consistentHashFactoryClass;
+   private final String hashFunctionClass;
    private final int numSegments;
    private final int numOwners;
    private final int timeout;
 
-   public CacheJoinInfo(String consistentHashFactoryClass, int numSegments, int numOwners, int timeout) {
+   public CacheJoinInfo(String consistentHashFactoryClass, String hashFunctionClass, int numSegments, int numOwners, int timeout) {
       this.consistentHashFactoryClass = consistentHashFactoryClass;
+      this.hashFunctionClass = hashFunctionClass;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.timeout = timeout;
@@ -40,6 +44,10 @@ public class CacheJoinInfo {
 
    public String getConsistentHashFactoryClass() {
       return consistentHashFactoryClass;
+   }
+
+   public String getHashFunctionClass() {
+      return hashFunctionClass;
    }
 
    public int getNumSegments() {

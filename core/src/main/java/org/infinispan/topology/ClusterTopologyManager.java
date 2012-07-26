@@ -33,7 +33,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 @Scope(Scopes.GLOBAL)
-interface ClusterTopologyManager {
+public interface ClusterTopologyManager {
    /**
     * Used by {@link RebalancePolicy} to update the consistent hash on all the members,
     * without triggering a state transfer.
@@ -53,15 +53,15 @@ interface ClusterTopologyManager {
     * Updates the members list and notifies the {@link RebalancePolicy}.
     * @return The current consistent hash.
     */
-   CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo);
+   CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) throws Exception;
 
    /**
     * Updates the members list and notifies the {@link RebalancePolicy}
     */
-   void handleLeave(String cacheName, Address leaver);
+   void handleLeave(String cacheName, Address leaver) throws Exception;
 
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalanceCompleted(String cacheName, Address node, int topologyId);
+   void handleRebalanceCompleted(String cacheName, Address node, int topologyId) throws Exception;
 }

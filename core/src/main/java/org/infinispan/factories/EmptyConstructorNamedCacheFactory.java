@@ -31,6 +31,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.TransactionalInvocationContextContainer;
+import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.L1ManagerImpl;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionManagerImpl;
 import org.infinispan.eviction.PassivationManager;
@@ -44,6 +46,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
@@ -63,7 +66,8 @@ import static org.infinispan.util.Util.getInstance;
                               CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
-                              ClusteringDependentLogic.class, LockContainer.class})
+                              ClusteringDependentLogic.class, LockContainer.class,
+                              L1Manager.class, TransactionFactory.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -109,10 +113,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                   notTransactional ? new ReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel())
                         : new OwnableReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel());
             return (T) lockContainer;
+         } else if (componentType.equals(L1Manager.class)) {
+            return (T) new L1ManagerImpl();
+         } else if (componentType.equals(TransactionFactory.class)) {
+            return (T) new TransactionFactory();
          }
       }
-
-
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());
 

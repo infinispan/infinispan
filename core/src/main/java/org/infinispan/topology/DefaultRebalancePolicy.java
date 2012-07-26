@@ -1,4 +1,5 @@
 /*
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -22,13 +23,16 @@ package org.infinispan.topology;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.newch.ConsistentHash;
 import org.infinispan.distribution.newch.ConsistentHashFactory;
 import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -55,6 +59,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    private volatile List<Address> clusterMembers;
    private final ConcurrentMap<String, CacheStatus> cacheStatusMap = ConcurrentMapFactory.makeConcurrentMap();
 
+   @Inject
    public void inject(Transport transport, ClusterTopologyManager clusterTopologyManager,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalConfiguration globalConfiguration) {
@@ -81,28 +86,28 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    }
 
    @Override
-   public void updateMembersList(List<Address> clusterMembers) throws Exception {
-      this.clusterMembers = clusterMembers;
+   public void updateMembersList(List<Address> newClusterMembers) throws Exception {
+      this.clusterMembers = newClusterMembers;
 
       for (Map.Entry<String, CacheStatus> e : cacheStatusMap.entrySet()) {
          String cacheName = e.getKey();
          CacheStatus cacheStatus = e.getValue();
          synchronized (cacheStatus) {
-            cacheStatus.joiners.retainAll(clusterMembers);
+            cacheStatus.joiners.retainAll(newClusterMembers);
             ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
             // the consistent hash may not be initialized yet
             if (currentCH == null)
                continue;
             ConsistentHash pendingCH = cacheStatus.cacheTopology.getPendingCH();
-            boolean currentMembersValid = clusterMembers.containsAll(currentCH.getMembers());
-            boolean pendingMembersValid = pendingCH == null || clusterMembers.containsAll(pendingCH.getMembers());
+            boolean currentMembersValid = newClusterMembers.containsAll(currentCH.getMembers());
+            boolean pendingMembersValid = pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
             if (!currentMembersValid || !pendingMembersValid) {
                int topologyId = cacheStatus.cacheTopology.getTopologyId();
                List<Address> newMembers1 = new ArrayList<Address>(currentCH.getMembers());
-               newMembers1.retainAll(clusterMembers);
+               newMembers1.retainAll(newClusterMembers);
                ConsistentHash newCurrentCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers1);
                List<Address> newMembers = new ArrayList<Address>(pendingCH.getMembers());
-               newMembers.retainAll(clusterMembers);
+               newMembers.retainAll(newClusterMembers);
                ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);
                cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
                clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
@@ -132,6 +137,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
             cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
             clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
+
+            startRebalance(cacheName, cacheStatus, newMembers);
          }
       }
       if (!joiners.isEmpty()) {
@@ -148,33 +155,61 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                return;
             }
 
-            int newTopologyId = topologyId + 1;
             List<Address> newMembers = cacheStatus.joiners;
             cacheStatus.joiners = new ArrayList<Address>();
             newMembers.addAll(cacheStatus.cacheTopology.getMembers());
             newMembers.retainAll(clusterMembers);
 
-            // TODO Keep track in cacheStatus of the "balanced" CH instead of calling rebalance again
-            ConsistentHash balancedCH = cacheStatus.chFactory.rebalance(pendingCH);
-            cacheStatus.balancedCH = balancedCH;
-            ConsistentHash newPendingCH = cacheStatus.chFactory.union(currentCH, balancedCH);
-            cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, newPendingCH);
-            clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, currentCH, newPendingCH);
+            if (currentCH == null) {
+               ConsistentHash balancedCH = cacheStatus.chFactory.create(cacheStatus.hash,
+                     cacheStatus.numOwners, cacheStatus.numSegments, newMembers);
+               cacheStatus.balancedCH = balancedCH;
+               int newTopologyId = topologyId + 1;
+               cacheStatus.cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
+               clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, balancedCH, null);
+            } else {
+               startRebalance(cacheName, cacheStatus, newMembers);
+            }
          }
       }
    }
 
+   private void startRebalance(final String cacheName, final CacheStatus cacheStatus, final List<Address> newMembers) throws Exception {
+      asyncTransportExecutor.submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            doRebalance(cacheName, cacheStatus, newMembers);
+            return null;
+         }
+      });
+   }
+
+   private void doRebalance(String cacheName, CacheStatus cacheStatus, List<Address> newMembers) throws Exception {
+      int newTopologyId = cacheStatus.cacheTopology.topologyId + 1;
+      ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
+      ConsistentHash updatedMembersCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers);
+      ConsistentHash balancedCH = cacheStatus.chFactory.rebalance(updatedMembersCH);
+      cacheStatus.balancedCH = balancedCH;
+      ConsistentHash newPendingCH = cacheStatus.chFactory.union(currentCH, balancedCH);
+      cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, newPendingCH);
+      clusterTopologyManager.rebalance(cacheName, newTopologyId, currentCH, newPendingCH);
+   }
+
    @Override
-   public void onRebalanceCompleted(String cacheName, int topologyId) {
+   public void onRebalanceCompleted(String cacheName, int topologyId) throws Exception {
+      log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",
+            cacheName, topologyId);
       CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       synchronized (cacheStatus) {
          assert topologyId == cacheStatus.cacheTopology.getTopologyId();
          int newTopologyId = topologyId + 1;
          ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
-         ConsistentHash newCurrentCH = cacheStatus.chFactory.rebalance(currentCH);
+         // TODO Move balancedCH to the CacheTopology, rename "pendingCH" to "unionCH"
+         ConsistentHash newCurrentCH = cacheStatus.balancedCH;
 
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
          cacheStatus.balancedCH = null;
+         clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, newCurrentCH, null);
       }
    }
 
@@ -186,6 +221,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
    private static class CacheStatus {
       private ConsistentHashFactory chFactory;
+      private Hash hash;
       private int numSegments;
       private int numOwners;
 
@@ -196,9 +232,26 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       public CacheStatus(CacheJoinInfo joinInfo, GlobalConfiguration globalConfiguration) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
          Class<?> chfClass = globalConfiguration.classLoader().loadClass(joinInfo.getConsistentHashFactoryClass());
          this.chFactory = (ConsistentHashFactory) chfClass.newInstance();
+         Class<?> hashFunctionClass = globalConfiguration.classLoader().loadClass(joinInfo.getHashFunctionClass());
+         this.hash = (Hash) hashFunctionClass.newInstance();
          this.numSegments = joinInfo.getNumSegments();
          this.numOwners = joinInfo.getNumOwners();
+
+         this.cacheTopology = new CacheTopology(0, null, null);
          this.joiners = new ArrayList<Address>();
+      }
+
+      @Override
+      public String toString() {
+         return "CacheStatus{" +
+               "chFactory=" + chFactory +
+               ", hash=" + hash +
+               ", numSegments=" + numSegments +
+               ", numOwners=" + numOwners +
+               ", cacheTopology=" + cacheTopology +
+               ", joiners=" + joiners +
+               ", balancedCH=" + balancedCH +
+               '}';
       }
    }
 }

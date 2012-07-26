@@ -58,22 +58,6 @@ import static org.infinispan.factories.KnownComponentNames.*;
 public interface Transport extends Lifecycle {
    // TODO discovery should be abstracted away into a separate set of interfaces such that it is not tightly coupled to the transport
 
-   @Inject
-   void setConfiguration(GlobalConfiguration gc);
-
-   /**
-    * Initializes the transport with global cache configuration and transport-specific properties.
-    *
-    * @param marshaller    marshaller to use for marshalling and unmarshalling
-    * @param asyncExecutor executor to use for asynchronous calls
-    * @param handler       handler for invoking remotely originating calls on the local cache
-    * @param notifier      notifier to use
-    */
-   @Inject
-   void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
-                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
-                   InboundInvocationHandler handler, CacheManagerNotifier notifier);
-
    /**
     * Invokes an RPC call on other caches in the cluster.
     *

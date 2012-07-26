@@ -22,10 +22,15 @@
  */
 package org.infinispan.topology;
 
+import java.io.Serializable;
+
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,7 +43,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei
  * @since 5.2
  */
-public class CacheTopologyControlCommand implements ReplicableCommand {
+public class CacheTopologyControlCommand implements ReplicableCommand, Serializable {
 
    public enum Type {
       // a node is requesting to join the cluster
@@ -60,8 +65,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    public static final int COMMAND_ID = 17;
 
-   private LocalTopologyManager localTopologyManager;
-   private ClusterTopologyManager clusterTopologyManager;
+   private transient LocalTopologyManager localTopologyManager;
+   private transient ClusterTopologyManager clusterTopologyManager;
 
    private final String cacheName;
    private Type type;
@@ -101,6 +106,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.pendingCH = pendingCH;
    }
 
+   @Inject
    public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager globalDistributionManager) {
       this.localTopologyManager = localTopologyManager;
       this.clusterTopologyManager = globalDistributionManager;
@@ -111,34 +117,38 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         switch (type) {
-            // member to coordinator
-            case JOIN:
-               return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo);
-            case LEAVE:
-               clusterTopologyManager.handleLeave(cacheName, sender);
-              return null;
-            case REBALANCE_CONFIRM:
-               clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId);
-               return null;
-
-            // coordinator to member
-            case CH_UPDATE:
-               localTopologyManager.handleConsistentHashUpdate(cacheName, currentCH, pendingCH);
-               return null;
-            case REBALANCE_START:
-               localTopologyManager.handleRebalance(cacheName, topologyId, currentCH);
-               return null;
-            case GET_STATUS:
-               return localTopologyManager.handleStatusRequest();
-            default:
-               throw new CacheException("Unknown cache topology control command type " + type);
-         }
-      } catch (Throwable t) {
+         return SuccessfulResponse.create(doPerform());
+      } catch (Exception t) {
          log.exceptionHandlingCommand(this, t);
-         throw t;
+         return new ExceptionResponse(t);
       } finally {
          LogFactory.popNDC(trace);
+      }
+   }
+
+   private Object doPerform() throws Exception {
+      switch (type) {
+         // member to coordinator
+         case JOIN:
+            return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo);
+         case LEAVE:
+            clusterTopologyManager.handleLeave(cacheName, sender);
+           return null;
+         case REBALANCE_CONFIRM:
+            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId);
+            return null;
+
+         // coordinator to member
+         case CH_UPDATE:
+            localTopologyManager.handleConsistentHashUpdate(cacheName, currentCH, pendingCH);
+            return null;
+         case REBALANCE_START:
+            localTopologyManager.handleRebalance(cacheName, topologyId, currentCH);
+            return null;
+         case GET_STATUS:
+            return localTopologyManager.handleStatusRequest();
+         default:
+            throw new CacheException("Unknown cache topology control command type " + type);
       }
    }
 

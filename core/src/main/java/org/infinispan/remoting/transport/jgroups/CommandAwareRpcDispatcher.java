@@ -28,6 +28,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -81,11 +82,19 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
    private final JGroupsTransport transport;
+   private final GlobalComponentRegistry gcr;
 
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
-                                    InboundInvocationHandler inboundInvocationHandler) {
+                                    InboundInvocationHandler inboundInvocationHandler,
+                                    GlobalComponentRegistry gcr) {
+      this.server_obj = transport;
+      this.asyncExecutor = asyncExecutor;
+      this.inboundInvocationHandler = inboundInvocationHandler;
+      this.transport = transport;
+      this.gcr = gcr;
+
       // MessageDispatcher superclass constructors will call start() so perform all init here
       this.setMembershipListener(transport);
       this.setChannel(channel);
@@ -97,10 +106,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          mux.setDefaultHandler(this.prot_adapter);
       }
       channel.addChannelListener(this);
-      this.server_obj = transport;
-      this.asyncExecutor = asyncExecutor;
-      this.inboundInvocationHandler = inboundInvocationHandler;
-      this.transport = transport;
    }
 
    private boolean isValid(Message req) {
@@ -222,6 +227,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          return inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()));
       } else {
          if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
+         gcr.wireDependencies(cmd);
          return cmd.perform(null);
       }
    }
