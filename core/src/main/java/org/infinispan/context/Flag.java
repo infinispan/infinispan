@@ -113,7 +113,10 @@ public enum Flag {
    /**
     * Skips checking whether a cache is in a receptive state, i.e. is {@link ComponentStatus#RUNNING}.  May break
     * operation in weird ways!
+    *
+    * @deprecated This flag is no longer in use.
     */
+   @Deprecated
    SKIP_CACHE_STATUS_CHECK,
    /**
     * Forces asynchronous network calls where possible, even if otherwise configured to use synchronous network calls.
