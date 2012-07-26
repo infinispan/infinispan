@@ -243,7 +243,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          log.debugf("Applying new state from %s: received %d keys", sender, state.size());
          if (trace) log.tracef("Received keys: %s", keys(state));
          for (InternalCacheEntry e : state) {
-            InvocationContext ctx = icc.createInvocationContext(false, 1);
+            // The put call originates remotely. This helps adding a state pusher
+            // which does not own a key, as L1 requestor if L1 is enabled.
+            InvocationContext ctx = icc.createRemoteInvocationContext(sender);
             // locking not necessary as during rehashing we block all transactions
             ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
                          SKIP_OWNERSHIP_CHECK);

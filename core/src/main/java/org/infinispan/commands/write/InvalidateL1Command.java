@@ -115,7 +115,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
             if (!locality.isLocal()) {
                if (forRehash && config.clustering().l1().onRehash()) {
-                  if (trace) log.trace("Not removing, instead entry will be stored in L1");
+                  if (trace) log.tracef("Not removing key=%s, instead entry will be stored in L1", k);
                   // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
                } else {
                	if (trace) log.tracef("Invalidating key %s.", k);
@@ -151,9 +151,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
       InvalidateL1Command that = (InvalidateL1Command) o;
 
-      if (forRehash != that.forRehash) return false;
-
-      return true;
+      return forRehash == that.forRehash;
    }
 
    @Override
