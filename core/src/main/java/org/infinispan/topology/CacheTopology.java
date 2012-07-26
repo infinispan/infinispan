@@ -1,6 +1,8 @@
 package org.infinispan.topology;
 
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.infinispan.distribution.newch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
@@ -17,7 +19,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
-class CacheTopology {
+public class CacheTopology implements Serializable {
    int topologyId;
    ConsistentHash currentCH;
    ConsistentHash pendingCH;
@@ -43,8 +45,10 @@ class CacheTopology {
    public Collection<Address> getMembers() {
       if (pendingCH != null)
          return pendingCH.getMembers();
-      else
+      else if (currentCH != null)
          return currentCH.getMembers();
+      else
+         return Collections.emptyList();
    }
 
    public ConsistentHash getReadConsistentHash() {
@@ -56,5 +60,14 @@ class CacheTopology {
          return pendingCH;
       else
          return currentCH;
+   }
+
+   @Override
+   public String toString() {
+      return "CacheTopology{" +
+            "topologyId=" + topologyId +
+            ", currentCH=" + currentCH +
+            ", pendingCH=" + pendingCH +
+            '}';
    }
 }

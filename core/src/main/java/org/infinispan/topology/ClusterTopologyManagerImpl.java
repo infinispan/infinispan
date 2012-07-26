@@ -28,16 +28,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -58,89 +65,145 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @author Dan Berindei
  * @since 5.2
  */
-class ClusterTopologyManagerImpl implements ClusterTopologyManager {
+public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private static Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
 
    private Transport transport;
    private RebalancePolicy rebalancePolicy;
    private GlobalConfiguration globalConfiguration;
+   private GlobalComponentRegistry gcr;
+   private CacheManagerNotifier cacheManagerNotifier;
    private ExecutorService asyncTransportExecutor;
    private boolean isCoordinator;
 
    //private ConcurrentMap<String, CacheJoinInfo> clusterCaches = ConcurrentMapFactory.makeConcurrentMap();
    private final ConcurrentMap<String, RebalanceInfo> rebalanceStatusMap = ConcurrentMapFactory.makeConcurrentMap();
+   private ClusterTopologyManagerImpl.ClusterViewListener listener;
 
+   @Inject
    public void inject(Transport transport, RebalancePolicy rebalancePolicy,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalConfiguration globalConfiguration) {
+                      GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
+                      CacheManagerNotifier cacheManagerNotifier) {
       this.transport = transport;
       this.rebalancePolicy = rebalancePolicy;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.globalConfiguration = globalConfiguration;
+      this.gcr = gcr;
+      this.cacheManagerNotifier = cacheManagerNotifier;
    }
 
    @Start(priority = 100)
    public void start() {
       this.isCoordinator = transport.isCoordinator();
+
+      listener = new ClusterViewListener();
+      cacheManagerNotifier.addListener(listener);
+      // The listener already missed the initial view
+      handleNewView(transport.getMembers(), false);
+   }
+
+   @Stop(priority = 100)
+   public void stop() {
+      cacheManagerNotifier.removeListener(listener);
    }
 
    @Override
    public void updateConsistentHash(String cacheName, int topologyId, ConsistentHash currentCH,
                                     ConsistentHash pendingCH) throws Exception {
+      log.debugf("Updating cluster-wide consistent hash for cache %s, topology id = %d, currentCH = %s, pendingCH = %s",
+            cacheName, topologyId, currentCH, pendingCH);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), topologyId, currentCH, pendingCH);
       executeOnClusterSync(command, getGlobalTimeout());
 
-      for (Map.Entry<String, RebalanceInfo> e : rebalanceStatusMap.entrySet()) {
-         RebalanceInfo rebalanceInfo = e.getValue();
-         if (rebalanceInfo.updateMembers(pendingCH.getMembers())) {
+      RebalanceInfo rebalanceInfo = rebalanceStatusMap.get(cacheName);
+      if (rebalanceInfo != null) {
+         List<Address> members = pendingCH != null ? pendingCH.getMembers() : currentCH.getMembers();
+         if (rebalanceInfo.updateMembers(members)) {
             // all the nodes that haven't confirmed yet have left the cache/cluster
-            rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
-            rebalanceStatusMap.remove(rebalanceInfo);
+            onRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
          }
       }
    }
 
-   @Override
-   public void rebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws Exception {
-      rebalanceStatusMap.putIfAbsent(cacheName, new RebalanceInfo(topologyId, pendingCH.getMembers()));
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), topologyId, currentCH, pendingCH);
-      executeOnClusterAsync(command);
-
+   private void onRebalanceCompleted(String cacheName, int topologyId, RebalanceInfo rebalanceInfo) throws Exception {
+      rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
+      log.debugf("Removing rebalance information for topology id %d", topologyId);
+      rebalanceStatusMap.remove(cacheName);
    }
 
    @Override
-   public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) {
+   public void rebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws Exception {
+      log.debugf("Starting cluster-wide rebalance for cache %s, topology id = %s, new CH = %s",
+            cacheName, topologyId, pendingCH);
+      RebalanceInfo existingRebalance = rebalanceStatusMap.putIfAbsent(cacheName, new RebalanceInfo(topologyId, pendingCH.getMembers()));
+      if (existingRebalance != null) {
+         throw new IllegalStateException("Aborting the current rebalance, there is another operation in progress: " + existingRebalance);
+      }
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), topologyId, currentCH, pendingCH);
+      executeOnClusterAsync(command);
+   }
+
+   @Override
+   public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) throws Exception {
       rebalancePolicy.initCache(cacheName, joinInfo);
       rebalancePolicy.updateMembersList(cacheName, Collections.singletonList(joiner), Collections.<Address>emptyList());
       return rebalancePolicy.getTopology(cacheName);
    }
 
    @Override
-   public void handleLeave(String cacheName, Address leaver) {
+   public void handleLeave(String cacheName, Address leaver) throws Exception {
       rebalancePolicy.updateMembersList(cacheName, Collections.<Address>emptyList(), Collections.singletonList(leaver));
    }
 
    @Override
-   public void handleRebalanceCompleted(String cacheName, Address node, int topologyId) {
+   public void handleRebalanceCompleted(String cacheName, Address node, int topologyId) throws Exception {
+      // TODO Don't send a rebalance confirmation if the node is not part of the new ch
+      // TODO Check for stale/invalid rebalance confirmations here
+      log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d", cacheName, node,
+            topologyId);
       RebalanceInfo rebalanceInfo = rebalanceStatusMap.get(cacheName);
       if (rebalanceInfo == null || topologyId != rebalanceInfo.topologyId) {
          throw new CacheException(String.format("%s: Received invalid rebalance confirmation from %s for " +
-               "topology %s, rebalance status is %s", cacheName, node, topologyId, rebalanceInfo));
+               "rebalance status is %s", cacheName, node, rebalanceInfo));
       }
 
       if (rebalanceInfo.confirmRebalance(node)) {
-         rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
-         rebalanceStatusMap.remove(rebalanceInfo);
+         onRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
       }
    }
 
-   private Map<Address, Object> executeOnClusterSync(ReplicableCommand command, int timeout)
+   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout)
          throws Exception {
-      Map<Address, Response> responseMap = transport.invokeRemotely(null,
-            command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null);
+      // first invoke remotely
+      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
+         @Override
+         public Map<Address, Response> call() throws Exception {
+            Map<Address, Response> rspList = transport.invokeRemotely(null, command,
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null);
+            return rspList;
+         }
+      });
 
+      // now invoke the command on the local node
+      Future<Object> localFuture = asyncTransportExecutor.submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            gcr.wireDependencies(command);
+            try {
+               return command.perform(null);
+            } catch (Throwable t) {
+               throw new Exception(t);
+            }
+         }
+      });
+
+      // wait for the remote commands to finish
+      Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
+
+      // parse the responses
       Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
       for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
          Address address = entry.getKey();
@@ -150,12 +213,27 @@ class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
          responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
       }
+
+      // now wait for the local command
+      Response localResponse = (Response) localFuture.get(timeout, TimeUnit.MILLISECONDS);
+      if (!localResponse.isSuccessful()) {
+         throw new CacheException("Unsuccessful local response");
+      }
+      responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
+
       return responseValues;
    }
 
    private void executeOnClusterAsync(ReplicableCommand command)
          throws Exception {
       transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, -1, false, null);
+
+      gcr.wireDependencies(command);
+      try {
+         command.perform(null);
+      } catch (Throwable throwable) {
+         log.errorf("Error executing command %s on local node", command);
+      }
    }
 
 
@@ -185,11 +263,16 @@ class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             log.errorf(e, "Error recovering cluster state");
          }
       } else {
-         rebalancePolicy.updateMembersList(newMembers);
+         try {
+            rebalancePolicy.updateMembersList(newMembers);
+         } catch (Exception e) {
+            log.errorf(e, "Error updating the cluster member list");
+         }
       }
    }
 
    private HashMap<String, List<CacheTopology>> recoverClusterStatus() throws Exception {
+      log.debugf("Recovering running caches in the cluster");
       ReplicableCommand command = new CacheTopologyControlCommand(null,
          CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress());
       Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout());
@@ -217,7 +300,7 @@ class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
 
-   private static class RebalanceInfo {
+   static class RebalanceInfo {
       private final int topologyId;
       private final Set<Address> confirmationsNeeded;
 
@@ -241,9 +324,21 @@ class ClusterTopologyManagerImpl implements ClusterTopologyManager {
        */
       public boolean updateMembers(Collection<Address> newMembers) {
          synchronized (this) {
+            // only return true the first time
+            if (confirmationsNeeded.isEmpty())
+               return false;
+
             confirmationsNeeded.retainAll(newMembers);
             return confirmationsNeeded.isEmpty();
          }
+      }
+
+      @Override
+      public String toString() {
+         return "RebalanceInfo{" +
+               "topologyId=" + topologyId +
+               ", confirmationsNeeded=" + confirmationsNeeded +
+               '}';
       }
    }
 }

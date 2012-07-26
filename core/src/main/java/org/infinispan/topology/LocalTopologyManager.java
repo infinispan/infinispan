@@ -32,7 +32,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 5.2
  */
 @Scope(Scopes.GLOBAL)
-interface LocalTopologyManager {
+public interface LocalTopologyManager {
    /**
     * Forwards the join request to the coordinator.
     * @return The current consistent hash.
@@ -57,5 +57,5 @@ interface LocalTopologyManager {
    /**
     * Performs the state transfer.
     */
-   void handleRebalance(String cacheName, int topologyId, ConsistentHash pendingCH);
+   void handleRebalance(String cacheName, int topologyId, ConsistentHash pendingCH) throws InterruptedException;
 }

@@ -32,6 +32,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.InboundInvocationHandlerImpl;
+import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.ClusterTopologyManagerImpl;
+import org.infinispan.topology.DefaultRebalancePolicy;
+import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.LocalTopologyManagerImpl;
+import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.xa.TransactionFactory;
 
 /**
@@ -41,7 +47,8 @@ import org.infinispan.transaction.xa.TransactionFactory;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, TransactionFactory.class, L1Manager.class, ExternalizerTable.class })
+@DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
+                              LocalTopologyManager.class, ClusterTopologyManager.class, RebalancePolicy.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -52,12 +59,14 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new InboundInvocationHandlerImpl();
       else if (componentType.equals(RemoteCommandsFactory.class))
          return (T) new RemoteCommandsFactory();
-      else if (componentType.equals(TransactionFactory.class))
-         return (T) new TransactionFactory();
-      else if (componentType.equals(L1Manager.class))
-         return (T) new L1ManagerImpl();
       else if (componentType.equals(ExternalizerTable.class))
          return (T) new ExternalizerTable();
+      else if (componentType.equals(LocalTopologyManager.class))
+         return (T) new LocalTopologyManagerImpl();
+      else if (componentType.equals(ClusterTopologyManager.class))
+         return (T) new ClusterTopologyManagerImpl();
+      else if (componentType.equals(RebalancePolicy.class))
+         return (T) new DefaultRebalancePolicy();
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());
    }

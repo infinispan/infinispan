@@ -27,7 +27,7 @@ import org.infinispan.distribution.newch.ConsistentHash;
  * @author Dan Berindei
  * @since 5.2
  */
-interface CacheTopologyHandler {
+public interface CacheTopologyHandler {
    CacheTopology getStatus();
 
    void updateConsistentHash(ConsistentHash currentCH, ConsistentHash pendingCH);

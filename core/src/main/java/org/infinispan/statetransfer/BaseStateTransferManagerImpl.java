@@ -26,6 +26,7 @@ import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
@@ -34,6 +35,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.newch.DefaultConsistentHashFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -43,6 +45,10 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.CacheTopologyHandler;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -65,7 +71,7 @@ import static org.infinispan.context.Flag.*;
  * State transfer manager.
  * Base class for the distributed and replicated implementations.
  */
-public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheViewListener {
+public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheViewListener, CacheTopologyHandler {
    private static final Log log = LogFactory.getLog(BaseStateTransferManagerImpl.class);
 
    private static final boolean trace = log.isTraceEnabled();
@@ -98,6 +104,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    private GlobalConfiguration globalCfg;
    protected boolean withTopology;
 
+   private LocalTopologyManager localTopologyManager;
+
    public BaseStateTransferManagerImpl() {
    }
 
@@ -106,7 +114,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
                     CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer, Cache cache,
-                    GlobalConfiguration globalCfg) {
+                    GlobalConfiguration globalCfg, LocalTopologyManager localTopologyManager) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -121,6 +129,8 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.lockContainer = lockContainer;
       this.cacheName = cache.getName();
       this.globalCfg = globalCfg;
+
+      this.localTopologyManager = localTopologyManager;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -153,7 +163,12 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       if (trace) log.tracef("Starting state transfer manager on " + getAddress());
 
       // set up the old CH, but it shouldn't be used until we get the prepare call
-      cacheViewsManager.join(cacheName, this);
+      //cacheViewsManager.join(cacheName, this);
+      int numSegments = configuration.clustering().hash().numVirtualNodes();
+      int numOwners = configuration.clustering().hash().numOwners();
+      int timeout = (int) configuration.clustering().stateTransfer().timeout();
+      localTopologyManager.join(cacheName, new CacheJoinInfo(DefaultConsistentHashFactory.class.getName(),
+            MurmurHash3.class.getName(), numSegments, numOwners, timeout), this);
    }
 
    protected abstract ConsistentHash createConsistentHash(List<Address> members);
@@ -167,6 +182,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Stop(priority = 20)
    public void stop() {
+      /*
       chOld = null;
       chNew = null;
       // cancel any pending state transfer before leaving
@@ -179,6 +195,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       joinStartedLatch.countDown();
       joinCompletedLatch.countDown();
       stateTransferInProgressLatch.open();
+      */
    }
 
    protected Address getAddress() {
@@ -275,6 +292,11 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
             }
          }
       }
+   }
+
+   @Override
+   public boolean isLocationInDoubt(Object key) {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
    }
 
    private Collection<Object> keys(Collection<InternalCacheEntry> state) {
@@ -406,6 +428,22 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);
+
+   @Override
+   public CacheTopology getStatus() {
+      return null;
+   }
+
+   @Override
+   public void updateConsistentHash(org.infinispan.distribution.newch.ConsistentHash currentCH, org.infinispan.distribution.newch.ConsistentHash pendingCH) {
+      if (pendingCH == null && currentCH.getMembers().contains(rpcManager.getAddress())) {
+         joinCompletedLatch.countDown();
+      }
+   }
+
+   @Override
+   public void rebalance(int topologyId, org.infinispan.distribution.newch.ConsistentHash pendingCH) {
+   }
 
    private static interface CommandBuilder {
       PutKeyValueCommand buildPut(InvocationContext ctx, CacheEntry e);

@@ -28,7 +28,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.configuration.global.TransportConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -38,11 +40,9 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -71,10 +71,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
@@ -104,7 +104,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
-   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = ConcurrentMapFactory.makeConcurrentMap();
 
    protected boolean startChannel = true, stopChannel = true;
    private CommandAwareRpcDispatcher dispatcher;
@@ -113,6 +112,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
+   private GlobalComponentRegistry gcr;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -156,13 +156,25 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   @Override
-   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller, ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
-            CacheManagerNotifier notifier) {
+   /**
+    * Initializes the transport with global cache configuration and transport-specific properties.
+    *
+    * @param marshaller    marshaller to use for marshalling and unmarshalling
+    * @param asyncExecutor executor to use for asynchronous calls
+    * @param inboundInvocationHandler       handler for invoking remotely originating calls on the local cache
+    * @param notifier      notifier to use
+    * @param gcr
+    */
+   @Inject
+   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+                          @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                          InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier,
+                          GlobalComponentRegistry gcr) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.notifier = notifier;
+      this.gcr = gcr;
    }
 
    @Override
@@ -269,8 +281,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // invalidations targeted at remote instances will be received by self.
       channel.setDiscardOwnMessages(true);
 
-      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in
-      // JGroups
+      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups
       if (transportCfg.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
          if (startChannel) {
@@ -299,7 +310,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler, gcr);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -444,7 +455,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
-         // don't send if dest list is empty
+         // don't send if recipients list is empty
          log.trace("Destination list is empty: no need to send message");
          return Collections.emptyMap();
       }

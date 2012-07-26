@@ -189,7 +189,7 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
 
       @Override
       public Integer getId() {
-         return Ids.DEFAULT_CONSISTENT_HASH;
+         return Ids.NEW_DEFAULT_CONSISTENT_HASH;
       }
 
       @Override

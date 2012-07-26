@@ -123,7 +123,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    public CacheViewsManagerImpl() {
    }
 
-   @Inject
+   //@Inject
    public void init(CacheManagerNotifier cacheManagerNotifier, Transport transport,
                     @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
                     GlobalConfiguration globalConfiguration) {
@@ -135,7 +135,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    // Start after JGroupsTransport so that we have a view already
-   @Start(priority = 11)
+   //@Start(priority = 11)
    public void start() throws Exception {
       if (transport == null)
          throw new ConfigurationException("CacheViewManager only works in clustered caches");
@@ -165,7 +165,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // so that a node can use the cache without ever joining and starting to hold data.
    }
 
-   @Stop(priority = 0)
+   //@Stop(priority = 0)
    public void stop() {
       cacheManagerNotifier.removeListener(listener);
       running = false;

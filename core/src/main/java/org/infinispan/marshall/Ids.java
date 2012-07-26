@@ -109,4 +109,5 @@ public interface Ids {
    int LOCK_INFO = 84;
 
    int FLAG = 85;
+   int NEW_DEFAULT_CONSISTENT_HASH = 86;
 }
