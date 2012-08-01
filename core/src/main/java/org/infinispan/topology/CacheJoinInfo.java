@@ -35,9 +35,9 @@ public class CacheJoinInfo implements Serializable {
    private final Hash hashFunction;
    private final int numSegments;
    private final int numOwners;
-   private final int timeout;    //todo [anistor] is this actually used?
+   private final long timeout;
 
-   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments, int numOwners, int timeout) {
+   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments, int numOwners, long timeout) {
       this.consistentHashFactory = consistentHashFactory;
       this.hashFunction = hashFunction;
       this.numSegments = numSegments;
@@ -61,7 +61,7 @@ public class CacheJoinInfo implements Serializable {
       return numOwners;
    }
 
-   public int getTimeout() {
+   public long getTimeout() {
       return timeout;
    }
 }
