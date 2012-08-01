@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -52,7 +51,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    /**
     * During state transfer only the locks are being migrated over, but no modifications.
     */
-   private boolean missingModifications;
+   private boolean missingModifications;  //todo [anistor] this will no longer be used once new NBST is in place
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
       super(tx, viewId);

@@ -72,7 +72,7 @@ public class StaleTransactionCleanupService {
       this.transactionTable = transactionTable;
    }
 
-   private ExecutorService lockBreakingService;
+   private ExecutorService lockBreakingService; // a thread pool with max. 1 thread
 
    /**
     * Roll back remote transactions originating on nodes that have left the cluster.
@@ -158,14 +158,14 @@ public class StaleTransactionCleanupService {
             @Override
             public void run() {
                try {
-               transactionTable.updateStateOnNodesLeaving(leavers);
+                  transactionTable.updateStateOnNodesLeaving(leavers);
                } catch (Exception e) {
                   log.error("Exception whilst updating state", e);
                }
             }
          });
       } catch (RejectedExecutionException ree) {
-         log.debug("Unable to submit task to executor", ree);
+         log.error("Unable to submit task to executor", ree);
       }
    }
 

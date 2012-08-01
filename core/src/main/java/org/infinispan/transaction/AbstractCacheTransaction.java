@@ -24,6 +24,7 @@
 package org.infinispan.transaction;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,15 +57,21 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private static final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
-   protected List<WriteCommand> modifications;
+   protected volatile List<WriteCommand> modifications;
    protected HashMap<Object, CacheEntry> lookedUpEntries;
+
+   /** Holds all the locked keys that were acquired by the transaction allover the cluster. */
    protected Set<Object> affectedKeys = null;
-   protected Set<Object> lockedKeys;
-   protected Set<Object> backupKeyLocks = null;
+
+   /** Holds all the keys that were actually locked on the local node. */
+   protected volatile Set<Object> lockedKeys = null;
+
+   /** Holds all the locks for which the local node is a secondary data owner. */
+   protected volatile Set<Object> backupKeyLocks = null;
+
    private boolean txComplete = false;
-   protected volatile boolean prepared;
    private volatile boolean needToNotifyWaiters = false;
-   final int viewId;
+   protected final int viewId;
 
    private EntryVersionsMap updatedEntryVersions;
 
@@ -84,7 +91,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public void setModifications(WriteCommand[] modifications) {
-      this.modifications = Arrays.asList(modifications);
+      // we need to synchronize this collection to be able to get a valid copy from another thread during state transfer
+      this.modifications = Collections.synchronizedList(new ArrayList<WriteCommand>(Arrays.asList(modifications)));
    }
 
    @Override
@@ -156,12 +164,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void addBackupLockForKey(Object key) {
-      if (backupKeyLocks == null) backupKeyLocks = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+      // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
+      if (backupKeyLocks == null) backupKeyLocks = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
       backupKeyLocks.add(key);
    }
 
    public void registerLockedKey(Object key) {
-      if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+      // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
+      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
       if (trace) log.tracef("Registering locked key: %s", key);
       lockedKeys.add(key);
    }
@@ -169,6 +179,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public Set<Object> getLockedKeys() {
       return lockedKeys == null ? Collections.emptySet() : lockedKeys;
+   }
+
+   @Override
+   public Set<Object> getBackupLockedKeys() {
+      return backupKeyLocks;
    }
 
    @Override
