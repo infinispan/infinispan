@@ -30,6 +30,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -39,7 +40,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheJoinInfo;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionTable;
@@ -122,13 +122,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting state transfer manager on " + rpcManager.getAddress());
       }
 
-      CacheJoinInfo joinInfo = new CacheJoinInfo(new DefaultConsistentHashFactory(), configuration.clustering().hash().hash(),
+      CacheJoinInfo joinInfo = new CacheJoinInfo(
+            configuration.clustering().cacheMode().isReplicated() 
+                  ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),
+            configuration.clustering().hash().hash(),
             configuration.clustering().hash().numVirtualNodes(), //todo [anistor] rename to numSegments
             configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
 
       localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
-
-         private CacheTopology cacheTopology;   //todo [anistor] this should actually be in LocalTopologyManager
 
          @Override
          public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
@@ -137,7 +138,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          @Override
          public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            cacheTopology = new CacheTopology(topologyId, currentCH, pendingCH);
             ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
             onTopologyUpdate(topologyId, ch);
          }
