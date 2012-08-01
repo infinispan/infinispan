@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class StateTransferLockInterceptor extends CommandInterceptor {
 
-   StateTransferLock stateTransferLock;
+   private StateTransferLock stateTransferLock;
    private long rpcTimeout;
 
    private static final Log log = LogFactory.getLog(StateTransferLockInterceptor.class);
@@ -195,7 +195,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
     * @return
     */
    private Object signalStateTransferInProgress(InvocationContext ctx) {
-         int viewId = stateTransferLock.getBlockingCacheViewId();
+      int viewId = stateTransferLock.getBlockingCacheViewId();
       if (ctx.isOriginLocal()) {
          throw new StateTransferInProgressException(viewId, "Timed out waiting for the state transfer lock, state transfer in progress for view " + viewId);
       } else {

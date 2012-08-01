@@ -38,7 +38,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Push state from the existing members of the cluster to the new members.
- * This is a base class, extended by the distributed an replicated versions.
+ * This is a base class, extended by the distributed and replicated versions.
  */
 public abstract class BaseStateTransferTask {
    private static final Log log = LogFactory.getLog(BaseStateTransferTask.class);

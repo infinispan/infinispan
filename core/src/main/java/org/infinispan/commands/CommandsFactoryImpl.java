@@ -74,6 +74,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.newstatetransfer.StateRequestCommand;
+import org.infinispan.newstatetransfer.StateResponseCommand;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.LockInfo;
@@ -123,6 +125,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Configuration configuration;
    private RecoveryManager recoveryManager;
    private StateTransferManager stateTransferManager;
+   private org.infinispan.newstatetransfer.StateTransferManager stateTransferManager2;
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
    private MapReduceManager mapReduceManager;
@@ -389,7 +392,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case StateTransferControlCommand.COMMAND_ID:
             StateTransferControlCommand rcc = (StateTransferControlCommand) c;
-            rcc.init(stateTransferManager, dataContainer, this);
+            rcc.init(stateTransferManager);
+            break;
+         case StateRequestCommand.COMMAND_ID:
+            ((StateRequestCommand) c).init(stateTransferManager2.getStateProvider());
+            break;
+         case StateResponseCommand.COMMAND_ID:
+            ((StateResponseCommand) c).init(stateTransferManager2.getStateConsumer());
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
@@ -451,14 +460,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                                int viewId) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId);
+                                                                int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
+      return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
    }
 
    @Override
-   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                                int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments) {
+      return new StateRequestCommand(cacheName, subtype, sender, viewId, segments);
+   }
+
+   @Override
+   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries) {
+      return new StateResponseCommand(cacheName, sender, viewId, segment, cacheEntries);
    }
 
    @Override
@@ -483,7 +496,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return new DistributedExecuteCommand(keys, callable);
+      return new DistributedExecuteCommand<T>(keys, callable);
    }
 
    @Override

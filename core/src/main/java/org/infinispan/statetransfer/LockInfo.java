@@ -40,7 +40,7 @@ public class LockInfo {
 
       @Override
       public Integer getId() {
-         return Ids.LOCK_INFO;
+         return Ids.TRANSACTION_INFO;
       }
 
       @Override

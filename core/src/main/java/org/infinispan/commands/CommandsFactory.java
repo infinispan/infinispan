@@ -53,6 +53,8 @@ import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.newstatetransfer.StateRequestCommand;
+import org.infinispan.newstatetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -293,21 +295,21 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags);
 
    /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
-    * control command with just a command type and sender.
-    * @param subtype type of RehashControlCommand
-    * @param sender sender's Address
-    * @param viewId the last view id on the sender
-    * @return a RehashControlCommand
-    */
-   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
+    * Builds a StateTransferControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
     * coordinates rehashing of nodes when a node join or leaves
     */
    StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
                                                          Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo);
+
+   /**
+    * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
+    */
+   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments);
+
+   /**
+    * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
+    */
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

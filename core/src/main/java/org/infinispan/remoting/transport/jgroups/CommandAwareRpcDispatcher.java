@@ -228,7 +228,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else {
          if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
          gcr.wireDependencies(cmd);
-         return cmd.perform(null);
+         return cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least provides the Address of the origin
       }
    }
 
