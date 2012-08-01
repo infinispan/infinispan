@@ -21,6 +21,9 @@ package org.infinispan.topology;
 
 import java.io.Serializable;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+
 /**
  * This class contains the information that a cache needs to supply to the coordinator when starting up.
  *
@@ -28,26 +31,26 @@ import java.io.Serializable;
  * @since 5.2
  */
 public class CacheJoinInfo implements Serializable {
-   private final String consistentHashFactoryClass;
-   private final String hashFunctionClass;
+   private final ConsistentHashFactory consistentHashFactory;
+   private final Hash hashFunction;
    private final int numSegments;
    private final int numOwners;
    private final int timeout;    //todo [anistor] is this actually used?
 
-   public CacheJoinInfo(String consistentHashFactoryClass, String hashFunctionClass, int numSegments, int numOwners, int timeout) {
-      this.consistentHashFactoryClass = consistentHashFactoryClass;
-      this.hashFunctionClass = hashFunctionClass;
+   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments, int numOwners, int timeout) {
+      this.consistentHashFactory = consistentHashFactory;
+      this.hashFunction = hashFunction;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.timeout = timeout;
    }
 
-   public String getConsistentHashFactoryClass() {
-      return consistentHashFactoryClass;
+   public ConsistentHashFactory getConsistentHashFactory() {
+      return consistentHashFactory;
    }
 
-   public String getHashFunctionClass() {
-      return hashFunctionClass;
+   public Hash getHashFunction() {
+      return hashFunction;
    }
 
    public int getNumSegments() {
