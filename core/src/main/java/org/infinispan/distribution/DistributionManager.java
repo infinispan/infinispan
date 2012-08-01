@@ -29,10 +29,11 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -87,15 +88,11 @@ public interface DistributionManager {
     * of the keys if a rehash happens to be in progress or is pending, so when querying these servers, invalid responses
     * should be checked for and the next address checked accordingly.
     *
+    *
     * @param keys list of keys to test
     * @return a list of addresses where the key may reside
     */
-   Map<Object, List<Address>> locateAll(Collection<Object> keys);
-
-   /**
-    * Same as {@link #locateAll(java.util.Collection)}, but the list of addresses only contains numOwners owners.
-    */
-   Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners);
+   Set<Address> locateAll(Collection<Object> keys);
 
    /**
     * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done
@@ -125,10 +122,10 @@ public interface DistributionManager {
 
    /**
     * Sets the consistent hash implementation in use.
-    * @param consistentHash consistent hash to set to
-    * @return previous consistent hash, the last one for which rehash completed
+    *
+    * @param cacheTopology@return previous consistent hash, the last one for which rehash completed
     */
-   ConsistentHash setConsistentHash(ConsistentHash consistentHash);
+   ConsistentHash setCacheTopology(CacheTopology cacheTopology);
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method

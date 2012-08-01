@@ -19,7 +19,7 @@
 
 package org.infinispan.topology;
 
-import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;

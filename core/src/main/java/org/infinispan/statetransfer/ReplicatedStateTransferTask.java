@@ -37,6 +37,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -84,7 +85,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
       //distributionManager.getTransactionLogger().enable();
       stateTransferLock.blockNewTransactions(newViewId);
 
-      Set<Address> joiners = chOld != null ? MembershipArithmetic.getMembersJoined(chOld.getCaches(), chNew.getCaches()) : chNew.getCaches();
+      List<Address> joiners = chOld != null ? MembershipArithmetic.getMembersJoined(chOld.getMembers(), chNew.getMembers()) : chNew.getMembers();
       if (joiners.isEmpty()) {
          log.tracef("No joiners in view %s, skipping replication", newViewId);
       } else {
@@ -138,7 +139,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
                           CacheStore cacheStore, ByRef<Collection<InternalCacheEntry>> stateRef) throws StateTransferCancelledException {
       // 1. Get the old primary owner for key K
       // That node will be the "pushing owner" for key K
-      final Address pushingOwner = chOld.primaryLocation(key);
+      final Address pushingOwner = chOld.locatePrimaryOwner(key);
 
       if (trace) log.tracef("Replicating key %s, pushing owner is %s",
             key, pushingOwner);

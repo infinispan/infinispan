@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.oldch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;

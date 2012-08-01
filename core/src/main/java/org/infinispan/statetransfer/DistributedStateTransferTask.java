@@ -29,6 +29,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.Immutables;
@@ -84,8 +85,8 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       this.stateTransferManager = stateTransferManager;
 
       // Cache sets for notification
-      oldCacheSet = chOld != null ? Immutables.immutableCollectionWrap(chOld.getCaches()) : Collections.<Address>emptySet();
-      newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
+      oldCacheSet = chOld != null ? Immutables.immutableCollectionWrap(chOld.getMembers()) : Collections.<Address>emptySet();
+      newCacheSet = Immutables.immutableCollectionWrap(chNew.getMembers());
       this.transactionTable = transactionTable;
    }
 
@@ -159,7 +160,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
          if (cacheStore != null) {
             if (trace) log.trace("Non-shared cache store, cleaning up persisted entries that we don't own after we joined the cache");
             for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-               if (!chNew.isKeyLocalToAddress(self, key, numOwners)) {
+               if (!chNew.isKeyLocalToNode(self, key)) {
                   keysToRemove.add(key);
                }
             }
@@ -169,7 +170,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
          if (trace) log.trace("Cleaning up preloaded entries (if preloading) that we don't own after we joined the cache");
          for (InternalCacheEntry ice : dataContainer) {
-            if (!chNew.isKeyLocalToAddress(self, ice.getKey(), numOwners)) {
+            if (!chNew.isKeyLocalToNode(self, ice.getKey())) {
                keysToRemove.add(ice.getKey());
             }
          }
@@ -184,7 +185,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       for (CacheTransaction cacheTx : tx) {
          for (Object key : cacheTx.getLockedKeys()) {
             Address oldLockOwner = self;
-            Address newLockOwner = chNew.locate(key, numOwners).get(0);
+            Address newLockOwner = chNew.locatePrimaryOwner(key);
             if (!oldLockOwner.equals(newLockOwner)) {
                log.tracef("Migrating lock %s from node %s to ", key, oldLockOwner, newLockOwner);
                Collection<LockInfo> lockInfo = locksToMigrate.get(newLockOwner);
@@ -205,7 +206,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
    @Override
    public void commitStateTransfer() {
       // update the distribution manager's consistent hash
-      dm.setConsistentHash(chNew);
+      dm.setCacheTopology(new CacheTopology(-1, null, null));
 
       if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
          // now we can invalidate the keys
@@ -237,8 +238,8 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
    private void rebalance(Object key, InternalCacheEntry value, int numOwners, ConsistentHash chOld, ConsistentHash chNew,
                             CacheStore cacheStore, Map<Address, Collection<InternalCacheEntry>> states, List<Object> keysToRemove) throws StateTransferCancelledException {
       // 1. Get the old and new servers for key K
-      List<Address> oldOwners = chOld.locate(key, numOwners);
-      List<Address> newOwners = chNew.locate(key, numOwners);
+      List<Address> oldOwners = chOld.locateOwners(key);
+      List<Address> newOwners = chNew.locateOwners(key);
 
       // 2. If the target set for K hasn't changed --> no-op
       if (oldOwners.equals(newOwners))
@@ -249,7 +250,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       Address pushingOwner = null;
       for (int i = oldOwners.size() - 1; i >= 0; i--) {
          Address server = oldOwners.get(i);
-         if (chNew.getCaches().contains(server)) {
+         if (chNew.getMembers().contains(server)) {
             pushingOwner = server;
             break;
          }

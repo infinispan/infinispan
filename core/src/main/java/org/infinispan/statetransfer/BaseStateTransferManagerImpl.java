@@ -35,7 +35,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.newch.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -435,14 +435,14 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void updateConsistentHash(org.infinispan.distribution.newch.ConsistentHash currentCH, org.infinispan.distribution.newch.ConsistentHash pendingCH) {
+   public void updateConsistentHash(ConsistentHash currentCH, ConsistentHash pendingCH) {
       if (pendingCH == null && currentCH.getMembers().contains(rpcManager.getAddress())) {
          joinCompletedLatch.countDown();
       }
    }
 
    @Override
-   public void rebalance(int topologyId, org.infinispan.distribution.newch.ConsistentHash pendingCH) {
+   public void rebalance(int topologyId, ConsistentHash pendingCH) {
    }
 
    private static interface CommandBuilder {

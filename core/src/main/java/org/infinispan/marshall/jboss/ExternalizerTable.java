@@ -54,9 +54,9 @@ import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheE
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
-import org.infinispan.distribution.newch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.oldch.UnionConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;

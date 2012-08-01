@@ -17,7 +17,7 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.distribution.newch;
+package org.infinispan.distribution.ch;
 
 import java.util.*;
 

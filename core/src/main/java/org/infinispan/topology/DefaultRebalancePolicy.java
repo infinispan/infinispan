@@ -29,8 +29,8 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.distribution.newch.ConsistentHash;
-import org.infinispan.distribution.newch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;

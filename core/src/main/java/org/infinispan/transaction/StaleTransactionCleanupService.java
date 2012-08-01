@@ -112,8 +112,8 @@ public class StaleTransactionCleanupService {
          List<Object> keys = new ArrayList<Object>();
          boolean txHasLocalKeys = false;
          for (Object key : remoteTx.getLockedKeys()) {
-            boolean wasLocal = chOld.isKeyLocalToAddress(self, key, numOwners);
-            boolean isLocal = chNew.isKeyLocalToAddress(self, key, numOwners);
+            boolean wasLocal = chOld.isKeyLocalToNode(self, key);
+            boolean isLocal = chNew.isKeyLocalToNode(self, key);
             if (wasLocal && !isLocal) {
                keys.add(key);
             }

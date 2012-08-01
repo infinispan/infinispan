@@ -19,7 +19,7 @@
 
 package org.infinispan.topology;
 
-import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 
 /**
  * The link between {@link LocalTopologyManager} and {@StateTransferManager}.

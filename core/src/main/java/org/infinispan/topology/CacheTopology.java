@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -24,7 +24,7 @@ public class CacheTopology implements Serializable {
    ConsistentHash currentCH;
    ConsistentHash pendingCH;
 
-   CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
       this.topologyId = topologyId;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;

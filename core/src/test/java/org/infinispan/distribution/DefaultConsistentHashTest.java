@@ -22,9 +22,10 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.commons.hash.*;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.oldch.ConsistentHashHelper;
+import org.infinispan.distribution.oldch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -32,6 +33,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -41,13 +43,10 @@ import static org.testng.Assert.assertEquals;
 public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
    public DefaultConsistentHash createConsistentHash(List<Address> servers) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().hash()
-            .consistentHash(new DefaultConsistentHash())
-            .numVirtualNodes(1)
-            .build();
-      return (DefaultConsistentHash)
-            ConsistentHashHelper.createConsistentHash(builder.build(), false, servers);
+      DefaultConsistentHash ch = new DefaultConsistentHash(new org.infinispan.commons.hash.MurmurHash3());
+      ch.setNumVirtualNodes(1);
+      ch.setCaches(new HashSet<Address>(servers));
+      return ch;
    }
 
    public void testSimpleHashing() {

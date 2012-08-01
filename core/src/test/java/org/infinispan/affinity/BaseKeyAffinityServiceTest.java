@@ -28,7 +28,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 
 import java.util.Collection;
 import java.util.List;
@@ -70,7 +69,7 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest 
 
    protected void assertMapsToAddress(Object o, Address addr) {
       ConsistentHash hash = caches.get(0).getAdvancedCache().getDistributionManager().getConsistentHash();
-      List<Address> addresses = hash.locate(o, numOwners);
+      List<Address> addresses = hash.locateOwners(o);
       assertEquals("Expected key " + o + " to map to address " + addr + ". List of addresses is" + addresses, true, addresses.contains(addr));
    }
 

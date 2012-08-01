@@ -21,7 +21,6 @@ package org.infinispan.topology;
 
 import java.util.List;
 
-import org.infinispan.distribution.newch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;

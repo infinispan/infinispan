@@ -23,7 +23,7 @@
 package org.infinispan.distribution.virtualnodes;
 
 import org.infinispan.distribution.DistSyncFuncTest;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.oldch.DefaultConsistentHash;
 import org.testng.annotations.Test;
 
 /**

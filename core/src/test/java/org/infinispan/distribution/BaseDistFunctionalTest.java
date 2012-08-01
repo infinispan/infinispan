@@ -25,17 +25,17 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.oldch.UnionConsistentHash;
 import org.infinispan.distribution.group.Grouper;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -47,7 +47,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -123,12 +122,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return configuration;
    }
 
-   protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
+   protected static ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.clustering().hash()
-            .consistentHash(new DefaultConsistentHash());
-         return ConsistentHashHelper.createConsistentHash(builder.build(), false, servers);
+            .consistentHash(null);
+         // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
+         return new DefaultConsistentHashFactory().create(new MurmurHash3(), 2, 10, servers);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {
@@ -151,7 +151,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
 
       
-      for (Address a : ch.getCaches()) {
+      for (Address a : ch.getMembers()) {
          for (Cache<Object, String> c : caches) {
             EmbeddedCacheManager cacheManager = c.getCacheManager();
             if (a.equals(cacheManager.getAddress())) {
@@ -252,7 +252,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       for (Cache c : caches) {
          ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
          int i = 0;
-         for (Address a : dch.getCaches()) {
+         for (Address a : dch.getMembers()) {
             if (a.equals(joinerAddress)) return i;
             i++;
          }
@@ -351,6 +351,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected ConsistentHash getNonUnionConsistentHash(Cache<?, ?> c, long timeout) {
+      // TODO Return only when the pending ch in DistributionManager is null instead
       long expTime = System.currentTimeMillis() + timeout;
       while (System.currentTimeMillis() < expTime) {
          ConsistentHash ch = c.getAdvancedCache().getDistributionManager().getConsistentHash();
