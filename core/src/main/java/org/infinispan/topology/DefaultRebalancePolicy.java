@@ -162,7 +162,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             if (currentCH == null) {
                ConsistentHash balancedCH = cacheStatus.chFactory.create(cacheStatus.hash,
                      cacheStatus.numOwners, cacheStatus.numSegments, newMembers);
-               cacheStatus.balancedCH = balancedCH;
                int newTopologyId = topologyId + 1;
                cacheStatus.cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
                clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, balancedCH, null);
@@ -188,10 +187,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
       ConsistentHash updatedMembersCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers);
       ConsistentHash balancedCH = cacheStatus.chFactory.rebalance(updatedMembersCH);
-      cacheStatus.balancedCH = balancedCH;
-      ConsistentHash newPendingCH = cacheStatus.chFactory.union(currentCH, balancedCH);
-      cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, newPendingCH);
-      clusterTopologyManager.rebalance(cacheName, newTopologyId, currentCH, newPendingCH);
+      cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
+      clusterTopologyManager.rebalance(cacheName, newTopologyId, currentCH, balancedCH);
    }
 
    @Override
@@ -202,12 +199,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       synchronized (cacheStatus) {
          assert topologyId == cacheStatus.cacheTopology.getTopologyId();
          int newTopologyId = topologyId + 1;
-         ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
-         // TODO Move balancedCH to the CacheTopology, rename "pendingCH" to "unionCH"
-         ConsistentHash newCurrentCH = cacheStatus.balancedCH;
+         ConsistentHash newCurrentCH = cacheStatus.cacheTopology.getPendingCH();
 
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
-         cacheStatus.balancedCH = null;
          clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, newCurrentCH, null);
       }
    }
@@ -226,7 +220,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
       private CacheTopology cacheTopology;
       private List<Address> joiners;
-      public ConsistentHash balancedCH;
 
       public CacheStatus(CacheJoinInfo joinInfo, GlobalConfiguration globalConfiguration) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
          Class<?> chfClass = globalConfiguration.classLoader().loadClass(joinInfo.getConsistentHashFactoryClass());
@@ -249,7 +242,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                ", numOwners=" + numOwners +
                ", cacheTopology=" + cacheTopology +
                ", joiners=" + joiners +
-               ", balancedCH=" + balancedCH +
                '}';
       }
    }
