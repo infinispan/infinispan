@@ -153,7 +153,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     *    - if tx.viewId > TT.minViewId then "k" might be a key whose owner crashed. If so:
     *       - obtain the list LT of transactions that started in a previous view (txTable.getTransactionsPreparedBefore)
     *       - for each t in LT:
-    *          - if t wants to to write "k" then block until t finishes (CacheTransaction.waitForTransactionsToFinishIfItWritesToKey)
+    *          - if t wants to write "k" then block until t finishes (CacheTransaction.waitForTransactionsToFinishIfItWritesToKey)
     *       - only then try to acquire lock on "k"
     *    - if tx.viewId == TT.minViewId try to acquire lock straight away.
     *
