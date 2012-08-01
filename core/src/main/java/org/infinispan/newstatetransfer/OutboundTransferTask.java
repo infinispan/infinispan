@@ -26,7 +26,7 @@ package org.infinispan.newstatetransfer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -66,7 +66,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final int stateTransferChunkSize;
 
-   private final AdvancedConsistentHash ch;
+   private final ConsistentHash ch;
 
    private final DataContainer dataContainer;
 
@@ -83,7 +83,7 @@ public class OutboundTransferTask implements Runnable {
    private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null, 10);  //todo [anistor] why do we have to specify a capacity?
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
-                               int topologyId, AdvancedConsistentHash ch, StateProviderImpl stateProvider, DataContainer dataContainer,
+                               int topologyId, ConsistentHash ch, StateProviderImpl stateProvider, DataContainer dataContainer,
                                CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
                                CommandsFactory commandsFactory, long timeout) {
       if (segments == null || segments.isEmpty()) {

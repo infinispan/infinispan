@@ -19,7 +19,7 @@
 
 package org.infinispan.distribution.group;
 
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * {@link AdvancedConsistentHash} wrapper that groups keys to the same node based on their @{@link Group}
+ * {@link ConsistentHash} wrapper that groups keys to the same node based on their @{@link Group}
  * annotation.
  * <p/>
  * It uses a {@link GroupManager} to determine the group key from annotations.
@@ -35,11 +35,11 @@ import java.util.Set;
  * @author Dan Berindei
  * @since 5.2
  */
-public class GroupingAdvancedConsistentHash implements AdvancedConsistentHash {
-   private AdvancedConsistentHash ch;
+public class GroupingAdvancedConsistentHash implements ConsistentHash {
+   private ConsistentHash ch;
    private GroupManager groupManager;
 
-   public GroupingAdvancedConsistentHash(AdvancedConsistentHash ch, GroupManager groupManager) {
+   public GroupingAdvancedConsistentHash(ConsistentHash ch, GroupManager groupManager) {
       this.ch = ch;
       this.groupManager = groupManager;
    }

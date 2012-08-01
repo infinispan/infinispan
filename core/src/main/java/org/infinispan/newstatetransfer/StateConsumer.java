@@ -24,7 +24,7 @@
 package org.infinispan.newstatetransfer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
@@ -48,7 +48,7 @@ public interface StateConsumer {
     * @param topologyId the new topology id
     * @param newCh      the new consistent hash
     */
-   void onTopologyUpdate(int topologyId, AdvancedConsistentHash newCh);
+   void onTopologyUpdate(int topologyId, ConsistentHash newCh);
 
    void applyTransactions(Address sender, int topologyId, Collection<TransactionInfo> transactions);
 

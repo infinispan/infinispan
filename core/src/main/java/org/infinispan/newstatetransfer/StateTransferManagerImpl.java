@@ -28,7 +28,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.factories.annotations.ComponentName;
@@ -70,7 +69,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private String cacheName;
 
    private int topologyId;
-   private AdvancedConsistentHash currentCh = null;
+   private ConsistentHash currentCh = null;
 
    private StateProvider stateProvider;
    private StateConsumer stateConsumer;
@@ -144,7 +143,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          @Override
          public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
             cacheTopology = new CacheTopology(topologyId, currentCH, pendingCH);
-            AdvancedConsistentHash ch = (AdvancedConsistentHash) (pendingCH != null ? pendingCH : currentCH);
+            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
             onTopologyUpdate(topologyId, ch);
          }
       });
@@ -168,7 +167,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, AdvancedConsistentHash newCh) {
+   public void onTopologyUpdate(int topologyId, ConsistentHash newCh) {
       currentCh = newCh;
       try {
          stateTransferLock.blockNewTransactions(topologyId);

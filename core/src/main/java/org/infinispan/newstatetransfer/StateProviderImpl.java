@@ -27,7 +27,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -60,7 +60,7 @@ public class StateProviderImpl implements StateProvider {
    private long timeout;
 
    private int topologyId;
-   private AdvancedConsistentHash currentCh = null;
+   private ConsistentHash currentCh = null;
 
    private Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
@@ -82,7 +82,7 @@ public class StateProviderImpl implements StateProvider {
       timeout = configuration.clustering().stateTransfer().timeout();
    }
 
-   public void onTopologyUpdate(int topologyId, AdvancedConsistentHash ch) {
+   public void onTopologyUpdate(int topologyId, ConsistentHash ch) {
       // cancel outbound state transfers for destinations that are no longer members in this topology
       Set<Address> members = new HashSet<Address>(ch.getMembers());
       for (Address destination : transfersByDestination.keySet()) {
