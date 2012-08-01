@@ -32,7 +32,7 @@ public class CacheJoinInfo implements Serializable {
    private final String hashFunctionClass;
    private final int numSegments;
    private final int numOwners;
-   private final int timeout;
+   private final int timeout;    //todo [anistor] is this actually used?
 
    public CacheJoinInfo(String consistentHashFactoryClass, String hashFunctionClass, int numSegments, int numOwners, int timeout) {
       this.consistentHashFactoryClass = consistentHashFactoryClass;

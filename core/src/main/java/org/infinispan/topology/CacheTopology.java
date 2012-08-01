@@ -20,9 +20,9 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public class CacheTopology implements Serializable {
-   int topologyId;
-   ConsistentHash currentCH;
-   ConsistentHash pendingCH;
+   private final int topologyId;
+   private final ConsistentHash currentCH;
+   private final ConsistentHash pendingCH;
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
       this.topologyId = topologyId;

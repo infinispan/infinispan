@@ -1,5 +1,4 @@
 /*
-/*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -108,7 +107,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                ConsistentHash newCurrentCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers1);
                List<Address> newMembers = new ArrayList<Address>(pendingCH.getMembers());
                newMembers.retainAll(newClusterMembers);
-               ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);
+               ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);     //todo [anistor] what if pendingCH is null?
                cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
                clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
             }
@@ -129,7 +128,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             // The list of "current" members will always be included in the set of "pending" members,
             // because leaves are reflected at the same time in both collections
             List<Address> newMembers = new ArrayList<Address>(clusterMembers);
-            newMembers.retainAll(pendingCH.getMembers());
+            newMembers.retainAll(pendingCH.getMembers());               //todo [anistor] what if pendingCH is null?
             ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);
 
             newMembers.retainAll(currentCH.getMembers());
@@ -185,7 +184,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    }
 
    private void doRebalance(String cacheName, CacheStatus cacheStatus, List<Address> newMembers) throws Exception {
-      int newTopologyId = cacheStatus.cacheTopology.topologyId + 1;
+      int newTopologyId = cacheStatus.cacheTopology.getTopologyId() + 1;
       ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
       ConsistentHash updatedMembersCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers);
       ConsistentHash balancedCH = cacheStatus.chFactory.rebalance(updatedMembersCH);
