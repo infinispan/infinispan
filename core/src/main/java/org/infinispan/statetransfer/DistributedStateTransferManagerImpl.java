@@ -67,7 +67,6 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
       this.dm = dm;
    }
 
-
    @Override
    protected BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView) {
       return new DistributedStateTransferTask(rpcManager, configuration, dataContainer,

@@ -435,14 +435,14 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void updateConsistentHash(ConsistentHash currentCH, ConsistentHash pendingCH) {
+   public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
       if (pendingCH == null && currentCH.getMembers().contains(rpcManager.getAddress())) {
          joinCompletedLatch.countDown();
       }
    }
 
    @Override
-   public void rebalance(int topologyId, ConsistentHash pendingCH) {
+   public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
    }
 
    private static interface CommandBuilder {

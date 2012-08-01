@@ -19,17 +19,17 @@
 
 package org.infinispan.distribution.group;
 
+import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.remoting.transport.Address;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
-import org.infinispan.remoting.transport.Address;
-
 /**
  * {@link AdvancedConsistentHash} wrapper that groups keys to the same node based on their @{@link Group}
  * annotation.
- *
+ * <p/>
  * It uses a {@link GroupManager} to determine the group key from annotations.
  *
  * @author Dan Berindei
@@ -63,6 +63,11 @@ public class GroupingAdvancedConsistentHash implements AdvancedConsistentHash {
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
       return ch.locatePrimaryOwnerForSegment(segmentId);
+   }
+
+   @Override
+   public Set<Integer> getSegmentsForOwner(Address owner) {
+      return ch.getSegmentsForOwner(owner);
    }
 
    @Override
