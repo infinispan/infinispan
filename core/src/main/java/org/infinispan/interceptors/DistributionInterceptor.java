@@ -489,7 +489,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
                	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
-               		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
+               		if (trace) log.tracef("Put occurring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                      if (useFuture) {
                		   futureToReturn = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue,
                                                               ctx.getOrigin(), !(command instanceof RemoveCommand));
@@ -519,7 +519,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             	// Piggyback remote puts and cause L1 invalidations
             	if (isL1CacheEnabled && !skipL1Invalidation) {
                	// Command was successful and L1 should be flushed, so request any L1 invalidations from this node
-            		if (trace) log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
+            		if (trace) log.tracef("Put occurring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
                   // If this is a remove command, then don't pass in the origin - since the entru would be removed from the origin's L1 cache.
             		invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),
                                                                             returnValue, ctx.getOrigin(), !(command instanceof RemoveCommand));
