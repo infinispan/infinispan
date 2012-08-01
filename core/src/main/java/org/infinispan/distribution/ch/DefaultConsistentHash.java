@@ -39,7 +39,7 @@ import org.infinispan.util.Util;
  * @since 5.2
  */
 @Immutable
-public class DefaultConsistentHash implements AdvancedConsistentHash {
+public class DefaultConsistentHash implements ConsistentHash {
 
    private final Hash hashFunction;
    private final int numSegments;

@@ -24,16 +24,16 @@ import org.infinispan.remoting.transport.Address;
 import java.util.*;
 
 /**
- * Special implementation of {@link AdvancedConsistentHash} for replicated caches.
+ * Special implementation of {@link ConsistentHash} for replicated caches.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-public class ReplicatedConsistentHash implements AdvancedConsistentHash {
+public class ReplicatedConsistentHash implements ConsistentHash {
 
-   private List<Address> members;
+   private final List<Address> members;
 
-   private Set<Integer> theSegment = Collections.singleton(0);
+   private final Set<Integer> theSegment = Collections.singleton(0);
 
    public ReplicatedConsistentHash(List<Address> members) {
       this.members = new ArrayList<Address>(members);
@@ -66,7 +66,7 @@ public class ReplicatedConsistentHash implements AdvancedConsistentHash {
 
    @Override
    public int getNumOwners() {
-      return Integer.MAX_VALUE;
+      return members.size();
    }
 
    @Override
@@ -92,5 +92,12 @@ public class ReplicatedConsistentHash implements AdvancedConsistentHash {
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
       return true;
+   }
+
+   @Override
+   public String toString() {
+      return "ReplicatedConsistentHash{" +
+            "members=" + members +
+            '}';
    }
 }

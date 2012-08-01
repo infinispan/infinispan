@@ -66,7 +66,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
    }
 
-   private void checkDistribution(AdvancedConsistentHash ch, boolean allowExtraOwners) {
+   private void checkDistribution(ConsistentHash ch, boolean allowExtraOwners) {
       int numSegments = ch.getNumSegments();
       List<Address> nodes = ch.getMembers();
       int numNodes = nodes.size();

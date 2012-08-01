@@ -23,7 +23,7 @@
 
 package org.infinispan.newstatetransfer;
 
-import org.infinispan.distribution.ch.AdvancedConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
@@ -43,7 +43,7 @@ public interface StateProvider {
     * @param topologyId the new topology id
     * @param ch         the new consistent hash
     */
-   void onTopologyUpdate(int topologyId, AdvancedConsistentHash ch);
+   void onTopologyUpdate(int topologyId, ConsistentHash ch);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a
