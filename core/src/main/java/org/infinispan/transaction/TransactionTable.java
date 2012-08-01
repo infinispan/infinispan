@@ -355,6 +355,20 @@ public class TransactionTable {
       return localTransactions.size();
    }
 
+   /**
+    * Looks up a LocalTransaction given a GlobalTransaction.
+    * @param txId
+    * @return
+    */
+   public LocalTransaction getLocalTransaction(GlobalTransaction txId) {
+      for (LocalTransaction localTx : localTransactions.values()) { //todo [anistor] optimize lookup!
+         if (txId.equals(localTx.getGlobalTransaction())) {
+            return localTx;
+         }
+      }
+      return null;
+   }
+
    public LocalTransaction getLocalTransaction(Transaction tx) {
       return localTransactions.get(tx);
    }
@@ -367,7 +381,7 @@ public class TransactionTable {
       return remoteTransactions.values();
    }
 
-   protected final LocalTransaction getLocalTx(Transaction tx) {
+   protected final LocalTransaction getLocalTx(Transaction tx) {    //todo [anistor] replace this with getLocalTransaction(Transaction tx)
       return localTransactions.get(tx);
    }
 
