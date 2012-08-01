@@ -58,6 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
+   // TODO During state transfer, we should try to assign keys to a node only if they are owners in both CHs
    public final static float THRESHOLD = 0.5f;
    
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
@@ -207,7 +208,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       maxNumberInvariant.writeLock().lock();
       try {
          address2key.clear(); //we need to drop everything as key-mapping data is stale due to view change
-         addQueuesForAddresses(vce.getConsistentHashAtEnd().getCaches());
+         addQueuesForAddresses(vce.getConsistentHashAtEnd().getMembers());
          resetNumberOfKeys();
          keyProducerStartLatch.open();
       } finally {
@@ -342,13 +343,13 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private Address getAddressForKey(Object key) {
       DistributionManager distributionManager = getDistributionManager();
       ConsistentHash hash = distributionManager.getConsistentHash();
-      return hash.primaryLocation(key);
+      return hash.locatePrimaryOwner(key);
    }
 
    private boolean isNodeInConsistentHash(Address address) {
       DistributionManager distributionManager = getDistributionManager();
       ConsistentHash hash = distributionManager.getConsistentHash();
-      return hash.getCaches().contains(address);
+      return hash.getMembers().contains(address);
    }
    private DistributionManager getDistributionManager() {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();

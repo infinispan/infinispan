@@ -30,7 +30,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import org.infinispan.test.TestingUtil
-import org.infinispan.distribution.ch.UnionConsistentHash
+import org.infinispan.distribution.oldch.UnionConsistentHash
 import org.infinispan.test.AbstractCacheTest._
 import collection.{immutable, mutable}
 import test.{TestHashDistAware10Response, HotRodClient}

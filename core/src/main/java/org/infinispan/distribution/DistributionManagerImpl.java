@@ -32,7 +32,6 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
@@ -46,6 +45,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
@@ -55,7 +55,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +82,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private CacheNotifier cacheNotifier;
    private StateTransferManager stateTransferManager;
 
-   private volatile ConsistentHash consistentHash;
+   private volatile CacheTopology cacheTopology;
    private GlobalConfiguration globalCfg;
 
    /**
@@ -107,8 +106,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Start(priority = 20)
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
-      consistentHash = ConsistentHashHelper.createConsistentHash(configuration,
-            globalCfg.transport().hasTopologyInfo(), Collections.singleton(rpcManager.getAddress()));
    }
 
    private int getReplCount() {
@@ -127,7 +124,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public DataLocality getLocality(Object key) {
-      boolean local = getConsistentHash().isKeyLocalToAddress(getAddress(), key, getReplCount());
+      boolean local = isKeyLocalToAddress(key);
       if (isRehashInProgress()) {
          if (local) {
             return DataLocality.LOCAL_UNCERTAIN;
@@ -143,24 +140,24 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
+   private boolean isKeyLocalToAddress(Object key) {
+      // TODO Add a boolean flag to select the read consistent hash?
+      return cacheTopology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+   }
+
    @Override
    public List<Address> locate(Object key) {
-      return getConsistentHash().locate(key, getReplCount());
+      return getConsistentHash().locateOwners(key);
    }
 
    @Override
    public Address getPrimaryLocation(Object key) {
-      return getConsistentHash().primaryLocation(key);
+      return getConsistentHash().locatePrimaryOwner(key);
    }
 
    @Override
-   public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
-      return locateAll(keys, getReplCount());
-   }
-
-   @Override
-   public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
-      return getConsistentHash().locateAll(keys, numOwners);
+   public Set<Address> locateAll(Collection<Object> keys) {
+      return getConsistentHash().locateAllOwners(keys);
    }
 
    @Override
@@ -195,15 +192,17 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public ConsistentHash getConsistentHash() {
-      return consistentHash;
+      return cacheTopology.getWriteConsistentHash();
    }
 
    @Override
-   public ConsistentHash setConsistentHash(ConsistentHash newCH) {
-      if (trace) log.tracef("Installing new consistent hash %s", newCH);
-      ConsistentHash oldCH = consistentHash;
+   public ConsistentHash setCacheTopology(CacheTopology newCacheTopology) {
+      if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
+      // TODO Replace the topology change notification with another notification that accepts two consistent hashes and a topology id
+      ConsistentHash oldCH = cacheTopology.getWriteConsistentHash();
+      ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
-      this.consistentHash = newCH;
+      this.cacheTopology = newCacheTopology;
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
       return oldCH;
    }
@@ -238,8 +237,7 @@ public class DistributionManagerImpl implements DistributionManager {
          return Collections.emptyList();
       }
 
-      Set<Address> an = new HashSet<Address>();
-      for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
+      Set<Address> an = locateAll(affectedKeys);
       return Immutables.immutableListConvert(an);
    }
 
@@ -259,6 +257,6 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public String toString() {
-      return "DistributionManagerImpl[consistentHash=" + consistentHash + "]";
+      return "DistributionManagerImpl[" + cacheTopology + "]";
    }
 }

@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.distribution.ch;
+package org.infinispan.distribution.oldch;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.cache.Configuration;
@@ -69,7 +69,7 @@ public class ConsistentHashHelper {
    private static ConsistentHash constructConsistentHashInstance(
             Configuration c, boolean withTopology) {
       HashConfiguration hashCfg = c.clustering().hash();
-      return constructConsistentHashInstance(hashCfg.consistentHash(),
+      return constructConsistentHashInstance(null, // hashCfg.consistentHash()
             hashCfg.hash(), hashCfg.numVirtualNodes(),
             new GroupManagerImpl(hashCfg.groups().groupers()), withTopology);
    }

@@ -594,9 +594,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       @Override
       public List<Address> generateRecipients() {
          if (recipients == null) {
-            Set<Address> addresses = new HashSet<Address>();
-            Map<Object, List<Address>> recipientsMap = dm.locateAll(keys);
-            for (List<Address> a : recipientsMap.values()) addresses.addAll(a);
+            Set<Address> addresses = dm.locateAll(keys);
             recipients = Immutables.immutableListConvert(addresses);
          }
          return recipients;

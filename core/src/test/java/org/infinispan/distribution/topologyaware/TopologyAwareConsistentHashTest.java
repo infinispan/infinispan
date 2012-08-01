@@ -25,7 +25,7 @@ package org.infinispan.distribution.topologyaware;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TestTopologyAwareAddress;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;

@@ -122,9 +122,9 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
    public void testCollocatedKey() {
       ConsistentHash hash = manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getConsistentHash();
       for (int i = 0; i < 1000; i++) {
-         List<Address> addresses = hash.locate(i, numOwners);
+         List<Address> addresses = hash.locateOwners(i);
          Object collocatedKey = keyAffinityService.getCollocatedKey(i);
-         List<Address> addressList = hash.locate(collocatedKey, numOwners);
+         List<Address> addressList = hash.locateOwners(collocatedKey);
          assertEquals(addresses, addressList);
       }
    }

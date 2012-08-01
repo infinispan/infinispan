@@ -3,8 +3,6 @@ package org.infinispan.lock.singlelock;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -73,7 +71,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
 
       Object migratedKey = null;
       for (Object key : key2Tx.keySet()) {
-         if (advancedCache(2).getDistributionManager().getConsistentHash().primaryLocation(key).equals(address(2))) {
+         if (advancedCache(2).getDistributionManager().getConsistentHash().locatePrimaryOwner(key).equals(address(2))) {
             migratedKey = key;
          }
       }

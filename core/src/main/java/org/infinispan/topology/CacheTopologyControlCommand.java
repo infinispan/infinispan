@@ -27,7 +27,7 @@ import java.io.Serializable;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;

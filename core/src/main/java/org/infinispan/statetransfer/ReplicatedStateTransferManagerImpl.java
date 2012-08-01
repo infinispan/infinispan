@@ -18,8 +18,11 @@
  */
 package org.infinispan.statetransfer;
 
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
+import org.infinispan.distribution.oldch.ConsistentHashHelper;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
@@ -56,7 +59,9 @@ public class ReplicatedStateTransferManagerImpl extends BaseStateTransferManager
    protected ConsistentHash createConsistentHash(List<Address> members) {
       // The user will not be able to configure the consistent hash in replicated mode
       // We are always going to use the default consistent hash function.
-      return ConsistentHashHelper.createConsistentHash(configuration, withTopology, members);
+      ConsistentHashFactory<?> chf = new DefaultConsistentHashFactory();
+      HashConfiguration hashConfig = configuration.clustering().hash();
+      return chf.create(hashConfig.hash(), hashConfig.numOwners(), hashConfig.numVirtualNodes(), members);
    }
 
    @Override

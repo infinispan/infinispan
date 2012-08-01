@@ -20,10 +20,13 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
+import org.infinispan.distribution.oldch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.loaders.CacheStore;
@@ -78,7 +81,9 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
 
    @Override
    protected ConsistentHash createConsistentHash(List<Address> members) {
-      return ConsistentHashHelper.createConsistentHash(configuration, withTopology, members);
+      ConsistentHashFactory<?> chf = new DefaultConsistentHashFactory();
+      HashConfiguration hashConfig = configuration.clustering().hash();
+      return chf.create(hashConfig.hash(), hashConfig.numOwners(), hashConfig.numVirtualNodes(), members);
    }
 
    public void invalidateKeys(List<Object> keysToRemove) {
@@ -107,8 +112,8 @@ public class DistributedStateTransferManagerImpl extends BaseStateTransferManage
    @Override
    public boolean isLocationInDoubt(Object key) {
       int numOwners = configuration.clustering().hash().numOwners();
-      return isStateTransferInProgress() && !chOld.isKeyLocalToAddress(getAddress(), key, numOwners)
-            && chNew.isKeyLocalToAddress(getAddress(), key, numOwners);
+      return isStateTransferInProgress() && !chOld.isKeyLocalToNode(getAddress(), key)
+            && chNew.isKeyLocalToNode(getAddress(), key);
    }
 }
 

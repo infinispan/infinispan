@@ -26,7 +26,7 @@ package org.infinispan.distribution.virtualnodes;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;

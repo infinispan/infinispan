@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.distribution.newch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.Response;
