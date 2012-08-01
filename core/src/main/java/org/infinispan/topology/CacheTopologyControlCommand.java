@@ -46,6 +46,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheTopologyControlCommand implements ReplicableCommand, Serializable {
 
    public enum Type {
+      // member to coordinator:
       // a node is requesting to join the cluster
       JOIN,
       // a member is signaling that it wants to leave the cluster
@@ -53,6 +54,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand, Serializa
       // a member is confirming that it finished the rebalance operation
       REBALANCE_CONFIRM,
 
+      // coordinator to member:
       // the coordinator is updating the consistent hash
       CH_UPDATE,
       // the coordinator is starting a rebalance operation
@@ -140,10 +142,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand, Serializa
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleConsistentHashUpdate(cacheName, currentCH, pendingCH);
+            localTopologyManager.handleConsistentHashUpdate(cacheName, topologyId, currentCH, pendingCH);
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, topologyId, currentCH);
+            localTopologyManager.handleRebalance(cacheName, topologyId, currentCH, pendingCH);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest();

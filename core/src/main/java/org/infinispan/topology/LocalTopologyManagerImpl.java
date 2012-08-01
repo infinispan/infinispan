@@ -118,22 +118,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleConsistentHashUpdate(String cacheName, ConsistentHash currentCH, ConsistentHash pendingCH) {
+   public void handleConsistentHashUpdate(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
       log.debugf("Updating local consistent hash(es) for cache %s: currentCH = %s, pendingCH = %s",
             cacheName, currentCH, pendingCH);
       CacheTopologyHandler handler = runningCaches.get(cacheName).handler;
-      handler.updateConsistentHash(currentCH, pendingCH);
+      handler.updateConsistentHash(topologyId, currentCH, pendingCH);
    }
 
    @Override
-   public void handleRebalance(String cacheName, int topologyId, ConsistentHash pendingCH) throws InterruptedException {
+   public void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws InterruptedException {
       log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s", cacheName, topologyId, pendingCH);
       LocalCacheStatus status = runningCaches.get(cacheName);
       status.joinedLatch.await();
 
       CacheTopologyHandler handler = status.handler;
       try {
-         handler.rebalance(topologyId, pendingCH);
+         handler.rebalance(topologyId, currentCH, pendingCH);
       } finally {
          // TODO If there was an exception, propagate the exception back to the coordinator
          // We don't want to block further rebalancing just because we got an exception on one node
@@ -152,8 +152,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
-   private Object executeOnCoordinator(ReplicableCommand command, int timeout)
-         throws Exception {
+   private Object executeOnCoordinator(ReplicableCommand command, int timeout) throws Exception {
       Response response;
       if (transport.isCoordinator()) {
          try {
@@ -175,8 +174,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       return ((SuccessfulResponse) response).getResponseValue();
    }
 
-   private void executeOnCoordinatorAsync(ReplicableCommand command)
-         throws Exception {
+   private void executeOnCoordinatorAsync(ReplicableCommand command) throws Exception {
       // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
          try {

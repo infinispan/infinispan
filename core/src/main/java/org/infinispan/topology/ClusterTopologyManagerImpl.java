@@ -300,7 +300,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
 
-   static class RebalanceInfo {
+   private static class RebalanceInfo {
       private final int topologyId;
       private final Set<Address> confirmationsNeeded;
 
