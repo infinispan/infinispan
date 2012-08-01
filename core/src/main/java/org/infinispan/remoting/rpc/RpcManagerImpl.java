@@ -29,7 +29,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -90,7 +89,6 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private boolean stateTransferEnabled;
    private Configuration configuration;
    private GlobalConfiguration globalCfg;
    private ReplicationQueue replicationQueue;
@@ -116,7 +114,6 @@ public class RpcManagerImpl implements RpcManager {
 
    @Start(priority = 9)
    private void start() {
-      stateTransferEnabled = Configurations.isStateTransferEnabled(configuration);
       statisticsEnabled = configuration.jmxStatistics().enabled();
    }
 

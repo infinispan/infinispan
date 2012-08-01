@@ -71,7 +71,7 @@ public interface Ids {
    int ATOMIC_REMOVE_OPERATION = 48;
    int ATOMIC_CLEAR_OPERATION = 49;
    int DEFAULT_CONSISTENT_HASH = 51;
-   int UNION_CONSISTENT_HASH = 52;
+   // 52 no longer in use, used to be UnionConsistentHash
    int UNSURE_RESPONSE = 54;
    // 55 - 56 no longer in use since server modules can now register their own externalizers
    int BYTE_ARRAY_KEY = 57;
@@ -81,7 +81,7 @@ public interface Ids {
    // commands (ids between 21 and 37 both inclusive and 50 and 53, are no longer in use, might get reused at a later stage)
    int REPLICABLE_COMMAND = 62;
 
-   int REMOTE_TX_LOG_DETAILS = 63;
+   // 63 no longer in use. used to be RemoteTransactionLogDetails
 
    int XID = 66;
    int XID_DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 67;
@@ -106,7 +106,7 @@ public interface Ids {
    int VERSIONED_MORTAL_VALUE = 81;
    int VERSIONED_TRANSIENT_VALUE = 82;
    int VERSIONED_TRANSIENT_MORTAL_VALUE = 83;
-   int LOCK_INFO = 84;
+   int TRANSACTION_INFO = 84;
 
    int FLAG = 85;
    int NEW_DEFAULT_CONSISTENT_HASH = 86;

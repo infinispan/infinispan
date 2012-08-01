@@ -53,10 +53,8 @@ import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.oldch.UnionConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -77,6 +75,7 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.newstatetransfer.TransactionInfo;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
@@ -277,12 +276,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new ClearOperation.Externalizer());
       addInternalExternalizer(new org.infinispan.distribution.ch.DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
-      addInternalExternalizer(new UnionConsistentHash.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
       addInternalExternalizer(new TopologyAwareConsistentHash.Externalizer());
       addInternalExternalizer(new ByteArrayKey.Externalizer());
 
-      addInternalExternalizer(new RemoteTransactionLogDetails.Externalizer());
       addInternalExternalizer(new SerializableXid.XidExternalizer());
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());
 
@@ -292,6 +289,7 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new CacheView.Externalizer());
       addInternalExternalizer(new LockInfo.Externalizer());
+      addInternalExternalizer(new TransactionInfo.Externalizer());
 
       addInternalExternalizer(new Flag.Externalizer());
    }
