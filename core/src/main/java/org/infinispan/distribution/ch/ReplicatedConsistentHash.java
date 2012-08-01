@@ -19,13 +19,9 @@
 
 package org.infinispan.distribution.ch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.infinispan.remoting.transport.Address;
+
+import java.util.*;
 
 /**
  * Special implementation of {@link AdvancedConsistentHash} for replicated caches.
@@ -34,7 +30,10 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public class ReplicatedConsistentHash implements AdvancedConsistentHash {
+
    private List<Address> members;
+
+   private Set<Integer> theSegment = Collections.singleton(0);
 
    public ReplicatedConsistentHash(List<Address> members) {
       this.members = new ArrayList<Address>(members);
@@ -58,6 +57,11 @@ public class ReplicatedConsistentHash implements AdvancedConsistentHash {
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
       return members.get(0);
+   }
+
+   @Override
+   public Set<Integer> getSegmentsForOwner(Address owner) {
+      return theSegment;
    }
 
    @Override

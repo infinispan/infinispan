@@ -24,6 +24,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
+import net.jcip.annotations.Immutable;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -34,8 +35,10 @@ import org.infinispan.util.Util;
  * Default {@link ConsistentHash} implementation. This object is immutable.
  *
  * @author Dan Berindei
+ * @author anistor@redhat.com
  * @since 5.2
  */
+@Immutable
 public class DefaultConsistentHash implements AdvancedConsistentHash {
 
    private final Hash hashFunction;
@@ -46,9 +49,9 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
 
    public DefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
                                 List<Address>[] segmentOwners) {
-      if (numSegments <= 1)
+      if (numSegments < 1)
          throw new IllegalArgumentException("The number of segments must be strictly positive");
-      if (numOwners <= 1)
+      if (numOwners < 1)
          throw new IllegalArgumentException("The number of owners must be strictly positive");
 
       this.numSegments = numSegments;
@@ -71,6 +74,24 @@ public class DefaultConsistentHash implements AdvancedConsistentHash {
    @Override
    public int getNumSegments() {
       return numSegments;
+   }
+
+   @Override
+   public Set<Integer> getSegmentsForOwner(Address owner) {
+      if (!members.contains(owner)) {
+         throw new IllegalArgumentException("Node " + owner + " is not a member");
+      }
+
+      Set<Integer> segments = new HashSet<Integer>();
+      for (int i = 0; i < segmentOwners.length; i++) {
+         for (Address a : segmentOwners[i]) {
+            if (a.equals(owner)) {
+               segments.add(i);
+               break;
+            }
+         }
+      }
+      return segments;
    }
 
    @Override

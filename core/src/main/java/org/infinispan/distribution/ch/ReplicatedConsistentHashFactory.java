@@ -19,16 +19,16 @@
 
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.remoting.transport.Address;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.remoting.transport.Address;
-
 /**
- * Created with
+ * Factory for ReplicatedConsistentHash.
  *
  * @author Dan Berindei
  * @since 5.2

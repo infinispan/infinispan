@@ -20,6 +20,7 @@
 package org.infinispan.distribution.ch;
 
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
@@ -37,6 +38,7 @@ import org.infinispan.remoting.transport.Address;
  * always located on the same server.
  *
  * @author Dan Berindei
+ * @author anistor@redhat.com
  * @since 5.2
  */
 public interface AdvancedConsistentHash extends ConsistentHash {
@@ -61,4 +63,6 @@ public interface AdvancedConsistentHash extends ConsistentHash {
     * @return The primary owner of a given hash space segment. This is equivalent to {@code locateOwnersForSegment(segmentId).get(0)} but is more efficient
     */
    Address locatePrimaryOwnerForSegment(int segmentId);
+
+   Set<Integer> getSegmentsForOwner(Address owner);
 }
