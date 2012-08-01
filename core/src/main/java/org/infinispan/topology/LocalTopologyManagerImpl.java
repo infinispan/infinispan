@@ -71,7 +71,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo);
-      int timeout = joinInfo.getTimeout();
+      long timeout = joinInfo.getTimeout();
       double endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
       while (true) {
          try {
@@ -157,7 +157,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
-   private Object executeOnCoordinator(ReplicableCommand command, int timeout) throws Exception {
+   private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
       Response response;
       if (transport.isCoordinator()) {
          try {

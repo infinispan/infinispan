@@ -26,8 +26,10 @@ import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -164,11 +166,13 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
       // set up the old CH, but it shouldn't be used until we get the prepare call
       //cacheViewsManager.join(cacheName, this);
-      int numSegments = configuration.clustering().hash().numVirtualNodes();
-      int numOwners = configuration.clustering().hash().numOwners();
-      int timeout = (int) configuration.clustering().stateTransfer().timeout();
-      localTopologyManager.join(cacheName, new CacheJoinInfo(DefaultConsistentHashFactory.class.getName(),
-            MurmurHash3.class.getName(), numSegments, numOwners, timeout), this);
+      HashConfiguration hashConfig = configuration.clustering().hash();
+      Hash hashFunction = hashConfig.hash();
+      int numSegments = hashConfig.numVirtualNodes();
+      int numOwners = hashConfig.numOwners();
+      long timeout = configuration.clustering().stateTransfer().timeout();
+      localTopologyManager.join(cacheName, new CacheJoinInfo(new DefaultConsistentHashFactory(),
+            hashFunction, numSegments, numOwners, timeout), this);
    }
 
    protected abstract ConsistentHash createConsistentHash(List<Address> members);

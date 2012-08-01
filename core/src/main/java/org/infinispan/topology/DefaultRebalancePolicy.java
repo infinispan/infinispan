@@ -104,10 +104,10 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                int topologyId = cacheStatus.cacheTopology.getTopologyId();
                List<Address> newMembers1 = new ArrayList<Address>(currentCH.getMembers());
                newMembers1.retainAll(newClusterMembers);
-               ConsistentHash newCurrentCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers1);
+               ConsistentHash newCurrentCH = cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers1);
                List<Address> newMembers = new ArrayList<Address>(pendingCH.getMembers());
                newMembers.retainAll(newClusterMembers);
-               ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);     //todo [anistor] what if pendingCH is null?
+               ConsistentHash newPendingCH = cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);     //todo [anistor] what if pendingCH is null?
                cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
                clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
             }
@@ -119,6 +119,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    public void updateMembersList(String cacheName, List<Address> joiners, List<Address> leavers) throws Exception {
       // TODO Separate into two methods, join() and leave()
       CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      CacheJoinInfo joinInfo = cacheStatus.joinInfo;
       if (!leavers.isEmpty()) {
          synchronized (cacheStatus) {
             int topologyId = cacheStatus.cacheTopology.getTopologyId();
@@ -129,10 +130,10 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             // because leaves are reflected at the same time in both collections
             List<Address> newMembers = new ArrayList<Address>(clusterMembers);
             newMembers.retainAll(pendingCH.getMembers());               //todo [anistor] what if pendingCH is null?
-            ConsistentHash newPendingCH = cacheStatus.chFactory.updateMembers(pendingCH, newMembers);
+            ConsistentHash newPendingCH = joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);
 
             newMembers.retainAll(currentCH.getMembers());
-            ConsistentHash newCurrentCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers);
+            ConsistentHash newCurrentCH = joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers);
 
             cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
             clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
@@ -160,8 +161,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             newMembers.retainAll(clusterMembers);
 
             if (currentCH == null) {
-               ConsistentHash balancedCH = cacheStatus.chFactory.create(cacheStatus.hash,
-                     cacheStatus.numOwners, cacheStatus.numSegments, newMembers);
+               ConsistentHash balancedCH = joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),
+                     joinInfo.getNumOwners(), joinInfo.getNumSegments(), newMembers);
                int newTopologyId = topologyId + 1;
                cacheStatus.cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
                clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, balancedCH, null);
@@ -185,8 +186,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    private void doRebalance(String cacheName, CacheStatus cacheStatus, List<Address> newMembers) throws Exception {
       int newTopologyId = cacheStatus.cacheTopology.getTopologyId() + 1;
       ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
-      ConsistentHash updatedMembersCH = cacheStatus.chFactory.updateMembers(currentCH, newMembers);
-      ConsistentHash balancedCH = cacheStatus.chFactory.rebalance(updatedMembersCH);
+      ConsistentHashFactory chFactory = cacheStatus.joinInfo.getConsistentHashFactory();
+      ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers);
+      ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
       cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
       clusterTopologyManager.rebalance(cacheName, newTopologyId, currentCH, balancedCH);
    }
@@ -213,21 +215,13 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
 
    private static class CacheStatus {
-      private ConsistentHashFactory chFactory;
-      private Hash hash;
-      private int numSegments;
-      private int numOwners;
+      private CacheJoinInfo joinInfo;
 
       private CacheTopology cacheTopology;
       private List<Address> joiners;
 
       public CacheStatus(CacheJoinInfo joinInfo, GlobalConfiguration globalConfiguration) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-         Class<?> chfClass = globalConfiguration.classLoader().loadClass(joinInfo.getConsistentHashFactoryClass());
-         this.chFactory = (ConsistentHashFactory) chfClass.newInstance();
-         Class<?> hashFunctionClass = globalConfiguration.classLoader().loadClass(joinInfo.getHashFunctionClass());
-         this.hash = (Hash) hashFunctionClass.newInstance();
-         this.numSegments = joinInfo.getNumSegments();
-         this.numOwners = joinInfo.getNumOwners();
+         this.joinInfo = joinInfo;
 
          this.cacheTopology = new CacheTopology(0, null, null);
          this.joiners = new ArrayList<Address>();
@@ -236,10 +230,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       @Override
       public String toString() {
          return "CacheStatus{" +
-               "chFactory=" + chFactory +
-               ", hash=" + hash +
-               ", numSegments=" + numSegments +
-               ", numOwners=" + numOwners +
+               "joinInfo=" + joinInfo +
                ", cacheTopology=" + cacheTopology +
                ", joiners=" + joiners +
                '}';

@@ -122,9 +122,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting state transfer manager on " + rpcManager.getAddress());
       }
 
-      CacheJoinInfo joinInfo = new CacheJoinInfo(DefaultConsistentHashFactory.class.getName(), configuration.clustering().hash().hash().getClass().getName(),
+      CacheJoinInfo joinInfo = new CacheJoinInfo(new DefaultConsistentHashFactory(), configuration.clustering().hash().hash(),
             configuration.clustering().hash().numVirtualNodes(), //todo [anistor] rename to numSegments
-            configuration.clustering().hash().numOwners(), 0);  //todo [anistor] is timeout still used?
+            configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
 
       localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
 
