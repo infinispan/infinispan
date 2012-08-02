@@ -227,7 +227,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, true);
+      this(globalConfiguration, null, true);
    }
 
    /**
@@ -252,7 +252,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param start               if true, the cache manager is started.
     */
    public DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration globalConfiguration, boolean start) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, start);
+      this(globalConfiguration, null, start);
    }
 
    /**
