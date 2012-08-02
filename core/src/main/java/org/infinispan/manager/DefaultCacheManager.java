@@ -220,7 +220,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, true);
+      this(globalConfiguration, null, true);
    }
 
    /**
@@ -245,7 +245,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @param start               if true, the cache manager is started.
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, boolean start) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), null, start);
+      this(globalConfiguration, null, start);
    }
 
    /**
