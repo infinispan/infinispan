@@ -26,7 +26,7 @@ package org.infinispan.spring;
 import org.infinispan.config.*;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.oldch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.remoting.ReplicationQueue;
