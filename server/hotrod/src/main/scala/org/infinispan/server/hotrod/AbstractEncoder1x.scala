@@ -30,6 +30,8 @@ import OperationStatus._
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.server.core.CacheValue
 import org.infinispan.configuration.cache.Configuration
+import org.infinispan.distribution.ch.DefaultConsistentHash
+import collection.mutable.ArrayBuffer
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -171,31 +173,34 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       topoRsp match {
          case h: AbstractHashDistAwareResponse => {
             trace("Write hash distribution change response header %s", h)
-            // If virtual nodes are enabled, we need to send as many hashes as
-            // cluster members * num virtual nodes. Otherwise, rely on the default
-            // when virtual nodes is disabled which is '1'.
             val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
-            val numVNodes = cache.getCacheConfiguration.clustering().hash().numVirtualNodes()
+            val distManager = cache.getAdvancedCache.getDistributionManager
+            val ch = distManager.getConsistentHash
 
-            val clusterMembers = members.getCacheManager.getMembers
-            val totalNumServers = clusterMembers.size * numVNodes
+            val numSegments = ch.getNumSegments
+            val totalNumServers = (0 until numSegments).map(i => ch.locateOwnersForSegment(i).size).sum
             writeCommonHashTopologyHeader(buffer, h.viewId, h.numOwners, h.hashFunction,
                h.hashSpace, totalNumServers)
 
-            // This is not performant at all, but the idea here is to be able to be
-            // consistent with the version 1.0 of the protocol. With time, users
-            // should migrate to version 1.1 capable clients.
-            val distManager = cache.getAdvancedCache.getDistributionManager
-            clusterMembers.foreach {clusterAddr =>
-            // Take hash ids associated with the cache
-               val cacheHashIds = distManager.getConsistentHash.getHashIds(clusterAddr)
-               val address = members.get(clusterAddr)
-               // For each of the hash ids associated with this address and cache
-               // (i.e. in case of virtual nodes), write an entry back the client.
-               cacheHashIds.foreach { hashId =>
-                  writeString(address.host, buffer)
-                  writeUnsignedShort(address.port, buffer)
-                  buffer.writeInt(hashId)
+            // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
+            // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
+            // of the keys (at the "segment borders"), so it's still much better than having no hash information.
+            // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
+            // With time, users should migrate to version 1.2 capable clients.
+            // TODO Need a check somewhere on startup, this only works with the default consistent hash
+            val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
+            for ((address, serverAddress) <- members) {
+               for (segmentIdx <- 0 until numSegments) {
+                  val ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(address)
+                  if (ownerIdx >= 0) {
+                     val segmentHashId = segmentHashIds(segmentIdx)
+                     val hashId = (segmentHashId + ownerIdx) & Int.MaxValue
+
+                     writeString(serverAddress.host, buffer)
+                     writeUnsignedShort(serverAddress.port, buffer)
+                     log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
+                     buffer.writeInt(hashId)
+                  }
                }
             }
          }

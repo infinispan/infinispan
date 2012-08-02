@@ -21,6 +21,7 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
@@ -51,6 +52,21 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public int getNumOwners() {
+      return members.size();
+   }
+
+   @Override
+   public List<Address> getMembers() {
+      return members;
+   }
+
+   @Override
+   public Hash getHashFunction() {
+      return null;
+   }
+
+   @Override
    public int getSegment(Object key) {
       return 0;
    }
@@ -68,16 +84,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public Set<Integer> getSegmentsForOwner(Address owner) {
       return theSegment;
-   }
-
-   @Override
-   public int getNumOwners() {
-      return members.size();
-   }
-
-   @Override
-   public List<Address> getMembers() {
-      return members;
    }
 
    @Override
