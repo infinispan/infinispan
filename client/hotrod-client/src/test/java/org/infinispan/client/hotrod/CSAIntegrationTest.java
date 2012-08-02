@@ -28,10 +28,12 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
@@ -168,7 +170,14 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + hrServ2CacheManager, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
-         assert distributionManager.getLocality(key).isLocal();
+         Address clusterAddress = cacheContainer.getCache().getAdvancedCache().getRpcManager().getAddress();
+
+         ConsistentHash serverCh = distributionManager.getReadConsistentHash();
+         int numSegments = serverCh.getNumSegments();
+         int keySegment = serverCh.getSegment(key);
+         Address serverOwner = serverCh.locatePrimaryOwnerForSegment(keySegment);
+         Address serverPreviousOwner = serverCh.locatePrimaryOwnerForSegment((keySegment - 1 + numSegments) % numSegments);
+         assert clusterAddress.equals(serverOwner) || clusterAddress.equals(serverPreviousOwner);
          tcpConnectionFactory.releaseTransport(transport);
       }
    }
