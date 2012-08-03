@@ -265,7 +265,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);
       }
-      PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0, Collections.EMPTY_SET);
+      PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c10);
 
       Address local = new JGroupsAddress(new IpAddress(12345));
@@ -279,7 +279,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
 
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
       marshallAndAssertEquality(c99);
    }
 
@@ -293,12 +293,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       Address a1 = new JGroupsAddress(UUID.randomUUID());
       Address a2 = new JGroupsAddress(UUID.randomUUID());
       Address a3 = new JGroupsAddress(UUID.randomUUID());
-      List<Address> oldAddresses = new ArrayList();
+      List<Address> oldAddresses = new ArrayList<Address>();
       oldAddresses.add(a1);
       oldAddresses.add(a2);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       DefaultConsistentHash oldCh = chf.create(new MurmurHash3(), 2, 3, oldAddresses);
-      List<Address> newAddresses = new ArrayList();
+      List<Address> newAddresses = new ArrayList<Address>();
       newAddresses.add(a1);
       newAddresses.add(a2);
       newAddresses.add(a3);
