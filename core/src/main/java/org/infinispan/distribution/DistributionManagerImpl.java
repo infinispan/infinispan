@@ -124,8 +124,10 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public DataLocality getLocality(Object key) {
-      boolean local = isKeyLocalToAddress(key);
-      if (isRehashInProgress()) {
+      boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
+      boolean local = cacheTopology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+
+      if (transferInProgress) {
          if (local) {
             return DataLocality.LOCAL_UNCERTAIN;
          } else {
@@ -138,11 +140,6 @@ public class DistributionManagerImpl implements DistributionManager {
             return DataLocality.NOT_LOCAL;
          }
       }
-   }
-
-   private boolean isKeyLocalToAddress(Object key) {
-      // TODO Add a boolean flag to select the read consistent hash?
-      return cacheTopology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
    }
 
    @Override
@@ -196,15 +193,14 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public ConsistentHash setCacheTopology(CacheTopology newCacheTopology) {
+   public void setCacheTopology(CacheTopology newCacheTopology) {
       if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
       // TODO Replace the topology change notification with another notification that accepts two consistent hashes and a topology id
       ConsistentHash oldCH = cacheTopology.getWriteConsistentHash();
       ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
-      this.cacheTopology = newCacheTopology;
+      cacheTopology = newCacheTopology;
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
-      return oldCH;
    }
 
 
