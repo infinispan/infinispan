@@ -136,20 +136,20 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       CacheTopologyHandler handler = new CacheTopologyHandler() {
          @Override
-         public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            rebalance(topologyId, currentCH, pendingCH);
+         public void updateConsistentHash(CacheTopology cacheTopology) {
+            rebalance(cacheTopology);
          }
 
          @Override
-         public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            distributionManager.setCacheTopology(new CacheTopology(topologyId, currentCH, pendingCH));
-            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
+         public void rebalance(CacheTopology cacheTopology) {
+            distributionManager.setCacheTopology(cacheTopology);
+            ConsistentHash ch = cacheTopology.getWriteConsistentHash();
             onTopologyUpdate(topologyId, ch);
          }
       };
 
       CacheTopology cacheTopology = localTopologyManager.join(cacheName, joinInfo, handler);
-      handler.updateConsistentHash(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+      handler.updateConsistentHash(cacheTopology);
    }
 
    @Stop(priority = 20)

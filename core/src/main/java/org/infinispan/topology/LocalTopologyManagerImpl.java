@@ -98,7 +98,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       runningCaches.remove(cacheName);
 
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.LEAVE, transport.getAddress(), null);
+            CacheTopologyControlCommand.Type.LEAVE, transport.getAddress());
       try {
          executeOnCoordinatorAsync(command);
       } catch (Exception e) {
@@ -120,42 +120,45 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleConsistentHashUpdate(String cacheName, int topologyId, ConsistentHash currentCH,
-                                          ConsistentHash pendingCH) {
+   public void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus == null) {
          log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
-               topologyId, cacheName);
+               cacheTopology.getTopologyId(), cacheName);
          return;
       }
-      log.debugf("Updating local consistent hash(es) for cache %s: currentCH = %s, pendingCH = %s",
-            cacheName, currentCH, pendingCH);
-      cacheStatus.topology = new CacheTopology(topologyId, currentCH, pendingCH);
-      ConsistentHash unionCH;
-      if (pendingCH != null)
-         unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH, pendingCH);
-      else unionCH = null;
+      log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",
+            cacheName, cacheTopology);
+      cacheStatus.topology = cacheTopology;
+      ConsistentHash unionCH = null;
+      if (cacheTopology.getPendingCH() != null) {
+         unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(cacheTopology.getCurrentCH(),
+               cacheTopology.getPendingCH());
+      }
+
       CacheTopologyHandler handler = cacheStatus.handler;
-      handler.updateConsistentHash(topologyId, currentCH, unionCH);
+      CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
+            cacheTopology.getCurrentCH(), unionCH);
+      handler.updateConsistentHash(unionTopology);
    }
 
    @Override
-   public void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH,
-                               ConsistentHash pendingCH) throws InterruptedException {
+   public void handleRebalance(String cacheName, CacheTopology cacheTopology) throws InterruptedException {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus == null) {
-         log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally", topologyId, cacheName);
+         log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally",
+               cacheTopology.getTopologyId(), cacheName);
          return;
       }
-      log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s", cacheName,
-            topologyId, pendingCH);
+      log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
       cacheStatus.joinedLatch.await();
 
-      cacheStatus.topology = new CacheTopology(topologyId, currentCH, pendingCH);
-      ConsistentHash unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH, pendingCH);
+      cacheStatus.topology = cacheTopology;
+      ConsistentHash unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(
+            cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
       CacheTopologyHandler handler = cacheStatus.handler;
       try {
-         handler.rebalance(topologyId, currentCH, unionCH);
+         handler.rebalance(cacheStatus.topology);
       } finally {
          // TODO If there was an exception, propagate the exception back to the coordinator
          // We don't want to block further rebalancing just because we got an exception on one node
@@ -165,8 +168,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // Note that if the coordinator changes again after we sent the command, we will get another
          // query for the status of our running caches. So we don't need to retry if the command failed.
          ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(), topologyId, null,
-               null);
+               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(),
+               cacheTopology.getTopologyId(), null, null);
          try {
             executeOnCoordinatorAsync(command);
          } catch (Exception e) {

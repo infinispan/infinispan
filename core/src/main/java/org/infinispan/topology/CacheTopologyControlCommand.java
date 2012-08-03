@@ -106,6 +106,15 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.pendingCH = pendingCH;
    }
 
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology) {
+      this.cacheName = cacheName;
+      this.type = type;
+      this.sender = sender;
+      this.topologyId = cacheTopology.getTopologyId();
+      this.currentCH = cacheTopology.getCurrentCH();
+      this.pendingCH = cacheTopology.getPendingCH();
+   }
+
    @Inject
    public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager globalDistributionManager) {
       this.localTopologyManager = localTopologyManager;
@@ -140,10 +149,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleConsistentHashUpdate(cacheName, topologyId, currentCH, pendingCH);
+            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH));
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, topologyId, currentCH, pendingCH);
+            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH));
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest();

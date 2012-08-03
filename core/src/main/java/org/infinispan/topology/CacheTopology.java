@@ -42,15 +42,21 @@ public class CacheTopology {
       return topologyId;
    }
 
+   /**
+    * The current consistent hash.
+    */
    public ConsistentHash getCurrentCH() {
       return currentCH;
    }
 
+   /**
+    * The future consistent hash. Should be {@code null} if there is no rebalance in progress.
+    */
    public ConsistentHash getPendingCH() {
       return pendingCH;
    }
 
-   public Collection<Address> getMembers() {
+   public List<Address> getMembers() {
       if (pendingCH != null)
          return pendingCH.getMembers();
       else if (currentCH != null)
@@ -59,10 +65,18 @@ public class CacheTopology {
          return Collections.emptyList();
    }
 
+   /**
+    * Read operations should always go to the "current" members.
+    */
    public ConsistentHash getReadConsistentHash() {
       return currentCH;
    }
 
+   /**
+    * When there is a rebalance in progress, write operations should go to the "pending" members.
+    *
+    * Note: The pending members always include the current members (unless there is no rebalance in progress).
+    */
    public ConsistentHash getWriteConsistentHash() {
       if (pendingCH != null)
          return pendingCH;

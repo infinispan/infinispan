@@ -109,20 +109,19 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
-   public void updateConsistentHash(String cacheName, int topologyId, ConsistentHash currentCH,
-                                    ConsistentHash pendingCH) throws Exception {
-      log.debugf("Updating cluster-wide consistent hash for cache %s, topology id = %d, currentCH = %s, pendingCH = %s",
-            cacheName, topologyId, currentCH, pendingCH);
+   public void updateConsistentHash(String cacheName, CacheTopology cacheTopology) throws Exception {
+      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",
+            cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), topologyId, currentCH, pendingCH);
+            CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology);
       executeOnClusterSync(command, getGlobalTimeout());
 
       RebalanceInfo rebalanceInfo = rebalanceStatusMap.get(cacheName);
       if (rebalanceInfo != null) {
-         List<Address> members = pendingCH != null ? pendingCH.getMembers() : currentCH.getMembers();
+         List<Address> members = cacheTopology.getMembers();
          if (rebalanceInfo.updateMembers(members)) {
             // all the nodes that haven't confirmed yet have left the cache/cluster
-            onRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
+            onRebalanceCompleted(cacheName, cacheTopology.getTopologyId(), rebalanceInfo);
          }
       }
    }
@@ -134,15 +133,18 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
-   public void rebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws Exception {
-      log.debugf("Starting cluster-wide rebalance for cache %s, topology id = %s, new CH = %s",
-            cacheName, topologyId, pendingCH);
-      RebalanceInfo existingRebalance = rebalanceStatusMap.putIfAbsent(cacheName, new RebalanceInfo(topologyId, pendingCH.getMembers()));
+   public void rebalance(String cacheName, CacheTopology cacheTopology) throws Exception {
+      log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s", cacheName, cacheTopology);
+      int topologyId = cacheTopology.getTopologyId();
+      Collection<Address> members = cacheTopology.getPendingCH().getMembers();
+      RebalanceInfo existingRebalance = rebalanceStatusMap.putIfAbsent(cacheName,
+            new RebalanceInfo(topologyId, members));
       if (existingRebalance != null) {
-         throw new IllegalStateException("Aborting the current rebalance, there is another operation in progress: " + existingRebalance);
+         throw new IllegalStateException("Aborting the current rebalance, there is another operation " +
+               "in progress: " + existingRebalance);
       }
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), topologyId, currentCH, pendingCH);
+            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology);
       executeOnClusterAsync(command);
    }
 

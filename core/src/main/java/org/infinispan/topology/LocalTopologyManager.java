@@ -52,12 +52,12 @@ public interface LocalTopologyManager {
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.
     */
-   void handleConsistentHashUpdate(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH);
+   void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology);
 
    /**
     * Performs the state transfer.
     */
-   void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws InterruptedException;
+   void handleRebalance(String cacheName, CacheTopology cacheTopology) throws InterruptedException;
 
    /**
     * @return the current topology for a cache.

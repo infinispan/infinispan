@@ -104,12 +104,17 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                int topologyId = cacheStatus.cacheTopology.getTopologyId();
                List<Address> newMembers1 = new ArrayList<Address>(currentCH.getMembers());
                newMembers1.retainAll(newClusterMembers);
-               ConsistentHash newCurrentCH = cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers1);
+
+               ConsistentHashFactory consistentHashFactory = cacheStatus.joinInfo.getConsistentHashFactory();
+               ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newMembers1);
                List<Address> newMembers = new ArrayList<Address>(pendingCH.getMembers());
                newMembers.retainAll(newClusterMembers);
-               ConsistentHash newPendingCH = cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);     //todo [anistor] what if pendingCH is null?
+               ConsistentHash newPendingCH = null;
+               if (pendingCH != null) {
+                  newPendingCH = consistentHashFactory.updateMembers(pendingCH, newMembers);
+               }
                cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
-               clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
+               clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
             }
          }
       }
@@ -139,7 +144,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             ConsistentHash newCurrentCH = joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers);
 
             cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
-            clusterTopologyManager.updateConsistentHash(cacheName, topologyId, newCurrentCH, newPendingCH);
+            clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
 
             startRebalance(cacheName, cacheStatus, newMembers);
          }
@@ -168,7 +173,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                      joinInfo.getNumOwners(), joinInfo.getNumSegments(), newMembers);
                int newTopologyId = topologyId + 1;
                cacheStatus.cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
-               clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, balancedCH, null);
+               clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
             } else {
                startRebalance(cacheName, cacheStatus, newMembers);
             }
@@ -193,7 +198,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers);
       ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
       cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
-      clusterTopologyManager.rebalance(cacheName, newTopologyId, currentCH, balancedCH);
+      clusterTopologyManager.rebalance(cacheName, cacheStatus.cacheTopology);
    }
 
    @Override
@@ -207,7 +212,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          ConsistentHash newCurrentCH = cacheStatus.cacheTopology.getPendingCH();
 
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
-         clusterTopologyManager.updateConsistentHash(cacheName, newTopologyId, newCurrentCH, null);
+         clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
       }
    }
 
