@@ -59,6 +59,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.newstatetransfer.StateRequestCommand;
+import org.infinispan.newstatetransfer.StateResponseCommand;
 
 import java.util.Map;
 
@@ -192,6 +194,12 @@ public class RemoteCommandsFactory {
                break;
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
+               break;
+            case StateRequestCommand.COMMAND_ID:
+               command = new StateRequestCommand(cacheName);
+               break;
+            case StateResponseCommand.COMMAND_ID:
+               command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
                command = new RemoveCacheCommand(cacheName, cacheManager, registry);
