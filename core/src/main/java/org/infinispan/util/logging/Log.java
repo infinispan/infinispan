@@ -23,7 +23,6 @@
 package org.infinispan.util.logging;
 
 import org.infinispan.CacheException;
-import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -782,16 +781,8 @@ public interface Log extends BasicLogger {
    void cacheViewCommitFailure(@Cause Throwable t, int committedViewId, String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
-   void prepareViewIdMismatch(CacheView lastCommittedView, CacheView committedView);
-
-   @LogMessage(level = INFO)
    @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
    void warnStrictPeerToPeerWithInjectedChannel();
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed to prepare view %s for cache  %s, rolling back to view %s", id = 172)
-   void cacheViewPrepareFailure(@Cause Throwable e, CacheView newView, String cacheName, CacheView committedView);
 
    @LogMessage(level = ERROR)
    @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)

@@ -20,9 +20,6 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.cacheviews.CacheView;
-import org.infinispan.cacheviews.CacheViewListener;
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -73,7 +70,7 @@ import static org.infinispan.context.Flag.*;
  * State transfer manager.
  * Base class for the distributed and replicated implementations.
  */
-public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheViewListener, CacheTopologyHandler {
+public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheTopologyHandler {
    private static final Log log = LogFactory.getLog(BaseStateTransferManagerImpl.class);
 
    private static final boolean trace = log.isTraceEnabled();
@@ -86,12 +83,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    protected InterceptorChain interceptorChain;
    protected InvocationContextContainer icc;
    protected CacheNotifier cacheNotifier;
-   private CacheViewsManager cacheViewsManager;
    protected StateTransferLock stateTransferLock;
    protected volatile ConsistentHash chOld;
-   private volatile CacheView oldView;
    protected volatile ConsistentHash chNew;
-   private volatile CacheView newView;
    // closed before the component has been started, open afterwards
    private final CountDownLatch joinStartedLatch = new CountDownLatch(1);
    // closed before the initial state transfer has completed, open afterwards
@@ -115,7 +109,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
                     CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
-                    CacheViewsManager cacheViewsManager, TransactionTable transactionTable, LockContainer<?> lockContainer, Cache cache,
+                    TransactionTable transactionTable, LockContainer<?> lockContainer, Cache cache,
                     GlobalConfiguration globalCfg, LocalTopologyManager localTopologyManager) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
@@ -126,7 +120,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.cacheNotifier = cacheNotifier;
-      this.cacheViewsManager = cacheViewsManager;
       this.transactionTable = transactionTable;
       this.lockContainer = lockContainer;
       this.cacheName = cache.getName();
@@ -228,10 +221,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public void waitForStateTransferToStart(int viewId) throws InterruptedException {
       // TODO Add another latch for this, or maybe use a lock with condition variables instead
-      while ((newView == null || newView.getViewId() < viewId)
-            && (oldView == null || oldView.getViewId() < viewId)) {
-         Thread.sleep(10);
-      }
+//      while ((newView == null || newView.getViewId() < viewId)
+//            && (oldView == null || oldView.getViewId() < viewId)) {
+//         Thread.sleep(10);
+//      }
    }
 
    @Override
@@ -251,14 +244,14 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    public void applyState(Collection<InternalCacheEntry> state,
                           Address sender, int viewId) throws InterruptedException {
       waitForStateTransferToStart(viewId);
-      if (newView == oldView) {
-         log.remoteStateRejected(sender, viewId, oldView.getViewId());
-         return;
-      }
-      if (viewId != newView.getViewId()) {
-         log.debugf("Rejecting state pushed by node %s for rehash %d (last view id we know is %d)", sender, viewId, newView.getViewId());
-         return;
-      }
+//      if (newView == oldView) {
+//         log.remoteStateRejected(sender, viewId, oldView.getViewId());
+//         return;
+//      }
+//      if (viewId != newView.getViewId()) {
+//         log.debugf("Rejecting state pushed by node %s for rehash %d (last view id we know is %d)", sender, viewId, newView.getViewId());
+//         return;
+//      }
 
       if (state != null) {
          log.debugf("Applying new state from %s: received %d keys", sender, state.size());
@@ -277,7 +270,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
          }
 
          if(trace) log.tracef("After applying state data container has %d keys", dataContainer.size());
-      } 
+      }
    }
 
    @Override
@@ -317,10 +310,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
     * @return <code>true</code> if the state transfer started successfully, <code>false</code> otherwise
     */
    public boolean startStateTransfer(int viewId, Collection<Address> members, boolean initialView) throws TimeoutException, InterruptedException, StateTransferCancelledException {
-      if (newView == null || viewId != newView.getViewId()) {
-         log.debugf("Cannot start state transfer for view %d, we should be starting state transfer for view %s", viewId, newView);
-         return false;
-      }
+//      if (newView == null || viewId != newView.getViewId()) {
+//         log.debugf("Cannot start state transfer for view %d, we should be starting state transfer for view %s", viewId, newView);
+//         return false;
+//      }
       stateTransferInProgressLatch.close();
       return true;
    }
@@ -346,97 +339,93 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       rpcManager.invokeRemotelyInFuture(targets, cmd, false, stateTransferFuture, getTimeout());
    }
 
-   public boolean isLastViewId(int viewId) {
-      return viewId == newView.getViewId();
-   }
-
-   @Override
-   public void prepareView(CacheView pendingView, CacheView committedView) throws Exception {
-      log.tracef("Received new cache view: %s %s", cacheName, pendingView);
-
-      joinStartedLatch.countDown();
-
-      // if this is the first view we're seeing, initialize the oldView as well
-      if (oldView == null) {
-         oldView = committedView;
-      }
-      newView = pendingView;
-      chNew = createConsistentHash(pendingView.getMembers());
-
-      stateTransferTask = createStateTransferTask(pendingView.getViewId(), pendingView.getMembers(), chOld == null);
-      stateTransferTask.performStateTransfer();
-   }
-
-   @Override
-   public void commitView(int viewId) {
-      BaseStateTransferTask tempTask = stateTransferTask;
-      if (tempTask == null) {
-         if (viewId == oldView.getViewId()) {
-            log.tracef("Ignoring commit for cache view %d as we have already committed it", viewId);
-            return;
-         } else {
-            throw new IllegalArgumentException(String.format("Cannot commit view %d, we are at view %d",
-                  viewId, oldView.getViewId()));
-         }
-      }
-
-      tempTask.commitStateTransfer();
-      stateTransferTask = null;
-
-      // we can now use the new CH as the baseline for the next rehash
-      oldView = newView;
-      chOld = chNew;
-   }
-
-   @Override
-   public void rollbackView(int newViewId, int committedViewId) {
-      BaseStateTransferTask tempTask = stateTransferTask;
-      if (tempTask == null) {
-         if (committedViewId == oldView.getViewId()) {
-            log.tracef("Ignoring rollback for cache view %d as we don't have a state transfer in progress",
-                  committedViewId);
-            return;
-         } else {
-            throw new IllegalArgumentException(String.format("Cannot rollback to view %d, we are at view %d",
-                  committedViewId, oldView.getViewId()));
-         }
-      }
-
-      tempTask.cancelStateTransfer(true);
-      stateTransferTask = null;
-
-      newView = new CacheView(newViewId, oldView.getMembers());
-      oldView = newView;
-      chNew = chOld;
-
-      stateTransferInProgressLatch.open();
-      joinCompletedLatch.countDown();
-   }
-
-   @Override
-   public void preInstallView() {
-      stateTransferLock.blockNewTransactionsAsync();
-   }
-
-   @Override
-   public void postInstallView(int viewId) {
-      try {
-         stateTransferLock.unblockNewTransactions(viewId);
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
-      }
-
-      stateTransferInProgressLatch.open();
-      // getCache() will only return after joining has completed, so we need that to be last
-      joinCompletedLatch.countDown();
-   }
+//   public boolean isLastViewId(int viewId) {
+//      return viewId == newView.getViewId();
+//   }
+//
+//   @Override
+//   public void prepareView(CacheView pendingView, CacheView committedView) throws Exception {
+//      log.tracef("Received new cache view: %s %s", cacheName, pendingView);
+//
+//      joinStartedLatch.countDown();
+//
+//      // if this is the first view we're seeing, initialize the oldView as well
+//      if (oldView == null) {
+//         oldView = committedView;
+//      }
+//      newView = pendingView;
+//      chNew = createConsistentHash(pendingView.getMembers());
+//
+//      stateTransferTask = createStateTransferTask(pendingView.getViewId(), pendingView.getMembers(), chOld == null);
+//      stateTransferTask.performStateTransfer();
+//   }
+//
+//   @Override
+//   public void commitView(int viewId) {
+//      BaseStateTransferTask tempTask = stateTransferTask;
+//      if (tempTask == null) {
+//         if (viewId == oldView.getViewId()) {
+//            log.tracef("Ignoring commit for cache view %d as we have already committed it", viewId);
+//            return;
+//         } else {
+//            throw new IllegalArgumentException(String.format("Cannot commit view %d, we are at view %d",
+//                  viewId, oldView.getViewId()));
+//         }
+//      }
+//
+//      tempTask.commitStateTransfer();
+//      stateTransferTask = null;
+//
+//      // we can now use the new CH as the baseline for the next rehash
+//      oldView = newView;
+//      chOld = chNew;
+//   }
+//
+//   @Override
+//   public void rollbackView(int newViewId, int committedViewId) {
+//      BaseStateTransferTask tempTask = stateTransferTask;
+//      if (tempTask == null) {
+//         if (committedViewId == oldView.getViewId()) {
+//            log.tracef("Ignoring rollback for cache view %d as we don't have a state transfer in progress",
+//                  committedViewId);
+//            return;
+//         } else {
+//            throw new IllegalArgumentException(String.format("Cannot rollback to view %d, we are at view %d",
+//                  committedViewId, oldView.getViewId()));
+//         }
+//      }
+//
+//      tempTask.cancelStateTransfer(true);
+//      stateTransferTask = null;
+//
+//      newView = new CacheView(newViewId, oldView.getMembers());
+//      oldView = newView;
+//      chNew = chOld;
+//
+//      stateTransferInProgressLatch.open();
+//      joinCompletedLatch.countDown();
+//   }
+//
+//   @Override
+//   public void preInstallView() {
+//      stateTransferLock.blockNewTransactionsAsync();
+//   }
+//
+//   @Override
+//   public void postInstallView(int viewId) {
+//      try {
+//         stateTransferLock.unblockNewTransactions(viewId);
+//      } catch (Exception e) {
+//         log.errorUnblockingTransactions(e);
+//      }
+//
+//      stateTransferInProgressLatch.open();
+//      // getCache() will only return after joining has completed, so we need that to be last
+//      joinCompletedLatch.countDown();
+//   }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);
 
-   @Override
-   public CacheTopology getStatus() {
-      return null;
-   }
 
    @Override
    public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {

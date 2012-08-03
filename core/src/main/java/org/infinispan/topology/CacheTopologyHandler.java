@@ -29,8 +29,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
  */
 public interface CacheTopologyHandler {
 
-   CacheTopology getStatus();   //todo [anistor] this does not belong here. current topology should be in LocalTopologyManager
-
    /**
     * Invoked when the CH has to be immediately updated because of a leave or when the state transfer has completed
     * and we have to install a permanent CH (pendingCH == null). A state transfer is not always required.

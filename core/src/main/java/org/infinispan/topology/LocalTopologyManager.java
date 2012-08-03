@@ -58,4 +58,9 @@ public interface LocalTopologyManager {
     * Performs the state transfer.
     */
    void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws InterruptedException;
+
+   /**
+    * @return the current topology for a cache.
+    */
+   CacheTopology getCacheTopology(String cacheName);
 }

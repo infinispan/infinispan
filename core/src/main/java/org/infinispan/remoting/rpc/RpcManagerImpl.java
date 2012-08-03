@@ -24,7 +24,6 @@ package org.infinispan.remoting.rpc;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -42,6 +41,7 @@ import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -94,14 +94,14 @@ public class RpcManagerImpl implements RpcManager {
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
-   private CacheViewsManager cvm;
+   private LocalTopologyManager localTopologyManager;
    private String cacheName;
 
    @Inject
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
             ReplicationQueue replicationQueue, CommandsFactory cf,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-            CacheViewsManager cvm, GlobalConfiguration globalCfg) {
+            LocalTopologyManager localTopologyManager, GlobalConfiguration globalCfg) {
       this.t = t;
       this.configuration = cfg;
       this.cacheName = cache.getName();
@@ -109,7 +109,7 @@ public class RpcManagerImpl implements RpcManager {
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
-      this.cvm = cvm;
+      this.localTopologyManager = localTopologyManager;
    }
 
    @Start(priority = 9)
@@ -120,13 +120,15 @@ public class RpcManagerImpl implements RpcManager {
    @ManagedAttribute(description = "Retrieves the committed view.")
    @Metric(displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
-      return cvm == null ? "N/A" : cvm.getCommittedView(cacheName).toString();
+      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
+            .getCurrentCH());
    }
 
    @ManagedAttribute(description = "Retrieves the pending view.")
    @Metric(displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
-      return cvm == null ? "N/A" : cvm.getPendingView(cacheName).toString();
+      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
+            .getPendingCH());
    }
 
    private boolean useReplicationQueue(boolean sync) {
@@ -150,7 +152,8 @@ public class RpcManagerImpl implements RpcManager {
             // but only if the target is the whole cluster and the call is synchronous
             // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
             if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
-               List<Address> cacheMembers = cvm.getCommittedView(cacheName).getMembers();
+               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
+               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
                // the filter won't work if there is no other member in the cache, so we have to 
                if (cacheMembers.size() < 2) {
                   log.tracef("We're the only member of cache %s; Don't invoke remotely.", cacheName);

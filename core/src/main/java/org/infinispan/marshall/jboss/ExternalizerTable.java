@@ -29,7 +29,6 @@ import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
-import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
@@ -287,7 +286,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MurmurHash2Compat.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
 
-      addInternalExternalizer(new CacheView.Externalizer());
       addInternalExternalizer(new LockInfo.Externalizer());
       addInternalExternalizer(new TransactionInfo.Externalizer());
 

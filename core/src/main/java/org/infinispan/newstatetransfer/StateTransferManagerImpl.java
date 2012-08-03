@@ -131,11 +131,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
          private CacheTopology cacheTopology;   //todo [anistor] this should actually be in LocalTopologyManager
 
          @Override
-         public CacheTopology getStatus() {
-            return cacheTopology;
-         }
-
-         @Override
          public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
             rebalance(topologyId, currentCH, pendingCH);
          }

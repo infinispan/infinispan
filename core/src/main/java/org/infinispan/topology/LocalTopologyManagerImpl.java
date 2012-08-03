@@ -157,6 +157,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
+   @Override
+   public CacheTopology getCacheTopology(String cacheName) {
+      return runningCaches.get(cacheName).topology;
+   }
+
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
       Response response;
       if (transport.isCoordinator()) {

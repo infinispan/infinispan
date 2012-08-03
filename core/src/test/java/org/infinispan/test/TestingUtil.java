@@ -48,7 +48,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
@@ -75,6 +74,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -166,12 +167,13 @@ public class TestingUtil {
       int gracetime = 120000; // 120 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), CacheViewsManager.class);
+         LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), LocalTopologyManager.class);
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         while (cacheViewsManager.getCommittedView(c.getName()).getMembers().size() != caches.length) {
+         CacheTopology cacheTopology = localTopologyManager.getCacheTopology(c.getName());
+         while (cacheTopology.getCurrentCH().getMembers().size() != caches.length) {
             if (System.currentTimeMillis() > giveup) {
                String message = String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",
-                     rpcManager.getAddress(), Arrays.toString(caches), cacheViewsManager.getCommittedView(c.getName()));
+                     rpcManager.getAddress(), Arrays.toString(caches), cacheTopology.getCurrentCH());
                log.error(message);
                throw new RuntimeException(message);
             }
@@ -185,12 +187,13 @@ public class TestingUtil {
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
-      CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), CacheViewsManager.class);
+      LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), LocalTopologyManager.class);
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      while (cacheViewsManager.getCommittedView(cache.getName()).getMembers().size() != groupSize) {
+      CacheTopology cacheTopology = localTopologyManager.getCacheTopology(cache.getName());
+      while (cacheTopology.getCurrentCH().getMembers().size() != groupSize) {
          if (System.currentTimeMillis() > giveup) {
             String message = String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",
-                  rpcManager.getAddress(), groupSize, cacheViewsManager.getCommittedView(cache.getName()));
+                  rpcManager.getAddress(), groupSize, cacheTopology.getCurrentCH());
             log.error(message);
             throw new RuntimeException(message);
          }
