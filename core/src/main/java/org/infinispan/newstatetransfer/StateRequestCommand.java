@@ -48,7 +48,7 @@ public class StateRequestCommand extends BaseRpcCommand {
       CANCEL_STATE_TRANSFER
    }
 
-   public static final byte COMMAND_ID = 120;   //todo [anistor] assign unique id
+   public static final byte COMMAND_ID = 15;
 
    private Type type;
 
