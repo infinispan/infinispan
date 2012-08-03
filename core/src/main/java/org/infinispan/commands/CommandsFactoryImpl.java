@@ -123,7 +123,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Configuration configuration;
    private RecoveryManager recoveryManager;
    private StateTransferManager stateTransferManager;
-   private org.infinispan.newstatetransfer.StateTransferManager stateTransferManager2;
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
    private MapReduceManager mapReduceManager;
@@ -136,8 +135,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateTransferManager stateTransferManager,
-                                 org.infinispan.newstatetransfer.StateTransferManager stateTransferManager2, LockManager lockManager,
-                                 InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
+                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -149,7 +147,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.moduleCommandInitializers = moduleCommandInitializers;
       this.recoveryManager = recoveryManager;
       this.stateTransferManager = stateTransferManager;
-      this.stateTransferManager2 = stateTransferManager2;
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
       this.mapReduceManager = mapReduceManager;
@@ -391,10 +388,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             }
             break;
          case StateRequestCommand.COMMAND_ID:
-            ((StateRequestCommand) c).init(stateTransferManager2.getStateProvider());
+            ((StateRequestCommand) c).init(stateTransferManager.getStateProvider());
             break;
          case StateResponseCommand.COMMAND_ID:
-            ((StateResponseCommand) c).init(stateTransferManager2.getStateConsumer());
+            ((StateResponseCommand) c).init(stateTransferManager.getStateConsumer());
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;

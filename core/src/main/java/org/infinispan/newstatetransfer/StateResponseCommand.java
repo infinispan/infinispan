@@ -56,6 +56,10 @@ public class StateResponseCommand extends BaseRpcCommand {
       super(null);  // for command id uniqueness test
    }
 
+   public StateResponseCommand(String cacheName) {
+      super(cacheName);
+   }
+
    public StateResponseCommand(String cacheName, Address origin, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
       super(cacheName);
       setOrigin(origin);

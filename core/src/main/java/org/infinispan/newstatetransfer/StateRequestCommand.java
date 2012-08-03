@@ -62,6 +62,10 @@ public class StateRequestCommand extends BaseRpcCommand {
       super(null);  // for command id uniqueness test
    }
 
+   public StateRequestCommand(String cacheName) {
+      super(cacheName);
+   }
+
    public StateRequestCommand(String cacheName, Type type, Address origin, int topologyId, Set<Integer> segments) {
       super(cacheName);
       this.type = type;

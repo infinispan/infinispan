@@ -272,7 +272,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new PutOperation.Externalizer());
       addInternalExternalizer(new RemoveOperation.Externalizer());
       addInternalExternalizer(new ClearOperation.Externalizer());
-      addInternalExternalizer(new org.infinispan.distribution.ch.DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
       addInternalExternalizer(new TopologyAwareConsistentHash.Externalizer());
@@ -352,7 +351,7 @@ public class ExternalizerTable implements ObjectTable {
    private int checkInternalIdLimit(int id, AdvancedExternalizer<?> ext) {
       if (id >= Ids.MAX_ID)
          throw new ConfigurationException(String.format(
-               "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
+               "Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d",
                ext, id, Ids.MAX_ID));
       return id;
    }
