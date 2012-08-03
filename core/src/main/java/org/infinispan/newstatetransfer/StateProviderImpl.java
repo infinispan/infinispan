@@ -57,12 +57,14 @@ public class StateProviderImpl implements StateProvider {
    private DataContainer dataContainer;
    private CacheLoaderManager cacheLoaderManager;
    private ExecutorService executorService;
+   private StateTransferLock stateTransferLock;
    private long timeout;
+   private int chunkSize;
 
    private int topologyId;
-   private ConsistentHash currentCh = null;
+   private ConsistentHash currentCh;
 
-   private Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
+   private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
    public StateProviderImpl(ExecutorService executorService,
                             Configuration configuration,
@@ -70,7 +72,8 @@ public class StateProviderImpl implements StateProvider {
                             CommandsFactory commandsFactory,
                             CacheLoaderManager cacheLoaderManager,
                             DataContainer dataContainer,
-                            TransactionTable transactionTable) {
+                            TransactionTable transactionTable,
+                            StateTransferLock stateTransferLock) {
       this.executorService = executorService;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -78,11 +81,21 @@ public class StateProviderImpl implements StateProvider {
       this.cacheLoaderManager = cacheLoaderManager;
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
+      this.stateTransferLock = stateTransferLock;
 
       timeout = configuration.clustering().stateTransfer().timeout();
+
+      // ignore chunk sizes <= 0
+      chunkSize = configuration.clustering().stateTransfer().chunkSize();
+      if (chunkSize <= 0) {
+         chunkSize = Integer.MAX_VALUE;
+      }
    }
 
    public void onTopologyUpdate(int topologyId, ConsistentHash ch) {
+      this.topologyId = topologyId;
+      currentCh = ch;
+
       // cancel outbound state transfers for destinations that are no longer members in this topology
       Set<Address> members = new HashSet<Address>(ch.getMembers());
       for (Address destination : transfersByDestination.keySet()) {
@@ -108,16 +121,22 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
-      //todo [anistor] all transactions should be blocked now
-      List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
-      //we migrate locks only if the cache is transactional and distributed
-      if (transactionTable != null) {
-         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
-         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
-         log.debugf("Found %d transfer to transfer", transactions.size());
+      // all transactions should be briefly blocked now
+      try {
+         stateTransferLock.acquireTTExclusiveLock();
+
+         List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
+         //we migrate locks only if the cache is transactional and distributed
+         if (transactionTable != null) {
+            collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
+            collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
+            log.debugf("Found %d transfer to transfer", transactions.size());
+         }
+         return transactions;
+      } finally {
+         // all transactions should be unblocked now
+         stateTransferLock.releaseTTExclusiveLock();
       }
-      //todo [anistor] all transactions should be unblocked now
-      return transactions;
    }
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer, Collection<? extends CacheTransaction> transactions, Set<Integer> segments) {
@@ -141,12 +160,6 @@ public class StateProviderImpl implements StateProvider {
 
    @Override
    public void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      // ignore chunk sizes <= 0
-      int chunkSize = configuration.clustering().stateTransfer().chunkSize();
-      if (chunkSize <= 0) {
-         chunkSize = Integer.MAX_VALUE;
-      }
-
       // the destination must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, currentCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout);
       addTransfer(outboundTransfer);
@@ -154,30 +167,34 @@ public class StateProviderImpl implements StateProvider {
    }
 
    private void addTransfer(OutboundTransferTask outboundTransfer) {
-      List<OutboundTransferTask> outboundTransferTasks = transfersByDestination.get(outboundTransfer.getDestination());
-      if (outboundTransferTasks == null) {
-         outboundTransferTasks = new ArrayList<OutboundTransferTask>();
+      synchronized (this) {
+         List<OutboundTransferTask> outboundTransferTasks = transfersByDestination.get(outboundTransfer.getDestination());
+         if (outboundTransferTasks == null) {
+            outboundTransferTasks = new ArrayList<OutboundTransferTask>();
+         }
+         outboundTransferTasks.add(outboundTransfer);
       }
-      outboundTransferTasks.add(outboundTransfer);
    }
 
    @Override
    public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
       // get the outbound transfers for this address and given segments and cancel the segments
-      List<OutboundTransferTask> outboundTransferTasks = transfersByDestination.get(destination);
-      if (outboundTransferTasks != null) {
-         for (OutboundTransferTask outboundTransfer : outboundTransferTasks) {
-            outboundTransfer.cancelSegments(segments);
+      List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
+      if (transferTasks != null) {
+         for (OutboundTransferTask transferTask : transferTasks) {
+            transferTask.cancelSegments(segments);
          }
       }
    }
 
-   private void removeTransfer(OutboundTransferTask outboundTransferTask) {
-      List<OutboundTransferTask> transfers = transfersByDestination.get(outboundTransferTask.getDestination());
-      if (transfers != null) {
-         transfers.remove(outboundTransferTask);
-         if (transfers.isEmpty()) {
-            transfersByDestination.remove(outboundTransferTask.getDestination());
+   private void removeTransfer(OutboundTransferTask transferTask) {
+      synchronized (this) {
+         List<OutboundTransferTask> transferTasks = transfersByDestination.get(transferTask.getDestination());
+         if (transferTasks != null) {
+            transferTasks.remove(transferTask);
+            if (transferTasks.isEmpty()) {
+               transfersByDestination.remove(transferTask.getDestination());
+            }
          }
       }
    }

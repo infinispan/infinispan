@@ -87,21 +87,8 @@ public class InboundTransferTask implements Runnable {
    @Override
    public void run() {
       try {
-         // get transactions and locks
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-         Response response = responses.get(source);
-         if (response instanceof SuccessfulResponse) {
-            List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-            stateConsumer.applyTransactions(source, topologyId, transactions);
-         } else {
-            //todo [anistor] fail
-         }
-
-         //todo [anistor] unlock transactions after we have received transactions from all donors
-
          // start transfer of cache entries
-         cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
+         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
          rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
 
          //todo [anistor] wait until all segments are received
@@ -110,6 +97,20 @@ public class InboundTransferTask implements Runnable {
       } finally {
          stateConsumer.onTaskCompletion(this);  //todo [anistor] this is inviked twice
       }
+   }
+
+   public void getTransactions() {
+      // get transactions and locks
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+      Response response = responses.get(source);
+      if (response instanceof SuccessfulResponse) {
+         List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
+         stateConsumer.applyTransactions(source, topologyId, transactions);
+      } else {
+         //todo [anistor] fail
+      }
+      //todo [anistor] unlock transactions after we have received transactions from all donors
    }
 
    public void cancelSegments(Set<Integer> cancelledSegments) {

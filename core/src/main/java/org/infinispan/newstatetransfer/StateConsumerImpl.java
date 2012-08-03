@@ -120,7 +120,9 @@ public class StateConsumerImpl implements StateConsumer {
       if (configuration.clustering().cacheMode().isInvalidation()) {
          return false;
       }
+      // todo [anistor] also return true for keys to be removed (now we report only keys to be added)
       synchronized (this) {
+         // todo [anistor] do not lookup segment in map if there is no transfer in progress
          return currentCh != null && transfersBySegment.containsKey(currentCh.getSegment(key));
       }
    }
@@ -286,6 +288,7 @@ public class StateConsumerImpl implements StateConsumer {
                transfersBySource.put(inboundTransfer.getSource(), inboundTransfers);
             }
             inboundTransfers.add(inboundTransfer);
+            inboundTransfer.getTransactions();
             executorService.submit(inboundTransfer);
          }
       }
@@ -337,7 +340,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (!keysToRemove.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, keysToRemove);  //todo [anistor] is this ok for removing keys or should we use a remove command?
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, keysToRemove);
             InvocationContext ctx = icc.createNonTxInvocationContext();
             ctx.setFlags(CACHE_MODE_LOCAL, SKIP_LOCKING);
             interceptorChain.invoke(ctx, invalidateCmd);
