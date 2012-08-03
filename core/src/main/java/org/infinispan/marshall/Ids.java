@@ -95,7 +95,7 @@ public interface Ids {
 
    int CACHE_RPC_COMMAND = 74;
 
-   int CACHE_VIEW = 75;
+   int CACHE_VIEW = 75; //todo [anistor] reuse this for CacheTopology
 
    // Versioned entries and values
    int VERSIONED_IMMORTAL_ENTRY = 76;
@@ -109,5 +109,4 @@ public interface Ids {
    int TRANSACTION_INFO = 84;
 
    int FLAG = 85;
-   int NEW_DEFAULT_CONSISTENT_HASH = 86;
 }
