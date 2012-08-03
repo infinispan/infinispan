@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -35,6 +36,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.newstatetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
@@ -95,13 +97,15 @@ public class RpcManagerImpl implements RpcManager {
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
    private LocalTopologyManager localTopologyManager;
+   private StateTransferManager stateTransferManager;
    private String cacheName;
 
    @Inject
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
             ReplicationQueue replicationQueue, CommandsFactory cf,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-            LocalTopologyManager localTopologyManager, GlobalConfiguration globalCfg) {
+            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager,
+            GlobalConfiguration globalCfg) {
       this.t = t;
       this.configuration = cfg;
       this.cacheName = cache.getName();
@@ -110,6 +114,7 @@ public class RpcManagerImpl implements RpcManager {
       this.asyncExecutor = e;
       this.cf = cf;
       this.localTopologyManager = localTopologyManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Start(priority = 9)
@@ -164,6 +169,9 @@ public class RpcManagerImpl implements RpcManager {
                if (responseFilter == null) {
                   responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
                }
+            }
+            if (rpcCommand instanceof TopologyAffectedCommand) {
+               ((TopologyAffectedCommand)rpcCommand).setTopologyId(stateTransferManager.getTopologyId());
             }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
             if (statisticsEnabled) replicationCount.incrementAndGet();
