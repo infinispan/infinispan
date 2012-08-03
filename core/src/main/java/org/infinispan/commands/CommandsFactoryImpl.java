@@ -114,10 +114,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private String cacheName;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
-   SizeCommand cachedSizeCommand;
-   KeySetCommand cachedKeySetCommand;
-   ValuesCommand cachedValuesCommand;
-   EntrySetCommand cachedEntrySetCommand;
+   private SizeCommand cachedSizeCommand;
+   private KeySetCommand cachedKeySetCommand;
+   private ValuesCommand cachedValuesCommand;
+   private EntrySetCommand cachedEntrySetCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
@@ -137,7 +137,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager,
+                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager,
+                                 org.infinispan.newstatetransfer.StateTransferManager stateTransferManager2, LockManager lockManager,
                                  InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
       this.dataContainer = container;
       this.notifier = notifier;
@@ -150,6 +151,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.moduleCommandInitializers = moduleCommandInitializers;
       this.recoveryManager = recoveryManager;
       this.stateTransferManager = stateTransferManager;
+      this.stateTransferManager2 = stateTransferManager2;
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
       this.mapReduceManager = mapReduceManager;

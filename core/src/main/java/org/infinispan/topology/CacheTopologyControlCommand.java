@@ -22,8 +22,6 @@
  */
 package org.infinispan.topology;
 
-import java.io.Serializable;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
@@ -43,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei
  * @since 5.2
  */
-public class CacheTopologyControlCommand implements ReplicableCommand, Serializable {
+public class CacheTopologyControlCommand implements ReplicableCommand {
 
    public enum Type {
       // member to coordinator:

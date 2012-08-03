@@ -19,44 +19,18 @@
 
 package org.infinispan.commands;
 
-import org.infinispan.context.Flag;
-
-import java.util.Set;
-
 /**
- * Base class for those commands that can carry flags.
+ * Some of the commands sent over the wire can only be honored by the receiver if the topology of the cluster at
+ * delivery time is still 'compatible' with the topology in place at send time (eg. a 'get' command cannot execute
+ * on a node that is no longer owner after state transfer took place). These commands need to be tagged with
+ * the current topology id of the sender so the receiver can detect and handle topology mismatches.
  *
- * @author Galder Zamarreño
- * @since 5.1
+ * @author anistor@redhat.com
+ * @since 5.2
  */
-public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand, TopologyAffectedCommand {
+public interface TopologyAffectedCommand extends ReplicableCommand {
 
-   protected Set<Flag> flags;
+   int getTopologyId();
 
-   private int topologyId = -1;
-
-   @Override
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return flags != null && flags.contains(flag);
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
-   }
+   void setTopologyId(int topologyId);
 }

@@ -187,4 +187,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public boolean isStateTransferInProgressForKey(Object key) {
       return stateConsumer.isStateTransferInProgressForKey(key);
    }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
 }

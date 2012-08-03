@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands.tx;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -34,7 +35,7 @@ import org.infinispan.commands.VisitableCommand;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface TransactionBoundaryCommand extends VisitableCommand, CacheRpcCommand {
+public interface TransactionBoundaryCommand extends VisitableCommand, CacheRpcCommand, TopologyAffectedCommand {
 
    GlobalTransaction getGlobalTransaction();
 
