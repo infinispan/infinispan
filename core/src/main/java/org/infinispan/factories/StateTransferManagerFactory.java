@@ -23,13 +23,11 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.statetransfer.DistributedStateTransferManagerImpl;
-import org.infinispan.statetransfer.DummyInvalidationStateTransferManagerImpl;
-import org.infinispan.statetransfer.ReplicatedStateTransferManagerImpl;
-import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.newstatetransfer.StateTransferManager;
+import org.infinispan.newstatetransfer.StateTransferManagerImpl;
 
 /**
- * Constructs {@link org.infinispan.statetransfer.StateTransferManager} instances.
+ * Constructs {@link org.infinispan.newstatetransfer.StateTransferManager} instances.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
@@ -42,13 +40,6 @@ public class StateTransferManagerFactory extends AbstractNamedCacheComponentFact
       if (!configuration.clustering().cacheMode().isClustered())
          return null;
 
-      if (configuration.clustering().cacheMode().isDistributed())
-         return componentType.cast(new DistributedStateTransferManagerImpl());
-      else if (configuration.clustering().cacheMode().isReplicated())
-         return componentType.cast(new ReplicatedStateTransferManagerImpl());
-      else if (configuration.clustering().cacheMode().isInvalidation())
-         return componentType.cast(new DummyInvalidationStateTransferManagerImpl());
-      else
-         return null;
+      return componentType.cast(new StateTransferManagerImpl());
    }
 }

@@ -25,9 +25,10 @@ package org.infinispan.remoting.transport.jgroups;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.newstatetransfer.StateRequestCommand;
+import org.infinispan.newstatetransfer.StateResponseCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -269,7 +270,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       // Replay capability requires responses from all members!
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache topology control command.
-      boolean rsvp = command instanceof StateTransferControlCommand || command instanceof CacheTopologyControlCommand;
+      boolean rsvp = command instanceof StateRequestCommand || command instanceof StateResponseCommand
+            || command instanceof CacheTopologyControlCommand;
 
       Response retval;
       Buffer buf;

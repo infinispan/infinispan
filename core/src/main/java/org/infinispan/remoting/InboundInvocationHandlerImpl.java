@@ -23,7 +23,6 @@
 package org.infinispan.remoting;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -37,7 +36,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -49,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
-   GlobalComponentRegistry gcr;
+   private GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private GlobalConfiguration globalConfiguration;
@@ -61,11 +59,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       this.gcr = gcr;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
-   }
-
-   private boolean hasJoinStarted(final ComponentRegistry componentRegistry) throws InterruptedException {
-      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
-      return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
 
    @Override
@@ -119,20 +112,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private Response handleWithRetry(final CacheRpcCommand cmd, final ComponentRegistry componentRegistry) throws Throwable {
-      // RehashControlCommands are the mechanism used for joining the cluster,
-      // so they don't need to wait until the cache starts up.
-      boolean isStateTransferCommand = cmd instanceof StateTransferControlCommand;
-      if (!isStateTransferCommand) {
-         // For normal commands, reject them if we didn't start joining yet
-         if (!hasJoinStarted(componentRegistry)) {
-            log.cacheCanNotHandleInvocations(cmd.getCacheName());
-            return new ExceptionResponse(new NamedCacheNotFoundException(cmd.getCacheName(),
-                  "Cache has not been started on node " + transport.getAddress()));
-         }
-         // if we did start joining, the StateTransferLockInterceptor will make it wait until the state transfer is complete
-         // TODO There is a small window between starting the join and blocking the transactions, we need to eliminate it
-         //waitForStart(cmd.getComponentRegistry());
-      }
       return handleWithWaitForBlocks(cmd, componentRegistry);
    }
 }
