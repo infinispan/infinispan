@@ -65,7 +65,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.newstatetransfer.StateTransferManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -135,9 +134,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private static final Log log = LogFactory.getLog(CacheImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private EmbeddedCacheManager cacheManager;
-   // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
-   private StateTransferManager stateTransferManager;
-   // as above for ResponseGenerator
+   // this is never used here but should be injected - this is a hack to make sure the ResponseGenerator is properly constructed if needed.
    private ResponseGenerator responseGenerator;
    private LockManager lockManager;
    private DistributionManager distributionManager;
@@ -165,7 +162,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
                                   @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                                   ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
-                                  EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
+                                  EmbeddedCacheManager cacheManager,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
                                   LockManager lockManager,
@@ -183,7 +180,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       this.marshaller = marshaller;
       this.cacheManager = cacheManager;
       this.responseGenerator = responseGenerator;
-      this.stateTransferManager = stateTransferManager;
       this.icc = icc;
       this.distributionManager = distributionManager;
       this.asyncExecutor = asyncExecutor;
