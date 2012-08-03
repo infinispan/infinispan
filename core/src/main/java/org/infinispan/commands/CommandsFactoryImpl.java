@@ -25,7 +25,6 @@ package org.infinispan.commands;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -76,10 +75,9 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.newstatetransfer.StateRequestCommand;
 import org.infinispan.newstatetransfer.StateResponseCommand;
+import org.infinispan.newstatetransfer.StateTransferManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.LockInfo;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -392,10 +390,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
                }
             }
             break;
-         case StateTransferControlCommand.COMMAND_ID:
-            StateTransferControlCommand rcc = (StateTransferControlCommand) c;
-            rcc.init(stateTransferManager);
-            break;
          case StateRequestCommand.COMMAND_ID:
             ((StateRequestCommand) c).init(stateTransferManager2.getStateProvider());
             break;
@@ -458,12 +452,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags) {
       return new LockControlCommand(keys,  cacheName, flags, null);
-   }
-
-   @Override
-   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                                int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
    }
 
    @Override

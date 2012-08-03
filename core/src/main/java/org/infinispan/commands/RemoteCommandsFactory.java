@@ -24,7 +24,6 @@ package org.infinispan.commands;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
@@ -193,9 +192,6 @@ public class RemoteCommandsFactory {
                break;
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
-               break;
-            case StateTransferControlCommand.COMMAND_ID:
-               command = new StateTransferControlCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
                command = new RemoveCacheCommand(cacheName, cacheManager, registry);
