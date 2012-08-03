@@ -57,14 +57,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
 
    @Inject
-   public void inject(Transport transport, GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr) {
+   public void inject(Transport transport, GlobalConfiguration globalConfiguration,
+                      GlobalComponentRegistry gcr) {
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
       this.gcr = gcr;
    }
 
    @Override
-   public CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm) throws Exception {
+   public CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm)
+         throws Exception {
       log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
       LocalCacheStatus status = new LocalCacheStatus(joinInfo, stm);
       runningCaches.put(cacheName, status);
@@ -118,20 +120,35 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleConsistentHashUpdate(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
+   public void handleConsistentHashUpdate(String cacheName, int topologyId, ConsistentHash currentCH,
+                                          ConsistentHash pendingCH) {
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      if (cacheStatus == null) {
+         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
+               topologyId, cacheName);
+         return;
+      }
       log.debugf("Updating local consistent hash(es) for cache %s: currentCH = %s, pendingCH = %s",
             cacheName, currentCH, pendingCH);
-      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       cacheStatus.topology = new CacheTopology(topologyId, currentCH, pendingCH);
-      ConsistentHash unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH, pendingCH);
+      ConsistentHash unionCH;
+      if (pendingCH != null)
+         unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH, pendingCH);
+      else unionCH = null;
       CacheTopologyHandler handler = cacheStatus.handler;
       handler.updateConsistentHash(topologyId, currentCH, unionCH);
    }
 
    @Override
-   public void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws InterruptedException {
-      log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s", cacheName, topologyId, pendingCH);
+   public void handleRebalance(String cacheName, int topologyId, ConsistentHash currentCH,
+                               ConsistentHash pendingCH) throws InterruptedException {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      if (cacheStatus == null) {
+         log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally", topologyId, cacheName);
+         return;
+      }
+      log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s", cacheName,
+            topologyId, pendingCH);
       cacheStatus.joinedLatch.await();
 
       cacheStatus.topology = new CacheTopology(topologyId, currentCH, pendingCH);
@@ -148,11 +165,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // Note that if the coordinator changes again after we sent the command, we will get another
          // query for the status of our running caches. So we don't need to retry if the command failed.
          ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(), topologyId, null, null);
+               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(), topologyId, null,
+               null);
          try {
             executeOnCoordinatorAsync(command);
          } catch (Exception e) {
-            log.debugf(e, "Error sending the rebalance completed notification for cache %s to coordinator", cacheName);
+            log.debugf(e, "Error sending the rebalance completed notification for cache %s to coordinator",
+                  cacheName);
          }
       }
    }

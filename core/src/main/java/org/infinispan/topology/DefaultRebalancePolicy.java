@@ -129,8 +129,11 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             // The list of "current" members will always be included in the set of "pending" members,
             // because leaves are reflected at the same time in both collections
             List<Address> newMembers = new ArrayList<Address>(clusterMembers);
-            newMembers.retainAll(pendingCH.getMembers());               //todo [anistor] what if pendingCH is null?
-            ConsistentHash newPendingCH = joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);
+            ConsistentHash newPendingCH = null;
+            if (pendingCH != null) {
+               newMembers.retainAll(pendingCH.getMembers());
+               newPendingCH = joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);
+            }
 
             newMembers.retainAll(currentCH.getMembers());
             ConsistentHash newCurrentCH = joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers);

@@ -40,6 +40,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionTable;
@@ -129,19 +130,21 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().hash().numVirtualNodes(), //todo [anistor] rename to numSegments
             configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
 
-      localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
-
+      CacheTopologyHandler handler = new CacheTopologyHandler() {
          @Override
          public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            rebalance(topologyId, currentCH, pendingCH);
+            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
+            onTopologyUpdate(topologyId, ch);
          }
 
          @Override
          public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
-            onTopologyUpdate(topologyId, ch);
+            rebalance(topologyId, currentCH, pendingCH);
          }
-      });
+      };
+
+      CacheTopology cacheTopology = localTopologyManager.join(cacheName, joinInfo, handler);
+      handler.updateConsistentHash(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
    }
 
    @Stop(priority = 20)
