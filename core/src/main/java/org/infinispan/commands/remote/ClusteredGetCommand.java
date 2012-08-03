@@ -71,7 +71,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private DistributionManager distributionManager;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-
+   private int topologyId;
 
    private ClusteredGetCommand() {
       super(null); // For command id uniqueness test
@@ -218,5 +218,15 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 }
