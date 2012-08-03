@@ -21,6 +21,7 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -100,6 +101,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       output.writeUTF(cacheName);
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
       StreamingMarshaller marshaller;
+      //todo [anistor] remove following hack once CacheViewControlCommand is removed
       if (registry == null) {
          // TODO This is a hack to support global commands CacheViewControlCommand
          // but they should not be CacheRpcCommands at all
@@ -112,7 +114,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       // the original payload.
       ExposedByteArrayOutputStream os = marshallParameters(command, marshaller);
       UnsignedNumeric.writeUnsignedInt(output, os.size());
-      // Do not rely on the raw buffer's lenght which is likely to be much longer!
+      // Do not rely on the raw buffer's length which is likely to be much longer!
       output.write(os.getRawBuffer(), 0, os.size());
    }
 
@@ -162,9 +164,12 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
       try {
          Object[] args = cmdExt.readParameters(paramsInput);
-         return cmdExt.fromStream(methodId, args, type, cacheName);
-      } catch (IOException e) {
-         throw e;
+         CacheRpcCommand cacheRpcCommand = cmdExt.fromStream(methodId, args, type, cacheName);
+         if (cacheRpcCommand instanceof TopologyAffectedCommand) {
+            int topologyId = input.readInt();
+            ((TopologyAffectedCommand)cacheRpcCommand).setTopologyId(topologyId);
+         }
+         return cacheRpcCommand;
       } finally {
          marshaller.finishObjectInput(paramsInput);
       }

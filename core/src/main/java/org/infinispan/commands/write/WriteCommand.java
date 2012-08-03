@@ -23,6 +23,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 
 import java.util.Set;
@@ -33,7 +34,7 @@ import java.util.Set;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
+public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, TopologyAffectedCommand {
    /**
     * Some commands may want to provide information on whether the command was successful or not.  This is different
     * from a failure, which usually would result in an exception being thrown.  An example is a putIfAbsent() not doing

@@ -68,4 +68,6 @@ public interface StateTransferManager {
     * @return
     */
    boolean isStateTransferInProgressForKey(Object key);
+
+   int getTopologyId();
 }
