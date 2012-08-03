@@ -25,7 +25,6 @@ package org.infinispan.remoting.transport.jgroups;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -33,6 +32,7 @@ import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -268,8 +268,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (trace) log.tracef("Replication task sending %s to single recipient %s with response mode %s", command, destination, mode);
 
       // Replay capability requires responses from all members!
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache view control command.
-      boolean rsvp = command instanceof StateTransferControlCommand || command instanceof CacheViewControlCommand;
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache topology control command.
+      boolean rsvp = command instanceof StateTransferControlCommand || command instanceof CacheTopologyControlCommand;
 
       Response retval;
       Buffer buf;
@@ -297,8 +297,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
 
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache view control command.
-      boolean rsvp = command instanceof CacheViewControlCommand;
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache topology control command.
+      boolean rsvp = command instanceof CacheTopologyControlCommand;
 
       RspList<Object> retval = null;
       Buffer buf;

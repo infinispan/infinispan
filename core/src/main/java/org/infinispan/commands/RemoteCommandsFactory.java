@@ -23,7 +23,6 @@
 package org.infinispan.commands;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
@@ -219,9 +218,6 @@ public class RemoteCommandsFactory {
             case CompleteTransactionCommand.COMMAND_ID:
                command = new CompleteTransactionCommand(cacheName);
                break;
-            case CacheViewControlCommand.COMMAND_ID:
-               command = new CacheViewControlCommand(cacheName);
-               break;                      
             case CreateCacheCommand.COMMAND_ID:
                command = new CreateCacheCommand(cacheName);   
                break;
