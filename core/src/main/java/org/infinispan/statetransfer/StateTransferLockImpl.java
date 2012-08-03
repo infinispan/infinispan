@@ -88,9 +88,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    public void injectDependencies(Configuration config) {
       pessimisticLocking =  config.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       isSync = config.clustering().cacheMode().isSynchronous();
-      lockTimeout = config.clustering().cacheMode().isDistributed() ?
-            config.clustering().hash().rehashWait() :
-            config.clustering().stateTransfer().timeout();
+      lockTimeout = config.clustering().stateTransfer().timeout();
    }
 
    @Override

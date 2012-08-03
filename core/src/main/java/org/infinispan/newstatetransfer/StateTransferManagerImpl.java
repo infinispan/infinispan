@@ -28,6 +28,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
@@ -38,7 +39,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
@@ -65,6 +65,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private StateTransferLock stateTransferLock;
 
    private Configuration configuration;
+   private DistributionManager distributionManager;
    private LocalTopologyManager localTopologyManager;
    private RpcManager rpcManager;
    private String cacheName;
@@ -83,6 +84,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     Configuration configuration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
+                    DistributionManager distributionManager,
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     InterceptorChain interceptorChain,
@@ -92,6 +94,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     Cache cache,
                     InvocationContextContainer icc) {
       this.configuration = configuration;
+      this.distributionManager = distributionManager;
       this.localTopologyManager = localTopologyManager;
       this.rpcManager = rpcManager;
       this.stateTransferLock = stateTransferLock;
@@ -103,7 +106,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             commandsFactory,
             cacheLoaderManager,
             dataContainer,
-            transactionTable);
+            transactionTable,
+            stateTransferLock);
 
       stateConsumer = new StateConsumerImpl(asyncTransportExecutor,
             interceptorChain,
@@ -124,7 +128,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(
-            configuration.clustering().cacheMode().isReplicated() 
+            configuration.clustering().cacheMode().isReplicated()
                   ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numVirtualNodes(), //todo [anistor] rename to numSegments
@@ -133,13 +137,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
       CacheTopologyHandler handler = new CacheTopologyHandler() {
          @Override
          public void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
-            onTopologyUpdate(topologyId, ch);
+            rebalance(topologyId, currentCH, pendingCH);
          }
 
          @Override
          public void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-            rebalance(topologyId, currentCH, pendingCH);
+            distributionManager.setCacheTopology(new CacheTopology(topologyId, currentCH, pendingCH));
+            ConsistentHash ch = pendingCH != null ? pendingCH : currentCH;
+            onTopologyUpdate(topologyId, ch);
          }
       };
 
@@ -167,11 +172,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public void onTopologyUpdate(int topologyId, ConsistentHash newCh) {
       currentCh = newCh;
-      try {
-         stateTransferLock.blockNewTransactions(topologyId);
-      } catch (InterruptedException e) {
-         e.printStackTrace();  // TODO [anistor] handle properly
-      }
+      stateTransferLock.setStateTransferInProgress(true);
       stateProvider.onTopologyUpdate(topologyId, newCh);
       stateConsumer.onTopologyUpdate(topologyId, newCh);
    }

@@ -114,8 +114,6 @@ public class OutboundTransferTask implements Runnable {
 
    @Override
    public void run() {
-      //todo [anistor] do we still need configuration.clustering().stateTransfer().fetchInMemoryState() ?
-
       try {
          // send data container entries
          for (InternalCacheEntry ice : dataContainer) {
