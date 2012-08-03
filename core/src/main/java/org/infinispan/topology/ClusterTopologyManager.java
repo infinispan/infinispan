@@ -37,16 +37,13 @@ public interface ClusterTopologyManager {
    /**
     * Used by {@link RebalancePolicy} to update the consistent hash on all the members,
     * without triggering a state transfer.
-    * @param topologyId The current topology id.
-    * @param currentCH The current consistent hash.
-    * @param balancedCH Should be {@code null}, unless there is a state transfer already in progress.
     */
-   void updateConsistentHash(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash balancedCH) throws Exception;
+   void updateConsistentHash(String cacheName, CacheTopology cacheTopology) throws Exception;
 
    /**
     * Used by {@link RebalancePolicy} to start a state transfer.
     */
-   void rebalance(String cacheName, int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) throws Exception;
+   void rebalance(String cacheName, CacheTopology cacheTopology) throws Exception;
 
 
    /**

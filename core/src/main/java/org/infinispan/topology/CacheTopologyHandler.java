@@ -32,17 +32,11 @@ public interface CacheTopologyHandler {
    /**
     * Invoked when the CH has to be immediately updated because of a leave or when the state transfer has completed
     * and we have to install a permanent CH (pendingCH == null). A state transfer is not always required.
-    *
-    * @param currentCH
-    * @param pendingCH the pending CH
     */
-   void updateConsistentHash(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH);
+   void updateConsistentHash(CacheTopology cacheTopology);
 
    /**
     * Invoked when state transfer has to be started.
-    *
-    * @param topologyId
-    * @param pendingCH
     */
-   void rebalance(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH);
+   void rebalance(CacheTopology cacheTopology);
 }
