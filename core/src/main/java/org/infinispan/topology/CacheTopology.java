@@ -1,11 +1,19 @@
 package org.infinispan.topology;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 /**
  * The status of a cache from a distribution/state transfer point of view.
@@ -19,7 +27,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
-public class CacheTopology implements Serializable {
+public class CacheTopology {
    private final int topologyId;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
@@ -69,5 +77,33 @@ public class CacheTopology implements Serializable {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             '}';
+   }
+
+
+   public static class Externalizer extends AbstractExternalizer<CacheTopology> {
+      @Override
+      public void writeObject(ObjectOutput output, CacheTopology cacheTopology) throws IOException {
+         output.writeInt(cacheTopology.topologyId);
+         output.writeObject(cacheTopology.currentCH);
+         output.writeObject(cacheTopology.pendingCH);
+      }
+
+      @Override
+      public CacheTopology readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         int topologyId = unmarshaller.readInt();
+         ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
+         ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
+         return new CacheTopology(topologyId, currentCH, pendingCH);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.CACHE_VIEW;
+      }
+
+      @Override
+      public Set<Class<? extends CacheTopology>> getTypeClasses() {
+         return Util.<Class<? extends CacheTopology>>asSet(CacheTopology.class);
+      }
    }
 }
