@@ -123,9 +123,9 @@ public interface DistributionManager {
    /**
     * Sets the consistent hash implementation in use.
     *
-    * @param cacheTopology@return previous consistent hash, the last one for which rehash completed
+    * @param cacheTopology
     */
-   ConsistentHash setCacheTopology(CacheTopology cacheTopology);
+   void setCacheTopology(CacheTopology cacheTopology);
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
