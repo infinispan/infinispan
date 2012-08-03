@@ -42,7 +42,7 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(StateResponseCommand.class);
 
-   public static final byte COMMAND_ID = 17;
+   public static final byte COMMAND_ID = 20;
 
    private int topologyId;
 
