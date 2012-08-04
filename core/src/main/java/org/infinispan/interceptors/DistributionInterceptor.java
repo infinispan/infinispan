@@ -52,7 +52,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
@@ -63,7 +62,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +81,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
-   StateTransferLock stateTransferLock;
    CommandsFactory cf;
    DataContainer dataContainer;
    boolean isL1CacheEnabled, needReliableReturnValues;
@@ -113,11 +110,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,
+   public void injectDependencies(DistributionManager distributionManager,
                                   CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory,
                                   L1Manager l1Manager, LockManager lockManager) {
       this.dm = distributionManager;
-      this.stateTransferLock = stateTransferLock;
       this.cf = cf;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
@@ -310,8 +306,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
          final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, true, true);
@@ -330,9 +324,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
-
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
          Future<?> f = flushL1Caches(ctx);
@@ -408,9 +399,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
-
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
@@ -477,8 +465,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             NotifyingNotifiableFuture<Object> futureToReturn = null;
             Future<?> invalidationFuture = null;
             if (ctx.isOriginLocal()) {
-               int newCacheViewId = -1;
-               stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
