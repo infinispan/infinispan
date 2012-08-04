@@ -36,6 +36,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.newstatetransfer.StateTransferInterceptor;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -118,7 +119,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // the state transfer lock ensures that the cache member list is up-to-date
       // so it's necessary even if state transfer is disabled
       if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())
-         interceptorChain.appendInterceptor(createInterceptor(new StateTransferLockInterceptor(), StateTransferLockInterceptor.class), false);
+         interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
 
       // load the tx interceptor
       if (configuration.transaction().transactionMode().isTransactional())

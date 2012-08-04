@@ -29,9 +29,10 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.StateTransferLockInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.newstatetransfer.StateTransferInterceptor;
+import org.infinispan.newstatetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -99,7 +100,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       // Before calling commit we block transactions on one of the nodes to simulate a state transfer
       final StateTransferLock blockFirst = TestingUtil.extractComponent(failOnOriginator ? c1 : c2, StateTransferLock.class);
       final StateTransferLock blockSecond = TestingUtil.extractComponent(failOnOriginator ? c2 : c1, StateTransferLock.class);
-      blockFirst.blockNewTransactions(1000);
+      blockFirst.acquireTTExclusiveLock();
 
       // Schedule the unblock on another thread since the main thread will be busy with the commit call
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {
@@ -108,9 +109,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
             try {
                // should be much larger than the lock acquisition timeout
                Thread.sleep(1000);
-               blockSecond.blockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-               blockFirst.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-               blockSecond.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
+               blockSecond.acquireTTExclusiveLock();
+               blockFirst.releaseTTExclusiveLock();
+               blockSecond.releaseTTExclusiveLock();
             } catch (InterruptedException e) {
                log.errorf(e, "Error blocking/unblocking transactions");
             }
@@ -176,7 +177,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
             }
             return super.handleDefault(ctx, command);
          }
-      }, StateTransferLockInterceptor.class);
+      }, StateTransferInterceptor.class);
 
       // Schedule the remote node to stop on another thread since the main thread will be busy with the commit call
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {

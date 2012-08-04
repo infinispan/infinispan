@@ -39,10 +39,10 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.newstatetransfer.StateTransferLock;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
@@ -61,7 +61,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
-   private StateTransferLock stateTransferLock;
    CommandsFactory cf;
 
    private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
@@ -72,8 +71,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
-      this.stateTransferLock = stateTransferLock;
+   public void init(CommandsFactory cf) {
       this.cf = cf;
    }
 
@@ -81,8 +79,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
-
          sendCommitCommand(ctx, command);
       }
       return invokeNextInterceptor(ctx, command);
@@ -124,8 +120,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
-
          broadcastPrepare(ctx, command);
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
       }
@@ -179,8 +173,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       final Object returnValue = invokeNextInterceptor(ctx, command);
       populateCommandFlags(command, ctx);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, -1);
-
          if (ctx.isUseFutureReturnType()) {
             NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
             rpcManager.broadcastRpcCommandInFuture(command, future);
