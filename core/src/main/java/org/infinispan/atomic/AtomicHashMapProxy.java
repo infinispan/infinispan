@@ -83,7 +83,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       // When passivation is enabled, cache loader needs to attempt to load
       // the previous value in order to merge it if necessary, so mark atomic
       // hash map writes as delta writes
-      if (cache.getCacheConfiguration().loaders().passivation())
+      if (cache.getConfiguration().getCacheLoaderManagerConfig().isPassivation())
          flags[1] = Flag.DELTA_WRITE;
       else
          flags[1] = Flag.SKIP_CACHE_LOAD;
