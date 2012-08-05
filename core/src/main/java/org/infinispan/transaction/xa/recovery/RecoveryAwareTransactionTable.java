@@ -138,7 +138,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    @Override
    public void failureCompletingTransaction(Transaction tx) {
-      RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) getLocalTx(tx);
+      RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) getLocalTransaction(tx);
       if (localTx == null)
          throw new CacheException(String.format("Local transaction for transaction (%s) not found", tx));
 
