@@ -381,11 +381,7 @@ public class TransactionTable {
       return remoteTransactions.values();
    }
 
-   protected final LocalTransaction getLocalTx(Transaction tx) {    //todo [anistor] replace this with getLocalTransaction(Transaction tx)
-      return localTransactions.get(tx);
-   }
-
-   public final Collection<LocalTransaction> getLocalTransactions() {
+   public Collection<LocalTransaction> getLocalTransactions() {
       return localTransactions.values();
    }
 
