@@ -95,7 +95,7 @@ public interface Ids {
 
    int CACHE_RPC_COMMAND = 74;
 
-   int CACHE_VIEW = 75; //todo [anistor] reuse this for CacheTopology
+   int CACHE_TOPOLOGY = 75;
 
    // Versioned entries and values
    int VERSIONED_IMMORTAL_ENTRY = 76;

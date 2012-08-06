@@ -34,13 +34,13 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureBuilder;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * // TODO [anistor] Document this
@@ -62,7 +62,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final Address destination;
 
-   private final Set<Integer> segments = new ConcurrentHashSet<Integer>();
+   private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
 
    private final int stateTransferChunkSize;
 

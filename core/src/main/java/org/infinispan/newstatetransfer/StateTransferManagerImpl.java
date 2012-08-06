@@ -109,8 +109,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             transactionTable,
             stateTransferLock);
 
-      stateConsumer = new StateConsumerImpl(asyncTransportExecutor,
-            interceptorChain,
+      stateConsumer = new StateConsumerImpl(interceptorChain,
             icc,
             configuration,
             rpcManager,
@@ -172,8 +171,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public void onTopologyUpdate(int topologyId, ConsistentHash newCh) {
       currentCh = newCh;
-      stateTransferLock.setStateTransferInProgress(true);
       stateProvider.onTopologyUpdate(topologyId, newCh);
+      stateTransferLock.setStateTransferInProgress(true);
       stateConsumer.onTopologyUpdate(topologyId, newCh);
    }
 

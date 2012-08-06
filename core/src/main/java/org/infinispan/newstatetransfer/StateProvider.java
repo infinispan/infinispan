@@ -37,6 +37,8 @@ import java.util.Set;
  */
 public interface StateProvider {
 
+   boolean isStateTransferInProgress();
+
    /**
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
     *
