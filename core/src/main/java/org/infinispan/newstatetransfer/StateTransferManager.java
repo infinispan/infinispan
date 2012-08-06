@@ -57,7 +57,7 @@ public interface StateTransferManager {
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
-   @ManagedAttribute(description = "Checks whether there is a pending state transfer in the cluster.")
+   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.")
    @Metric(displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 

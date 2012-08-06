@@ -77,6 +77,9 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public Set<Integer> getSegmentsForOwner(Address owner) {
+      if (owner == null) {
+         throw new IllegalArgumentException("owner cannot be null");
+      }
       if (!members.contains(owner)) {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
@@ -179,6 +182,19 @@ public class DefaultConsistentHash implements ConsistentHash {
             ", numOwners=" + numOwners +
             ", numSegments=" + numSegments +
             '}';
+   }
+
+   public String dump() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("members=").append(members).append("\n");
+      sb.append("numOwners=").append(numOwners).append("\n");
+      sb.append("numSegments=").append(numSegments).append("\n");
+      sb.append("segmentOwners:\n");
+      for (int i = 0; i < numSegments; i++) {
+         sb.append(i).append(" : ").append(Arrays.asList(segmentOwners[i])).append("\n");
+      }
+
+      return sb.toString();
    }
 
    public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {

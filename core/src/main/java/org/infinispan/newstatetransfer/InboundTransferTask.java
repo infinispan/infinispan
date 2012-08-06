@@ -29,9 +29,9 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * // TODO [anistor] Document this
@@ -39,15 +39,15 @@ import java.util.*;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class InboundTransferTask implements Runnable {
+public class InboundTransferTask {
 
-   private final Set<Integer> segments = new ConcurrentHashSet<Integer>();
+   private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
 
-   private final Set<Integer> finishedSegments = new ConcurrentHashSet<Integer>();
+   private final Set<Integer> finishedSegments = new CopyOnWriteArraySet<Integer>();
 
    private final Address source;
 
-   private boolean isCancelled = false;
+   private volatile boolean isCancelled = false;
 
    private final StateConsumerImpl stateConsumer;
 
@@ -61,7 +61,7 @@ public class InboundTransferTask implements Runnable {
 
    public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, StateConsumerImpl stateConsumer, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout) {
       if (segments == null || segments.isEmpty()) {
-         throw new IllegalArgumentException("Segments must not be null or empty");
+         throw new IllegalArgumentException("segments must not be null or empty");
       }
       if (source == null) {
          throw new IllegalArgumentException("Source address cannot be null");
@@ -84,21 +84,6 @@ public class InboundTransferTask implements Runnable {
       return source;
    }
 
-   @Override
-   public void run() {
-      try {
-         // start transfer of cache entries
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-
-         //todo [anistor] wait until all segments are received
-
-         //todo [anistor] notify state consumer and remove the task
-      } finally {
-         stateConsumer.onTaskCompletion(this);  //todo [anistor] this is inviked twice
-      }
-   }
-
    public void getTransactions() {
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
@@ -111,6 +96,12 @@ public class InboundTransferTask implements Runnable {
          //todo [anistor] fail
       }
       //todo [anistor] unlock transactions after we have received transactions from all donors
+   }
+
+   public void requestSegments() {
+      // start transfer of cache entries
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
+      rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
    }
 
    public void cancelSegments(Set<Integer> cancelledSegments) {
@@ -144,7 +135,7 @@ public class InboundTransferTask implements Runnable {
    }
 
    public void onStateReceived(int segmentId, int numEntries) {
-      if (segments.contains(segmentId)) {
+      if (!isCancelled && segments.contains(segmentId)) {
          if (numEntries == 0) {
             finishedSegments.add(segmentId);
             if (finishedSegments.containsAll(segments)) {

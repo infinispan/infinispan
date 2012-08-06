@@ -3,8 +3,6 @@ package org.infinispan.topology;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +11,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 
 /**
  * The status of a cache from a distribution/state transfer point of view.
@@ -112,12 +109,12 @@ public class CacheTopology {
 
       @Override
       public Integer getId() {
-         return Ids.CACHE_VIEW;
+         return Ids.CACHE_TOPOLOGY;
       }
 
       @Override
       public Set<Class<? extends CacheTopology>> getTypeClasses() {
-         return Util.<Class<? extends CacheTopology>>asSet(CacheTopology.class);
+         return Collections.<Class<? extends CacheTopology>>singleton(CacheTopology.class);
       }
    }
 }

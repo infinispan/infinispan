@@ -24,8 +24,6 @@ package org.infinispan.factories;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.distribution.L1Manager;
-import org.infinispan.distribution.L1ManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -38,7 +36,6 @@ import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.RebalancePolicy;
-import org.infinispan.transaction.xa.TransactionFactory;
 
 /**
  * Factory for building global-scope components which have default empty constructors
