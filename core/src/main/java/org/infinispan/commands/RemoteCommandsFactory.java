@@ -61,6 +61,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.newstatetransfer.StateRequestCommand;
 import org.infinispan.newstatetransfer.StateResponseCommand;
+import org.infinispan.topology.CacheTopologyControlCommand;
 
 import java.util.Map;
 
@@ -140,7 +141,10 @@ public class RemoteCommandsFactory {
                break;
             case ApplyDeltaCommand.COMMAND_ID:
                command = new ApplyDeltaCommand();
-               break;      
+               break;
+            case CacheTopologyControlCommand.COMMAND_ID:
+               command = new CacheTopologyControlCommand();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

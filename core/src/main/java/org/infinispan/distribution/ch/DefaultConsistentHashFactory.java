@@ -19,6 +19,7 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.Serializable;
 import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
@@ -33,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>, Serializable {
 
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
 
