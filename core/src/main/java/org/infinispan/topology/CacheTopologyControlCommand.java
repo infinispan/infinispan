@@ -68,7 +68,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
 
-   private final String cacheName;
+   private String cacheName;
    private Type type;
    private Address sender;
    private CacheJoinInfo joinInfo;
@@ -192,13 +192,14 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{(byte) type.ordinal(), sender, joinInfo, topologyId, currentCH, pendingCH};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH, pendingCH};
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
+      cacheName = (String) parameters[i++];
       type = Type.values()[(Byte) parameters[i++]];
       sender = (Address) parameters[i++];
       joinInfo = (CacheJoinInfo) parameters[i++];
