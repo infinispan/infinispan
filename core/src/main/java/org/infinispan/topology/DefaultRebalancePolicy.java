@@ -124,6 +124,11 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    public void updateMembersList(String cacheName, List<Address> joiners, List<Address> leavers) throws Exception {
       // TODO Separate into two methods, join() and leave()
       CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (cacheStatus == null) {
+         log.tracef("Ignoring members update for cache %s, as we haven't initialized it yet", cacheName);
+         return;
+      }
+
       CacheJoinInfo joinInfo = cacheStatus.joinInfo;
       if (!leavers.isEmpty()) {
          synchronized (cacheStatus) {
