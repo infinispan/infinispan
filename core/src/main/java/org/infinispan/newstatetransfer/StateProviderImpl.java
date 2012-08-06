@@ -130,10 +130,10 @@ public class StateProviderImpl implements StateProvider {
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
       //todo [anistor] check all segments are in range of current ch
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
-      if (transactionTable != null) {
+      if (configuration.transaction().transactionMode().isTransactional()) {
          // all transactions should be briefly blocked now
          try {
-            stateTransferLock.acquireTTExclusiveLock();
+            stateTransferLock.transactionsExclusiveLock();
             //we migrate locks only if the cache is transactional and distributed
             collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
             collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
@@ -141,7 +141,7 @@ public class StateProviderImpl implements StateProvider {
 
          } finally {
             // all transactions should be unblocked now
-            stateTransferLock.releaseTTExclusiveLock();
+            stateTransferLock.transactionsExclusiveUnlock();
          }
       }
       return transactions;

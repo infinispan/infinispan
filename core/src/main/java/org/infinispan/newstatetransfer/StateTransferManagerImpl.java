@@ -32,6 +32,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -68,6 +69,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private DistributionManager distributionManager;
    private LocalTopologyManager localTopologyManager;
    private RpcManager rpcManager;
+   private GroupManager groupManager;
    private String cacheName;
 
    private int topologyId;
@@ -88,16 +90,18 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     InterceptorChain interceptorChain,
+                    InvocationContextContainer icc,
                     TransactionTable transactionTable,
                     LocalTopologyManager localTopologyManager,
                     StateTransferLock stateTransferLock,
                     Cache cache,
-                    InvocationContextContainer icc) {
+                    GroupManager groupManager) {
       this.configuration = configuration;
       this.distributionManager = distributionManager;
       this.localTopologyManager = localTopologyManager;
       this.rpcManager = rpcManager;
       this.stateTransferLock = stateTransferLock;
+      this.groupManager = groupManager;
       cacheName = cache.getName();
 
       stateProvider = new StateProviderImpl(asyncTransportExecutor,
@@ -116,7 +120,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             commandsFactory,
             cacheLoaderManager,
             dataContainer,
-            transactionTable);
+            transactionTable,
+            stateTransferLock);
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -130,7 +135,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().cacheMode().isReplicated()
                   ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),
             configuration.clustering().hash().hash(),
-            configuration.clustering().hash().numVirtualNodes(), //todo [anistor] rename to numSegments
+            configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
 
       CacheTopologyHandler handler = new CacheTopologyHandler() {
@@ -153,9 +158,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Stop(priority = 20)
    public void stop() {
+      localTopologyManager.leave(cacheName);
       stateProvider.shutdown();
       stateConsumer.shutdown();
-      localTopologyManager.leave(cacheName);
    }
 
    @Override
@@ -169,10 +174,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, ConsistentHash newCh) {
+   public void onTopologyUpdate(int topologyId, ConsistentHash newCh) { //todo [anistor] this method should be re-entrant
       currentCh = newCh;
       stateProvider.onTopologyUpdate(topologyId, newCh);
-      stateTransferLock.setStateTransferInProgress(true);
       stateConsumer.onTopologyUpdate(topologyId, newCh);
    }
 

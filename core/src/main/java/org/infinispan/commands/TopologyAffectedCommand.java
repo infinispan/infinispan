@@ -28,7 +28,7 @@ package org.infinispan.commands;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public interface TopologyAffectedCommand extends ReplicableCommand {
+public interface TopologyAffectedCommand extends VisitableCommand {
 
    int getTopologyId();
 

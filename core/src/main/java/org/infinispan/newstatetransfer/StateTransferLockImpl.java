@@ -36,35 +36,45 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    private final ReadWriteLock transactionTableLock = new ReentrantReadWriteLock();
 
-   private volatile boolean isStateTransferInProgress = false;
+   private final ReadWriteLock commandLock = new ReentrantReadWriteLock();
 
    @Override
-   public void acquireTTSharedLock() {
+   public void transactionsSharedLock() {
       transactionTableLock.readLock().lock();
    }
 
    @Override
-   public void releaseTTSharedLock() {
+   public void transactionsSharedUnlock() {
       transactionTableLock.readLock().unlock();
    }
 
    @Override
-   public void acquireTTExclusiveLock() {
+   public void transactionsExclusiveLock() {
       transactionTableLock.writeLock().lock();
    }
 
    @Override
-   public void releaseTTExclusiveLock() {
+   public void transactionsExclusiveUnlock() {
       transactionTableLock.writeLock().unlock();
    }
 
    @Override
-   public boolean isStateTransferInProgress() {
-      return isStateTransferInProgress;
+   public void commandsExclusiveLock() {
+      commandLock.writeLock().lock();
    }
 
    @Override
-   public void setStateTransferInProgress(boolean isStateTransferInProgress) {
-      this.isStateTransferInProgress = isStateTransferInProgress;
+   public void commandsExclusiveUnlock() {
+      commandLock.writeLock().unlock();
+   }
+
+   @Override
+   public void commandsSharedLock() {
+      commandLock.readLock().lock();
+   }
+
+   @Override
+   public void commandsSharedUnlock() {
+      commandLock.readLock().unlock();
    }
 }

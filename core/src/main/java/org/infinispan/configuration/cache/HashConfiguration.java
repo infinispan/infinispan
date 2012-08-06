@@ -87,6 +87,10 @@ public class HashConfiguration {
       return numVirtualNodes;
    }
 
+   public int numSegments() {
+      return numVirtualNodes; //todo [anistor] rename to numSegments
+   }
+
    /**
     * If false, no rebalancing or rehashing will take place when a new node joins the cluster or a
     * node leaves

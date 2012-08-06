@@ -164,8 +164,8 @@ public class StateProviderTest {
       assertEquals(0, transactions.size());
 
       InOrder stateTransferLockVerifier = inOrder(stateTransferLock);
-      stateTransferLockVerifier.verify(stateTransferLock).acquireTTExclusiveLock();
-      stateTransferLockVerifier.verify(stateTransferLock).releaseTTExclusiveLock();
+      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveLock();
+      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveUnlock();
 
       Set<Integer> seg = new HashSet<Integer>();
       seg.add(0);

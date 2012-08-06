@@ -35,15 +35,19 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.NAMED_CACHE)
 public interface StateTransferLock {
 
-   void acquireTTSharedLock();
+   void transactionsSharedLock();
 
-   void releaseTTSharedLock();
+   void transactionsSharedUnlock();
 
-   void acquireTTExclusiveLock();
+   void transactionsExclusiveLock();
 
-   void releaseTTExclusiveLock();
+   void transactionsExclusiveUnlock();
 
-   boolean isStateTransferInProgress();  //todo add separate booleans for acceptor and donor
+   void commandsExclusiveLock();
 
-   void setStateTransferInProgress(boolean isStateTransferInProgress);
+   void commandsExclusiveUnlock();
+
+   void commandsSharedLock();
+
+   void commandsSharedUnlock();
 }
