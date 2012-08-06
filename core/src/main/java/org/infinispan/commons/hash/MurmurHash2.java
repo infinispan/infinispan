@@ -111,6 +111,10 @@ public class MurmurHash2 implements Hash {
          return hash(o.hashCode());
    }
 
+   public boolean equals(Object other) {
+      return other != null && other.getClass() == getClass();
+   }
+
    public static class Externalizer extends NoStateExternalizer<MurmurHash2> {
       @Override
       public Set<Class<? extends MurmurHash2>> getTypeClasses() {
