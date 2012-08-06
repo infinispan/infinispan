@@ -128,7 +128,7 @@ public class StateConsumerTest {
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl(interceptorChain, icc,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
-            dataContainer, transactionTable);
+            dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       cacheEntries.add(new ImmortalCacheEntry("key1", "value1"));

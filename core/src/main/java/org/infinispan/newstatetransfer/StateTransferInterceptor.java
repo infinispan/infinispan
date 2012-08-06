@@ -23,6 +23,8 @@
 
 package org.infinispan.newstatetransfer;
 
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -141,15 +143,55 @@ public class StateTransferInterceptor extends CommandInterceptor {
     * @throws Throwable
     */
    private Object handleTxCommand(InvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
-      stateTransferLock.acquireTTSharedLock();
       try {
-         return invokeNextInterceptor(ctx, command);
+         stateTransferLock.commandsSharedLock();
+         try {
+            stateTransferLock.transactionsSharedLock();
+            try {
+               return invokeNextInterceptor(ctx, command);
+            } finally {
+               stateTransferLock.transactionsSharedUnlock();
+            }
+         } finally {
+            stateTransferLock.commandsSharedUnlock();
+         }
       } finally {
-         stateTransferLock.releaseTTSharedLock();
+         forwardCommand(ctx, command);
       }
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return invokeNextInterceptor(ctx, command);
+      try {
+         stateTransferLock.commandsSharedLock();
+         try {
+            return invokeNextInterceptor(ctx, command);
+         } finally {
+            stateTransferLock.commandsSharedUnlock();
+         }
+      } finally {
+         forwardCommand(ctx, command);
+      }
+   }
+
+   @Override
+   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      if (command instanceof TopologyAffectedCommand) {
+         try {
+            stateTransferLock.commandsSharedLock();
+            try {
+               return invokeNextInterceptor(ctx, command);
+            } finally {
+               stateTransferLock.commandsSharedUnlock();
+            }
+         } finally {
+            forwardCommand(ctx, command);
+         }
+      } else {
+         return invokeNextInterceptor(ctx, command);
+      }
+   }
+
+   private void forwardCommand(InvocationContext ctx, VisitableCommand command) {
+      // TODO: Customise this generated block
    }
 }

@@ -100,7 +100,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       // Before calling commit we block transactions on one of the nodes to simulate a state transfer
       final StateTransferLock blockFirst = TestingUtil.extractComponent(failOnOriginator ? c1 : c2, StateTransferLock.class);
       final StateTransferLock blockSecond = TestingUtil.extractComponent(failOnOriginator ? c2 : c1, StateTransferLock.class);
-      blockFirst.acquireTTExclusiveLock();
+      blockFirst.transactionsExclusiveLock();
 
       // Schedule the unblock on another thread since the main thread will be busy with the commit call
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {
@@ -109,9 +109,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
             try {
                // should be much larger than the lock acquisition timeout
                Thread.sleep(1000);
-               blockSecond.acquireTTExclusiveLock();
-               blockFirst.releaseTTExclusiveLock();
-               blockSecond.releaseTTExclusiveLock();
+               blockSecond.transactionsExclusiveLock();
+               blockFirst.transactionsExclusiveUnlock();
+               blockSecond.transactionsExclusiveUnlock();
             } catch (InterruptedException e) {
                log.errorf(e, "Error blocking/unblocking transactions");
             }

@@ -69,6 +69,7 @@ public class StateConsumerImpl implements StateConsumer {
    private CacheLoaderManager cacheLoaderManager;
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
+   private StateTransferLock stateTransferLock;
    private long timeout;
    private boolean useVersionedPut;
 
@@ -85,7 +86,8 @@ public class StateConsumerImpl implements StateConsumer {
                             CommandsFactory commandsFactory,
                             CacheLoaderManager cacheLoaderManager,
                             DataContainer dataContainer,
-                            TransactionTable transactionTable) {
+                            TransactionTable transactionTable,
+                            StateTransferLock stateTransferLock) {
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.configuration = configuration;
@@ -94,6 +96,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheLoaderManager = cacheLoaderManager;
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
+      this.stateTransferLock = stateTransferLock;
 
       // we need to use a special form of PutKeyValueCommand that can apply versions too
       useVersionedPut = configuration.transaction().transactionMode().isTransactional() &&
@@ -128,15 +131,13 @@ public class StateConsumerImpl implements StateConsumer {
       log.debugf("Received new CH: %s", newCh);
       this.topologyId = topologyId;
 
-      //todo [anistor] block all incoming commands
-
+      Set<Integer> addedSegments = null;
       if (currentCh == null) {
          // we start fresh, without any data, so we need to pull everything we own according to this CH
          currentCh = newCh;
 
          if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-            Set<Integer> segments = currentCh.getSegmentsForOwner(rpcManager.getAddress());   //todo [anistor] in replicated case we need to generate all segments rather than get them from the CH
-            addTransfers(segments);
+            addedSegments = currentCh.getSegmentsForOwner(rpcManager.getAddress());
          }
       } else {
          Set<Integer> oldSegments = currentCh.getSegmentsForOwner(rpcManager.getAddress());
@@ -146,15 +147,15 @@ public class StateConsumerImpl implements StateConsumer {
          // we need to diff the addressing tables of the two CHes
          Set<Integer> removedSegments = new HashSet<Integer>(oldSegments);
          removedSegments.removeAll(newSegments);
-         Set<Integer> addedSegments = new HashSet<Integer>(newSegments);
-         addedSegments.removeAll(oldSegments);
 
          // remove inbound transfers and received data for segments we no longer own
          discardSegments(removedSegments);       //todo [anistor] what do we do with transactions and locks of removed segments?
 
          if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
+            addedSegments = new HashSet<Integer>(newSegments);
+            addedSegments.removeAll(oldSegments);
+
             // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
-            //todo [anistor] what do we do with the locks and transactions for restarted segments?
             Set<Address> members = new HashSet<Address>(currentCh.getMembers());
             synchronized (this) {
                for (Address source : transfersBySource.keySet()) {
@@ -163,21 +164,25 @@ public class StateConsumerImpl implements StateConsumer {
                      if (inboundTransfers != null) {
                         for (InboundTransferTask inboundTransfer : inboundTransfers) {
                            for (int segmentId : inboundTransfer.getSegments()) {
-                              transfersBySegment.remove(segmentId);
-                              addedSegments.add(segmentId);        // this segment will be restarted
+                              transfersBySegment.remove(segmentId);   //todo [anistor] what do we do with the locks and transactions for restarted segments?
+                              addedSegments.add(segmentId);   // this segment will be restarted
                            }
                         }
                      }
                   }
                }
             }
-
-            // add transfers for new or restarted segments
-            addTransfers(addedSegments);
          }
       }
 
-      //todo [anistor] unblock commands
+      if (addedSegments != null) {
+         stateTransferLock.commandsExclusiveLock();
+         try {
+            addTransfers(addedSegments);  // add transfers for new or restarted segments
+         } finally {
+            stateTransferLock.commandsExclusiveUnlock();
+         }
+      }
    }
 
    public void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
@@ -270,7 +275,7 @@ public class StateConsumerImpl implements StateConsumer {
             }
 
             List<Address> owners = currentCh.locateOwnersForSegment(segmentId);
-            Address source = owners.get(owners.size() - 1);  //pick the last owner as source
+            Address source = owners.get(owners.size() - 1);  //pick the last owner as our source
 
             Set<Integer> segs = segmentsBySource.get(source);
             if (segs == null) {
@@ -292,7 +297,7 @@ public class StateConsumerImpl implements StateConsumer {
                transfersBySource.put(inboundTransfer.getSource(), inboundTransfers);
             }
             inboundTransfers.add(inboundTransfer);
-            inboundTransfer.getTransactions();
+            inboundTransfer.getTransactions(); //todo [anistor] need to retry from another source if this fails
             inboundTransfer.requestSegments();
          }
       }
@@ -309,11 +314,13 @@ public class StateConsumerImpl implements StateConsumer {
          while (!segmentsToCancel.isEmpty()) {
             int segmentId = segmentsToCancel.get(0);
             log.debugf("Removing state transfer for segment %d", segmentId);
-            InboundTransferTask inboundTransfer = transfersBySegment.get(segmentId);
-            Set<Integer> cancelledSegments = new HashSet<Integer>(segmentsToCancel);
-            cancelledSegments.retainAll(inboundTransfer.getSegments());
-            segmentsToCancel.removeAll(cancelledSegments);
-            inboundTransfer.cancelSegments(cancelledSegments);
+            InboundTransferTask inboundTransfer = transfersBySegment.remove(segmentId);
+            if (inboundTransfer != null) { // we need to check the transfer was not already completed
+               Set<Integer> cancelledSegments = new HashSet<Integer>(segmentsToCancel);
+               cancelledSegments.retainAll(inboundTransfer.getSegments());
+               segmentsToCancel.removeAll(cancelledSegments);
+               inboundTransfer.cancelSegments(cancelledSegments);
+            }
          }
       }
 

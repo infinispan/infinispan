@@ -117,6 +117,10 @@ public class InboundTransferTask {
 
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, cancelledSegments);
       rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+
+      if (isCancelled) {
+         stateConsumer.onTaskCompletion(this);
+      }
    }
 
    public void cancel() {
