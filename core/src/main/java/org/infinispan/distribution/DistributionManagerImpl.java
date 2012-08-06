@@ -196,7 +196,7 @@ public class DistributionManagerImpl implements DistributionManager {
    public void setCacheTopology(CacheTopology newCacheTopology) {
       if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
       // TODO Replace the topology change notification with another notification that accepts two consistent hashes and a topology id
-      ConsistentHash oldCH = cacheTopology.getWriteConsistentHash();
+      ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
       ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
       cacheTopology = newCacheTopology;
