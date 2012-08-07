@@ -21,7 +21,6 @@ package org.infinispan.topology;
 
 import java.util.Map;
 
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
