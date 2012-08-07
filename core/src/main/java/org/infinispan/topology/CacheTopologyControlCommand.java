@@ -44,20 +44,21 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheTopologyControlCommand implements ReplicableCommand {
 
    public enum Type {
-      // member to coordinator:
-      // a node is requesting to join the cluster
+      // Member to coordinator:
+      // A node is requesting to join the cluster.
       JOIN,
-      // a member is signaling that it wants to leave the cluster
+      // A member is signaling that it wants to leave the cluster.
       LEAVE,
-      // a member is confirming that it finished the rebalance operation
+      // A member is confirming that it finished the rebalance operation.
       REBALANCE_CONFIRM,
 
-      // coordinator to member:
-      // the coordinator is updating the consistent hash
+      // Coordinator to member:
+      // The coordinator is updating the consistent hash.
+      // Used to signal the end of rebalancing as well.
       CH_UPDATE,
-      // the coordinator is starting a rebalance operation
+      // The coordinator is starting a rebalance operation.
       REBALANCE_START,
-      // the coordinator is requesting information about the running caches
+      // The coordinator is requesting information about the running caches.
       GET_STATUS
    }
 
@@ -77,6 +78,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private int topologyId;
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
+   private Throwable throwable;
 
    // For CommandIdUniquenessTest only
    public CacheTopologyControlCommand() {
@@ -97,13 +99,12 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    public CacheTopologyControlCommand(String cacheName, Type type, Address sender, int topologyId,
-                                      ConsistentHash currentCH, ConsistentHash pendingCH) {
+                                      Throwable throwable) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
       this.topologyId = topologyId;
-      this.currentCH = currentCH;
-      this.pendingCH = pendingCH;
+      this.throwable = throwable;
    }
 
    public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology) {
@@ -126,7 +127,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         return SuccessfulResponse.create(doPerform());
+         Object responseValue = doPerform();
+         return SuccessfulResponse.create(responseValue);
       } catch (Exception t) {
          log.exceptionHandlingCommand(this, t);
          return new ExceptionResponse(t);
@@ -144,7 +146,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             clusterTopologyManager.handleLeave(cacheName, sender);
            return null;
          case REBALANCE_CONFIRM:
-            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId);
+            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable);
             return null;
 
          // coordinator to member
@@ -185,6 +187,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       return pendingCH;
    }
 
+   public Throwable getThrowable() {
+      return throwable;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -192,7 +198,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH, pendingCH};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH,
+            pendingCH, throwable};
    }
 
    @Override
@@ -206,6 +213,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       topologyId = (Integer) parameters[i++];
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
+      throwable = (Throwable) parameters[i++];
    }
 
    @Override

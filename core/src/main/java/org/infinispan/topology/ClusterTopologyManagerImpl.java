@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -161,9 +160,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
-   public void handleRebalanceCompleted(String cacheName, Address node, int topologyId) throws Exception {
-      // TODO Don't send a rebalance confirmation if the node is not part of the new ch
+   public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable) throws Exception {
       // TODO Check for stale/invalid rebalance confirmations here
+      if (throwable != null) {
+         // TODO Logger method
+         log.errorf(throwable, "Error performing rebalance for cache %s on node %s", cacheName, node);
+      }
       log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d", cacheName, node,
             topologyId);
       RebalanceInfo rebalanceInfo = rebalanceStatusMap.get(cacheName);

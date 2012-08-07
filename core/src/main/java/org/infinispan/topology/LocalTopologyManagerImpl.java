@@ -106,6 +106,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
+   @Override
+   public void confirmRebalance(String cacheName, int topologyId, Throwable throwable) {
+      // Note that if the coordinator changes again after we sent the command, we will get another
+      // query for the status of our running caches. So we don't need to retry if the command failed.
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(),
+            topologyId, throwable);
+      try {
+         executeOnCoordinatorAsync(command);
+      } catch (Exception e) {
+         log.debugf(e, "Error sending the rebalance completed notification for cache %s to the coordinator",
+               cacheName);
+      }
+   }
+
    // called by the coordinator
    @Override
    public Map<String, CacheTopology> handleStatusRequest() {
@@ -153,30 +168,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
       cacheStatus.joinedLatch.await();
 
+      // TODO Should we store the "unionized" cache topology instead?
       cacheStatus.topology = cacheTopology;
       ConsistentHash unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(
             cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
       CacheTopologyHandler handler = cacheStatus.handler;
-      try {
-         handler.rebalance(cacheStatus.topology);
-      } finally {
-         // TODO If there was an exception, propagate the exception back to the coordinator
-         // We don't want to block further rebalancing just because we got an exception on one node
-
-         // The coordinator can change during the state transfer, so we make the rebalance RPC async
-         // and we send the response as a different command.
-         // Note that if the coordinator changes again after we sent the command, we will get another
-         // query for the status of our running caches. So we don't need to retry if the command failed.
-         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-               CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(),
-               cacheTopology.getTopologyId(), null, null);
-         try {
-            executeOnCoordinatorAsync(command);
-         } catch (Exception e) {
-            log.debugf(e, "Error sending the rebalance completed notification for cache %s to coordinator",
-                  cacheName);
-         }
-      }
+      handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH));
    }
 
    @Override
