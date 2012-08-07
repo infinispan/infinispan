@@ -20,9 +20,10 @@
 package org.infinispan.topology;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.newstatetransfer.StateTransferManager;
 
 /**
- * The link between {@link LocalTopologyManager} and {@StateTransferManager}.
+ * The link between {@link LocalTopologyManager} and {@link StateTransferManager}.
  *
  * @author Dan Berindei
  * @since 5.2
@@ -37,6 +38,9 @@ public interface CacheTopologyHandler {
 
    /**
     * Invoked when state transfer has to be started.
+    *
+    * The caller will not consider the local rebalance done when this method returns. Instead, the handler
+    * will have to call {@link LocalTopologyManager.confirmRebalance(String, int, Throwable)}
     */
    void rebalance(CacheTopology cacheTopology);
 }

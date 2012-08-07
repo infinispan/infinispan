@@ -60,5 +60,5 @@ public interface ClusterTopologyManager {
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalanceCompleted(String cacheName, Address node, int topologyId) throws Exception;
+   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable) throws Exception;
 }

@@ -45,6 +45,17 @@ public interface LocalTopologyManager {
    void leave(String cacheName);
 
    /**
+    * Confirm that the local cache {@code cacheName} has finished receiving the new data for topology
+    * {@code topologyId}.
+    *
+    * <p>The coordinator can change during the state transfer, so we make the rebalance RPC async
+    * and we send the response as a different command.
+    *
+    * @param throwable {@code null} if local rebalance ended because of an error.
+    */
+   void confirmRebalance(String cacheName, int topologyId, Throwable throwable);
+
+   /**
     * Recovers the current topology information for all running caches and returns it to the coordinator.
     */
    Map<String, CacheTopology> handleStatusRequest();
