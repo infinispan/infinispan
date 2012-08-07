@@ -63,7 +63,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    private static final Log log = LogFactory.getLog(CacheTopologyControlCommand.class);
 
-   public static final int COMMAND_ID = 17;
+   public static final byte COMMAND_ID = 17;
 
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
