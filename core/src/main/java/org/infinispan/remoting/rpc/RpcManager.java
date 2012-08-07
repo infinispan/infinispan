@@ -66,7 +66,6 @@ public interface RpcManager {
     * @param timeout          a timeout after which to throw a replication exception.
     * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
     *                         implementations.
-    * @return a list of responses from each member contacted.
     * @return a map of responses from each member contacted.
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue);
@@ -80,7 +79,6 @@ public interface RpcManager {
     * @param mode       the response mode to use
     * @param timeout    a timeout after which to throw a replication exception.
     * @return a map of responses from each member contacted.
-    * @throws Exception in the event of problems.
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout);
 
