@@ -26,6 +26,8 @@ package org.infinispan.newstatetransfer;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -34,6 +36,8 @@ import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -41,6 +45,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -49,11 +55,15 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateTransferInterceptor extends CommandInterceptor {
+public class StateTransferInterceptor extends CommandInterceptor {   //todo [anistor] this interceptor should be added to stack only if we have state transfer
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
 
+   private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
+
    private StateTransferLock stateTransferLock;
+
+   private DistributionManager distributionManager;
 
    private RpcManager rpcManager;
 
@@ -65,9 +75,10 @@ public class StateTransferInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager) {
+   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager, DistributionManager distributionManager) {
       this.stateTransferLock = stateTransferLock;
       this.rpcManager = rpcManager;
+      this.distributionManager = distributionManager;
       // no need to retry for asynchronous caches
       this.rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
             ? configuration.clustering().sync().replTimeout() : 0;
@@ -91,12 +102,6 @@ public class StateTransferInterceptor extends CommandInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       return handleTxCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // it's not necessary to propagate eviction to the new owners in case of state transfer
-      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -141,6 +146,12 @@ public class StateTransferInterceptor extends CommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      // it's not necessary to propagate eviction to the new owners in case of state transfer
+      return invokeNextInterceptor(ctx, command);
+   }
+
    /**
     * Special processing required for transaction commands.
     *
@@ -150,57 +161,113 @@ public class StateTransferInterceptor extends CommandInterceptor {
     * @throws Throwable
     */
    private Object handleTxCommand(InvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
-      try {
-         stateTransferLock.commandsSharedLock();
-         try {
-            stateTransferLock.transactionsSharedLock();
-            try {
-               return invokeNextInterceptor(ctx, command);
-            } finally {
-               stateTransferLock.transactionsSharedUnlock();
-            }
-         } finally {
-            stateTransferLock.commandsSharedUnlock();
-         }
-      } finally {
-         forwardCommand(ctx, command);
-      }
+      return handleTopologyAffectedCommand(ctx, command);
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      try {
-         stateTransferLock.commandsSharedLock();
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
-            stateTransferLock.commandsSharedUnlock();
-         }
-      } finally {
-         forwardCommand(ctx, command);
-      }
+      return handleTopologyAffectedCommand(ctx, command);
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof TopologyAffectedCommand) {
-         try {
-            stateTransferLock.commandsSharedLock();
-            try {
-               return invokeNextInterceptor(ctx, command);
-            } finally {
-               stateTransferLock.commandsSharedUnlock();
-            }
-         } finally {
-            forwardCommand(ctx, command);
-         }
+         return handleTopologyAffectedCommand(ctx, (TopologyAffectedCommand) command);
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
-   private void forwardCommand(InvocationContext ctx, VisitableCommand command) {
-      // TODO: Customise this generated block
-      Set<Address> newTarget = null;
-      rpcManager.invokeRemotely(newTarget, command, true);
+   private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command) throws Throwable {
+      Set<Address> newTargets = null;
+      stateTransferLock.commandsSharedLock();
+      final int topologyId = stateTransferLock.getTopologyId();
+      final ConsistentHash rCh = distributionManager.getReadConsistentHash();
+      final ConsistentHash wCh = distributionManager.getWriteConsistentHash();
+      try {
+         final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
+         if (isTxCommand) {
+            stateTransferLock.transactionsSharedLock();
+         }
+         try {
+            if (command.getTopologyId() < topologyId) {
+               // if it is a read request and comes from an older topology we need to check if we still hold the data
+               Object readKey = null;
+               if (command instanceof GetKeyValueCommand) {   //todo [anistor] would be nice to have a common ReadCommand interface for these
+                  readKey = ((GetKeyValueCommand) command).getKey();
+               } else if (command instanceof ClusteredGetCommand) {
+                  readKey = ((ClusteredGetCommand) command).getKey();
+               }
+               if (readKey != null) {
+                  // it's a read operation
+                  if (!rCh.isKeyLocalToNode(rpcManager.getAddress(), readKey)) {
+                     return null; //todo [anistor] throw an exception or return a special result that will cause the read command to be retried on the originator
+                  }
+               } else if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {  //todo a ClearCommand should be executed directly
+                  // a TX or a write command from an old topology
+                  Set<Object> affectedKeys = getAffectedKeys(ctx, command);
+                  newTargets = new HashSet<Address>();
+                  boolean localExecutionNeeded = false;
+                  for (Object key : affectedKeys) {
+                     if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+                        localExecutionNeeded = true;
+                     } else {
+                        newTargets.addAll(wCh.locateOwners(key));
+                     }
+                  }
+
+                  if (localExecutionNeeded) {
+                     return invokeNextInterceptor(ctx, command);
+                  }
+               } else if (command instanceof CommitCommand || command instanceof RollbackCommand) {
+                  // for these commands we can determine affected keys only after they are executed
+                  try {
+                     return invokeNextInterceptor(ctx, command);
+                  } finally {
+                     newTargets = new HashSet<Address>();
+                     Set<Object> affectedKeys = ((TxInvocationContext) ctx).getAffectedKeys();
+                     for (Object key : affectedKeys) {
+                        if (!wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+                           newTargets.addAll(wCh.locateOwners(key));
+                        }
+                     }
+                  }
+               }
+            } else if (command.getTopologyId() > topologyId) {
+               // this means there will be a new topology installed soon. no need to wait until then
+               //stateTransferLock.waitForTopology(command.getTopologyId());
+
+               // proceed normally
+            } else {
+               // proceed normally
+            }
+
+            // no special handling was needed, invoke normally (and do not forward)
+            return invokeNextInterceptor(ctx, command);
+         } finally {
+            if (isTxCommand) {
+               stateTransferLock.transactionsSharedUnlock();
+            }
+         }
+      } finally {
+         stateTransferLock.commandsSharedUnlock();
+
+         if (newTargets != null && !newTargets.isEmpty()) {
+            command.setTopologyId(topologyId);
+            rpcManager.invokeRemotely(newTargets, command, true);
+         }
+      }
+   }
+
+   private Set<Object> getAffectedKeys(InvocationContext ctx, VisitableCommand command) {
+      Set<Object> affectedKeys = null;
+      try {
+         affectedKeys = (Set<Object>) command.acceptVisitor(ctx, affectedKeysVisitor);
+      } catch (Throwable throwable) {
+         // impossible to reach this
+      }
+      if (affectedKeys == null) {
+         affectedKeys = Collections.emptySet();
+      }
+      return affectedKeys;
    }
 }

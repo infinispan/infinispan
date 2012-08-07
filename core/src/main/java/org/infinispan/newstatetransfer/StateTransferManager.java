@@ -71,4 +71,6 @@ public interface StateTransferManager {
    boolean isStateTransferInProgressForKey(Object key);
 
    int getTopologyId();
+
+   void notifyEndOfStateTransfer(int topologyId);
 }

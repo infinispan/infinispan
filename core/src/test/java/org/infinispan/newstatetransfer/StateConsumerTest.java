@@ -24,6 +24,7 @@
 package org.infinispan.newstatetransfer;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -38,6 +39,9 @@ import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
@@ -53,11 +57,10 @@ import org.testng.annotations.Test;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -81,12 +84,6 @@ public class StateConsumerTest {
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
 
-      ThreadFactory threadFactory = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r);
-         }
-      };
       Configuration configuration = cb.build();
 
       // create list of 6 members
@@ -101,12 +98,13 @@ public class StateConsumerTest {
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that adress 6 is not used for un-owned segments
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
 
-      System.out.println(ch1.dump());
-      System.out.println(ch2.dump());
+      log.debug(ch1.dump());
+      log.debug(ch2.dump());
 
       // create dependencies
+      StateTransferManager stateTransferManager = mock(StateTransferManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       ExecutorService executorService2 = mock(ExecutorService.class);
       RpcManager rpcManager = mock(RpcManager.class);
@@ -120,24 +118,57 @@ public class StateConsumerTest {
 
       when(executorService2.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
          @Override
-         public Future<?> answer(InvocationOnMock invocation) throws Throwable {
+         public Future<?> answer(InvocationOnMock invocation) {
             return null;
+         }
+      });
+
+      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(Set.class))).thenAnswer(new Answer<StateRequestCommand>() {
+         @Override
+         public StateRequestCommand answer(InvocationOnMock invocation) {
+            return new StateRequestCommand("cache1", (StateRequestCommand.Type) invocation.getArguments()[0], (Address) invocation.getArguments()[1], (Integer) invocation.getArguments()[2], (Set) invocation.getArguments()[3]);
          }
       });
 
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
 
+      when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong())).thenAnswer(new Answer<Map<Address, Response>>() {
+         @Override
+         public Map<Address, Response> answer(InvocationOnMock invocation) {
+            Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
+            ReplicableCommand rpcCommand = (ReplicableCommand) invocation.getArguments()[1];
+            if (rpcCommand instanceof StateRequestCommand) {
+               StateRequestCommand cmd = (StateRequestCommand) rpcCommand;
+               Map<Address, Response> results = new HashMap<Address, Response>();
+               if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
+                  for (Address recipient : recipients) {
+                     results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
+                  }
+               } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER) || cmd.getType().equals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER)) {
+                  for (Address recipient : recipients) {
+                     results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+                  }
+               }
+               return results;
+            }
+            return Collections.emptyMap();
+         }
+      });
+
+
       // create state provider
-      StateConsumerImpl stateConsumer = new StateConsumerImpl(cacheNotifier, interceptorChain, icc,
+      StateConsumerImpl stateConsumer = new StateConsumerImpl(stateTransferManager, cacheNotifier, interceptorChain, icc,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
-      cacheEntries.add(new ImmortalCacheEntry("key1", "value1"));
-      cacheEntries.add(new ImmortalCacheEntry("key2", "value2"));
+      Object key1 = new TestKey("key1", 0, ch1);
+      Object key2 = new TestKey("key2", 0, ch1);
+      cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
+      cacheEntries.add(new ImmortalCacheEntry(key2, "value2"));
       when(dataContainer.iterator()).thenAnswer(new Answer<Iterator<InternalCacheEntry>>() {
          @Override
-         public Iterator<InternalCacheEntry> answer(InvocationOnMock invocation) throws Throwable {
+         public Iterator<InternalCacheEntry> answer(InvocationOnMock invocation) {
             return cacheEntries.iterator();
          }
       });
@@ -145,13 +176,9 @@ public class StateConsumerTest {
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
       // create segments
-      Set<Integer> segments = new HashSet<Integer>();
-      for (int i = 0; i < 5; i++) {
-         segments.add(i);
-      }
+      Set<Integer> segments = new HashSet<Integer>(Arrays.asList(0, 1, 2, 3, 4));
 
-      Set<Integer> seg = new HashSet<Integer>();
-      seg.add(0);
+      Set<Integer> seg = new HashSet<Integer>(Arrays.asList(0));
 
       assertFalse(stateConsumer.isStateTransferInProgress());
 
@@ -159,7 +186,7 @@ public class StateConsumerTest {
 
       assertTrue(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(3, ch1, ch2);
+      stateConsumer.onTopologyUpdate(2, ch1, ch2);
 
       stateConsumer.shutdown();
 

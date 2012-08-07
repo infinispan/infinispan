@@ -52,4 +52,8 @@ public interface StateTransferLock {
    void commandsSharedUnlock();
 
    int getTopologyId();
+
+   void setTopologyId(int topologyId);
+
+   void waitForTopology(int expectedTopologyId) throws InterruptedException;
 }

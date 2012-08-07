@@ -40,6 +40,8 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    private volatile int topologyId;
 
+   private final Object topologyLock = new Object();
+
    @Override
    public void transactionsSharedLock() {
       transactionTableLock.readLock().lock();
@@ -85,7 +87,20 @@ public class StateTransferLockImpl implements StateTransferLock {
       return topologyId;
    }
 
+   @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
+      synchronized (topologyLock) {
+         topologyLock.notifyAll();
+      }
+   }
+
+   @Override
+   public void waitForTopology(int expectedTopologyId) throws InterruptedException {
+      while (topologyId <= expectedTopologyId) {
+         synchronized (topologyLock) {
+            topologyLock.wait();
+         }
+      }
    }
 }

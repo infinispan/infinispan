@@ -126,16 +126,15 @@ public class StateProviderTest {
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
 
-      System.out.println("StateProviderTest.test1 " + ch1.dump());
-      System.out.println("StateProviderTest.test1 " + ch2.dump());
-
       // create dependencies
       when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
          @Override
-         public Future<?> answer(InvocationOnMock invocation) throws Throwable {
+         public Future<?> answer(InvocationOnMock invocation) {
             return null;
          }
       });
+
+      when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl(mockExecutorService,
@@ -143,46 +142,51 @@ public class StateProviderTest {
             dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
-      cacheEntries.add(new ImmortalCacheEntry("key1", "value1"));
-      cacheEntries.add(new ImmortalCacheEntry("key2", "value2"));
+      Object key1 = new TestKey("key1", 0, ch1);
+      Object key2 = new TestKey("key2", 0, ch1);
+      cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
+      cacheEntries.add(new ImmortalCacheEntry(key2, "value2"));
       when(dataContainer.iterator()).thenAnswer(new Answer<Iterator<InternalCacheEntry>>() {
          @Override
-         public Iterator<InternalCacheEntry> answer(InvocationOnMock invocation) throws Throwable {
+         public Iterator<InternalCacheEntry> answer(InvocationOnMock invocation) {
             return cacheEntries.iterator();
          }
       });
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      // create segments
-      Set<Integer> segments = new HashSet<Integer>();
-      for (int i = 0; i < 5; i++) {
-         segments.add(i);
-      }
+      stateProvider.onTopologyUpdate(1, ch1, ch1);
 
-      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, segments);
+      log.debug("ch1: " + ch1.dump());
+      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
       assertEquals(0, transactions.size());
+
+      try {
+         stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(2, 4)));
+         fail("IllegalArgumentException expected");
+      } catch (IllegalArgumentException e) {
+         // expected
+      }
 
       InOrder stateTransferLockVerifier = inOrder(stateTransferLock);
       stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveLock();
       stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveUnlock();
 
-      Set<Integer> seg = new HashSet<Integer>();
-      seg.add(0);
-      stateProvider.startOutboundTransfer(new TestAddress(5), 1, seg);
+      stateProvider.startOutboundTransfer(new TestAddress(5), 1, Collections.singleton(0));
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-      stateProvider.onTopologyUpdate(2, ch1, ch1);
-
-      assertTrue(stateProvider.isStateTransferInProgress());
-
-      stateProvider.shutdown();
-
-      stateProvider.onTopologyUpdate(3, ch1, ch2);
+      log.debug("ch2: " + ch2.dump());
+      stateProvider.onTopologyUpdate(2, ch1, ch2);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
+      stateProvider.startOutboundTransfer(new TestAddress(4), 1, Collections.singleton(0));
+
+      assertTrue(stateProvider.isStateTransferInProgress());
+
       stateProvider.shutdown();
+
+      assertFalse(stateProvider.isStateTransferInProgress());
    }
 }
