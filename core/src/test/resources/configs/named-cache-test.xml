@@ -181,7 +181,7 @@
       <clustering mode="distribution">
          <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" numVirtualNodes="1000"/>
+         <hash numOwners="3" numSegments="1000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>

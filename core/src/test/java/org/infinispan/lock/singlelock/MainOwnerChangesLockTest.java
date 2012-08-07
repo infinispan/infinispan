@@ -33,8 +33,6 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       dccc.clustering().hash().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
-      //increase the chances for nodes to be rehashed to the new owner
-      dccc.clustering().hash().numVirtualNodes(10);
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();

@@ -823,17 +823,17 @@
                     </xs:complexType>
                   </xs:element>
                 </xs:sequence>
-                <xs:attribute name="class" type="xs:string">
+                <xs:attribute name="factory" type="xs:string">
                   <xs:annotation>
                     <xs:documentation>
-                      The consistent hash in use.
+                       The factory to use for generating the consistent hash. Must implement org.infinispan.distribution.ch.ConsistentHashFactory.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="hashFunctionClass" type="xs:string">
                   <xs:annotation>
                     <xs:documentation>
-                      The hash function in use. Used as a bit spreader and a general hash code generator. Typically one of the the many default org.infinispan.distribution.ch.ConsistentHash implementations shipped.
+                      The hash function used as a bit spreader and a general hash code generator. Must implement org.infinispan.commons.hash.Hash.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
@@ -844,10 +844,10 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="numVirtualNodes" type="xs:int">
+                <xs:attribute name="numSegments" type="xs:int">
                   <xs:annotation>
                     <xs:documentation>
-                      Controls the number of virtual nodes per "real" node. You can read more about virtual nodes at TODO. If numVirtualNodes is 1, then virtual nodes are disabled. A default of 1 is used.
+                      Controls the total number of hash space segments (per cluster). Recommended value is 10 * max_cluster_size.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>

@@ -245,13 +245,13 @@ public class ConfigurationUnitTest {
    public void numVirtualNodes() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cb.clustering().hash().numVirtualNodes(5);
+      cb.clustering().hash().numSegments(5);
 
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
+      Assert.assertEquals(5, c.clustering().hash().numSegments());
 
       // negative test
-      cb.clustering().hash().numVirtualNodes(0);
+      cb.clustering().hash().numSegments(0);
    }
 
    public void testEnableVersioning() {

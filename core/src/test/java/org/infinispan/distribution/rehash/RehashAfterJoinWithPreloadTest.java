@@ -80,7 +80,6 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
          cb.clustering().cacheMode(CacheMode.DIST_SYNC);
          cb.clustering().hash().numOwners(1); // one owner!
 
-         cb.clustering().hash().numVirtualNodes(1);
          cb.clustering().stateTransfer().fetchInMemoryState(true);
          cb.clustering().hash().groups().enabled();
       }
