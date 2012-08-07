@@ -457,8 +457,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries) {
-      return new StateResponseCommand(cacheName, sender, viewId, segment, cacheEntries);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
+      return new StateResponseCommand(cacheName, sender, viewId, segment, cacheEntries, isLastChunk);
    }
 
    @Override

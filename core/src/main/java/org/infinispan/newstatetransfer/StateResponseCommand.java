@@ -50,6 +50,8 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    private Collection<InternalCacheEntry> cacheEntries;
 
+   private boolean isLastChunk;
+
    private StateConsumer stateConsumer;
 
    private StateResponseCommand() {
@@ -60,12 +62,13 @@ public class StateResponseCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public StateResponseCommand(String cacheName, Address origin, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
+   public StateResponseCommand(String cacheName, Address origin, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
       super(cacheName);
       setOrigin(origin);
       this.topologyId = topologyId;
       this.segmentId = segmentId;
       this.cacheEntries = cacheEntries;
+      this.isLastChunk = isLastChunk;
    }
 
    public void init(StateConsumer stateConsumer) {
@@ -77,7 +80,7 @@ public class StateResponseCommand extends BaseRpcCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries);
+         stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries, isLastChunk);
          return null;
       } catch (Throwable t) {
          log.exceptionHandlingCommand(this, t);
@@ -99,7 +102,7 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{getOrigin(), topologyId, segmentId};
+      return new Object[]{getOrigin(), topologyId, segmentId, isLastChunk};
    }
 
    @Override
@@ -108,7 +111,8 @@ public class StateResponseCommand extends BaseRpcCommand {
       int i = 0;
       setOrigin((Address) parameters[i++]);
       topologyId = (Integer) parameters[i++];
-      segmentId = (Integer) parameters[i];
+      segmentId = (Integer) parameters[i++];
+      isLastChunk = (Boolean) parameters[i];
    }
 
    @Override
@@ -119,6 +123,7 @@ public class StateResponseCommand extends BaseRpcCommand {
             ", topologyId=" + topologyId +
             ", segmentId=" + segmentId +
             ", cacheEntries=" + cacheEntries +
+            ", isLastChunk=" + isLastChunk +
             '}';
    }
 }
