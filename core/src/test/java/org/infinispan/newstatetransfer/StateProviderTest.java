@@ -70,6 +70,7 @@ public class StateProviderTest {
    private Configuration configuration;
 
    private ExecutorService pooledExecutorService;
+   private ExecutorService mockExecutorService;
 
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
@@ -77,7 +78,6 @@ public class StateProviderTest {
    private DataContainer dataContainer;
    private TransactionTable transactionTable;
    private StateTransferLock stateTransferLock;
-
 
    @BeforeTest
    public void setUp() {
@@ -100,6 +100,8 @@ public class StateProviderTest {
       pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingDeque<Runnable>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
+      mockExecutorService = mock(ExecutorService.class);
+
       rpcManager = mock(RpcManager.class);
       commandsFactory = mock(CommandsFactory.class);
       cacheLoaderManager = mock(CacheLoaderManager.class);
@@ -109,7 +111,6 @@ public class StateProviderTest {
    }
 
    public void test1() {
-
       // create list of 6 members
       List<Address> members1 = new ArrayList<Address>();
       for (int i = 0; i < 6; i++) {
@@ -129,8 +130,7 @@ public class StateProviderTest {
       System.out.println("StateProviderTest.test1 " + ch2.dump());
 
       // create dependencies
-      ExecutorService executorService2 = mock(ExecutorService.class);
-      when(executorService2.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
+      when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
          @Override
          public Future<?> answer(InvocationOnMock invocation) throws Throwable {
             return null;
@@ -138,7 +138,7 @@ public class StateProviderTest {
       });
 
       // create state provider
-      StateProviderImpl stateProvider = new StateProviderImpl(executorService2,
+      StateProviderImpl stateProvider = new StateProviderImpl(mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
@@ -173,44 +173,16 @@ public class StateProviderTest {
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-      stateProvider.onTopologyUpdate(2, ch1);
+      stateProvider.onTopologyUpdate(2, ch1, ch1);
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
       stateProvider.shutdown();
 
-      stateProvider.onTopologyUpdate(3, ch2);
+      stateProvider.onTopologyUpdate(3, ch1, ch2);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
       stateProvider.shutdown();
-   }
-
-   private static class TestAddress implements Address {
-
-      private final int addressNum;
-
-      TestAddress(int addressNum) {
-         this.addressNum = addressNum;
-      }
-
-      @Override
-      public String toString() {
-         return "TestAddress(" + addressNum + ')';
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         TestAddress that = (TestAddress) o;
-         return addressNum == that.addressNum;
-      }
-
-      @Override
-      public int hashCode() {
-         return addressNum;
-      }
    }
 }

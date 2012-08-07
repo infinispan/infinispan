@@ -84,7 +84,7 @@ public class InboundTransferTask {
       return source;
    }
 
-   public void getTransactions() {
+   public boolean requestTransactions() {
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
       Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
@@ -92,16 +92,18 @@ public class InboundTransferTask {
       if (response instanceof SuccessfulResponse) {
          List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
          stateConsumer.applyTransactions(source, topologyId, transactions);
+         return true;
       } else {
-         //todo [anistor] fail
+         return false;
       }
-      //todo [anistor] unlock transactions after we have received transactions from all donors
    }
 
-   public void requestSegments() {
+   public boolean requestSegments() {
       // start transfer of cache entries
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-      rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+      Response response = responses.get(source);
+      return response instanceof SuccessfulResponse;
    }
 
    public void cancelSegments(Set<Integer> cancelledSegments) {
@@ -138,9 +140,9 @@ public class InboundTransferTask {
       }
    }
 
-   public void onStateReceived(int segmentId, int numEntries) {
+   public void onStateReceived(int segmentId, boolean isLastChunk) {
       if (!isCancelled && segments.contains(segmentId)) {
-         if (numEntries == 0) {
+         if (isLastChunk) {
             finishedSegments.add(segmentId);
             if (finishedSegments.containsAll(segments)) {
                stateConsumer.onTaskCompletion(this);

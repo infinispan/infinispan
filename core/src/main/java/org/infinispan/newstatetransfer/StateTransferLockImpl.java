@@ -38,6 +38,8 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    private final ReadWriteLock commandLock = new ReentrantReadWriteLock();
 
+   private volatile int topologyId;
+
    @Override
    public void transactionsSharedLock() {
       transactionTableLock.readLock().lock();
@@ -76,5 +78,14 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void commandsSharedUnlock() {
       commandLock.readLock().unlock();
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 }

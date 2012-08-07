@@ -23,40 +23,38 @@
 
 package org.infinispan.newstatetransfer;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.Collection;
-
 /**
- * Handles inbound state transfers.
+ * // TODO: Document this
  *
  * @author anistor@redhat.com
  * @since 5.2
  */
-public interface StateConsumer {
+class TestAddress implements Address {
 
-   boolean isStateTransferInProgress();
+   private final int addressNum;
 
-   boolean isStateTransferInProgressForKey(Object key);
+   TestAddress(int addressNum) {
+      this.addressNum = addressNum;
+   }
 
-   /**
-    * Receive notification of topology changes. StateRequestCommands are issued for segments that are new to this member
-    * and the segments that are no longer owned are discarded.
-    *
-    * @param topologyId the new topology id
-    * @param rCh
-    * @param wCh
-    */
-   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
+   @Override
+   public String toString() {
+      return "TestAddress(" + addressNum + ')';
+   }
 
-   void applyTransactions(Address sender, int topologyId, Collection<TransactionInfo> transactions);
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
-   void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
+      TestAddress that = (TestAddress) o;
+      return addressNum == that.addressNum;
+   }
 
-   /**
-    * Cancels all incoming state transfers. The already received data is not discarded.
-    */
-   void shutdown();
+   @Override
+   public int hashCode() {
+      return addressNum;
+   }
 }

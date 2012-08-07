@@ -33,19 +33,20 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.GroupingConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.util.concurrent.AggregatingNotifyingFutureBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,7 +63,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final AggregatingNotifyingFutureBuilder statePushFuture = new AggregatingNotifyingFutureBuilder(null, 1);
    private StateTransferLock stateTransferLock;
 
    private Configuration configuration;
@@ -72,8 +72,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private GroupManager groupManager;
    private String cacheName;
 
-   private int topologyId;
-   private ConsistentHash currentCh = null;
+   private int topologyId = -1;
 
    private StateProvider stateProvider;
    private StateConsumer stateConsumer;
@@ -83,6 +82,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Inject
    public void init(@ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,   //todo [anistor] use a separate ExecutorService
+                    CacheNotifier cacheNotifier,
                     Configuration configuration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
@@ -113,7 +113,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
             transactionTable,
             stateTransferLock);
 
-      stateConsumer = new StateConsumerImpl(interceptorChain,
+      stateConsumer = new StateConsumerImpl(
+            cacheNotifier,
+            interceptorChain,
             icc,
             configuration,
             rpcManager,
@@ -146,9 +148,20 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          @Override
          public void rebalance(CacheTopology cacheTopology) {
+            // handle grouping
+            if (groupManager != null) {
+               ConsistentHash currentCH = cacheTopology.getCurrentCH();
+               currentCH = new GroupingConsistentHash(currentCH, groupManager);
+               ConsistentHash pendingCH = cacheTopology.getPendingCH();
+               if (pendingCH != null) {
+                  pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
+               }
+               cacheTopology = new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
+            }
+
+            topologyId = cacheTopology.getTopologyId();
             distributionManager.setCacheTopology(cacheTopology);
-            ConsistentHash ch = cacheTopology.getWriteConsistentHash();
-            onTopologyUpdate(topologyId, ch);
+            onTopologyUpdate(topologyId, cacheTopology.getReadConsistentHash(), cacheTopology.getWriteConsistentHash());
          }
       };
 
@@ -174,15 +187,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, ConsistentHash newCh) { //todo [anistor] this method should be re-entrant
-      currentCh = newCh;
-      stateProvider.onTopologyUpdate(topologyId, newCh);
-      stateConsumer.onTopologyUpdate(topologyId, newCh);
+   public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
+      stateProvider.onTopologyUpdate(topologyId, rCh, wCh);
+      stateConsumer.onTopologyUpdate(topologyId, rCh, wCh);
    }
 
    @Override
    public boolean isJoinComplete() {
-      return currentCh != null;
+      return topologyId != -1;
    }
 
    @Override

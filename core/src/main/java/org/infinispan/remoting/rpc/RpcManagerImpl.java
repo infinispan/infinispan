@@ -404,6 +404,6 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public Address getAddress() {
-      return t != null ? t.getAddress() : null;
+      return t != null ? t.getAddress() : null;  // todo [anistor] transport should never be null!
    }
 }

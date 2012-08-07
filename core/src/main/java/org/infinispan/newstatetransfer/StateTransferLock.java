@@ -50,4 +50,6 @@ public interface StateTransferLock {
    void commandsSharedLock();
 
    void commandsSharedUnlock();
+
+   int getTopologyId();
 }

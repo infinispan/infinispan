@@ -43,9 +43,10 @@ public interface StateProvider {
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
     *
     * @param topologyId the new topology id
-    * @param ch         the new consistent hash
+    * @param rCh
+    * @param wCh
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash ch);
+   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a
