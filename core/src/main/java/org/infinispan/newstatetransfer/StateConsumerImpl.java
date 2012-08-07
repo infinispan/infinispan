@@ -63,6 +63,7 @@ public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private StateTransferManager stateTransferManager;
    private CacheNotifier cacheNotifier;
    private Configuration configuration;
    private RpcManager rpcManager;
@@ -89,7 +90,8 @@ public class StateConsumerImpl implements StateConsumer {
    private Map<Address, List<InboundTransferTask>> transfersBySource = new HashMap<Address, List<InboundTransferTask>>();
    private Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<Integer, InboundTransferTask>();
 
-   public StateConsumerImpl(CacheNotifier cacheNotifier,
+   public StateConsumerImpl(StateTransferManager stateTransferManager,
+                            CacheNotifier cacheNotifier,
                             InterceptorChain interceptorChain,
                             InvocationContextContainer icc,
                             Configuration configuration,
@@ -99,6 +101,7 @@ public class StateConsumerImpl implements StateConsumer {
                             DataContainer dataContainer,
                             TransactionTable transactionTable,
                             StateTransferLock stateTransferLock) {
+      this.stateTransferManager = stateTransferManager;
       this.cacheNotifier = cacheNotifier;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
@@ -133,7 +136,6 @@ public class StateConsumerImpl implements StateConsumer {
       }
       // todo [anistor] also return true for keys to be removed (now we report only keys to be added)
       synchronized (this) {
-         // todo [anistor] do not lookup segment in map if there is no transfer in progress
          return rCh != null && transfersBySegment.containsKey(rCh.getSegment(key));
       }
    }
@@ -148,7 +150,7 @@ public class StateConsumerImpl implements StateConsumer {
          this.topologyId = topologyId;
       }
 
-      ((StateTransferLockImpl) stateTransferLock).setTopologyId(topologyId);
+      stateTransferLock.setTopologyId(topologyId);
 
       try {
          Set<Integer> addedSegments = null;
@@ -158,10 +160,10 @@ public class StateConsumerImpl implements StateConsumer {
             this.wCh = wCh;
 
             if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-               addedSegments = this.rCh.getSegmentsForOwner(rpcManager.getAddress());
+               addedSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
             }
          } else {
-            Set<Integer> oldSegments = this.rCh.getSegmentsForOwner(rpcManager.getAddress());
+            Set<Integer> oldSegments = this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
             this.rCh = rCh;
             this.wCh = wCh;
             Set<Integer> newSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
@@ -209,20 +211,18 @@ public class StateConsumerImpl implements StateConsumer {
          synchronized (this) {
             isTopologyUpdate--;
             if (isTopologyUpdate == 0 && !isStateTransferInProgress()) {
-               notifyEndOfStateTransfer();
+               stateTransferManager.notifyEndOfStateTransfer(topologyId);
             }
          }
       }
    }
 
-   private void notifyEndOfStateTransfer() {
-      // TODO [anistor] implement!
-   }
-
    public void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
       // it's possible to receive a late message so we must be prepared to ignore segments we no longer own
-      if (rCh == null || !rCh.locateOwnersForSegment(segmentId).contains(rpcManager.getAddress())) {  //todo [anistor] optimize
-         log.tracef("Discarding the received cache entries because they do not belong to this node.");
+      if (wCh == null || !wCh.getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
+         if (trace) {
+            log.tracef("Discarding received cache entries for segment %d because they do not belong to this node.", segmentId);
+         }
          return;
       }
 
@@ -314,16 +314,19 @@ public class StateConsumerImpl implements StateConsumer {
                }
 
                Address source = pickSourceOwner(segmentId, faultyMembers);
-
-               Set<Integer> segs = segmentsBySource.get(source);
-               if (segs == null) {
-                  segs = new HashSet<Integer>();
-                  segmentsBySource.put(source, segs);
+               if (source == null) {
+                  log.errorf("No owners found for segment %d", segmentId);
+               } else {
+                  Set<Integer> segs = segmentsBySource.get(source);
+                  if (segs == null) {
+                     segs = new HashSet<Integer>();
+                     segmentsBySource.put(source, segs);
+                  }
+                  segs.add(segmentId);
                }
-               segs.add(segmentId);
             }
 
-            Set<Integer> failedSegments = new HashSet<Integer>(segments);
+            Set<Integer> failedSegments = new HashSet<Integer>();
             for (Address source : segmentsBySource.keySet()) {
                Set<Integer> segs = segmentsBySource.get(source);
                InboundTransferTask inboundTransfer = new InboundTransferTask(segs, source, topologyId, this, rpcManager, commandsFactory, timeout);
@@ -375,7 +378,7 @@ public class StateConsumerImpl implements StateConsumer {
       synchronized (this) {
          List<Integer> segmentsToCancel = new ArrayList<Integer>(segments);
          while (!segmentsToCancel.isEmpty()) {
-            int segmentId = segmentsToCancel.get(0);
+            int segmentId = segmentsToCancel.remove(0);
             log.debugf("Removing state transfer for segment %d", segmentId);
             InboundTransferTask inboundTransfer = transfersBySegment.remove(segmentId);
             if (inboundTransfer != null) { // we need to check the transfer was not already completed
@@ -408,7 +411,7 @@ public class StateConsumerImpl implements StateConsumer {
             }
 
          } catch (CacheLoaderException e) {
-            e.printStackTrace();  // TODO [anistor] handle properly
+            log.failedLoadingKeysFromCacheStore(e);
          }
       }
 
@@ -420,7 +423,7 @@ public class StateConsumerImpl implements StateConsumer {
             interceptorChain.invoke(ctx, invalidateCmd);
 
             log.debugf("Invalidated %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());
-            log.tracef("Invalidated keys: %s", keysToRemove);
+            if (trace) log.tracef("Invalidated keys: %s", keysToRemove);
          } catch (CacheException e) {
             log.failedToInvalidateKeys(e);
          }
@@ -463,7 +466,7 @@ public class StateConsumerImpl implements StateConsumer {
          allTasksCompleted = isTopologyUpdate == 0 && !isStateTransferInProgress();
       }
       if (allTasksCompleted) {
-         notifyEndOfStateTransfer();
+         stateTransferManager.notifyEndOfStateTransfer(topologyId);
       }
    }
 }

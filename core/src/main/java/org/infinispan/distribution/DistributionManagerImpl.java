@@ -189,6 +189,14 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public ConsistentHash getConsistentHash() {
+      return getWriteConsistentHash();
+   }
+
+   public ConsistentHash getReadConsistentHash() {
+      return cacheTopology.getReadConsistentHash();
+   }
+
+   public ConsistentHash getWriteConsistentHash() {
       return cacheTopology.getWriteConsistentHash();
    }
 

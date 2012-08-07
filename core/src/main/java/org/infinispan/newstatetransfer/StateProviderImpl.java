@@ -128,6 +128,10 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
+      if (rCh == null) {
+         throw new IllegalStateException("No cache topology received yet");
+      }
+
       Set<Integer> ownedSegments = rCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
          segments.removeAll(ownedSegments);

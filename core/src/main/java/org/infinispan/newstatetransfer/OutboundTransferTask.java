@@ -43,7 +43,9 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * // TODO [anistor] Document this
+ * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
+ * OutboundTransferTask are created and managed by StateTransferManagerImpl. There should be at most
+ * one such task per destination at any time.
  *
  * @author anistor@redhat.com
  * @since 5.2

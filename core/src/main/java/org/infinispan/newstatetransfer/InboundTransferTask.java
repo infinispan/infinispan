@@ -34,7 +34,9 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * // TODO [anistor] Document this
+ * Inbound state transfer task. Fetches transactions and data segments from a remote source and applies it to local
+ * cache. Instances of InboundTransferTask are created and managed by StateTransferManagerImpl. There should be at most
+ * one such task per source at any time.
  *
  * @author anistor@redhat.com
  * @since 5.2

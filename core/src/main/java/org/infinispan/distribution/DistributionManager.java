@@ -120,6 +120,10 @@ public interface DistributionManager {
     */
    ConsistentHash getConsistentHash();
 
+   ConsistentHash getReadConsistentHash();
+
+   ConsistentHash getWriteConsistentHash();
+
    /**
     * Sets the consistent hash implementation in use.
     *

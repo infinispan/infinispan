@@ -166,7 +166,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
             topologyId = cacheTopology.getTopologyId();
             rebalanceInProgress = rebalance;
-            distributionManager.setCacheTopology(cacheTopology);
+            if (distributionManager != null) { // need to check we are really in distributed mode
+               distributionManager.setCacheTopology(cacheTopology);
+            }
             onTopologyUpdate(topologyId, cacheTopology.getReadConsistentHash(), cacheTopology.getWriteConsistentHash());
          }
       };
