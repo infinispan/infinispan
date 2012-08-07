@@ -37,6 +37,7 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
@@ -106,6 +107,7 @@ public class StateConsumerTest {
       System.out.println(ch2.dump());
 
       // create dependencies
+      CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       ExecutorService executorService2 = mock(ExecutorService.class);
       RpcManager rpcManager = mock(RpcManager.class);
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
@@ -126,7 +128,7 @@ public class StateConsumerTest {
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
 
       // create state provider
-      StateConsumerImpl stateConsumer = new StateConsumerImpl(interceptorChain, icc,
+      StateConsumerImpl stateConsumer = new StateConsumerImpl(cacheNotifier, interceptorChain, icc,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
@@ -153,42 +155,14 @@ public class StateConsumerTest {
 
       assertFalse(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(1, ch1);
+      stateConsumer.onTopologyUpdate(1, ch1, ch1);
 
       assertTrue(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(3, ch2);
+      stateConsumer.onTopologyUpdate(3, ch1, ch2);
 
       stateConsumer.shutdown();
 
       assertFalse(stateConsumer.isStateTransferInProgress());
-   }
-
-   private static class TestAddress implements Address {
-
-      private final int addressNum;
-
-      TestAddress(int addressNum) {
-         this.addressNum = addressNum;
-      }
-
-      @Override
-      public String toString() {
-         return "TestAddress(" + addressNum + ')';
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         TestAddress that = (TestAddress) o;
-         return addressNum == that.addressNum;
-      }
-
-      @Override
-      public int hashCode() {
-         return addressNum;
-      }
    }
 }

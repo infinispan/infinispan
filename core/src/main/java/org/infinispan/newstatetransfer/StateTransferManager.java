@@ -49,9 +49,10 @@ public interface StateTransferManager {
     * Receive notification of topology changes. Handles it by starting state transfer as needed.
     *
     * @param topologyId the new topology id
-    * @param newCh      the new consistent hash
+    * @param rCh
+    * @param wCh
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash newCh);
+   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
 
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)

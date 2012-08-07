@@ -36,8 +36,12 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Set;
 
 /**
  * // TODO: Document this
@@ -51,6 +55,8 @@ public class StateTransferInterceptor extends CommandInterceptor {
 
    private StateTransferLock stateTransferLock;
 
+   private RpcManager rpcManager;
+
    private long rpcTimeout;
 
    @Override
@@ -59,8 +65,9 @@ public class StateTransferInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration) {
+   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager) {
       this.stateTransferLock = stateTransferLock;
+      this.rpcManager = rpcManager;
       // no need to retry for asynchronous caches
       this.rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
             ? configuration.clustering().sync().replTimeout() : 0;
@@ -193,5 +200,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
 
    private void forwardCommand(InvocationContext ctx, VisitableCommand command) {
       // TODO: Customise this generated block
+      Set<Address> newTarget = null;
+      rpcManager.invokeRemotely(newTarget, command, true);
    }
 }

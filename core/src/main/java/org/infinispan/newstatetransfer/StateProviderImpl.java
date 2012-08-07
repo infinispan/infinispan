@@ -61,7 +61,7 @@ public class StateProviderImpl implements StateProvider {
    private long timeout;
    private int chunkSize;
 
-   private ConsistentHash currentCh;
+   private ConsistentHash rCh;
 
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
@@ -97,11 +97,11 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public void onTopologyUpdate(int topologyId, ConsistentHash ch) {
-      currentCh = ch;
+   public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
+      this.rCh = rCh;
 
-      // cancel outbound state transfers for destinations that are no longer members in this topology
-      Set<Address> members = new HashSet<Address>(ch.getMembers());
+      // cancel outbound state transfers for destinations that are no longer members in new topology
+      Set<Address> members = new HashSet<Address>(wCh.getMembers());
       synchronized (transfersByDestination) {
          for (Address destination : transfersByDestination.keySet()) {
             if (!members.contains(destination)) {
@@ -128,17 +128,21 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
-      //todo [anistor] check all segments are in range of current ch
+      Set<Integer> ownedSegments = rCh.getSegmentsForOwner(rpcManager.getAddress());
+      if (!ownedSegments.containsAll(segments)) {
+         segments.removeAll(ownedSegments);
+         throw new IllegalArgumentException("Segments " + segments + " are not owned by " + rpcManager.getAddress());
+      }
+
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
       if (configuration.transaction().transactionMode().isTransactional()) {
          // all transactions should be briefly blocked now
+         stateTransferLock.transactionsExclusiveLock();
          try {
-            stateTransferLock.transactionsExclusiveLock();
             //we migrate locks only if the cache is transactional and distributed
             collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
             collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
-            log.debugf("Found %d transfer to transfer", transactions.size());
-
+            log.debugf("Found %d transactions to transfer", transactions.size());
          } finally {
             // all transactions should be unblocked now
             stateTransferLock.transactionsExclusiveUnlock();
@@ -149,15 +153,15 @@ public class StateProviderImpl implements StateProvider {
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer, Collection<? extends CacheTransaction> transactions, Set<Integer> segments) {
       for (CacheTransaction tx : transactions) {
-         // transfer only locked keys that belong to those segments and belong to local node
+         // transfer only locked keys that belong to requested segments and belong to local node
          Set<Object> lockedKeys = new HashSet<Object>();
          for (Object key : tx.getLockedKeys()) {
-            if (segments.contains(currentCh.getSegment(key))) {
+            if (segments.contains(rCh.getSegment(key))) {
                lockedKeys.add(key);
             }
          }
          for (Object key : tx.getBackupLockedKeys()) {
-            if (segments.contains(currentCh.getSegment(key))) {
+            if (segments.contains(rCh.getSegment(key))) {
                lockedKeys.add(key);
             }
          }
@@ -168,8 +172,9 @@ public class StateProviderImpl implements StateProvider {
 
    @Override
    public void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      // the destination must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, currentCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout);
+      if (trace) log.tracef("Starting outbound transfer for segments %s", segments);
+      // the destination node must already have an InboundTransferTask waiting for these segments
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, rCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       executorService.submit(outboundTransfer);
    }
@@ -187,7 +192,8 @@ public class StateProviderImpl implements StateProvider {
 
    @Override
    public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      // get the outbound transfers for this address and given segments and cancel the segments
+      if (trace) log.tracef("Cancelling outbound transfer for segments %s", segments);
+      // get the outbound transfers for this address and given segments and cancel the transfers
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
          if (transferTasks != null) {

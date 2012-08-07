@@ -66,7 +66,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final int stateTransferChunkSize;
 
-   private final ConsistentHash ch;
+   private final ConsistentHash rCh;
 
    private final DataContainer dataContainer;
 
@@ -80,10 +80,13 @@ public class OutboundTransferTask implements Runnable {
 
    private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = ConcurrentMapFactory.makeConcurrentMap();
 
-   private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null, 10);  //todo [anistor] why do we have to specify a capacity?
+   /**
+    * This is used with RpcManager.invokeRemotelyInFuture to be able to cancel message sending if the task needs to be canceled.
+    */
+   private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null);
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
-                               int topologyId, ConsistentHash ch, StateProviderImpl stateProvider, DataContainer dataContainer,
+                               int topologyId, ConsistentHash rCh, StateProviderImpl stateProvider, DataContainer dataContainer,
                                CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
                                CommandsFactory commandsFactory, long timeout) {
       if (segments == null || segments.isEmpty()) {
@@ -100,7 +103,7 @@ public class OutboundTransferTask implements Runnable {
       this.segments.addAll(segments);
       this.stateTransferChunkSize = stateTransferChunkSize;
       this.topologyId = topologyId;
-      this.ch = ch;
+      this.rCh = rCh;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.rpcManager = rpcManager;
@@ -122,7 +125,7 @@ public class OutboundTransferTask implements Runnable {
             }
 
             Object key = ice.getKey();
-            int segmentId = ch.getSegment(key);
+            int segmentId = rCh.getSegment(key);
             if (segments.contains(segmentId)) {
                sendEntry(ice, segmentId);
             }
@@ -136,13 +139,13 @@ public class OutboundTransferTask implements Runnable {
          if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared()) {
             CacheStore cacheStore = cacheLoaderManager.getCacheStore();
             try {
-               //todo [anistor] extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
+               //todo [anistor] need to extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
                Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                for (Object key : storedKeys) {
                   if (isCancelled) {
                      return;
                   }
-                  int segmentId = ch.getSegment(key);
+                  int segmentId = rCh.getSegment(key);
                   if (segments.contains(segmentId)) {
                      try {
                         InternalCacheEntry ice = cacheStore.load(key);
@@ -150,12 +153,12 @@ public class OutboundTransferTask implements Runnable {
                            sendEntry(ice, segmentId);
                         }
                      } catch (CacheLoaderException e) {
-                        log.failedLoadingValueFromCacheStore(key);
+                        log.failedLoadingValueFromCacheStore(key, e);
                      }
                   }
                }
             } catch (CacheLoaderException e) {
-               e.printStackTrace();  // TODO [anistor] handle properly
+               log.failedLoadingKeysFromCacheStore(e);
             }
          } else {
             if (trace) {
@@ -170,10 +173,7 @@ public class OutboundTransferTask implements Runnable {
             }
 
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
-            sendEntries(entries, segmentId);
-            if (!entries.isEmpty()) {
-               sendEntries(Collections.<InternalCacheEntry>emptyList(), segmentId);
-            }
+            sendEntries(entries, segmentId, true);
          }
       } finally {
          stateProvider.onTaskCompletion(this);
@@ -186,18 +186,19 @@ public class OutboundTransferTask implements Runnable {
          entries = new ArrayList<InternalCacheEntry>();
          entriesBySegment.put(segmentId, entries);
       }
-      entries.add(ice);
 
       // send if we have a full chunk
       if (entries.size() >= stateTransferChunkSize) {
-         sendEntries(entries, segmentId);
+         sendEntries(entries, segmentId, false);
          entries.clear();
       }
+
+      entries.add(ice);
    }
 
-   private void sendEntries(List<InternalCacheEntry> entries, int segmentId) {
+   private void sendEntries(List<InternalCacheEntry> entries, int segmentId, boolean isLastChunk) {
       if (!isCancelled) {
-         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries);
+         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries, isLastChunk);
          // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
          rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
       }
@@ -218,7 +219,7 @@ public class OutboundTransferTask implements Runnable {
    public void cancel() {
       if (!isCancelled) {
          isCancelled = true;
-         sendFuture.cancel(true);    //todo [anistor] is this going to cancel the unprocessed jgroup send operations? I hope so
+         sendFuture.cancel(true);
          stateProvider.onTaskCompletion(this);
       }
    }
