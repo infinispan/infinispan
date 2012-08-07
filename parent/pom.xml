@@ -233,6 +233,17 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-lucene-directory</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-query</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -461,6 +472,12 @@
                     <artifactId>hibernate-search-analyzers</artifactId>
                 </exclusion>
             </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-infinispan</artifactId>
+            <version>${version.hibernate.search}</version>
+            <optional>true</optional>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>

@@ -22,6 +22,10 @@
 
 package org.infinispan.query.logging;
 
+import java.util.List;
+
+import org.hibernate.search.backend.LuceneWork;
+import org.infinispan.remoting.transport.Address;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -34,6 +38,7 @@ import static org.jboss.logging.Logger.Level.*;
  * ranging from 14001 to 15000 inclusively have been reserved.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
@@ -50,5 +55,21 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = INFO)
    @Message(value = "Registering Query interceptor", id = 14003)
    void registeringQueryInterceptor();
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Custom commands backend initialized backing index %s", id = 14004)
+   void commandsBackendInitialized(String indexName);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Sent list of LuceneWork %s to node %s", id = 14005)
+   void workListRemotedTo(Object workList, Address primaryNodeAddress);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Apply list of LuceneWork %s delegating to local indexing engine", id = 14006)
+   void applyingChangeListLocally(List<LuceneWork> workList);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Going to ship list of LuceneWork %s to a remote master indexer", id = 14007)
+   void applyingChangeListRemotely(List<LuceneWork> workList);
 
 }

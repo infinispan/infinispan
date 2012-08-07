@@ -21,75 +21,42 @@
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
+
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>5.2.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
+      <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-query</artifactId>
-   <packaging>bundle</packaging>
-   <name>Infinispan Query API</name>
-   <description>Infinispan Query API module</description>
-
-   <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
+   <artifactId>integrationtests-lucenedirectory-query</artifactId>
+   <name>Integration tests: Lucene Directory with Infinispan Query</name>
+   <description>Integration tests using both the Lucene Directory module and Infinispan Query</description>
 
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
+         <artifactId>infinispan-lucene-directory</artifactId>
       </dependency>
-
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-engine</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-infinispan</artifactId>
-      </dependency>
-
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-lucene-directory</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
       </dependency>
-
       <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-core</artifactId>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query</artifactId>
       </dependency>
-
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-
    </dependencies>
 
-   <build>
-      <plugins>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-      </plugins>
-   </build>
 </project>
