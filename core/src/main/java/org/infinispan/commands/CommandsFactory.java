@@ -300,7 +300,7 @@ public interface CommandsFactory {
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
