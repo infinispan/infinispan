@@ -51,7 +51,7 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
             .cacheMode(CacheMode.DIST_SYNC)
             .sync().replTimeout(60000)
             .stateTransfer().timeout(180000).fetchInMemoryState(true)
-            .hash().numOwners(1).numVirtualNodes(48);
+            .hash().numOwners(1);
 
       // transactions
 

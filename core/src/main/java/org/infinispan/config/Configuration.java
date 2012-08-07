@@ -1047,10 +1047,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Fully qualified name of class providing consistent hash algorithm
-    *
-    * @param consistentHashClass
-    * @deprecated Use {@link FluentConfiguration.HashConfig#consistentHashClass(Class)} instead
+    * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
     */
    @Deprecated
    public void setConsistentHashClass(String consistentHashClass) {
@@ -3512,13 +3509,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = 752218766840948822L;
 
-      @ConfigurationDocRef(name = "class", bean = Configuration.class, targetElement = "setConsistentHashClass")
+      @ConfigurationDocRef(name = "class", bean = HashConfig.class, targetElement = "setConsistentHashClass")
       protected String consistentHashClass;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "hashFunctionClass")
       protected String hashFunctionClass = MurmurHash3.class.getName();
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numOwners")
       protected Integer numOwners = 2;
 
       @ConfigurationDoc(desc = "Future flag. Currenly unused.")
@@ -3549,7 +3546,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       /**
-       * @deprecated The visibility of this will be reduced, use {@link #consistentHashClass(Class)}
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
        */
       @Deprecated
       public void setConsistentHashClass(String consistentHashClass) {
@@ -3608,7 +3605,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
       
       /**
-       * @deprecated The visibility of this will be reduced, use {@link #numVirtualNodes(Integer)}
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#numSegments(int)} instead.
        */
       @Deprecated
       public void setNumVirtualNodes(Integer numVirtualNodes) {

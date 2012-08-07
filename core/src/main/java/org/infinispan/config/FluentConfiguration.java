@@ -651,10 +651,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     */
 @Deprecated public interface HashConfig extends FluentTypes {
       /**
-       * Fully qualified name of class providing consistent hash algorithm
-       *
-       * @param consistentHashClass
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
        */
+      @Deprecated
       HashConfig consistentHashClass(Class<? extends ConsistentHash> consistentHashClass);
 
       /**
@@ -676,7 +675,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       HashConfig rehashWait(Long rehashWaitTime);
 
       /**
-       * Rehashing timeout
        *
        * @param rehashRpcTimeout
        */
@@ -691,17 +689,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       HashConfig rehashEnabled(Boolean rehashEnabled);
       
       /**
-       * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes
-       * at ...
-       * 
-       * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
-       * must be used if you wish to take advnatage of virtual nodes.
-       * 
-       * A default of 1 is used.
-       * 
-       * @param numVirtualNodes the number of virtual nodes. Must be >0.
-       * @throws IllegalArgumentException if numVirtualNodes <0
-       * 
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#numSegments(int)} instead.
        */
       HashConfig numVirtualNodes(Integer numVirtualNodes);
       

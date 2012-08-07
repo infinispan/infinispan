@@ -862,4 +862,11 @@ public interface Log extends BasicLogger {
    @Message(value = "When indexing locally a cache with shared cache loader, preload must be enabled", id = 191)
    void localIndexingWithSharedCacheLoaderRequiresPreload();
 
+   @LogMessage(level = WARN)
+   @Message(value = "hash's 'numVirtualNodes' attribute has been deprecated. Please use hash.numSegments instead", id = 192)
+   void hashNumVirtualNodesDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "hash's 'consistentHash' attribute has been deprecated. Please use hash.consistentHashFactory instead", id = 193)
+   void consistentHashDeprecated();
 }
