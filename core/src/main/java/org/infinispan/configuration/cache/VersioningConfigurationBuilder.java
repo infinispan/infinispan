@@ -49,19 +49,19 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   VersioningConfiguration create() {
+   public VersioningConfiguration create() {
       return new VersioningConfiguration(enabled, scheme);
    }
-   
+
    @Override
    public VersioningConfigurationBuilder read(VersioningConfiguration template) {
       this.enabled = template.enabled();
       this.scheme = template.scheme();
-      
+
       return this;
    }
 

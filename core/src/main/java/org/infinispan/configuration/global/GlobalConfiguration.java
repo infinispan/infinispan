@@ -22,7 +22,13 @@
  */
 package org.infinispan.configuration.global;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Version;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -57,13 +63,13 @@ public class GlobalConfiguration {
    private final TransportConfiguration transport;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
-   
+   private final Map<Class<?>, ?> modules;
    private final ClassLoader cl;
-   
+
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, ClassLoader cl) {
+         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, List<?> modules, ClassLoader cl) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -72,44 +78,54 @@ public class GlobalConfiguration {
       this.transport = transport;
       this.serialization = serialization;
       this.shutdown = shutdown;
+
+      Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
+      for(Object module : modules) {
+         moduleMap.put(module.getClass(), module);
+      }
+      this.modules = Collections.unmodifiableMap(moduleMap);
       this.cl = cl;
    }
-   
+
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
       return asyncListenerExecutor;
    }
-   
+
    public ExecutorFactoryConfiguration asyncTransportExecutor() {
       return asyncTransportExecutor;
    }
-   
+
    public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
-   
+
    public ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor() {
       return replicationQueueScheduledExecutor;
    }
-   
+
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
       return globalJmxStatistics;
    }
-   
+
    public TransportConfiguration transport() {
       return transport;
    }
-   
+
    public SerializationConfiguration serialization() {
       return serialization;
    }
-   
+
    public ShutdownConfiguration shutdown() {
       return shutdown;
    }
-   
+
+   public Map<Class<?>, ?> modules() {
+      return modules;
+   }
+
    /**
     * Get the classloader in use by this configuration.
-    * 
+    *
     * @return
     */
    public ClassLoader classLoader() {
@@ -127,10 +143,9 @@ public class GlobalConfiguration {
             ", transport=" + transport +
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
+            ", modules=" + modules +
             ", cl=" + cl +
             '}';
    }
 
 }
-
-

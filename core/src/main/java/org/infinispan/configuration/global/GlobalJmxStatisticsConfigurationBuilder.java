@@ -29,18 +29,18 @@ import org.infinispan.util.Util;
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
  */
 public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfigurationBuilder<GlobalJmxStatisticsConfiguration> {
-   
+
    private Properties properties = new Properties();
    private String jmxDomain = "org.infinispan";
    private Boolean allowDuplicateDomains= false;
    private String cacheManagerName = "DefaultCacheManager";
    private MBeanServerLookup mBeanServerLookupInstance = Util.getInstance(PlatformMBeanServerLookup.class);
    private boolean enabled = false;
-   
+
    GlobalJmxStatisticsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
    }
-   
+
    /**
     * Sets properties which are then passed to the MBean Server Lookup implementation specified.
     *
@@ -111,23 +111,24 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
       this.enabled = true;
       return this;
    }
-   
+
    public GlobalJmxStatisticsConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
       return this;
    }
-   
+
    @Override
    void validate() {
       // No-op, no validation required
    }
-   
+
    @Override
    GlobalJmxStatisticsConfiguration create() {
       return new GlobalJmxStatisticsConfiguration(enabled, jmxDomain, mBeanServerLookupInstance, allowDuplicateDomains,  cacheManagerName, TypedProperties.toTypedProperties(properties));
    }
-   
+
    @Override
+   protected
    GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
       this.allowDuplicateDomains = template.allowDuplicateDomains();
       this.cacheManagerName = template.cacheManagerName();
@@ -135,7 +136,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
       this.jmxDomain = template.domain();
       this.mBeanServerLookupInstance = template.mbeanServerLookup();
       this.properties = template.properties();
-      
+
       return this;
    }
 

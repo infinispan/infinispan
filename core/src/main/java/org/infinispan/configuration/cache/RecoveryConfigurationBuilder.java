@@ -20,9 +20,9 @@ package org.infinispan.configuration.cache;
 
 /**
  * Defines recovery configuration for the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder<RecoveryConfiguration> {
 
@@ -48,7 +48,7 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       this.enabled = false;
       return this;
    }
-   
+
    /**
     * Enable recovery for this cache
     */
@@ -67,11 +67,11 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   RecoveryConfiguration create() {
+   public RecoveryConfiguration create() {
       return new RecoveryConfiguration(enabled, recoveryInfoCacheName);
    }
 

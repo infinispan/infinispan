@@ -30,16 +30,16 @@ import org.infinispan.util.logging.LogFactory;
 public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder<EvictionConfiguration> {
 
    private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
-   
+
    private int maxEntries = -1;
    private EvictionStrategy strategy = EvictionStrategy.NONE;
    private EvictionThreadPolicy threadPolicy = EvictionThreadPolicy.DEFAULT;
-   
+
    EvictionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
 
-   
+
    /**
     * Eviction strategy. Available options are 'UNORDERED', 'LRU', 'LIRS' and 'NONE' (to disable
     * eviction).
@@ -50,7 +50,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       this.strategy = evictionStrategy;
       return this;
    }
-   
+
    /**
     * Threading policy for eviction.
     *
@@ -60,12 +60,12 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       this.threadPolicy = policy;
       return this;
    }
-   
+
    /**
     * Maximum number of entries in a cache instance. Cache size is guaranteed not to exceed upper
     * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
     * be exactly maximum number of entries specified here.
-    * 
+    *
     * @param maxEntries
     */
    public EvictionConfigurationBuilder maxEntries(int maxEntries) {
@@ -74,7 +74,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   void validate() {
+   public void validate() {
       if (!strategy.isEnabled() && getBuilder().loaders().passivation())
          log.passivationWithoutEviction();
       if(strategy == EvictionStrategy.FIFO)
@@ -88,16 +88,16 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   EvictionConfiguration create() {
+   public EvictionConfiguration create() {
       return new EvictionConfiguration(maxEntries, strategy, threadPolicy);
    }
-   
+
    @Override
    public EvictionConfigurationBuilder read(EvictionConfiguration template) {
       this.maxEntries = template.maxEntries();
       this.strategy = template.strategy();
       this.threadPolicy = template.threadPolicy();
-      
+
       return this;
    }
 

@@ -29,12 +29,14 @@ public class ConfigurationBuilderHolder {
    private final GlobalConfigurationBuilder globalConfigurationBuilder;
    private final ConfigurationBuilder defaultConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
+   private ConfigurationBuilder currentConfigurationBuilder;
    private final ClassLoader classLoader;
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
       this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
       this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
+      this.currentConfigurationBuilder = defaultConfigurationBuilder;
       this.classLoader = classLoader;
    }
 
@@ -48,6 +50,7 @@ public class ConfigurationBuilderHolder {
       //https://issues.jboss.org/browse/ISPN-1938
       builder.read(getDefaultConfigurationBuilder().build(false));
       namedConfigurationBuilders.put(name, builder);
+      currentConfigurationBuilder = builder;
       return builder;
    }
 
@@ -57,6 +60,10 @@ public class ConfigurationBuilderHolder {
 
    public Map<String, ConfigurationBuilder> getNamedConfigurationBuilders() {
       return namedConfigurationBuilders;
+   }
+
+   public ConfigurationBuilder getCurrentConfigurationBuilder() {
+      return currentConfigurationBuilder;
    }
 
    public ClassLoader getClassLoader() {

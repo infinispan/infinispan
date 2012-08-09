@@ -18,8 +18,13 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Configuration {
-   
+
    private final ClassLoader classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
@@ -36,6 +41,7 @@ public class Configuration {
    private final TransactionConfiguration transactionConfiguration;
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
+   private final Map<Class<?>, ?> moduleConfiguration;
 
    Configuration(ClusteringConfiguration clusteringConfiguration,
          CustomInterceptorsConfiguration customInterceptorsConfiguration,
@@ -46,7 +52,7 @@ public class Configuration {
          LoadersConfiguration loadersConfiguration,
          LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
          TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
-         VersioningConfiguration versioningConfiguration, ClassLoader cl) {
+         VersioningConfiguration versioningConfiguration, List<?> modules, ClassLoader cl) {
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -62,9 +68,14 @@ public class Configuration {
       this.transactionConfiguration = transactionConfiguration;
       this.unsafeConfiguration = unsafeConfiguration;
       this.versioningConfiguration = versioningConfiguration;
+      Map<Class<?>, Object> modulesMap = new HashMap<Class<?>, Object>();
+      for(Object module : modules) {
+         modulesMap.put(module.getClass(), module);
+      }
+      this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
       this.classLoader = cl;
    }
-   
+
    /**
     * Will be removed with no replacement
     * @return
@@ -73,59 +84,68 @@ public class Configuration {
    public ClassLoader classLoader() {
       return classLoader;
    }
-   
+
    public ClusteringConfiguration clustering() {
       return clusteringConfiguration;
    }
-   
+
    public CustomInterceptorsConfiguration customInterceptors() {
       return customInterceptorsConfiguration;
    }
-   
+
    public DataContainerConfiguration dataContainer() {
       return dataContainerConfiguration;
    }
-   
+
    public DeadlockDetectionConfiguration deadlockDetection() {
       return deadlockDetectionConfiguration;
    }
-   
+
    public EvictionConfiguration eviction() {
       return evictionConfiguration;
    }
-   
+
    public ExpirationConfiguration expiration() {
       return expirationConfiguration;
    }
-   
+
    public IndexingConfiguration indexing() {
       return indexingConfiguration;
    }
-   
+
    public InvocationBatchingConfiguration invocationBatching() {
       return invocationBatchingConfiguration;
    }
-   
+
    public JMXStatisticsConfiguration jmxStatistics() {
       return jmxStatisticsConfiguration;
    }
-   
+
    public LoadersConfiguration loaders() {
       return loadersConfiguration;
    }
-   
+
    public LockingConfiguration locking() {
       return lockingConfiguration;
    }
-   
+
+   @SuppressWarnings("unchecked")
+   public <T> T module(Class<T> moduleClass) {
+      return (T)moduleConfiguration.get(moduleClass);
+   }
+
+   public Map<Class<?>, ?> modules() {
+      return moduleConfiguration;
+   }
+
    public StoreAsBinaryConfiguration storeAsBinary() {
       return storeAsBinaryConfiguration;
    }
-   
+
    public TransactionConfiguration transaction() {
       return transactionConfiguration;
    }
-   
+
    public UnsafeConfiguration unsafe() {
       return unsafeConfiguration;
    }
@@ -149,6 +169,7 @@ public class Configuration {
             ", jmxStatistics=" + jmxStatisticsConfiguration +
             ", loaders=" + loadersConfiguration +
             ", locking=" + lockingConfiguration +
+            ", modules=" + moduleConfiguration +
             ", storeAsBinary=" + storeAsBinaryConfiguration +
             ", transaction=" + transactionConfiguration +
             ", versioning=" + versioningConfiguration +
@@ -187,6 +208,8 @@ public class Configuration {
          return false;
       if (lockingConfiguration != null ? !lockingConfiguration.equals(that.lockingConfiguration) : that.lockingConfiguration != null)
          return false;
+      if (moduleConfiguration != null ? !moduleConfiguration.equals(that.moduleConfiguration) : that.moduleConfiguration !=null)
+         return false;
       if (storeAsBinaryConfiguration != null ? !storeAsBinaryConfiguration.equals(that.storeAsBinaryConfiguration) : that.storeAsBinaryConfiguration != null)
          return false;
       if (transactionConfiguration != null ? !transactionConfiguration.equals(that.transactionConfiguration) : that.transactionConfiguration != null)
@@ -213,11 +236,13 @@ public class Configuration {
       result = 31 * result + (jmxStatisticsConfiguration != null ? jmxStatisticsConfiguration.hashCode() : 0);
       result = 31 * result + (loadersConfiguration != null ? loadersConfiguration.hashCode() : 0);
       result = 31 * result + (lockingConfiguration != null ? lockingConfiguration.hashCode() : 0);
+      result = 31 * result + (moduleConfiguration != null ? moduleConfiguration.hashCode() : 0);
       result = 31 * result + (storeAsBinaryConfiguration != null ? storeAsBinaryConfiguration.hashCode() : 0);
       result = 31 * result + (transactionConfiguration != null ? transactionConfiguration.hashCode() : 0);
       result = 31 * result + (versioningConfiguration != null ? versioningConfiguration.hashCode() : 0);
       result = 31 * result + (unsafeConfiguration != null ? unsafeConfiguration.hashCode() : 0);
       return result;
    }
+
 
 }

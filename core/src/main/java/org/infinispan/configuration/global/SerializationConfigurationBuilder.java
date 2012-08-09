@@ -149,6 +149,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
+   protected
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.advancedExternalizers = template.advancedExternalizers();
       this.marshaller = template.marshaller();
@@ -189,7 +190,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public int hashCode() {
       int result = marshaller != null ? marshaller.hashCode() : 0;
-      result = 31 * result + (int) marshallVersion;
+      result = 31 * result + marshallVersion;
       result = 31 * result + (advancedExternalizers != null ? advancedExternalizers.hashCode() : 0);
       result = 31 * result + (classResolver != null ? classResolver.hashCode() : 0);
       return result;

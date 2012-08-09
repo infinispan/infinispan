@@ -34,7 +34,7 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for 
+    * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
     * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
     * <p />
     * Providing return values can be expensive as they may entail a read from disk or across a network, and if the usage
@@ -49,12 +49,12 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   void validate() {
+   public void validate() {
       // Nothing to validate
    }
 
    @Override
-   UnsafeConfiguration create() {
+   public UnsafeConfiguration create() {
       return new UnsafeConfiguration(unreliableReturnValues);
    }
 

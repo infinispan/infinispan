@@ -23,9 +23,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -33,12 +30,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
- * 
+ *
  * @author pmuir
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
-
-   private static Log log = LogFactory.getLog(TransactionConfigurationBuilder.class);
 
    private boolean autoCommit = true;
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
@@ -116,7 +111,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    /**
     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
     * transactional then the locking mode is ignored.
-    * 
+    *
     * @see org.infinispan.config.Configuration#isTransactionalCache()
     */
    public TransactionConfigurationBuilder lockingMode(LockingMode lockingMode) {
@@ -144,9 +139,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions.
     * <p />
-    * 
+    *
     * This configuration property may be adjusted at runtime.
-    * 
+    *
     * @param b
     * @return
     */
@@ -189,7 +184,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * <p />
     * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
     * be enforced by setting transaction's locking mode to PESSIMISTIC.
-    * 
+    *
     * @param b
     * @return
     */
@@ -219,7 +214,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       recovery.enable();
       return recovery;
    }
-   
+
    /**
     * Before Infinispan 5.1 you could access the cache both transactionally and
     * non-transactionally. Naturally the non-transactional access is faster and
@@ -239,11 +234,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   TransactionConfiguration create() {
+   public TransactionConfiguration create() {
       if (useEagerLocking) {
          lockingMode = LockingMode.PESSIMISTIC;
       }

@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<SyncConfiguration> {
 
    private long replTimeout = TimeUnit.SECONDS.toMillis(15);
-   
+
    protected SyncConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
    }
@@ -51,15 +51,15 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    @Override
-   void validate() {
-      
+   public void validate() {
+
    }
 
    @Override
-   SyncConfiguration create() {
+   public SyncConfiguration create() {
       return new SyncConfiguration(replTimeout);
    }
-   
+
    @Override
    public SyncConfigurationBuilder read(SyncConfiguration template) {
       this.replTimeout = template.replTimeout();

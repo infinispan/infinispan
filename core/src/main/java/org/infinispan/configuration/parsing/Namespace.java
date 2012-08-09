@@ -35,11 +35,15 @@ public class Namespace {
       this("", rootElement, 0, 0);
    }
 
-   public Namespace(final String base, final String rootElement, int major, int minor) {
+   public Namespace(final String base, final String rootElement, final int major, final int minor) {
       this.base = base;
       this.rootElement = rootElement;
       this.major = major;
       this.minor = minor;
+   }
+
+   public Namespace(final String base, final String module, final String rootElement, final int major, final int minor) {
+      this(base + ":" + module, rootElement, major, minor);
    }
 
    public String getBase() {
