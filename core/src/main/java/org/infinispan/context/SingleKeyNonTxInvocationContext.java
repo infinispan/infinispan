@@ -90,7 +90,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public CacheEntry lookupEntry(Object key) {
-      if (key != null && key.equals(this.key)) return cacheEntry;
+      if (key != null && this.key !=null && key.equals(this.key)) return cacheEntry;
       return null;
    }
 
