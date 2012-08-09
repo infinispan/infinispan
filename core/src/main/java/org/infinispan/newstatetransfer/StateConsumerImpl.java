@@ -143,7 +143,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
       log.debugf("Received new CH: %s", wCh);
-      if (trace) log.tracef("Received new CH: %s", ((DefaultConsistentHash) wCh).dump());
+      if (trace) log.tracef("Received new CH: %s", wCh);
 
       synchronized (this) {
          isTopologyUpdate++;

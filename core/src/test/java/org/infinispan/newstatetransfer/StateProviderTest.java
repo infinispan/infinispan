@@ -157,7 +157,7 @@ public class StateProviderTest {
 
       stateProvider.onTopologyUpdate(1, ch1, ch1);
 
-      log.debug("ch1: " + ch1.dump());
+      log.debug("ch1: " + ch1);
       List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
       assertEquals(0, transactions.size());
 
@@ -176,7 +176,7 @@ public class StateProviderTest {
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-      log.debug("ch2: " + ch2.dump());
+      log.debug("ch2: " + ch2);
       stateProvider.onTopologyUpdate(2, ch1, ch2);
 
       assertFalse(stateProvider.isStateTransferInProgress());

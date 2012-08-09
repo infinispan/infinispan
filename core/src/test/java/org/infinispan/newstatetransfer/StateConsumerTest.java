@@ -100,8 +100,8 @@ public class StateConsumerTest {
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
 
-      log.debug(ch1.dump());
-      log.debug(ch2.dump());
+      log.debug(ch1);
+      log.debug(ch2);
 
       // create dependencies
       StateTransferManager stateTransferManager = mock(StateTransferManager.class);

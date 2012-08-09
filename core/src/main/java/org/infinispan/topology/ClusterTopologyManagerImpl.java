@@ -47,6 +47,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -213,7 +214,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Address address = entry.getKey();
          Response response = entry.getValue();
          if (!response.isSuccessful()) {
-            throw new CacheException("Unsuccessful response received from node " + address + ": " + response);
+            Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
+            throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
          }
          responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
       }
