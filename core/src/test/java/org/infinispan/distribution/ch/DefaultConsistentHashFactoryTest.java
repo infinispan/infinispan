@@ -56,7 +56,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          for (int ns : numSegments) {
             if (nn < ns) {
                for (int no : numOwners) {
-                  DefaultConsistentHash ch = (DefaultConsistentHash) chf.create(hashFunction, no, ns, nodes);
+                  DefaultConsistentHash ch = chf.create(hashFunction, no, ns, nodes);
                   checkDistribution(ch, false);
 
                   testConsistentHashModifications(chf, ch);
@@ -137,7 +137,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
          // first phase: just update the members list, removing the leavers
          // and adding new owners, but not necessarily assigning segments to them
-         DefaultConsistentHash updatedMembersCH = (DefaultConsistentHash) chf.updateMembers(baseCH, newMembers);
+         DefaultConsistentHash updatedMembersCH = chf.updateMembers(baseCH, newMembers);
          if (nodesToRemove > 0) {
             for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
                assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
@@ -145,7 +145,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          }
 
          // second phase: rebalance with the new members list
-         DefaultConsistentHash inclRebalancedCH = (DefaultConsistentHash) chf.rebalance(updatedMembersCH);
+         DefaultConsistentHash inclRebalancedCH = chf.rebalance(updatedMembersCH);
          checkDistribution(inclRebalancedCH, false);
 
          int actualNumOwners = Math.min(inclRebalancedCH.getMembers().size(), inclRebalancedCH.getNumOwners());
@@ -154,8 +154,8 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          }
 
          // third phase: prune extra owners
-         DefaultConsistentHash exclRebalancedCH = (DefaultConsistentHash) chf.rebalance(updatedMembersCH);
-         DefaultConsistentHash exclRebalancedCH2 = (DefaultConsistentHash) chf.rebalance(inclRebalancedCH);
+         DefaultConsistentHash exclRebalancedCH = chf.rebalance(updatedMembersCH);
+         DefaultConsistentHash exclRebalancedCH2 = chf.rebalance(inclRebalancedCH);
          // TODO sometimes the order of the backup owners is not the same because the node may be removed and then re-added at the end of the list
          assertEquals(exclRebalancedCH2, exclRebalancedCH);
          checkDistribution(exclRebalancedCH, false);

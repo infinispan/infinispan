@@ -28,7 +28,6 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -144,7 +143,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       // lets make sure any rehashing work has completed
       TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
       TestingUtil.waitForRehashToComplete(cacheMap.values());
-      DefaultConsistentHash hash = (DefaultConsistentHash) cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash hash = cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
 
       for (int i = 0; i < NUM_NODES; i++) {
          for (int j = 0; j < WORKERS_PER_NODE; j++) {
