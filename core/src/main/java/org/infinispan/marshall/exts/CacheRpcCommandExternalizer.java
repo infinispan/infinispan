@@ -101,14 +101,23 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
+      StreamingMarshaller marshaller;
+      if (registry == null) {
+         // TODO This is a hack to able to externalize commands while a cache is stopping
+         marshaller = globalMarshaller;
+      } else {
+         marshaller = registry.getCacheMarshaller();
+      }
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
-      StreamingMarshaller marshaller = registry.getCacheMarshaller();
       ExposedByteArrayOutputStream os = marshallParameters(command, marshaller);
       UnsignedNumeric.writeUnsignedInt(output, os.size());
       // Do not rely on the raw buffer's length which is likely to be much longer!
       output.write(os.getRawBuffer(), 0, os.size());
+      if (command instanceof TopologyAffectedCommand) {
+         output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
+      }
    }
 
    private ExposedByteArrayOutputStream marshallParameters(
