@@ -33,7 +33,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -310,7 +309,7 @@ public class StateConsumerImpl implements StateConsumer {
             Map<Address, Set<Integer>> segmentsBySource = new HashMap<Address, Set<Integer>>();
             for (int segmentId : segmentsToProcess) {
                if (transfersBySegment.containsKey(segmentId)) {
-                  throw new IllegalArgumentException("Cannot have more than one transfer for segment " + segmentId);
+                  throw new IllegalStateException("Cannot have more than one transfer for segment " + segmentId);
                }
 
                Address source = pickSourceOwner(segmentId, faultyMembers);
@@ -340,7 +339,7 @@ public class StateConsumerImpl implements StateConsumer {
                }
                inboundTransfers.add(inboundTransfer);
 
-               // if requesting the transactions or segments fails
+               // if requesting the transactions fails we need to retry from another source
                if (inboundTransfer.requestTransactions()) {
                   if (!inboundTransfer.requestSegments()) {
                      log.errorf("Failed to request segments %s from %s", segs, source);

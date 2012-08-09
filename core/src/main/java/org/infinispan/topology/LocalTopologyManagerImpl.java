@@ -24,13 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -81,7 +79,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo);
       long timeout = joinInfo.getTimeout();
-      double endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+      long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
       while (true) {
          try {
             CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);

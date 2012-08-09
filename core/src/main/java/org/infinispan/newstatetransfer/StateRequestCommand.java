@@ -108,7 +108,7 @@ public class StateRequestCommand extends BaseRpcCommand {
 
    @Override
    public boolean isReturnValueExpected() {
-      return type == Type.GET_TRANSACTIONS;
+      return true;
    }
 
    public Type getType() {
