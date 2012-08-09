@@ -28,7 +28,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.distribution.group.GroupingConsistentHash;
@@ -64,17 +63,16 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private StateTransferLock stateTransferLock;
 
    private Configuration configuration;
-   private DistributionManager distributionManager;
+   private CacheNotifier cacheNotifier;
    private LocalTopologyManager localTopologyManager;
    private RpcManager rpcManager;
    private GroupManager groupManager;
    private String cacheName;
 
-   private int topologyId = -1;
-
    private StateProvider stateProvider;
    private StateConsumer stateConsumer;
-   private boolean rebalanceInProgress;
+   private volatile boolean rebalanceInProgress;
+   private volatile CacheTopology cacheTopology;
 
    public StateTransferManagerImpl() {
    }
@@ -85,7 +83,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     Configuration configuration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
-                    DistributionManager distributionManager,
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     InterceptorChain interceptorChain,
@@ -96,7 +93,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     Cache cache,
                     GroupManager groupManager) {
       this.configuration = configuration;
-      this.distributionManager = distributionManager;
+      this.cacheNotifier = cacheNotifier;
       this.localTopologyManager = localTopologyManager;
       this.rpcManager = rpcManager;
       this.stateTransferLock = stateTransferLock;
@@ -152,7 +149,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
             doTopologyUpdate(cacheTopology, true);
          }
 
-         private void doTopologyUpdate(CacheTopology cacheTopology, boolean rebalance) {
+         private void doTopologyUpdate(CacheTopology newCacheTopology, boolean rebalance) {
+            if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
+
             // handle grouping
             if (groupManager != null) {
                ConsistentHash currentCH = cacheTopology.getCurrentCH();
@@ -164,12 +163,16 @@ public class StateTransferManagerImpl implements StateTransferManager {
                cacheTopology = new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
             }
 
-            topologyId = cacheTopology.getTopologyId();
+            ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
+            ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
+
             rebalanceInProgress = rebalance;
-            if (distributionManager != null) { // need to check we are really in distributed mode
-               distributionManager.setCacheTopology(cacheTopology);
-            }
-            onTopologyUpdate(topologyId, cacheTopology.getReadConsistentHash(), cacheTopology.getWriteConsistentHash());
+
+            cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
+            cacheTopology = newCacheTopology;
+            cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
+
+            onTopologyUpdate(cacheTopology.getTopologyId(), newCacheTopology.getReadConsistentHash(), newCacheTopology.getWriteConsistentHash());
          }
       };
 
@@ -201,7 +204,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public boolean isJoinComplete() {
-      return topologyId != -1;
+      return cacheTopology != null;
    }
 
    @Override
@@ -215,8 +218,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public int getTopologyId() {
-      return topologyId;
+   public CacheTopology getCacheTopology() {
+      return cacheTopology;
    }
 
    public void notifyEndOfStateTransfer(int topologyId) {

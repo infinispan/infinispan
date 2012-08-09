@@ -37,7 +37,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.newstatetransfer.StateTransferManager;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -45,7 +44,6 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
@@ -68,6 +66,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @author Bela Ban
  * @author Dan Berindei <dan@infinispan.org>
+ * @author anistor@redhat.com
  * @since 4.0
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
@@ -79,10 +78,8 @@ public class DistributionManagerImpl implements DistributionManager {
    private Configuration configuration;
    private RpcManager rpcManager;
    private CommandsFactory cf;
-   private CacheNotifier cacheNotifier;
    private StateTransferManager stateTransferManager;
 
-   private volatile CacheTopology cacheTopology;
    private GlobalConfiguration globalCfg;
 
    /**
@@ -92,12 +89,11 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf, CacheNotifier cacheNotifier,
+   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     StateTransferManager stateTransferManager, GlobalConfiguration globalCfg) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.cf = cf;
-      this.cacheNotifier = cacheNotifier;
       this.stateTransferManager = stateTransferManager;
       this.globalCfg = globalCfg;
    }
@@ -106,10 +102,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Start(priority = 20)
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
-   }
-
-   private int getReplCount() {
-      return configuration.clustering().hash().numOwners();
    }
 
    private Address getAddress() {
@@ -125,7 +117,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @Override
    public DataLocality getLocality(Object key) {
       boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
-      boolean local = cacheTopology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+      boolean local = stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
 
       if (transferInProgress) {
          if (local) {
@@ -193,24 +185,12 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public ConsistentHash getReadConsistentHash() {
-      return cacheTopology.getReadConsistentHash();
+      return stateTransferManager.getCacheTopology().getReadConsistentHash();
    }
 
    public ConsistentHash getWriteConsistentHash() {
-      return cacheTopology.getWriteConsistentHash();
+      return stateTransferManager.getCacheTopology().getWriteConsistentHash();
    }
-
-   @Override
-   public void setCacheTopology(CacheTopology newCacheTopology) {
-      if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
-      // TODO Replace the topology change notification with another notification that accepts two consistent hashes and a topology id
-      ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
-      ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
-      cacheTopology = newCacheTopology;
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
-   }
-
 
    // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
    @Override
@@ -257,10 +237,5 @@ public class DistributionManagerImpl implements DistributionManager {
       List<String> l = new LinkedList<String>();
       for (Address a : locate(key)) l.add(a.toString());
       return l;
-   }
-
-   @Override
-   public String toString() {
-      return "DistributionManagerImpl[" + cacheTopology + "]";
    }
 }

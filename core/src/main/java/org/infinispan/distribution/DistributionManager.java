@@ -29,7 +29,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheTopology;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,6 +40,7 @@ import java.util.Set;
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
+ * @author anistor@redhat.com
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -123,13 +123,6 @@ public interface DistributionManager {
    ConsistentHash getReadConsistentHash();
 
    ConsistentHash getWriteConsistentHash();
-
-   /**
-    * Sets the consistent hash implementation in use.
-    *
-    * @param cacheTopology
-    */
-   void setCacheTopology(CacheTopology cacheTopology);
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
