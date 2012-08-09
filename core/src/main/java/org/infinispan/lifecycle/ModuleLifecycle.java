@@ -48,6 +48,8 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * <li><tt>infinispan.module.lifecycle</tt> - the name of the class implementing {@link ModuleLifecycle}.
  * This implementation would typically reside in the module's codebase.</li>
  * </ul>
+ * Modules who also have their own configuration (see {@see org.infinispan.configuration}), can access their
+ * configuration beans via {@link Configuration#module(Class)}
  *
  * @author Manik Surtani
  * @since 4.0

@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Configuration for the async cache loader. If enabled, this provides you with asynchronous writes
  * to the cache store, giving you 'write-behind' caching.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfigurationChildBuilder<AsyncLoaderConfiguration> {
 
@@ -113,10 +113,12 @@ public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfiguration
    }
 
    @Override
+   public
    void validate() {
    }
 
    @Override
+   public
    AsyncLoaderConfiguration create() {
       return new AsyncLoaderConfiguration(enabled, flushLockTimeout, modificationQueueSize, shutdownTimeout, threadPoolSize);
    }

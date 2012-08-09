@@ -20,6 +20,15 @@ package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
 
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
+import org.infinispan.configuration.BuiltBy;
+
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    private ClassLoader classLoader;
@@ -38,7 +47,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final TransactionConfigurationBuilder transaction;
    private final VersioningConfigurationBuilder versioning;
    private final UnsafeConfigurationBuilder unsafe;
-   
+   private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
+
    public ConfigurationBuilder() {
       this.clustering = new ClusteringConfigurationBuilder(this);
       this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
@@ -61,7 +71,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.classLoader = cl;
       return this;
    }
-   
+
    ClassLoader classLoader() {
       return classLoader;
    }
@@ -70,62 +80,62 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public ClusteringConfigurationBuilder clustering() {
       return clustering;
    }
-   
+
    @Override
    public CustomInterceptorsConfigurationBuilder customInterceptors() {
       return customInterceptors;
    }
-   
+
    @Override
    public DataContainerConfigurationBuilder dataContainer() {
       return dataContainer;
-   } 
-   
+   }
+
    @Override
    public DeadlockDetectionConfigurationBuilder deadlockDetection() {
       return deadlockDetection;
    }
-   
+
    @Override
    public EvictionConfigurationBuilder eviction() {
       return eviction;
    }
-   
+
    @Override
    public ExpirationConfigurationBuilder expiration() {
       return expiration;
    }
-   
+
    @Override
    public IndexingConfigurationBuilder indexing() {
       return indexing;
    }
-   
+
    @Override
    public InvocationBatchingConfigurationBuilder invocationBatching() {
       return invocationBatching;
    }
-   
+
    @Override
    public JMXStatisticsConfigurationBuilder jmxStatistics() {
       return jmxStatistics;
    }
-   
+
    @Override
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return storeAsBinary;
    }
-   
+
    @Override
    public LoadersConfigurationBuilder loaders() {
       return loaders;
    }
-   
+
    @Override
    public LockingConfigurationBuilder locking() {
       return locking;
    }
-   
+
    @Override
    public TransactionConfigurationBuilder transaction() {
       return transaction;
@@ -135,10 +145,30 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public VersioningConfigurationBuilder versioning() {
       return versioning;
    }
-   
+
    @Override
    public UnsafeConfigurationBuilder unsafe() {
       return unsafe;
+   }
+
+   public List<Builder<?>> modules() {
+      return modules;
+   }
+
+   public ConfigurationBuilder clearModules() {
+      modules.clear();
+      return this;
+   }
+
+   public <T extends Builder<?>> T addModule(Class<T> klass) {
+      try {
+         Constructor<T> constructor = klass.getConstructor(ConfigurationBuilder.class);
+         T builder = constructor.newInstance(this);
+         this.modules.add(builder);
+         return builder;
+      } catch (Exception e) {
+         throw new ConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -149,6 +179,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                    versioning, unsafe)) {
          validatable.validate();
       }
+      for (Builder<?> m : modules) {
+         m.validate();
+      }
 
       // TODO validate that a transport is set if a singleton store is set
    }
@@ -157,16 +190,19 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public Configuration build() {
       return build(true);
    }
-   
+
    public Configuration build(boolean validate) {
       if (validate) {
          validate();
       }
+      List<Object> modulesConfig = new LinkedList<Object>();
+      for (Builder<?> module : modules)
+         modulesConfig.add(module.create());
       return new Configuration(clustering.create(), customInterceptors.create(),
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), loaders.create(), locking.create(), storeAsBinary.create(),
-               transaction.create(), unsafe.create(), versioning.create(), classLoader);// TODO
+               transaction.create(), unsafe.create(), versioning.create(), modulesConfig, classLoader);// TODO
    }
 
    public ConfigurationBuilder read(Configuration template) {
@@ -186,7 +222,16 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.transaction.read(template.transaction());
       this.unsafe.read(template.unsafe());
       this.versioning.read(template.versioning());
-      
+
+      for (Object c : template.modules().values()) {
+         BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
+         if (builtBy==null) {
+            throw new ConfigurationException("Missing BuiltBy annotation for configuration bean "+c.getClass().getName());
+         }
+         Builder<Object> builder = (Builder<Object>) this.addModule(builtBy.value());
+         builder.read(c);
+      }
+
       return this;
    }
 
@@ -205,6 +250,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", jmxStatistics=" + jmxStatistics +
             ", loaders=" + loaders +
             ", locking=" + locking +
+            ", modules=" + modules +
             ", storeAsBinary=" + storeAsBinary +
             ", transaction=" + transaction +
             ", versioning=" + versioning +

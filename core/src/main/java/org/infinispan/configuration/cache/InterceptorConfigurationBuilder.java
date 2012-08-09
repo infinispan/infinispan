@@ -32,7 +32,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    private CommandInterceptor interceptor;
    private int index = -1;
    private Position position = null;
-   
+
    InterceptorConfigurationBuilder(CustomInterceptorsConfigurationBuilder builder) {
       super(builder);
    }
@@ -41,7 +41,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     * Dictates that the custom interceptor appears immediately <i>after</i> the specified interceptor. If the specified
     * interceptor is not found in the interceptor chain, a {@link ConfigurationException} will be thrown when the
     * cache starts.
-    * 
+    *
     * @param after the class of the interceptor to look for
     */
    public InterceptorConfigurationBuilder after(Class<? extends CommandInterceptor> after) {
@@ -72,9 +72,9 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
    /**
     * Specifies a position in the interceptor chain to place the new interceptor.  The index starts at 0 and goes up to
-    * the number of interceptors in a given configuration.  A {@link ConfigurationException} is thrown if the index is 
+    * the number of interceptors in a given configuration.  A {@link ConfigurationException} is thrown if the index is
     * less than 0 or greater than the maximum number of interceptors in the chain.
-    * 
+    *
     * @param i positional index in the interceptor chain to place the new interceptor.
     */
    public InterceptorConfigurationBuilder index(int i) {
@@ -94,7 +94,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    }
 
    @Override
-   void validate() {
+   public void validate() {
       // Make sure more than one 'position' isn't picked.
       int positions = 0;
 
@@ -115,10 +115,10 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    }
 
    @Override
-   InterceptorConfiguration create() {
+   public InterceptorConfiguration create() {
       return new InterceptorConfiguration(after, before, interceptor, index, position);
    }
-   
+
    @Override
    public InterceptorConfigurationBuilder read(InterceptorConfiguration template) {
       this.after = template.after();
@@ -126,7 +126,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       this.index = template.index();
       this.interceptor = template.interceptor();
       this.position = template.position();
-      
+
       return this;
    }
 
