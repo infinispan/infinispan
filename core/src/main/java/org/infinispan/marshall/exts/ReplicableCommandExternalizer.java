@@ -89,7 +89,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       }
 
       if (command instanceof TopologyAffectedCommand) {
-         output.write(((TopologyAffectedCommand)command).getTopologyId());
+         output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }
    }
 
@@ -114,7 +114,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       ReplicableCommand replicableCommand = cmdFactory.fromStream((byte) methodId, args, type);
       if (replicableCommand instanceof TopologyAffectedCommand) {
          int topologyId = input.readInt();
-         ((TopologyAffectedCommand)replicableCommand).setTopologyId(topologyId);
+         ((TopologyAffectedCommand) replicableCommand).setTopologyId(topologyId);
       }
       return replicableCommand;
    }
