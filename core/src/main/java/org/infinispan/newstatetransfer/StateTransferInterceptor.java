@@ -36,12 +36,12 @@ import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,7 +63,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
 
    private StateTransferLock stateTransferLock;
 
-   private DistributionManager distributionManager;
+   private StateTransferManager stateTransferManager;
 
    private RpcManager rpcManager;
 
@@ -75,10 +75,10 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager, DistributionManager distributionManager) {
+   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager, StateTransferManager stateTransferManager) {
       this.stateTransferLock = stateTransferLock;
       this.rpcManager = rpcManager;
-      this.distributionManager = distributionManager;
+      this.stateTransferManager = stateTransferManager;
       // no need to retry for asynchronous caches
       this.rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
             ? configuration.clustering().sync().replTimeout() : 0;
@@ -180,9 +180,10 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command) throws Throwable {
       Set<Address> newTargets = null;
       stateTransferLock.commandsSharedLock();
-      final int topologyId = stateTransferLock.getTopologyId();
-      final ConsistentHash rCh = distributionManager.getReadConsistentHash();
-      final ConsistentHash wCh = distributionManager.getWriteConsistentHash();
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      final int topologyId = cacheTopology.getTopologyId();
+      final ConsistentHash rCh = cacheTopology.getReadConsistentHash();
+      final ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       try {
          final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
          if (isTxCommand) {
@@ -258,6 +259,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       }
    }
 
+   @SuppressWarnings("unchecked")
    private Set<Object> getAffectedKeys(InvocationContext ctx, VisitableCommand command) {
       Set<Object> affectedKeys = null;
       try {

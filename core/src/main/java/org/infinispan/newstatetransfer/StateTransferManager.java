@@ -27,6 +27,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.topology.CacheTopology;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
@@ -70,7 +71,7 @@ public interface StateTransferManager {
     */
    boolean isStateTransferInProgressForKey(Object key);
 
-   int getTopologyId();
+   CacheTopology getCacheTopology();
 
    void notifyEndOfStateTransfer(int topologyId);
 }
