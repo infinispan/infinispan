@@ -186,7 +186,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          @Override
          public Map<Address, Response> call() throws Exception {
             Map<Address, Response> rspList = transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null);
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null);
             return rspList;
          }
       });
@@ -228,16 +228,21 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return responseValues;
    }
 
-   private void executeOnClusterAsync(ReplicableCommand command)
+   private void executeOnClusterAsync(final ReplicableCommand command)
          throws Exception {
-      transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, -1, false, null);
+      transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, -1, true, null);
 
-      gcr.wireDependencies(command);
-      try {
-         command.perform(null);
-      } catch (Throwable throwable) {
-         log.errorf("Error executing command %s on local node", command);
-      }
+      asyncTransportExecutor.submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            gcr.wireDependencies(command);
+            try {
+               return command.perform(null);
+            } catch (Throwable t) {
+               throw new Exception(t);
+            }
+         }
+      });
    }
 
 

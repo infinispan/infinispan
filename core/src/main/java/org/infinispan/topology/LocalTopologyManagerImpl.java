@@ -22,8 +22,10 @@ package org.infinispan.topology;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.CacheException;
@@ -31,7 +33,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -40,6 +44,8 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * The {@code LocalTopologyManager} implementation.
@@ -51,16 +57,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
 
    private Transport transport;
-   private GlobalConfiguration globalConfiguration;
+   private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
 
    private ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
 
    @Inject
-   public void inject(Transport transport, GlobalConfiguration globalConfiguration,
+   public void inject(Transport transport,
+                      @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalComponentRegistry gcr) {
       this.transport = transport;
-      this.globalConfiguration = globalConfiguration;
+      this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
    }
 
@@ -68,8 +75,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    public CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm)
          throws Exception {
       log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
-      LocalCacheStatus status = new LocalCacheStatus(joinInfo, stm);
-      runningCaches.put(cacheName, status);
+      LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm);
+      runningCaches.put(cacheName, cacheStatus);
 
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo);
@@ -78,15 +85,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       while (true) {
          try {
             CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
-            status.topology = initialTopology;
-            status.joinedLatch.countDown();
+            handleConsistentHashUpdate(cacheName, initialTopology);
             return initialTopology;
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
             if (endTime <= System.nanoTime()) {
                throw e;
             }
-            // TODO Add some configuration for this, or use timeout/n
+            // TODO Add some configuration for this, or use a fraction of state transfer timeout
             Thread.sleep(1000);
          }
       }
@@ -127,8 +133,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       Map<String, CacheTopology> response = new HashMap<String, CacheTopology>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
-         LocalCacheStatus status = runningCaches.get(cacheName);
-         CacheTopology topology = status.topology;
+         LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+         CacheTopology topology = cacheStatus.getTopology();
          response.put(e.getKey(), topology);
       }
       return response;
@@ -142,19 +148,28 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                cacheTopology.getTopologyId(), cacheName);
          return;
       }
-      log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",
-            cacheName, cacheTopology);
-      cacheStatus.topology = cacheTopology;
-      ConsistentHash unionCH = null;
-      if (cacheTopology.getPendingCH() != null) {
-         unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(cacheTopology.getCurrentCH(),
-               cacheTopology.getPendingCH());
-      }
 
-      CacheTopologyHandler handler = cacheStatus.handler;
-      CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
-            cacheTopology.getCurrentCH(), unionCH);
-      handler.updateConsistentHash(unionTopology);
+      synchronized (cacheStatus) {
+         if (cacheStatus.getTopology() != null && cacheStatus.getTopology().getTopologyId() > cacheTopology.getTopologyId()){
+            log.tracef("Ignoring consistent hash update %s for cache %s, we have already received a newer topology %s",
+                  cacheTopology.getTopologyId(), cacheName, cacheStatus.getTopology().getTopologyId());
+            return;
+         }
+
+         log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",
+               cacheName, cacheTopology);
+         cacheStatus.setTopology(cacheTopology);
+         ConsistentHash unionCH = null;
+         if (cacheTopology.getPendingCH() != null) {
+            unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),
+                  cacheTopology.getPendingCH());
+         }
+
+         CacheTopologyHandler handler = cacheStatus.getHandler();
+         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
+               cacheTopology.getCurrentCH(), unionCH);
+         handler.updateConsistentHash(unionTopology);
+      }
    }
 
    @Override
@@ -166,19 +181,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          return;
       }
       log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
-      cacheStatus.joinedLatch.await();
 
-      // TODO Should we store the "unionized" cache topology instead?
-      cacheStatus.topology = cacheTopology;
-      ConsistentHash unionCH = cacheStatus.joinInfo.getConsistentHashFactory().union(
+      synchronized (cacheStatus) {
+         cacheStatus.setTopology(cacheTopology);
+      }
+
+      ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
             cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
-      CacheTopologyHandler handler = cacheStatus.handler;
+      CacheTopologyHandler handler = cacheStatus.getHandler();
       handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH));
    }
 
    @Override
    public CacheTopology getCacheTopology(String cacheName) {
-      return runningCaches.get(cacheName).topology;
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      return cacheStatus.getTopology();
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
@@ -194,41 +211,74 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // this node is not the coordinator
          Address coordinator = transport.getCoordinator();
          Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-               command, ResponseMode.SYNCHRONOUS, timeout, false, null);
+               command, ResponseMode.SYNCHRONOUS, timeout, true, null);
          response = responseMap.get(coordinator);
       }
       if (response == null || !response.isSuccessful()) {
-         throw new CacheException("Bad response received from coordinator: " + response);
+         Throwable exception = response instanceof ExceptionResponse
+               ? ((ExceptionResponse)response).getException() : null;
+         throw new CacheException("Bad response received from coordinator: " + response, exception);
       }
       return ((SuccessfulResponse) response).getResponseValue();
    }
 
-   private void executeOnCoordinatorAsync(ReplicableCommand command) throws Exception {
+   private void executeOnCoordinatorAsync(final ReplicableCommand command) throws Exception {
       // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
-         try {
-            gcr.wireDependencies(command);
-            command.perform(null);
-         } catch (Throwable t) {
-            throw new CacheException("Error handling join request", t);
-         }
+         asyncTransportExecutor.submit(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+               gcr.wireDependencies(command);
+               try {
+                  return command.perform(null);
+               } catch (Throwable t) {
+                  throw new Exception(t);
+               }
+            }
+         });
+      } else {
+         Address coordinator = transport.getCoordinator();
+         // ignore the responses
+         transport.invokeRemotely(Collections.singleton(coordinator),
+               command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, true, null);
       }
-
-      Address coordinator = transport.getCoordinator();
-      // ignore the responses
-      transport.invokeRemotely(Collections.singleton(coordinator),
-            command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, false, null);
    }
 
-   public static class LocalCacheStatus {
-      public final CacheJoinInfo joinInfo;
-      public final CacheTopologyHandler handler;
-      public final CountDownLatch joinedLatch = new CountDownLatch(1);
-      public volatile CacheTopology topology;
+}
 
-      public LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler) {
-         this.joinInfo = joinInfo;
-         this.handler = handler;
-      }
+class LocalCacheStatus {
+   private final CacheJoinInfo joinInfo;
+   private final CacheTopologyHandler handler;
+   private volatile CacheTopology topology;
+
+   private boolean joined;
+
+   public LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler) {
+      this.joinInfo = joinInfo;
+      this.handler = handler;
+   }
+
+   public CacheJoinInfo getJoinInfo() {
+      return joinInfo;
+   }
+
+   public CacheTopologyHandler getHandler() {
+      return handler;
+   }
+
+   public CacheTopology getTopology() {
+      return topology;
+   }
+
+   public void setTopology(CacheTopology topology) {
+      this.topology = topology;
+   }
+
+   public boolean isJoined() {
+      return joined;
+   }
+
+   public void setJoined(boolean joined) {
+      this.joined = joined;
    }
 }

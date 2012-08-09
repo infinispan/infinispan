@@ -30,8 +30,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.distribution.group.GroupingConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
@@ -76,6 +74,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private StateProvider stateProvider;
    private StateConsumer stateConsumer;
+   private boolean rebalanceInProgress;
 
    public StateTransferManagerImpl() {
    }
@@ -104,7 +103,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.groupManager = groupManager;
       cacheName = cache.getName();
 
-      stateProvider = new StateProviderImpl(asyncTransportExecutor,
+      stateProvider = new StateProviderImpl(
+            asyncTransportExecutor,
             configuration,
             rpcManager,
             commandsFactory,
@@ -114,6 +114,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             stateTransferLock);
 
       stateConsumer = new StateConsumerImpl(
+            this,
             cacheNotifier,
             interceptorChain,
             icc,
@@ -134,20 +135,24 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(
-            configuration.clustering().cacheMode().isReplicated()
-                  ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),
+            configuration.clustering().hash().consistentHashFactory(),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
 
       CacheTopologyHandler handler = new CacheTopologyHandler() {
+
          @Override
          public void updateConsistentHash(CacheTopology cacheTopology) {
-            rebalance(cacheTopology);
+            doTopologyUpdate(cacheTopology, false);
          }
 
          @Override
          public void rebalance(CacheTopology cacheTopology) {
+            doTopologyUpdate(cacheTopology, true);
+         }
+
+         private void doTopologyUpdate(CacheTopology cacheTopology, boolean rebalance) {
             // handle grouping
             if (groupManager != null) {
                ConsistentHash currentCH = cacheTopology.getCurrentCH();
@@ -160,13 +165,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
             }
 
             topologyId = cacheTopology.getTopologyId();
+            rebalanceInProgress = rebalance;
             distributionManager.setCacheTopology(cacheTopology);
             onTopologyUpdate(topologyId, cacheTopology.getReadConsistentHash(), cacheTopology.getWriteConsistentHash());
          }
       };
 
-      CacheTopology cacheTopology = localTopologyManager.join(cacheName, joinInfo, handler);
-      handler.updateConsistentHash(cacheTopology);
+      localTopologyManager.join(cacheName, joinInfo, handler);
    }
 
    @Stop(priority = 20)
@@ -210,5 +215,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public int getTopologyId() {
       return topologyId;
+   }
+
+   public void notifyEndOfStateTransfer(int topologyId) {
+      if (rebalanceInProgress) {
+         localTopologyManager.confirmRebalance(cacheName, topologyId, null);
+      }
    }
 }
