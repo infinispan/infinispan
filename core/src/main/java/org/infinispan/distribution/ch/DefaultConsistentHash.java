@@ -177,23 +177,21 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public String toString() {
-      return "DefaultConsistentHash{" +
-            "members=" + members +
-            ", numOwners=" + numOwners +
-            ", numSegments=" + numSegments +
-            '}';
-   }
-
-   public String dump() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("members=").append(members).append("\n");
-      sb.append("numOwners=").append(numOwners).append("\n");
-      sb.append("numSegments=").append(numSegments).append("\n");
-      sb.append("segmentOwners:\n");
+      StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
+      sb.append("numSegments=").append(numSegments);
+      sb.append(", numOwners=").append(numOwners);
+      sb.append(", members=").append(members);
+      sb.append(", segmentOwners={");
       for (int i = 0; i < numSegments; i++) {
-         sb.append(i).append(" : ").append(Arrays.asList(segmentOwners[i])).append("\n");
+         if (i > 0) {
+            sb.append(", ");
+         }
+         sb.append(i).append(":");
+         for (int j = 0; j < segmentOwners[i].length; j++) {
+            sb.append(' ').append(members.indexOf(segmentOwners[i][j]));
+         }
       }
-
+      sb.append('}');
       return sb.toString();
    }
 
