@@ -268,10 +268,11 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             while (existingKeyCount.get() < maxNumberOfKeys.get() && missCount < maxMisses) {
                K key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
+               boolean added = false;
                if (interestedInAddress(addressForKey)) {
-                  boolean added = tryAddKey(addressForKey, key);
-                  if (!added) missCount++;
+                  added = tryAddKey(addressForKey, key);
                }
+               if (!added) missCount++;
             }
 
             // if we had too many misses, just release the lock and try again
