@@ -19,8 +19,13 @@
 
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 /**
@@ -99,5 +104,29 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return "ReplicatedConsistentHash{" +
             "members=" + members +
             '}';
+   }
+
+   public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHash> {
+
+      @Override
+      public void writeObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
+         output.writeObject(ch.members);
+      }
+
+      @Override
+      public ReplicatedConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         List<Address> members = (List<Address>) unmarshaller.readObject();
+         return new ReplicatedConsistentHash(members);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.REPLICATED_CONSISTENT_HASH;
+      }
+
+      @Override
+      public Set<Class<? extends ReplicatedConsistentHash>> getTypeClasses() {
+         return Collections.<Class<? extends ReplicatedConsistentHash>>singleton(ReplicatedConsistentHash.class);
+      }
    }
 }
