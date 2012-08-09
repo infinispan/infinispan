@@ -224,7 +224,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
-    * Caching shortcut for #getComponent(StateTransferManager.class);
+    * Caching shortcut for #getComponent(ResponseGenerator.class);
     */
    public ResponseGenerator getResponseGenerator() {
       return responseGenerator;
