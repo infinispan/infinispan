@@ -31,6 +31,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.NamedCacheNotFoundException;
+import org.infinispan.newstatetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -78,7 +79,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
       }
 
-      return handleWithRetry(cmd, cr);
+      return handleWithWaitForBlocks(cmd, cr);
    }
 
 
@@ -100,6 +101,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private Response handleWithWaitForBlocks(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
+      StateTransferManager stm = cr.getStateTransferManager();
+      // We must have completed the join before handling commands
+      // (even if we didn't complete the initial state transfer)
+      if (!stm.isJoinComplete())
+         return null;
+
       Response resp = handleInternal(cmd, cr);
 
       // A null response is valid and OK ...
@@ -111,8 +118,5 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return resp;
    }
 
-   private Response handleWithRetry(final CacheRpcCommand cmd, final ComponentRegistry componentRegistry) throws Throwable {
-      return handleWithWaitForBlocks(cmd, componentRegistry);
-   }
 }
 
