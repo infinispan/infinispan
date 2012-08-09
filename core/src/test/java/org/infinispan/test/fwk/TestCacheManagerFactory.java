@@ -427,6 +427,8 @@ public class TestCacheManagerFactory {
       markAsTransactional(transactional, builder);
       //don't changed the tx lookup.
       if (useCustomTxLookup) updateTransactionSupport(transactional, builder);
+      // reduce the number of hash segments
+      builder.clustering().hash().numSegments(12);
       return builder;
    }
 
