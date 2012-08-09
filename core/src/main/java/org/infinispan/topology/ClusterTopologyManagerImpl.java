@@ -161,10 +161,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable) throws Exception {
-      // TODO Check for stale/invalid rebalance confirmations here
       if (throwable != null) {
-         // TODO Logger method
-         log.errorf(throwable, "Error performing rebalance for cache %s on node %s", cacheName, node);
+         // TODO We could try to update the pending CH such that nodes reporting errors are not considered to hold any state
+         // For now we are just logging the error and proceeding as if the rebalance was successful everywhere
+         log.rebalanceError(cacheName, node, throwable);
       }
       log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d", cacheName, node,
             topologyId);
@@ -268,14 +268,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                rebalancePolicy.initCache(cacheName, topologyList);
             }
          } catch (Exception e) {
-            //TODO log.errorRecoveringClusterState(e);
-            log.errorf(e, "Error recovering cluster state");
+            // TODO Retry?
+            log.failedToRecoverClusterState(e);
          }
       } else {
          try {
             rebalancePolicy.updateMembersList(newMembers);
          } catch (Exception e) {
-            log.errorf(e, "Error updating the cluster member list");
+            log.errorUpdatingMembersList(e);
          }
       }
    }

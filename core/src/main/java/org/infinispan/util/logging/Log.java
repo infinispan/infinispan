@@ -873,4 +873,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed loading keys from cache store", id = 194)
    void failedLoadingKeysFromCacheStore(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
+   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to recover cluster state after the current node became the coordinator", id = 196)
+   void failedToRecoverClusterState(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error updating cluster member list", id = 197)
+   void errorUpdatingMembersList(@Cause Throwable cause);
 }
