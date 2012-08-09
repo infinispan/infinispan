@@ -79,11 +79,6 @@ public final class ExpandableMarshalledValueByteStream extends MarshalledValueBy
       return buf;
    }
 
-   public final void set(byte[] b) {
-      this.buf = b;
-      this.count = b.length;
-   }
-
    @Override
    public final void write(byte[] b, int off, int len) {
       if ((off < 0) || (off > b.length) || (len < 0) ||
