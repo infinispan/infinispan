@@ -22,6 +22,7 @@ package org.infinispan.distribution.ch;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.Set;
  * @author Dan Berindei
  * @since 5.2
  */
-public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
+public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
    @Override
    public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
       return new ReplicatedConsistentHash(members);

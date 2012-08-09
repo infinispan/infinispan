@@ -71,7 +71,7 @@ public interface Ids {
    int ATOMIC_REMOVE_OPERATION = 48;
    int ATOMIC_CLEAR_OPERATION = 49;
    int DEFAULT_CONSISTENT_HASH = 51;
-   // 52 no longer in use, used to be UnionConsistentHash
+   int REPLICATED_CONSISTENT_HASH = 52;
    int UNSURE_RESPONSE = 54;
    // 55 - 56 no longer in use since server modules can now register their own externalizers
    int BYTE_ARRAY_KEY = 57;
