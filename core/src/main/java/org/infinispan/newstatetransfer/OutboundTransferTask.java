@@ -24,6 +24,7 @@
 package org.infinispan.newstatetransfer;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -68,6 +69,8 @@ public class OutboundTransferTask implements Runnable {
 
    private final int stateTransferChunkSize;
 
+   private final Configuration configuration;
+
    private final ConsistentHash rCh;
 
    private final DataContainer dataContainer;
@@ -89,7 +92,7 @@ public class OutboundTransferTask implements Runnable {
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash rCh, StateProviderImpl stateProvider, DataContainer dataContainer,
-                               CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
+                               CacheLoaderManager cacheLoaderManager, RpcManager rpcManager, Configuration configuration,
                                CommandsFactory commandsFactory, long timeout) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
@@ -109,12 +112,17 @@ public class OutboundTransferTask implements Runnable {
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.rpcManager = rpcManager;
+      this.configuration = configuration;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
    }
 
    public Address getDestination() {
       return destination;
+   }
+
+   public Set<Integer> getSegments() {
+      return segments;
    }
 
    @Override
@@ -138,8 +146,8 @@ public class OutboundTransferTask implements Runnable {
          }
 
          // send cache store entries if needed
-         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared()) {
-            CacheStore cacheStore = cacheLoaderManager.getCacheStore();
+         CacheStore cacheStore = getCacheStore();
+         if (cacheStore != null) {
             try {
                //todo [anistor] need to extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
                Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
@@ -175,13 +183,27 @@ public class OutboundTransferTask implements Runnable {
             }
 
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
+            if (entries == null) {
+               entries = Collections.emptyList();
+            }
             sendEntries(entries, segmentId, true);
          }
       } catch (Throwable t) {
-         log.error("Error sending data", t);
+         log.error("Failed to execute outbound transfer", t);
       } finally {
          stateProvider.onTaskCompletion(this);
       }
+   }
+
+   private CacheStore getCacheStore() {
+      if (configuration.clustering().cacheMode().isInvalidation()) {
+         // the cache store is ignored in case of invalidation mode caches
+         return null;
+      }
+      if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
+         return cacheLoaderManager.getCacheStore();
+      }
+      return null;
    }
 
    private void sendEntry(InternalCacheEntry ice, int segmentId) {
@@ -202,6 +224,9 @@ public class OutboundTransferTask implements Runnable {
 
    private void sendEntries(List<InternalCacheEntry> entries, int segmentId, boolean isLastChunk) {
       if (!isCancelled) {
+         if (trace) {
+            log.tracef("Sending %d cache entries from segment %d to %s", entries.size(), segmentId, destination);
+         }
          StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries, isLastChunk);
          // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
          rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
@@ -209,6 +234,9 @@ public class OutboundTransferTask implements Runnable {
    }
 
    public void cancelSegments(Set<Integer> cancelledSegments) {
+      if (trace) {
+         log.tracef("Cancelling outbound transfer of segments %s to %s", cancelledSegments, destination);
+      }
       if (segments.removeAll(cancelledSegments)) {
          entriesBySegment.keySet().removeAll(cancelledSegments);
          if (segments.isEmpty()) {

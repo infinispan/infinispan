@@ -158,7 +158,7 @@ public class StateConsumerImpl implements StateConsumer {
             this.rCh = rCh;
             this.wCh = wCh;
 
-            if (this.wCh.getMembers().size() != 1) {
+            if (wCh.getMembers().size() > 1) {
                // There is at least one other member to pull the data from
                // TODO If this is the initial CH update, we could have multiple joiners but noone to pull the data from
                if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
@@ -166,9 +166,9 @@ public class StateConsumerImpl implements StateConsumer {
                }
             }
          } else {
-            Set<Integer> oldSegments = this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
             this.rCh = rCh;
             this.wCh = wCh;
+            Set<Integer> oldSegments = this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
             Set<Integer> newSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
 
             // we need to diff the addressing tables of the two CHes
@@ -294,6 +294,9 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public void shutdown() {
+      if (trace) {
+         log.trace("Shutting down StateConsumer");
+      }
       synchronized (this) {
          // cancel all inbound transfers
          for (Iterator<List<InboundTransferTask>> it = transfersBySource.values().iterator(); it.hasNext(); ) {
@@ -440,6 +443,7 @@ public class StateConsumerImpl implements StateConsumer {
       //todo [anistor] CacheNotifier.notifyDataRehashed
    }
 
+   //todo [anistor] this method is identical to OutboundTransferTask.getCacheStore()
    private CacheStore getCacheStore() {
       if (configuration.clustering().cacheMode().isInvalidation()) {
          // the cache store is ignored in case of invalidation mode caches

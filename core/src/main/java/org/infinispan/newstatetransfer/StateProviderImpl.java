@@ -115,6 +115,9 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public void shutdown() {
+      if (trace) {
+         log.trace("Shutting down StateProvider");
+      }
       // cancel all outbound transfers
       synchronized (transfersByDestination) {
          for (Iterator<List<OutboundTransferTask>> it = transfersByDestination.values().iterator(); it.hasNext(); ) {
@@ -139,11 +142,11 @@ public class StateProviderImpl implements StateProvider {
       }
 
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
+      //we migrate locks only if the cache is transactional and distributed
       if (configuration.transaction().transactionMode().isTransactional()) {
          // all transactions should be briefly blocked now
          stateTransferLock.transactionsExclusiveLock();
          try {
-            //we migrate locks only if the cache is transactional and distributed
             collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
             collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
             log.debugf("Found %d transactions to transfer", transactions.size());
@@ -176,14 +179,19 @@ public class StateProviderImpl implements StateProvider {
 
    @Override
    public void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      if (trace) log.tracef("Starting outbound transfer for segments %s", segments);
+      if (trace) {
+         log.tracef("Starting outbound transfer of segments %s to %s", segments, destination);
+      }
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, rCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout);
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, rCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       executorService.submit(outboundTransfer);
    }
 
    private void addTransfer(OutboundTransferTask outboundTransfer) {
+      if (trace) {
+         log.tracef("Adding outbound transfer of segments %s to %s", outboundTransfer.getSegments(), outboundTransfer.getDestination());
+      }
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transfers = transfersByDestination.get(outboundTransfer.getDestination());
          if (transfers == null) {
@@ -196,7 +204,9 @@ public class StateProviderImpl implements StateProvider {
 
    @Override
    public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      if (trace) log.tracef("Cancelling outbound transfer for segments %s", segments);
+      if (trace) {
+         log.tracef("Cancelling outbound transfer of segments %s to %s", segments, destination);
+      }
       // get the outbound transfers for this address and given segments and cancel the transfers
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
@@ -209,6 +219,9 @@ public class StateProviderImpl implements StateProvider {
    }
 
    private void removeTransfer(OutboundTransferTask transferTask) {
+      if (trace) {
+         log.tracef("Removing outbound transfer of segments %s to %s", transferTask.getSegments(), transferTask.getDestination());
+      }
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(transferTask.getDestination());
          if (transferTasks != null) {
@@ -221,6 +234,9 @@ public class StateProviderImpl implements StateProvider {
    }
 
    void onTaskCompletion(OutboundTransferTask outboundTransferTask) {
+      if (trace) {
+         log.tracef("Outbound transfer of segments %s to %s is complete", outboundTransferTask.getSegments(), outboundTransferTask.getDestination());
+      }
       removeTransfer(outboundTransferTask);
    }
 }
