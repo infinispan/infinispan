@@ -70,7 +70,7 @@ import java.util.Set;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-public class MarshalledValue implements Serializable {
+public final class MarshalledValue implements Serializable {
    volatile protected Object instance;
    volatile protected MarshalledValueByteStream raw;
    volatile protected int serialisedSize = 128; //size of serialized representation: initial value is a guess
@@ -220,7 +220,9 @@ public class MarshalledValue implements Serializable {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null || MarshalledValue.class != o.getClass()) {
+         return false;
+      }
 
       MarshalledValue that = (MarshalledValue) o;
       final boolean preferInstanceEquality = equalityPreferenceForInstance && that.equalityPreferenceForInstance;
@@ -230,12 +232,16 @@ public class MarshalledValue implements Serializable {
       Object thisInstance = this.instance;
       Object thatInstance = that.instance;
       //test the default equality first so we might skip some work:
-      if (preferInstanceEquality && thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
+      if (preferInstanceEquality && thisInstance != null && thatInstance != null) {
+         return thisInstance.equals(thatInstance);
+      }
 
       MarshalledValueByteStream thisRaw = this.raw;
       MarshalledValueByteStream thatRaw = that.raw;
       if (thisRaw != null && thatRaw != null) return thisRaw.equals(thatRaw);
-      if (thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
+      if (thisInstance != null && thatInstance != null) {
+         return thisInstance.equals(thatInstance);
+      }
 
       // if conversion of one representation to the other is necessary, then see which we prefer converting.
       if (preferInstanceEquality) {
