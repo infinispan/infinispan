@@ -168,8 +168,8 @@ public class StateConsumerImpl implements StateConsumer {
          } else {
             this.rCh = rCh;
             this.wCh = wCh;
-            Set<Integer> oldSegments = this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
-            Set<Integer> newSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
+            Set<Integer> oldSegments = getMySegments(this.rCh);
+            Set<Integer> newSegments = getMySegments(this.wCh);
 
             // we need to diff the addressing tables of the two CHes
             Set<Integer> removedSegments = new HashSet<Integer>(oldSegments);
@@ -218,6 +218,12 @@ public class StateConsumerImpl implements StateConsumer {
             }
          }
       }
+   }
+
+   private Set<Integer> getMySegments(ConsistentHash consistentHash) {
+      Address address = rpcManager.getAddress();
+      return consistentHash.getMembers().contains(address) ? consistentHash.getSegmentsForOwner(address)
+            : Collections.<Integer>emptySet();
    }
 
    public void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
