@@ -166,7 +166,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
             ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
 
-            rebalanceInProgress = rebalance;
+            rebalanceInProgress |= rebalance;
 
             cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
             cacheTopology = newCacheTopology;
