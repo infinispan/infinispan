@@ -26,6 +26,7 @@ package org.infinispan.newstatetransfer;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -98,9 +99,9 @@ public class StateRequestCommand extends BaseRpcCommand {
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }
-      } catch (Throwable t) {
+      } catch (Exception t) {
          log.exceptionHandlingCommand(this, t);
-         return null;
+         return new ExceptionResponse(t);
       } finally {
          LogFactory.popNDC(trace);
       }
