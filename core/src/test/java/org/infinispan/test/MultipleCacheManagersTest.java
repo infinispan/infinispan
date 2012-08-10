@@ -199,7 +199,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
-    * @deprecacted Use {@link #addClusterEnabledCacheManager(
+    * @deprecated Use {@link #addClusterEnabledCacheManager(
     *    org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
     */
    @Deprecated
@@ -273,18 +273,21 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   private List<Cache> getCaches(String cacheName) {
-      List<Cache> caches;
-      caches = new ArrayList<Cache>();
+   private <K, V> List<Cache<K, V>> getCaches(String cacheName) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>();
       for (EmbeddedCacheManager cm : cacheManagers) {
-         caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+         Cache<K, V> c;
+         if (cacheName == null)
+            c = cm.getCache();
+         else
+            c = cm.getCache(cacheName);
+         caches.add(c);
       }
       return caches;
    }
 
    protected void waitForClusterToForm(String cacheName) {
-      List<Cache> caches;
-      caches = getCaches(cacheName);
+      List<Cache<Object, Object>> caches = getCaches(cacheName);
       Cache<Object, Object> cache = caches.get(0);
       TestingUtil.blockUntilViewsReceived(10000, caches);
       if (cache.getConfiguration().getCacheMode().isDistributed()) {
@@ -309,7 +312,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected TransactionManager tm(int i, String cacheName) {
       return cache(i, cacheName ).getAdvancedCache().getTransactionManager();
    }
-
 
    protected TransactionManager tm(int i) {
       return cache(i).getAdvancedCache().getTransactionManager();
@@ -449,16 +451,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected <K, V> List<Cache<K, V>> caches(String name) {
-      List<Cache<K, V>> result = new ArrayList<Cache<K, V>>();
-      for (EmbeddedCacheManager ecm : cacheManagers) {
-         Cache<K, V> c;
-         if (name == null)
-            c = ecm.getCache();
-         else
-            c = ecm.getCache(name);
-         result.add(c);
-      }
-      return result;
+      return getCaches(name);
    }
 
    protected <K, V> List<Cache<K, V>> caches() {
