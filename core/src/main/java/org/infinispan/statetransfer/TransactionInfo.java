@@ -27,16 +27,17 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 /**
- * A representation of a transaction that is suitable for transferring between a StateProvider and a StateConsumer.
+ * A representation of a transaction that is suitable for transferring between a StateProvider and a StateConsumer
+ * running on different members of the same cache.
  *
  * @author anistor@redhat.com
  * @since 5.2
@@ -85,7 +86,7 @@ public class TransactionInfo {
 
       @Override
       public Set<Class<? extends TransactionInfo>> getTypeClasses() {
-         return Util.<Class<? extends TransactionInfo>>asSet(TransactionInfo.class);
+         return Collections.<Class<? extends TransactionInfo>>singleton(TransactionInfo.class);
       }
 
       @Override
@@ -96,6 +97,7 @@ public class TransactionInfo {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          WriteCommand[] modifications = (WriteCommand[]) input.readObject();

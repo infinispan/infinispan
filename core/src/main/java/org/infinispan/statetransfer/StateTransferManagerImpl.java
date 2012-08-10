@@ -144,7 +144,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             pickConsistentHashFactory(),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
-            configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
+            configuration.clustering().hash().numOwners(),
+            configuration.clustering().stateTransfer().timeout());
 
       CacheTopologyHandler handler = new CacheTopologyHandler() {
 
@@ -158,7 +159,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             doTopologyUpdate(cacheTopology, true);
          }
 
-         private void doTopologyUpdate(CacheTopology newCacheTopology, boolean rebalance) {
+         private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
             if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
 
             // handle grouping
@@ -175,7 +176,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
             ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
 
-            rebalanceInProgress |= rebalance;
+            rebalanceInProgress |= isRebalance;
 
             cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
             cacheTopology = newCacheTopology;
@@ -225,9 +226,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
-      stateProvider.onTopologyUpdate(topologyId, rCh, wCh);
-      stateConsumer.onTopologyUpdate(topologyId, rCh, wCh);
+   public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
+      stateProvider.onTopologyUpdate(topologyId, readCh, writeCh);
+      stateConsumer.onTopologyUpdate(topologyId, readCh, writeCh);
    }
 
    @Override

@@ -50,19 +50,23 @@ public class StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Configuration configuration;
-   private RpcManager rpcManager;
-   private CommandsFactory commandsFactory;
-   private TransactionTable transactionTable;
-   private DataContainer dataContainer;
-   private CacheLoaderManager cacheLoaderManager;
-   private ExecutorService executorService;
-   private StateTransferLock stateTransferLock;
-   private long timeout;
-   private int chunkSize;
+   private final Configuration configuration;
+   private final RpcManager rpcManager;
+   private final CommandsFactory commandsFactory;
+   private final TransactionTable transactionTable;
+   private final DataContainer dataContainer;
+   private final CacheLoaderManager cacheLoaderManager; // optional
+   private final ExecutorService executorService;
+   private final StateTransferLock stateTransferLock;
+   private final long timeout;
+   private final int chunkSize;
 
-   private ConsistentHash rCh;
+   private ConsistentHash readCh;
 
+   /**
+    * A map that keeps track of current outbound state transfers by source address. There could be multiple transfers
+    * flowing to the same destination (but for different segments) so the values are lists.
+    */
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
    public StateProviderImpl(ExecutorService executorService,
@@ -85,10 +89,8 @@ public class StateProviderImpl implements StateProvider {
       timeout = configuration.clustering().stateTransfer().timeout();
 
       // ignore chunk sizes <= 0
-      chunkSize = configuration.clustering().stateTransfer().chunkSize();
-      if (chunkSize <= 0) {
-         chunkSize = Integer.MAX_VALUE;
-      }
+      int chunkSize = configuration.clustering().stateTransfer().chunkSize();
+      this.chunkSize = chunkSize > 0 ? chunkSize : Integer.MAX_VALUE;
    }
 
    public boolean isStateTransferInProgress() {
@@ -97,11 +99,11 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
-      this.rCh = rCh;
+   public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
+      this.readCh = readCh;
 
       // cancel outbound state transfers for destinations that are no longer members in new topology
-      Set<Address> members = new HashSet<Address>(wCh.getMembers());
+      Set<Address> members = new HashSet<Address>(writeCh.getMembers());
       synchronized (transfersByDestination) {
          for (Address destination : transfersByDestination.keySet()) {
             if (!members.contains(destination)) {
@@ -116,7 +118,7 @@ public class StateProviderImpl implements StateProvider {
 
    public void shutdown() {
       if (trace) {
-         log.trace("Shutting down StateProvider");
+         log.tracef("Shutting down StateProvider of cache %s on %s", rpcManager.getAddress());
       }
       // cancel all outbound transfers
       synchronized (transfersByDestination) {
@@ -131,11 +133,12 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
-      if (rCh == null) {
+      if (readCh == null) {
          throw new IllegalStateException("No cache topology received yet");
       }
 
-      Set<Integer> ownedSegments = rCh.getSegmentsForOwner(rpcManager.getAddress());
+      //todo [anistor] here we should block until topologyId is installed so we are sure forwarding happens correctly
+      Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
          segments.removeAll(ownedSegments);
          throw new IllegalArgumentException("Segments " + segments + " are not owned by " + rpcManager.getAddress());
@@ -165,19 +168,20 @@ public class StateProviderImpl implements StateProvider {
          // transfer only locked keys that belong to requested segments and belong to local node
          Set<Object> lockedKeys = new HashSet<Object>();
          for (Object key : tx.getLockedKeys()) {
-            if (segments.contains(rCh.getSegment(key))) {
+            if (segments.contains(readCh.getSegment(key))) {
                lockedKeys.add(key);
             }
          }
          if (tx.getBackupLockedKeys() != null) {
             for (Object key : tx.getBackupLockedKeys()) {
-               if (segments.contains(rCh.getSegment(key))) {
+               if (segments.contains(readCh.getSegment(key))) {
                   lockedKeys.add(key);
                }
             }
          }
-         List<WriteCommand> modifications = tx.getModifications();
-         transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), modifications.toArray(new WriteCommand[modifications.size()]), lockedKeys));
+         List<WriteCommand> txModifications = tx.getModifications();
+         WriteCommand[] modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+         transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), modifications, lockedKeys));
       }
    }
 
@@ -187,7 +191,7 @@ public class StateProviderImpl implements StateProvider {
          log.tracef("Starting outbound transfer of segments %s to %s", segments, destination);
       }
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, rCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       executorService.submit(outboundTransfer);
    }

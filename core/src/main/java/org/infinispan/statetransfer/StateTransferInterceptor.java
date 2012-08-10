@@ -182,8 +182,8 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       stateTransferLock.commandsSharedLock();
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       final int topologyId = cacheTopology.getTopologyId();
-      final ConsistentHash rCh = cacheTopology.getReadConsistentHash();
-      final ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
+      final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+      final ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
 
       // set the topology id if it was not set before (ie. this is not a remote or forwarded command)
       if (command.getTopologyId() == -1) {
@@ -205,7 +205,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                }
                if (readKey != null) {
                   // it's a read operation
-                  if (!rCh.isKeyLocalToNode(rpcManager.getAddress(), readKey)) {
+                  if (!readCh.isKeyLocalToNode(rpcManager.getAddress(), readKey)) {
                      return null; //todo [anistor] throw an exception or return a special result that will cause the read command to be retried on the originator
                   }
                } else if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {  //todo a ClearCommand should be executed directly
@@ -215,10 +215,10 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                      newTargets = new HashSet<Address>();
                      boolean localExecutionNeeded = false;
                      for (Object key : affectedKeys) {
-                        if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+                        if (writeCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
                            localExecutionNeeded = true;
                         } else {
-                           newTargets.addAll(wCh.locateOwners(key));
+                           newTargets.addAll(writeCh.locateOwners(key));
                         }
                      }
 
@@ -236,8 +236,8 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                      newTargets = new HashSet<Address>();
                      Set<Object> affectedKeys = ((TxInvocationContext) ctx).getAffectedKeys();
                      for (Object key : affectedKeys) {
-                        if (!wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-                           newTargets.addAll(wCh.locateOwners(key));
+                        if (!writeCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+                           newTargets.addAll(writeCh.locateOwners(key));
                         }
                      }
                   }

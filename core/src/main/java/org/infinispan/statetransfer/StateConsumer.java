@@ -46,10 +46,10 @@ public interface StateConsumer {
     * and the segments that are no longer owned are discarded.
     *
     * @param topologyId the new topology id
-    * @param rCh
-    * @param wCh
+    * @param readCh
+    * @param writeCh
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
+   void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
 
    void applyTransactions(Address sender, int topologyId, Collection<TransactionInfo> transactions);
 

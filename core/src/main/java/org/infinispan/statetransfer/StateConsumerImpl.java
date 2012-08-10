@@ -76,9 +76,20 @@ public class StateConsumerImpl implements StateConsumer {
    private long timeout;
    private boolean useVersionedPut;
 
+   /**
+    * Current topology id.
+    */
    private int topologyId;
-   private ConsistentHash rCh;
-   private ConsistentHash wCh;
+
+   /**
+    * CH used for read operations. It is never null.
+    */
+   private ConsistentHash readCh;
+
+   /**
+    * CH used for write operations. In some cases this can be the same as readCh. It is never null.
+    */
+   private ConsistentHash writeCh;
 
    /**
     * The number of topology updates that are being processed concurrently (in method onTopologyUpdate()).
@@ -86,7 +97,18 @@ public class StateConsumerImpl implements StateConsumer {
     */
    private int isTopologyUpdate = 0;
 
+   /**
+    * A map that keeps track of current inbound state transfers by source address. There could be multiple transfers
+    * flowing in from the same source (but for different segments) so the values are lists. This works in tandem with
+    * transfersBySegment so they always need to be kept in sync and updates to both of them need to be atomic.
+    */
    private Map<Address, List<InboundTransferTask>> transfersBySource = new HashMap<Address, List<InboundTransferTask>>();
+
+   /**
+    * A map that keeps track of current inbound state transfers by segment id. There is at most one transfers per segment.
+    * This works in tandem with transfersBySource so they always need to be kept in sync and updates to both of them
+    * need to be atomic.
+    */
    private Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<Integer, InboundTransferTask>();
 
    public StateConsumerImpl(StateTransferManager stateTransferManager,
@@ -135,14 +157,14 @@ public class StateConsumerImpl implements StateConsumer {
       }
       // todo [anistor] also return true for keys to be removed (now we report only keys to be added)
       synchronized (this) {
-         return rCh != null && transfersBySegment.containsKey(rCh.getSegment(key));
+         return readCh != null && transfersBySegment.containsKey(readCh.getSegment(key));
       }
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh) {
-      log.debugf("Received new CH: %s", wCh);
-      if (trace) log.tracef("Received new CH: %s", wCh);
+   public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
+      log.debugf("Received new CH: %s", writeCh);
+      if (trace) log.tracef("Received new CH: %s", writeCh);
 
       synchronized (this) {
          isTopologyUpdate++;
@@ -153,23 +175,23 @@ public class StateConsumerImpl implements StateConsumer {
 
       try {
          Set<Integer> addedSegments = null;
-         if (this.rCh == null) {
+         if (this.readCh == null) {
             // we start fresh, without any data, so we need to pull everything we own according to this CH
-            this.rCh = rCh;
-            this.wCh = wCh;
+            this.readCh = readCh;
+            this.writeCh = writeCh;
 
-            if (wCh.getMembers().size() > 1) {
+            if (writeCh.getMembers().size() > 1) {
                // There is at least one other member to pull the data from
                // TODO If this is the initial CH update, we could have multiple joiners but noone to pull the data from
                if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-                  addedSegments = getMySegments(wCh);
+                  addedSegments = getMySegments(writeCh);
                }
             }
          } else {
-            this.rCh = rCh;
-            this.wCh = wCh;
-            Set<Integer> oldSegments = getMySegments(rCh);
-            Set<Integer> newSegments = getMySegments(wCh);
+            this.readCh = readCh;
+            this.writeCh = writeCh;
+            Set<Integer> oldSegments = getMySegments(readCh);
+            Set<Integer> newSegments = getMySegments(writeCh);
 
             // we need to diff the addressing tables of the two CHes
             Set<Integer> removedSegments = new HashSet<Integer>(oldSegments);
@@ -183,7 +205,7 @@ public class StateConsumerImpl implements StateConsumer {
                addedSegments.removeAll(oldSegments);
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
-               Set<Address> members = new HashSet<Address>(rCh.getMembers());
+               Set<Address> members = new HashSet<Address>(readCh.getMembers());
                synchronized (this) {
                   for (Address source : transfersBySource.keySet()) {
                      if (!members.contains(source)) {
@@ -228,7 +250,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    public void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
       // it's possible to receive a late message so we must be prepared to ignore segments we no longer own
-      if (wCh == null || !wCh.getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
+      if (writeCh == null || !writeCh.getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
          if (trace) {
             log.tracef("Discarding received cache entries for segment %d because they do not belong to this node.", segmentId);
          }
@@ -377,7 +399,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private Address pickSourceOwner(int segmentId, Set<Address> faultyMembers) {
-      List<Address> owners = rCh.locateOwnersForSegment(segmentId);
+      List<Address> owners = readCh.locateOwnersForSegment(segmentId);
       for (int i = owners.size() - 1; i >= 0; i--) {
          Address o = owners.get(i);
          if (!faultyMembers.contains(o) && !o.equals(rpcManager.getAddress())) {
@@ -411,7 +433,7 @@ public class StateConsumerImpl implements StateConsumer {
       Set<Object> keysToRemove = new HashSet<Object>();
       for (InternalCacheEntry ice : dataContainer) {
          Object key = ice.getKey();
-         if (segments.contains(rCh.getSegment(key))) {
+         if (segments.contains(readCh.getSegment(key))) {
             keysToRemove.add(key);
          }
       }
@@ -423,7 +445,7 @@ public class StateConsumerImpl implements StateConsumer {
          try {
             Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
             for (Object key : storedKeys) {
-               if (segments.contains(rCh.getSegment(key))) {
+               if (segments.contains(readCh.getSegment(key))) {
                   keysToRemove.add(key);
                }
             }
