@@ -158,8 +158,12 @@ public class StateConsumerImpl implements StateConsumer {
             this.rCh = rCh;
             this.wCh = wCh;
 
-            if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-               addedSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
+            if (this.wCh.getMembers().size() != 1) {
+               // There is at least one other member to pull the data from
+               // TODO If this is the initial CH update, we could have multiple joiners but noone to pull the data from
+               if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
+                  addedSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
+               }
             }
          } else {
             Set<Integer> oldSegments = this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
