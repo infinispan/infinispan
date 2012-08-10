@@ -234,7 +234,7 @@ public class MarshalledValue implements Serializable {
 
       MarshalledValueByteStream thisRaw = this.raw;
       MarshalledValueByteStream thatRaw = that.raw;
-      if (thisRaw != null && thatRaw != null) return this.raw.equals(that.raw);
+      if (thisRaw != null && thatRaw != null) return thisRaw.equals(thatRaw);
       if (thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
 
       // if conversion of one representation to the other is necessary, then see which we prefer converting.
