@@ -168,9 +168,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             }
 
             // TODO Need to consider that a join request can reach the coordinator before the JGroups view has been installed
-            List<Address> newMembers = cacheStatus.joiners;
+            List<Address> newMembers = new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+            newMembers.addAll(cacheStatus.joiners);
             cacheStatus.joiners = new ArrayList<Address>();
-            newMembers.addAll(cacheStatus.cacheTopology.getMembers());
             newMembers.retainAll(clusterMembers);
 
             if (currentCH == null) {
