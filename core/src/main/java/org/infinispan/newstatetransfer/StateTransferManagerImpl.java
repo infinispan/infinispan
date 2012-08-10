@@ -172,7 +172,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             cacheTopology = newCacheTopology;
             cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
 
-            onTopologyUpdate(cacheTopology.getTopologyId(), newCacheTopology.getReadConsistentHash(), newCacheTopology.getWriteConsistentHash());
+            onTopologyUpdate(newCacheTopology.getTopologyId(), newCacheTopology.getReadConsistentHash(), newCacheTopology.getWriteConsistentHash());
          }
       };
 
@@ -224,6 +224,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    public void notifyEndOfStateTransfer(int topologyId) {
       if (rebalanceInProgress) {
+         rebalanceInProgress = false;
          localTopologyManager.confirmRebalance(cacheName, topologyId, null);
       }
    }

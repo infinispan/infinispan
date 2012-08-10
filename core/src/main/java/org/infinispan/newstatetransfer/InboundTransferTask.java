@@ -29,6 +29,8 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -42,6 +44,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @since 5.2
  */
 public class InboundTransferTask {
+
+   private static final Log log = LogFactory.getLog(InboundTransferTask.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
 
@@ -87,6 +92,9 @@ public class InboundTransferTask {
    }
 
    public boolean requestTransactions() {
+      if (trace) {
+         log.tracef("Requesting transactions for segments %s", segments);
+      }
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
       Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);

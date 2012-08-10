@@ -204,19 +204,23 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                      return null; //todo [anistor] throw an exception or return a special result that will cause the read command to be retried on the originator
                   }
                } else if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {  //todo a ClearCommand should be executed directly
-                  // a TX or a write command from an old topology
-                  Set<Object> affectedKeys = getAffectedKeys(ctx, command);
-                  newTargets = new HashSet<Address>();
-                  boolean localExecutionNeeded = false;
-                  for (Object key : affectedKeys) {
-                     if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-                        localExecutionNeeded = true;
-                     } else {
-                        newTargets.addAll(wCh.locateOwners(key));
+                  // a TX or a write command from an old topology should be forwarded unless it's a write and the context is transactional
+                  if (!(command instanceof WriteCommand && ctx instanceof TxInvocationContext)) {
+                     Set<Object> affectedKeys = getAffectedKeys(ctx, command);
+                     newTargets = new HashSet<Address>();
+                     boolean localExecutionNeeded = false;
+                     for (Object key : affectedKeys) {
+                        if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+                           localExecutionNeeded = true;
+                        } else {
+                           newTargets.addAll(wCh.locateOwners(key));
+                        }
                      }
-                  }
 
-                  if (localExecutionNeeded) {
+                     if (localExecutionNeeded) {
+                        return invokeNextInterceptor(ctx, command);
+                     }
+                  } else {
                      return invokeNextInterceptor(ctx, command);
                   }
                } else if (command instanceof CommitCommand || command instanceof RollbackCommand) {
