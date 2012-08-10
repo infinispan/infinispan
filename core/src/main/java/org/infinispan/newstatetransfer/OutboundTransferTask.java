@@ -177,6 +177,8 @@ public class OutboundTransferTask implements Runnable {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             sendEntries(entries, segmentId, true);
          }
+      } catch (Throwable t) {
+         log.error("Error sending data", t);
       } finally {
          stateProvider.onTaskCompletion(this);
       }
