@@ -90,7 +90,7 @@ public class StateRequestCommand extends BaseRpcCommand {
 
             case START_STATE_TRANSFER:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments);
-               return null;
+               return true;
 
             case CANCEL_STATE_TRANSFER:
                stateProvider.cancelOutboundTransfer(getOrigin(), topologyId, segments);

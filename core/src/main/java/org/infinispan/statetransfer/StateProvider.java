@@ -41,16 +41,17 @@ public interface StateProvider {
 
    /**
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
+    * The other outbound transfers remain unaffected.
     *
     * @param topologyId the new topology id
-    * @param rCh
-    * @param wCh
+    * @param readCh
+    * @param writeCh
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
+   void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a
-    * StateRequestCommand of type GET_TRANSACTIONS.
+    * StateRequestCommand of type StateRequestCommand.Type.GET_TRANSACTIONS.
     *
     * @param destination the address of the requester
     * @param topologyId
@@ -61,7 +62,7 @@ public interface StateProvider {
 
    /**
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a
-    * StateRequestCommand of type START_STATE_TRANSFER.
+    * StateRequestCommand of type StateRequestCommand.Type.START_STATE_TRANSFER.
     *
     * @param destination the address of the requester
     * @param topologyId
@@ -71,7 +72,7 @@ public interface StateProvider {
 
    /**
     * Cancel sending of cache entries that belong to the given set of segments. This is invoked in response to a
-    * StateRequestCommand of type CANCEL_STATE_TRANSFER.
+    * StateRequestCommand of type StateRequestCommand.Type.CANCEL_STATE_TRANSFER.
     *
     * @param destination the address of the requester
     * @param topologyId
@@ -80,7 +81,7 @@ public interface StateProvider {
    void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments);
 
    /**
-    * Cancels all outgoing state transfers.
+    * Cancels all outbound state transfers.
     */
    void shutdown();
 }

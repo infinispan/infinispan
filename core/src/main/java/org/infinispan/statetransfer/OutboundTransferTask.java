@@ -71,7 +71,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final Configuration configuration;
 
-   private final ConsistentHash rCh;
+   private final ConsistentHash readCh;
 
    private final DataContainer dataContainer;
 
@@ -86,12 +86,12 @@ public class OutboundTransferTask implements Runnable {
    private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = ConcurrentMapFactory.makeConcurrentMap();
 
    /**
-    * This is used with RpcManager.invokeRemotelyInFuture to be able to cancel message sending if the task needs to be canceled.
+    * This is used with RpcManager.invokeRemotelyInFuture() to be able to cancel message sending if the task needs to be canceled.
     */
    private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null);
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
-                               int topologyId, ConsistentHash rCh, StateProviderImpl stateProvider, DataContainer dataContainer,
+                               int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
                                CacheLoaderManager cacheLoaderManager, RpcManager rpcManager, Configuration configuration,
                                CommandsFactory commandsFactory, long timeout) {
       if (segments == null || segments.isEmpty()) {
@@ -108,7 +108,7 @@ public class OutboundTransferTask implements Runnable {
       this.segments.addAll(segments);
       this.stateTransferChunkSize = stateTransferChunkSize;
       this.topologyId = topologyId;
-      this.rCh = rCh;
+      this.readCh = readCh;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.rpcManager = rpcManager;
@@ -135,7 +135,7 @@ public class OutboundTransferTask implements Runnable {
             }
 
             Object key = ice.getKey();
-            int segmentId = rCh.getSegment(key);
+            int segmentId = readCh.getSegment(key);
             if (segments.contains(segmentId)) {
                sendEntry(ice, segmentId);
             }
@@ -155,7 +155,7 @@ public class OutboundTransferTask implements Runnable {
                   if (isCancelled) {
                      return;
                   }
-                  int segmentId = rCh.getSegment(key);
+                  int segmentId = readCh.getSegment(key);
                   if (segments.contains(segmentId)) {
                      try {
                         InternalCacheEntry ice = cacheStore.load(key);
@@ -176,7 +176,7 @@ public class OutboundTransferTask implements Runnable {
             }
          }
 
-         // send the last chunk of all segments. if the last chunk is not empty an additional empty chunk is sent to signal completion
+         // send the last chunk of all segments
          for (int segmentId : segments) {
             if (isCancelled) {
                return;
