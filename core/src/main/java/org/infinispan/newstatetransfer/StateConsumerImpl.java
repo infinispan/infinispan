@@ -229,6 +229,28 @@ public class StateConsumerImpl implements StateConsumer {
          return;
       }
 
+      if (cacheEntries != null) {
+         doApplyState(sender, segmentId, cacheEntries);
+      }
+
+      // notify the inbound task that a chunk of cache entries was received
+      InboundTransferTask inboundTransfer;
+      synchronized (this) {
+         inboundTransfer = transfersBySegment.get(segmentId);
+      }
+      if (inboundTransfer != null) {
+         inboundTransfer.onStateReceived(segmentId, isLastChunk);
+      } else {
+         log.debugf("Received unsolicited state for segment %d from node %s", segmentId, sender);
+         return;
+      }
+
+      if (trace) {
+         log.tracef("After applying state data container has %d keys", dataContainer.size());
+      }
+   }
+
+   private void doApplyState(Address sender, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
       log.debugf("Applying new state for segment %d from %s: received %d cache entries", segmentId, sender, cacheEntries.size());
       if (trace) {
          List<Object> keys = new ArrayList<Object>(cacheEntries.size());
@@ -251,22 +273,6 @@ public class StateConsumerImpl implements StateConsumer {
          } catch (Exception ex) {
             log.problemApplyingStateForKey(ex.getMessage(), e.getKey());
          }
-      }
-
-      // notify the inbound task that a chunk of cache entries was received
-      InboundTransferTask inboundTransfer;
-      synchronized (this) {
-         inboundTransfer = transfersBySegment.get(segmentId);
-      }
-      if (inboundTransfer != null) {
-         inboundTransfer.onStateReceived(segmentId, isLastChunk);
-      } else {
-         log.debugf("Received unsolicited state for segment %d from node %s", segmentId, sender);
-         return;
-      }
-
-      if (trace) {
-         log.tracef("After applying state data container has %d keys", dataContainer.size());
       }
    }
 
