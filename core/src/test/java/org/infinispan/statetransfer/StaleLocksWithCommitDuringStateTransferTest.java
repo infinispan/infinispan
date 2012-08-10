@@ -31,8 +31,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.newstatetransfer.StateTransferInterceptor;
-import org.infinispan.newstatetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;

@@ -19,7 +19,7 @@
 
 package org.infinispan.topology;
 
-import org.infinispan.newstatetransfer.StateTransferManager;
+import org.infinispan.statetransfer.StateTransferManager;
 
 /**
  * The link between {@link LocalTopologyManager} and {@link StateTransferManager}.

@@ -21,6 +21,7 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.util.concurrent.TimeoutException;
 
+//todo [anistor] do we still use this?
 /**
  * Internal exception, thrown when {@code StateTransferLock.waitForStateTransferToEnd} fails to re-acquire
  * the state transfer lock after state transfer (most likely because the timeout expired).

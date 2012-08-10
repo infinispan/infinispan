@@ -68,7 +68,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExternalizerTable;
-import org.infinispan.newstatetransfer.StateTransferManager;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;

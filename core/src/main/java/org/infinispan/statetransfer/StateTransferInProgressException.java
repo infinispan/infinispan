@@ -21,6 +21,7 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.util.concurrent.TimeoutException;
 
+//todo [anistor] do we still use this?
 /**
  * This exception is thrown when an operation cannot complete because a state transfer is in progress.
  * Most of the time the operation will just wait for the rehash to complete and continue,

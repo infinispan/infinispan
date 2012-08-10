@@ -23,11 +23,11 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.newstatetransfer.StateTransferManager;
-import org.infinispan.newstatetransfer.StateTransferManagerImpl;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.statetransfer.StateTransferManagerImpl;
 
 /**
- * Constructs {@link org.infinispan.newstatetransfer.StateTransferManager} instances.
+ * Constructs {@link org.infinispan.statetransfer.StateTransferManager} instances.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Dan Berindei &lt;dan@infinispan.org&gt;

@@ -59,8 +59,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.newstatetransfer.StateRequestCommand;
-import org.infinispan.newstatetransfer.StateResponseCommand;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.topology.CacheTopologyControlCommand;
 
 import java.util.Map;
