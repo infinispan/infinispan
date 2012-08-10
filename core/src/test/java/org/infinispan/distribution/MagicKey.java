@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.Random;
 
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
@@ -46,21 +47,31 @@ public class MagicKey implements Serializable {
    int hashcode;
    String address;
 
-   public MagicKey(Cache<?, ?> toMapTo) {
-      address = addressOf(toMapTo).toString();
+   public MagicKey(Cache<?, ?> primaryOwner) {
+      address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
       do {
          // create a dummy object with this hashcode
          final int hc = r.nextInt();
-         dummy = new Object() {
-            @Override
-            public int hashCode() {
-               return hc;
-            }
-         };
+         dummy = new Integer(hc);
 
-      } while (!isFirstOwner(toMapTo, dummy));
+      } while (!isFirstOwner(primaryOwner, dummy));
+
+      // we have found a hashcode that works!
+      hashcode = dummy.hashCode();
+   }
+
+   public MagicKey(Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+      address = addressOf(primaryOwner).toString();
+      Random r = new Random();
+      Object dummy;
+      do {
+         // create a dummy object with this hashcode
+         final int hc = r.nextInt();
+         dummy = new Integer(hc);
+
+      } while (!hasOwners(dummy, primaryOwner, backupOwners));
 
       // we have found a hashcode that works!
       hashcode = dummy.hashCode();

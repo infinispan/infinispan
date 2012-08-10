@@ -57,15 +57,21 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoteGet() {
-      MagicKey k = new MagicKey(cache(0)); // this should now map to cache0 and cache1
+      Cache<MagicKey, String> c1 = cache(0);
+      Cache<MagicKey, String> c2 = cache(1);
+      Cache<MagicKey, String> c3 = cache(2);
+      MagicKey k = new MagicKey(c1, c2);
 
-      List<Address> owners = cache(0).getAdvancedCache().getDistributionManager().locate(k);
+      List<Address> owners = c1.getAdvancedCache().getDistributionManager().locate(k);
 
       assert owners.size() == 2: "Key should have 2 owners";
 
       Cache<MagicKey, String> owner1 = getCacheForAddress(owners.get(0));
+      assert owner1 == c1;
       Cache<MagicKey, String> owner2 = getCacheForAddress(owners.get(1));
+      assert owner2 == c2;
       Cache<MagicKey, String> nonOwner = getNonOwner(owners);
+      assert nonOwner == c3;
 
       owner1.put(k, "value");
       assert "value".equals(nonOwner.get(k));
