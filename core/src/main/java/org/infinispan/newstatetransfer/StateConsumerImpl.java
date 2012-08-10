@@ -162,14 +162,14 @@ public class StateConsumerImpl implements StateConsumer {
                // There is at least one other member to pull the data from
                // TODO If this is the initial CH update, we could have multiple joiners but noone to pull the data from
                if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-                  addedSegments = this.wCh.getSegmentsForOwner(rpcManager.getAddress());
+                  addedSegments = getMySegments(wCh);
                }
             }
          } else {
             this.rCh = rCh;
             this.wCh = wCh;
-            Set<Integer> oldSegments = getMySegments(this.rCh);
-            Set<Integer> newSegments = getMySegments(this.wCh);
+            Set<Integer> oldSegments = getMySegments(rCh);
+            Set<Integer> newSegments = getMySegments(wCh);
 
             // we need to diff the addressing tables of the two CHes
             Set<Integer> removedSegments = new HashSet<Integer>(oldSegments);
@@ -183,7 +183,7 @@ public class StateConsumerImpl implements StateConsumer {
                addedSegments.removeAll(oldSegments);
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
-               Set<Address> members = new HashSet<Address>(this.rCh.getMembers());
+               Set<Address> members = new HashSet<Address>(rCh.getMembers());
                synchronized (this) {
                   for (Address source : transfersBySource.keySet()) {
                      if (!members.contains(source)) {

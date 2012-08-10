@@ -26,6 +26,7 @@ package org.infinispan.newstatetransfer;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -82,9 +83,9 @@ public class StateResponseCommand extends BaseRpcCommand {
       try {
          stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries, isLastChunk);
          return null;
-      } catch (Throwable t) {
-         log.exceptionHandlingCommand(this, t);
-         return null;
+      } catch (Exception e) {
+         log.exceptionHandlingCommand(this, e);
+         return new ExceptionResponse(e);
       } finally {
          LogFactory.popNDC(trace);
       }

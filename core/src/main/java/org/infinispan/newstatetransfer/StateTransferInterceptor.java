@@ -184,6 +184,11 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       final int topologyId = cacheTopology.getTopologyId();
       final ConsistentHash rCh = cacheTopology.getReadConsistentHash();
       final ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
+
+      // set the topology id if it was not set before (ie. this is not a remote or forwarded command)
+      if (command.getTopologyId() == -1) {
+         command.setTopologyId(cacheTopology.getTopologyId());
+      }
       try {
          final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
          if (isTxCommand) {
@@ -257,7 +262,6 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
          stateTransferLock.commandsSharedUnlock();
 
          if (newTargets != null && !newTargets.isEmpty()) {
-            command.setTopologyId(topologyId);
             rpcManager.invokeRemotely(newTargets, command, true);
          }
       }

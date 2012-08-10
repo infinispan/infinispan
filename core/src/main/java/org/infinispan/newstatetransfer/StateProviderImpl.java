@@ -149,7 +149,9 @@ public class StateProviderImpl implements StateProvider {
          try {
             collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
             collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
-            log.debugf("Found %d transactions to transfer", transactions.size());
+            if (trace) {
+               log.tracef("Found %d transactions to transfer", transactions.size());
+            }
          } finally {
             // all transactions should be unblocked now
             stateTransferLock.transactionsExclusiveUnlock();
@@ -167,9 +169,11 @@ public class StateProviderImpl implements StateProvider {
                lockedKeys.add(key);
             }
          }
-         for (Object key : tx.getBackupLockedKeys()) {
-            if (segments.contains(rCh.getSegment(key))) {
-               lockedKeys.add(key);
+         if (tx.getBackupLockedKeys() != null) {
+            for (Object key : tx.getBackupLockedKeys()) {
+               if (segments.contains(rCh.getSegment(key))) {
+                  lockedKeys.add(key);
+               }
             }
          }
          List<WriteCommand> modifications = tx.getModifications();
