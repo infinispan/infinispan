@@ -21,59 +21,62 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.newstatetransfer;
+package org.infinispan.statetransfer;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
- * This command is used by a StateProvider to push cache entries to a StateConsumer.
+ * This command is used by a StateConsumer to request transactions and cache entries from a StateProvider.
  *
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateResponseCommand extends BaseRpcCommand {
+public class StateRequestCommand extends BaseRpcCommand {
 
-   private static final Log log = LogFactory.getLog(StateResponseCommand.class);
+   private static final Log log = LogFactory.getLog(StateRequestCommand.class);
 
-   public static final byte COMMAND_ID = 20;
+   public enum Type {
+      GET_TRANSACTIONS,
+      START_STATE_TRANSFER,
+      CANCEL_STATE_TRANSFER
+   }
+
+   public static final byte COMMAND_ID = 15;
+
+   private Type type;
 
    private int topologyId;
 
-   private int segmentId;
+   private Set<Integer> segments;
 
-   private Collection<InternalCacheEntry> cacheEntries;
+   private StateProvider stateProvider;
 
-   private boolean isLastChunk;
-
-   private StateConsumer stateConsumer;
-
-   private StateResponseCommand() {
+   private StateRequestCommand() {
       super(null);  // for command id uniqueness test
    }
 
-   public StateResponseCommand(String cacheName) {
+   public StateRequestCommand(String cacheName) {
       super(cacheName);
    }
 
-   public StateResponseCommand(String cacheName, Address origin, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
+   public StateRequestCommand(String cacheName, Type type, Address origin, int topologyId, Set<Integer> segments) {
       super(cacheName);
+      this.type = type;
       setOrigin(origin);
       this.topologyId = topologyId;
-      this.segmentId = segmentId;
-      this.cacheEntries = cacheEntries;
-      this.isLastChunk = isLastChunk;
+      this.segments = segments;
    }
 
-   public void init(StateConsumer stateConsumer) {
-      this.stateConsumer = stateConsumer;
+   public void init(StateProvider stateProvider) {
+      this.stateProvider = stateProvider;
    }
 
    @Override
@@ -81,11 +84,24 @@ public class StateResponseCommand extends BaseRpcCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries, isLastChunk);
-         return null;
-      } catch (Exception e) {
-         log.exceptionHandlingCommand(this, e);
-         return new ExceptionResponse(e);
+         switch (type) {
+            case GET_TRANSACTIONS:
+               return stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
+
+            case START_STATE_TRANSFER:
+               stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments);
+               return null;
+
+            case CANCEL_STATE_TRANSFER:
+               stateProvider.cancelOutboundTransfer(getOrigin(), topologyId, segments);
+               return null;
+
+            default:
+               throw new CacheException("Unknown state request command type: " + type);
+         }
+      } catch (Exception t) {
+         log.exceptionHandlingCommand(this, t);
+         return new ExceptionResponse(t);
       } finally {
          LogFactory.popNDC(trace);
       }
@@ -93,7 +109,11 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;
+      return true;
+   }
+
+   public Type getType() {
+      return type;
    }
 
    @Override
@@ -103,28 +123,26 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{getOrigin(), topologyId, segmentId, isLastChunk};
+      return new Object[]{(byte) type.ordinal(), getOrigin(), topologyId, segments};
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
+      type = Type.values()[(Byte) parameters[i++]];
       setOrigin((Address) parameters[i++]);
       topologyId = (Integer) parameters[i++];
-      segmentId = (Integer) parameters[i++];
-      isLastChunk = (Boolean) parameters[i];
+      segments = (Set<Integer>) parameters[i];
    }
 
    @Override
    public String toString() {
-      return "StateResponseCommand{" +
+      return "StateRequestCommand{" +
             "cache=" + cacheName +
+            ", type=" + type +
             ", origin=" + getOrigin() +
             ", topologyId=" + topologyId +
-            ", segmentId=" + segmentId +
-            ", cacheEntries=" + cacheEntries +
-            ", isLastChunk=" + isLastChunk +
             '}';
    }
 }

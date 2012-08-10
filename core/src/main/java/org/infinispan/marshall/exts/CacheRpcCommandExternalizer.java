@@ -48,8 +48,8 @@ import org.infinispan.marshall.BufferSizePredictor;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
-import org.infinispan.newstatetransfer.StateRequestCommand;
-import org.infinispan.newstatetransfer.StateResponseCommand;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.util.Util;
 
 import java.io.ByteArrayInputStream;

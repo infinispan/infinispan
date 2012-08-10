@@ -56,7 +56,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
-import org.infinispan.newstatetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;

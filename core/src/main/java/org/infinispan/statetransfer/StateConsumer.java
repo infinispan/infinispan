@@ -21,40 +21,42 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.newstatetransfer;
+package org.infinispan.statetransfer;
 
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
+import java.util.Collection;
+
 /**
- * // TODO: Document this
+ * Handles inbound state transfers.
  *
  * @author anistor@redhat.com
  * @since 5.2
  */
-class TestAddress implements Address {
+public interface StateConsumer {
 
-   private final int addressNum;
+   boolean isStateTransferInProgress();
 
-   TestAddress(int addressNum) {
-      this.addressNum = addressNum;
-   }
+   boolean isStateTransferInProgressForKey(Object key);
 
-   @Override
-   public String toString() {
-      return "TestAddress(" + addressNum + ')';
-   }
+   /**
+    * Receive notification of topology changes. StateRequestCommands are issued for segments that are new to this member
+    * and the segments that are no longer owned are discarded.
+    *
+    * @param topologyId the new topology id
+    * @param rCh
+    * @param wCh
+    */
+   void onTopologyUpdate(int topologyId, ConsistentHash rCh, ConsistentHash wCh);
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   void applyTransactions(Address sender, int topologyId, Collection<TransactionInfo> transactions);
 
-      TestAddress that = (TestAddress) o;
-      return addressNum == that.addressNum;
-   }
+   void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
 
-   @Override
-   public int hashCode() {
-      return addressNum;
-   }
+   /**
+    * Cancels all incoming state transfers. The already received data is not discarded.
+    */
+   void shutdown();
 }

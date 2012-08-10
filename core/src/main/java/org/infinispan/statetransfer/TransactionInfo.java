@@ -21,7 +21,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.newstatetransfer;
+package org.infinispan.statetransfer;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.marshall.AbstractExternalizer;
