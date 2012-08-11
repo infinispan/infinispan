@@ -30,7 +30,7 @@ import java.io.IOException;
  * @since 5.1
  */
 @ThreadSafe
-public class ImmutableMarshalledValueByteStream extends MarshalledValueByteStream {
+public final class ImmutableMarshalledValueByteStream extends MarshalledValueByteStream {
    private final byte[] bytes;
 
    public ImmutableMarshalledValueByteStream(byte[] bytes) {
@@ -68,4 +68,13 @@ public class ImmutableMarshalledValueByteStream extends MarshalledValueByteStrea
          return false;
       }
    }
+
+   @Override
+   public int hashCode() {
+      //Implementation would either be slow or not consistent with the equals definition
+      //just avoid needing the hashCode:
+      throw new UnsupportedOperationException();
+   }
+
 }
+
