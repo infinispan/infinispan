@@ -24,6 +24,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.Logger;
 import org.testng.IClass;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
@@ -67,23 +68,25 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    }
 
    synchronized public void onTestSuccess(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " succeeded.");
-      log.info("Test succeeded " + getTestDesc(arg0) + ".");
+      String message = "Test " + getTestDesc(arg0) + " succeeded.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.info(message);
       succeeded.incrementAndGet();
       printStatus();
    }
 
    synchronized public void onTestFailure(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " failed.");
-      if (arg0.getThrowable() != null) log.error("Test failed " + getTestDesc(arg0), arg0.getThrowable());
+      String message = "Test " + getTestDesc(arg0) + " failed.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.error(message, arg0.getThrowable());
       failed.incrementAndGet();
       printStatus();
    }
 
    synchronized public void onTestSkipped(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " skipped.");
-      log.info(" Test " + getTestDesc(arg0) + " skipped.");
-      if (arg0.getThrowable() != null) log.error("Test skipped : " + arg0.getThrowable(), arg0.getThrowable());
+      String message = "Test " + getTestDesc(arg0) + " skipped.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.error(message, arg0.getThrowable());
       skipped.incrementAndGet();
       printStatus();
    }
@@ -111,7 +114,9 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    }
 
    private void printStatus() {
-      System.out.println("Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
+      String message = "Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".";
+      System.out.println(message);
+      log.info(message);
    }
 
    @Override
@@ -120,8 +125,11 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    @Override
    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-      if (testResult.getThrowable() != null)
-         log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
+      if (testResult.getThrowable() != null && method.isConfigurationMethod()) {
+         String message = String.format("Configuration method %s threw an exception", getTestDesc(testResult));
+         System.out.println(message);
+         log.error(message, testResult.getThrowable());
+      }
    }
 
    public static void printAllTheThreadsInTheJvm(Throwable e) {
