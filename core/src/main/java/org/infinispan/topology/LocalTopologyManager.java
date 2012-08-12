@@ -57,7 +57,8 @@ public interface LocalTopologyManager {
    /**
     * Recovers the current topology information for all running caches and returns it to the coordinator.
     */
-   Map<String, CacheTopology> handleStatusRequest();
+   // TODO Add a new class to hold the CacheJoinInfo and the CacheTopology
+   Map<String, Object[]> handleStatusRequest();
 
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.

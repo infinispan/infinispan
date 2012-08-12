@@ -127,13 +127,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    // called by the coordinator
    @Override
-   public Map<String, CacheTopology> handleStatusRequest() {
-      Map<String, CacheTopology> response = new HashMap<String, CacheTopology>();
+   public Map<String, Object[]> handleStatusRequest() {
+      Map<String, Object[]> response = new HashMap<String, Object[]>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
          LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-         CacheTopology topology = cacheStatus.getTopology();
-         response.put(e.getKey(), topology);
+         response.put(e.getKey(), new Object[]{cacheStatus.getJoinInfo(), cacheStatus.getTopology()});
       }
       return response;
    }

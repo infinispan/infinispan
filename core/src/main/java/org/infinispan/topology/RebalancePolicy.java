@@ -45,7 +45,7 @@ public interface RebalancePolicy {
     * It will overwrite the current status of the cache, but it will not reset any pending join or leave
     * operations.
     */
-   void initCache(String cacheName, List<CacheTopology> partitionTopologies);
+   void initCache(String cacheName, List<CacheTopology> partitionTopologies) throws Exception;
 
    /**
     * Called when the membership of the cluster changes. It updates the members list of each cache atomically.
