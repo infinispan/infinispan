@@ -21,12 +21,12 @@ package org.infinispan.io;
 
 /**
  * A byte stream that can be written to and expanded on the fly, not dissimilar to {@link ExposedByteArrayOutputStream}
- * but with the benefit of not having to allocate unnecessary byte arrays byt not extending {@link java.io.ByteArrayOutputStream}.
+ * but with the benefit of not having to allocate unnecessary byte arrays by not extending {@link java.io.ByteArrayOutputStream}.
  *
  * @author Manik Surtani
  * @since 5.1
  */
-public class ExpandableMarshalledValueByteStream extends MarshalledValueByteStream {
+public final class ExpandableMarshalledValueByteStream extends MarshalledValueByteStream {
    /**
     * The buffer where data is stored.
     */
@@ -77,11 +77,6 @@ public class ExpandableMarshalledValueByteStream extends MarshalledValueByteStre
    @Override
    public final byte[] getRaw() {
       return buf;
-   }
-
-   public final void set(byte[] b) {
-      this.buf = b;
-      this.count = b.length;
    }
 
    @Override
@@ -162,4 +157,12 @@ public class ExpandableMarshalledValueByteStream extends MarshalledValueByteStre
          return false;
       }
    }
+
+   @Override
+   public int hashCode() {
+      //Implementation would either be slow or not consistent with the equals definition
+      //just avoid needing the hashCode:
+      throw new UnsupportedOperationException();
+   }
+
 }

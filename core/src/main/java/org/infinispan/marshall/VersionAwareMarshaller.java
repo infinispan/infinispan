@@ -52,7 +52,7 @@ import java.io.OutputStream;
  */
 public class VersionAwareMarshaller extends AbstractMarshaller implements StreamingMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
-   private boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final int VERSION_510 = 510;
 
