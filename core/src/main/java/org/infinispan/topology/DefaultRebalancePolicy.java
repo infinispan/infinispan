@@ -20,6 +20,7 @@
 package org.infinispan.topology;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -79,8 +80,33 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    }
 
    @Override
-   public void initCache(String cacheName, List<CacheTopology> partitionTopologies) {
-      throw new IllegalStateException("Not implemented");
+   public void initCache(String cacheName, List<CacheTopology> partitionTopologies) throws Exception {
+      CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (partitionTopologies.isEmpty())
+         return;
+
+      int unionTopologyId = 0;
+      ConsistentHash currentCHUnion = null;
+      ConsistentHash pendingCHUnion = null;
+      ConsistentHashFactory chFactory = cacheStatus.joinInfo.getConsistentHashFactory();
+      for (CacheTopology topology : partitionTopologies) {
+         if (topology.getTopologyId() > unionTopologyId) {
+            unionTopologyId = topology.getTopologyId();
+         }
+         if (currentCHUnion == null) {
+            currentCHUnion = topology.getCurrentCH();
+            pendingCHUnion = topology.getPendingCH();
+         } else {
+            currentCHUnion = chFactory.union(currentCHUnion, topology.getCurrentCH());
+            pendingCHUnion = chFactory.union(pendingCHUnion, topology.getPendingCH());
+         }
+      }
+
+      synchronized (cacheStatus) {
+         cacheStatus.cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
+         clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
+         // TODO Trigger a new rebalance
+      }
    }
 
    @Override
@@ -101,17 +127,19 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             boolean pendingMembersValid = pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
             if (!currentMembersValid || !pendingMembersValid) {
                int topologyId = cacheStatus.cacheTopology.getTopologyId();
-               List<Address> newMembers1 = new ArrayList<Address>(currentCH.getMembers());
-               newMembers1.retainAll(newClusterMembers);
-
                ConsistentHashFactory consistentHashFactory = cacheStatus.joinInfo.getConsistentHashFactory();
-               ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newMembers1);
-               List<Address> newMembers = new ArrayList<Address>(pendingCH.getMembers());
-               newMembers.retainAll(newClusterMembers);
+
+               List<Address> newCurrentMembers = new ArrayList<Address>(currentCH.getMembers());
+               newCurrentMembers.retainAll(newClusterMembers);
+               ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers);
+
                ConsistentHash newPendingCH = null;
                if (pendingCH != null) {
-                  newPendingCH = consistentHashFactory.updateMembers(pendingCH, newMembers);
+                  List<Address> newPendingMembers = new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+                  newPendingMembers.retainAll(newClusterMembers);
+                  newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers);
                }
+
                cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
                clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
             }

@@ -290,12 +290,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       HashMap<String, List<CacheTopology>> clusterCacheMap = new HashMap<String, List<CacheTopology>>();
       for (Object o : statusResponses.values()) {
-         Map<String, CacheTopology> nodeStatus = (Map<String, CacheTopology>) o;
-         for (Map.Entry<String, CacheTopology> e : nodeStatus.entrySet()) {
+         Map<String, Object[]> nodeStatus = (Map<String, Object[]>) o;
+         for (Map.Entry<String, Object[]> e : nodeStatus.entrySet()) {
             String cacheName = e.getKey();
-            CacheTopology cacheTopology = e.getValue();
+            CacheJoinInfo joinInfo = (CacheJoinInfo) e.getValue()[0];
+            CacheTopology cacheTopology = (CacheTopology) e.getValue()[1];
+
             List<CacheTopology> topologyList = clusterCacheMap.get(cacheName);
             if (topologyList == null) {
+               // this is the first CacheJoinInfo we got for this cache
+               rebalancePolicy.initCache(cacheName, joinInfo);
+
                topologyList = new ArrayList<CacheTopology>();
                clusterCacheMap.put(cacheName, topologyList);
             }
