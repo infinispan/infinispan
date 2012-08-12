@@ -73,8 +73,8 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       InterceptorChain ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
       ic.addInterceptorBefore(interceptor, DistributionInterceptor.class);
 
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       if (mods) {

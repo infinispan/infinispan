@@ -83,8 +83,8 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
     * Check that the transaction commit/rollback recovers if we receive a StateTransferInProgressException from the remote node
     */
    private void doStateTransferInProgressTest(boolean commit, final boolean failOnOriginator) throws Exception {
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       c1.put(k1, "v1");
@@ -158,8 +158,8 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
     * Check that the transaction commit/rollback recovers if the remote node dies during the RPC
     */
    private void doTestSuspect(boolean commit) throws Exception {
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       c1.put(k1, "v1");

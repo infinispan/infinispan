@@ -68,7 +68,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache2, "hello");
+      MagicKey hello = new MagicKey("hello", cache2);
       cache0.put(hello, "world");
 
       for (Cache<Object, Object> c: caches()) assert "world".equals(c.get(hello));

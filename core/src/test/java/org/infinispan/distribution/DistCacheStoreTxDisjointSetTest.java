@@ -56,14 +56,13 @@ public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder buildCacheConfig(String storeName) {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cb.clustering().hash().numVirtualNodes(1);
       cb.loaders().addStore().cacheStore(new DummyInMemoryCacheStore(storeName));
       return cb;
    }
 
    public void testDisjointSetTransaction() throws Exception {
-      MagicKey k1 = new MagicKey(cache(0));
-      MagicKey k2 = new MagicKey(cache(1));
+      MagicKey k1 = new MagicKey(cache(0), cache(1));
+      MagicKey k2 = new MagicKey(cache(1), cache(2));
 
       // make sure the owners of k1 and k2 are NOT the same!
       Set<Address> k1Owners = new HashSet<Address>();

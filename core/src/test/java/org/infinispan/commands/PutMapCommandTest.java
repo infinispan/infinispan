@@ -44,7 +44,7 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
    }
 
    public void testPutOnNonOwner() {
-      MagicKey mk = new MagicKey(cache(0), "key");
+      MagicKey mk = new MagicKey("key", cache(0));
       cache(3).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).put(mk, "value");
 
       assert cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk) != null;

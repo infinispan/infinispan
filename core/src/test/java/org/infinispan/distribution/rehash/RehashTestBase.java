@@ -72,8 +72,8 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    protected List<MagicKey> init() {
 
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
-            new MagicKey(c1, "k1"), new MagicKey(c2, "k2"),
-            new MagicKey(c3, "k3"), new MagicKey(c4, "k4")
+            new MagicKey("k1", c1), new MagicKey("k2", c2),
+            new MagicKey("k3", c3), new MagicKey("k4", c4)
       ));
       assertEquals(caches.size(), keys.size(), "Received caches" + caches);
 
