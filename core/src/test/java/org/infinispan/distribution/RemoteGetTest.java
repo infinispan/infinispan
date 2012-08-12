@@ -83,7 +83,7 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
    }
 
    public void testGetOfNonexistentKeyOnOwner() {
-      MagicKey mk = new MagicKey(cache(0), "does not exist");
+      MagicKey mk = new MagicKey("does not exist", cache(0));
       Object v = cache(0).get(mk);
       assert v == null : "Should get a null response";
    }

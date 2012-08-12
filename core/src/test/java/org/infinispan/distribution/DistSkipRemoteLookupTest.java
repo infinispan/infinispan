@@ -35,7 +35,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    }
 
    public void testSkipLookupOnGet() {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -49,7 +49,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    }
    
    public void testCorrectFunctionalityOnConditionalWrite() {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -66,7 +66,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    }
 
    public void testCorrectFunctionalityOnUnconditionalWrite() {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -81,7 +81,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    
    @Test
    public void testSkipLookupOnRemove() {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       final String value = "SomethingToSayHere";
 
       assert null == c1.put(k1, value);
@@ -103,7 +103,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    
    @Test
    public void testSkipLookupOnAsyncRemove() throws InterruptedException, ExecutionException {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       final String value = "SomethingToSayHere-async";
 
       assert null == c1.put(k1, value);

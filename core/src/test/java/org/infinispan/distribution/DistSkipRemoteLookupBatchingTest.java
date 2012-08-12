@@ -42,7 +42,7 @@ public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest {
    }
 
    public void testSkipLookupOnGetWhileBatching() {
-      MagicKey k1 = new MagicKey(c1);
+      MagicKey k1 = new MagicKey(c1, c2);
       c1.put(k1, "batchingMagicValue-h1");
 
       assertIsInContainerImmortal(c1, k1);

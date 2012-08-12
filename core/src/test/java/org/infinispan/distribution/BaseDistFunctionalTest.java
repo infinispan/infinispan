@@ -81,8 +81,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
                                      new TransportFlags().withFD(false));
 
-      reorderBasedOnCHPositions();
-
       if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
       if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
       if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
@@ -134,35 +132,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-   }
-
-   // only used if the CH impl does not order the hash ring based on the order of the view.
-   // in the case of the DefaultConsistentHash, the order is based on a has code of the addres modded by
-   // the hash space.  So this will not adhere to the positions in the view, but it is deterministic.
-   // so this function orders things such that the test can predict where keys get mapped to.
-   private void reorderBasedOnCHPositions() {
-      // wait for all joiners to join
-      assert caches.size() == INIT_CLUSTER_SIZE;
-      waitForClusterToForm(cacheName);
-
-      // seed this with an initial cache.  Any one will do.
-      Cache seed = caches.get(0);
-      ConsistentHash ch = getNonUnionConsistentHash(seed, SECONDS.toMillis(480));
-      List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
-
-      
-      for (Address a : ch.getMembers()) {
-         for (Cache<Object, String> c : caches) {
-            EmbeddedCacheManager cacheManager = c.getCacheManager();
-            if (a.equals(cacheManager.getAddress())) {
-               reordered.add(c);
-               break;
-            }
-         }
-      }
-
-      assert reordered.size() == INIT_CLUSTER_SIZE : "Reordering caches lost some caches: started with " + caches + ", ended with " + reordered;
-      caches = reordered;
    }
 
    // ----------------- HELPERS ----------------

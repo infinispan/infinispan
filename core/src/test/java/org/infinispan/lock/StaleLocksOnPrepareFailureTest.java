@@ -67,7 +67,7 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       InterceptorChain ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
       ic.addInterceptorBefore(interceptor, DistributionInterceptor.class);
 
-      MagicKey k1 = new MagicKey(c1, "k1");
+      MagicKey k1 = new MagicKey("k1", c1);
 
       tm(c1).begin();
       c1.put(k1, "v1");

@@ -67,7 +67,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
    }
 
    public void testRehashes() throws CacheLoaderException {
-      MagicKey k = new MagicKey(c1, "k");
+      MagicKey k = new MagicKey("k", c1);
 
       c1.put(k, "v");
 

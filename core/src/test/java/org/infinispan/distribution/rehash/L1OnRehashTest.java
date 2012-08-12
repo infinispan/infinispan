@@ -77,7 +77,7 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
 
    private List<MagicKey> init() {
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
-            new MagicKey(c1, "k1"), new MagicKey(c2, "k2")
+            new MagicKey("k1", c1), new MagicKey("k2", c2)
       ));
 
       int i = 0;

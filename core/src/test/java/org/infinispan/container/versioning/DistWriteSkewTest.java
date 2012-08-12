@@ -56,7 +56,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache1.put(hello, "world 1");
@@ -95,7 +95,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(0), "hello"); // Owned by cache0 and cache1
+      MagicKey hello = new MagicKey("hello", cache(0)); // Owned by cache0 and cache1
 
       int owners[] = {0, 0};
       int nonOwners[] = {0, 0};
@@ -144,9 +144,9 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
-      MagicKey hello2 = new MagicKey(cache(3), "hello2");
-      MagicKey hello3 = new MagicKey(cache(0), "hello3");
+      MagicKey hello = new MagicKey("hello", cache(2));
+      MagicKey hello2 = new MagicKey("hello2", cache(3));
+      MagicKey hello3 = new MagicKey("hello3", cache(0));
 
       tm(1).begin();
       cache1.put(hello, "world 1");
@@ -195,7 +195,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache0.put(hello, "world");
@@ -233,7 +233,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache0.put(hello, "world");
