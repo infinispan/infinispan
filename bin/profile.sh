@@ -7,7 +7,7 @@
 JVM_OPTS="$JVM_OPTS -Xms512M -Xmx512M -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dprotocol.stack=udp"
 
 PROFILED=false
-if [ $1 = "-p" ] ; then
+if [ "$1" = "-p" ] ; then
   PROFILED=true
   SESSION_ID=$2
   shift
@@ -35,9 +35,10 @@ if [ "x$SKIP_MAKE" = "x" ] ; then
   unzip -q target/distribution/*-bin.zip -d .tmp_profile_script
 fi
 
-for i in `find .tmp_profile_script/*/modules/core/lib -name "*.jar"` ; do
-  CP=$CP:$i
-done
+TMP_ISPN_HOME=$ISPN_HOME
+ISPN_HOME=`find .tmp_profile_script -name "infinispan-*-bin"`
+CP=$CP:`eval echo $(<$ISPN_HOME/runtime-classpath.txt)`
+ISPN_HOME=$TMP_ISPN_HOME
 
 if [ $PROFILED = "true" ] ; then
   JVM_OPTS="$JVM_OPTS 
