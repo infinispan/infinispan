@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-@Test (groups = "functional")
+@Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
    OwnableReentrantPerEntryLockContainer lc = new OwnableReentrantPerEntryLockContainer(1000);

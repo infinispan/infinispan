@@ -13,7 +13,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.LockOwnerCrasheOptimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.LockOwnerCrashOptimisticTest")
 @CleanupAfterMethod
 public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 

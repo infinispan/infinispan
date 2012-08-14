@@ -98,11 +98,16 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    public void onStart(ITestContext arg0) {
       String fullName = arg0.getName();
       String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
-      TestCacheManagerFactory.testStarted(simpleName, fullName);
+      Class testClass = arg0.getCurrentXmlTest().getClasses().get(0).getSupportClass();
+      if (!simpleName.equals(testClass.getSimpleName())) {
+         log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
+      }
+      TestCacheManagerFactory.testStarted(testClass.getSimpleName(), testClass.getName());
    }
 
    public void onFinish(ITestContext arg0) {
-      TestCacheManagerFactory.testFinished(arg0.getName());
+      Class testClass = arg0.getCurrentXmlTest().getClasses().get(0).getSupportClass();
+      TestCacheManagerFactory.testFinished(testClass.getSimpleName());
    }
 
    private String getThreadId() {
