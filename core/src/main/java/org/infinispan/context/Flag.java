@@ -163,10 +163,13 @@ public enum Flag {
    SKIP_INDEXING,
 
    /**
-    * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)} call, as opposed to a regular
-    * {@link Cache#put(Object, Object)}.
+    * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)}
+    * call, as opposed to a regular {@link Cache#put(Object, Object)}. This
+    * flag was created purely for internal Infinispan usage, and should not be
+    * used by clients calling into Infinispan.
     */
    PUT_FOR_EXTERNAL_READ,
+
    /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
