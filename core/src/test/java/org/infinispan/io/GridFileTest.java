@@ -278,6 +278,27 @@ public class GridFileTest extends SingleCacheManagerTest {
         }
     }
 
+
+   public void testSkipAndAvailable() throws Exception {
+        String filePath = "skip.dat";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(1);
+            out.write(2);
+            out.write(3);
+        }finally{
+            out.close();
+        }
+        InputStream in = fs.getInput(filePath);
+        try{
+            long skipped = in.skip(2);
+            assertEquals(skipped, 2);
+            assertEquals(in.read(), 3);
+        }finally{
+            in.close();
+        }
+    }
+
     public void testLastModified() throws Exception {
       assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
 
