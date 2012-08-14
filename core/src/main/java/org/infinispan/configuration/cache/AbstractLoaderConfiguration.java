@@ -31,11 +31,11 @@ public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertie
    private boolean fetchPersistentState;
    private boolean ignoreModifications;
 
-   private final AsyncLoaderConfiguration async;
+   private final AsyncStoreConfiguration async;
    private final SingletonStoreConfiguration singletonStore;
 
    AbstractLoaderConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
-         boolean ignoreModifications, TypedProperties properties, AsyncLoaderConfiguration async, SingletonStoreConfiguration singletonStore) {
+         boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(properties);
       this.purgeOnStartup = purgeOnStartup;
       this.purgeSynchronously = purgeSynchronously;
@@ -50,7 +50,7 @@ public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertie
     * Configuration for the async cache loader. If enabled, this provides you with asynchronous
     * writes to the cache store, giving you 'write-behind' caching.
     */
-   public AsyncLoaderConfiguration async() {
+   public AsyncStoreConfiguration async() {
       return async;
    }
 

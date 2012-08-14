@@ -35,7 +35,7 @@ public abstract class AbstractLockSupportCacheStoreConfiguration extends Abstrac
    AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout,
          int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
          int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncLoaderConfiguration async,
+         TypedProperties properties, AsyncStoreConfiguration async,
          SingletonStoreConfiguration singletonStore) {
       super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, properties, async, singletonStore);

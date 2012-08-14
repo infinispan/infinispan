@@ -19,13 +19,13 @@
 package org.infinispan.configuration.cache;
 
 /**
- * Configuration for the async cache loader. If enabled, this provides you with asynchronous writes
+ * Configuration for the async cache store. If enabled, this provides you with asynchronous writes
  * to the cache store, giving you 'write-behind' caching.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
-public class AsyncLoaderConfiguration {
+public class AsyncStoreConfiguration {
 
    private final boolean enabled;
    private long flushLockTimeout;
@@ -33,7 +33,7 @@ public class AsyncLoaderConfiguration {
    private long shutdownTimeout;
    private final int threadPoolSize;
 
-   AsyncLoaderConfiguration(boolean enabled, long flushLockTimeout, int modificationQueueSize, long shutdownTimeout,
+   AsyncStoreConfiguration(boolean enabled, long flushLockTimeout, int modificationQueueSize, long shutdownTimeout,
          int threadPoolSize) {
       this.enabled = enabled;
       this.flushLockTimeout = flushLockTimeout;
@@ -52,7 +52,7 @@ public class AsyncLoaderConfiguration {
    /**
     * Timeout to acquire the lock which guards the state to be flushed to the cache store
     * periodically. The timeout can be adjusted for a running cache.
-    * 
+    *
     * @return
     */
    public long flushLockTimeout() {
@@ -63,7 +63,7 @@ public class AsyncLoaderConfiguration {
     * Timeout to acquire the lock which guards the state to be flushed to the cache store
     * periodically. The timeout can be adjusted for a running cache.
     */
-   public AsyncLoaderConfiguration flushLockTimeout(long l) {
+   public AsyncStoreConfiguration flushLockTimeout(long l) {
       this.flushLockTimeout = l;
       return this;
    }
@@ -87,7 +87,7 @@ public class AsyncLoaderConfiguration {
       return shutdownTimeout;
    }
 
-   public AsyncLoaderConfiguration shutdownTimeout(long l) {
+   public AsyncStoreConfiguration shutdownTimeout(long l) {
       this.shutdownTimeout = l;
       return this;
    }

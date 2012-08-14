@@ -28,12 +28,12 @@ import java.util.Properties;
 public abstract class AbstractLoaderConfigurationBuilder<T extends AbstractLoaderConfiguration> extends
       AbstractLoadersConfigurationChildBuilder<T> {
 
-   protected final AsyncLoaderConfigurationBuilder async;
+   protected final AsyncStoreConfigurationBuilder async;
    protected final SingletonStoreConfigurationBuilder singletonStore;
 
    public AbstractLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.async = new AsyncLoaderConfigurationBuilder(this);
+      this.async = new AsyncStoreConfigurationBuilder(this);
       this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
@@ -41,7 +41,7 @@ public abstract class AbstractLoaderConfigurationBuilder<T extends AbstractLoade
     * Configuration for the async cache loader. If enabled, this provides you with asynchronous
     * writes to the cache store, giving you 'write-behind' caching.
     */
-   public AsyncLoaderConfigurationBuilder async() {
+   public AsyncStoreConfigurationBuilder async() {
       return async;
    }
 
