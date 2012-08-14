@@ -260,7 +260,6 @@ public class GridFileTest extends SingleCacheManagerTest {
       writeToFile("leak.txt", "12345", 5);           // file length = 5, chunkSize = 5
       assertEquals(numberOfChunksInCache(), 1);
    }
-
     //ISPN-2157
     public void testWriteAndReadNegativeByte() throws Exception {
         String filePath = "negative.dat";
@@ -273,6 +272,27 @@ public class GridFileTest extends SingleCacheManagerTest {
         InputStream in = fs.getInput(filePath);
         try{
             assertEquals(in.read(), 255);
+        }finally{
+            in.close();
+        }
+    }
+
+   public void testSkipAndAvailable() throws Exception {
+        String filePath = "skip.dat";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(1);
+            out.write(2);
+            out.write(3);
+        }finally{
+            out.close();
+        }
+        InputStream in = fs.getInput(filePath);
+        try{
+            assertTrue(in.available()>=0);
+            long skipped = in.skip(2);
+            assertEquals(skipped, 2);
+            assertEquals(in.read(), 3);
         }finally{
             in.close();
         }
