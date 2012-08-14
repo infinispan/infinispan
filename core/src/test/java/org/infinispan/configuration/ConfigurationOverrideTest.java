@@ -36,7 +36,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.infinispan.eviction.EvictionStrategy.*;
 import static org.infinispan.configuration.cache.CacheMode.*;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "configuration.ConfigurationOverrideTest")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;

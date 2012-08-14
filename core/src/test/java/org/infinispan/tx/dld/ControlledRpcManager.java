@@ -89,6 +89,7 @@ public class ControlledRpcManager implements RpcManager {
 
    protected void waitForLatchToOpen() {
       try {
+         log.trace("Waiting for replication latch to open");
          replicationLatch.await();
          log.trace("Replication latch opened, continuing...");
       } catch (Exception e) {

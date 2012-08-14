@@ -58,7 +58,7 @@ public final class PerCacheExecutorThread extends Thread {
    }
 
    public PerCacheExecutorThread(Cache<Object, Object> cache, int index) {
-      super("PerCacheExecutorThread-" + index);
+      super("PerCacheExecutorThread-" + index + "," + cache.getCacheManager().getAddress());
       this.cache = cache;
       start();
    }
