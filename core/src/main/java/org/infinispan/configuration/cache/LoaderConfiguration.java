@@ -32,7 +32,7 @@ public class LoaderConfiguration extends AbstractLoaderConfiguration {
 
    LoaderConfiguration(TypedProperties properties, CacheLoader cacheLoader, boolean fetchPersistentState,
          boolean ignoreModifications, boolean purgeOnStartup, int purgerThreads, boolean purgeSynchronously,
-         AsyncLoaderConfiguration async, SingletonStoreConfiguration singletonStore) {
+         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, properties, async, singletonStore);
       this.cacheLoader = cacheLoader;

@@ -39,7 +39,7 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
          FsyncMode fsyncMode, int streamBufferSize, long lockAcquistionTimeout,
          int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
          int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncLoaderConfiguration async,
+         TypedProperties properties, AsyncStoreConfiguration async,
          SingletonStoreConfiguration singletonStore) {
       super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
             purgeSynchronously, purgerThreads, fetchPersistentState,

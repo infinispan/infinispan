@@ -28,7 +28,7 @@ public abstract class AbstractLoaderConfigurationChildBuilder<T> extends Abstrac
    }
 
    @Override
-   public AsyncLoaderConfigurationBuilder async() {
+   public AsyncStoreConfigurationBuilder async() {
       return loaderConfigurationBuilder.async();
    }
    
