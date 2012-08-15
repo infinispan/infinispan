@@ -154,6 +154,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert c.get("k").equals("v6");
    }
 
+   @Test(enabled = false, description = "See ISPN-2203")
    public void testAsyncMethodWithLifespanAndMaxIdle() throws ExecutionException, InterruptedException {
 
       // lifespan only
