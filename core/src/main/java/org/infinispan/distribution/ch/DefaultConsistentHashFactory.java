@@ -106,6 +106,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
    /**
     * Merges two consistent hash objects that have the same number of segments, numOwners and hash function.
+    * For each segment, the primary owner of the first CH has priority, the other primary owners become backups.
     */
    @Override
    public DefaultConsistentHash union(DefaultConsistentHash dch1, DefaultConsistentHash dch2) {
