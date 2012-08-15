@@ -25,7 +25,7 @@ package org.infinispan.distribution.topologyaware;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -55,10 +55,9 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       defaultConfig.setL1CacheEnabled(false);
       createClusteredCaches(5, defaultConfig);
 
-      TopologyAwareConsistentHash hash =
-            (TopologyAwareConsistentHash) cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
-      Set<Address> addressSet = hash.getCaches();
-      addresses = addressSet.toArray(new Address[addressSet.size()]);
+      ConsistentHash hash = cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
+      List<Address> members = hash.getMembers();
+      addresses = members.toArray(new Address[members.size()]);
    }
 
    @AfterMethod(alwaysRun = true)

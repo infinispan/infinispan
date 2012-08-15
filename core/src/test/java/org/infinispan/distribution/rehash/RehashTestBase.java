@@ -102,7 +102,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       int i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
-      assertProperConsistentHashOnAllCaches();
    }
 
 
@@ -169,8 +168,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
          assertOnAllCaches(keys.get(1), "v" + 2);
          assertOnAllCaches(keys.get(2), "v" + 3);
          assertOnAllCaches(keys.get(3), "v" + 4);
-
-         assertProperConsistentHashOnAllCaches();
       }
    }
 
@@ -214,8 +211,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       int i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + updaters.get(i++).currentValue);
-
-      assertProperConsistentHashOnAllCaches();
    }
 }
 

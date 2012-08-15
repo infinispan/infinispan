@@ -31,7 +31,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -1414,21 +1413,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.l1.onRehash;
    }
 
+   /**
+    * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
+    */
    public String getConsistentHashClass() {
-      if (clustering.hash.consistentHashClass == null) {
-         clustering.hash.consistentHashClass = globalConfiguration == null || globalConfiguration.hasTopologyInfo() ? TopologyAwareConsistentHash.class.getName() : DefaultConsistentHash.class.getName();
-      }
       return clustering.hash.consistentHashClass;
    }
-   
-   public boolean hasConsistentHashClass() {
-      return clustering.hash.consistentHashClass != null;
-   }
 
+   /**
+    * @deprecated No longer useful, since {@link #getConsistentHashClass()} is not used.
+    */
    public boolean isCustomConsistentHashClass() {
-      return clustering.hash.consistentHashClass != null &&
-            !clustering.hash.consistentHashClass.equals(DefaultConsistentHash.class.getName()) &&
-            !clustering.hash.consistentHashClass.equals(TopologyAwareConsistentHash.class.getName());
+      return false;
    }
 
    public boolean isCustomHashFunctionClass() {

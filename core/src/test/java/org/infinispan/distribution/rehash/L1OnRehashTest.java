@@ -66,13 +66,8 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(10), c1, c2, joiner);
       waitForClusterToForm(cacheName);
 
-      // where does the joiner sit in relation to the other caches?
-      int joinerPos = locateJoiner(joinerManager.getAddress());
-
-      log.info("***>>> Joiner is in position " + joinerPos);
-
-      caches.add(joinerPos, joiner);
-      return joinerPos;
+      caches.add(joiner);
+      return caches.size() - 1;
    }
 
    private List<MagicKey> init() {

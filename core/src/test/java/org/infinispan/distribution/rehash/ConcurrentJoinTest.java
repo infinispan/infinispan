@@ -83,15 +83,8 @@ public class ConcurrentJoinTest extends RehashTestBase {
       // Collection already contains all cache managers, no need to add more
       TestingUtil.blockUntilViewsReceived(60000, false, allCacheManagers);
       waitForClusterToForm(cacheName);
-      int[] joinersPos = new int[NUM_JOINERS];
-      for (int i = 0; i < NUM_JOINERS; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
-
-      log.info("***>>> Joiners are in positions " + Arrays.toString(joinersPos));
       for (int i = 0; i < NUM_JOINERS; i++) {
-         if (joinersPos[i] > caches.size())
-            caches.add(joiners.get(i));
-         else
-            caches.add(joinersPos[i], joiners.get(i));
+         caches.add(joiners.get(i));
       }
    }
 }

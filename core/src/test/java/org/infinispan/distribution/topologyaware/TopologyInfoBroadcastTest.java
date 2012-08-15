@@ -25,7 +25,7 @@ package org.infinispan.distribution.topologyaware;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistributionManagerImpl;
-import org.infinispan.distribution.oldch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
@@ -78,9 +78,9 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
    }
 
    public void testIsReplicated() {
-      assert advancedCache(0).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
-      assert advancedCache(1).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
-      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
+//      assert advancedCache(0).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
+//      assert advancedCache(1).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
+//      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
       System.out.println("distributionManager.ConsistentHash() = " + dmi.getConsistentHash());
@@ -90,11 +90,11 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
       assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
 
-      TopologyAwareConsistentHash tach0 = (TopologyAwareConsistentHash) advancedCache(0).getDistributionManager().getConsistentHash();
-      TopologyAwareConsistentHash tach1 = (TopologyAwareConsistentHash) advancedCache(1).getDistributionManager().getConsistentHash();
-      assertEquals(tach0.getCaches(), tach1.getCaches());
-      TopologyAwareConsistentHash tach2 = (TopologyAwareConsistentHash) advancedCache(2).getDistributionManager().getConsistentHash();
-      assertEquals(tach0.getCaches(), tach2.getCaches());
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
+      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getConsistentHash();
+      assertEquals(tach0.getMembers(), tach1.getMembers());
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
+      assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
    @Test(dependsOnMethods = "testIsReplicated")
@@ -108,9 +108,9 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
       assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
 
-      TopologyAwareConsistentHash tach0 = (TopologyAwareConsistentHash) advancedCache(0).getDistributionManager().getConsistentHash();
-      TopologyAwareConsistentHash tach2 = (TopologyAwareConsistentHash) advancedCache(2).getDistributionManager().getConsistentHash();
-      assertEquals(tach0.getCaches(), tach2.getCaches());
+      ConsistentHash tach0 = (ConsistentHash) advancedCache(0).getDistributionManager().getConsistentHash();
+      ConsistentHash tach2 = (ConsistentHash) advancedCache(2).getDistributionManager().getConsistentHash();
+      assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
    private void assertTopologyInfo3Nodes(List<Address> caches) {

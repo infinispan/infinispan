@@ -32,7 +32,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.distribution.oldch.UnionConsistentHash;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
@@ -217,18 +216,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected int locateJoiner(Address joinerAddress) {
-      for (Cache c : caches) {
-         ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
-         int i = 0;
-         for (Address a : dch.getMembers()) {
-            if (a.equals(joinerAddress)) return i;
-            i++;
-         }
-      }
-      throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
-   }
-
    protected String safeType(Object o) {
       return DistributionTestHelper.safeType(o);
    }
@@ -319,17 +306,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return getDistributionManager(c).getConsistentHash();
    }
 
-   protected ConsistentHash getNonUnionConsistentHash(Cache<?, ?> c, long timeout) {
-      // TODO Return only when the pending ch in DistributionManager is null instead
-      long expTime = System.currentTimeMillis() + timeout;
-      while (System.currentTimeMillis() < expTime) {
-         ConsistentHash ch = c.getAdvancedCache().getDistributionManager().getConsistentHash();
-         if (!(ch instanceof UnionConsistentHash)) return ch;
-         TestingUtil.sleepThread(100);
-      }
-      throw new RuntimeException("Timed out waiting for a non-UnionConsistentHash to be present on cache [" + addressOf(c) + "]");
-   }
-
    /**
     * Blocks and waits for a replication event on async caches
     *
@@ -340,14 +316,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     */
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... caches) {
       // no op.
-   }
-
-   protected void assertProperConsistentHashOnAllCaches() {
-      // check that ALL caches in the system DON'T have a temporary UnionCH
-      for (Cache c : caches) {
-         DistributionManager dm = getDistributionManager(c);
-         assert !(dm.getConsistentHash() instanceof UnionConsistentHash);
-      }
    }
 
    protected TransactionManager getTransactionManager(Cache<?, ?> cache) {
