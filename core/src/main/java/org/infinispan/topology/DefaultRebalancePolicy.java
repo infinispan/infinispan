@@ -20,7 +20,6 @@
 package org.infinispan.topology;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -76,7 +75,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
    @Override
    public void initCache(String cacheName, CacheJoinInfo joinInfo) throws Exception {
-      cacheStatusMap.putIfAbsent(cacheName, new CacheStatus(joinInfo, globalConfiguration));
+      cacheStatusMap.putIfAbsent(cacheName, new CacheStatus(joinInfo));
    }
 
    @Override
@@ -261,7 +260,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       private CacheTopology cacheTopology;
       private List<Address> joiners;
 
-      public CacheStatus(CacheJoinInfo joinInfo, GlobalConfiguration globalConfiguration) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+      public CacheStatus(CacheJoinInfo joinInfo) {
          this.joinInfo = joinInfo;
 
          this.cacheTopology = new CacheTopology(0, null, null);
