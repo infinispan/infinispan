@@ -30,6 +30,7 @@ import java.util.*;
 
 /**
  * Special implementation of {@link ConsistentHash} for replicated caches.
+ * The hash-space has only one segment owned by all members.
  *
  * @author Dan Berindei
  * @since 5.2
