@@ -36,7 +36,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
