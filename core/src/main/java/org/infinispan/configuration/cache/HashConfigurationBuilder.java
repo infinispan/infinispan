@@ -180,17 +180,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      ConsistentHashFactory finalCHFactory = null;
-      if (consistentHashFactory != null) {
-         finalCHFactory = consistentHashFactory;
-      } else if (clustering().cacheMode().isClustered()) {
-         if (clustering().cacheMode().isDistributed()) {
-            finalCHFactory = new DefaultConsistentHashFactory();
-         } else {
-            finalCHFactory = new ReplicatedConsistentHashFactory();
-         }
-      }
-      return new HashConfiguration(finalCHFactory, hash, numOwners, numSegments,
+      return new HashConfiguration(null, hash, numOwners, numSegments,
             groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 

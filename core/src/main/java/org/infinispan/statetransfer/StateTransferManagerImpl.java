@@ -25,10 +25,16 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.distribution.group.GroupingConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
@@ -64,6 +70,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private Configuration configuration;
    private CacheNotifier cacheNotifier;
+   private GlobalConfiguration globalConfiguration;
    private LocalTopologyManager localTopologyManager;
    private RpcManager rpcManager;
    private GroupManager groupManager;
@@ -81,6 +88,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public void init(@ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,   //todo [anistor] use a separate ExecutorService
                     CacheNotifier cacheNotifier,
                     Configuration configuration,
+                    GlobalConfiguration globalConfiguration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
                     CacheLoaderManager cacheLoaderManager,
@@ -94,6 +102,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     GroupManager groupManager) {
       this.configuration = configuration;
       this.cacheNotifier = cacheNotifier;
+      this.globalConfiguration = globalConfiguration;
       this.localTopologyManager = localTopologyManager;
       this.rpcManager = rpcManager;
       this.stateTransferLock = stateTransferLock;
@@ -132,7 +141,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(
-            configuration.clustering().hash().consistentHashFactory(),
+            pickConsistentHashFactory(),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(), configuration.clustering().stateTransfer().timeout());
@@ -177,6 +186,25 @@ public class StateTransferManagerImpl implements StateTransferManager {
       };
 
       localTopologyManager.join(cacheName, joinInfo, handler);
+   }
+
+   private ConsistentHashFactory pickConsistentHashFactory() {
+      ConsistentHashFactory factory = configuration.clustering().hash().consistentHashFactory();
+      if (factory == null) {
+         CacheMode cacheMode = configuration.clustering().cacheMode();
+         if (cacheMode.isClustered()) {
+            if (cacheMode.isDistributed()) {
+               if (globalConfiguration.transport().hasTopologyInfo()) {
+                  factory = new TopologyAwareConsistentHashFactory();
+               } else {
+                  factory = new DefaultConsistentHashFactory();
+               }
+            } else {
+               factory = new ReplicatedConsistentHashFactory();
+            }
+         }
+      }
+      return factory;
    }
 
    @Stop(priority = 20)
