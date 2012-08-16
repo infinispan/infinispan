@@ -72,7 +72,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       int numNodes = nodes.size();
       int actualNumOwners = Math.min(ch.getNumOwners(), numNodes);
 
-      CHStatistics stats = new CHStatistics(nodes);
+      OwnershipStatistics stats = new OwnershipStatistics(nodes);
       for (int i = 0; i < numSegments; i++) {
          List<Address> owners = ch.locateOwnersForSegment(i);
          if (!allowExtraOwners) {

@@ -88,7 +88,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       Hash hashFunction = baseCH.getHashFunction();
       List<Address> nodes = baseCH.getMembers();
 
-      CHStatistics stats = computeStatistics(baseCH, nodes);
+      OwnershipStatistics stats = computeStatistics(baseCH, nodes);
 
       // Copy the owners list out of the old CH
       List<Address>[] ownerLists = extractSegmentOwners(baseCH);
@@ -139,7 +139,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
    }
 
-   private void addPrimaryOwners(List<Address> nodes, int numSegments, CHStatistics stats, List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
+   private void addPrimaryOwners(List<Address> nodes, int numSegments, OwnershipStatistics stats, List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
       // Compute how many segments each node has to primary-own.
       // If numSegments is not divisible by numNodes, older nodes will own 1 extra segment.
       Map<Address, Integer> expectedPrimaryOwned = computeExpectedPrimaryOwned(nodes, numSegments);
@@ -186,7 +186,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       return segmentOwners;
    }
 
-   private void addBackupOwners(int numOwners, List<Address> nodes, int numSegments, CHStatistics stats,
+   private void addBackupOwners(int numOwners, List<Address> nodes, int numSegments, OwnershipStatistics stats,
                                 List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
       int actualNumOwners = Math.min(numOwners, nodes.size());
       Map<Address, Integer> expectedOwned = computeExpectedOwned(nodes, actualNumOwners, numSegments);
@@ -248,7 +248,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
    }
 
    private void stealOwner(int numSegments, Address replacementOwner, int destSegment,
-                           List<Address>[] ownerLists, List<Address>[] intOwnerLists, CHStatistics stats) {
+                           List<Address>[] ownerLists, List<Address>[] intOwnerLists, OwnershipStatistics stats) {
       // try to find a replacement for the new owner in any segment, starting from the back
       for (int i = numSegments - 1; i >= 0; i--) {
          if (ownerLists[i].contains(replacementOwner))
@@ -281,7 +281,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       assert false : "It should always be possible to find a replacement owner";
    }
 
-   private List<Address> computeNewPrimaryOwners(List<Address> nodes, CHStatistics stats,
+   private List<Address> computeNewPrimaryOwners(List<Address> nodes, OwnershipStatistics stats,
                                                  Map<Address, Integer> expectedPrimaryOwned) {
       // Find the nodes that need to own more segments
       // A node can appear multiple times in this list, once for each new segment
@@ -306,7 +306,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       return newPrimaryOwners;
    }
 
-   private List<Address> computeNewOwners(List<Address> nodes, CHStatistics stats, Map<Address, Integer> expectedOwned) {
+   private List<Address> computeNewOwners(List<Address> nodes, OwnershipStatistics stats, Map<Address, Integer> expectedOwned) {
       // Find the nodes that need to own more segments
       // A node can appear multiple times in this list, once for each new segment
       // But in order to make the job of the picker easier, we add nodes to the list in a round-robin fashion
@@ -418,7 +418,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
    private void assignSegmentsWithZeroOwners(DefaultConsistentHash baseDCH, List<Address> newMembers,
                                              List<Address>[] segmentOwners) {
-      CHStatistics stats = computeStatistics(baseDCH, newMembers);
+      OwnershipStatistics stats = computeStatistics(baseDCH, newMembers);
       int actualNumOwners = Math.min(baseDCH.getNumOwners(), newMembers.size());
       int numSegments = baseDCH.getNumSegments();
       Map<Address, Integer> expectedPrimaryOwnedSegments = computeExpectedPrimaryOwned(newMembers, numSegments);
@@ -464,8 +464,8 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
    }
 
-   private CHStatistics computeStatistics(DefaultConsistentHash ch, List<Address> nodes) {
-      CHStatistics stats = new CHStatistics(nodes);
+   private OwnershipStatistics computeStatistics(DefaultConsistentHash ch, List<Address> nodes) {
+      OwnershipStatistics stats = new OwnershipStatistics(nodes);
       for (int i = 0; i < ch.getNumSegments(); i++) {
          List<Address> owners = ch.locateOwnersForSegment(i);
          for (int j = 0; j < owners.size(); j++) {
