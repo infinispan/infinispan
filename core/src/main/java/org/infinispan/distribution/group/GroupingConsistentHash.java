@@ -23,6 +23,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,8 +53,7 @@ public class GroupingConsistentHash implements ConsistentHash {
 
    @Override
    public int getSegment(Object key) {
-      String groupKey = groupManager.getGroup(key);
-      return ch.getSegment(groupKey);
+      return ch.getSegment(getGroupKey(key));
    }
 
    @Override
@@ -82,22 +83,41 @@ public class GroupingConsistentHash implements ConsistentHash {
 
    @Override
    public Address locatePrimaryOwner(Object key) {
-      return ch.locatePrimaryOwner(key);
+      return ch.locatePrimaryOwner(getGroupKey(key));
    }
 
    @Override
    public List<Address> locateOwners(Object key) {
-      return ch.locateOwners(key);
+      return ch.locateOwners(getGroupKey(key));
    }
 
    @Override
    public Set<Address> locateAllOwners(Collection<Object> keys) {
-      return ch.locateAllOwners(keys);
+      // We have to duplicate the work in DefaultConsistentHash.locateAllOwners
+      // because there's no way to call back from DCH to our getSegment(key) method.
+      HashSet<Integer> segments = new HashSet<Integer>();
+      for (Object key : keys) {
+         segments.add(getSegment(key));
+      }
+      HashSet<Address> owners = new HashSet<Address>();
+      for (Integer segment : segments) {
+         owners.addAll(locateOwnersForSegment(segment));
+      }
+      return owners;
    }
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return ch.isKeyLocalToNode(nodeAddress, key);
+      return ch.isKeyLocalToNode(nodeAddress, getGroupKey(key));
+   }
+
+   private Object getGroupKey(Object key) {
+      Object finalKey = key;
+      String groupKey = groupManager.getGroup(key);
+      if (groupKey != null) {
+         finalKey = groupKey;
+      }
+      return finalKey;
    }
 
    @Override
