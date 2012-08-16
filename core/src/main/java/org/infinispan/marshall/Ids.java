@@ -61,7 +61,7 @@ public interface Ids {
    int GLOBAL_TRANSACTION = 38;
    int JGROUPS_ADDRESS = 39;
    int MARSHALLED_VALUE = 40;
-   int TRANSACTION_LOG_ENTRY = 41;
+   // 41 no longer in use, used to be TransactionLog.LogEntry
    int BUCKET = 42;
    int DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
 
@@ -106,6 +106,7 @@ public interface Ids {
    int VERSIONED_MORTAL_VALUE = 81;
    int VERSIONED_TRANSIENT_VALUE = 82;
    int VERSIONED_TRANSIENT_MORTAL_VALUE = 83;
+
    int TRANSACTION_INFO = 84;
 
    int FLAG = 85;
