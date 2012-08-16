@@ -131,6 +131,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          return SuccessfulResponse.create(responseValue);
       } catch (Exception t) {
          log.exceptionHandlingCommand(this, t);
+         // todo [anistor] CommandAwareRequestDispatcher does not wrap our exceptions so we have to do it instead
          return new ExceptionResponse(t);
       } finally {
          LogFactory.popNDC(trace);

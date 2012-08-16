@@ -26,7 +26,6 @@ package org.infinispan.statetransfer;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -90,18 +89,17 @@ public class StateRequestCommand extends BaseRpcCommand {
 
             case START_STATE_TRANSFER:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments);
+               // return a non-null value to ensure it will reach back to originator wrapped in a SuccessfulResponse (a null would not be sent back)
                return true;
 
             case CANCEL_STATE_TRANSFER:
                stateProvider.cancelOutboundTransfer(getOrigin(), topologyId, segments);
+               // originator does not care about the result, so we can return null
                return null;
 
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }
-      } catch (Exception t) {
-         log.exceptionHandlingCommand(this, t);
-         return new ExceptionResponse(t);
       } finally {
          LogFactory.popNDC(trace);
       }
@@ -109,7 +107,7 @@ public class StateRequestCommand extends BaseRpcCommand {
 
    @Override
    public boolean isReturnValueExpected() {
-      return true;
+      return type != Type.CANCEL_STATE_TRANSFER;
    }
 
    public Type getType() {
@@ -140,9 +138,10 @@ public class StateRequestCommand extends BaseRpcCommand {
    public String toString() {
       return "StateRequestCommand{" +
             "cache=" + cacheName +
-            ", type=" + type +
             ", origin=" + getOrigin() +
+            ", type=" + type +
             ", topologyId=" + topologyId +
+            ", segments=" + segments +
             '}';
    }
 }

@@ -229,7 +229,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else {
          if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
          gcr.wireDependencies(cmd);
-         return cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least provides the Address of the origin
+
+         //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
+         return cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
       }
    }
 
