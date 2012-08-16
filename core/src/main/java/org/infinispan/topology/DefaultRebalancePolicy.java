@@ -245,6 +245,10 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
          clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
+
+         if (!isBalanced(newCurrentCH)) {
+            startRebalance(cacheName, cacheStatus, newCurrentCH.getMembers());
+         }
       }
    }
 
@@ -253,6 +257,15 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       return cacheStatusMap.get(cacheName).cacheTopology;
    }
 
+   private boolean isBalanced(ConsistentHash ch) {
+      int numSegments = ch.getNumSegments();
+      for (int i = 0; i < numSegments; i++) {
+         if (ch.locateOwnersForSegment(i).size() != ch.getNumOwners()) {
+            return false;
+         }
+      }
+      return true;
+   }
 
    private static class CacheStatus {
       private CacheJoinInfo joinInfo;
