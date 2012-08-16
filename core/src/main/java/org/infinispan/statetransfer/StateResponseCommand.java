@@ -26,7 +26,6 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,14 +44,29 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 20;
 
+   /**
+    * The topology id of the sender at send time.
+    */
    private int topologyId;
 
+   /**
+    * The id of the segment for which we push cache entries.
+    */
    private int segmentId;
 
+   /**
+    * The cache entries. They are all guaranteed to be long to the same segment: segmentId.
+    */
    private Collection<InternalCacheEntry> cacheEntries;
 
+   /**
+    * Indicates to receiver is there are more chunks to come for this segment.
+    */
    private boolean isLastChunk;
 
+   /**
+    * This is injected on target node via init() method before the command is performed.
+    */
    private StateConsumer stateConsumer;
 
    private StateResponseCommand() {
@@ -83,9 +97,6 @@ public class StateResponseCommand extends BaseRpcCommand {
       try {
          stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries, isLastChunk);
          return null;
-      } catch (Exception e) {
-         log.exceptionHandlingCommand(this, e);
-         return new ExceptionResponse(e);
       } finally {
          LogFactory.popNDC(trace);
       }
@@ -107,7 +118,6 @@ public class StateResponseCommand extends BaseRpcCommand {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
       setOrigin((Address) parameters[i++]);
