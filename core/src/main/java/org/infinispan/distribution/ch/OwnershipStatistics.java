@@ -26,17 +26,18 @@ import java.util.Map;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * This class holds statistics about a consistent hash.
+ * This class holds statistics about a consistent hash. It counts how many segments are owned or primary-owned by each
+ * member.
  *
  * @author Dan Berindei
  * @since 5.2
  */
-class CHStatistics {
+class OwnershipStatistics {
    private final Map<Address, Integer> nodes;
    private final int[] primaryOwned;
    private final int[] owned;
 
-   public CHStatistics(List<Address> nodes) {
+   public OwnershipStatistics(List<Address> nodes) {
       this.nodes = new HashMap<Address, Integer>(nodes.size());
       for (int i = 0; i < nodes.size(); i++) {
          this.nodes.put(nodes.get(i), i);
