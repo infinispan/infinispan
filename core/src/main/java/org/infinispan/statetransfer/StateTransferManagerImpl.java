@@ -163,15 +163,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
 
             // handle grouping
-            if (groupManager != null) {
-               ConsistentHash currentCH = cacheTopology.getCurrentCH();
-               currentCH = new GroupingConsistentHash(currentCH, groupManager);
-               ConsistentHash pendingCH = cacheTopology.getPendingCH();
-               if (pendingCH != null) {
-                  pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
-               }
-               cacheTopology = new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
-            }
+            newCacheTopology = addGrouping(newCacheTopology);
 
             ConsistentHash oldCH = cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
             ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
@@ -187,6 +179,19 @@ public class StateTransferManagerImpl implements StateTransferManager {
       };
 
       localTopologyManager.join(cacheName, joinInfo, handler);
+   }
+
+   private CacheTopology addGrouping(CacheTopology newCacheTopology) {
+      if (groupManager == null)
+         return newCacheTopology;
+
+      ConsistentHash currentCH = newCacheTopology.getCurrentCH();
+      currentCH = new GroupingConsistentHash(currentCH, groupManager);
+      ConsistentHash pendingCH = newCacheTopology.getPendingCH();
+      if (pendingCH != null) {
+         pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
+      }
+      return new CacheTopology(newCacheTopology.getTopologyId(), currentCH, pendingCH);
    }
 
    private ConsistentHashFactory pickConsistentHashFactory() {
