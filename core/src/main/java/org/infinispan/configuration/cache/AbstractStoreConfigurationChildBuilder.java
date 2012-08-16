@@ -18,10 +18,23 @@
  */
 package org.infinispan.configuration.cache;
 
-public interface LoaderConfigurationChildBuilder extends ConfigurationChildBuilder {
+public abstract class AbstractStoreConfigurationChildBuilder<T> extends AbstractLoaderConfigurationChildBuilder<T> implements StoreConfigurationChildBuilder {
 
-   AsyncStoreConfigurationBuilder async();
-   
-   SingletonStoreConfigurationBuilder singletonStore();
-   
+   private final StoreConfigurationBuilder<? extends AbstractStoreConfiguration, ? extends StoreConfigurationBuilder<?,?>> storeConfigurationBuilder;
+
+   protected AbstractStoreConfigurationChildBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
+      super(builder.loaders());
+      this.storeConfigurationBuilder = builder;
+   }
+
+   @Override
+   public AsyncStoreConfigurationBuilder async() {
+      return storeConfigurationBuilder.async();
+   }
+
+   @Override
+   public SingletonStoreConfigurationBuilder singletonStore() {
+      return storeConfigurationBuilder.singletonStore();
+   }
+
 }

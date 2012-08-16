@@ -18,18 +18,10 @@
  */
 package org.infinispan.configuration.cache;
 
-/**
- *
- * AbstractLoaderConfigurationChildBuilder.
- *
- * @author Pete Muir
- * @author Tristan Tarrant
- * @since 5.1
- */
-public abstract class AbstractLoaderConfigurationChildBuilder<T> extends AbstractLoadersConfigurationChildBuilder<T> {
+public interface StoreConfigurationChildBuilder extends ConfigurationChildBuilder {
 
-   AbstractLoaderConfigurationChildBuilder(LoadersConfigurationBuilder builder) {
-      super(builder);
-   }
-
+   AsyncStoreConfigurationBuilder async();
+   
+   SingletonStoreConfigurationBuilder singletonStore();
+   
 }

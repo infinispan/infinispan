@@ -40,7 +40,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
@@ -194,7 +193,7 @@ public class ConfigurationUnitTest {
    public void testClearCacheLoaders() {
       Configuration c = new ConfigurationBuilder()
             .loaders()
-               .addCacheLoader()
+               .addLoader()
             .loaders()
                .clearCacheLoaders()
          .build();
@@ -258,7 +257,7 @@ public class ConfigurationUnitTest {
    public void testEnableVersioning() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.versioning().enable();
-      org.infinispan.config.Configuration adapt = 
+      org.infinispan.config.Configuration adapt =
             LegacyConfigurationAdaptor.adapt(builder.build());
       assert adapt.isEnableVersioning();
    }

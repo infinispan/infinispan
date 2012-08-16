@@ -22,7 +22,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -65,10 +65,10 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
 
       cb.loaders().passivation(false).preload(true).shared(true);
       // Make it really shared by adding the test's name as store name
-      LoaderConfigurationBuilder lb = cb.loaders().addCacheLoader().cacheLoader(
+      LegacyStoreConfigurationBuilder sb = cb.loaders().addStore().cacheStore(
             new DummyInMemoryCacheStore());
-      lb.addProperty("storeName", getClass().getSimpleName());
-      lb.async().disable();
+      sb.addProperty("storeName", getClass().getSimpleName());
+      sb.async().disable();
       return cb;
    }
 

@@ -32,7 +32,7 @@ import org.testng.Assert._
 import org.testng.annotations.Test
 import org.infinispan.loaders.cluster.{ClusterCacheLoaderConfig, ClusterCacheLoader}
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.configuration.cache.{LoaderConfiguration, Configuration}
+import org.infinispan.configuration.cache.{LegacyLoaderConfiguration, Configuration}
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -65,7 +65,7 @@ class HotRodConfigurationTest {
       withClusteredServer(props) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.clustering().sync().replTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
-         val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[LoaderConfiguration]
+         val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[LegacyLoaderConfiguration]
          assertNotNull(clcfg)
          assertEquals(clcfg.cacheLoader().getClass.getName, classOf[ClusterCacheLoader].getName)
          assertEquals(clcfg.properties().get("remoteCallTimeout"), "43000")

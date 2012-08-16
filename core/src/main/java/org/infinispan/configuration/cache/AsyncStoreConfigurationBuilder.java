@@ -35,7 +35,7 @@ public class AsyncStoreConfigurationBuilder extends AbstractLoaderConfigurationC
    private long shutdownTimeout = TimeUnit.SECONDS.toMillis(25);
    private int threadPoolSize = 1;
 
-   AsyncStoreConfigurationBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
+   AsyncStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 

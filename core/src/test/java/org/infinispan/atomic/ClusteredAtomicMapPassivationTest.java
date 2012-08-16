@@ -49,7 +49,7 @@ public class ClusteredAtomicMapPassivationTest extends MultipleCacheManagersTest
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_SYNC, true);
       builder.loaders().passivation(true)
-                  .addCacheLoader().cacheLoader(new DummyInMemoryCacheStore());
+                  .addStore().cacheStore(new DummyInMemoryCacheStore());
       createClusteredCaches(2, "atomic", builder);
    }
 

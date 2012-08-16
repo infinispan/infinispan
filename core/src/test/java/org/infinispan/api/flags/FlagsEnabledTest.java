@@ -54,13 +54,14 @@ import java.util.concurrent.Callable;
 @CleanupAfterMethod
 public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .loaders().addCacheLoader().cacheLoader(new CountingCacheStore())
-            .loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore())
+            .loaders().addStore().cacheStore(new CountingCacheStore())
+            .loaders().addStore().cacheStore(new DummyInMemoryCacheStore())
             .transaction().syncCommitPhase(true);
       createClusteredCaches(2, "replication", builder);
    }
@@ -83,16 +84,16 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value2");
-      
+
       assert getCacheStore(cache1).numLoads == 1;
       assert getCacheStore(cache2).numLoads == 1;
       assert getCacheStore(cache2) != getCacheStore(cache1);
-      
+
       cache1.put("nonLocal", "value");
       assert "value".equals(cache2.get("nonLocal"));
       assert getCacheStore(cache1).numLoads == 2;
       assert getCacheStore(cache2).numLoads == 1; //not incremented since ISPN-1642
-      
+
       AdvancedCache cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
       cache1SkipRemoteAndStores.put("again", "value");
       assert getCacheStore(cache1).numLoads == 2;
@@ -102,12 +103,12 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       assert getCacheStore(cache1).numLoads == 2;
       assert getCacheStore(cache2).numLoads == 2; //"again" wasn't found in cache, looks into store
-      
+
       assert cache2.get("again") == null;
       assert getCacheStore(cache2).numLoads == 3;
       assert cache2.withFlags(SKIP_CACHE_STORE).get("again") == null;
       assert getCacheStore(cache2).numLoads == 3;
-      
+
       assert getCacheStore(cache1).numLoads == 2;
       assert cache1LocalOnly.get("localStored") == null;
       assert getCacheStore(cache1).numLoads == 3; //options on cache1SkipRemoteAndStores did NOT affect this cache

@@ -57,6 +57,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    DummyInMemoryCacheStore[] stores;  // for convenient iteration
    private static final long lifespan = 6000000;
 
+   @Override
    protected CacheStore createCacheStore() throws CacheLoaderException {
       ChainingCacheStore store = new ChainingCacheStore();
       CacheStoreConfig cfg = new DummyInMemoryCacheStore.Cfg()

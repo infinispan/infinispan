@@ -18,35 +18,21 @@
  */
 package org.infinispan.configuration.cache;
 
-import java.util.Properties;
-
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.Self;
+import java.util.concurrent.TimeUnit;
 
 /**
- * LoaderConfigurationBuilder is an interface which should be implemented by all cache loader builders
+ * LockSupportCacheStoreConfigurationBuilder is an interface which should be implemented by all cache store builders which support locking
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LoaderConfigurationBuilder<T extends LoaderConfiguration, S extends LoaderConfigurationBuilder<T,S>> extends Builder<T>, ConfigurationChildBuilder, Self<S> {
+public interface LockSupportCacheStoreConfigurationBuilder<T extends StoreConfiguration, S extends LockSupportCacheStoreConfigurationBuilder<T, S>> extends StoreConfigurationBuilder<T, S> {
 
-   /**
-    * <p>
-    * Defines a single property. Can be used multiple times to define all needed properties, but the
-    * full set is overridden by {@link #withProperties(Properties)}.
-    * </p>
-    * <p>
-    * These properties are passed directly to the cache store.
-    * </p>
-    */
-   S addProperty(String key, String value);
+   S lockAcquistionTimeout(long lockAcquistionTimeout);
 
-   /**
-    * Properties passed to the cache store or loader
-    * @param p
-    * @return
-    */
-   S withProperties(Properties p);
+   S lockAcquistionTimeout(
+         long lockAcquistionTimeout, TimeUnit unit);
+
+   S lockConcurrencyLevel(int lockConcurrencyLevel);
 
 }

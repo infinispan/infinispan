@@ -24,7 +24,7 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -37,28 +37,29 @@ import org.testng.annotations.Test;
  * TwoNodesWithCacheStoreMapReduceTest tests Map/Reduce functionality using two Infinispan nodes,
  * local reduce and also to verify that having values in cache store only does not lead to any
  * additional key/value being missed for map/reduce algorithm
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 5.2
  */
 @Test(groups = "functional", testName = "distexec.TwoNodesWithCacheStoreMapReduceTest")
 public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceTest {
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      LoaderConfigurationBuilder loader = builder.loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore(getClass().getSimpleName()));
-      loader.purgeOnStartup(true);
+      LegacyStoreConfigurationBuilder store = builder.loaders().addStore().cacheStore(new DummyInMemoryCacheStore(getClass().getSimpleName()));
+      store.purgeOnStartup(true);
       createClusteredCaches(2, cacheName(), builder);
    }
-   
+
+   @Override
    @SuppressWarnings({ "rawtypes"})
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
             Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer, boolean useCombiner)
             throws Exception {
       Cache cache1 = cache(0, cacheName());
       Cache cache2 = cache(1, cacheName());
-      
+
       CacheStore c1 = getStore(cache1);
       CacheStore c2 = getStore(cache2);
 
@@ -94,23 +95,23 @@ public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceT
       c2.store(toEntry("213", "JBoss division of RedHat "));
       c1.store(toEntry("214", "RedHat community"));
       c2.store(toEntry("214", "RedHat community"));
-      
+
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache1);
       task.mappedWith(mapper).reducedWith(reducer);
       if(useCombiner)
          task.combinedWith(reducer);
-      
+
       if(keys != null && keys.length>0){
          task.onKeys(keys);
-      } 
-      return task; 
+      }
+      return task;
    }
-   
+
    @SuppressWarnings("rawtypes")
    protected CacheStore getStore(Cache c){
       return TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
    }
-   
+
    protected InternalCacheEntry toEntry(String key, String value){
       return TestInternalCacheEntryFactory.create(key,value);
    }

@@ -16,37 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.configuration.cache;
+package org.infinispan.configuration;
 
-import java.util.Properties;
-
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.Self;
+import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 
 /**
- * LoaderConfigurationBuilder is an interface which should be implemented by all cache loader builders
+ * This interface simplifies the task of writing fluent builders which need to inherit from
+ * other builders (abstract or concrete). It overcomes Java's limitation of not being able to
+ * return an instance of a class narrowed to the class itself. It should be used by all {@link Builder}
+ * classes which require inheritance (such as the {@link LoaderConfigurationBuilder})
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LoaderConfigurationBuilder<T extends LoaderConfiguration, S extends LoaderConfigurationBuilder<T,S>> extends Builder<T>, ConfigurationChildBuilder, Self<S> {
-
-   /**
-    * <p>
-    * Defines a single property. Can be used multiple times to define all needed properties, but the
-    * full set is overridden by {@link #withProperties(Properties)}.
-    * </p>
-    * <p>
-    * These properties are passed directly to the cache store.
-    * </p>
-    */
-   S addProperty(String key, String value);
-
-   /**
-    * Properties passed to the cache store or loader
-    * @param p
-    * @return
-    */
-   S withProperties(Properties p);
-
+public interface Self<S extends Self<S>> {
+   S self();
 }
