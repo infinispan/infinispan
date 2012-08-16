@@ -68,14 +68,15 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExternalizerTable;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -164,78 +165,46 @@ public class TestingUtil {
       // give it 1 second to start rehashing
       // TODO Should look at the last committed view instead and check if it contains all the caches
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 120000; // 120 seconds?
+      int gracetime = 90000; // 60 seconds
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), LocalTopologyManager.class);
+         DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         CacheTopology cacheTopology = localTopologyManager.getCacheTopology(c.getName());
-         while (cacheTopology.getCurrentCH().getMembers().size() != caches.length) {
+         while (true) {
+            CacheTopology cacheTopology = localTopologyManager.getCacheTopology(c.getName());
+            boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
+            boolean chIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            boolean stateTransferInProgress = cacheTopology.getPendingCH() != null;
+            if (chContainsAllMembers && chIsBalanced && !stateTransferInProgress)
+               break;
+
             if (System.currentTimeMillis() > giveup) {
-               String message = String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",
-                     rpcManager.getAddress(), Arrays.toString(caches), cacheTopology.getCurrentCH());
+               String message;
+               if (!chContainsAllMembers) {
+                  Address[] addresses = new Address[caches.length];
+                  for (int i = 0; i < caches.length; i++) {
+                     addresses[i] = caches[i].getCacheManager().getAddress();
+                  }
+                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
+                        "expected member list is %s, current member list is %s!",
+                        rpcManager.getAddress(), Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
+               } else {
+                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
+                        "current topology is %s", c.getCacheManager().getAddress(), cacheTopology);
+               }
                log.error(message);
                throw new RuntimeException(message);
             }
+
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
-         log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+         log.trace("Node " + rpcManager.getAddress() + " finished state transfer.");
       }
-   }
-
-   public static void waitForRehashToComplete(Cache cache, int groupSize) {
-      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 30000; // 30 seconds?
-      long giveup = System.currentTimeMillis() + gracetime;
-      LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), LocalTopologyManager.class);
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      CacheTopology cacheTopology = localTopologyManager.getCacheTopology(cache.getName());
-      while (cacheTopology.getCurrentCH().getMembers().size() != groupSize) {
-         if (System.currentTimeMillis() > giveup) {
-            String message = String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",
-                  rpcManager.getAddress(), groupSize, cacheTopology.getCurrentCH());
-            log.error(message);
-            throw new RuntimeException(message);
-         }
-         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
-      }
-      log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
    }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
       waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
-   }
-
-   /**
-    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
-    */
-   @Deprecated
-   public static void waitForInitRehashToComplete(Cache... caches) {
-      int gracetime = 30000; // 30 seconds?
-      long giveup = System.currentTimeMillis() + gracetime;
-      for (Cache c : caches) {
-         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
-         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         while (!stateTransferManager.isJoinComplete()) {
-            if (System.currentTimeMillis() > giveup) {
-               String message = "Timed out waiting for join to complete on node " + rpcManager.getAddress() + " !";
-               log.error(message);
-               throw new RuntimeException(message);
-            }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
-         }
-         log.trace("Node " + rpcManager.getAddress() + " finished join task.");
-      }
-   }
-
-   /**
-    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
-    */
-   @Deprecated
-   public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
-      Set<Cache> cachesSet = new HashSet<Cache>();
-      cachesSet.addAll(caches);
-      waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
    }
 
    /**

@@ -298,7 +298,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
          // If we have postponed some joiners, start a new rebalance for them now
          // If the CH is still not balanced (perhaps because of a leaver), restart the rebalance process
-         if (cacheStatus.getJoiners().isEmpty() && isBalanced(newCurrentCH, cacheStatus)) {
+         if (cacheStatus.getJoiners().isEmpty() && isBalanced(newCurrentCH)) {
             log.tracef("Consistent hash is now balanced for cache %s", cacheName);
          } else {
             triggerRebalance(cacheName, cacheStatus);
@@ -311,7 +311,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       return cacheStatusMap.get(cacheName).cacheTopology;
    }
 
-   private boolean isBalanced(ConsistentHash ch, CacheStatus cacheStatus) {
+   // TODO Need a proper API for this
+   public boolean isBalanced(ConsistentHash ch) {
       int numSegments = ch.getNumSegments();
       for (int i = 0; i < numSegments; i++) {
          int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
