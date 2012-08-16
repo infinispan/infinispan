@@ -44,7 +44,6 @@ import java.lang.reflect.Method;
 import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.*;
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * @author Manik Surtani
@@ -125,14 +124,14 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       } catch(NullPointerException npe) {
          assert npe.getMessage() != null;
       }
-      
+
       try {
          cm.defineConfiguration(null, (Configuration) null);
          assert false : "Should fail";
       } catch(NullPointerException npe) {
          assert npe.getMessage() != null;
       }
-      
+
       try {
          cm.defineConfiguration(null, new org.infinispan.config.Configuration());
          assert false : "Should fail";
@@ -142,7 +141,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       org.infinispan.config.Configuration c = cm.defineConfiguration("cache1", null, new org.infinispan.config.Configuration());
       assert c.equalsIgnoreName(cm.getDefaultConfiguration()) ;
-      
+
       c = cm.defineConfiguration("cache1", "does-not-exist-cache", new org.infinispan.config.Configuration());
        assert c.equalsIgnoreName(cm.getDefaultConfiguration());
    }
@@ -159,19 +158,19 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       org.infinispan.config.Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
       assert oneCacheConfiguration.equalsIgnoreName(c);
       assert oneCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
-      
+
       c = new org.infinispan.config.Configuration();
       org.infinispan.config.Configuration secondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
       assert oneCacheConfiguration.equalsIgnoreName(secondCacheConfiguration) ;
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
-      
+
       c = new org.infinispan.config.Configuration();
       c.setIsolationLevel(IsolationLevel.SERIALIZABLE);
       org.infinispan.config.Configuration anotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
       assert !secondCacheConfiguration.equals(anotherSecondCacheConfiguration);
       assert anotherSecondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.SERIALIZABLE);
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
-      
+
       c = new org.infinispan.config.Configuration();
       c.setExpirationMaxIdle(Long.MAX_VALUE);
       org.infinispan.config.Configuration yetAnotherSecondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
@@ -366,7 +365,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c
             .loaders()
-               .shared(isStoreShared).addCacheLoader().cacheLoader(new DummyInMemoryCacheStore(storeName))
+               .shared(isStoreShared).addStore().cacheStore(new DummyInMemoryCacheStore(storeName))
             .clustering()
                .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 

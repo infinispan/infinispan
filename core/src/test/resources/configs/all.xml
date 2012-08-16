@@ -104,10 +104,10 @@
           <loader fetchPersistentState="true" ignoreModifications="true"
                   purgeOnStartup="true" purgerThreads="1" purgeSynchronously="true"
                   class="com.acme.TestCacheLoader">
-            <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>
             <properties>
               <property name="foo" value="bar"/>
             </properties>
+            <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>
             <singletonStore enabled="true"/>
           </loader>
         </loaders>

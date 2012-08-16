@@ -35,7 +35,7 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private long pushStateTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean pushStateWhenCoordinator = true;
 
-   SingletonStoreConfigurationBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
+   SingletonStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 

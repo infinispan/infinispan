@@ -1,4 +1,4 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -50,7 +50,7 @@ import org.testng.annotations.Test;
  * we can find the same contents as by searching it directly.
  * This implicitly verifies configuration settings passed it, as it won't work if the CacheLoader
  * is unable to find the specific index path.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */
@@ -104,7 +104,7 @@ public class IndexCacheLoaderTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
          .loaders()
-            .addCacheLoader()
+            .addLoader()
                .cacheLoader( new LuceneCacheLoader() )
                   .addProperty(LuceneCacheLoaderConfig.LOCATION_OPTION, rootDir.getAbsolutePath())
                   .addProperty(LuceneCacheLoaderConfig.AUTO_CHUNK_SIZE_OPTION, "1024");

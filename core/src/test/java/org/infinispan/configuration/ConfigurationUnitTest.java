@@ -193,7 +193,7 @@ public class ConfigurationUnitTest {
    public void testClearCacheLoaders() {
       Configuration c = new ConfigurationBuilder()
             .loaders()
-               .addCacheLoader()
+               .addLoader()
             .loaders()
                .clearCacheLoaders()
          .build();
@@ -257,7 +257,7 @@ public class ConfigurationUnitTest {
    public void testEnableVersioning() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.versioning().enable();
-      org.infinispan.config.Configuration adapt = 
+      org.infinispan.config.Configuration adapt =
             LegacyConfigurationAdaptor.adapt(builder.build());
       assert adapt.isEnableVersioning();
    }

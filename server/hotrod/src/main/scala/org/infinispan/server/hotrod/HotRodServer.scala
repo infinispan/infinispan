@@ -166,7 +166,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       } else {
          val loaderProps = new Properties()
          loaderProps.setProperty("remoteCallTimeout", replTimeout.toString)
-         builder.loaders().addCacheLoader().cacheLoader(new ClusterCacheLoader)
+         builder.loaders().addLoader().cacheLoader(new ClusterCacheLoader)
                  .withProperties(loaderProps)
       }
 
@@ -178,13 +178,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[ByteArrayKey, CacheValue] = {
-      var cache: Cache[ByteArrayKey, CacheValue] = null 
+      var cache: Cache[ByteArrayKey, CacheValue] = null
       if (!skipCacheCheck) cache = knownCaches.get(cacheName)
 
       if (cache == null) {
-         if (cacheName.isEmpty) 
+         if (cacheName.isEmpty)
             cache = cacheManager.getCache[ByteArrayKey, CacheValue]
-         else 
+         else
             cache = cacheManager.getCache(cacheName)
 
          knownCaches.put(cacheName, cache)

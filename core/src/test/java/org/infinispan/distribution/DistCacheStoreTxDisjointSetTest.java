@@ -23,7 +23,6 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -58,7 +57,7 @@ public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder buildCacheConfig(String storeName) {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       cb.clustering().hash().numVirtualNodes(1);
-      cb.loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore(storeName));
+      cb.loaders().addStore().cacheStore(new DummyInMemoryCacheStore(storeName));
       return cb;
    }
 

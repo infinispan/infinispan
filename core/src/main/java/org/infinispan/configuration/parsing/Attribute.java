@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * Enumerates the attributes used in Infinispan
- * 
+ *
  * @author Pete Muir
  */
 public enum Attribute {
@@ -54,6 +54,8 @@ public enum Attribute {
     FETCH_IN_MEMORY_STATE("fetchInMemoryState"),
     FETCH_PERSISTENT_STATE("fetchPersistentState"),
     FLUSH_LOCK_TIMEOUT("flushLockTimeout"),
+    FSYNC_INTERVAL("fsyncInterval"),
+    FSYNC_MODE("fsyncMode"),
     HASH_FUNCTION_CLASS("hashFunctionClass"),
     HASH_SEED_CLASS("hashSeedClass"),
     HOOK_BEHAVIOR("hookBehavior"),
@@ -66,6 +68,7 @@ public enum Attribute {
     ISOLATION_LEVEL("isolationLevel"),
     JMX_DOMAIN("jmxDomain"),
     LIFESPAN("lifespan"),
+    LOCATION("location"),
     INVALIDATION_CLEANUP_TASK_FREQUENCY("cleanupTaskFrequency"),
     LOCK_ACQUISITION_TIMEOUT("lockAcquisitionTimeout"),
     LOCKING_MODE("lockingMode"),
@@ -78,7 +81,7 @@ public enum Attribute {
     MBEAN_SERVER_LOOKUP("mBeanServerLookup"),
     MODE("mode"),
     NODE_NAME("nodeName"),
-    MODIFICTION_QUEUE_SIZE("modificationQueueSize"),
+    MODIFICATION_QUEUE_SIZE("modificationQueueSize"),
     NAME("name"),
     NUM_OWNERS("numOwners"),
     NUM_RETRIES("numRetries"),
@@ -110,6 +113,7 @@ public enum Attribute {
     STORE_KEYS_AS_BINARY("storeKeysAsBinary"),
     STORE_VALUES_AS_BINARY("storeValuesAsBinary"),
     STRATEGY("strategy"),
+    STREAM_BUFFER_SIZE("streamBufferSize"),
     SYNC_COMMIT_PHASE("syncCommitPhase"),
     SYNC_ROLLBACK_PHASE("syncRollbackPhase"),
     STRICT_PEER_TO_PEER("strictPeerToPeer"),

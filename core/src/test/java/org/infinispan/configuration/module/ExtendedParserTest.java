@@ -43,7 +43,9 @@ public class ExtendedParserTest {
    public void testExtendedParser() throws IOException {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "      <sample-element xmlns=\"urn:infinispan:config:mymodule:5.2\" sample-attribute=\"test-value\" />\n" +
+            "     <modules>\n" +
+            "       <sample-element xmlns=\"urn:infinispan:config:mymodule:5.2\" sample-attribute=\"test-value\" />\n" +
+            "     </modules>\n" +
             "   </default>\n" +
             INFINISPAN_END_TAG;
       assertCacheConfiguration(config);

@@ -18,9 +18,12 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.infinispan.config.ConfigurationException;
 
 /**
  * Configuration for cache loaders and stores.
@@ -31,7 +34,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    private boolean passivation = false;
    private boolean preload = false;
    private boolean shared = false;
-   private List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders = new ArrayList<AbstractLoaderConfigurationBuilder<?>>(2);
+   private List<LoaderConfigurationBuilder<?,?>> cacheLoaders = new ArrayList<LoaderConfigurationBuilder<?,?>>(2);
 
    protected LoadersConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -87,47 +90,142 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return shared;
    }
 
-   public LoaderConfigurationBuilder addCacheLoader() {
-      LoaderConfigurationBuilder builder = new LoaderConfigurationBuilder(this);
+   @Deprecated
+   public LegacyStoreConfigurationBuilder addCacheLoader() {
+      LegacyStoreConfigurationBuilder builder = new LegacyStoreConfigurationBuilder(this);
       this.cacheLoaders.add(builder);
       return builder;
    }
 
+   /**
+    * Adds a cache loader to the configuration. If possible use the alternate {@link #addLoader(LoaderConfigurationBuilder)} and
+    * {@link #addLoader(Class)} which will return appropriately typed builders
+    *
+    * @return
+    */
+   public LegacyLoaderConfigurationBuilder addLoader() {
+      LegacyLoaderConfigurationBuilder builder = new LegacyLoaderConfigurationBuilder(this);
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+
+   /**
+    * Adds a cache loader which uses the specified builder class to build its configuration
+    *
+    * @param klass
+    * @return
+    */
+   public <T extends LoaderConfigurationBuilder<?, ?>> T addLoader(Class<T> klass) {
+      try {
+         Constructor<T> constructor = klass.getConstructor(LoadersConfigurationBuilder.class);
+         T builder = constructor.newInstance(this);
+         this.cacheLoaders.add(builder);
+         return builder;
+      } catch (Exception e) {
+         throw new ConfigurationException("Could not instantiate loader configuration builder '" + klass.getName()
+               + "'", e);
+      }
+   }
+
+   /**
+    * Adds a cache loader which uses the specified builder instance to build its configuration
+    *
+    * @param builder an instance of {@link LoaderConfigurationBuilder}
+    * @return
+    */
+   public LoaderConfigurationBuilder<?, ?> addLoader(LoaderConfigurationBuilder<?, ?> builder) {
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+
+   /**
+    * Adds a cache store to the configuration. If possible use the alternate {@link #addStore(StoreConfigurationBuilder)} and
+    * {@link #addStore(Class)} which will return appropriately typed builders
+    *
+    * @return
+    */
+   public LegacyStoreConfigurationBuilder addStore() {
+     LegacyStoreConfigurationBuilder builder = new LegacyStoreConfigurationBuilder(this);
+     this.cacheLoaders.add(builder);
+     return builder;
+   }
+
+   /**
+    * Adds a cache store which uses the specified builder class to build its configuration
+    *
+    * @param klass
+    * @return
+    */
+   public <T extends StoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
+      try {
+         Constructor<T> constructor = klass.getConstructor(LoadersConfigurationBuilder.class);
+         T builder = constructor.newInstance(this);
+         this.cacheLoaders.add(builder);
+         return builder;
+      } catch (Exception e) {
+         throw new ConfigurationException("Could not instantiate store configuration builder '" + klass.getName()
+               + "'", e);
+      }
+   }
+
+   /**
+    * Adds a cache store which uses the specified builder instance to build its configuration
+    *
+    * @param klass an instance of {@link StoreConfigurationBuilder}
+    */
+   public LoaderConfigurationBuilder<?, ?> addStore(StoreConfigurationBuilder<?, ?> builder) {
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+
+   /**
+    * Adds a file cache store
+    */
    public FileCacheStoreConfigurationBuilder addFileCacheStore() {
       FileCacheStoreConfigurationBuilder builder = new FileCacheStoreConfigurationBuilder(this);
       this.cacheLoaders.add(builder);
       return builder;
    }
 
+   /**
+    * Removes any configured cache loaders and stores from this builder
+    */
    public LoadersConfigurationBuilder clearCacheLoaders() {
       this.cacheLoaders.clear();
       return this;
    }
 
-   List<AbstractLoaderConfigurationBuilder<?>> cacheLoaders() {
+   /**
+    * Returns a list of the cache loader/store builders added to this builder
+    *
+    * @return
+    */
+   List<LoaderConfigurationBuilder<?, ?>> cacheLoaders() {
       return cacheLoaders;
    }
 
    @Override
    public void validate() {
-      for (AbstractLoaderConfigurationBuilder<?> b : cacheLoaders) {
+      for (LoaderConfigurationBuilder<?, ?> b : cacheLoaders) {
          b.validate();
       }
    }
 
    @Override
    public LoadersConfiguration create() {
-      List<AbstractLoaderConfiguration> loaders = new LinkedList<AbstractLoaderConfiguration>();
-      for (AbstractLoaderConfigurationBuilder<?> loader : cacheLoaders)
+      List<LoaderConfiguration> loaders = new LinkedList<LoaderConfiguration>();
+      for (LoaderConfigurationBuilder<?, ?> loader : cacheLoaders)
          loaders.add(loader.create());
       return new LoadersConfiguration(passivation, preload, shared, loaders);
    }
 
    @Override
    public LoadersConfigurationBuilder read(LoadersConfiguration template) {
-      for (AbstractLoaderConfiguration c : template.cacheLoaders()) {
-         if (c instanceof LoaderConfiguration)
-            this.addCacheLoader().read((LoaderConfiguration) c);
+      for (LoaderConfiguration c : template.cacheLoaders()) {
+         if (c instanceof LegacyStoreConfiguration)
+            this.addStore().read((LegacyStoreConfiguration) c);
+         if (c instanceof LegacyLoaderConfiguration)
+            this.addLoader().read((LegacyLoaderConfiguration) c);
          else if (c instanceof FileCacheStoreConfiguration)
             this.addFileCacheStore().read((FileCacheStoreConfiguration) c);
       }
