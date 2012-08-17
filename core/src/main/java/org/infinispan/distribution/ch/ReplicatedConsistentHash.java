@@ -115,6 +115,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public ReplicatedConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          List<Address> members = (List<Address>) unmarshaller.readObject();
          return new ReplicatedConsistentHash(members);

@@ -45,7 +45,7 @@ import java.util.Set;
  * Our consistent hashes work by splitting the hash space (the set of possible hash codes) into
  * fixed segments and then assigning those segments to nodes dynamically. The number of segments
  * is defined at creation time, and the mapping of keys to segments never changes.
- * The mapping of segments to nodes does change as the membership of the cache changes.
+ * The mapping of segments to nodes can change as the membership of the cache changes.
  *
  * Normally application code doesn't need to know about this implementation detail, but some
  * applications may benefit from the knowledge that all the keys that map to one segment are
