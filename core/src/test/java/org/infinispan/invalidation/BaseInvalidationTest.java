@@ -67,12 +67,12 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, false);
-      c.setStateRetrievalTimeout(1000);
+      c.setStateRetrievalTimeout(5000);
       c.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "invalidation", c);
 
       c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
-      c.setStateRetrievalTimeout(1000);
+      c.setStateRetrievalTimeout(5000);
       c.setLockAcquisitionTimeout(500);
       defineConfigurationOnAllManagers("invalidationTx", c);
       waitForClusterToForm("invalidationTx");
