@@ -19,6 +19,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.CacheException;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheViewsManager;
@@ -152,7 +153,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    @Override
    @Start(priority = 1000)
    public void waitForJoinToComplete() throws InterruptedException {
-      joinCompletedLatch.await(getTimeout(), TimeUnit.MILLISECONDS);
+      if (!joinCompletedLatch.await(getTimeout(), TimeUnit.MILLISECONDS)) {
+         throw new CacheException("Error joining the cluster");
+      }
    }
 
    @Stop(priority = 20)
