@@ -74,14 +74,21 @@ public class PendingCacheViewChanges {
             log.tracef("Cannot create a new view, there is another view installation in progress");
             return null;
          }
+
+         Collection<Address> baseMembers = recoveredMembers != null ? recoveredMembers : committedView.getMembers();
+         // Some joiners could be already members (e.g. after a merge, or because of a duplicated join command).
+         joiners.removeAll(baseMembers);
+         // Same with leavers, they could have already left.
+         leavers.retainAll(baseMembers);
+
          if (leavers.size() == 0 && joiners.size() == 0 && recoveredMembers == null) {
             log.tracef("Cannot create a new view, we have no joiners or leavers");
             return null;
          }
 
-         Collection<Address> baseMembers = recoveredMembers != null ? recoveredMembers : committedView.getMembers();
          log.tracef("Previous members are %s, joiners are %s, leavers are %s, recovered after merge = %s",
                baseMembers, joiners, leavers, recoveredMembers != null);
+
          List<Address> members = new ArrayList<Address>(baseMembers);
          // If a node is both in leavers and in joiners we should install a view without it first
          // so that other nodes don't consider it an old owner, so we first add it as a joiner
