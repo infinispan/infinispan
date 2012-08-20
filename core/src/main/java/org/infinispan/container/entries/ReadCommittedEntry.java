@@ -168,7 +168,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void setLockPlaceholder(boolean placeholder) {
+   public void setLockPlaceholder(boolean placeholder) {   //todo [anistor] why is this method never used?
       if (placeholder)
          setFlag(LOCK_PLACEHOLDER);
       else

@@ -210,7 +210,10 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                   }
                } else if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {  //todo a ClearCommand should be executed directly
                   // a TX or a write command from an old topology should be forwarded unless it's a write and the context is transactional
-                  if (!(command instanceof WriteCommand && ctx instanceof TxInvocationContext)) {
+                  if (command instanceof WriteCommand && ctx instanceof TxInvocationContext) {
+                     // a transactional write is always local
+                     return invokeNextInterceptor(ctx, command);
+                  } else {
                      Set<Object> affectedKeys = getAffectedKeys(ctx, command);
                      newTargets = new HashSet<Address>();
                      boolean localExecutionNeeded = false;
@@ -225,12 +228,11 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                      if (localExecutionNeeded) {
                         return invokeNextInterceptor(ctx, command);
                      }
-                  } else {
-                     return invokeNextInterceptor(ctx, command);
                   }
                } else if (command instanceof CommitCommand || command instanceof RollbackCommand) {
                   // for these commands we can determine affected keys only after they are executed
                   try {
+                     // it does not harm to attempt to execute them if it might not be the proper destination
                      return invokeNextInterceptor(ctx, command);
                   } finally {
                      newTargets = new HashSet<Address>();
@@ -243,8 +245,8 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                   }
                }
             } else if (command.getTopologyId() > topologyId) {
-               // this means there will be a new topology installed soon. no need to wait until then
-               //stateTransferLock.waitForTopology(command.getTopologyId());
+               // this means there will be a new topology installed soon
+               stateTransferLock.waitForTopology(command.getTopologyId());
 
                // proceed normally
             } else {
