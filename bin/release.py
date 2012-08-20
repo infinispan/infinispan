@@ -14,7 +14,7 @@ except:
   prettyprint('''
         Welcome to the Infinispan Release Script.
         This release script requires that you use at least Python 2.5.0.  It appears
-        that you do not thave the ElementTree XML APIs available, which are available
+        that you do not have the ElementTree XML APIs available, which are available
         by default in Python 2.5.0.
         ''', Levels.FATAL)
   sys.exit(1)
@@ -44,9 +44,9 @@ def help_and_exit():
             
 %s        E.g.,%s
         
-            $ bin/release.py 4.1.1.BETA1 %s<-- this will tag off master.%s
+            $ bin/release.py 6.1.1.Beta1 %s<-- this will tag off master.%s
             
-            $ bin/release.py 4.1.1.BETA1 4.1.x %s<-- this will use the appropriate branch.%s
+            $ bin/release.py 6.1.1.Beta1 6.1.x %s<-- this will use the appropriate branch.%s
             
     ''' % (Colors.yellow(), Colors.end_color(), Colors.yellow(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color()), Levels.INFO)
     sys.exit(0)
@@ -54,7 +54,7 @@ def help_and_exit():
 def validate_version(version):  
   version_pattern = get_version_pattern()
   if version_pattern.match(version):
-    return version.strip().upper()
+    return version.strip()
   else:
     prettyprint("Invalid version '"+version+"'!\n", Levels.FATAL)
     help_and_exit()
@@ -179,7 +179,7 @@ def update_versions(base_dir, version):
   git.commit(modified_files, "'Release Script: update versions for %s'" % version)
   
   # And return the next version
-  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.FINAL' if snapshot else '-SNAPSHOT')
+  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.Final' if snapshot else '-SNAPSHOT')
 
 def get_module_name(pom_file):
   tree = ElementTree()
