@@ -24,14 +24,14 @@ import java.util.List;
 
 /**
  * Configures custom interceptors to be added to the cache.
- * 
+ *
  * @author pmuir
  *
  */
 public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();
-   
+
    CustomInterceptorsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
@@ -46,12 +46,12 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
-   void validate() {
+   public void validate() {
       // Nothing to validate
    }
 
    @Override
-   CustomInterceptorsConfiguration create() {
+   public CustomInterceptorsConfiguration create() {
       if (interceptorBuilders.isEmpty()) {
          return new CustomInterceptorsConfiguration();
       } else {
@@ -60,7 +60,7 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
          return new CustomInterceptorsConfiguration(interceptors);
       }
    }
-   
+
    @Override
    public CustomInterceptorsConfigurationBuilder read(CustomInterceptorsConfiguration template) {
       this.interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();

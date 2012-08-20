@@ -52,7 +52,7 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
-    * 
+    *
     * @param cacheLoader
     * @return
     */
@@ -135,7 +135,7 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
    }
 
    @Override
-   void validate() {
+   public void validate() {
       async.validate();
       singletonStore.validate();
       if (!getLoadersBuilder().shared() && !fetchPersistentState && !purgeOnStartup
@@ -145,7 +145,7 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
    }
 
    @Override
-   LoaderConfiguration create() {
+   public LoaderConfiguration create() {
       return new LoaderConfiguration(TypedProperties.toTypedProperties(properties), cacheLoader, fetchPersistentState,
             ignoreModifications, purgeOnStartup, purgerThreads, purgeSynchronously, async.create(), singletonStore.create());
    }
@@ -159,10 +159,10 @@ public class LoaderConfigurationBuilder extends AbstractLoaderConfigurationBuild
       this.purgeOnStartup = template.purgeOnStartup();
       this.purgerThreads = template.purgerThreads();
       this.purgeSynchronously = template.purgeSynchronously();
-      
+
       this.async.read(template.async());
       this.singletonStore.read(template.singletonStore());
-      
+
       return this;
    }
 

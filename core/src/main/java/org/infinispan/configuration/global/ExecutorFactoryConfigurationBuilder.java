@@ -28,15 +28,15 @@ import org.infinispan.util.TypedProperties;
  * Configures executor factory.
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigurationBuilder<ExecutorFactoryConfiguration> {
-   
+
    private ExecutorFactory factory = new DefaultExecutorFactory();
    private Properties properties;
-   
+
    ExecutorFactoryConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
       this.properties = new Properties();
    }
-   
+
    /**
     * Specify factory class for executor
     *
@@ -74,22 +74,23 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
       this.properties = props;
       return this;
    }
-   
+
    @Override
    void validate() {
       // No-op, no validation required
-   } 
-   
+   }
+
    @Override
    ExecutorFactoryConfiguration create() {
       return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
    }
-   
+
    @Override
+   protected
    ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
       this.factory = template.factory();
       this.properties = template.properties();
-      
+
       return this;
    }
 

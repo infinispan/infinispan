@@ -70,7 +70,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
 
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
-    * 
+    *
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
@@ -116,6 +116,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    @Override
+   public
    void validate() {
       if (useReplicationQueue && getClusteringBuilder().cacheMode().isDistributed())
          throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
@@ -125,10 +126,11 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    @Override
+   public
    AsyncConfiguration create() {
       return new AsyncConfiguration(asyncMarshalling, replicationQueue, replicationQueueInterval, replicationQueueMaxElements, useReplicationQueue);
    }
-   
+
    @Override
    public AsyncConfigurationBuilder read(AsyncConfiguration template) {
       this.asyncMarshalling = template.asyncMarshalling();

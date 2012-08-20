@@ -84,7 +84,7 @@ public class StateTransferConfigurationBuilder extends
    }
 
    @Override
-   void validate() {
+   public void validate() {
       // certain combinations are illegal, such as state transfer + invalidation
       if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isInvalidation())
          throw new ConfigurationException(
@@ -92,7 +92,7 @@ public class StateTransferConfigurationBuilder extends
    }
 
    @Override
-   StateTransferConfiguration create() {
+   public  StateTransferConfiguration create() {
       // If replicated and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
       CacheMode cacheMode = getClusteringBuilder().cacheMode();

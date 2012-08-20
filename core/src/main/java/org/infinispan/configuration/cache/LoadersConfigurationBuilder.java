@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * Configuration for cache loaders and stores.
- * 
+ *
  */
 public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuilder<LoadersConfiguration> {
 
@@ -98,7 +98,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       this.cacheLoaders.add(builder);
       return builder;
    }
-   
+
    public LoadersConfigurationBuilder clearCacheLoaders() {
       this.cacheLoaders.clear();
       return this;
@@ -109,14 +109,14 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   void validate() {
+   public void validate() {
       for (AbstractLoaderConfigurationBuilder<?> b : cacheLoaders) {
          b.validate();
       }
    }
 
    @Override
-   LoadersConfiguration create() {
+   public LoadersConfiguration create() {
       List<AbstractLoaderConfiguration> loaders = new LinkedList<AbstractLoaderConfiguration>();
       for (AbstractLoaderConfigurationBuilder<?> loader : cacheLoaders)
          loaders.add(loader.create());

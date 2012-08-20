@@ -23,12 +23,20 @@
 
 package org.infinispan.configuration.global;
 
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
+import org.infinispan.configuration.BuiltBy;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 import static java.util.Arrays.asList;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
-   
+
    private ClassLoader cl;
    private final TransportConfigurationBuilder transport;
    private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
@@ -38,7 +46,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor;
    private final ShutdownConfigurationBuilder shutdown;
-   
+   private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
+
    public GlobalConfigurationBuilder() {
       this.cl = Thread.currentThread().getContextClassLoader();
       this.transport = new TransportConfigurationBuilder(this);
@@ -50,7 +59,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.replicationQueueScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
    }
-   
+
    /**
     * Helper method that gets you a default constructed GlobalConfiguration, preconfigured to use the default clustering
     * stack.
@@ -65,7 +74,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          .addProperty("threadNamePrefix", "asyncTransportThread");
       return this;
    }
-   
+
    /**
     * Helper method that gets you a default constructed GlobalConfiguration, preconfigured for use in LOCAL mode
     *
@@ -77,16 +86,16 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          .clearProperties();
       return this;
    }
-   
+
    protected ClassLoader getClassLoader() {
       return cl;
    }
-   
+
    public GlobalConfigurationBuilder classLoader(ClassLoader cl) {
       this.cl = cl;
       return this;
    }
-   
+
    @Override
    public TransportConfigurationBuilder transport() {
       return transport;
@@ -131,34 +140,67 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return shutdown;
    }
 
-    @SuppressWarnings("unchecked")
-    public void validate() {
-        for (AbstractGlobalConfigurationBuilder<?> validatable :
-                asList(asyncListenerExecutor, asyncTransportExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor,
-                        globalJmxStatistics, transport, serialization, shutdown)) {
-            validatable.validate();
-        }
-    }
+   public List<Builder<?>> modules() {
+      return modules;
+   }
+
+   public GlobalConfigurationBuilder clearModules() {
+      modules.clear();
+      return this;
+   }
+
+   public <T extends Builder<?>> T addModule(Class<T> klass) {
+      try {
+         Constructor<T> constructor = klass.getConstructor(GlobalConfigurationBuilder.class);
+         T builder = constructor.newInstance(this);
+         this.modules.add(builder);
+         return builder;
+      } catch (Exception e) {
+         throw new ConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   public void validate() {
+      for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, asyncTransportExecutor,
+            evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
+            serialization, shutdown)) {
+         validatable.validate();
+      }
+      for (Builder<?> m : modules) {
+         m.validate();
+      }
+   }
 
    @Override
    public GlobalConfiguration build() {
-       validate();
+      validate();
+      List<Object> modulesConfig = new LinkedList<Object>();
+      for (Builder<?> module : modules)
+         modulesConfig.add(module.create());
       return new GlobalConfiguration(
-            asyncListenerExecutor.create(), 
-            asyncTransportExecutor.create(), 
-            evictionScheduledExecutor.create(), 
-            replicationQueueScheduledExecutor.create(), 
+            asyncListenerExecutor.create(),
+            asyncTransportExecutor.create(),
+            evictionScheduledExecutor.create(),
+            replicationQueueScheduledExecutor.create(),
             globalJmxStatistics.create(),
             transport.create(),
-            serialization.create(), 
+            serialization.create(),
             shutdown.create(),
+            modulesConfig,
             cl
             );
    }
-   
+
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
       this.cl = template.classLoader();
-      
+
+      for (Object c : template.modules().values()) {
+         BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
+         Builder<Object> builder = (Builder<Object>) this.addModule(builtBy.value());
+         builder.read(c);
+      }
+
       asyncListenerExecutor.read(template.asyncListenerExecutor());
       asyncTransportExecutor.read(template.asyncTransportExecutor());
       evictionScheduledExecutor.read(template.evictionScheduledExecutor());
@@ -167,7 +209,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
       transport.read(template.transport());
-      
+
       return this;
    }
 

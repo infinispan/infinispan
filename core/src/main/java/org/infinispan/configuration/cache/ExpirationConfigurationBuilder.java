@@ -29,7 +29,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    private long maxIdle = -1L;
    private boolean reaperEnabled = true;
    private long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
-   
+
    ExpirationConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
@@ -37,7 +37,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    /**
     * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
     * milliseconds. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder lifespan(long l) {
@@ -58,7 +58,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
     * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder maxIdle(long l) {
@@ -85,7 +85,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       this.reaperEnabled = true;
       return this;
    }
-   
+
    /**
     * Enable the background reaper to test entries for expiration.
     * Regardless of whether a reaper is used, entries are tested for expiration lazily when they are
@@ -95,7 +95,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       this.reaperEnabled = enabled;
       return this;
    }
-   
+
    /**
     * Disable the background reaper to test entries for expiration. to test entries for expiration.
     * Regardless of whether a reaper is used, entries are tested for expiration lazily when they are
@@ -126,21 +126,21 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   ExpirationConfiguration create() {
+   public ExpirationConfiguration create() {
       return new ExpirationConfiguration(lifespan, maxIdle, reaperEnabled, wakeUpInterval);
    }
-   
+
    @Override
    public ExpirationConfigurationBuilder read(ExpirationConfiguration template) {
       this.lifespan = template.lifespan();
       this.maxIdle = template.maxIdle();
       this.reaperEnabled = template.reaperEnabled();
       this.wakeUpInterval = template.wakeUpInterval();
-      
+
       return this;
    }
 

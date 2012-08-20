@@ -20,9 +20,9 @@ package org.infinispan.configuration.cache;
 
 /**
  * Determines whether statistics are gather and reported.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder<JMXStatisticsConfiguration> {
 
@@ -57,11 +57,11 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   JMXStatisticsConfiguration create() {
+   public JMXStatisticsConfiguration create() {
       return new JMXStatisticsConfiguration(enabled);
    }
 

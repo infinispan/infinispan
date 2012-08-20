@@ -31,17 +31,17 @@ import java.util.concurrent.TimeUnit;
  * Configures the transport used for network communications across the cluster.
  */
 public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBuilder<TransportConfiguration> {
-   
+
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
    public static final Class<? extends Transport> DEFAULT_TRANSPORT = JGroupsTransport.class;
-   
+
    private String clusterName = "ISPN";
    private String machineId;
    private String rackId;
    private String siteId;
    private long distributedSyncTimeout = TimeUnit.MINUTES.toMillis(4);
    private Transport transport;
-   
+
    private String nodeName;
    private Properties properties = new Properties();
    private boolean strictPeerToPeer = false;
@@ -49,7 +49,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
    }
-   
+
    /**
     * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
     *
@@ -145,7 +145,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.properties = properties;
       return this;
    }
-   
+
    /**
     * Clears the transport properties
     *
@@ -155,7 +155,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.properties = new Properties();
       return this;
    }
-   
+
    public TransportConfigurationBuilder addProperty(String key, String value) {
       this.properties.put(key, value);
       return this;
@@ -179,25 +179,26 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
-   
+
    @Override
    void validate() {
       if(clusterName == null){
           throw new ConfigurationException("Transport clusterName cannot be null");
       }
    }
-   
+
    @Override
    TransportConfiguration create() {
       return new TransportConfiguration(clusterName, machineId, rackId, siteId, strictPeerToPeer, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
    }
-   
+
    public TransportConfigurationBuilder defaultTransport() {
       transport(Util.getInstance(DEFAULT_TRANSPORT));
       return this;
    }
 
    @Override
+   protected
    TransportConfigurationBuilder read(TransportConfiguration template) {
       this.clusterName = template.clusterName();
       this.distributedSyncTimeout = template.distributedSyncTimeout();
@@ -208,7 +209,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.siteId = template.siteId();
       this.strictPeerToPeer = template.strictPeerToPeer();
       this.transport = template.transport();
-      
+
       return this;
    }
 

@@ -26,9 +26,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
 
@@ -100,7 +100,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   void validate() {
+   public void validate() {
       if (writeSkewCheck) {
          if (isolationLevel != IsolationLevel.REPEATABLE_READ)
             throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
@@ -126,7 +126,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   LockingConfiguration create() {
+   public LockingConfiguration create() {
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
 

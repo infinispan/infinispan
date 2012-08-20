@@ -19,13 +19,13 @@
 package org.infinispan.configuration.global;
 
 abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurationChildBuilder {
-   
+
    private final GlobalConfigurationBuilder globalConfig;
-   
+
    protected AbstractGlobalConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       this.globalConfig = globalConfig;
    }
-   
+
    protected GlobalConfigurationBuilder getGlobalConfig() {
       return globalConfig;
    }
@@ -48,7 +48,7 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
 
    @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
-      
+
       return globalConfig.asyncListenerExecutor();
    }
 
@@ -56,7 +56,7 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
       return globalConfig.asyncTransportExecutor();
    }
-   
+
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return globalConfig.evictionScheduledExecutor();
@@ -76,11 +76,11 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    public GlobalConfiguration build() {
       return globalConfig.build();
    }
-   
+
    abstract void validate();
-   
+
    abstract T create();
-   
-   abstract GlobalConfigurationChildBuilder read(T template);
-   
+
+   protected abstract GlobalConfigurationChildBuilder read(T template);
+
 }

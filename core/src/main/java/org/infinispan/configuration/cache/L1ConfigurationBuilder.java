@@ -142,7 +142,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    }
 
    @Override
-   void validate() {
+   public void validate() {
       if (enabled) {
          if (!clustering().cacheMode().isDistributed())
             throw new ConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
@@ -159,7 +159,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    }
 
    @Override
-   L1Configuration create() {
+   public L1Configuration create() {
       boolean finalOnRehash;
       if (onRehash != null) {
          finalOnRehash = onRehash;

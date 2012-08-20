@@ -28,7 +28,7 @@ import org.infinispan.util.TypedProperties;
 
 /**
  * File cache store configuration builder
- * 
+ *
  * @author Galder Zamarreño
  * @since 5.1
  */
@@ -77,7 +77,7 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    // Shared with others cache stores...
@@ -120,7 +120,7 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       this.lockConcurrencyLevel = lockConcurrencyLevel;
       return this;
    }
-   
+
    @Override
    public AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> withProperties(Properties p) {
       this.properties = p;
@@ -134,14 +134,14 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    @Override
-   FileCacheStoreConfiguration create() {
+   public FileCacheStoreConfiguration create() {
       return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
             streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
             purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties),
             async.create(), singletonStore.create());
    }
-   
+
    @Override
    public FileCacheStoreConfigurationBuilder read(FileCacheStoreConfiguration template) {
       fetchPersistentState = template.fetchPersistentState();
@@ -155,10 +155,10 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
       purgeOnStartup = template.purgeOnStartup();
       purgeSynchronously = template.purgeSynchronously();
       streamBufferSize = template.streamBufferSize();
-      
+
       this.async.read(template.async());
       this.singletonStore.read(template.singletonStore());
-      
+
       return this;
    }
 
