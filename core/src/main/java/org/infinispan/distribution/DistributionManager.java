@@ -56,7 +56,7 @@ public interface DistributionManager {
     * @deprecated
     */
    @Deprecated
-   boolean isLocal(Object key);
+   boolean isLocal(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Returns the data locality characteristics of a given key.
@@ -64,7 +64,7 @@ public interface DistributionManager {
     * @return a DataLocality that allows you to test whether a key is mapped to the local node or not, and the degree of
     * certainty of such a result.
     */
-   DataLocality getLocality(Object key);
+   DataLocality getLocality(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Locates a key in a cluster.  The returned addresses <i>may not</i> be owners of the keys if a rehash happens to be
@@ -74,14 +74,14 @@ public interface DistributionManager {
     * @param key key to test
     * @return a list of addresses where the key may reside
     */
-   List<Address> locate(Object key);
+   List<Address> locate(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Returns the first Address containing the key.  Equivalent to returning the first element of {@link #locate(Object)}
     * @param key key to test
     * @return the first address on which the key may reside
     */
-   Address getPrimaryLocation(Object key);
+   Address getPrimaryLocation(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Locates a list of keys in a cluster.  Like {@link #locate(Object)} the returned addresses <i>may not</i> be owners
@@ -92,7 +92,7 @@ public interface DistributionManager {
     * @param keys list of keys to test
     * @return a list of addresses where the key may reside
     */
-   Set<Address> locateAll(Collection<Object> keys);
+   Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done

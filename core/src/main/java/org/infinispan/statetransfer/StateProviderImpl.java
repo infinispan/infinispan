@@ -158,7 +158,7 @@ public class StateProviderImpl implements StateProvider {
             collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
             collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
             if (trace) {
-               log.tracef("Found %d transactions to transfer", transactions.size());
+               log.tracef("Found %d transaction(s) to transfer", transactions.size());
             }
          } finally {
             // all transactions should be unblocked now
@@ -170,7 +170,7 @@ public class StateProviderImpl implements StateProvider {
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer, Collection<? extends CacheTransaction> transactions, Set<Integer> segments) {
       for (CacheTransaction tx : transactions) {
-         // transfer only locked keys that belong to requested segments and belong to local node
+         // transfer only locked keys that belong to requested segments, located on local node
          Set<Object> lockedKeys = new HashSet<Object>();
          for (Object key : tx.getLockedKeys()) {
             if (segments.contains(readCh.getSegment(key))) {

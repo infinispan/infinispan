@@ -256,11 +256,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public boolean isStateTransferInProgress() {
+      // todo [anistor] this returns false until we receive the first rebalance and should actually return true if the cluster has > 1 member
       return stateConsumer.isStateTransferInProgress();
    }
 
    @Override
    public boolean isStateTransferInProgressForKey(Object key) {
+      // todo [anistor] this returns false until we receive the first rebalance and should actually return true if the cluster has > 1 member
       return stateConsumer.isStateTransferInProgressForKey(key);
    }
 
