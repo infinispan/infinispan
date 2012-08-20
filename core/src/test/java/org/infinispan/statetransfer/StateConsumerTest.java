@@ -157,7 +157,7 @@ public class StateConsumerTest {
 
 
       // create state provider
-      StateConsumerImpl stateConsumer = new StateConsumerImpl(stateTransferManager, cacheNotifier, interceptorChain, icc,
+      StateConsumerImpl stateConsumer = new StateConsumerImpl(stateTransferManager, "testCache", cacheNotifier, interceptorChain, icc,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 

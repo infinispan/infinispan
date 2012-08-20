@@ -195,11 +195,11 @@ public class OutboundTransferTask implements Runnable {
       }
    }
 
+   /**
+    * Obtains the CacheStore that will be used for pulling segments that will be sent to other new owners on request.
+    * The CacheStore is ignored if it is disabled or if it is shared or if fetchPersistentState is disabled.
+    */
    private CacheStore getCacheStore() {
-      if (configuration.clustering().cacheMode().isInvalidation()) {
-         // the cache store is ignored in case of invalidation mode caches
-         return null;
-      }
       if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
          return cacheLoaderManager.getCacheStore();
       }

@@ -137,7 +137,7 @@ public class StateProviderTest {
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
 
       // create state provider
-      StateProviderImpl stateProvider = new StateProviderImpl(mockExecutorService,
+      StateProviderImpl stateProvider = new StateProviderImpl("testCache", mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
