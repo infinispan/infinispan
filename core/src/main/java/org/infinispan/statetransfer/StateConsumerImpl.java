@@ -62,19 +62,20 @@ public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private StateTransferManager stateTransferManager;
-   private CacheNotifier cacheNotifier;
-   private Configuration configuration;
-   private RpcManager rpcManager;
-   private CommandsFactory commandsFactory;
-   private TransactionTable transactionTable;
-   private DataContainer dataContainer;
-   private CacheLoaderManager cacheLoaderManager;
-   private InterceptorChain interceptorChain;
-   private InvocationContextContainer icc;
-   private StateTransferLock stateTransferLock;
-   private long timeout;
-   private boolean useVersionedPut;
+   private final StateTransferManager stateTransferManager;
+   private final String cacheName;
+   private final CacheNotifier cacheNotifier;
+   private final Configuration configuration;
+   private final RpcManager rpcManager;
+   private final CommandsFactory commandsFactory;
+   private final TransactionTable transactionTable;
+   private final DataContainer dataContainer;
+   private final CacheLoaderManager cacheLoaderManager;
+   private final InterceptorChain interceptorChain;
+   private final InvocationContextContainer icc;
+   private final StateTransferLock stateTransferLock;
+   private final long timeout;
+   private final boolean useVersionedPut;
 
    /**
     * Current topology id.
@@ -112,6 +113,7 @@ public class StateConsumerImpl implements StateConsumer {
    private Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<Integer, InboundTransferTask>();
 
    public StateConsumerImpl(StateTransferManager stateTransferManager,
+                            String cacheName,
                             CacheNotifier cacheNotifier,
                             InterceptorChain interceptorChain,
                             InvocationContextContainer icc,
@@ -123,6 +125,7 @@ public class StateConsumerImpl implements StateConsumer {
                             TransactionTable transactionTable,
                             StateTransferLock stateTransferLock) {
       this.stateTransferManager = stateTransferManager;
+      this.cacheName = cacheName;
       this.cacheNotifier = cacheNotifier;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
@@ -157,52 +160,47 @@ public class StateConsumerImpl implements StateConsumer {
       }
       // todo [anistor] also return true for keys to be removed (now we report only keys to be added)
       synchronized (this) {
-         return readCh != null && transfersBySegment.containsKey(readCh.getSegment(key));
+         return readCh != null && transfersBySegment.containsKey(getSegment(key));
       }
    }
 
    @Override
    public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
-      log.debugf("Received new CH: %s", writeCh);
       if (trace) log.tracef("Received new CH: %s", writeCh);
 
+      ConsistentHash previousCh;
       synchronized (this) {
          isTopologyUpdate++;
          this.topologyId = topologyId;
+         previousCh = this.writeCh != null ? this.writeCh : this.readCh;
+         this.readCh = readCh;
+         this.writeCh = writeCh;
       }
 
       stateTransferLock.setTopologyId(topologyId);
 
       try {
          Set<Integer> addedSegments = null;
-         if (this.readCh == null) {
-            // we start fresh, without any data, so we need to pull everything we own according to this CH
-            this.readCh = readCh;
-            this.writeCh = writeCh;
-
-            if (writeCh.getMembers().size() > 1) {
-               // There is at least one other member to pull the data from
-               // TODO If this is the initial CH update, we could have multiple joiners but noone to pull the data from
-               if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-                  addedSegments = getMySegments(writeCh);
-               }
+         if (previousCh == null) {
+            // we start fresh, without any data, so we need to pull everything we own according to writeCh
+            if (configuration.clustering().stateTransfer().fetchInMemoryState() && !configuration.clustering().cacheMode().isInvalidation()) {
+               addedSegments = getOwnedSegments(writeCh);
             }
          } else {
-            this.readCh = readCh;
-            this.writeCh = writeCh;
-            Set<Integer> oldSegments = getMySegments(readCh);
-            Set<Integer> newSegments = getMySegments(writeCh);
+            Set<Integer> previousSegments = getOwnedSegments(previousCh);
+            Set<Integer> newSegments = getOwnedSegments(writeCh);
 
-            // we need to diff the addressing tables of the two CHes
-            Set<Integer> removedSegments = new HashSet<Integer>(oldSegments);
+            // we need to diff the routing tables of the two CHes
+            Set<Integer> removedSegments = new HashSet<Integer>(previousSegments);
             removedSegments.removeAll(newSegments);
 
-            // remove inbound transfers and received data for segments we no longer own
+            // remove inbound transfers and any data for segments we no longer own
             discardSegments(removedSegments);       //todo [anistor] what do we do with transactions and locks of removed segments?
 
-            if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
+            if (configuration.clustering().stateTransfer().fetchInMemoryState() && !configuration.clustering().cacheMode().isInvalidation()) {
+               Set<Integer> currentSegments = getOwnedSegments(readCh);
                addedSegments = new HashSet<Integer>(newSegments);
-               addedSegments.removeAll(oldSegments);
+               addedSegments.removeAll(currentSegments);
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
                Set<Address> members = new HashSet<Address>(readCh.getMembers());
@@ -242,7 +240,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private Set<Integer> getMySegments(ConsistentHash consistentHash) {
+   private Set<Integer> getOwnedSegments(ConsistentHash consistentHash) {
       Address address = rpcManager.getAddress();
       return consistentHash.getMembers().contains(address) ? consistentHash.getSegmentsForOwner(address)
             : Collections.<Integer>emptySet();
@@ -323,7 +321,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public void shutdown() {
       if (trace) {
-         log.trace("Shutting down StateConsumer");
+         log.tracef("Shutting down StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       synchronized (this) {
          // cancel all inbound transfers
@@ -345,7 +343,20 @@ public class StateConsumerImpl implements StateConsumer {
       Set<Integer> segmentsToProcess = new HashSet<Integer>(segments);
       Set<Address> faultyMembers = new HashSet<Address>();
 
+      // ignore all segments for which there are no other owners to pull data from.
+      // these segments are considered empty (or lost) and do not require a state transfer
+      for (Iterator<Integer> it = segmentsToProcess.iterator(); it.hasNext(); ) {
+         Integer segmentId = it.next();
+         Address source = pickSourceOwner(segmentId, faultyMembers);
+         if (source == null) {
+            it.remove();
+         }
+      }
+
       synchronized (this) {
+         // already active transfers do not need to be added again
+         segmentsToProcess.removeAll(transfersBySegment.keySet());
+
          while (!segmentsToProcess.isEmpty()) {
             Map<Address, Set<Integer>> segmentsBySource = new HashMap<Address, Set<Integer>>();
             for (int segmentId : segmentsToProcess) {
@@ -410,7 +421,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    /**
-    * Remove the segment's data from the data container because we no longer own it.
+    * Remove the segment's data from the data container and cache store because we no longer own it.
     *
     * @param segments to be cancelled and discarded
     */
@@ -433,7 +444,7 @@ public class StateConsumerImpl implements StateConsumer {
       Set<Object> keysToRemove = new HashSet<Object>();
       for (InternalCacheEntry ice : dataContainer) {
          Object key = ice.getKey();
-         if (segments.contains(readCh.getSegment(key))) {
+         if (segments.contains(getSegment(key))) {
             keysToRemove.add(key);
          }
       }
@@ -445,7 +456,7 @@ public class StateConsumerImpl implements StateConsumer {
          try {
             Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
             for (Object key : storedKeys) {
-               if (segments.contains(readCh.getSegment(key))) {
+               if (segments.contains(getSegment(key))) {
                   keysToRemove.add(key);
                }
             }
@@ -471,13 +482,17 @@ public class StateConsumerImpl implements StateConsumer {
       //todo [anistor] CacheNotifier.notifyDataRehashed
    }
 
-   //todo [anistor] this method is identical to OutboundTransferTask.getCacheStore()
+   private int getSegment(Object key) {
+      // there we can use any CH version because the routing table is not involved
+      return readCh.getSegment(key);
+   }
+
+   /**
+    * Obtains the CacheStore that will be used for purging segments that are no longer owned by this node.
+    * The CacheStore will be purged only if it is enabled and it is not shared.
+    */
    private CacheStore getCacheStore() {
-      if (configuration.clustering().cacheMode().isInvalidation()) {
-         // the cache store is ignored in case of invalidation mode caches
-         return null;
-      }
-      if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
+      if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared()) {
          return cacheLoaderManager.getCacheStore();
       }
       return null;

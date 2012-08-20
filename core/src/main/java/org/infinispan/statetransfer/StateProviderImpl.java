@@ -50,6 +50,7 @@ public class StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private final String cacheName;
    private final Configuration configuration;
    private final RpcManager rpcManager;
    private final CommandsFactory commandsFactory;
@@ -69,7 +70,8 @@ public class StateProviderImpl implements StateProvider {
     */
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
-   public StateProviderImpl(ExecutorService executorService,
+   public StateProviderImpl(String cacheName,
+                            ExecutorService executorService,
                             Configuration configuration,
                             RpcManager rpcManager,
                             CommandsFactory commandsFactory,
@@ -77,6 +79,7 @@ public class StateProviderImpl implements StateProvider {
                             DataContainer dataContainer,
                             TransactionTable transactionTable,
                             StateTransferLock stateTransferLock) {
+      this.cacheName = cacheName;
       this.executorService = executorService;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -105,9 +108,11 @@ public class StateProviderImpl implements StateProvider {
       // cancel outbound state transfers for destinations that are no longer members in new topology
       Set<Address> members = new HashSet<Address>(writeCh.getMembers());
       synchronized (transfersByDestination) {
-         for (Address destination : transfersByDestination.keySet()) {
+         for (Iterator<Address> it = transfersByDestination.keySet().iterator(); it.hasNext(); ) {
+            Address destination = it.next();
             if (!members.contains(destination)) {
-               List<OutboundTransferTask> transfers = transfersByDestination.remove(destination);
+               List<OutboundTransferTask> transfers = transfersByDestination.get(destination);
+               it.remove();
                for (OutboundTransferTask outboundTransfer : transfers) {
                   outboundTransfer.cancel();
                }
@@ -118,7 +123,7 @@ public class StateProviderImpl implements StateProvider {
 
    public void shutdown() {
       if (trace) {
-         log.tracef("Shutting down StateProvider of cache %s on %s", rpcManager.getAddress());
+         log.tracef("Shutting down StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       // cancel all outbound transfers
       synchronized (transfersByDestination) {
@@ -180,7 +185,10 @@ public class StateProviderImpl implements StateProvider {
             }
          }
          List<WriteCommand> txModifications = tx.getModifications();
-         WriteCommand[] modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+         WriteCommand[] modifications = null;
+         if (txModifications != null) {
+            modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+         }
          transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), modifications, lockedKeys));
       }
    }

@@ -30,11 +30,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHashFactory;
+import org.infinispan.distribution.ch.*;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.distribution.group.GroupingConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
@@ -78,6 +74,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private StateProvider stateProvider;
    private StateConsumer stateConsumer;
+
    private volatile boolean rebalanceInProgress;
    private volatile CacheTopology cacheTopology;
 
@@ -110,6 +107,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       cacheName = cache.getName();
 
       stateProvider = new StateProviderImpl(
+            cacheName,
             asyncTransportExecutor,
             configuration,
             rpcManager,
@@ -121,6 +119,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       stateConsumer = new StateConsumerImpl(
             this,
+            cacheName,
             cacheNotifier,
             interceptorChain,
             icc,
@@ -135,7 +134,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
    @Start(priority = 60)
-   private void start() throws Exception {
+   public void start() throws Exception {
       if (trace) {
          log.tracef("Starting state transfer manager on " + rpcManager.getAddress());
       }
@@ -160,7 +159,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
 
          private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
-            if (trace) log.tracef("Installing new cache topology %s", newCacheTopology);
+            if (trace) {
+               log.tracef("Installing new cache topology %s", newCacheTopology);
+            }
 
             // handle grouping
             newCacheTopology = addGrouping(newCacheTopology);
@@ -181,19 +182,30 @@ public class StateTransferManagerImpl implements StateTransferManager {
       localTopologyManager.join(cacheName, joinInfo, handler);
    }
 
-   private CacheTopology addGrouping(CacheTopology newCacheTopology) {
-      if (groupManager == null)
-         return newCacheTopology;
+   /**
+    * Decorates the given cache topology to add key grouping. The ConsistentHash objects of the cache topology
+    * are wrapped to provide key grouping (if configured).
+    *
+    * @param cacheTopology the given cache topology
+    * @return the decorated topology
+    */
+   private CacheTopology addGrouping(CacheTopology cacheTopology) {
+      if (groupManager == null) {
+         return cacheTopology;
+      }
 
-      ConsistentHash currentCH = newCacheTopology.getCurrentCH();
+      ConsistentHash currentCH = cacheTopology.getCurrentCH();
       currentCH = new GroupingConsistentHash(currentCH, groupManager);
-      ConsistentHash pendingCH = newCacheTopology.getPendingCH();
+      ConsistentHash pendingCH = cacheTopology.getPendingCH();
       if (pendingCH != null) {
          pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
       }
-      return new CacheTopology(newCacheTopology.getTopologyId(), currentCH, pendingCH);
+      return new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
    }
 
+   /**
+    * If no ConsistentHashFactory was explicitly configured we choose one based on cache mode.
+    */
    private ConsistentHashFactory pickConsistentHashFactory() {
       ConsistentHashFactory factory = configuration.clustering().hash().consistentHashFactory();
       if (factory == null) {
@@ -206,6 +218,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                   factory = new DefaultConsistentHashFactory();
                }
             } else {
+               // this is also used for invalidation mode
                factory = new ReplicatedConsistentHashFactory();
             }
          }
