@@ -43,7 +43,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
-      c.setStateRetrievalTimeout(1000);
+      c.setStateRetrievalTimeout(5000);
       createClusteredCaches(2, "replication", c);      
    }
 
