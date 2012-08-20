@@ -54,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
+ * TODO document this
  * @author anistor@redhat.com
  * @since 5.2
  */
@@ -228,9 +229,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Stop(priority = 20)
    public void stop() {
-      localTopologyManager.leave(cacheName);
-      stateProvider.shutdown();
-      stateConsumer.shutdown();
+      try {
+         localTopologyManager.leave(cacheName);
+         stateProvider.shutdown();
+         stateConsumer.shutdown();
+      } catch (Throwable e) {
+         log.errorf(e, "Failed to stop StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
+      }
    }
 
    @Override
@@ -251,7 +256,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public boolean isJoinComplete() {
-      return cacheTopology != null;
+      return cacheTopology != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
    }
 
    @Override

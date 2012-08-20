@@ -272,7 +272,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       if (trace) {
-         log.tracef("After applying state data container has %d keys", dataContainer.size());
+         log.tracef("After applying the received state the data container has %d keys", dataContainer.size());
       }
    }
 

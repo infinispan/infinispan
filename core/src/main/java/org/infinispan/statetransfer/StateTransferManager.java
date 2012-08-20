@@ -55,6 +55,7 @@ public interface StateTransferManager {
     */
    void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
 
+   //todo [anistor] this is innacurate. this node does not hold state in current implementation
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
