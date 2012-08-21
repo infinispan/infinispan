@@ -122,12 +122,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          List<Address> members = cacheTopology.getMembers();
          if (rebalanceInfo.updateMembers(members)) {
             // all the nodes that haven't confirmed yet have left the cache/cluster
-            onRebalanceCompleted(cacheName, cacheTopology.getTopologyId(), rebalanceInfo);
+            onClusterRebalanceCompleted(cacheName, cacheTopology.getTopologyId(), rebalanceInfo);
          }
       }
    }
 
-   private void onRebalanceCompleted(String cacheName, int topologyId, RebalanceInfo rebalanceInfo) throws Exception {
+   private void onClusterRebalanceCompleted(String cacheName, int topologyId, RebalanceInfo rebalanceInfo) throws Exception {
       rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
       log.debugf("Removing rebalance information for topology id %d", topologyId);
       rebalanceStatusMap.remove(cacheName);
@@ -177,7 +177,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       if (rebalanceInfo.confirmRebalance(node)) {
-         onRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
+         onClusterRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
       }
    }
 
@@ -330,6 +330,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       public RebalanceInfo(int topologyId, Collection<Address> members) {
          this.topologyId = topologyId;
          this.confirmationsNeeded = new HashSet<Address>(members);
+         log.tracef("Initializing rebalance confirmation collector %d, initial list is %s", topologyId, confirmationsNeeded);
       }
 
       /**
@@ -338,6 +339,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       public boolean confirmRebalance(Address node) {
          synchronized (this) {
             confirmationsNeeded.remove(node);
+            log.tracef("Rebalance confirmation collector %d received confirmation for %s, remaining list is %s", topologyId, node, confirmationsNeeded);
             return confirmationsNeeded.isEmpty();
          }
       }
