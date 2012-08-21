@@ -75,11 +75,13 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
    @Override
    public void initCache(String cacheName, CacheJoinInfo joinInfo) throws Exception {
+      log.tracef("Initializing rebalance policy for cache %s", cacheName);
       cacheStatusMap.putIfAbsent(cacheName, new CacheStatus(joinInfo));
    }
 
    @Override
    public void initCache(String cacheName, List<CacheTopology> partitionTopologies) throws Exception {
+      log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s", cacheName, partitionTopologies);
       CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (partitionTopologies.isEmpty())
          return;
@@ -111,6 +113,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    @Override
    public void updateMembersList(List<Address> newClusterMembers) throws Exception {
       this.clusterMembers = newClusterMembers;
+      log.tracef("Updating cluster members for all the caches. New list is %s", newClusterMembers);
 
       for (Map.Entry<String, CacheStatus> e : cacheStatusMap.entrySet()) {
          String cacheName = e.getKey();
@@ -224,6 +227,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    }
 
    private void doRebalance(String cacheName, CacheStatus cacheStatus, List<Address> newMembers) throws Exception {
+      log.tracef("Rebalancing consistent hash for cache %s", cacheName);
       int newTopologyId = cacheStatus.cacheTopology.getTopologyId() + 1;
       ConsistentHash currentCH = cacheStatus.cacheTopology.getCurrentCH();
       ConsistentHashFactory chFactory = cacheStatus.joinInfo.getConsistentHashFactory();
@@ -239,7 +243,10 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             cacheName, topologyId);
       CacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       synchronized (cacheStatus) {
-         assert topologyId == cacheStatus.cacheTopology.getTopologyId();
+         if (topologyId != cacheStatus.cacheTopology.getTopologyId()) {
+            throw new IllegalStateException(String.format("Invalid cluster-wide rebalance confirmation: received topology id %d, expected %d",
+                  topologyId, cacheStatus.cacheTopology.getTopologyId()));
+         }
          int newTopologyId = topologyId + 1;
          ConsistentHash newCurrentCH = cacheStatus.cacheTopology.getPendingCH();
 
@@ -260,7 +267,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    private boolean isBalanced(ConsistentHash ch) {
       int numSegments = ch.getNumSegments();
       for (int i = 0; i < numSegments; i++) {
-         if (ch.locateOwnersForSegment(i).size() != ch.getNumOwners()) {
+         int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
+         if (ch.locateOwnersForSegment(i).size() != actualNumOwners) {
             return false;
          }
       }
