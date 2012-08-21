@@ -75,6 +75,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private CacheManagerNotifier cacheManagerNotifier;
    private ExecutorService asyncTransportExecutor;
    private boolean isCoordinator;
+   private volatile int viewId = -1;
 
    //private ConcurrentMap<String, CacheJoinInfo> clusterCaches = ConcurrentMapFactory.makeConcurrentMap();
    private final ConcurrentMap<String, RebalanceInfo> rebalanceStatusMap = ConcurrentMapFactory.makeConcurrentMap();
@@ -100,7 +101,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       listener = new ClusterViewListener();
       cacheManagerNotifier.addListener(listener);
       // The listener already missed the initial view
-      handleNewView(transport.getMembers(), false);
+      handleNewView(transport.getMembers(), false, 0);
    }
 
    @Stop(priority = 100)
@@ -254,15 +255,21 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       @Merged
       @ViewChanged
       public void handleViewChange(final ViewChangedEvent e) {
-         handleNewView(e.getNewMembers(), e.isMergeView());
+         handleNewView(e.getNewMembers(), e.isMergeView(), e.getViewId());
       }
    }
 
-   private void handleNewView(List<Address> newMembers, boolean mergeView) {
+   private void handleNewView(List<Address> newMembers, boolean mergeView, int viewId) {
+      // check to ensure this is not an older view
+      if (viewId < this.viewId) {
+         return;
+      }
+      this.viewId = viewId;
+
       boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
       if (mergeView || becameCoordinator) {
          try {
-            HashMap<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
+            Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
 
             for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
                String cacheName = e.getKey();
