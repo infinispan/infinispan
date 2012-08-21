@@ -515,13 +515,15 @@ public class RemoteCacheManager implements BasicCacheContainer {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? forceReturnValueDefault : forceReturnValueOverride);
             startRemoteCache(rcc);
-            // If ping not successful assume that the cache does not exist
-            // Default cache is always started, so don't do for it
-            if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
-                  ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
-               return null;
+            if (config.getPingOnStartup()) {
+               // If ping not successful assume that the cache does not exist
+               // Default cache is always started, so don't do for it
+               if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
+                     ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
+                  return null;
+               }
             }
-            // If cache is not defined in server
+            // If ping on startup is disabled, or cache is defined in server
             cacheName2RemoteCache.put(cacheName, rcc);
             return result;
          } else {
