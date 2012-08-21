@@ -31,7 +31,7 @@ import org.infinispan.remoting.transport.Address;
  * @author anistor@redhat.com
  * @since 5.2
  */
-class TestAddress implements Address {
+final class TestAddress implements Address {
 
    private final int addressNum;
 
