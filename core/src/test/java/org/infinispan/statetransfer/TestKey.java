@@ -34,7 +34,7 @@ import java.util.Random;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public final class TestKey implements Serializable {
+final class TestKey implements Serializable {
 
    private static final long serialVersionUID = -42;
 
