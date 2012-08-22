@@ -131,10 +131,16 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       return new DefaultConsistentHash(dch1.getHashFunction(), dch1.getNumSegments(), dch1.getNumOwners(), members, segmentOwners);
    }
 
-   private void mergeLists(List<Address> list1, List<Address> list2) {
-      for (Address a2 : list2) {
-         if (!list1.contains(a2)) {
-            list1.add(a2);
+   /**
+    * Adds all elements from <code>src</code> list that do not already exist in <code>dest</code> list to the latter.
+    *
+    * @param dest List where elements are added
+    * @param src List of elements to add - this is never modified
+    */
+   private void mergeLists(List<Address> dest, List<Address> src) {
+      for (Address a2 : src) {
+         if (!dest.contains(a2)) {
+            dest.add(a2);
          }
       }
    }
@@ -181,7 +187,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       int numSegments = ch.getNumSegments();
       List<Address>[] segmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         segmentOwners[i] = ch.locateOwnersForSegment(i);
+         segmentOwners[i] = new ArrayList<Address>(ch.locateOwnersForSegment(i));
       }
       return segmentOwners;
    }
@@ -402,7 +408,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       boolean segmentsWithZeroOwners = false;
       List<Address>[] newSegmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = baseCH.locateOwnersForSegment(i);
+         List<Address> owners = new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
          owners.removeAll(leavers);
          segmentsWithZeroOwners |= owners.isEmpty();
          newSegmentOwners[i] = owners;

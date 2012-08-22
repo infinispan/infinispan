@@ -87,7 +87,7 @@ public interface ConsistentHash {
     * Finds all the owners of a key. The first element in the returned list is the primary owner.
     *
     * @param key key to locate
-    * @return A list of addresses where the key resides.
+    * @return An unmodifiable list of addresses where the key resides.
     *         Will never be {@code null}, and it will always have at least 1 element.
     */
    List<Address> locateOwners(Object key);
@@ -123,7 +123,7 @@ public interface ConsistentHash {
    int getSegment(Object key);
 
    /**
-    * @return All the nodes that own a given hash space segment. The returned list is a copy of the internal list.
+    * @return All the nodes that own a given hash space segment. The returned list is unmodifiable.
     */
    List<Address> locateOwnersForSegment(int segmentId);
 
