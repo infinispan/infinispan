@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
 public @interface Stop {
    /**
     * Optional parameter which defines the order in which this method will be called when the ComponentRegistry moves to
-    * the STARTED state.  Defaults to 10.
+    * the STOPPING state.  Defaults to 10.
     *
     * @return execution priority
     * @since 4.0
