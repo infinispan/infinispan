@@ -53,6 +53,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
+      cacheStoreConfig.setPurgeSynchronously(true);
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();
       store.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
       store.start();

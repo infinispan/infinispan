@@ -49,6 +49,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
+      config.setPurgeSynchronously(true);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
       jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBinaryCacheStore.start();

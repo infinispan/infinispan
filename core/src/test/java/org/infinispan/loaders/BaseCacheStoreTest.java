@@ -26,8 +26,6 @@ import static java.util.Collections.emptySet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -87,6 +85,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       try {
          cs = createCacheStore();
+         assert (cs.getCacheStoreConfig()==null || cs.getCacheStoreConfig().isPurgeSynchronously()) : "Cache store tests expect purgeSynchronously to be enabled";
       } catch (Exception e) {
          //in IDEs this won't be printed which makes debugging harder
          e.printStackTrace();
@@ -110,9 +109,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    public void assertNoLocksHeld(Method m) {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {
-         assert ((LockSupportCacheStore) cs).getTotalLockCount() == 0 :
+         int totalLockCount = ((LockSupportCacheStore) cs).getTotalLockCount();
+         assert totalLockCount == 0 :
                "Lock count for test method " + m.getName() + " is "
-                     + ((LockSupportCacheStore) cs).getTotalLockCount();
+                     + totalLockCount;
       }
    }
 

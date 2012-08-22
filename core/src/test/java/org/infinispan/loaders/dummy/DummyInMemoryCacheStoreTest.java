@@ -30,10 +30,12 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "loaders.dummy.DummyInMemoryCacheStoreTest")
 public class DummyInMemoryCacheStoreTest extends BaseCacheStoreTest {
 
+   @Override
    protected CacheStore createCacheStore() throws CacheLoaderException {
       DummyInMemoryCacheStore cl = new DummyInMemoryCacheStore();
       DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg()
          .storeName(DummyInMemoryCacheStoreTest.class.getName());
+      cfg.setPurgeSynchronously(true);
       cl.init(cfg, getCache(), getMarshaller());
       cl.start();
       return cl;
