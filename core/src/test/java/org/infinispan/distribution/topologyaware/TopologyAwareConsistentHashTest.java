@@ -23,12 +23,10 @@
 package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,9 +35,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -493,7 +489,7 @@ public class TopologyAwareConsistentHashTest extends AbstractInfinispanTest {
    }
 
    private void checkConsistency(List<Address> testAddressesList, Address testAddresses, Address addr, int replCount) {
-      testAddressesList = new ArrayList(testAddressesList);
+      testAddressesList = new ArrayList<Address>(testAddressesList);
       testAddressesList.remove(addr);
       if (testAddresses.equals(addr)) return;
       List<Address> currentBackupList = ch.locateOwners(testAddresses);

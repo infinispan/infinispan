@@ -29,6 +29,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Immutables;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
@@ -111,8 +112,7 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
-      // TODO Optimize away the new ArrayList, write instead an array-backed readonly list
-      return new ArrayList<Address>(Arrays.asList(segmentOwners[segmentId]));
+      return Immutables.immutableListWrap(segmentOwners[segmentId]);
    }
 
    @Override
