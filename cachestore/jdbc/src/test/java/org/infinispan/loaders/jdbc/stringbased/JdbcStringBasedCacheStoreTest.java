@@ -49,6 +49,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
+      config.setPurgeSynchronously(true);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       CacheImpl cache = new CacheImpl("aName");
       stringBasedCacheStore.init(config, cache, getMarshaller());
