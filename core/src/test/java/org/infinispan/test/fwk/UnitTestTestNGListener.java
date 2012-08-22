@@ -24,17 +24,15 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.logging.Logger;
 import org.testng.IClass;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-import org.testng.annotations.Test;
-import org.testng.internal.annotations.TestAnnotation;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -52,6 +50,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    private AtomicInteger failed = new AtomicInteger(0);
    private AtomicInteger succeeded = new AtomicInteger(0);
    private AtomicInteger skipped = new AtomicInteger(0);
+   private AtomicBoolean oomHandled = new AtomicBoolean();
 
    public void onTestStart(ITestResult res) {
       log.info("Starting test " + getTestDesc(res));
@@ -60,9 +59,20 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    }
 
    private void addOomLoggingSupport() {
+      final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
       Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
          public void uncaughtException(final Thread t, final Throwable e) {
-            printAllTheThreadsInTheJvm(e);
+            try {
+               // we need to ensure we only handle first OOM occurrence (multiple threads could see one) to avoid duplicated thread dumps
+               if (e instanceof OutOfMemoryError && oomHandled.compareAndSet(false, true)) {
+                  printAllTheThreadsInTheJvm();
+               }
+            } finally {
+               if (oldHandler != null) {
+                  // invoke the old handler if any
+                  oldHandler.uncaughtException(t, e);
+               }
+            }
          }
       });
    }
@@ -137,8 +147,9 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
       }
    }
 
-   public static void printAllTheThreadsInTheJvm(Throwable e) {
-      if (e instanceof OutOfMemoryError) {
+   //todo [anistor] this approach can result in more OOM. maybe it's wiser to remove the whole thing and rely on -XX:+HeapDumpOnOutOfMemoryError
+   private void printAllTheThreadsInTheJvm() {
+      if (log.isTraceEnabled()) {
          Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
          log.tracef("Dumping all %s threads in the system.", allStackTraces.size());
          for (Map.Entry<Thread, StackTraceElement[]> s : allStackTraces.entrySet()) {
