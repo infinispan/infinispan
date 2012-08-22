@@ -192,7 +192,20 @@ public enum Flag {
     * make decisions such as whether the cache store needs checking to see if
     * the previous value needs to be loaded and merged.
     */
-   DELTA_WRITE;
+   DELTA_WRITE,
+
+   /**
+    * Signals that an operation's return value will be ignored. Typical
+    * operations whose return value might be ignored include
+    * {@link java.util.Map#put(Object, Object)} whose return value indicates
+    * previous value. So, a user might decide to the put something in the
+    * cache but might not be interested in the return value.
+    *
+    * Not requiring return values makes the cache behave more efficiently by
+    * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
+    * {@link Flag#SKIP_CACHE_LOAD}.
+    */
+   IGNORE_RETURN_VALUES;
 
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.

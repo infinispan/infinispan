@@ -28,7 +28,7 @@ import static org.infinispan.context.Flag.REMOVE_DATA_ON_STOP;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 import java.util.Collections;
@@ -191,11 +191,11 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             for (InternalCacheEntry e : state) {
                if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
                   cache.getAdvancedCache()
-                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
+                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, IGNORE_RETURN_VALUES, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                } else {
                   cache.getAdvancedCache()
-                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
+                       .withFlags(CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                }
             }

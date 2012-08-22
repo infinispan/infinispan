@@ -50,7 +50,8 @@ final class FileListOperations {
 
    FileListOperations(AdvancedCache<?, ?> cache, String indexName){
       this.cache = (AdvancedCache<FileListCacheKey, Object>) cache.withFlags(Flag.SKIP_INDEXING);
-      this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>) cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_INDEXING);
+      this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>)
+            cache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING);
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }
