@@ -66,8 +66,8 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"))
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"))
 
-      assertTrue(s.get("totalBytesRead").get.toInt != 0)
-      assertTrue(s.get("totalBytesWritten").get.toInt != 0)
+      assertTrue(s.get("totalBytesRead") != 0)
+      assertTrue(s.get("totalBytesWritten") != 0)
 
       assertSuccess(client.assertGet(m), v(m))
       s = client.stats
@@ -76,6 +76,12 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       assertEquals(s.get("retrievals").get, "1")
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"))
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"))
+
+      client.clear
+
+      s = client.stats
+      assertEquals(s.get("totalNumberOfEntries").get, "1")
+      assertEquals(s.get("currentNumberOfEntries").get, "0")
    }
 
    private def assertHigherBytes(currentBytesRead: Int, bytesStr: Option[String]): Int = {
