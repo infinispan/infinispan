@@ -134,7 +134,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)) {
+      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)
+            || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
          return false; //skip operation
       }
 

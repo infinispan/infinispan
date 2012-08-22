@@ -163,6 +163,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return retvalCheck
             && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
             && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES)
             && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());
    }
 
@@ -448,7 +449,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private boolean isNeedReliableReturnValues(InvocationContext ctx) {
-      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && needReliableReturnValues;
+      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    /**
