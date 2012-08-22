@@ -27,6 +27,8 @@ import org.infinispan.remoting.transport.Address;
 /**
  * Factory for {@link ConsistentHash} instances.
  *
+ * @see <a href="https://community.jboss.org/wiki/Non-BlockingStateTransferV2">Non-BlockingStateTransferV2</a>
+ *
  * @author Dan Berindei
  * @since 5.2
  */
@@ -38,7 +40,7 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     * @param hashFunction The hash function to use on top of the keys' own {@code hashCode()} implementation.
     * @param numOwners The ideal number of owners for each key. The created consistent hash
     *                  can have more or less owners, but each key will have at least one owner.
-    * @param numSegments Number of hash wheel segments. The implementation may round up the number
+    * @param numSegments Number of hash-space segments. The implementation may round up the number
     *                    of segments for performance, or may ignore the parameter altogether.
     * @param members A list of addresses representing the new cache members.
     */
