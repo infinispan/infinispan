@@ -52,6 +52,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
+      config.setPurgeSynchronously(true);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       stringBasedCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       stringBasedCacheStore.start();

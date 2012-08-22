@@ -52,6 +52,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
+      config.setPurgeSynchronously(true);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
       jdbcBucketCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBucketCacheStore.start();
