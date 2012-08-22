@@ -42,6 +42,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -58,8 +60,6 @@ public class OutboundTransferTask implements Runnable {
    private final boolean trace = log.isTraceEnabled();
 
    private StateProviderImpl stateProvider;
-
-   private volatile boolean isCancelled = false;
 
    private final int topologyId;
 
@@ -90,6 +90,11 @@ public class OutboundTransferTask implements Runnable {
     */
    private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null);
 
+   /**
+    * The Future obtained from submitting this task to an executor service. This is used for cancellation.
+    */
+   private FutureTask runnableFuture;
+
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
                                CacheLoaderManager cacheLoaderManager, RpcManager rpcManager, Configuration configuration,
@@ -117,6 +122,19 @@ public class OutboundTransferTask implements Runnable {
       this.timeout = timeout;
    }
 
+   public void execute(ExecutorService executorService) {
+      if (runnableFuture != null) {
+         throw new IllegalStateException("This task was already submitted");
+      }
+      runnableFuture = new FutureTask<Void>(this, null) {
+         @Override
+         protected void done() {
+            stateProvider.onTaskCompletion(OutboundTransferTask.this);
+         }
+      };
+      executorService.submit(runnableFuture);
+   }
+
    public Address getDestination() {
       return destination;
    }
@@ -125,24 +143,15 @@ public class OutboundTransferTask implements Runnable {
       return segments;
    }
 
-   @Override
    public void run() {
       try {
          // send data container entries
          for (InternalCacheEntry ice : dataContainer) {
-            if (isCancelled) {
-               return;
-            }
-
             Object key = ice.getKey();
             int segmentId = readCh.getSegment(key);
             if (segments.contains(segmentId)) {
                sendEntry(ice, segmentId);
             }
-         }
-
-         if (isCancelled) {
-            return;
          }
 
          // send cache store entries if needed
@@ -152,9 +161,6 @@ public class OutboundTransferTask implements Runnable {
                //todo [anistor] need to extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
                Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                for (Object key : storedKeys) {
-                  if (isCancelled) {
-                     return;
-                  }
                   int segmentId = readCh.getSegment(key);
                   if (segments.contains(segmentId)) {
                      try {
@@ -172,16 +178,12 @@ public class OutboundTransferTask implements Runnable {
             }
          } else {
             if (trace) {
-               log.tracef("No cache store or the cache store is shared, no need to send any stored cache entries for segments %s", segments);
+               log.tracef("No cache store or the cache store is shared, no need to send any stored cache entries for segments: %s", segments);
             }
          }
 
          // send the last chunk of all segments
          for (int segmentId : segments) {
-            if (isCancelled) {
-               return;
-            }
-
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
                entries = Collections.emptyList();
@@ -189,9 +191,13 @@ public class OutboundTransferTask implements Runnable {
             sendEntries(entries, segmentId, true);
          }
       } catch (Throwable t) {
-         log.error("Failed to execute outbound transfer", t);
-      } finally {
-         stateProvider.onTaskCompletion(this);
+         // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
+         if (!runnableFuture.isCancelled()) {
+            log.error("Failed to execute outbound transfer", t);
+         }
+      }
+      if (trace) {
+         log.tracef("Outbound transfer of segments %s to %s is complete", segments, destination);
       }
    }
 
@@ -223,16 +229,19 @@ public class OutboundTransferTask implements Runnable {
    }
 
    private void sendEntries(List<InternalCacheEntry> entries, int segmentId, boolean isLastChunk) {
-      if (!isCancelled) {
-         if (trace) {
-            log.tracef("Sending %d cache entries from segment %d to %s", entries.size(), segmentId, destination);
-         }
-         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries, isLastChunk);
-         // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
-         rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
-      }
+      if (trace) {
+         log.tracef("Sending %d cache entries from segment %d to %s", entries.size(), segmentId, destination);
+      }                                                                                             //todo [anistor] send back received topologyId or my local one?
+      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries, isLastChunk);
+      // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
+      rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
    }
 
+   /**
+    * Cancel some of the segments. If all segments get cancelled then the whole task will be cancelled.
+    *
+    * @param cancelledSegments segments to cancel.
+    */
    public void cancelSegments(Set<Integer> cancelledSegments) {
       if (trace) {
          log.tracef("Cancelling outbound transfer of segments %s to %s", cancelledSegments, destination);
@@ -249,10 +258,13 @@ public class OutboundTransferTask implements Runnable {
     * Cancel the whole task.
     */
    public void cancel() {
-      if (!isCancelled) {
-         isCancelled = true;
+      if (runnableFuture != null && !runnableFuture.isCancelled()) {
+         runnableFuture.cancel(true);
          sendFuture.cancel(true);
-         stateProvider.onTaskCompletion(this);
       }
+   }
+
+   public boolean isCancelled() {
+      return runnableFuture != null && runnableFuture.isCancelled();
    }
 }

@@ -201,7 +201,7 @@ public class StateProviderImpl implements StateProvider {
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
-      executorService.submit(outboundTransfer);
+      outboundTransfer.execute(executorService);
    }
 
    private void addTransfer(OutboundTransferTask outboundTransfer) {
