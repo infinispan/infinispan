@@ -23,6 +23,8 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
+import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -246,6 +248,28 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       assert replicationQueue.getElementsCount() == numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS;
    }
 
+   public void testAtomicHashMap() throws Exception {
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
+      transactionManager.begin();
+      AtomicMap am = AtomicMapLookup.getAtomicMap(cache1, "foo");
+      am.put("sub-key", "sub-value");
+      transactionManager.commit();
+
+      ReplQueueTestScheduledExecutorFactory.command.run();
+
+      //in next 5 secs, expect the replication to occur
+      long start = System.currentTimeMillis();
+      while (System.currentTimeMillis() - start < 5000) {
+         if (cache2.get("foo") != null) break;
+         Thread.sleep(50);
+      }
+
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo", false) != null;
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key") != null;
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key").equals("sub-value");
+   }
 
    public static class ReplQueueTestScheduledExecutorFactory implements ScheduledExecutorFactory {
       static Properties myProps = new Properties();
@@ -280,6 +304,5 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          };
       }
    }
-
 
 }
