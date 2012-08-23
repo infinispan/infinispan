@@ -49,6 +49,8 @@ public class StateResponseCommand extends BaseRpcCommand {
     */
    private int topologyId;
 
+   // TODO Why not support multiple segments in the same state response command?
+   // This would help us with startup speed, especially when the caches start up empty (as they do in the tests).
    /**
     * The id of the segment for which we push cache entries.
     */
