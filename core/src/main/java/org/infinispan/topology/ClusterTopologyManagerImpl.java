@@ -371,11 +371,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       public boolean updateMembers(Collection<Address> newMembers) {
          synchronized (this) {
             // only return true the first time
-            if (confirmationsNeeded.isEmpty())
-               return false;
-
-            confirmationsNeeded.retainAll(newMembers);
-            return confirmationsNeeded.isEmpty();
+            boolean modified = confirmationsNeeded.retainAll(newMembers);
+            return modified && confirmationsNeeded.isEmpty();
          }
       }
 
