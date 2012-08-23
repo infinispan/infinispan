@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -40,6 +41,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -75,6 +77,7 @@ public class StateProviderTest {
 
    private ExecutorService pooledExecutorService;
    private ExecutorService mockExecutorService;
+   private Cache cache;
 
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
@@ -105,6 +108,8 @@ public class StateProviderTest {
             new LinkedBlockingDeque<Runnable>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
       mockExecutorService = mock(ExecutorService.class);
+      cache = mock(Cache.class);
+      when(cache.getName()).thenReturn("testCache");
 
       rpcManager = mock(RpcManager.class);
       commandsFactory = mock(CommandsFactory.class);
@@ -141,7 +146,8 @@ public class StateProviderTest {
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
 
       // create state provider
-      StateProviderImpl stateProvider = new StateProviderImpl("testCache", mockExecutorService,
+      StateProviderImpl stateProvider = new StateProviderImpl();
+      stateProvider.init(cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
@@ -159,7 +165,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      stateProvider.onTopologyUpdate(1, ch1, ch1);
+      stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
 
       log.debug("ch1: " + ch1);
       List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
@@ -181,7 +187,7 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      stateProvider.onTopologyUpdate(2, ch1, ch2);
+      stateProvider.onTopologyUpdate(new CacheTopology(2, ch1, ch2), true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
@@ -189,7 +195,7 @@ public class StateProviderTest {
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-      stateProvider.shutdown();
+      stateProvider.stop();
 
       assertFalse(stateProvider.isStateTransferInProgress());
    }
@@ -239,7 +245,8 @@ public class StateProviderTest {
 
 
       // create state provider
-      StateProviderImpl stateProvider = new StateProviderImpl("testCache", pooledExecutorService,
+      StateProviderImpl stateProvider = new StateProviderImpl();
+      stateProvider.init(cache, pooledExecutorService,
             configuration, rpcManager, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
@@ -261,7 +268,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      stateProvider.onTopologyUpdate(1, ch1, ch1);
+      stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
 
       log.debug("ch1: " + ch1);
       List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
@@ -284,7 +291,7 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      stateProvider.onTopologyUpdate(2, ch1, ch2);
+      stateProvider.onTopologyUpdate(new CacheTopology(2, ch1, ch2), false);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
@@ -292,7 +299,7 @@ public class StateProviderTest {
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-      stateProvider.shutdown();
+      stateProvider.stop();
 
       assertFalse(stateProvider.isStateTransferInProgress());
    }

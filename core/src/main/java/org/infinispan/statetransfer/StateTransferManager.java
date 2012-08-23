@@ -23,7 +23,6 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -31,6 +30,7 @@ import org.infinispan.topology.CacheTopology;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
+//todo [anistor] remove this class and move the remaining functionality to StateConsumer
 /**
  * A component that manages the state transfer when the topology of the cluster changes.
  *
@@ -42,30 +42,20 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 @Scope(Scopes.NAMED_CACHE)
 public interface StateTransferManager {
 
-   StateProvider getStateProvider();
-
-   StateConsumer getStateConsumer();
-
-   /**
-    * Receive notification of topology changes. Handles it by starting state transfer as needed.
-    *
-    * @param topologyId the new topology id
-    * @param readCh
-    * @param writeCh
-    */
-   void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
-
-   //todo [anistor] this is innacurate. this node does not hold state in current implementation
+   //todo [anistor] this is inaccurate. this node does not hold state yet in current implementation
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
+   /**
+    * Checks if an inbound state transfer is in progress.
+    */
    @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.")
    @Metric(displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 
    /**
-    * Checks if an inbound state transfer is in progress.
+    * Checks if an inbound state transfer is in progress for a given key.
     *
     * @param key
     * @return
@@ -73,6 +63,4 @@ public interface StateTransferManager {
    boolean isStateTransferInProgressForKey(Object key);
 
    CacheTopology getCacheTopology();
-
-   void notifyEndOfStateTransfer(int topologyId);
 }

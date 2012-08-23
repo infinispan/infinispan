@@ -23,8 +23,10 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 import java.util.List;
 import java.util.Set;
@@ -35,6 +37,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface StateProvider {
 
    boolean isStateTransferInProgress();
@@ -43,11 +46,10 @@ public interface StateProvider {
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
     * The other outbound transfers remain unaffected.
     *
-    * @param topologyId the new topology id
-    * @param readCh
-    * @param writeCh
+    * @param cacheTopology
+    * @param isRebalance
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
+   void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a
@@ -82,6 +84,7 @@ public interface StateProvider {
 
    /**
     * Cancels all outbound state transfers.
+    * This is executed when the cache is shutting down.
     */
-   void shutdown();
+   void stop();
 }
