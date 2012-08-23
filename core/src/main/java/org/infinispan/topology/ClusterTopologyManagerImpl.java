@@ -139,7 +139,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       int topologyId = cacheTopology.getTopologyId();
       Collection<Address> members = cacheTopology.getPendingCH().getMembers();
       RebalanceInfo existingRebalance = rebalanceStatusMap.putIfAbsent(cacheName,
-            new RebalanceInfo(topologyId, members));
+            new RebalanceInfo(cacheName, topologyId, members));
       if (existingRebalance != null) {
          throw new IllegalStateException("Aborting the current rebalance, there is another operation " +
                "in progress: " + existingRebalance);
@@ -175,12 +175,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d", cacheName, node,
             topologyId);
       RebalanceInfo rebalanceInfo = rebalanceStatusMap.get(cacheName);
-      if (rebalanceInfo == null || topologyId != rebalanceInfo.topologyId) {
-         throw new CacheException(String.format("%s: Received invalid rebalance confirmation from %s for " +
-               "rebalance status is %s", cacheName, node, rebalanceInfo));
+      if (rebalanceInfo == null) {
+         throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
+               "for cache %s, we don't have a rebalance in progress", node, cacheName));
       }
 
-      if (rebalanceInfo.confirmRebalance(node)) {
+      if (rebalanceInfo.confirmRebalance(node, topologyId)) {
          onClusterRebalanceCompleted(cacheName, topologyId, rebalanceInfo);
       }
    }
@@ -268,9 +268,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (viewId < this.viewId) {
          return;
       }
-      this.viewId = viewId;
 
       boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
+      isCoordinator = transport.isCoordinator();
       if (mergeView || becameCoordinator) {
          try {
             Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
@@ -284,13 +284,16 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             // TODO Retry?
             log.failedToRecoverClusterState(e);
          }
-      } else {
+      } else if (isCoordinator) {
          try {
             rebalancePolicy.updateMembersList(newMembers);
          } catch (Exception e) {
             log.errorUpdatingMembersList(e);
          }
       }
+
+      // update the view id last, so join requests from other nodes wait until we recovered existing members' info
+      this.viewId = viewId;
    }
 
    private HashMap<String, List<CacheTopology>> recoverClusterStatus() throws Exception {
@@ -328,22 +331,36 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
 
    private static class RebalanceInfo {
+      private final String cacheName;
       private final int topologyId;
       private final Set<Address> confirmationsNeeded;
 
-      public RebalanceInfo(int topologyId, Collection<Address> members) {
+      public RebalanceInfo(String cacheName, int topologyId, Collection<Address> members) {
+         this.cacheName = cacheName;
          this.topologyId = topologyId;
          this.confirmationsNeeded = new HashSet<Address>(members);
-         log.tracef("Initializing rebalance confirmation collector %d, initial list is %s", topologyId, confirmationsNeeded);
+         log.tracef("Initialized rebalance confirmation collector %d, initial list is %s", topologyId, confirmationsNeeded);
       }
 
       /**
        * @return {@code true} if everyone has confirmed
        */
-      public boolean confirmRebalance(Address node) {
+      public boolean confirmRebalance(Address node, int receivedTopologyId) {
          synchronized (this) {
-            confirmationsNeeded.remove(node);
-            log.tracef("Rebalance confirmation collector %d received confirmation for %s, remaining list is %s", topologyId, node, confirmationsNeeded);
+            if (topologyId != receivedTopologyId) {
+               throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
+                     "for cache %s, expecting topology id %d but got %d", node, cacheName, topologyId, receivedTopologyId));
+            }
+
+            boolean removed = confirmationsNeeded.remove(node);
+            if (!removed) {
+               log.tracef("Rebalance confirmation collector %d ignored confirmation for %s, which is not a member",
+                     topologyId, node);
+               return false;
+            }
+
+            log.tracef("Rebalance confirmation collector %d received confirmation for %s, remaining list is %s",
+                  topologyId, node, confirmationsNeeded);
             return confirmationsNeeded.isEmpty();
          }
       }

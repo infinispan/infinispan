@@ -253,6 +253,14 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
          clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
 
+         // We have postponed some joiners, start a new rebalance for them now
+         if (!cacheStatus.joiners.isEmpty()) {
+            List<Address> newMembers = new ArrayList<Address>(newCurrentCH.getMembers());
+            newMembers.addAll(cacheStatus.joiners);
+            startRebalance(cacheName, cacheStatus, newMembers);
+         }
+
+         // If the CH is still not balanced (perhaps because of a leaver), restart the rebalance process
          if (!isBalanced(newCurrentCH, cacheStatus)) {
             startRebalance(cacheName, cacheStatus, newCurrentCH.getMembers());
          }
@@ -265,9 +273,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    }
 
    private boolean isBalanced(ConsistentHash ch, CacheStatus cacheStatus) {
-      if (!cacheStatus.joiners.isEmpty())
-         return false;
-
       int numSegments = ch.getNumSegments();
       for (int i = 0; i < numSegments; i++) {
          int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
