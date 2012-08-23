@@ -35,7 +35,7 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
 
    /**
     * Set embedded hbase up and spawn it in a new thread.
-    * 
+    *
     * @throws InterruptedException
     */
    @BeforeClass
@@ -59,6 +59,7 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
       HBaseCacheStore cs = new HBaseCacheStore();
       // This uses the default config settings in HBaseCacheStoreConfig
       HBaseCacheStoreConfig conf = new HBaseCacheStoreConfig();
+      conf.setPurgeSynchronously(true);
 
       if (USE_EMBEDDED) {
          // overwrite the ZooKeeper client port with the port from the embedded server
