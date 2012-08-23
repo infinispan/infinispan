@@ -719,7 +719,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
-      log.debugf("Started cache manager %s on %s", globalConfiguration.transport().clusterName(), getAddress());
+      String clusterName = globalConfiguration.transport().clusterName();
+      String nodeName = globalConfiguration.transport().nodeName();
+      log.debugf("Started cache manager %s on %s", clusterName, nodeName);
    }
 
    @Override
