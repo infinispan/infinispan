@@ -210,14 +210,12 @@ public class StateProviderTest {
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
 
-      when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), anyInt(), any(Collection.class), anyBoolean())).thenAnswer(new Answer<StateResponseCommand>() {
+      when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class))).thenAnswer(new Answer<StateResponseCommand>() {
          @Override
          public StateResponseCommand answer(InvocationOnMock invocation) {
             return new StateResponseCommand("cache1", (Address) invocation.getArguments()[0],
                   ((Integer) invocation.getArguments()[1]).intValue(),
-                  ((Integer) invocation.getArguments()[2]).intValue(),
-                  (Collection<InternalCacheEntry>) invocation.getArguments()[3],
-                  ((Boolean)invocation.getArguments()[4]).booleanValue());
+                  (Collection<StateChunk>) invocation.getArguments()[2]);
          }
       });
 
@@ -284,7 +282,7 @@ public class StateProviderTest {
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
-     // TestingUtil.sleepThread(15000);
+      // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
       stateProvider.onTopologyUpdate(2, ch1, ch2);
 

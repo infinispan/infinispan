@@ -24,7 +24,6 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -52,19 +51,9 @@ public class StateResponseCommand extends BaseRpcCommand {
    // TODO Why not support multiple segments in the same state response command?
    // This would help us with startup speed, especially when the caches start up empty (as they do in the tests).
    /**
-    * The id of the segment for which we push cache entries.
+    * A collections of state chunks to be transferred.
     */
-   private int segmentId;
-
-   /**
-    * The cache entries. They are all guaranteed to be long to the same segment: segmentId.
-    */
-   private Collection<InternalCacheEntry> cacheEntries;
-
-   /**
-    * Indicates to receiver is there are more chunks to come for this segment.
-    */
-   private boolean isLastChunk;
+   private Collection<StateChunk> stateChunks;
 
    /**
     * This is injected on target node via init() method before the command is performed.
@@ -79,13 +68,11 @@ public class StateResponseCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public StateResponseCommand(String cacheName, Address origin, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
+   public StateResponseCommand(String cacheName, Address origin, int topologyId, Collection<StateChunk> stateChunks) {
       super(cacheName);
       setOrigin(origin);
       this.topologyId = topologyId;
-      this.segmentId = segmentId;
-      this.cacheEntries = cacheEntries;
-      this.isLastChunk = isLastChunk;
+      this.stateChunks = stateChunks;
    }
 
    public void init(StateConsumer stateConsumer) {
@@ -97,7 +84,9 @@ public class StateResponseCommand extends BaseRpcCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         stateConsumer.applyState(getOrigin(), topologyId, segmentId, cacheEntries, isLastChunk);
+         for (StateChunk stateChunk : stateChunks) {
+            stateConsumer.applyState(getOrigin(), topologyId, stateChunk.getSegmentId(), stateChunk.getCacheEntries(), stateChunk.isLastChunk());
+         }
          return null;
       } finally {
          LogFactory.popNDC(trace);
@@ -116,7 +105,7 @@ public class StateResponseCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{getOrigin(), topologyId, segmentId, isLastChunk};
+      return new Object[]{getOrigin(), topologyId, stateChunks};
    }
 
    @Override
@@ -124,8 +113,7 @@ public class StateResponseCommand extends BaseRpcCommand {
       int i = 0;
       setOrigin((Address) parameters[i++]);
       topologyId = (Integer) parameters[i++];
-      segmentId = (Integer) parameters[i++];
-      isLastChunk = (Boolean) parameters[i];
+      stateChunks = (Collection<StateChunk>) parameters[i];
    }
 
    @Override
@@ -134,9 +122,7 @@ public class StateResponseCommand extends BaseRpcCommand {
             "cache=" + cacheName +
             ", origin=" + getOrigin() +
             ", topologyId=" + topologyId +
-            ", segmentId=" + segmentId +
-            ", cacheEntries=" + cacheEntries +
-            ", isLastChunk=" + isLastChunk +
+            ", stateChunks=" + stateChunks +
             '}';
    }
 }

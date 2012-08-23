@@ -110,4 +110,6 @@ public interface Ids {
    int TRANSACTION_INFO = 84;
 
    int FLAG = 85;
+
+   int STATE_CHUNK = 86;
 }
