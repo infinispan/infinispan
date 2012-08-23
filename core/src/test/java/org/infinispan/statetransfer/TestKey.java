@@ -49,6 +49,9 @@ final class TestKey implements Serializable {
    private final int hashCode;
 
    public TestKey(String name, int segmentId, ConsistentHash ch) {
+      if (segmentId < 0 || segmentId >= ch.getNumSegments()) {
+         throw new IllegalArgumentException("segmentId is out of range");
+      }
       this.name = name;
 
       Random rnd = new Random();

@@ -62,6 +62,7 @@ public class StateProviderImpl implements StateProvider {
    private final long timeout;
    private final int chunkSize;
 
+   private int topolopyId;
    private ConsistentHash readCh;
 
    /**
@@ -104,6 +105,7 @@ public class StateProviderImpl implements StateProvider {
 
    public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
       this.readCh = readCh;
+      this.topolopyId = topologyId;
 
       // cancel outbound state transfers for destinations that are no longer members in new topology
       Set<Address> members = new HashSet<Address>(writeCh.getMembers());
@@ -198,23 +200,26 @@ public class StateProviderImpl implements StateProvider {
       if (trace) {
          log.tracef("Starting outbound transfer of segments %s to %s", segments, destination);
       }
+      if (topologyId != this.topolopyId) {
+         log.warnf("Received topology id (%d) is different that expected (%d)", topologyId, this.topolopyId);
+      }
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
 
-   private void addTransfer(OutboundTransferTask outboundTransfer) {
+   private void addTransfer(OutboundTransferTask transferTask) {
       if (trace) {
-         log.tracef("Adding outbound transfer of segments %s to %s", outboundTransfer.getSegments(), outboundTransfer.getDestination());
+         log.tracef("Adding outbound transfer of segments %s to %s", transferTask.getSegments(), transferTask.getDestination());
       }
       synchronized (transfersByDestination) {
-         List<OutboundTransferTask> transfers = transfersByDestination.get(outboundTransfer.getDestination());
+         List<OutboundTransferTask> transfers = transfersByDestination.get(transferTask.getDestination());
          if (transfers == null) {
             transfers = new ArrayList<OutboundTransferTask>();
-            transfersByDestination.put(outboundTransfer.getDestination(), transfers);
+            transfersByDestination.put(transferTask.getDestination(), transfers);
          }
-         transfers.add(outboundTransfer);
+         transfers.add(transferTask);
       }
    }
 
@@ -235,9 +240,6 @@ public class StateProviderImpl implements StateProvider {
    }
 
    private void removeTransfer(OutboundTransferTask transferTask) {
-      if (trace) {
-         log.tracef("Removing outbound transfer of segments %s to %s", transferTask.getSegments(), transferTask.getDestination());
-      }
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(transferTask.getDestination());
          if (transferTasks != null) {
@@ -249,10 +251,11 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   void onTaskCompletion(OutboundTransferTask outboundTransferTask) {
+   void onTaskCompletion(OutboundTransferTask transferTask) {
       if (trace) {
-         log.tracef("Outbound transfer of segments %s to %s is complete", outboundTransferTask.getSegments(), outboundTransferTask.getDestination());
+         log.tracef("Removing %s outbound transfer of segments %s to %s", transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getSegments(), transferTask.getDestination());
       }
-      removeTransfer(outboundTransferTask);
+
+      removeTransfer(transferTask);
    }
 }
