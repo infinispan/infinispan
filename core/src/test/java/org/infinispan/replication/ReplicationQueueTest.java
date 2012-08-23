@@ -34,6 +34,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -44,6 +45,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests ReplicationQueue's functionality.
@@ -284,13 +288,14 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          myProps.put("ddd", "ccc");
       }
 
+
       public ScheduledExecutorService getScheduledExecutor(Properties p) {
-         Properties toCompareWith = new Properties();
-         for (Map.Entry<Object, Object> entry: myProps.entrySet())
-            toCompareWith.setProperty((String) entry.getKey(), (String) entry.getValue()); 
-         toCompareWith.setProperty("componentName", "replicationQueue-thread");
-         toCompareWith.setProperty("threadPriority", "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
-         assert p.equals(toCompareWith) : "Expected " + p + " but was " + toCompareWith;
+         assertEquals(p.size(), 5);
+         assertEquals(p.get("componentName"), "replicationQueue-thread");
+         assertEquals(p.get("threadPriority"), "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
+         assertEquals(p.get("aaa"), "bbb");
+         assertEquals(p.get("ddd"), "ccc");
+         assertTrue(p.containsKey("threadNameSuffix")); // don't check p.get("threadNameSuffix"), it depends on the node name
          methodCalled = true;
          return new ScheduledThreadPoolExecutor(1) {
             @Override

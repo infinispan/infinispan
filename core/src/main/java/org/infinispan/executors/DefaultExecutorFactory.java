@@ -22,6 +22,8 @@
  */
 package org.infinispan.executors;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TypedProperties;
 
 import java.util.Properties;
@@ -48,10 +50,12 @@ public class DefaultExecutorFactory implements ExecutorFactory {
       int queueSize = tp.getIntProperty("queueSize", 100000);
       final int threadPrio = tp.getIntProperty("threadPriority", Thread.MIN_PRIORITY);
       final String threadNamePrefix = tp.getProperty("threadNamePrefix", tp.getProperty("componentName", "Thread"));
+      final String threadNameSuffix = tp.getProperty("threadNameSuffix", "");
       ThreadFactory tf = new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
-            Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());
+            String threadName = threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix;
+            Thread th = new Thread(r, threadName);
             th.setDaemon(true);
             th.setPriority(threadPrio);
             return th;
