@@ -23,14 +23,19 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -38,6 +43,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * // TODO [anistor] Document this
@@ -50,17 +57,17 @@ public class StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final String cacheName;
-   private final Configuration configuration;
-   private final RpcManager rpcManager;
-   private final CommandsFactory commandsFactory;
-   private final TransactionTable transactionTable;
-   private final DataContainer dataContainer;
-   private final CacheLoaderManager cacheLoaderManager; // optional
-   private final ExecutorService executorService;
-   private final StateTransferLock stateTransferLock;
-   private final long timeout;
-   private final int chunkSize;
+   private String cacheName;
+   private Configuration configuration;
+   private RpcManager rpcManager;
+   private CommandsFactory commandsFactory;
+   private TransactionTable transactionTable;
+   private DataContainer dataContainer;
+   private CacheLoaderManager cacheLoaderManager; // optional
+   private ExecutorService executorService;
+   private StateTransferLock stateTransferLock;
+   private long timeout;
+   private int chunkSize;
 
    private int topolopyId;
    private ConsistentHash readCh;
@@ -71,16 +78,20 @@ public class StateProviderImpl implements StateProvider {
     */
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
 
-   public StateProviderImpl(String cacheName,
-                            ExecutorService executorService,
-                            Configuration configuration,
-                            RpcManager rpcManager,
-                            CommandsFactory commandsFactory,
-                            CacheLoaderManager cacheLoaderManager,
-                            DataContainer dataContainer,
-                            TransactionTable transactionTable,
-                            StateTransferLock stateTransferLock) {
-      this.cacheName = cacheName;
+   public StateProviderImpl() {
+   }
+
+   @Inject
+   public void init(Cache cache,
+                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //todo [anistor] use a separate ExecutorService
+                    Configuration configuration,
+                    RpcManager rpcManager,
+                    CommandsFactory commandsFactory,
+                    CacheLoaderManager cacheLoaderManager,
+                    DataContainer dataContainer,
+                    TransactionTable transactionTable,
+                    StateTransferLock stateTransferLock) {
+      this.cacheName = cache.getName();
       this.executorService = executorService;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -103,12 +114,12 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
-      this.readCh = readCh;
-      this.topolopyId = topologyId;
+   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+      this.readCh = cacheTopology.getReadConsistentHash();
+      this.topolopyId = cacheTopology.getTopologyId();
 
       // cancel outbound state transfers for destinations that are no longer members in new topology
-      Set<Address> members = new HashSet<Address>(writeCh.getMembers());
+      Set<Address> members = new HashSet<Address>(cacheTopology.getWriteConsistentHash().getMembers());
       synchronized (transfersByDestination) {
          for (Iterator<Address> it = transfersByDestination.keySet().iterator(); it.hasNext(); ) {
             Address destination = it.next();
@@ -123,19 +134,24 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public void shutdown() {
+   @Stop(priority = 20)
+   public void stop() {
       if (trace) {
          log.tracef("Shutting down StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       // cancel all outbound transfers
-      synchronized (transfersByDestination) {
-         for (Iterator<List<OutboundTransferTask>> it = transfersByDestination.values().iterator(); it.hasNext(); ) {
-            List<OutboundTransferTask> transfers = it.next();
-            it.remove();
-            for (OutboundTransferTask outboundTransfer : transfers) {
-               outboundTransfer.cancel();
+      try {
+         synchronized (transfersByDestination) {
+            for (Iterator<List<OutboundTransferTask>> it = transfersByDestination.values().iterator(); it.hasNext(); ) {
+               List<OutboundTransferTask> transfers = it.next();
+               it.remove();
+               for (OutboundTransferTask outboundTransfer : transfers) {
+                  outboundTransfer.cancel();
+               }
             }
          }
+      } catch (Throwable t){
+         log.errorf(t, "Failed to stop StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
    }
 
@@ -170,7 +186,9 @@ public class StateProviderImpl implements StateProvider {
       return transactions;
    }
 
-   private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer, Collection<? extends CacheTransaction> transactions, Set<Integer> segments) {
+   private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer,
+                                              Collection<? extends CacheTransaction> transactions,
+                                              Set<Integer> segments) {
       for (CacheTransaction tx : transactions) {
          // transfer only locked keys that belong to requested segments, located on local node
          Set<Object> lockedKeys = new HashSet<Object>();
@@ -204,7 +222,8 @@ public class StateProviderImpl implements StateProvider {
          log.warnf("Received topology id (%d) is different that expected (%d)", topologyId, this.topolopyId);
       }
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId, readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId,
+            readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
@@ -253,7 +272,8 @@ public class StateProviderImpl implements StateProvider {
 
    void onTaskCompletion(OutboundTransferTask transferTask) {
       if (trace) {
-         log.tracef("Removing %s outbound transfer of segments %s to %s", transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getSegments(), transferTask.getDestination());
+         log.tracef("Removing %s outbound transfer of segments %s to %s",
+               transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getSegments(), transferTask.getDestination());
       }
 
       removeTransfer(transferTask);

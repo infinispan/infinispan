@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -30,6 +31,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -44,6 +47,9 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -75,7 +81,7 @@ public class StateConsumerTest {
 
    private static final Log log = LogFactory.getLog(StateConsumerTest.class);
 
-   public void test1() {
+   public void test1() throws Exception {
       // create cache configuration
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().invocationBatching().enable()
@@ -84,6 +90,8 @@ public class StateConsumerTest {
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
 
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      GlobalConfiguration globalConfiguration = gcb.build();
       Configuration configuration = cb.build();
 
       // create list of 6 members
@@ -104,10 +112,15 @@ public class StateConsumerTest {
       log.debug(ch2);
 
       // create dependencies
-      StateTransferManager stateTransferManager = mock(StateTransferManager.class);
+      Cache cache = mock(Cache.class);
+      when(cache.getName()).thenReturn("testCache");
+
+      StateProvider stateProvider = mock(StateProvider.class);
+      LocalTopologyManager localTopologyManager = mock(LocalTopologyManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       ExecutorService mockExecutorService = mock(ExecutorService.class);
       RpcManager rpcManager = mock(RpcManager.class);
+      Transport transport = mock(Transport.class);
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       CacheLoaderManager cacheLoaderManager = mock(CacheLoaderManager.class);
       DataContainer dataContainer = mock(DataContainer.class);
@@ -130,7 +143,9 @@ public class StateConsumerTest {
          }
       });
 
+      when(transport.getViewId()).thenReturn(1);
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
+      when(rpcManager.getTransport()).thenReturn(transport);
 
       when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong())).thenAnswer(new Answer<Map<Address, Response>>() {
          @Override
@@ -157,9 +172,11 @@ public class StateConsumerTest {
 
 
       // create state provider
-      StateConsumerImpl stateConsumer = new StateConsumerImpl(stateTransferManager, "testCache", cacheNotifier, interceptorChain, icc,
-            configuration, rpcManager, commandsFactory, cacheLoaderManager,
+      StateConsumerImpl stateConsumer = new StateConsumerImpl();
+      stateConsumer.init(cache, stateProvider, localTopologyManager, cacheNotifier, interceptorChain, icc,
+            configuration, globalConfiguration, rpcManager, null, commandsFactory, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
+      stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       Object key1 = new TestKey("key1", 0, ch1);
@@ -182,13 +199,13 @@ public class StateConsumerTest {
 
       assertFalse(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(1, ch1, ch1);
+      stateConsumer.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
 
       assertTrue(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(2, ch1, ch2);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch1, ch2), true);
 
-      stateConsumer.shutdown();
+      stateConsumer.stop();
 
       assertFalse(stateConsumer.isStateTransferInProgress());
    }

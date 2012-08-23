@@ -23,16 +23,24 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.*;
+import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.GroupingConsistentHash;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -40,6 +48,10 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.CacheTopologyHandler;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -62,20 +74,23 @@ public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final StateTransferManager stateTransferManager;
-   private final String cacheName;
-   private final CacheNotifier cacheNotifier;
-   private final Configuration configuration;
-   private final RpcManager rpcManager;
-   private final CommandsFactory commandsFactory;
-   private final TransactionTable transactionTable;
-   private final DataContainer dataContainer;
-   private final CacheLoaderManager cacheLoaderManager;
-   private final InterceptorChain interceptorChain;
-   private final InvocationContextContainer icc;
-   private final StateTransferLock stateTransferLock;
-   private final long timeout;
-   private final boolean useVersionedPut;
+   private StateProvider stateProvider;
+   private LocalTopologyManager localTopologyManager;
+   private String cacheName;
+   private CacheNotifier cacheNotifier;
+   private Configuration configuration;
+   private GlobalConfiguration globalConfiguration;
+   private RpcManager rpcManager;
+   private GroupManager groupManager;
+   private CommandsFactory commandsFactory;
+   private TransactionTable transactionTable;
+   private DataContainer dataContainer;
+   private CacheLoaderManager cacheLoaderManager;
+   private InterceptorChain interceptorChain;
+   private InvocationContextContainer icc;
+   private StateTransferLock stateTransferLock;
+   private long timeout;
+   private boolean useVersionedPut;
 
    /**
     * Current topology id.
@@ -92,11 +107,15 @@ public class StateConsumerImpl implements StateConsumer {
     */
    private ConsistentHash writeCh;
 
+   private volatile CacheTopology cacheTopology;
+
    /**
     * The number of topology updates that are being processed concurrently (in method onTopologyUpdate()).
     * This is needed to be able to detect completion.
     */
    private int isTopologyUpdate = 0;
+
+   private volatile boolean rebalanceInProgress;
 
    /**
     * A map that keeps track of current inbound state transfers by source address. There could be multiple transfers
@@ -112,25 +131,35 @@ public class StateConsumerImpl implements StateConsumer {
     */
    private Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<Integer, InboundTransferTask>();
 
-   public StateConsumerImpl(StateTransferManager stateTransferManager,
-                            String cacheName,
-                            CacheNotifier cacheNotifier,
-                            InterceptorChain interceptorChain,
-                            InvocationContextContainer icc,
-                            Configuration configuration,
-                            RpcManager rpcManager,
-                            CommandsFactory commandsFactory,
-                            CacheLoaderManager cacheLoaderManager,
-                            DataContainer dataContainer,
-                            TransactionTable transactionTable,
-                            StateTransferLock stateTransferLock) {
-      this.stateTransferManager = stateTransferManager;
-      this.cacheName = cacheName;
+   public StateConsumerImpl() {
+   }
+
+   @Inject
+   public void init(Cache cache,
+                    StateProvider stateProvider,
+                    LocalTopologyManager localTopologyManager,
+                    CacheNotifier cacheNotifier,
+                    InterceptorChain interceptorChain,
+                    InvocationContextContainer icc,
+                    Configuration configuration,
+                    GlobalConfiguration globalConfiguration,
+                    RpcManager rpcManager,
+                    GroupManager groupManager,
+                    CommandsFactory commandsFactory,
+                    CacheLoaderManager cacheLoaderManager,
+                    DataContainer dataContainer,
+                    TransactionTable transactionTable,
+                    StateTransferLock stateTransferLock) {
+      this.cacheName = cache.getName();
+      this.stateProvider = stateProvider;
+      this.localTopologyManager = localTopologyManager;
       this.cacheNotifier = cacheNotifier;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.configuration = configuration;
+      this.globalConfiguration = globalConfiguration;
       this.rpcManager = rpcManager;
+      this.groupManager = groupManager;
       this.commandsFactory = commandsFactory;
       this.cacheLoaderManager = cacheLoaderManager;
       this.dataContainer = dataContainer;
@@ -165,13 +194,19 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh) {
+   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+      ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+      ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
+      int topologyId = cacheTopology.getTopologyId();
+
       if (trace) log.tracef("Received new CH: %s", writeCh);
 
       ConsistentHash previousCh;
       synchronized (this) {
          isTopologyUpdate++;
-         this.topologyId = topologyId;
+         this.cacheTopology = cacheTopology;
+         this.topologyId = cacheTopology.getTopologyId();
+         rebalanceInProgress |= isRebalance;
          previousCh = this.writeCh != null ? this.writeCh : this.readCh;
          this.readCh = readCh;
          this.writeCh = writeCh;
@@ -234,9 +269,16 @@ public class StateConsumerImpl implements StateConsumer {
          synchronized (this) {
             isTopologyUpdate--;
             if (isTopologyUpdate == 0 && !isStateTransferInProgress()) {
-               stateTransferManager.notifyEndOfStateTransfer(topologyId);
+               notifyEndOfStateTransfer(topologyId);
             }
          }
+      }
+   }
+
+   private void notifyEndOfStateTransfer(int topologyId) {
+      if (rebalanceInProgress) {
+         rebalanceInProgress = false;
+         localTopologyManager.confirmRebalance(cacheName, topologyId, null);
       }
    }
 
@@ -246,6 +288,7 @@ public class StateConsumerImpl implements StateConsumer {
             : Collections.<Integer>emptySet();
    }
 
+   //todo [anistor] check topologyId
    public void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
       // it's possible to receive a late message so we must be prepared to ignore segments we no longer own
       if (writeCh == null || !writeCh.getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
@@ -318,23 +361,127 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
+   // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
+   @Start(priority = 60)
+   public void start() throws Exception {
+      if (trace) {
+         log.tracef("Starting StateConsumer on %s", rpcManager.getAddress());
+      }
+
+      CacheJoinInfo joinInfo = new CacheJoinInfo(
+            pickConsistentHashFactory(),
+            configuration.clustering().hash().hash(),
+            configuration.clustering().hash().numSegments(),
+            configuration.clustering().hash().numOwners(),
+            configuration.clustering().stateTransfer().timeout(),
+            rpcManager.getTransport().getViewId());
+
+      localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
+         @Override
+         public void updateConsistentHash(CacheTopology cacheTopology) {
+            doTopologyUpdate(cacheTopology, false);
+         }
+
+         @Override
+         public void rebalance(CacheTopology cacheTopology) {
+            doTopologyUpdate(cacheTopology, true);
+         }
+      });
+   }
+
+   /**
+    * If no ConsistentHashFactory was explicitly configured we choose a suitable one based on cache mode.
+    */
+   private ConsistentHashFactory pickConsistentHashFactory() {
+      ConsistentHashFactory factory = configuration.clustering().hash().consistentHashFactory();
+      if (factory == null) {
+         CacheMode cacheMode = configuration.clustering().cacheMode();
+         if (cacheMode.isClustered()) {
+            if (cacheMode.isDistributed()) {
+               if (globalConfiguration.transport().hasTopologyInfo()) {
+                  factory = new TopologyAwareConsistentHashFactory();
+               } else {
+                  factory = new DefaultConsistentHashFactory();
+               }
+            } else {
+               // this is also used for invalidation mode
+               factory = new ReplicatedConsistentHashFactory();
+            }
+         }
+      }
+      return factory;
+   }
+
+   private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
+      if (trace) {
+         log.tracef("Installing new cache topology %s", newCacheTopology);
+      }
+
+      // handle grouping
+      newCacheTopology = addGrouping(newCacheTopology);
+
+      CacheTopology oldCacheTopology = cacheTopology;
+      ConsistentHash oldCH = oldCacheTopology != null ? oldCacheTopology.getWriteConsistentHash() : null;
+      ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
+
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
+
+      stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
+      onTopologyUpdate(newCacheTopology, isRebalance);
+   }
+
+   /**
+    * Decorates the given cache topology to add key grouping. The ConsistentHash objects of the cache topology
+    * are wrapped to provide key grouping (if configured).
+    *
+    * @param cacheTopology the given cache topology
+    * @return the decorated topology
+    */
+   private CacheTopology addGrouping(CacheTopology cacheTopology) {
+      if (groupManager == null) {
+         return cacheTopology;
+      }
+
+      ConsistentHash currentCH = cacheTopology.getCurrentCH();
+      currentCH = new GroupingConsistentHash(currentCH, groupManager);
+      ConsistentHash pendingCH = cacheTopology.getPendingCH();
+      if (pendingCH != null) {
+         pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
+      }
+      return new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
+   }
+
    @Override
-   public void shutdown() {
+   @Stop(priority = 20)
+   public void stop() {
       if (trace) {
          log.tracef("Shutting down StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
-      synchronized (this) {
-         // cancel all inbound transfers
-         for (Iterator<List<InboundTransferTask>> it = transfersBySource.values().iterator(); it.hasNext(); ) {
-            List<InboundTransferTask> inboundTransfers = it.next();
-            it.remove();
-            for (InboundTransferTask inboundTransfer : inboundTransfers) {
-               inboundTransfer.cancel();
+
+      try {
+         synchronized (this) {
+            // cancel all inbound transfers
+            for (Iterator<List<InboundTransferTask>> it = transfersBySource.values().iterator(); it.hasNext(); ) {
+               List<InboundTransferTask> inboundTransfers = it.next();
+               it.remove();
+               for (InboundTransferTask inboundTransfer : inboundTransfers) {
+                  inboundTransfer.cancel();
+               }
             }
+            transfersBySource.clear();
+            transfersBySegment.clear();
          }
-         transfersBySource.clear();
-         transfersBySegment.clear();
+      } catch (Throwable t) {
+         log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
+
+      localTopologyManager.leave(cacheName);
+   }
+
+   @Override
+   public CacheTopology getCacheTopology() {
+      return cacheTopology;
    }
 
    private void addTransfers(Set<Integer> segments) {
@@ -523,7 +670,7 @@ public class StateConsumerImpl implements StateConsumer {
          allTasksCompleted = isTopologyUpdate == 0 && !isStateTransferInProgress();
       }
       if (allTasksCompleted) {
-         stateTransferManager.notifyEndOfStateTransfer(topologyId);
+         notifyEndOfStateTransfer(topologyId);
       }
    }
 }

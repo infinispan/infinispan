@@ -24,8 +24,10 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 import java.util.Collection;
 
@@ -35,7 +37,10 @@ import java.util.Collection;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface StateConsumer {
+
+   CacheTopology getCacheTopology();
 
    boolean isStateTransferInProgress();
 
@@ -45,18 +50,20 @@ public interface StateConsumer {
     * Receive notification of topology changes. StateRequestCommands are issued for segments that are new to this member
     * and the segments that are no longer owned are discarded.
     *
-    * @param topologyId the new topology id
-    * @param readCh
-    * @param writeCh
+    * @param cacheTopology
+    * @param isRebalance
     */
-   void onTopologyUpdate(int topologyId, ConsistentHash readCh, ConsistentHash writeCh);
+   void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
    void applyTransactions(Address sender, int topologyId, Collection<TransactionInfo> transactions);
 
    void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
 
+   void start() throws Exception;
+
    /**
     * Cancels all incoming state transfers. The already received data is not discarded.
+    * This is executed when the cache is shutting down.
     */
-   void shutdown();
+   void stop();
 }
