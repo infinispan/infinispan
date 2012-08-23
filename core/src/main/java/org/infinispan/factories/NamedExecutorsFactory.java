@@ -55,6 +55,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType, String componentName) {
       try {
+         String nodeName = globalConfiguration.transport().nodeName();
+
          // Construction happens only on startup of either CacheManager, or Cache, so
          // using synchronized protection does not have a great impact on app performance.
          if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
@@ -62,7 +64,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (notificationExecutor == null) {
                   notificationExecutor = buildAndConfigureExecutorService(
                         globalConfiguration.asyncListenerExecutor().factory(),
-                        globalConfiguration.asyncListenerExecutor().properties(), componentName);
+                        globalConfiguration.asyncListenerExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) notificationExecutor;
@@ -71,7 +73,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (asyncTransportExecutor == null) {
                   asyncTransportExecutor = buildAndConfigureExecutorService(
                         globalConfiguration.asyncTransportExecutor().factory(),
-                        globalConfiguration.asyncTransportExecutor().properties(), componentName);
+                        globalConfiguration.asyncTransportExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) asyncTransportExecutor;
@@ -80,7 +82,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (evictionExecutor == null) {
                   evictionExecutor = buildAndConfigureScheduledExecutorService(
                         globalConfiguration.evictionScheduledExecutor().factory(),
-                        globalConfiguration.evictionScheduledExecutor().properties(), componentName);
+                        globalConfiguration.evictionScheduledExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) evictionExecutor;
@@ -89,7 +91,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (asyncReplicationExecutor == null) {
                   asyncReplicationExecutor = buildAndConfigureScheduledExecutorService(
                         globalConfiguration.replicationQueueScheduledExecutor().factory(),
-                        globalConfiguration.replicationQueueScheduledExecutor().properties(), componentName);
+                        globalConfiguration.replicationQueueScheduledExecutor().properties(), componentName,
+                        nodeName);
                }
             }
             return (T) asyncReplicationExecutor;
@@ -111,21 +114,32 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (evictionExecutor != null) evictionExecutor.shutdownNow();
    }
 
-   private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p, String componentName) throws Exception {
+   private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p,
+                                                            String componentName, String nodeName) throws Exception {
       Properties props = new Properties(p); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
+      setThreadSuffix(nodeName, props);
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return new LazyInitializingExecutorService(f, props);
    }
 
-   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(ScheduledExecutorFactory f, Properties p, String componentName) throws Exception {
+   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(ScheduledExecutorFactory f,
+                                                                              Properties p, String componentName,
+                                                                              String nodeName) throws Exception {
       Properties props = new Properties(); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
+      setThreadSuffix(nodeName, props);
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return new LazyInitializingScheduledExecutorService(f, props);
+   }
+
+   private void setThreadSuffix(String nodeName, Properties props) {
+      if (nodeName != null && !nodeName.isEmpty()) {
+         props.setProperty("threadNameSuffix", ',' + nodeName);
+      }
    }
 
    private void setDefaultThreadPrio(int prio, Properties props) {
