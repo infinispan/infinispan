@@ -45,13 +45,13 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
@@ -300,7 +300,7 @@ public interface CommandsFactory {
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, int segment, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

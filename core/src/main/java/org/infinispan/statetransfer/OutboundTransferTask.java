@@ -86,6 +86,11 @@ public class OutboundTransferTask implements Runnable {
    private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = ConcurrentMapFactory.makeConcurrentMap();
 
    /**
+    * The total number of entries from all segments accumulated in entriesBySegment.
+    */
+   private int accumulatedEntries;
+
+   /**
     * This is used with RpcManager.invokeRemotelyInFuture() to be able to cancel message sending if the task needs to be canceled.
     */
    private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null);
@@ -183,13 +188,7 @@ public class OutboundTransferTask implements Runnable {
          }
 
          // send the last chunk of all segments
-         for (int segmentId : segments) {
-            List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
-            if (entries == null) {
-               entries = Collections.emptyList();
-            }
-            sendEntries(entries, segmentId, true);
-         }
+         sendEntries(true);
       } catch (Throwable t) {
          // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
          if (!runnableFuture.isCancelled()) {
@@ -213,28 +212,51 @@ public class OutboundTransferTask implements Runnable {
    }
 
    private void sendEntry(InternalCacheEntry ice, int segmentId) {
+      // send if we have a full chunk
+      if (accumulatedEntries >= stateTransferChunkSize) {
+         sendEntries(false);
+         entriesBySegment.clear();
+         accumulatedEntries = 0;
+      }
+
       List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
       if (entries == null) {
          entries = new ArrayList<InternalCacheEntry>();
          entriesBySegment.put(segmentId, entries);
       }
-
-      // send if we have a full chunk
-      if (entries.size() >= stateTransferChunkSize) {
-         sendEntries(entries, segmentId, false);
-         entries.clear();
-      }
-
       entries.add(ice);
+      accumulatedEntries++;
    }
 
-   private void sendEntries(List<InternalCacheEntry> entries, int segmentId, boolean isLastChunk) {
-      if (trace) {
-         log.tracef("Sending %d cache entries from segment %d to %s", entries.size(), segmentId, destination);
-      }                                                                                             //todo [anistor] send back received topologyId or my local one?
-      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, segmentId, entries, isLastChunk);
-      // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
-      rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
+   private void sendEntries(boolean isLast) {
+      List<StateChunk> chunks = new ArrayList<StateChunk>();
+      if (isLast) {
+         for (int segmentId : segments) {
+            List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
+            if (entries == null) {
+               entries = Collections.emptyList();
+            }
+            chunks.add(new StateChunk(segmentId, entries, isLast));
+         }
+      } else {
+         for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
+            List<InternalCacheEntry> entries = e.getValue();
+            if (!entries.isEmpty()) {
+               chunks.add(new StateChunk(e.getKey(), entries, isLast));
+            }
+         }
+      }
+
+      if (!chunks.isEmpty() || isLast) {
+         if (trace) {
+            log.tracef("Sending %d cache entries from segments %s to node %s", accumulatedEntries, entriesBySegment.keySet(), destination);
+         }
+
+         //todo [anistor] send back the received topologyId or my local one?
+         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks);
+         // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
+         rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
+      }
    }
 
    /**
@@ -247,7 +269,7 @@ public class OutboundTransferTask implements Runnable {
          log.tracef("Cancelling outbound transfer of segments %s to %s", cancelledSegments, destination);
       }
       if (segments.removeAll(cancelledSegments)) {
-         entriesBySegment.keySet().removeAll(cancelledSegments);
+         entriesBySegment.keySet().removeAll(cancelledSegments);  // here we do not update accumulatedEntries but this inaccuracy does not cause any harm
          if (segments.isEmpty()) {
             cancel();
          }

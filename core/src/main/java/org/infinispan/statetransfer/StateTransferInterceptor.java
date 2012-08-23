@@ -55,7 +55,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateTransferInterceptor extends CommandInterceptor {   //todo [anistor] this interceptor should be added to stack only if we have state transfer
+public class StateTransferInterceptor extends CommandInterceptor {   //todo [anistor] this interceptor should be added to stack only if we have state transfer. maybe we need this for invalidation mode too!
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
 
