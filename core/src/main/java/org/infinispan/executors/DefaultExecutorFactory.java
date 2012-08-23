@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.0
  */
 public class DefaultExecutorFactory implements ExecutorFactory {
-   private final static AtomicInteger counter = new AtomicInteger(0);
+   private final AtomicInteger counter = new AtomicInteger(0);
 
    @Override
    public ExecutorService getExecutor(Properties p) {
