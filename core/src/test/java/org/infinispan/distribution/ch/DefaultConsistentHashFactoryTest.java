@@ -40,9 +40,9 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    private static int iterationCount = 0;
 
    public void testConsistentHashDistribution() {
-      int[] numSegments = {1, 2, 4, 8, 16, 64, 128, 256, 512, 1024};
+      int[] numSegments = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
       int[] numNodes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000};
-      int[] numOwners = {1, 2, 3, 5, 10};
+      int[] numOwners = {1, 2, 3, 5};
 
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       Hash hashFunction = new MurmurHash3();
