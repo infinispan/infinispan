@@ -54,6 +54,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -63,6 +64,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.staxmapper.XMLMapper;
+import org.jgroups.util.UUID;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -565,7 +567,12 @@ public class TestCacheManagerFactory {
       }
       PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
       String methodName = extractMethodName();
-      log.trace("Adding DCM (" + cm.getAddress() + ") for method: '" + methodName + "'");
+      // In case JGroups' address cache expires, this will help us map the uuids in the log
+      if (cm.getAddress() != null) {
+         String uuid = ((UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
+         log.debugf("Started cache manager %s, UUID is %s", cm.getAddress(), uuid);
+      }
+      log.trace("Adding DCM (" + cm.getCacheManagerConfiguration().transport().nodeName() + ") for method: '" + methodName + "'");
       threadCacheManagers.add(methodName, cm);
       return cm;
    }
