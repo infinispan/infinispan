@@ -341,13 +341,13 @@ public class StateConsumerImpl implements StateConsumer {
       log.debugf("Adding state transfer for segments: %s", segments);
 
       Set<Integer> segmentsToProcess = new HashSet<Integer>(segments);
-      Set<Address> faultyMembers = new HashSet<Address>();
+      Set<Address> blacklistedSources = new HashSet<Address>();
 
       // ignore all segments for which there are no other owners to pull data from.
       // these segments are considered empty (or lost) and do not require a state transfer
       for (Iterator<Integer> it = segmentsToProcess.iterator(); it.hasNext(); ) {
          Integer segmentId = it.next();
-         Address source = pickSourceOwner(segmentId, faultyMembers);
+         Address source = pickSourceOwner(segmentId, blacklistedSources);
          if (source == null) {
             it.remove();
          }
@@ -364,24 +364,22 @@ public class StateConsumerImpl implements StateConsumer {
                   throw new IllegalStateException("Cannot have more than one transfer for segment " + segmentId);
                }
 
-               Address source = pickSourceOwner(segmentId, faultyMembers);
-               if (source == null) {
-                  log.errorf("No owners found for segment %d", segmentId);
-               } else {
-                  Set<Integer> segs = segmentsBySource.get(source);
-                  if (segs == null) {
-                     segs = new HashSet<Integer>();
-                     segmentsBySource.put(source, segs);
+               Address source = pickSourceOwner(segmentId, blacklistedSources);
+               if (source != null) {
+                  Set<Integer> segmentsFromSource = segmentsBySource.get(source);
+                  if (segmentsFromSource == null) {
+                     segmentsFromSource = new HashSet<Integer>();
+                     segmentsBySource.put(source, segmentsFromSource);
                   }
-                  segs.add(segmentId);
+                  segmentsFromSource.add(segmentId);
                }
             }
 
             Set<Integer> failedSegments = new HashSet<Integer>();
             for (Address source : segmentsBySource.keySet()) {
-               Set<Integer> segs = segmentsBySource.get(source);
-               InboundTransferTask inboundTransfer = new InboundTransferTask(segs, source, topologyId, this, rpcManager, commandsFactory, timeout);
-               for (int segmentId : segs) {
+               Set<Integer> segmentsFromSource = segmentsBySource.get(source);
+               InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsFromSource, source, topologyId, this, rpcManager, commandsFactory, timeout);
+               for (int segmentId : segmentsFromSource) {
                   transfersBySegment.put(segmentId, inboundTransfer);
                }
                List<InboundTransferTask> inboundTransfers = transfersBySource.get(inboundTransfer.getSource());
@@ -394,12 +392,14 @@ public class StateConsumerImpl implements StateConsumer {
                // if requesting the transactions fails we need to retry from another source
                if (inboundTransfer.requestTransactions()) {
                   if (!inboundTransfer.requestSegments()) {
-                     log.errorf("Failed to request segments %s from %s", segs, source);
+                     log.errorf("Failed to request segments %s from %s", segmentsFromSource, source);
+                     //todo [anistor] maybe I need to remove this transfer to be retried from another source
                   }
                } else {
-                  log.errorf("Failed to retrieve transactions for segments %s from %s", segs, source);
-                  failedSegments.addAll(segs);
-                  faultyMembers.add(source);
+                  log.errorf("Failed to retrieve transactions for segments %s from %s", segmentsFromSource, source);
+                  log.tracef("Adding members %s to black list", source);
+                  failedSegments.addAll(segmentsFromSource);
+                  blacklistedSources.add(source);
                   removeTransfer(inboundTransfer);
                }
             }
@@ -409,14 +409,15 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private Address pickSourceOwner(int segmentId, Set<Address> faultyMembers) {
+   private Address pickSourceOwner(int segmentId, Set<Address> blacklistedSources) {
       List<Address> owners = readCh.locateOwnersForSegment(segmentId);
       for (int i = owners.size() - 1; i >= 0; i--) {
          Address o = owners.get(i);
-         if (!faultyMembers.contains(o) && !o.equals(rpcManager.getAddress())) {
+         if (!blacklistedSources.contains(o) && !o.equals(rpcManager.getAddress())) {
             return o;
          }
       }
+      log.errorf("No live owners found for segment %d. Current owners are %s", segmentId, owners);
       return null;
    }
 

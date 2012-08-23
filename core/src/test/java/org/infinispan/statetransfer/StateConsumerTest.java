@@ -106,7 +106,7 @@ public class StateConsumerTest {
       // create dependencies
       StateTransferManager stateTransferManager = mock(StateTransferManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
-      ExecutorService executorService2 = mock(ExecutorService.class);
+      ExecutorService mockExecutorService = mock(ExecutorService.class);
       RpcManager rpcManager = mock(RpcManager.class);
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       CacheLoaderManager cacheLoaderManager = mock(CacheLoaderManager.class);
@@ -116,7 +116,7 @@ public class StateConsumerTest {
       InterceptorChain interceptorChain = mock(InterceptorChain.class);
       InvocationContextContainer icc = mock(InvocationContextContainer.class);
 
-      when(executorService2.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
+      when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
          @Override
          public Future<?> answer(InvocationOnMock invocation) {
             return null;
