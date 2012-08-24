@@ -128,9 +128,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void onClusterRebalanceCompleted(String cacheName, int topologyId, RebalanceInfo rebalanceInfo) throws Exception {
-      rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
       log.debugf("Removing rebalance information for topology id %d", topologyId);
       rebalanceStatusMap.remove(cacheName);
+      rebalancePolicy.onRebalanceCompleted(cacheName, topologyId);
    }
 
    @Override
