@@ -104,7 +104,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       }
 
       synchronized (cacheStatus) {
-         cacheStatus.cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
+         CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
+         log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+         cacheStatus.cacheTopology = cacheTopology;
          clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
          // TODO Trigger a new rebalance
       }
@@ -142,7 +144,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                   newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers);
                }
 
-               cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
+               CacheTopology cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
+               log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+               cacheStatus.cacheTopology = cacheTopology;
                clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
             }
          }
@@ -177,7 +181,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             newMembers.retainAll(currentCH.getMembers());
             ConsistentHash newCurrentCH = joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers);
 
-            cacheStatus.cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
+            CacheTopology cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
+            log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+            cacheStatus.cacheTopology = cacheTopology;
             clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
 
             startRebalance(cacheName, cacheStatus, newMembers);
@@ -198,7 +204,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                return;
             }
 
-            // TODO Need to consider that a join request can reach the coordinator before the JGroups view has been installed
             List<Address> newMembers = new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
             cacheStatus.joiners.removeAll(newMembers);
             newMembers.addAll(cacheStatus.joiners);
@@ -209,7 +214,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                ConsistentHash balancedCH = joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),
                      joinInfo.getNumOwners(), joinInfo.getNumSegments(), newMembers);
                int newTopologyId = topologyId + 1;
-               cacheStatus.cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
+               CacheTopology cacheTopology = new CacheTopology(newTopologyId, balancedCH, null);
+               log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+               cacheStatus.cacheTopology = cacheTopology;
                clusterTopologyManager.updateConsistentHash(cacheName, cacheStatus.cacheTopology);
             } else {
                startRebalance(cacheName, cacheStatus, newMembers);
@@ -244,7 +251,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          if (balancedCH.equals(currentCH)) {
             log.tracef("The balanced CH is the same as the current CH, stopping rebalance");
          }
-         cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
+         CacheTopology cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
+         log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+         cacheStatus.cacheTopology = cacheTopology;
       }
       clusterTopologyManager.rebalance(cacheName, cacheStatus.cacheTopology);
    }
@@ -306,7 +315,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       public CacheStatus(CacheJoinInfo joinInfo) {
          this.joinInfo = joinInfo;
 
-         this.cacheTopology = new CacheTopology(0, null, null);
+         this.cacheTopology = new CacheTopology(-1, null, null);
          this.joiners = new ArrayList<Address>();
       }
 
