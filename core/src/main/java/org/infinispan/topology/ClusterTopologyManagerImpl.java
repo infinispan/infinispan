@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
@@ -76,6 +77,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private boolean isCoordinator;
    private volatile int viewId = -1;
+   private final Object viewUpdateLock = new Object();
+
 
    //private ConcurrentMap<String, CacheJoinInfo> clusterCaches = ConcurrentMapFactory.makeConcurrentMap();
    private final ConcurrentMap<String, RebalanceInfo> rebalanceStatusMap = ConcurrentMapFactory.makeConcurrentMap();
@@ -101,7 +104,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       listener = new ClusterViewListener();
       cacheManagerNotifier.addListener(listener);
       // The listener already missed the initial view
-      handleNewView(transport.getMembers(), false, 0);
+      handleNewView(transport.getMembers(), false, transport.getViewId());
    }
 
    @Stop(priority = 100)
@@ -151,10 +154,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) throws Exception {
-      while (viewId < joinInfo.getViewId()) {
-         // TODO Hack to work around the coordinator receiving the view after the cache join request
-         Thread.sleep(100);
-      }
       rebalancePolicy.initCache(cacheName, joinInfo);
       rebalancePolicy.updateMembersList(cacheName, Collections.singletonList(joiner), Collections.<Address>emptyList());
       return rebalancePolicy.getTopology(cacheName);
@@ -263,37 +262,41 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   private void handleNewView(List<Address> newMembers, boolean mergeView, int viewId) {
-      // check to ensure this is not an older view
-      if (viewId < this.viewId) {
-         return;
-      }
+   private void handleNewView(List<Address> newMembers, boolean mergeView, int newViewId) {
+      synchronized (viewUpdateLock) {
+         // check to ensure this is not an older view
+         if (newViewId <= viewId) {
+            log.tracef("Ignoring old cluster view notification: %s", newViewId);
+            return;
+         }
 
-      boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
-      isCoordinator = transport.isCoordinator();
-      if (mergeView || becameCoordinator) {
-         try {
-            Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
+         log.tracef("Received new cluster view: %s", newViewId);
+         boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
+         isCoordinator = transport.isCoordinator();
+         if (mergeView || becameCoordinator) {
+            try {
+               Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
 
-            for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
-               String cacheName = e.getKey();
-               List<CacheTopology> topologyList = e.getValue();
-               rebalancePolicy.initCache(cacheName, topologyList);
+               for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
+                  String cacheName = e.getKey();
+                  List<CacheTopology> topologyList = e.getValue();
+                  rebalancePolicy.initCache(cacheName, topologyList);
+               }
+            } catch (Exception e) {
+               // TODO Retry?
+               log.failedToRecoverClusterState(e);
             }
-         } catch (Exception e) {
-            // TODO Retry?
-            log.failedToRecoverClusterState(e);
+         } else if (isCoordinator) {
+            try {
+               rebalancePolicy.updateMembersList(newMembers);
+            } catch (Exception e) {
+               log.errorUpdatingMembersList(e);
+            }
          }
-      } else if (isCoordinator) {
-         try {
-            rebalancePolicy.updateMembersList(newMembers);
-         } catch (Exception e) {
-            log.errorUpdatingMembersList(e);
-         }
-      }
 
-      // update the view id last, so join requests from other nodes wait until we recovered existing members' info
-      this.viewId = viewId;
+         // update the view id last, so join requests from other nodes wait until we recovered existing members' info
+         this.viewId = newViewId;
+      }
    }
 
    private HashMap<String, List<CacheTopology>> recoverClusterStatus() throws Exception {
