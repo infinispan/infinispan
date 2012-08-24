@@ -152,7 +152,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
       c.setL1CacheEnabled(false);
       c.setL1OnRehash(false);
-      c.fluent().hash().numVirtualNodes(48);
       c.setTransactionManagerLookup(new GenericTransactionManagerLookup());
       c.setIsolationLevel(IsolationLevel.NONE);
       org.infinispan.config.Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
