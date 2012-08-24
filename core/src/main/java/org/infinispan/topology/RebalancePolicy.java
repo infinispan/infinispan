@@ -26,7 +26,9 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Processes cache membership changes and decides when to rebalance state between members.
+ * Processes cache membership changes or any other events and decides when to
+ * rebalance state between members.
+ *
  * It is used both in distributed and replicated mode.
  *
  * @author Dan Berindei
