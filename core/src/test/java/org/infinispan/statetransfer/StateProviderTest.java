@@ -37,6 +37,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -81,6 +82,7 @@ public class StateProviderTest {
 
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
+   private CacheNotifier cacheNotifier;
    private CacheLoaderManager cacheLoaderManager;
    private DataContainer dataContainer;
    private TransactionTable transactionTable;
@@ -113,6 +115,7 @@ public class StateProviderTest {
 
       rpcManager = mock(RpcManager.class);
       commandsFactory = mock(CommandsFactory.class);
+      cacheNotifier = mock(CacheNotifier.class);
       cacheLoaderManager = mock(CacheLoaderManager.class);
       dataContainer = mock(DataContainer.class);
       transactionTable = mock(TransactionTable.class);
@@ -148,7 +151,7 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, mockExecutorService,
-            configuration, rpcManager, commandsFactory, cacheLoaderManager,
+            configuration, rpcManager, commandsFactory, cacheNotifier, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
@@ -247,7 +250,7 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, pooledExecutorService,
-            configuration, rpcManager, commandsFactory, cacheLoaderManager,
+            configuration, rpcManager, commandsFactory, cacheNotifier, cacheLoaderManager,
             dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();

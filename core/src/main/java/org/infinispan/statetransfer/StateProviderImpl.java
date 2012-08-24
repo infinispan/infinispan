@@ -31,8 +31,13 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -52,6 +57,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @author anistor@redhat.com
  * @since 5.2
  */
+@Listener
 public class StateProviderImpl implements StateProvider {
 
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
@@ -61,7 +67,8 @@ public class StateProviderImpl implements StateProvider {
    private Configuration configuration;
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
-   private TransactionTable transactionTable;
+   private CacheNotifier cacheNotifier;
+   private TransactionTable transactionTable;     // optional
    private DataContainer dataContainer;
    private CacheLoaderManager cacheLoaderManager; // optional
    private ExecutorService executorService;
@@ -87,6 +94,7 @@ public class StateProviderImpl implements StateProvider {
                     Configuration configuration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
+                    CacheNotifier cacheNotifier,
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     TransactionTable transactionTable,
@@ -96,6 +104,7 @@ public class StateProviderImpl implements StateProvider {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
+      this.cacheNotifier = cacheNotifier;
       this.cacheLoaderManager = cacheLoaderManager;
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
@@ -112,6 +121,14 @@ public class StateProviderImpl implements StateProvider {
       synchronized (transfersByDestination) {
          return !transfersByDestination.isEmpty();
       }
+   }
+
+   @TopologyChanged
+   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
+      // do all the work AFTER the consistent hash has changed
+      if (tce.isPre())
+         return;
+      //todo [anistor] move all code from onTopologyUpdate here and remove dependency StateConsumer->StateProvider
    }
 
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
@@ -132,9 +149,18 @@ public class StateProviderImpl implements StateProvider {
             }
          }
       }
+
+      //todo [anistor] must cancel transfers for all segments that we no longer own
+   }
+
+   @Start(priority = 60)
+   @Override
+   public void start() {
+      cacheNotifier.addListener(this);
    }
 
    @Stop(priority = 20)
+   @Override
    public void stop() {
       if (trace) {
          log.tracef("Shutting down StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
@@ -150,17 +176,24 @@ public class StateProviderImpl implements StateProvider {
                }
             }
          }
-      } catch (Throwable t){
+      } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
    }
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) {
+      if (trace) {
+         log.tracef("Received request for transactions from node %s for segments %s with topology id %d", destination, segments, topologyId);
+      }
+
       if (readCh == null) {
-         throw new IllegalStateException("No cache topology received yet");
+         throw new IllegalStateException("No cache topology received yet");  // no commands are processed until the join is complete, so this cannot normally happen
       }
 
       //todo [anistor] here we should block until topologyId is installed so we are sure forwarding happens correctly
+      if (topologyId != this.topolopyId) {
+         log.warnf("Transactions were requested by a node with topology (%d) that does not match local topology (%d).", topologyId, this.topolopyId);
+      }
       Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
          segments.removeAll(ownedSegments);
@@ -216,10 +249,10 @@ public class StateProviderImpl implements StateProvider {
    @Override
    public void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
       if (trace) {
-         log.tracef("Starting outbound transfer of segments %s to %s", segments, destination);
+         log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d", segments, destination, topologyId);
       }
       if (topologyId != this.topolopyId) {
-         log.warnf("Received topology id (%d) is different that expected (%d)", topologyId, this.topolopyId);
+         log.warnf("Segments were requested by a node with topology (%d) that does not match local topology (%d).", topologyId, this.topolopyId);
       }
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId,
@@ -245,7 +278,7 @@ public class StateProviderImpl implements StateProvider {
    @Override
    public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
       if (trace) {
-         log.tracef("Cancelling outbound transfer of segments %s to %s", segments, destination);
+         log.tracef("Cancelling outbound transfer of segments %s to node %s with topology id %d", segments, destination, topologyId);
       }
       // get the outbound transfers for this address and given segments and cancel the transfers
       synchronized (transfersByDestination) {

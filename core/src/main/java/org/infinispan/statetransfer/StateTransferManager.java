@@ -63,4 +63,8 @@ public interface StateTransferManager {
    boolean isStateTransferInProgressForKey(Object key);
 
    CacheTopology getCacheTopology();
+
+   void start() throws Exception;
+
+   void stop();
 }

@@ -82,6 +82,8 @@ public interface StateProvider {
     */
    void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments);
 
+   void start();
+
    /**
     * Cancels all outbound state transfers.
     * This is executed when the cache is shutting down.

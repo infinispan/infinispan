@@ -203,7 +203,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       keyGenWorker.stop();
    }
 
-   public void handleViewChange(TopologyChangedEvent<?, ?> vce) {
+   public void handleViewChange(TopologyChangedEvent<?, ?> vce) {    //todo [anistor] do we have to do this for both pre/after?
       log.tracef("TopologyChangedEvent received: %s", vce);
       maxNumberInvariant.writeLock().lock();
       try {

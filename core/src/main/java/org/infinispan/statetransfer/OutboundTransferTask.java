@@ -148,6 +148,7 @@ public class OutboundTransferTask implements Runnable {
       return segments;
    }
 
+   //todo [anistor] check thread interrupt status in loops to implement faster cancellation
    public void run() {
       try {
          // send data container entries
