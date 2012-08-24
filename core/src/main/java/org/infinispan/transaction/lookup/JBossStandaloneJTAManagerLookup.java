@@ -41,13 +41,25 @@ import java.lang.reflect.Method;
 public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup {
    private Method manager, user;
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
-   
+
+   /**
+    * @deprecated Use {@link #init(org.infinispan.configuration.cache.Configuration)} instead.
+    */
+   @Deprecated
+   public void init(org.infinispan.config.Configuration configuration) {
+      init(configuration.getClassLoader());
+   }
+
    @Inject
    public void init(Configuration configuration) {
+      init(configuration.classLoader());
+   }
+
+   private void init(ClassLoader classLoader) {
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       try {
-         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", configuration.classLoader()).getMethod("transactionManager");
-         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", configuration.classLoader()).getMethod("userTransaction");
+         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", classLoader).getMethod("transactionManager");
+         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", classLoader).getMethod("userTransaction");
       } catch (SecurityException e) {
          throw new RuntimeException(e);
       } catch (NoSuchMethodException e) {
