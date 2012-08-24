@@ -34,6 +34,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -178,6 +179,20 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    }
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command) throws Throwable {
+      if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
+         try {
+            if (isTxCommand) {
+               stateTransferLock.transactionsSharedLock();
+            }
+            return invokeNextInterceptor(ctx, command);
+         } finally {
+            if (isTxCommand) {
+               stateTransferLock.transactionsSharedUnlock();
+            }
+         }
+      }
+
       Set<Address> newTargets = null;
       stateTransferLock.commandsSharedLock();
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
