@@ -67,7 +67,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          //System.out.println("Output file is:\n" + baos.toString());
          withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()))) {
             @Override
-            public void call() throws Exception {
+            public void call() {
                org.infinispan.config.Configuration defaultConfig = cm.getDefaultConfiguration();
                org.infinispan.config.GlobalConfiguration globalConfig = cm.getGlobalConfiguration();
                assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);

@@ -60,7 +60,7 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(stream)){
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache c = cm.getCache();
             DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
             assert i != null;
@@ -76,14 +76,14 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
    public static final class CustomInterceptor2 extends CommandInterceptor {}
 
 
-   public void testCustomInterceptorsProgramatically() throws Exception {
+   public void testCustomInterceptorsProgramatically() {
       Configuration cfg = new Configuration();
       cfg.setLockAcquisitionTimeout(1010);
       CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(cfg)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache c = cm.getCache();
             DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
             assert i != null;
@@ -91,14 +91,14 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testCustomInterceptorsProgramaticallyWithOverride() throws Exception {
+   public void testCustomInterceptorsProgramaticallyWithOverride() {
       final Configuration cfg = new Configuration();
       cfg.setLockAcquisitionTimeout(1010);
       CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.defineConfiguration("custom", cfg);
             Cache c = cm.getCache("custom");
             DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);

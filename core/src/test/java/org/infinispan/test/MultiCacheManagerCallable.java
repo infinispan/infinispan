@@ -35,7 +35,7 @@ public class MultiCacheManagerCallable {
       this.cms = cms;
    }
 
-   public void call() throws Exception {
+   public void call() {
       // No-op
    }
 

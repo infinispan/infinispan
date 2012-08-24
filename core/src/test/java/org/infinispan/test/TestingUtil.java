@@ -1250,10 +1250,8 @@ public class TestingUtil {
     * completed, regardless of the task outcome.
     *
     * @param c task to execute
-    * @throws Exception if the task fails somehow
     */
-   public static void withCacheManager(CacheManagerCallable c)
-            throws Exception {
+   public static void withCacheManager(CacheManagerCallable c) {
       try {
          c.call();
       } finally {
@@ -1267,10 +1265,8 @@ public class TestingUtil {
     * task has completed, regardless of the task outcome.
     *
     * @param c task to execute
-    * @throws Exception if the task fails somehow
     */
-   public static void withCacheManagers(MultiCacheManagerCallable c)
-            throws Exception {
+   public static void withCacheManagers(MultiCacheManagerCallable c) {
       try {
          c.call();
       } finally {
