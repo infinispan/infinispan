@@ -173,10 +173,8 @@ public class StateConsumerTest {
 
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, stateProvider, localTopologyManager, cacheNotifier, interceptorChain, icc,
-            configuration, globalConfiguration, rpcManager, null, commandsFactory, cacheLoaderManager,
-            dataContainer, transactionTable, stateTransferLock);
-      stateConsumer.start();
+      stateConsumer.init(cache, localTopologyManager, interceptorChain, icc, configuration, rpcManager,
+            commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       Object key1 = new TestKey("key1", 0, ch1);

@@ -59,8 +59,6 @@ public interface StateConsumer {
 
    void applyState(Address sender, int topologyId, int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk);
 
-   void start() throws Exception;
-
    /**
     * Cancels all incoming state transfers. The already received data is not discarded.
     * This is executed when the cache is shutting down.

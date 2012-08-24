@@ -39,4 +39,6 @@ public interface TopologyChangedEvent<K, V> extends Event<K, V> {
     * @return retrieves the consistent hash at the end of a topology change
     */
    ConsistentHash getConsistentHashAtEnd();
+
+   //todo [anistor] add topologyId, prevReadCH, prevWriteCH, newReadCH2, newWriteCH
 }
