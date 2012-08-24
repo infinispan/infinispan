@@ -84,7 +84,7 @@ public class CacheTopology {
    @Override
    public String toString() {
       return "CacheTopology{" +
-            "topologyId=" + topologyId +
+            "id=" + topologyId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             '}';
