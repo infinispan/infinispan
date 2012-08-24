@@ -185,6 +185,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       }
       if (!joiners.isEmpty()) {
          synchronized (cacheStatus) {
+            joiners.removeAll(cacheStatus.joiners);
             cacheStatus.joiners.addAll(joiners);
 
             int topologyId = cacheStatus.cacheTopology.getTopologyId();
@@ -199,9 +200,10 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
             // TODO Need to consider that a join request can reach the coordinator before the JGroups view has been installed
             List<Address> newMembers = new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+            cacheStatus.joiners.removeAll(newMembers);
             newMembers.addAll(cacheStatus.joiners);
-            cacheStatus.joiners = new ArrayList<Address>();
             newMembers.retainAll(clusterMembers);
+            cacheStatus.joiners.removeAll(newMembers);
 
             if (currentCH == null) {
                ConsistentHash balancedCH = joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),
@@ -239,6 +241,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          ConsistentHashFactory chFactory = cacheStatus.joinInfo.getConsistentHashFactory();
          ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers);
          ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
+         if (balancedCH.equals(currentCH)) {
+            log.tracef("The balanced CH is the same as the current CH, stopping rebalance");
+         }
          cacheStatus.cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
       }
       clusterTopologyManager.rebalance(cacheName, cacheStatus.cacheTopology);
@@ -263,7 +268,9 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          if (!cacheStatus.joiners.isEmpty()) {
             // We have postponed some joiners, start a new rebalance for them now
             List<Address> newMembers = new ArrayList<Address>(newCurrentCH.getMembers());
+            cacheStatus.joiners.removeAll(newMembers);
             newMembers.addAll(cacheStatus.joiners);
+            cacheStatus.joiners.removeAll(newMembers);
             startRebalance(cacheName, cacheStatus, newMembers);
          } else if (!isBalanced(newCurrentCH, cacheStatus)) {
             // If the CH is still not balanced (perhaps because of a leaver), restart the rebalance process
