@@ -217,23 +217,23 @@ public class APITest extends MultipleCacheManagersTest {
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
-   public void testLockOnNonTransactionalCache() throws Exception {
+   public void testLockOnNonTransactionalCache() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createLocalCacheManager(false)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache().getAdvancedCache().lock("k");
          }
       });
    }
 
-   public void testNoLockingInterceptorWithNoneIsolationLevel() throws Exception {
+   public void testNoLockingInterceptorWithNoneIsolationLevel() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.locking().isolationLevel(IsolationLevel.NONE);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             AbstractLockingInterceptor locking = TestingUtil.findInterceptor(
                   cm.getCache(), AbstractLockingInterceptor.class);
             assertNull(locking);

@@ -32,11 +32,11 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(groups = {"performance", "manual"})
 public class CreateThousandCachesTest {
-   public void doTest() throws Exception {
+   public void doTest() {
       System.out.println("Starting... ");
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             List<Cache<?, ?>> thousandCaches = new LinkedList<Cache<?, ?>>();
             long start = System.currentTimeMillis();
             for (int i = 0; i < 1000; i++) {

@@ -65,7 +65,7 @@ public class RemoteCacheStoreConfigTest {
    public void simpleTest() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<Object, Object> cache = cm.getCache();
             CacheLoader cacheLoader = TestingUtil.getCacheLoader(cache);
             assert cacheLoader != null;
@@ -82,7 +82,7 @@ public class RemoteCacheStoreConfigTest {
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache cache = cm.getCache();
             assertEquals("v", cache.get("k"));
          }

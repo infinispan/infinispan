@@ -467,6 +467,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                LegacyConfigurationAdaptor.adapt(configurationOverrides.get(cacheName));
          if (existing != null) {
             existing.applyOverrides(configOverride);
+            configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(existing));
             return existing.clone();
          }
       }
@@ -499,7 +500,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             ConfigurationBuilder builder = new ConfigurationBuilder();
             builder.read(existing);
             builder.read(configOverride);
-            return builder.build();
+            Configuration configuration = builder.build();
+            configurationOverrides.put(cacheName, configuration);
+            return configuration;
          }
       }
       ConfigurationBuilder builder = new ConfigurationBuilder();

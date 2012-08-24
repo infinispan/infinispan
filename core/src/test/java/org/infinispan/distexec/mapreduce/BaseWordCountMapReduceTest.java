@@ -150,7 +150,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    }
    
    @Test(expectedExceptions={IllegalStateException.class})
-   public void testImproperCacheStateForMapReduceTask() throws Exception {
+   public void testImproperCacheStateForMapReduceTask() {
 
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
@@ -158,7 +158,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
          
          @SuppressWarnings("unused")
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<Object, Object> cache = cm.getCache();
             MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
                   cache);

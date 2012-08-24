@@ -71,7 +71,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             final Cache<Object,Object> cache = cm.getCache();
 
             switch (visibility) {
@@ -92,7 +92,11 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                }
             });
 
-            entryCreatedLatch.await(30, TimeUnit.SECONDS);
+            try {
+               entryCreatedLatch.await(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
 
             switch (visibility) {
                case SIZE:
@@ -108,7 +112,13 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                   break;
             }
 
-            ignore.get(5, TimeUnit.SECONDS);
+            try {
+               ignore.get(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
          }
       });
    }
