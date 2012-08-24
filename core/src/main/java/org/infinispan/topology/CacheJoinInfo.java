@@ -71,4 +71,16 @@ public class CacheJoinInfo implements Serializable {
    public int getViewId() {
       return viewId;
    }
+
+   @Override
+   public String toString() {
+      return "CacheJoinInfo{" +
+            "consistentHashFactory=" + consistentHashFactory +
+            ", hashFunction=" + hashFunction +
+            ", numSegments=" + numSegments +
+            ", numOwners=" + numOwners +
+            ", viewId=" + viewId +
+            ", timeout=" + timeout +
+            '}';
+   }
 }
