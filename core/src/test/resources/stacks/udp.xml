@@ -84,8 +84,7 @@
               xmit_table_msgs_per_row="10000"
               xmit_table_max_compaction_time="10000"
               max_msg_batch_size="100"/>
-   <RSVP/>           
-   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>   
+   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <FC max_credits="500000" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
