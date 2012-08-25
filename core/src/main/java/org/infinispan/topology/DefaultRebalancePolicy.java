@@ -96,9 +96,14 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          }
          if (currentCHUnion == null) {
             currentCHUnion = topology.getCurrentCH();
-            pendingCHUnion = topology.getPendingCH();
          } else {
             currentCHUnion = chFactory.union(currentCHUnion, topology.getCurrentCH());
+         }
+
+         if (pendingCHUnion == null) {
+            pendingCHUnion = topology.getPendingCH();
+         } else {
+            if (topology.getPendingCH() != null)
             pendingCHUnion = chFactory.union(pendingCHUnion, topology.getPendingCH());
          }
       }
