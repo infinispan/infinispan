@@ -156,6 +156,12 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                CacheTopology cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
                updateConsistentHash(cacheName, cacheStatus, cacheTopology);
             }
+
+            if (!cacheStatus.getJoiners().isEmpty()) {
+               // In rare cases we get the join request from a new node before JGroups has installed the new view
+               // If that happens, we ignore the joiner until the view containing it has been installed.
+               triggerRebalance(cacheName, cacheStatus);
+            }
          }
       }
    }
@@ -191,7 +197,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             CacheTopology cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
             updateConsistentHash(cacheName, cacheStatus, cacheTopology);
 
-            startRebalance(cacheName, cacheStatus, newMembers);
+            triggerRebalance(cacheName, cacheStatus);
          }
       }
 
@@ -221,14 +227,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       updateConsistentHash(cacheName, cacheStatus, cacheTopology);
    }
 
-   private void triggerRebalance(String cacheName, CacheStatus cacheStatus) throws Exception {
-      List<Address> newMembers = new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
-      addUniqueJoiners(newMembers, cacheStatus.getJoiners());
-      newMembers.retainAll(clusterMembers);
-
-      startRebalance(cacheName, cacheStatus, newMembers);
-   }
-
    private void addUniqueJoiners(List<Address> members, List<Address> joiners) {
       for (Address joiner : joiners) {
          if (!members.contains(joiner)) {
@@ -237,17 +235,17 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       }
    }
 
-   private void startRebalance(final String cacheName, final CacheStatus cacheStatus, final List<Address> newMembers) throws Exception {
+   private void triggerRebalance(final String cacheName, final CacheStatus cacheStatus) throws Exception {
       asyncTransportExecutor.submit(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            doRebalance(cacheName, cacheStatus, newMembers);
+            doRebalance(cacheName, cacheStatus);
             return null;
          }
       });
    }
 
-   private void doRebalance(String cacheName, CacheStatus cacheStatus, List<Address> newMembers) throws Exception {
+   private void doRebalance(String cacheName, CacheStatus cacheStatus) throws Exception {
       synchronized (cacheStatus) {
          boolean isRebalanceInProgress = cacheStatus.getCacheTopology().getPendingCH() != null;
          if (isRebalanceInProgress) {
@@ -255,7 +253,12 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                   cacheName, cacheStatus.getCacheTopology());
             return;
          }
-         log.tracef("Rebalancing consistent hash for cache %s", cacheName);
+
+         List<Address> newMembers = new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
+         addUniqueJoiners(newMembers, cacheStatus.getJoiners());
+         newMembers.retainAll(clusterMembers);
+         log.tracef("Rebalancing consistent hash for cache %s, members are %s", cacheName, newMembers);
+
          int newTopologyId = cacheStatus.getCacheTopology().getTopologyId() + 1;
          ConsistentHash currentCH = cacheStatus.getCacheTopology().getCurrentCH();
          ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
@@ -266,7 +269,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             return;
          }
          CacheTopology cacheTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
-         log.tracef("Updating cache %s topology: %s", cacheName, cacheTopology);
+         log.tracef("Updating cache %s topology for rebalance: %s", cacheName, cacheTopology);
          cacheStatus.setCacheTopology(cacheTopology);
       }
       clusterTopologyManager.rebalance(cacheName, cacheStatus.getCacheTopology());
