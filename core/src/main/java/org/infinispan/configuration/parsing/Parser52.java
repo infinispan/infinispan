@@ -707,33 +707,43 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
 
    private void parseLoaderChildren(final XMLExtendedStreamReader reader, final LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTIES:
-               loaderBuilder.withProperties(parseProperties(reader));
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+         parseCommonLoaderChildren(reader, loaderBuilder);
       }
    }
 
-   public static void parseStoreChildren(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseCommonLoaderChildren(final XMLExtendedStreamReader reader,
+         final LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
+      Element element = Element.forName(reader.getLocalName());
+      switch (element) {
+         case PROPERTIES:
+            loaderBuilder.withProperties(parseProperties(reader));
+            break;
+         default:
+            throw ParseUtils.unexpectedElement(reader);
+      }
+   }
+
+   private void parseStoreChildren(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case ASYNC:
-               parseAsyncStore(reader, storeBuilder);
-               break;
-            case PROPERTIES:
-               storeBuilder.withProperties(parseProperties(reader));
-               break;
-            case SINGLETON_STORE:
-               parseSingletonStore(reader, storeBuilder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+         parseCommonStoreChildren(reader, storeBuilder);
+      }
+   }
+
+   public static void parseCommonStoreChildren(final XMLExtendedStreamReader reader,
+         final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+      Element element = Element.forName(reader.getLocalName());
+      switch (element) {
+         case ASYNC:
+            parseAsyncStore(reader, storeBuilder);
+            break;
+         case PROPERTIES:
+            storeBuilder.withProperties(parseProperties(reader));
+            break;
+         case SINGLETON_STORE:
+            parseSingletonStore(reader, storeBuilder);
+            break;
+         default:
+            throw ParseUtils.unexpectedElement(reader);
       }
    }
 

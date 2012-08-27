@@ -66,37 +66,20 @@
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
-         <loader class="org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore" fetchPersistentState="false"
-                 ignoreModifications="false" purgeOnStartup="false">
-            <properties>
-               <property name="tableNamePrefixForStrings" value="ISPN_MIXED_STR_TABLE"/>
-               <property name="tableNamePrefixForBinary" value="ISPN_MIXED_BINARY_TABLE"/>
-               <property name="idColumnNameForStrings" value="ID_COLUMN"/>
-               <property name="idColumnNameForBinary" value="ID_COLUMN"/>
-               <property name="dataColumnNameForStrings" value="DATA_COLUMN"/>
-               <property name="dataColumnNameForBinary" value="DATA_COLUMN"/>
-               <property name="timestampColumnNameForStrings" value="TIMESTAMP_COLUMN"/>
-               <property name="timestampColumnNameForBinary" value="TIMESTAMP_COLUMN"/>
-               <property name="timestampColumnTypeForStrings" value="BIGINT"/>
-               <property name="timestampColumnTypeForBinary" value="BIGINT"/>
-               <property name="connectionFactoryClass"
-                         value="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"/>
-               <property name="datasourceJndiLocation" value="java:/MixedStoreWithManagedConnectionTest/DS"/>
-               <property name="userName" value="sa"/>
-               <property name="driverClass" value="org.h2.Driver"/>
-               <property name="idColumnTypeForStrings" value="VARCHAR(255)"/>
-               <property name="idColumnTypeForBinary" value="VARCHAR(255)"/>
-               <property name="dataColumnTypeForStrings" value="BINARY"/>
-               <property name="dataColumnTypeForBinary" value="BINARY"/>
-               <property name="dropTableOnExitForStrings" value="false"/>
-               <property name="dropTableOnExitForBinary" value="false"/>
-               <property name="createTableOnStartForStrings" value="true"/>
-               <property name="createTableOnStartForBinary" value="true"/>
-               <property name="createTableOnStartForStrings" value="true"/>
-               <property name="createTableOnStartForBinary" value="true"/>
-            </properties>
-
-         </loader>
+         <mixedKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
+            connectionFactoryClass="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"
+            datasource="java:/MixedStoreWithManagedConnectionTest/DS" >
+            <stringKeyedTable prefix="ISPN_MIXED_STR_TABLE" createOnStart="true" dropOnExit="true">
+               <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+               <dataColumn name="DATA_COLUMN" type="BINARY" />
+               <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+            </stringKeyedTable>
+            <binaryKeyedTable prefix="ISPN_MIXED_BINARY_TABLE" createOnStart="true" dropOnExit="true">
+               <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+               <dataColumn name="DATA_COLUMN" type="BINARY" />
+               <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+            </binaryKeyedTable>
+         </mixedKeyedJdbcStore>
       </loaders>
 
    </default>
