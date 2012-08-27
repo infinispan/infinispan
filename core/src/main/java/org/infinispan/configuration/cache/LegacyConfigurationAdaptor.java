@@ -242,20 +242,10 @@ public class LegacyConfigurationAdaptor {
 
    public static CacheLoaderConfig adapt(LoaderConfiguration loader) {
       CacheLoaderConfig clc = null;
-      if (loader instanceof StoreConfiguration) {
-         if (loader instanceof FileCacheStoreConfiguration) {
-            FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
-            clc = fcsc;
-            FileCacheStoreConfiguration store = (FileCacheStoreConfiguration) loader;
-            if (store.location() != null) {
-               fcsc.location(store.location());
-            }
-            if (store.fsyncMode() != null) {
-               fcsc.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(store.fsyncMode().name()));
-            }
-            fcsc.fsyncInterval(store.fsyncInterval());
-            fcsc.streamBufferSize(store.streamBufferSize());
-         } else if (loader instanceof LegacyStoreConfiguration) {
+      if (loader instanceof LegacyLoaderAdapter<?>) {
+         return ((LegacyLoaderAdapter<?>)loader).adapt();
+      } else if (loader instanceof StoreConfiguration) {
+         if (loader instanceof LegacyStoreConfiguration) {
             LegacyStoreConfiguration store = (LegacyStoreConfiguration) loader;
             CacheLoader cacheStore = store.cacheStore(); // TODO: in 6.0, as we deprecate the LegacyConfigurationLoader#cacheLoader() method, narrow this type to CacheStore
             clc = getLoaderConfig(loader, cacheStore);
@@ -274,11 +264,6 @@ public class LegacyConfigurationAdaptor {
          csc.getSingletonStoreConfig().enabled(store.singletonStore().enabled());
          csc.getSingletonStoreConfig().pushStateTimeout(store.singletonStore().pushStateTimeout());
          csc.getSingletonStoreConfig().pushStateWhenCoordinator(store.singletonStore().pushStateWhenCoordinator());
-      } else if (loader instanceof ClusterCacheLoaderConfiguration) {
-         ClusterCacheLoaderConfig cclc = new ClusterCacheLoaderConfig();
-         clc = cclc;
-         ClusterCacheLoaderConfiguration clusterLoader = (ClusterCacheLoaderConfiguration) loader;
-         cclc.remoteCallTimeout(clusterLoader.remoteCallTimeout());
       } else if (loader instanceof LegacyLoaderConfiguration) {
          CacheLoader cacheLoader = ((LegacyLoaderConfiguration) loader).cacheLoader();
          clc = getLoaderConfig(loader, cacheLoader);
@@ -298,7 +283,6 @@ public class LegacyConfigurationAdaptor {
    }
 
    private static CacheLoaderConfig getLoaderConfig(LoaderConfiguration loader, CacheLoader cacheLoader) {
-      CacheLoaderConfig clc;
       if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
          return Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
       } else {
