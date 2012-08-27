@@ -177,9 +177,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                cacheTopology.getTopologyId(), cacheName);
          return;
       }
-      log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
 
       synchronized (cacheStatus) {
+         CacheTopology existingTopology = cacheStatus.getTopology();
+         if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()) {
+            // Start rebalance commands are sent asynchronously to the entire cluster
+            // So it's possible to receive an old one on a joiner after the joiner has already become a member.
+            log.debugf("Ignoring old rebalance for cache %s: %s", cacheName, cacheTopology.getTopologyId());
+            return;
+         }
+
+         log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
          cacheStatus.setTopology(cacheTopology);
       }
 
