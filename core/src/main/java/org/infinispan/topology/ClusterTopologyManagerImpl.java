@@ -154,6 +154,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) throws Exception {
+//      while (viewId < joinInfo.getViewId()) {
+//         // TODO Hack to work around the coordinator receiving the view after the cache join request
+//         Thread.sleep(100);
+//      }
+//
       rebalancePolicy.initCache(cacheName, joinInfo);
       rebalancePolicy.updateMembersList(cacheName, Collections.singletonList(joiner), Collections.<Address>emptyList());
       return rebalancePolicy.getTopology(cacheName);
