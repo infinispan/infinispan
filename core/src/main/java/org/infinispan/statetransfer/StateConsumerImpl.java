@@ -150,6 +150,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    public boolean isStateTransferInProgress() {
+      // TODO This is called quite often, use an extra volatile, a concurrent collection or a RWLock instead
       synchronized (this) {
          return !transfersBySource.isEmpty();
       }
@@ -195,6 +196,8 @@ public class StateConsumerImpl implements StateConsumer {
             removedSegments.removeAll(newSegments);
 
             // remove inbound transfers and any data for segments we no longer own
+            log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",
+                  removedSegments, newSegments, previousSegments);
             discardSegments(removedSegments);
 
             if (fetchEnabled) {
@@ -275,6 +278,9 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (trace) {
          log.tracef("After applying the received state the data container has %d keys", dataContainer.size());
+         synchronized (this) {
+            log.tracef("Segments not received yet: %s", transfersBySource);
+         }
       }
    }
 

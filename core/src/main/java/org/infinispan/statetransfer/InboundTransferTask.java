@@ -160,4 +160,17 @@ public class InboundTransferTask {
          }
       }
    }
+
+   @Override
+   public String toString() {
+      HashSet<Integer> unfinishedSegments = new HashSet<Integer>(segments);
+      unfinishedSegments.removeAll(finishedSegments);
+      return "InboundTransferTask{" +
+            "unfinishedSegments=" + unfinishedSegments +
+            ", source=" + source +
+            ", isCancelled=" + isCancelled +
+            ", topologyId=" + topologyId +
+            ", timeout=" + timeout +
+            '}';
+   }
 }
