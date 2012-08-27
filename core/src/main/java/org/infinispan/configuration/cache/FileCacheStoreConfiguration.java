@@ -19,7 +19,9 @@
 
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
+import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -28,7 +30,7 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration {
+public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration implements LegacyLoaderAdapter<FileCacheStoreConfig>{
 
    private final String location;
    private final long fsyncInterval;
@@ -111,6 +113,28 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
       result = 31 * result + (fsyncMode != null ? fsyncMode.hashCode() : 0);
       result = 31 * result + streamBufferSize;
       return result;
+   }
+
+   @Override
+   public FileCacheStoreConfig adapt() {
+      FileCacheStoreConfig config = new FileCacheStoreConfig();
+
+      config.fetchPersistentState(fetchPersistentState());
+      config.ignoreModifications(ignoreModifications());
+      config.purgeOnStartup(purgeOnStartup());
+      config.purgeSynchronously(purgeSynchronously());
+      config.purgerThreads(purgerThreads());
+      config.setLockAcquistionTimeout(lockAcquistionTimeout());
+      config.setLockConcurrencyLevel(lockConcurrencyLevel());
+
+      config.fsyncInterval(fsyncInterval);
+      config.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(fsyncMode.name()));
+      config.streamBufferSize(streamBufferSize);
+      config.location(location);
+
+      XmlConfigHelper.setValues(config, properties(), false, true);
+
+      return config;
    }
 
 }
