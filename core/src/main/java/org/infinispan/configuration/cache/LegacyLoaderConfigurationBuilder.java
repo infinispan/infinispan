@@ -39,7 +39,7 @@ public class LegacyLoaderConfigurationBuilder extends AbstractLoaderConfiguratio
    private CacheLoader cacheLoader;
    private Properties properties = new Properties();
 
-   LegacyLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public LegacyLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 

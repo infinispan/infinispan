@@ -20,6 +20,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.TypedProperties;
@@ -30,6 +31,7 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
+@BuiltBy(FileCacheStoreConfigurationBuilder.class)
 public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration implements LegacyLoaderAdapter<FileCacheStoreConfig>{
 
    private final String location;

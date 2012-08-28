@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
+import org.infinispan.configuration.BuiltBy;
 
 /**
  * Configuration for cache loaders and stores.
@@ -117,7 +119,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
     */
    public <T extends LoaderConfigurationBuilder<?, ?>> T addLoader(Class<T> klass) {
       try {
-         Constructor<T> constructor = klass.getConstructor(LoadersConfigurationBuilder.class);
+         Constructor<T> constructor = klass.getDeclaredConstructor(LoadersConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
          this.cacheLoaders.add(builder);
          return builder;
@@ -158,7 +160,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
     */
    public <T extends StoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
       try {
-         Constructor<T> constructor = klass.getConstructor(LoadersConfigurationBuilder.class);
+         Constructor<T> constructor = klass.getDeclaredConstructor(LoadersConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
          this.cacheLoaders.add(builder);
          return builder;
@@ -228,17 +230,17 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return new LoadersConfiguration(passivation, preload, shared, loaders);
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public LoadersConfigurationBuilder read(LoadersConfiguration template) {
       for (LoaderConfiguration c : template.cacheLoaders()) {
-         if (c instanceof LegacyStoreConfiguration)
-            this.addStore().read((LegacyStoreConfiguration) c);
-         if (c instanceof LegacyLoaderConfiguration)
-            this.addLoader().read((LegacyLoaderConfiguration) c);
-         else if (c instanceof FileCacheStoreConfiguration)
-            this.addFileCacheStore().read((FileCacheStoreConfiguration) c);
-         else if (c instanceof ClusterCacheLoaderConfiguration)
-            this.addClusterCacheLoader().read((ClusterCacheLoaderConfiguration) c);
+         BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
+         if (builtBy==null) {
+            throw new ConfigurationException("Missing BuiltBy annotation for configuration bean "+c.getClass().getName());
+         }
+         Class<? extends LoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends LoaderConfigurationBuilder<?, ?>>) builtBy.value();
+         Builder<Object> builder = (Builder<Object>) this.addLoader(builderClass);
+         builder.read(c);
       }
       this.passivation = template.passivation();
       this.preload = template.preload();
