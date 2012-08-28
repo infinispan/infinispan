@@ -23,10 +23,11 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -42,6 +43,7 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Tristan Tarrant
  */
 @Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest")
 public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
@@ -73,33 +75,35 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.EHCACHE_CACHE1X), Thread.currentThread().getContextClassLoader());
 
          //System.out.println("Output file is:\n" + baos.toString());
-         
+
          dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
-         Configuration configuration = defaultCache.getConfiguration();
-         assertEquals(configuration.getEvictionMaxEntries(),10000);
-         assertEquals(configuration.getExpirationMaxIdle(), 121);
-         assertEquals(configuration.getExpirationLifespan(), 122);
-         CacheLoaderManagerConfig clmConfig = configuration.getCacheLoaderManagerConfig();
-         assert clmConfig != null;
-         CacheLoaderConfig loaderConfig = clmConfig.getCacheLoaderConfigs().get(0);
-         assert loaderConfig.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
-         assertEquals(configuration.getExpirationWakeUpInterval(), 119000);
-         assertEquals(configuration.getEvictionStrategy(), EvictionStrategy.LRU);
+         Configuration configuration = defaultCache.getCacheConfiguration();
 
-         assert dcm.getDefinedCacheNames().contains("sampleCache1");
-         assert dcm.getDefinedCacheNames().contains("sampleCache2");
-         assert dcm.getDefinedCacheNames().contains("sampleCache3");
-         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache1");
-         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache2");
-         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache3");
+         assertEquals(configuration.eviction().maxEntries(),10000);
+         assertEquals(configuration.expiration().maxIdle(), 121);
+         assertEquals(configuration.expiration().lifespan(), 122);
+         LoadersConfiguration loaders = configuration.loaders();
+         assert loaders.cacheLoaders().get(0) instanceof FileCacheStoreConfiguration;
+
+         assertEquals(configuration.expiration().wakeUpInterval(), 119000);
+         assertEquals(configuration.eviction().strategy(), EvictionStrategy.LRU);
+
+         String definedCacheNames = dcm.getDefinedCacheNames();
+         assert definedCacheNames.contains("sampleCache1");
+         assert definedCacheNames.contains("sampleCache2");
+         assert definedCacheNames.contains("sampleCache3");
+         assert definedCacheNames.contains("sampleDistributedCache1");
+         assert definedCacheNames.contains("sampleDistributedCache2");
+         assert definedCacheNames.contains("sampleDistributedCache3");
 
          sampleDistributedCache2 = dcm.getCache("sampleDistributedCache2");
-         assert sampleDistributedCache2.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
-         assert sampleDistributedCache2.getConfiguration().getExpirationLifespan() == 101;
-         assert sampleDistributedCache2.getConfiguration().getExpirationMaxIdle() == 102;
-         assertEquals(sampleDistributedCache2.getConfiguration().getCacheMode(), Configuration.CacheMode.INVALIDATION_SYNC);
+         Configuration configuration2 = sampleDistributedCache2.getCacheConfiguration();
+         assert configuration2.loaders().cacheLoaders().size() == 1;
+         assert configuration2.expiration().lifespan() == 101;
+         assert configuration2.expiration().maxIdle() == 102;
+         assertEquals(configuration2.clustering().cacheMode(), CacheMode.INVALIDATION_SYNC);
 
       } finally {
          currentThread().setContextClassLoader(existingCl);
