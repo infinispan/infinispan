@@ -28,6 +28,8 @@ import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.query.CommandInitializer;
+import org.infinispan.query.CustomQueryCommand;
 import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.backend.QueryInterceptor;
 
@@ -37,7 +39,7 @@ import org.infinispan.query.backend.QueryInterceptor;
  * 
 * @author Sanne Grinovero
 */
-public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableCommand {
+public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX;
 
@@ -97,9 +99,10 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
    /**
     * This is invoked only on the receiving node, before {@link #perform(InvocationContext)}
     */
-   public void injectComponents(SearchFactoryImplementor searchFactory, QueryInterceptor queryInterceptor) {
-      this.searchFactory = searchFactory;
-      this.queryInterceptor = queryInterceptor;
+   @Override
+   public void fetchExecutionContext(CommandInitializer ci) {
+      this.searchFactory = ci.getSearchFactory();
+      this.queryInterceptor = ci.getQueryInterceptor();
    }
 
    public void setSerializedWorkList(byte[] serializedModel) {
