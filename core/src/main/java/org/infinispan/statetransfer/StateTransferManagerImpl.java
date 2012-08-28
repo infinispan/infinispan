@@ -98,8 +98,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
-            configuration.clustering().stateTransfer().timeout(),
-            rpcManager.getTransport().getViewId());
+            configuration.clustering().stateTransfer().timeout()
+      );
 
       localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override

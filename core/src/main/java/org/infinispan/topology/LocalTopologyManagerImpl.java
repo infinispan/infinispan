@@ -76,14 +76,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm);
       runningCaches.put(cacheName, cacheStatus);
 
+      int viewId = transport.getViewId();
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo);
+            CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
       long timeout = joinInfo.getTimeout();
       long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
       while (true) {
          try {
             CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
-            handleConsistentHashUpdate(cacheName, initialTopology);
+            handleConsistentHashUpdate(cacheName, initialTopology, viewId);
             return initialTopology;
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
@@ -102,7 +103,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       runningCaches.remove(cacheName);
 
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.LEAVE, transport.getAddress());
+            CacheTopologyControlCommand.Type.LEAVE, transport.getAddress(), transport.getViewId());
       try {
          executeOnCoordinatorAsync(command);
       } catch (Exception e) {
@@ -116,7 +117,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       // query for the status of our running caches. So we don't need to retry if the command failed.
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(),
-            topologyId, throwable);
+            topologyId, throwable, transport.getViewId());
       try {
          executeOnCoordinatorAsync(command);
       } catch (Exception e) {
@@ -127,7 +128,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    // called by the coordinator
    @Override
-   public Map<String, Object[]> handleStatusRequest() {
+   public Map<String, Object[]> handleStatusRequest(int viewId) {
       Map<String, Object[]> response = new HashMap<String, Object[]>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
@@ -138,7 +139,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology) {
+   public void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
+      waitForView(viewId);
+
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus == null) {
          log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
@@ -170,7 +173,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleRebalance(String cacheName, CacheTopology cacheTopology) throws InterruptedException {
+   public void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
+      waitForView(viewId);
+
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus == null) {
          log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally",
@@ -201,6 +206,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    public CacheTopology getCacheTopology(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       return cacheStatus.getTopology();
+   }
+
+   private void waitForView(int viewId) throws InterruptedException {
+      if (transport.getViewId() < viewId) {
+         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId,
+               transport.getViewId());
+      }
+      while (transport.getViewId() < viewId) {
+         Thread.sleep(100);
+      }
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
