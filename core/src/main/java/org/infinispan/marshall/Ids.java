@@ -112,4 +112,5 @@ public interface Ids {
    int FLAG = 85;
 
    int STATE_CHUNK = 86;
+   int CACHE_JOIN_INFO = 87;
 }

@@ -19,10 +19,16 @@
 
 package org.infinispan.topology;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 
 /**
  * This class contains the information that a cache needs to supply to the coordinator when starting up.
@@ -30,7 +36,7 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
  * @author Dan Berindei
  * @since 5.2
  */
-public class CacheJoinInfo implements Serializable {
+public class CacheJoinInfo {
    private final ConsistentHashFactory consistentHashFactory;
    private final Hash hashFunction;
    private final int numSegments;
@@ -75,5 +81,36 @@ public class CacheJoinInfo implements Serializable {
             ", numOwners=" + numOwners +
             ", timeout=" + timeout +
             '}';
+   }
+
+   public static class Externalizer extends AbstractExternalizer<CacheJoinInfo> {
+      @Override
+      public void writeObject(ObjectOutput output, CacheJoinInfo cacheJoinInfo) throws IOException {
+         output.writeObject(cacheJoinInfo.consistentHashFactory);
+         output.writeObject(cacheJoinInfo.hashFunction);
+         output.writeInt(cacheJoinInfo.numSegments);
+         output.writeInt(cacheJoinInfo.numOwners);
+         output.writeLong(cacheJoinInfo.timeout);
+      }
+
+      @Override
+      public CacheJoinInfo readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         ConsistentHashFactory consistentHashFactory = (ConsistentHashFactory) unmarshaller.readObject();
+         Hash hashFunction = (Hash) unmarshaller.readObject();
+         int numSegments = unmarshaller.readInt();
+         int numOwners = unmarshaller.readInt();
+         long timeout = unmarshaller.readLong();
+         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.CACHE_JOIN_INFO;
+      }
+
+      @Override
+      public Set<Class<? extends CacheJoinInfo>> getTypeClasses() {
+         return Collections.<Class<? extends CacheJoinInfo>>singleton(CacheJoinInfo.class);
+      }
    }
 }
