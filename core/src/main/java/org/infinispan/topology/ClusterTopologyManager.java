@@ -49,15 +49,15 @@ public interface ClusterTopologyManager {
     * Updates the members list and notifies the {@link RebalancePolicy}.
     * @return The current consistent hash.
     */
-   CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo) throws Exception;
+   CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
 
    /**
     * Updates the members list and notifies the {@link RebalancePolicy}
     */
-   void handleLeave(String cacheName, Address leaver) throws Exception;
+   void handleLeave(String cacheName, Address leaver, int viewId) throws Exception;
 
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable) throws Exception;
+   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
 }

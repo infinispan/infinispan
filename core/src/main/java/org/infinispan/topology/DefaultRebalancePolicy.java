@@ -147,12 +147,20 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
                List<Address> newCurrentMembers = new ArrayList<Address>(currentCH.getMembers());
                newCurrentMembers.retainAll(newClusterMembers);
+               if (newCurrentMembers.isEmpty()) {
+                  log.tracef("Zero members remaining for cache %s", cacheName);
+                  return;
+               }
                ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers);
 
                ConsistentHash newPendingCH = null;
                if (pendingCH != null) {
                   List<Address> newPendingMembers = new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
                   newPendingMembers.retainAll(newClusterMembers);
+                  if (newPendingMembers.isEmpty()) {
+                     log.tracef("Zero members remaining for cache %s", cacheName);
+                     return;
+                  }
                   newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers);
                }
 
@@ -194,10 +202,19 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
             ConsistentHash newPendingCH = null;
             if (pendingCH != null) {
                newMembers.retainAll(pendingCH.getMembers());
+               if (newMembers.isEmpty()) {
+                  log.tracef("Zero members remaining for cache %s", cacheName);
+                  return;
+               }
+
                newPendingCH = joinInfo.getConsistentHashFactory().updateMembers(pendingCH, newMembers);
             }
 
             newMembers.retainAll(currentCH.getMembers());
+            if (newMembers.isEmpty()) {
+               log.tracef("Zero members remaining for cache %s", cacheName);
+               return;
+            }
             ConsistentHash newCurrentCH = joinInfo.getConsistentHashFactory().updateMembers(currentCH, newMembers);
 
             CacheTopology cacheTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);

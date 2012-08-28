@@ -78,39 +78,45 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private int topologyId;
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
+
    private Throwable throwable;
+   private int viewId;
 
    // For CommandIdUniquenessTest only
    public CacheTopologyControlCommand() {
       this.cacheName = null;
    }
 
-   public CacheTopologyControlCommand(String cacheName, Type type, Address sender) {
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
+      this.viewId = viewId;
    }
 
-   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheJoinInfo joinInfo) {
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheJoinInfo joinInfo, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
       this.joinInfo = joinInfo;
+      this.viewId = viewId;
    }
 
    public CacheTopologyControlCommand(String cacheName, Type type, Address sender, int topologyId,
-                                      Throwable throwable) {
+                                      Throwable throwable, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
       this.topologyId = topologyId;
       this.throwable = throwable;
+      this.viewId = viewId;
    }
 
-   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology) {
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
+      this.viewId = viewId;
       this.topologyId = cacheTopology.getTopologyId();
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
@@ -142,23 +148,23 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       switch (type) {
          // member to coordinator
          case JOIN:
-            return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo);
+            return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo, viewId);
          case LEAVE:
-            clusterTopologyManager.handleLeave(cacheName, sender);
+            clusterTopologyManager.handleLeave(cacheName, sender, viewId);
            return null;
          case REBALANCE_CONFIRM:
-            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable);
+            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable, viewId);
             return null;
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH));
+            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH), viewId);
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH));
+            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH), viewId);
             return null;
          case GET_STATUS:
-            return localTopologyManager.handleStatusRequest();
+            return localTopologyManager.handleStatusRequest(viewId);
          default:
             throw new CacheException("Unknown cache topology control command type " + type);
       }
@@ -200,7 +206,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH,
-            pendingCH, throwable};
+            pendingCH, throwable, viewId};
    }
 
    @Override
@@ -215,6 +221,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
       throwable = (Throwable) parameters[i++];
+      viewId = (Integer) parameters[i++];
    }
 
    @Override
@@ -227,6 +234,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             ", topologyId=" + topologyId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
+            ", throwable=" + throwable +
+            ", viewId=" + viewId +
             '}';
    }
 

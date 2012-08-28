@@ -56,19 +56,20 @@ public interface LocalTopologyManager {
 
    /**
     * Recovers the current topology information for all running caches and returns it to the coordinator.
+    * @param viewId
     */
    // TODO Add a new class to hold the CacheJoinInfo and the CacheTopology
-   Map<String, Object[]> handleStatusRequest();
+   Map<String, Object[]> handleStatusRequest(int viewId);
 
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.
     */
-   void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology);
+   void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException;
 
    /**
     * Performs the state transfer.
     */
-   void handleRebalance(String cacheName, CacheTopology cacheTopology) throws InterruptedException;
+   void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException;
 
    /**
     * @return the current topology for a cache.
