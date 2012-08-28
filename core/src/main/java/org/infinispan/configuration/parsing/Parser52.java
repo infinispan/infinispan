@@ -32,6 +32,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
@@ -58,6 +59,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
@@ -434,19 +436,41 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case CLUSTER_LOADER:
+               parseClusterLoader(reader, holder);
+               break;
+            case FILE_STORE:
+               parseFileStore(reader, holder);
+               break;
             case LOADER:
                parseLoader(reader, holder);
                break;
             case STORE:
                parseStore(reader, holder);
                break;
-            case FILE_STORE:
-               parseFileStore(reader, holder);
-               break;
             default:
                reader.handleAny(holder);
          }
       }
+   }
+
+   private void parseClusterLoader(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case REMOTE_CALL_TIMEOUT:
+            cclb.remoteCallTimeout(Long.parseLong(value));
+            break;
+         default:
+            parseCommonLoaderAttributes(reader, i, cclb);
+            break;
+         }
+      }
+      parseLoaderChildren(reader, cclb);
    }
 
    private void parseFileStore(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -602,6 +626,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             if (purgeSynchronously != null)
                scb.purgeSynchronously(purgeSynchronously);
             parseStoreChildren(reader, scb);
+         } else if (loader instanceof ClusterCacheLoader) {
+            ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
+            parseLoaderChildren(reader, cclb);
          } else {
             LegacyLoaderConfigurationBuilder lcb = builder.loaders().addLoader();
             lcb.cacheLoader(loader);

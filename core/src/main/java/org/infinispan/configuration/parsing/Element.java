@@ -41,6 +41,7 @@ public enum Element {
     ASYNC_LISTENER_EXECUTOR("asyncListenerExecutor"),
     ASYNC_TRANSPORT_EXECUTOR("asyncTransportExecutor"),
     CLUSTERING("clustering"),
+    CLUSTER_LOADER("clusterLoader"),
     CUSTOM_INTERCEPTORS("customInterceptors"),
     DATA_CONTAINER("dataContainer"),
     DEADLOCK_DETECTION("deadlockDetection"),

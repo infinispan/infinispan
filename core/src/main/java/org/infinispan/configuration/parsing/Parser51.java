@@ -37,6 +37,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
@@ -57,6 +58,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
@@ -484,6 +486,9 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
             if (purgeSynchronously != null)
                scb.purgeSynchronously(purgeSynchronously);
             parseStoreChildren(reader, scb);
+         } else if (loader instanceof ClusterCacheLoader) {
+            ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
+            parseLoaderChildren(reader, cclb);
          } else {
             LegacyLoaderConfigurationBuilder lcb = builder.loaders().addLoader();
             lcb.cacheLoader(loader);

@@ -38,6 +38,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -273,6 +274,11 @@ public class LegacyConfigurationAdaptor {
          csc.getSingletonStoreConfig().enabled(store.singletonStore().enabled());
          csc.getSingletonStoreConfig().pushStateTimeout(store.singletonStore().pushStateTimeout());
          csc.getSingletonStoreConfig().pushStateWhenCoordinator(store.singletonStore().pushStateWhenCoordinator());
+      } else if (loader instanceof ClusterCacheLoaderConfiguration) {
+         ClusterCacheLoaderConfig cclc = new ClusterCacheLoaderConfig();
+         clc = cclc;
+         ClusterCacheLoaderConfiguration clusterLoader = (ClusterCacheLoaderConfiguration) loader;
+         cclc.remoteCallTimeout(clusterLoader.remoteCallTimeout());
       } else if (loader instanceof LegacyLoaderConfiguration) {
          CacheLoader cacheLoader = ((LegacyLoaderConfiguration) loader).cacheLoader();
          clc = getLoaderConfig(loader, cacheLoader);
@@ -518,7 +524,12 @@ public class LegacyConfigurationAdaptor {
    // Temporary method... once cache store configs have been converted, this should go
    public static void adapt(ClassLoader cl, ConfigurationBuilder builder, CacheLoaderConfig clc) {
       LoaderConfigurationBuilder<?, ?> loaderBuilder = null;
-      if (clc instanceof FileCacheStoreConfig) {
+      if (clc instanceof ClusterCacheLoaderConfig) {
+         ClusterCacheLoaderConfig cclc = (ClusterCacheLoaderConfig) clc;
+         ClusterCacheLoaderConfigurationBuilder cclBuilder = builder.loaders().addClusterCacheLoader();
+         cclBuilder.remoteCallTimeout(cclc.getRemoteCallTimeout());
+         loaderBuilder = cclBuilder;
+      } else if (clc instanceof FileCacheStoreConfig) {
          FileCacheStoreConfig csc = (FileCacheStoreConfig) clc;
          FileCacheStoreConfigurationBuilder fcsBuilder = builder.loaders().addFileCacheStore();
 
