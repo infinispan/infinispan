@@ -37,8 +37,12 @@ import javax.transaction.UserTransaction;
 
 import org.hibernate.TransactionException;
 import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
+<<<<<<< HEAD
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 >>>>>>> HHH-7197 reimport imports
+=======
+import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+>>>>>>> HHH-7556 - Clean up packages
 
 /**
  * @author Steve Ebersole

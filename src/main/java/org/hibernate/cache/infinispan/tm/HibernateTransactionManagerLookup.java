@@ -25,11 +25,15 @@ import java.util.Properties;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.cfg.Settings;
+<<<<<<< HEAD
 import org.hibernate.transaction.TransactionManagerLookup;
 =======
 
 import org.hibernate.cfg.Settings;
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
+=======
+import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+>>>>>>> HHH-7556 - Clean up packages
 
 import javax.transaction.TransactionManager;
 import java.util.Properties;

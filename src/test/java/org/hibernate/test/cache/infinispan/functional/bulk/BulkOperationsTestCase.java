@@ -46,12 +46,17 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.transaction.internal.jta.CMTTransactionFactory;
 import org.hibernate.engine.transaction.spi.TransactionFactory;
+<<<<<<< HEAD
 import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 >>>>>>> HHH-6150 - JBoss AS7 integration work
+=======
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+>>>>>>> HHH-7556 - Clean up packages
 import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.test.cache.infinispan.functional.Contact;
 import org.hibernate.test.cache.infinispan.functional.Customer;
