@@ -19,12 +19,17 @@
 
 package org.infinispan.configuration.cache;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /*
  * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
  * rather than delegate to existing ones.
  */
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>> extends
       AbstractLoaderConfigurationBuilder<T, S> implements StoreConfigurationBuilder<T, S> {
+
+   private static final Log log = LogFactory.getLog(LegacyStoreConfigurationBuilder.class);
 
    protected final AsyncStoreConfigurationBuilder async;
    protected final SingletonStoreConfigurationBuilder singletonStore;
@@ -112,4 +117,15 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       this.purgeSynchronously = b;
       return self();
    }
+
+   @Override
+   public void validate() {
+      async.validate();
+      singletonStore.validate();
+      if (!loaders().shared() && !fetchPersistentState && !purgeOnStartup
+            && getBuilder().clustering().cacheMode().isClustered())
+         log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
+   }
+
+
 }

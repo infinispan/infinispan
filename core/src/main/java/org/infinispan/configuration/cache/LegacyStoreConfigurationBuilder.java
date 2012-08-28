@@ -21,8 +21,6 @@ package org.infinispan.configuration.cache;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configuration of a legacy cache store, i.e. a store which is still configured via properties and
@@ -36,11 +34,9 @@ import org.infinispan.util.logging.LogFactory;
 public class LegacyStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<LegacyStoreConfiguration, LegacyStoreConfigurationBuilder> implements
       StoreConfigurationChildBuilder {
 
-   private static final Log log = LogFactory.getLog(LegacyStoreConfigurationBuilder.class);
-
    private CacheLoader cacheStore; // TODO: in 6.0, as we deprecate the cacheLoader() method, narrow this type to CacheStore
 
-   LegacyStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public LegacyStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 
@@ -68,15 +64,6 @@ public class LegacyStoreConfigurationBuilder extends AbstractStoreConfigurationB
    public LegacyStoreConfigurationBuilder cacheStore(CacheStore cacheStore) {
       this.cacheStore = cacheStore;
       return this;
-   }
-
-   @Override
-   public void validate() {
-      async.validate();
-      singletonStore.validate();
-      if (!loaders().shared() && !fetchPersistentState && !purgeOnStartup
-            && getBuilder().clustering().cacheMode().isClustered())
-         log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
    }
 
    @Override

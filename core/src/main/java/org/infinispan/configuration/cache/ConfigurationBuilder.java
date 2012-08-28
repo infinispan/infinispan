@@ -162,7 +162,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    public <T extends Builder<?>> T addModule(Class<T> klass) {
       try {
-         Constructor<T> constructor = klass.getConstructor(ConfigurationBuilder.class);
+         Constructor<T> constructor = klass.getDeclaredConstructor(ConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
          this.modules.add(builder);
          return builder;

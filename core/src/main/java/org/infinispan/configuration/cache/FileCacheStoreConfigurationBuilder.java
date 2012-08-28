@@ -39,7 +39,7 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportCache
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
 
-   protected FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 

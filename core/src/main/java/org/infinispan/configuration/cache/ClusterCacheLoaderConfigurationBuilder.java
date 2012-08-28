@@ -27,7 +27,7 @@ import org.infinispan.util.TypedProperties;
 public class ClusterCacheLoaderConfigurationBuilder extends AbstractLoaderConfigurationBuilder<ClusterCacheLoaderConfiguration, ClusterCacheLoaderConfigurationBuilder> {
    private long remoteCallTimeout;
 
-   protected ClusterCacheLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public ClusterCacheLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 

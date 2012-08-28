@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.BuiltBy;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.util.TypedProperties;
 
@@ -29,6 +30,7 @@ import org.infinispan.util.TypedProperties;
  * @since 5.2
  *
  */
+@BuiltBy(LegacyStoreConfigurationBuilder.class)
 public class LegacyStoreConfiguration extends AbstractStoreConfiguration {
 
    private final CacheLoader cacheStore; // TODO: in 6.0, as we deprecate the cacheLoader() method in LegacyStoreConfigurationBuilder, narrow this type to CacheStore

@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.BuiltBy;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.util.TypedProperties;
 
@@ -27,6 +28,7 @@ import org.infinispan.util.TypedProperties;
  * @author Pete Muir
  * @since 5.1
  */
+@BuiltBy(LegacyLoaderConfigurationBuilder.class)
 public class LegacyLoaderConfiguration extends AbstractLoaderConfiguration {
 
    private final CacheLoader cacheLoader;
