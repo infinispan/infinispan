@@ -26,6 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.query.CommandInitializer;
+import org.infinispan.query.CustomQueryCommand;
 import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 
@@ -37,7 +39,7 @@ import java.util.UUID;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand {
+public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
    private static final Integer ZERO = Integer.valueOf(0);
@@ -68,8 +70,9 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       super(cacheName);
    }
 
-   public void injectComponents(Cache<?, ?> cache) {
-      this.cache = cache;
+   @Override
+   public void fetchExecutionContext(CommandInitializer ci) {
+      this.cache = ci.getCache();
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache<?, ?> cache, UUID id) {
