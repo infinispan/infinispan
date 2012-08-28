@@ -153,23 +153,24 @@ public class RpcManagerImpl implements RpcManager {
          long startTimeNanos = 0;
          if (statisticsEnabled) startTimeNanos = System.nanoTime();
          try {
+            // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
             // add a response filter that will ensure we don't wait for replies from non-members
             // but only if the target is the whole cluster and the call is synchronous
             // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
-            if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
-               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
-               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
-               // the filter won't work if there is no other member in the cache, so we have to 
-               if (cacheMembers.size() < 2) {
-                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", cacheName);
-                  return Collections.emptyMap();
-               }
-               // if there is already a response filter attached it means it must have its own way of dealing with non-members
-               // so skip installing the filter
-               if (responseFilter == null) {
-                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
-               }
-            }
+//            if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
+//               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
+//               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
+//               // the filter won't work if there is no other member in the cache, so we have to
+//               if (cacheMembers.size() < 2) {
+//                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", cacheName);
+//                  return Collections.emptyMap();
+//               }
+//               // if there is already a response filter attached it means it must have its own way of dealing with non-members
+//               // so skip installing the filter
+//               if (responseFilter == null) {
+//                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
+//               }
+//            }
             if (rpcCommand instanceof TopologyAffectedCommand) {
                ((TopologyAffectedCommand)rpcCommand).setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
             }
