@@ -369,7 +369,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
       assert c.clustering().hash().numOwners() == 3;
       assert c.clustering().l1().enabled();
-      assert c.clustering().hash().numVirtualNodes() == 1000;
+      assert c.clustering().hash().numVirtualNodes() == 1;
+      if (!deprecated) assert c.clustering().hash().numSegments() == 1000;
 
       c = cm.getCacheConfiguration("groups");
       assert c.clustering().hash().groups().enabled();
