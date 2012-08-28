@@ -366,6 +366,13 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
+            <xs:element name="clusterLoader" minOccurs="0" maxOccurs="unbounded" type="tns:clusterLoader">
+              <xs:annotation>
+                <xs:documentation>
+                  Configuration of a ClusterCacheLoader
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
             <xs:element name="fileStore" minOccurs="0" maxOccurs="unbounded" type="tns:fileStore">
               <xs:annotation>
                 <xs:documentation>
@@ -1290,6 +1297,20 @@
           <xs:annotation>
             <xs:documentation>
               The cache store to configure and use
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="clusterLoader">
+    <xs:complexContent>
+      <xs:extension base="tns:loader">
+        <xs:attribute name="remoteCallTimeout">
+          <xs:annotation>
+            <xs:documentation>
+              How long to wait for results from other members in the cluster before returning a null.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

@@ -139,7 +139,7 @@
       <storeAsBinary enabled="true"/>
    </namedCache>
 
-   <namedCache name="withLoader">
+   <namedCache name="withFileStore">
       <loaders passivation="false" shared="false" preload="true">
 
          <!--
@@ -149,6 +149,12 @@
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
          </fileStore>
+      </loaders>
+   </namedCache>
+   
+   <namedCache name="withClusterLoader">
+      <loaders passivation="false" shared="false" preload="true">
+         <clusterLoader remoteCallTimeout="15000" />
       </loaders>
    </namedCache>
 

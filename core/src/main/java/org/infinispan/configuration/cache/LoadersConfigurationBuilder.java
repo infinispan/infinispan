@@ -179,6 +179,15 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
+    * Adds a cluster cache loader
+    */
+   public ClusterCacheLoaderConfigurationBuilder addClusterCacheLoader() {
+      ClusterCacheLoaderConfigurationBuilder builder = new ClusterCacheLoaderConfigurationBuilder(this);
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+
+   /**
     * Adds a file cache store
     */
    public FileCacheStoreConfigurationBuilder addFileCacheStore() {
@@ -228,6 +237,8 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
             this.addLoader().read((LegacyLoaderConfiguration) c);
          else if (c instanceof FileCacheStoreConfiguration)
             this.addFileCacheStore().read((FileCacheStoreConfiguration) c);
+         else if (c instanceof ClusterCacheLoaderConfiguration)
+            this.addClusterCacheLoader().read((ClusterCacheLoaderConfiguration) c);
       }
       this.passivation = template.passivation();
       this.preload = template.preload();

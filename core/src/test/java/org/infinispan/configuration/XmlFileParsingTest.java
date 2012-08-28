@@ -38,6 +38,7 @@ import java.util.Map;
 import org.infinispan.Version;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
@@ -312,7 +313,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("storeAsBinary");
       assert c.storeAsBinary().enabled();
 
-      c = cm.getCacheConfiguration("withLoader");
+      c = cm.getCacheConfiguration("withFileStore");
       assert c.loaders().preload();
       assert !c.loaders().passivation();
       assert !c.loaders().shared();
@@ -332,6 +333,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert loaderCfg.async().flushLockTimeout() == 15000;
       assert loaderCfg.async().enabled();
       assert loaderCfg.async().modificationQueueSize() == 700;
+
+      c = cm.getCacheConfiguration("withClusterLoader");
+      assert c.loaders().cacheLoaders().size() == 1;
+      ClusterCacheLoaderConfiguration clusterLoaderCfg = (ClusterCacheLoaderConfiguration) c.loaders().cacheLoaders().get(0);
+      assert clusterLoaderCfg.remoteCallTimeout() == 15000;
 
       c = cm.getCacheConfiguration("withLoaderDefaults");
       loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);

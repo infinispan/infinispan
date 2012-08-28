@@ -101,6 +101,7 @@ public enum Attribute {
     REHASH_ENABLED("rehashEnabled"),
     REHASH_RPC_TIMEOUT("rehashRpcTimeout"),
     REHASH_WAIT("rehashWait"),
+    REMOTE_CALL_TIMEOUT("remoteCallTimeout"),
     REPL_QUEUE_INTERVAL("replQueueInterval"),
     REPL_QUEUE_CLASS("replQueueClass"),
     REPL_QUEUE_MAX_ELEMENTS("replQueueMaxElements"),
