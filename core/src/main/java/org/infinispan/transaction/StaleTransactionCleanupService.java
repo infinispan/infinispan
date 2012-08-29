@@ -106,7 +106,6 @@ public class StaleTransactionCleanupService {
       // for remote transactions, release locks for which we are no longer an owner
       // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
       log.tracef("Unlocking keys for which we are no longer an owner");
-      int numOwners = transactionTable.configuration.clustering().hash().numOwners();
       for (RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
          GlobalTransaction gtx = remoteTx.getGlobalTransaction();
          List<Object> keys = new ArrayList<Object>();
@@ -119,6 +118,11 @@ public class StaleTransactionCleanupService {
             }
             txHasLocalKeys |= isLocal;
          }
+         for (Object key : remoteTx.getBackupLockedKeys()) {
+            boolean isLocal = chNew.isKeyLocalToNode(self, key);
+            txHasLocalKeys |= isLocal;
+         }
+
          if (keys.size() > 0) {
             log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
             Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
@@ -131,20 +135,20 @@ public class StaleTransactionCleanupService {
             } catch (Throwable t) {
                log.unableToUnlockRebalancedKeys(gtx, keys, self, t);
             }
+         }
 
-            // if the transaction doesn't touch local keys any more, we can roll it back
-            if (!txHasLocalKeys) {
-               log.tracef("Killing remote transaction without any local keys %s", gtx);
-               RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-               rc.init(invoker, transactionTable.icc, transactionTable);
-               try {
-                  rc.perform(null);
-                  log.tracef("Rollback of transaction %s complete.", gtx);
-               } catch (Throwable e) {
-                  log.unableToRollbackGlobalTx(gtx, e);
-               } finally {
-                  transactionTable.removeRemoteTransaction(gtx);
-               }
+         // if the transaction doesn't touch local keys any more, we can roll it back
+         if (!txHasLocalKeys) {
+            log.tracef("Killing remote transaction without any local keys %s", gtx);
+            RollbackCommand rc = new RollbackCommand(cacheName, gtx);
+            rc.init(invoker, transactionTable.icc, transactionTable);
+            try {
+               rc.perform(null);
+               log.tracef("Rollback of transaction %s complete.", gtx);
+            } catch (Throwable e) {
+               log.unableToRollbackGlobalTx(gtx, e);
+            } finally {
+               transactionTable.removeRemoteTransaction(gtx);
             }
          }
       }
