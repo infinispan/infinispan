@@ -210,6 +210,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
             stateTransferLock.transactionsSharedLock();
          }
          try {
+            // forward commands with older topology ids to their new targets
             if (command.getTopologyId() < topologyId) {
                // if it is a read request and comes from an older topology we need to check if we still hold the data
                Object readKey = null;
@@ -278,6 +279,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       } finally {
          stateTransferLock.commandsSharedUnlock();
 
+         log.tracef("Forwarding command %s to new targets %", command, newTargets);
          if (newTargets != null && !newTargets.isEmpty()) {
             rpcManager.invokeRemotely(newTargets, command, true);
          }
