@@ -31,6 +31,9 @@ import java.util.Set;
 /**
  * A form of {@link PutKeyValueCommand} that also applies a version to the entry created.
  *
+ * Note that this command is only used during state transfer. Normally versioning requires transactions,
+ * and as such it used VersionedPrepareCommand and the regular PutKeyValueCommand.
+ *
  * @author Manik Surtani
  * @since 5.1
  */
@@ -61,8 +64,7 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
 
       // Apply the version to the entry
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      Object entryValue = e.getValue();
-      if ((entryValue == null || !putIfAbsent || e.isRemoved()) && !(value instanceof Delta)) {
+      if (!(value instanceof Delta)) {
          e.setVersion(version);
       }
 
@@ -89,5 +91,20 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
       maxIdleTimeMillis = (Long) parameters[3];
       version = (EntryVersion) parameters[4];
       flags = (Set<Flag>) parameters[5];
+   }
+
+   @Override
+   public String toString() {
+      return new StringBuilder()
+            .append("VersionedPutKeyValueCommand{key=")
+            .append(key)
+            .append(", value=").append(value)
+            .append(", version=").append(version)
+            .append(", flags=").append(flags)
+            .append(", putIfAbsent=").append(putIfAbsent)
+            .append(", lifespanMillis=").append(lifespanMillis)
+            .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+            .append("}")
+            .toString();
    }
 }
