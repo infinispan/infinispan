@@ -19,6 +19,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
+@Test(groups = "functional", testName = "query.nulls.NullCollectionElementsTest")
 public class NullCollectionElementsTest extends SingleCacheManagerTest {
 
    private TransactionManager transactionManager;
@@ -29,9 +30,10 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
-         .indexLocalOnly(true)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+             .enable()
+             .indexLocalOnly(true)
+             .addProperty("hibernate.search.default.directory_provider", "ram")
+             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
       transactionManager = cache.getAdvancedCache().getTransactionManager();
