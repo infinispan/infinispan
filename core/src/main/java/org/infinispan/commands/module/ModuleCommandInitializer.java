@@ -23,6 +23,7 @@
 package org.infinispan.commands.module;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -36,6 +37,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 5.0
  */
 @Scope(Scopes.NAMED_CACHE)
+@SurvivesRestarts
 public interface ModuleCommandInitializer {
    /**
     * Initializes a command constructed using {@link ModuleCommandFactory#fromStream(byte, Object[])} with
