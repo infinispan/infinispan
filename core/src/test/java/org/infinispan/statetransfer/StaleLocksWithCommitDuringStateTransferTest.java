@@ -43,7 +43,8 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.Test;
 
-@Test(testName = "lock.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")
+@Test(testName = "lock.StaleLocksWithCommitDuringStateTransferTest", groups = "functional",
+      enabled = false, description = "This test relies on implementation details of the old state algorithm")
 @CleanupAfterMethod
 public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheManagersTest {
 
