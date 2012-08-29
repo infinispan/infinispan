@@ -60,14 +60,14 @@ public class ConfigurationProperties {
 
    // defaults
 
-   private static final int DEFAULT_KEY_SIZE = 64;
-   private static final int DEFAULT_VALUE_SIZE = 512;
-   private static final int DEFAULT_HOTROD_PORT = 11222;
-   private static final int DEFAULT_SO_TIMEOUT = 60000;
-   private static final int DEFAULT_CONNECT_TIMEOUT = 60000;
+   public static final int DEFAULT_KEY_SIZE = 64;
+   public static final int DEFAULT_VALUE_SIZE = 512;
+   public static final int DEFAULT_HOTROD_PORT = 11222;
+   public static final int DEFAULT_SO_TIMEOUT = 60000;
+   public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final String PROTOCOL_VERSION_11 = "1.1";
    public static final String PROTOCOL_VERSION_10 = "1.0";
-   private static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_11;
+   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_11;
 
    private final TypedProperties props;
 
