@@ -188,7 +188,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       final CacheEntry entry;
       return !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
             && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)   //todo [anistor] do we need this? it should normally be used only in distributed mode, never in replicated mode
-            && stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)
+            && !stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)
             && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());
    }
 
