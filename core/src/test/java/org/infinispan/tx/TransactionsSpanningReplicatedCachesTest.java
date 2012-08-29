@@ -61,6 +61,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    private void startAllCaches() {
       cm1.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
       cm2.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
+      waitForClusterToForm("c1", "c2", "cache1", "cache2");
    }
 
    protected Configuration getConfiguration() {
