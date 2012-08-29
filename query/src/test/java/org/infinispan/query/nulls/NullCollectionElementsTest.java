@@ -5,7 +5,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -26,13 +26,13 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent()
-            .indexing()
-            .indexLocalOnly(true)
-            .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
+         .indexing()
+         .indexLocalOnly(true)
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
       transactionManager = cache.getAdvancedCache().getTransactionManager();
       searchManager = Search.getSearchManager(cache);
