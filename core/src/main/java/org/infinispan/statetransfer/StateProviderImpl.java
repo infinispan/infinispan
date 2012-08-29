@@ -230,11 +230,9 @@ public class StateProviderImpl implements StateProvider {
                lockedKeys.add(key);
             }
          }
-         if (tx.getBackupLockedKeys() != null) {
-            for (Object key : tx.getBackupLockedKeys()) {
-               if (segments.contains(readCh.getSegment(key))) {
-                  lockedKeys.add(key);
-               }
+         for (Object key : tx.getBackupLockedKeys()) {
+            if (segments.contains(readCh.getSegment(key))) {
+               lockedKeys.add(key);
             }
          }
          List<WriteCommand> txModifications = tx.getModifications();
