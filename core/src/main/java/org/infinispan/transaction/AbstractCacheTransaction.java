@@ -183,7 +183,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public Set<Object> getBackupLockedKeys() {
-      return backupKeyLocks;
+      return backupKeyLocks == null ? Collections.emptySet() : backupKeyLocks;
    }
 
    @Override
