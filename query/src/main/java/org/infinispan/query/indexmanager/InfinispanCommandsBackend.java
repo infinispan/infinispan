@@ -165,7 +165,7 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
          return members.get(elementIndex);
       }
       else { //If cache is configured as DIST
-         return hashService.primaryLocation(indexName);
+         return hashService.locatePrimaryOwner(indexName);
       }
    }
 
