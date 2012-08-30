@@ -67,4 +67,9 @@ public interface StateTransferManager {
    void start() throws Exception;
 
    void stop();
+
+   /**
+    * @return {@code true} if the local node was the first to start this cache in the cluster.
+    */
+   boolean isLocalNodeFirst();
 }

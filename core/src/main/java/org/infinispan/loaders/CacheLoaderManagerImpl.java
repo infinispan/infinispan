@@ -63,11 +63,14 @@ import org.infinispan.loaders.decorators.ReadOnlyStore;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
+   private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    Configuration configuration;
    LoadersConfiguration clmConfig;
@@ -76,17 +79,19 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    CacheLoader loader;
    InvocationContextContainer icc;
    TransactionManager transactionManager;
-   private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
+   StateTransferManager stateTransferManager;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache,
                       @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                      Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager) {
+                      Configuration configuration, InvocationContextContainer icc,
+                      TransactionManager transactionManager, StateTransferManager stateTransferManager) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
       this.icc = icc;
       this.transactionManager = transactionManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Override
@@ -174,12 +179,19 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
+    * The preload will happen only on the first node to start this cache in a cluster - the other nodes
+    * will receive this data via state transfer.
     */
    @Override
    @Start(priority = 56)
    public void preload() {
       if (loader != null) {
          if (clmConfig.preload()) {
+            // Don't preload anything if we're not the first member to start up
+            if (stateTransferManager != null && !stateTransferManager.isLocalNodeFirst()) {
+               log.debugf("We are not the first node to join cache %s, skipping preload", cache.getName());
+               return;
+            }
             long start = 0;
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
@@ -208,7 +220,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                   .withFlags(flags.toArray(new Flag[]{}));
 
             for (InternalCacheEntry e : state)
-               flaggedCache.put(e.getKey(), e.getValue(),
+               flaggedCache.putIfAbsent(e.getKey(), e.getValue(),
                      e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (debugTiming) {

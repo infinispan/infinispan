@@ -91,8 +91,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.localTopologyManager = localTopologyManager;
    }
 
-   // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
-   @Start(priority = 60)
+   @Start(priority = 50)
    @Override
    public void start() throws Exception {
       if (trace) {
@@ -229,4 +228,15 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public CacheTopology getCacheTopology() {
       return stateConsumer.getCacheTopology();
    }
+
+   @Override
+   public boolean isLocalNodeFirst() {
+      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      if (cacheTopology == null || cacheTopology.getMembers().isEmpty()) {
+         throw new IllegalStateException("Can only check if the local node is the first to join after joining");
+      }
+
+      return cacheTopology.getMembers().get(0).equals(rpcManager.getAddress());
+   }
+
 }
