@@ -72,6 +72,10 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   boolean preload() {
+      return preload;
+   }
+
    /**
     * This setting should be set to true when multiple cache instances share the same cache store
     * (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared
@@ -173,7 +177,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    /**
     * Adds a cache store which uses the specified builder instance to build its configuration
     *
-    * @param klass an instance of {@link StoreConfigurationBuilder}
+    * @param builder an instance of {@link StoreConfigurationBuilder}
     */
    public LoaderConfigurationBuilder<?, ?> addStore(StoreConfigurationBuilder<?, ?> builder) {
       this.cacheLoaders.add(builder);

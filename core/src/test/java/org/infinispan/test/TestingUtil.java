@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -62,6 +63,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractDelegatingMarshaller;
@@ -752,6 +754,13 @@ public class TestingUtil {
             throw new RuntimeException(e);
          }
       }
+   }
+
+   public static <K, V> List<CacheStore> cachestores(List<Cache<K, V>> caches) {
+      List<CacheStore> l = new LinkedList<CacheStore>();
+      for (Cache<?, ?> c: caches)
+         l.add(TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore());
+      return l;
    }
 
    private static void removeInMemoryData(Cache cache) {
