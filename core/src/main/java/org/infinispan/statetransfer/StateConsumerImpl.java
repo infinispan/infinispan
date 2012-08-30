@@ -35,6 +35,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
@@ -145,8 +146,6 @@ public class StateConsumerImpl implements StateConsumer {
             configuration.clustering().cacheMode().isClustered();
 
       timeout = configuration.clustering().stateTransfer().timeout();
-
-      fetchEnabled = configuration.clustering().stateTransfer().fetchInMemoryState() && !configuration.clustering().cacheMode().isInvalidation();
    }
 
    public boolean isStateTransferInProgress() {
@@ -326,6 +325,12 @@ public class StateConsumerImpl implements StateConsumer {
             }
          }
       }
+   }
+
+   // Must run after the CacheLoaderManager
+   @Start(priority = 20)
+   public void start() {
+      fetchEnabled = configuration.clustering().stateTransfer().fetchInMemoryState() || cacheLoaderManager.isFetchPersistentState();
    }
 
    @Stop(priority = 20)
