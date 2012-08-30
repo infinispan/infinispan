@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<xs:schema attributeFormDefault="unqualified"
+           elementFormDefault="qualified"
+           version="1.0"
+           targetNamespace="urn:infinispan:config:mongodb:5.3"
+           xmlns:tns="urn:infinispan:config:mongodb:5.3"
+           xmlns:config="urn:infinispan:config:5.3"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:import namespace="urn:infinispan:config:5.3"
+               schemaLocation="http://www.infinispan.org/schemas/infinispan-config-5.3.xsd"/>
+
+    <xs:complexType name="mongodbStore">
+        <xs:complexContent>
+            <xs:extension base="config:store">
+                <xs:sequence>
+                <xs:element name="connection" type="tns:connection">
+                    <xs:annotation>
+                        <xs:documentation>The connection information of the MongoDB server instance.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+
+                <xs:element name="authentication" type="tns:authentication">
+                    <xs:annotation>
+                        <xs:documentation>Authentication information.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+
+                <xs:element name="storage" type="tns:storage">
+                    <xs:annotation>
+                        <xs:documentation>Storage information</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="connection">
+        <xs:attribute name="host" type="xs:string" default="localhost">
+            <xs:annotation>
+                <xs:documentation>The hostname of the server on which the MongoDB is running.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="port" type="xs:int" default="27017">
+            <xs:annotation>
+                <xs:documentation>The port used by the MongoDB server instance.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="timeout" type="xs:int" default="2000">
+            <xs:annotation>
+                <xs:documentation>The timeout used by the MongoDB driver at the connection.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="acknowledgment" type="xs:int" default="1">
+            <xs:annotation>
+                <xs:documentation>The value used to configure the acknowledgment for write operation.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="authentication">
+        <xs:attribute name="username" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The username used for the authentication with the MongoDB server.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="password" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The password used for the authentication with the MongoDB server.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="storage">
+        <xs:attribute name="database" type="xs:string" default="">
+            <xs:annotation>
+                <xs:documentation>The database used to store elements.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="collection" type="xs:string" default="">
+            <xs:annotation>
+                <xs:documentation>The collection which will contain the elements.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+</xs:schema>
