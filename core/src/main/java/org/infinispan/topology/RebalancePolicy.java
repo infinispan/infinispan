@@ -55,9 +55,15 @@ public interface RebalancePolicy {
    void updateMembersList(List<Address> membersList) throws Exception;
 
    /**
-    * Called when a member joins or leaves an individual cache.
+    * Called when one or more members join a cache.
+    * @return The previous cache topology.
     */
-   void updateMembersList(String cacheName, List<Address> joiners, List<Address> leavers) throws Exception;
+   CacheTopology addJoiners(String cacheName, List<Address> joiners) throws Exception;
+
+   /**
+    * Called when one or more members leave an individual cache (as opposed to leaving the cluster).
+    */
+   void removeLeavers(String cacheName, List<Address> leavers) throws Exception;
 
    /**
     * Called when every member has completed receiving data.

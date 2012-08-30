@@ -161,13 +161,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       waitForView(viewId);
 
       rebalancePolicy.initCache(cacheName, joinInfo);
-      rebalancePolicy.updateMembersList(cacheName, Collections.singletonList(joiner), Collections.<Address>emptyList());
-      return rebalancePolicy.getTopology(cacheName);
+      return rebalancePolicy.addJoiners(cacheName, Collections.singletonList(joiner));
    }
 
    @Override
    public void handleLeave(String cacheName, Address leaver, int viewId) throws Exception {
-      rebalancePolicy.updateMembersList(cacheName, Collections.<Address>emptyList(), Collections.singletonList(leaver));
+      rebalancePolicy.removeLeavers(cacheName, Collections.singletonList(leaver));
    }
 
    @Override
