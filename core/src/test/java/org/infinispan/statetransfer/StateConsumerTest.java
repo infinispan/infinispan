@@ -175,6 +175,7 @@ public class StateConsumerTest {
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, localTopologyManager, interceptorChain, icc, configuration, rpcManager,
             commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
+      stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       Object key1 = new TestKey("key1", 0, ch1);
