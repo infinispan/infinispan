@@ -33,7 +33,7 @@ public abstract class AbstractStoreConfiguration extends AbstractLoaderConfigura
    private final AsyncStoreConfiguration async;
    private final SingletonStoreConfiguration singletonStore;
 
-   AbstractStoreConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
+   protected AbstractStoreConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
          boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(properties);
       this.purgeOnStartup = purgeOnStartup;

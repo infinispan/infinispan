@@ -119,6 +119,11 @@ public class GlobalConfiguration {
       return shutdown;
    }
 
+   @SuppressWarnings("unchecked")
+   public <T> T module(Class<T> moduleClass) {
+      return (T)modules.get(moduleClass);
+   }
+
    public Map<Class<?>, ?> modules() {
       return modules;
    }
