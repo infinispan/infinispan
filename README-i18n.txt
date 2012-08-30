@@ -29,4 +29,4 @@ Infinispan logs fully support internationalisation. The following is a list of m
 16001 - 17000    rhq plugin
 17001 - 18000    cdi integration
 18001 - 19000    hbase
-
+21001 - 22000    mongodb cachestore
