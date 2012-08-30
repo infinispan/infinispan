@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -169,4 +170,8 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       return values;
    }
 
+   @Override
+   public CacheQuery timeout(long timeout, TimeUnit timeUnit) {
+      throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");   // TODO
+   }
 }
