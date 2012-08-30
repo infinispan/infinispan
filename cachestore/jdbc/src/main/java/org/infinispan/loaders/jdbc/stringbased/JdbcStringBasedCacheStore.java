@@ -220,32 +220,39 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
 
    @Override
    public void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
-      InternalCacheEntry existingOne = readStoredEntry(ed, lockingKey);
-      String sql;
-      if (existingOne == null) {
-         sql = tableManipulation.getInsertRowSql();
-      } else {
-         sql = tableManipulation.getUpdateRowSql();
-      }
       Connection connection = null;
       PreparedStatement ps = null;
       ByteBuffer byteBuffer = null;
       try {
          byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
+         connection = connectionFactory.getConnection();
+         String sql = tableManipulation.getSelectIdRowSql();
+         if (log.isTraceEnabled()) {
+            log.tracef("Running sql '%s' on %s. Key string is '%s'", sql, ed, lockingKey);
+         }
+         ps = connection.prepareStatement(sql);
+         ps.setString(1, lockingKey);
+         ResultSet rs = ps.executeQuery();
+         if (rs.next()) {
+            sql = tableManipulation.getUpdateRowSql();
+         } else {
+            sql = tableManipulation.getInsertRowSql();
+         }
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
          if (log.isTraceEnabled()) {
              log.tracef("Running sql '%s' on %s. Key string is '%s', value size is %d bytes", sql, ed, lockingKey, byteBuffer.getLength());
          }
-         connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
          ps.setLong(2, ed.getExpiryTime());
          ps.setString(3, lockingKey);
          ps.executeUpdate();
       } catch (SQLException ex) {
-         log.sqlFailureStoringKey(lockingKey, byteBuffer.getLength(), ex);
+         log.sqlFailureStoringKey(lockingKey, byteBuffer != null ? byteBuffer.getLength() : 0, ex);
          throw new CacheLoaderException(String.format(
                "Error while storing string key to database; key: '%s', buffer size of value: %d bytes",
-               lockingKey, byteBuffer.getLength()), ex);
+               lockingKey, byteBuffer != null ? byteBuffer.getLength() : 0), ex);
       } catch (InterruptedException e) {
          if (log.isTraceEnabled()) {
             log.trace("Interrupted while marshalling to store");
@@ -333,8 +340,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
 
    @Override
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
-      InternalCacheEntry storedEntry = null;
-      storedEntry = readStoredEntry(key, lockingKey);
+      InternalCacheEntry storedEntry = readStoredEntry(key, lockingKey);
       if (storedEntry != null && storedEntry.isExpired(System.currentTimeMillis())) {
          if (log.isTraceEnabled()) {
             log.tracef("Not returning '%s' as it is expired. It will be removed from DB by purging thread!", storedEntry);
