@@ -47,6 +47,7 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
+ * @author Sanne Grinovero
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  * @see AtomicHashMap
@@ -99,12 +100,16 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public Set<K> keySet() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
-      Set<K> result = new HashSet<K>(keySetUncommitted());
-      if (map != null) {
-         result.addAll(map.keySet());
+      if (hasUncommittedChanges()) {
+           return new HashSet<K>(keySetUncommitted());
+      } else {
+         AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
+         Set<K> result = new HashSet<K>(keySetUncommitted());
+         if (map != null) {
+            result.addAll(map.keySet());
+         }
+         return result;
       }
-      return result;
    }
 
    @SuppressWarnings("unchecked")
@@ -131,12 +136,17 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public Set<Entry<K, V>> entrySet() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
-      Set<Entry<K, V>> result = new HashSet<Entry<K, V>>(entrySetUncommitted());
-      if (map != null) {
-         result.addAll(map.entrySet());
+      Set<Entry<K, V>> result;
+      if (hasUncommittedChanges()) {
+         return new HashSet<Entry<K, V>>(entrySetUncommitted());
+      } else {
+         AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
+         result = new HashSet<Entry<K, V>>();
+         if (map != null) {
+            result.addAll(map.entrySet());
+         }
+         return result;
       }
-      return result;
    }
 
    @SuppressWarnings("unchecked")
@@ -147,9 +157,12 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public int size() {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
-      int su = sizeUncommitted();
-      return map == null ? su : su + map.size();
+      final AtomicHashMap<K, V> map = getDeltaMapForRead();
+      final int result = sizeUncommitted();
+      if (result <= 0 && map != null) {
+         return map.size();
+      }
+      return result;
    }
 
    public int sizeUncommitted() {
@@ -157,21 +170,25 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       return entry != null ? entry.getUncommittedChages().size() : 0;
    }
 
+   public boolean hasUncommittedChanges() {
+      DeltaAwareCacheEntry entry = lookupEntry();
+      return entry != null && ! entry.getUncommittedChages().isEmpty();
+   }
+
    @Override
    public boolean isEmpty() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return isEmptyUncommitted() && (map == null || map.isEmpty());
-   }
-
-   private boolean isEmptyUncommitted() {
-      DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null && entry.getUncommittedChages().isEmpty();
+      return ! hasUncommittedChanges() && (map == null || map.isEmpty());
    }
 
    @Override
    public boolean containsKey(Object key) {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return containsKeyUncommitted(key) || (map != null && map.containsKey(key));
+      if (hasUncommittedChanges()) {
+         return containsKeyUncommitted(key);
+      } else {
+         AtomicHashMap<K, V> map = getDeltaMapForRead();
+         return map != null ? map.containsKey(key) : false;
+      }
    }
 
    private boolean containsKeyUncommitted(Object key) {
@@ -181,8 +198,12 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public boolean containsValue(Object value) {
-      AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return containsValueUncommitted(value) || (map != null && map.containsValue(value));
+      if (hasUncommittedChanges()) {
+         return containsValueUncommitted(value);
+      } else {
+         AtomicHashMap<K, V> map = getDeltaMapForRead();
+         return map != null ? map.containsValue(value) : false;
+      }
    }
 
    private boolean containsValueUncommitted(Object value) {
