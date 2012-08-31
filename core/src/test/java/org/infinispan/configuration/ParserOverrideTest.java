@@ -33,7 +33,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "configuration.ParserOverrideTest")
 public class ParserOverrideTest {
 
    /**
@@ -177,7 +177,7 @@ public class ParserOverrideTest {
             "   </default>\n" +
             "   <namedCache name=\"" + cacheName + "\">\n" +
             "      <clustering mode=\"dist\">\n" +
-            "         <hash numOwners=\"3\" numVirtualNodes=\"51\"/>\n" +
+            "         <hash numOwners=\"3\" numSegments=\"51\"/>\n" +
             "         <l1 enabled=\"true\" lifespan=\"12345\"/>\n" +
             "         <async useReplQueue=\"false\"/>\n" +
             "      </clustering>\n" +
@@ -196,7 +196,7 @@ public class ParserOverrideTest {
             // These are all overridden values
             Assert.assertEquals(c.clustering().cacheMode(), CacheMode.DIST_ASYNC);
             Assert.assertEquals(c.clustering().hash().numOwners(), 3);
-            Assert.assertEquals(c.clustering().hash().numVirtualNodes(), 51);
+            Assert.assertEquals(c.clustering().hash().numSegments(), 51);
             Assert.assertEquals(c.clustering().l1().enabled(), true);
             Assert.assertEquals(c.clustering().l1().lifespan(), 12345);
             Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
