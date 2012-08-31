@@ -100,18 +100,10 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
-      StreamingMarshaller marshaller;
-      //todo [anistor] remove following hack once CacheViewControlCommand is removed
-      if (registry == null) {
-         // TODO This is a hack to support global commands CacheViewControlCommand
-         // but they should not be CacheRpcCommands at all
-         marshaller = globalMarshaller;
-      } else {
-         marshaller = registry.getCacheMarshaller();
-      }
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
+      StreamingMarshaller marshaller = registry.getCacheMarshaller();
       ExposedByteArrayOutputStream os = marshallParameters(command, marshaller);
       UnsignedNumeric.writeUnsignedInt(output, os.size());
       // Do not rely on the raw buffer's length which is likely to be much longer!
@@ -143,7 +135,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       if (registry == null) {
          // Even though the command is directed at a cache, it could happen
          // that the cache is not yet started, so fallback on global marshaller.
-         marshaller = globalMarshaller;
+         marshaller = globalMarshaller;  // TODO [anistor] in this case it is better to return null rather than continue deserializing
       } else {
          marshaller = registry.getCacheMarshaller();
       }
