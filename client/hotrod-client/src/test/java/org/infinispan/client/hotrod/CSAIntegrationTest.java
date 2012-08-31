@@ -144,6 +144,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       super.destroy();
    }
 
+   @Test (enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
    public void testHashInfoRetrieved() throws InterruptedException {
       assertEquals(3, tcpConnectionFactory.getServers().size());
       for (int i = 0; i < 10; i++) {

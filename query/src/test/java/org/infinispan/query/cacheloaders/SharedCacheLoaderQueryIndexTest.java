@@ -35,7 +35,8 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "query.cacheloaders.SharedCacheLoaderQueryIndexTest")
+@Test(groups = "functional", testName = "query.cacheloaders.SharedCacheLoaderQueryIndexTest", enabled = false,
+      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
    protected void configureCache(ConfigurationBuilder builder) {

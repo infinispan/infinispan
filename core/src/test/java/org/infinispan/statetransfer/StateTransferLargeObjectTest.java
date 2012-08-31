@@ -44,7 +44,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest")
+@Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);

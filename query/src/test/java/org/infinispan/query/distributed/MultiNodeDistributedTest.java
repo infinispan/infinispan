@@ -48,7 +48,7 @@ import org.testng.annotations.Test;
  * 
  * @author Sanne Grinovero
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")
+@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
    private List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);

@@ -43,7 +43,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea Markus
  */
-@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest")
+@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest {
 
    @Override

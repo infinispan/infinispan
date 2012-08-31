@@ -35,7 +35,8 @@ import org.testng.annotations.Test
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = Array("functional"), testName = "server.hotrod.HotRod11DistributionTest")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRod11DistributionTest" enabled = false,
+      description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 class HotRod11DistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "distributedVersion11"

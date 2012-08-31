@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
  *
  * @author Carsten Lohmann
  */
-@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional")
+@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RehashAfterJoinWithPreloadTest.class);
