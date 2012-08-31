@@ -80,7 +80,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
          queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
-         cr.registerComponent(queryInterceptor, QueryInterceptor.class);
+         // Interceptor registration not needed, core configuration handling
+         // already does it for all custom interceptors
 
          ConfigurationBuilder builder = new ConfigurationBuilder();
          InterceptorConfigurationBuilder interceptorBuilder =

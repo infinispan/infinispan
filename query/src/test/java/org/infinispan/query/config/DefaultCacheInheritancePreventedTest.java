@@ -24,6 +24,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.test.TestingUtil;
@@ -44,11 +45,11 @@ public class DefaultCacheInheritancePreventedTest {
    public void verifyIndexDisabledCorrectly() throws IOException {
       DefaultCacheManager cacheManager = new DefaultCacheManager("configuration-parsing-test-enbledInDefault.xml");
       try {
-         assertIndexingEnabled(cacheManager.getCache(), true);
-         assertIndexingEnabled(cacheManager.getCache("simple"), true);
-         assertIndexingEnabled(cacheManager.getCache("not-searchable"), false);
-         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true);
-         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true);
+         assertIndexingEnabled(cacheManager.getCache(), true, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("simple"), true, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("not-searchable"), false, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
       }
       finally {
          TestingUtil.killCacheManagers(cacheManager);
@@ -59,10 +60,10 @@ public class DefaultCacheInheritancePreventedTest {
    public void verifyIndexEnabledCorrectly() throws IOException {
       DefaultCacheManager cacheManager = new DefaultCacheManager("configuration-parsing-test.xml");
       try {
-         assertIndexingEnabled(cacheManager.getCache(), false);
-         assertIndexingEnabled(cacheManager.getCache("simple"), false);
-         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true);
-         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true);
+         assertIndexingEnabled(cacheManager.getCache(), false, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("simple"), false, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true, QueryInterceptor.class);
+         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
       }
       finally {
          TestingUtil.killCacheManagers(cacheManager);
@@ -74,7 +75,7 @@ public class DefaultCacheInheritancePreventedTest {
     * @param expected true if you expect indexing to be enabled
     * @param cache the cache to extract indexing from
     */
-   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected) {
+   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected, Class<? extends QueryInterceptor> expectedQueryInterceptorType) {
       SearchManager searchManager = null;
       try {
          searchManager = Search.getSearchManager(cache);
@@ -90,7 +91,7 @@ public class DefaultCacheInheritancePreventedTest {
       //verify as well that the indexing interceptor is (not) there:
       QueryInterceptor component = null;
       try {
-         component = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+         component = ComponentRegistryUtils.getComponent(cache, expectedQueryInterceptorType);
       }
       catch (IllegalArgumentException e) {
       }

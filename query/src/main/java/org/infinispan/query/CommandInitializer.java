@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * Initializes query module remote commands
@@ -46,7 +47,7 @@ public final class CommandInitializer implements ModuleCommandInitializer {
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchFactory searchFactory = searchManager.getSearchFactory();
       searchFactoryImplementor = (SearchFactoryImplementor) searchFactory;
-      queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
+      queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
    }
 
    @Override
