@@ -29,6 +29,7 @@ import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.impl.CacheQueryImpl;
@@ -54,7 +55,7 @@ class SearchManagerImpl implements SearchManager {
       }
       this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchFactoryIntegrator.class);
-      this.queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+      this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
    }
 
    /* (non-Javadoc)

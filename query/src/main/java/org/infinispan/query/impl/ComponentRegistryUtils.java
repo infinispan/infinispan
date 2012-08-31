@@ -24,9 +24,14 @@ package org.infinispan.query.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.query.backend.LocalQueryInterceptor;
+import org.infinispan.query.backend.QueryInterceptor;
 
 /**
+ * Component registry utilities
+ *
  * @author Marko Luksa
+ * @author Galder Zamarreño
  */
 public class ComponentRegistryUtils {
 
@@ -41,4 +46,11 @@ public class ComponentRegistryUtils {
       }
       return component;
    }
+
+   public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
+      Class<? extends QueryInterceptor> queryType = cache.getCacheConfiguration().indexing().indexLocalOnly()
+            ? LocalQueryInterceptor.class : QueryInterceptor.class;
+      return getComponent(cache, queryType);
+   }
+
 }

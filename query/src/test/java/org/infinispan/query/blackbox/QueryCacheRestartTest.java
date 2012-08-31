@@ -19,33 +19,45 @@
 
 package org.infinispan.query.blackbox;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
 /**
- * // TODO: Document this
+ * Tests whether query caches can restart without problems.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.2
  */
 @Test(testName = "query.blackbox.QueryCacheRestartTest", groups = "functional")
-public class QueryCacheRestartTest extends SingleCacheManagerTest {
-
-   @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
-      builder.indexing().enable().indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(builder.build());
-   }
+public class QueryCacheRestartTest extends AbstractInfinispanTest {
 
    public void testQueryCacheRestart() {
-      cache.stop();
-      cache.start();
+      queryCacheRestart(false);
+   }
+
+   public void testLocalQueryCacheRestart() {
+      queryCacheRestart(true);
+   }
+
+   private void queryCacheRestart(boolean localOnly) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable().indexLocalOnly(localOnly)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder.build())) {
+         @Override
+         public void call() {
+            Cache<Object,Object> cache = cm.getCache();
+            cache.stop();
+            cache.start();
+         }
+      });
    }
 
 }
