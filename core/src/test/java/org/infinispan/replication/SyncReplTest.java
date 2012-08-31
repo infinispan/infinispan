@@ -33,9 +33,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -203,6 +201,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          // check that the replication call was sync
          cache1.put("k", "v");
+         verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
+                                              (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
+                                              anyBoolean(), (ResponseFilter) anyObject());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
@@ -217,7 +218,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
                            anyBoolean(), (ResponseFilter) anyObject())).thenReturn(emptyResponses);
 
          asyncCache1.put("k", "v");
-         // check that the replication call was async
+         verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
+                                               (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
+                                               anyBoolean(), (ResponseFilter) anyObject());
       } finally {
          // replace original transport
          if (rpcManager != null)
