@@ -289,7 +289,7 @@ def release():
   else:
     uploader = Uploader()
   
-  git = Git(branch, version.upper())
+  git = Git(branch, version)
   if not git.is_upstream_clone():
     proceed = input_with_default('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END), 'N')
     if not proceed.upper().startswith('Y'):
