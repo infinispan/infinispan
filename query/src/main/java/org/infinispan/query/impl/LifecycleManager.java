@@ -67,15 +67,14 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     * Registers the Search interceptor in the cache before it gets started
     */
    @Override
-   public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
-      Configuration cfg = cr.getComponent(Configuration.class);
+   public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       if (cfg.indexing().enabled()) {
          log.registeringQueryInterceptor();
          SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
       }
    }
-   
+
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, SearchFactoryIntegrator searchFactory) {
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
