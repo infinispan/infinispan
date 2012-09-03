@@ -1276,6 +1276,10 @@
                      <name>java.net.preferIPv4Stack</name>
                      <value>true</value>
                   </property>
+                  <property>
+                     <name>infinispan.unsafe.allow_jdk8_chm</name>
+                     <value>true</value>
+                  </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
                <properties>
