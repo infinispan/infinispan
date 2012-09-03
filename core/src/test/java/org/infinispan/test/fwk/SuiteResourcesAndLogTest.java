@@ -54,6 +54,7 @@ public class SuiteResourcesAndLogTest {
       log("sun.cpu.endian = " + System.getProperty("sun.cpu.endian"));
       log("protocol.stack = " + System.getProperty("protocol.stack"));
       log("infinispan.test.jgroups.protocol = " + System.getProperty("infinispan.test.jgroups.protocol"));
+      log("infinispan.unsafe.allow_jdk8_chm = " + System.getProperty("infinispan.unsafe.allow_jdk8_chm"));
       String preferIpV4 = System.getProperty("java.net.preferIPv4Stack");
       log("java.net.preferIPv4Stack = " + preferIpV4);
       log("java.net.preferIPv6Stack = " + System.getProperty("java.net.preferIPv6Stack"));
