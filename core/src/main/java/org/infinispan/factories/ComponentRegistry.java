@@ -171,6 +171,11 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
 
       // Cache starting notification happens earlier in the call stack trace
 
+      // But do call cache starting if terminated, this is needed for user invocations of #start()
+      if (state == ComponentStatus.TERMINATED) {
+          notifyCacheStarting(getComponent(Configuration.class));
+      }
+
       super.start();
 
       if (needToNotify && state == ComponentStatus.RUNNING) {
