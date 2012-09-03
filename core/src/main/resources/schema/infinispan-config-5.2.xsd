@@ -28,7 +28,7 @@
     </xs:annotation>
     <xs:complexType>
         <xs:sequence>
-        <xs:element name="global">
+        <xs:element name="global" minOccurs="0">
           <xs:complexType>
             <xs:annotation>
               <xs:documentation>
