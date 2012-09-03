@@ -19,8 +19,18 @@
 
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
+import junit.framework.Assert;
+
+import org.apache.lucene.search.Query;
+import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
+import org.infinispan.query.indexedembedded.Book;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,6 +42,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * Tests whether query caches can restart without problems.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 5.2
  */
 @Test(testName = "query.blackbox.QueryCacheRestartTest", groups = "functional")
@@ -54,10 +65,33 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<Object,Object> cache = cm.getCache();
+            addABook(cache);
+            assertFindBook(cache);
             cache.stop();
             cache.start();
+            //stopped cache lost all data, and in memory index is lost: re-store both
+            //(not needed with permanent indexes and caches using a cachestore)
+            addABook(cache);
+            assertFindBook(cache);
          }
+
+         protected void addABook(Cache<Object, Object> cache) {
+            cache.put("1",
+                  new Book("Infinispan Data Grid Platform",
+                           "Francesco Marchioni and Manik Surtani",
+                           "Packt Publishing"));
+         }
+
       });
+   }
+
+   private static void assertFindBook(Cache<Object, Object> cache) {
+      SearchManager searchManager = Search.getSearchManager(cache);
+      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
+      Query luceneQuery = queryBuilder.keyword().onField("title").matching("infinispan").createQuery();
+      CacheQuery cacheQuery = searchManager.getQuery(luceneQuery);
+      List<Object> list = cacheQuery.list();
+      Assert.assertEquals(1, list.size());
    }
 
 }
