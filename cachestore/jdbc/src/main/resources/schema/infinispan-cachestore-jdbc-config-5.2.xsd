@@ -213,62 +213,6 @@
     </xs:attribute>
   </xs:complexType>
 
-  <xs:complexType name="table">
-    <xs:sequence>
-      <xs:element name="idColumn" type="tns:idColumn" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>Defines the column in which to store the cache key or bucket id.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="dataColumn" type="tns:dataColumn" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>Defines the column in which to store the cache entry or bucket.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="timestampColumn" type="tns:timestampColumn" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>Defines the column in which to store the timestamp of the cache entry or bucket.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
-    </xs:sequence>
-    <xs:attribute name="fetchSize" type="xs:int" default="100">
-      <xs:annotation>
-        <xs:documentation>The fetch size used when querying from this table. Used to avoid heap memory exhaustion when query is large.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="batchSize" type="xs:int" default="100">
-      <xs:annotation>
-        <xs:documentation>The statement batch size used when modifying this table.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="idColumn">
-    <xs:attribute name="name" type="xs:string" default="id">
-      <xs:annotation>
-        <xs:documentation>The name of the column used to store the cache key or bucket id.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="type" type="xs:string" default="VARCHAR">
-      <xs:annotation>
-        <xs:documentation>The type of the column used to store the cache key or bucket id.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="dataColumn">
-    <xs:attribute name="name" type="xs:string" default="datum">
-      <xs:annotation>
-        <xs:documentation>The name of the column used to store the cache entry or bucket.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="type" type="xs:string" default="BINARY">
-      <xs:annotation>
-        <xs:documentation>The type of the column used to store the cache entry or bucket.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
   <xs:complexType name="timestampColumn">
     <xs:attribute name="name" type="xs:string" default="version">
       <xs:annotation>
