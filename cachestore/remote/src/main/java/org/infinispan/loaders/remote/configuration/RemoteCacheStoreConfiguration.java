@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
@@ -141,11 +142,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
    public RemoteCacheStoreConfig adapt() {
       RemoteCacheStoreConfig config = new RemoteCacheStoreConfig();
       // StoreConfiguration
-      config.fetchPersistentState(fetchPersistentState());
-      config.ignoreModifications(ignoreModifications());
-      config.purgeOnStartup(purgeOnStartup());
-      config.purgeSynchronously(purgeSynchronously());
-      config.purgerThreads(purgerThreads());
+      LegacyConfigurationAdaptor.adapt(this, config);
 
       // RemoteCacheStoreConfiguration
       config.setRemoteCacheName(remoteCacheName);
