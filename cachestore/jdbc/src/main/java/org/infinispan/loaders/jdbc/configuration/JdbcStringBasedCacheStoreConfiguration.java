@@ -20,6 +20,7 @@ package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
@@ -56,15 +57,7 @@ public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheSto
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig();
 
       // StoreConfiguration
-      config.fetchPersistentState(fetchPersistentState());
-      config.ignoreModifications(ignoreModifications());
-      config.purgeOnStartup(purgeOnStartup());
-      config.purgeSynchronously(purgeSynchronously());
-      config.purgerThreads(purgerThreads());
-
-      // LockSupportCacheStoreConfiguration
-      config.setLockAcquistionTimeout(lockAcquistionTimeout());
-      config.setLockConcurrencyLevel(lockConcurrencyLevel());
+      LegacyConfigurationAdaptor.adapt(this, config);
 
       // AbstractJdbcCacheStoreConfiguration
       config.setConnectionFactoryClass(connectionFactoryClass());
