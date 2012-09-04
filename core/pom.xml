@@ -1,266 +1,276 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
-  ~ contributors as indicated by the @author tags. All rights reserved.
-  ~ See the copyright.txt in the distribution for a full listing of
-  ~ individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-   <modelVersion>4.0.0</modelVersion>
+<!-- ~ JBoss, Home of Professional Open Source ~ Copyright 2012 Red Hat Inc. 
+  and/or its affiliates and other ~ contributors as indicated by the @author 
+  tags. All rights reserved. ~ See the copyright.txt in the distribution for 
+  a full listing of ~ individual contributors. ~ ~ This is free software; you 
+  can redistribute it and/or modify it ~ under the terms of the GNU Lesser 
+  General Public License as ~ published by the Free Software Foundation; either 
+  version 2.1 of ~ the License, or (at your option) any later version. ~ ~ 
+  This software is distributed in the hope that it will be useful, ~ but WITHOUT 
+  ANY WARRANTY; without even the implied warranty of ~ MERCHANTABILITY or FITNESS 
+  FOR A PARTICULAR PURPOSE. See the GNU ~ Lesser General Public License for 
+  more details. ~ ~ You should have received a copy of the GNU Lesser General 
+  Public ~ License along with this software; if not, write to the Free ~ Software 
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA ~ 02110-1301 USA, 
+  or see the FSF site: http://www.fsf.org. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
-      <version>5.2.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
-   </parent>
+  <parent>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-parent</artifactId>
+    <version>5.2.0-BNI</version>
+    <relativePath>../parent/pom.xml</relativePath>
+  </parent>
 
-   <artifactId>infinispan-core</artifactId>
-   <packaging>bundle</packaging>
-   <name>Infinispan Core</name>
-   <description>Infinispan core module</description>
+  <artifactId>infinispan-core</artifactId>
+  <packaging>bundle</packaging>
+  <name>Infinispan Core</name>
+  <description>Infinispan core module</description>
 
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
-   <dependencies>
+  <properties>
+    <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+  </properties>
+  <dependencies>
 
-      <dependency>
-         <groupId>org.jgroups</groupId>
-         <artifactId>jgroups</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.jgroups</groupId>
+      <artifactId>jgroups</artifactId>
+    </dependency>
 
-      <!--
-         For the JTA 1.1 API; consuming projects can safely
-         exclude this and replace with any valid source of this API, such as a Java EE app server. 
-         -->
-      <dependency>
-         <groupId>org.jboss.spec.javax.transaction</groupId>
-         <artifactId>jboss-transaction-api_1.1_spec</artifactId>
-      </dependency>
+    <!-- For the JTA 1.1 API; consuming projects can safely exclude this and 
+      replace with any valid source of this API, such as a Java EE app server. -->
+    <dependency>
+      <groupId>org.jboss.spec.javax.transaction</groupId>
+      <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.jboss.marshalling</groupId>
-         <artifactId>jboss-marshalling-river</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss.marshalling</groupId>
+      <artifactId>jboss-marshalling-river</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.jboss.marshalling</groupId>
-         <artifactId>jboss-marshalling</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss.marshalling</groupId>
+      <artifactId>jboss-marshalling</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging</artifactId>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.jboss</groupId>
-        <artifactId>staxmapper</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.osgi</groupId>
-         <artifactId>org.osgi.core</artifactId>
-         <optional>true</optional>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss</groupId>
+      <artifactId>staxmapper</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.jboss.naming</groupId>
-         <artifactId>jnp-client</artifactId>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.jboss.logging</groupId>
-               <artifactId>jboss-logging-spi</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-      <dependency>
-         <groupId>org.jboss.naming</groupId>
-         <artifactId>jnpserver</artifactId>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.jboss.logging</groupId>
-               <artifactId>jboss-logging-spi</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss.naming</groupId>
+      <artifactId>jnp-client</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-      <dependency>
-         <groupId>org.apache.commons</groupId>
-         <artifactId>commons-math</artifactId>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>org.jboss.naming</groupId>
+      <artifactId>jnpserver</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-      <dependency>
-         <groupId>org.javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <scope>test</scope>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.codehaus.woodstox</groupId>
-         <artifactId>woodstox-core-asl</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>javax.xml.stream</groupId>
-               <artifactId>stax-api</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-     
-      <dependency>
-         <groupId>org.codehaus.woodstox</groupId>
-         <artifactId>stax2-api</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>javax.xml.stream</groupId>
-               <artifactId>stax-api</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-   </dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-   <build>
-      <pluginManagement>
-         <plugins>
-            <plugin>
-               <!-- This plugin's configuration is used in m2e only. -->
-               <groupId>org.eclipse.m2e</groupId>
-               <artifactId>lifecycle-mapping</artifactId>
-               <version>1.0.0</version>
-               <configuration>
-                  <lifecycleMappingMetadata>
-                     <pluginExecutions>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.codehaus.mojo</groupId>
-                              <artifactId>exec-maven-plugin</artifactId>
-                              <versionRange>[1.0.2,)</versionRange>
-                              <goals>
-                                 <goal>java</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                              <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                            <pluginExecutionFilter>
-                                <groupId>
-                                    org.apache.maven.plugins
-                                </groupId>
-                                <artifactId>
-                                    maven-antrun-plugin
-                                </artifactId>
-                                <versionRange>[1.3,)</versionRange>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </pluginExecutionFilter>
-                            <action>
-                                <ignore></ignore>
-                            </action>
-                        </pluginExecution>
-                     </pluginExecutions>
-                  </lifecycleMappingMetadata>
-               </configuration>
-            </plugin>
-         </plugins>
-      </pluginManagement>
-   </build>
-   
-   <profiles>
-      <profile>
-         <id>generate-schema-doc</id>
-         <dependencies>
-            <dependency>
-               <groupId>xsddoc</groupId>
-               <artifactId>xsddoc</artifactId>
-               <version>1.0</version>
-            </dependency>
-            <dependency>
-               <groupId>xalan</groupId>
-               <artifactId>xalan</artifactId>
-               <version>2.7.0</version>
-            </dependency>
-            <dependency>
-               <groupId>xerces</groupId>
-               <artifactId>xercesImpl</artifactId>
-               <version>2.4.0</version>
-            </dependency>
-            
-         </dependencies>
-         <build>
-            <plugins>
-               <!--
-        Generates XML schema for Infinispan configuration files
-        Run with mvn exec:java
-        For more details see:
-        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
-         <plugin>
+    <dependency>
+      <groupId>org.javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.woodstox</groupId>
+      <artifactId>woodstox-core-asl</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.xml.stream</groupId>
+          <artifactId>stax-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.woodstox</groupId>
+      <artifactId>stax2-api</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.xml.stream</groupId>
+          <artifactId>stax-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <relocations>
+                <relocation>
+                  <pattern>org.jboss.logging</pattern>
+                  <shadedPattern>org.shaded.logging</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <!-- This plugin's configuration is used in m2e only. -->
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <versionRange>[1.0.2,)</versionRange>
+                    <goals>
+                      <goal>java</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>
+                      org.apache.maven.plugins
+                    </groupId>
+                    <artifactId>
+                      maven-antrun-plugin
+                    </artifactId>
+                    <versionRange>[1.3,)</versionRange>
+                    <goals>
+                      <goal>run</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>generate-schema-doc</id>
+      <dependencies>
+        <dependency>
+          <groupId>xsddoc</groupId>
+          <artifactId>xsddoc</artifactId>
+          <version>1.0</version>
+        </dependency>
+        <dependency>
+          <groupId>xalan</groupId>
+          <artifactId>xalan</artifactId>
+          <version>2.7.0</version>
+        </dependency>
+        <dependency>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+          <version>2.4.0</version>
+        </dependency>
+
+      </dependencies>
+      <build>
+        <plugins>
+          <!-- Generates XML schema for Infinispan configuration files Run with 
+            mvn exec:java For more details see: http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                     <tasks>
-                        <mkdir dir="${project.build.directory}/xsd_doc" />
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
+              <execution>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <tasks>
+                    <mkdir dir="${project.build.directory}/xsd_doc" />
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
             </executions>
-         </plugin>
-         <plugin>
+          </plugin>
+          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
-               <execution>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-               </execution>
+              <execution>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
             </executions>
             <configuration>
-               <mainClass>net.sf.xframe.xsddoc.Main</mainClass>
-               <arguments>
-                  <argument>-q</argument>
-                  <argument>-s</argument>
-                  <argument>-t</argument>
-                  <argument>"XML Schema for Infinispan"</argument>
-                  <argument>-o</argument>
-                  <argument>${project.build.directory}/xsd_doc</argument>
-                  <argument>${basedir}/src/main/resources/schema/infinispan-config-5.2.xsd</argument>
-               </arguments>
+              <mainClass>net.sf.xframe.xsddoc.Main</mainClass>
+              <arguments>
+                <argument>-q</argument>
+                <argument>-s</argument>
+                <argument>-t</argument>
+                <argument>"XML Schema for Infinispan"</argument>
+                <argument>-o</argument>
+                <argument>${project.build.directory}/xsd_doc</argument>
+                <argument>${basedir}/src/main/resources/schema/infinispan-config-5.2.xsd</argument>
+              </arguments>
             </configuration>
-         </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
