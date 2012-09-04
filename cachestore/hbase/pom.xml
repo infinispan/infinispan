@@ -41,15 +41,19 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.hadoop</groupId>
+         <artifactId>hadoop-core</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-simple</artifactId>
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.apache.hbase</groupId>
-         <artifactId>hbase</artifactId>
-      </dependency>
       <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-io</artifactId>
