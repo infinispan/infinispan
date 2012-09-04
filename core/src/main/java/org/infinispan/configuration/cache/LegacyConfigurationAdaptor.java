@@ -20,7 +20,6 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
@@ -38,6 +37,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
@@ -244,18 +244,7 @@ public class LegacyConfigurationAdaptor {
          }
          CacheStoreConfig csc = (CacheStoreConfig) clc;
          StoreConfiguration store = (StoreConfiguration) loader;
-         csc.fetchPersistentState(store.fetchPersistentState());
-         csc.ignoreModifications(store.ignoreModifications());
-         csc.purgeOnStartup(store.purgeOnStartup());
-         csc.setPurgeSynchronously(store.purgeSynchronously());
-         csc.getAsyncStoreConfig().setEnabled(store.async().enabled());
-         csc.getAsyncStoreConfig().flushLockTimeout(store.async().flushLockTimeout());
-         csc.getAsyncStoreConfig().modificationQueueSize(store.async().modificationQueueSize());
-         csc.getAsyncStoreConfig().shutdownTimeout(store.async().shutdownTimeout());
-         csc.getAsyncStoreConfig().threadPoolSize(store.async().threadPoolSize());
-         csc.getSingletonStoreConfig().enabled(store.singletonStore().enabled());
-         csc.getSingletonStoreConfig().pushStateTimeout(store.singletonStore().pushStateTimeout());
-         csc.getSingletonStoreConfig().pushStateWhenCoordinator(store.singletonStore().pushStateWhenCoordinator());
+         adapt(store, csc);
       } else if (loader instanceof LegacyLoaderConfiguration) {
          CacheLoader cacheLoader = ((LegacyLoaderConfiguration) loader).cacheLoader();
          clc = getLoaderConfig(loader, cacheLoader);
@@ -543,6 +532,30 @@ public class LegacyConfigurationAdaptor {
          storeBuilder.singletonStore().enabled(csc.getSingletonStoreConfig().isSingletonStoreEnabled());
          storeBuilder.singletonStore().pushStateTimeout(csc.getSingletonStoreConfig().getPushStateTimeout());
          storeBuilder.singletonStore().pushStateWhenCoordinator(csc.getSingletonStoreConfig().isPushStateWhenCoordinator());
+      }
+   }
+
+   public static void adapt(StoreConfiguration config, CacheStoreConfig legacy) {
+      legacy.fetchPersistentState(config.fetchPersistentState());
+      legacy.ignoreModifications(config.ignoreModifications());
+      legacy.purgeOnStartup(config.purgeOnStartup());
+      legacy.purgeSynchronously(config.purgeSynchronously());
+      legacy.purgerThreads(config.purgerThreads());
+
+      legacy.getAsyncStoreConfig().setEnabled(config.async().enabled());
+      legacy.getAsyncStoreConfig().flushLockTimeout(config.async().flushLockTimeout());
+      legacy.getAsyncStoreConfig().modificationQueueSize(config.async().modificationQueueSize());
+      legacy.getAsyncStoreConfig().shutdownTimeout(config.async().shutdownTimeout());
+      legacy.getAsyncStoreConfig().threadPoolSize(config.async().threadPoolSize());
+      legacy.getSingletonStoreConfig().enabled(config.singletonStore().enabled());
+      legacy.getSingletonStoreConfig().pushStateTimeout(config.singletonStore().pushStateTimeout());
+      legacy.getSingletonStoreConfig().pushStateWhenCoordinator(config.singletonStore().pushStateWhenCoordinator());
+
+      if (config instanceof LockSupportCacheStoreConfiguration) {
+         LockSupportCacheStoreConfiguration lockConfig = (LockSupportCacheStoreConfiguration) config;
+         LockSupportCacheStoreConfig lockLegacy = (LockSupportCacheStoreConfig) legacy;
+         lockLegacy.setLockAcquistionTimeout(lockConfig.lockAcquistionTimeout());
+         lockLegacy.setLockConcurrencyLevel(lockConfig.lockConcurrencyLevel());
       }
    }
 
