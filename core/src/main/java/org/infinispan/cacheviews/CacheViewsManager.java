@@ -69,11 +69,11 @@ public interface CacheViewsManager {
 
    void handleRequestLeave(Address sender, String cacheName);
 
-   void handlePrepareView(String cacheName, CacheView pendingView, CacheView committedView) throws Exception;
+   void handlePrepareView(Address sender, String cacheName, CacheView pendingView, CacheView committedView) throws Exception;
 
-   void handleCommitView(String cacheName, int viewId);
+   void handleCommitView(Address sender, String cacheName, int viewId);
 
-   void handleRollbackView(String cacheName, int newViewId, int committedViewId);
+   void handleRollbackView(Address sender, String cacheName, int newViewId, int committedViewId);
 
    /**
     * @return The last prepared view id for each cache that's running on this node.
