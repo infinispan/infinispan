@@ -170,7 +170,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       cacheManagerNotifier.removeListener(listener);
       running = false;
       viewTriggerThread.wakeUp();
-      cacheViewInstallerExecutor.shutdown();
+      cacheViewInstallerExecutor.shutdownNow();
       try {
          viewTriggerThread.join(timeout);
          if (viewTriggerThread.isAlive()) {
@@ -251,15 +251,16 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
          Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
          if (cacheViewInfo.getPendingView().containsAny(leavers)) {
-            log.debugf("Cannot commit cache view %s, some nodes already left the cluster: %s",
-                  cacheViewInfo.getPendingView(), leavers);
+            log.debugf("Cannot commit cache %s view %s, some nodes already left the cluster: %s",
+                  cacheName, cacheViewInfo.getPendingView(), leavers);
             // will still run the rollback
             return false;
          }
 
          success = true;
       } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
+         log.debugf("Cache %s view %s installation was interrupted because the coordinator is shutting down",
+               cacheName, newView);
       } catch (Throwable t) {
          log.cacheViewPrepareFailure(t, newView, cacheName, cacheViewInfo.getCommittedView());
       } finally {
