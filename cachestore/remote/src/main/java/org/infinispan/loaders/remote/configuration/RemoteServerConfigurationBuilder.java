@@ -18,9 +18,7 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
-import org.infinispan.configuration.Builder;
-
-public class RemoteServerConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder implements Builder<RemoteServerConfiguration> {
+public class RemoteServerConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<RemoteServerConfiguration> {
    private String host;
    private int port = 11222;
 

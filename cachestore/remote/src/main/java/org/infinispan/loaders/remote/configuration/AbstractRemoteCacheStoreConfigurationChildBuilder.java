@@ -18,16 +18,21 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
+import org.infinispan.marshall.Marshaller;
+
 /**
  * AbstractRemoteCacheStoreConfigurationChildBuilder.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class AbstractRemoteCacheStoreConfigurationChildBuilder implements RemoteCacheStoreConfigurationChildBuilder {
+public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<T> extends AbstractStoreConfigurationChildBuilder<T> implements RemoteCacheStoreConfigurationChildBuilder {
    private final RemoteCacheStoreConfigurationBuilder builder;
 
    protected AbstractRemoteCacheStoreConfigurationChildBuilder(RemoteCacheStoreConfigurationBuilder builder) {
+      super(builder);
       this.builder = builder;
    }
 
@@ -72,6 +77,11 @@ public class AbstractRemoteCacheStoreConfigurationChildBuilder implements Remote
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
+      return builder.marshaller(marshaller);
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
       return builder.pingOnStartup(pingOnStartup);
    }
@@ -98,6 +108,11 @@ public class AbstractRemoteCacheStoreConfigurationChildBuilder implements Remote
 
    @Override
    public RemoteCacheStoreConfigurationBuilder transportFactory(String transportFactory) {
+      return builder.transportFactory(transportFactory);
+   }
+
+   @Override
+   public RemoteCacheStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
       return builder.transportFactory(transportFactory);
    }
 

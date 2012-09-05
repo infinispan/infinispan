@@ -35,6 +35,9 @@ public class JdbcBinaryCacheStoreConfigurationBuilder extends
       return this;
    }
 
+   /**
+    * Allows configuration of table-specific parameters such as column names and types
+    */
    public TableManipulationConfigurationBuilder table() {
       return table;
    }
