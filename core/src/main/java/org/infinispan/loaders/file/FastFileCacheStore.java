@@ -24,6 +24,7 @@ package org.infinispan.loaders.file;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 import org.infinispan.Cache;
@@ -50,24 +51,24 @@ import org.infinispan.marshall.StreamingMarshaller;
  * @author Karsten Blees
  */
 @CacheLoaderMetadata(configurationClass = FastFileCacheStoreConfig.class)
-public class FastFileCacheStore extends AbstractCacheStore implements
-	Externalizable
+public class FastFileCacheStore extends AbstractCacheStore
 {
 	private static final byte[] MAGIC = new byte[]
 	{ 'F', 'C', 'S', '1' };
 
-	// file header is MAGIC + long + int
-	private static final int HEADER_SIZE = MAGIC.length + 8 + 4;
+	private static final int KEYLEN_POS = 4;
+
+	private static final int KEY_POS = 4 + 4 + 4 + 8;
 
 	private FastFileCacheStoreConfig config;
 
-	private RandomAccessFile file;
+	private FileChannel file;
 
 	private Map<Object, FileEntry> entries;
 
 	private SortedSet<FileEntry> freeList;
 
-	private long filePos = HEADER_SIZE;
+	private long filePos = MAGIC.length;
 
 	/** {@inheritDoc} */
 	@Override
@@ -102,7 +103,7 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 					+ " does not exist and cannot be created!");
 
 			File f = new File(location, cache.getName() + ".dat");
-			file = new RandomAccessFile(f, "rw");
+			file = new RandomAccessFile(f, "rw").getChannel();
 
 			// initialize data structures
 			// only use LinkedHashMap (LRU) for entries when cache store is bounded
@@ -114,15 +115,15 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 			entries = Collections.synchronizedMap(entryMap);
 			freeList = Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
 
-			// read the index from file if enabled, otherwise reset file pointer
-			if (file.length() > HEADER_SIZE
-				&& Boolean.TRUE.equals(config.isFetchPersistentState()))
-				readIndex();
+			// check file format and read persistent state if enabled for the cache
+			byte[] header = new byte[MAGIC.length];
+			if (file.read(ByteBuffer.wrap(header), 0) == MAGIC.length
+				&& Arrays.equals(MAGIC, header)
+				&& cache.getCacheConfiguration().loaders().preload())
+				preload();
 			else
-				file.setLength(0);
-
-			// index is now in memory, invalidate index on disk
-			writeHeader(null);
+				// otherwise (unknown file format or no preload) just reset the file
+				clear();
 		}
 		catch (Exception e)
 		{
@@ -138,16 +139,12 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 		{
 			if (file != null)
 			{
-				// write in-memory index to the file if persistent caching is enabled
-				if (Boolean.TRUE.equals(config.isFetchPersistentState()))
-					writeIndex();
-
 				// reset state
 				file.close();
 				file = null;
 				entries = null;
 				freeList = null;
-				filePos = HEADER_SIZE;
+				filePos = MAGIC.length;
 			}
 		}
 		catch (Exception e)
@@ -158,76 +155,51 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 	}
 
 	/**
-	 * Read state of the index from the cache file if enabled.
-	 * 
-	 * @throws IOException
-	 * @throws ClassNotFoundException
+	 * Rebuilds the in-memory index from file.
 	 */
-	private void readIndex() throws IOException, ClassNotFoundException
+	private void preload() throws Exception
 	{
-		// read file header
-		ByteBuffer buf = ByteBuffer.allocate(HEADER_SIZE);
-		file.getChannel().read(buf);
-		buf.flip();
+		ByteBuffer buf = ByteBuffer.allocate(KEY_POS);
+		for (;;)
+		{
+			// read FileEntry fields from file (size, keyLen etc.)
+			buf.clear().limit(KEY_POS);
+			file.read(buf, filePos);
+			// return if end of file is reached
+			if (buf.remaining() > 0)
+				return;
+			buf.flip();
 
-		// don't read index if the file header / version doesn't match
-		byte[] magic = new byte[4];
-		buf.get(magic);
-		if (!Arrays.equals(MAGIC, magic))
-			return;
+			// initialize FileEntry from buffer
+			FileEntry fe = new FileEntry(filePos, buf.getInt());
+			fe.keyLen = buf.getInt();
+			fe.dataLen = buf.getInt();
+			fe.expiryTime = buf.getLong();
 
-		// get offset + length of index
-		FileEntry fe = new FileEntry();
-		fe.offset = buf.getLong();
-		if (fe.offset <= 0)
-			return;
+			// update file pointer
+			filePos += fe.size;
 
-		// read and deserialize index
-		fe.len = buf.getInt();
-		byte[] data = new byte[fe.len];
-		file.getChannel().read(ByteBuffer.wrap(data), fe.offset);
-		ObjectInput in = new ObjectInputStream(new ByteArrayInputStream(data));
-		readExternal(in);
-		in.close();
-	}
+			// check if the entry is used or free
+			if (fe.keyLen > 0)
+			{
+				// load the key from file
+				if (buf.capacity() < fe.keyLen)
+					buf = ByteBuffer.allocate(fe.keyLen);
 
-	/**
-	 * Writes the file header.
-	 * 
-	 * @param index optional file position and length of serialized index
-	 * @throws IOException
-	 */
-	private void writeHeader(FileEntry index) throws IOException
-	{
-		ByteBuffer buf = ByteBuffer.allocate(HEADER_SIZE);
-		buf.put(MAGIC);
-		buf.putLong(index == null ? 0 : index.offset);
-		buf.putInt(index == null ? 0 : index.len);
-		buf.flip();
-		file.getChannel().write(buf, 0);
-	}
+				buf.clear().limit(fe.keyLen);
+				file.read(buf, fe.offset + KEY_POS);
 
-	/**
-	 * Write the current state of the index to the cache file.
-	 * 
-	 * @throws IOException
-	 */
-	private void writeIndex() throws IOException
-	{
-		// serializes current state
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		writeExternal(oos);
-		oos.flush();
-		oos.close();
-		byte[] data = baos.toByteArray();
-
-		// store index in a free section of the file
-		FileEntry index = allocate(data.length);
-		file.getChannel().write(ByteBuffer.wrap(data), index.offset);
-
-		// store offset + length of the index in the header
-		writeHeader(index);
+				// deserialize key and add to entries map
+				Object key = getMarshaller().objectFromByteBuffer(buf.array(), 0,
+					fe.keyLen);
+				entries.put(key, fe);
+			}
+			else
+			{
+				// add to free list
+				freeList.add(fe);
+			}
+		}
 	}
 
 	/**
@@ -250,12 +222,10 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 	 */
 	private FileEntry allocate(int len)
 	{
-		FileEntry fe = new FileEntry();
-		fe.len = fe.size = len;
 		synchronized (freeList)
 		{
 			// lookup a free entry of sufficient size
-			SortedSet<FileEntry> candidates = freeList.tailSet(fe);
+			SortedSet<FileEntry> candidates = freeList.tailSet(new FileEntry(0, len));
 			for (Iterator<FileEntry> it = candidates.iterator(); it.hasNext();)
 			{
 				FileEntry free = it.next();
@@ -263,62 +233,82 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 				if (free.isLocked())
 					continue;
 
-				// found one, remove from freeList and initialize requested length (may
-				// be smaller than size)
+				// found one, remove from freeList
 				it.remove();
-				free.len = len;
 				return free;
 			}
 
 			// no appropriate free section available, append at end of file
-			fe.offset = filePos;
-			filePos += fe.size;
+			FileEntry fe = new FileEntry(filePos, len);
+			filePos += len;
+			return fe;
 		}
-		return fe;
 	}
+
+	private static final byte[] ZERO_INT =
+	{ 0, 0, 0, 0 };
 
 	/**
 	 * Frees the space of the specified file entry (for reuse by allocate).
 	 * 
 	 * @param fe FileEntry to free
 	 */
-	private void free(FileEntry fe)
+	private void free(FileEntry fe) throws IOException
 	{
 		if (fe != null)
+		{
+			// invalidate entry on disk (by setting keyLen field to 0)
+			file.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
 			freeList.add(fe);
+		}
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void store(InternalCacheEntry entry) throws CacheLoaderException
 	{
-		FileEntry fe = null;
 		try
 		{
 			// serialize cache value
+			byte[] key = getMarshaller().objectToByteBuffer(entry.getKey());
 			byte[] data = getMarshaller().objectToByteBuffer(
 				entry.toInternalCacheValue());
 
 			// allocate file entry and store in cache file
-			fe = allocate(data.length);
-			fe.expiryTime = entry.getExpiryTime();
-			file.getChannel().write(ByteBuffer.wrap(data), fe.offset);
+			int len = KEY_POS + key.length + data.length;
+			FileEntry fe = allocate(len);
+			try
+			{
+				fe.expiryTime = entry.getExpiryTime();
+				fe.keyLen = key.length;
+				fe.dataLen = data.length;
 
-			// add the new entry to in-memory index
-			fe = entries.put(entry.getKey(), fe);
+				ByteBuffer buf = ByteBuffer.allocate(len);
+				buf.putInt(fe.size);
+				buf.putInt(fe.keyLen);
+				buf.putInt(fe.dataLen);
+				buf.putLong(fe.expiryTime);
+				buf.put(key);
+				buf.put(data);
+				buf.flip();
+				file.write(buf, fe.offset);
 
-			// if we added an entry, check if we need to evict something
-			if (fe == null)
-				fe = evict();
+				// add the new entry to in-memory index
+				fe = entries.put(entry.getKey(), fe);
+
+				// if we added an entry, check if we need to evict something
+				if (fe == null)
+					fe = evict();
+			}
+			finally
+			{
+				// in case we replaced or evicted an entry, add to freeList
+				free(fe);
+			}
 		}
 		catch (Exception e)
 		{
 			throw new CacheLoaderException(e);
-		}
-		finally
-		{
-			// in case we replaced or evicted an entry, add to freeList
-			free(fe);
 		}
 	}
 
@@ -331,6 +321,7 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 	private FileEntry evict()
 	{
 		if (config.getMaxEntries() > 0)
+		{
 			synchronized (entries)
 			{
 				if (entries.size() > config.getMaxEntries())
@@ -341,6 +332,7 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 					return fe;
 				}
 			}
+		}
 		return null;
 	}
 
@@ -363,7 +355,11 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 					// clear in-memory state
 					entries.clear();
 					freeList.clear();
-					filePos = HEADER_SIZE;
+
+					// reset file
+					file.truncate(0);
+					file.write(ByteBuffer.wrap(MAGIC), 0);
+					filePos = MAGIC.length;
 				}
 			}
 		}
@@ -377,9 +373,16 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 	@Override
 	public boolean remove(Object key) throws CacheLoaderException
 	{
-		FileEntry fe = entries.remove(key);
-		free(fe);
-		return fe != null;
+		try
+		{
+			FileEntry fe = entries.remove(key);
+			free(fe);
+			return fe != null;
+		}
+		catch (Exception e)
+		{
+			throw new CacheLoaderException(e);
+		}
 	}
 
 	/** {@inheritDoc} */
@@ -389,12 +392,18 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 		try
 		{
 			final FileEntry fe;
+			final boolean expired;
 			synchronized (entries)
 			{
 				// lookup FileEntry of the key
 				fe = entries.get(key);
 				if (fe == null)
 					return null;
+
+				// if expired, remove the entry (within entries monitor)
+				expired = fe.isExpired(System.currentTimeMillis());
+				if (expired)
+					entries.remove(key);
 
 				// lock entry for reading before releasing entries monitor
 				fe.lock();
@@ -403,16 +412,16 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 			final byte[] data;
 			try
 			{
-				// check if entry is expired
-				if (fe.expiryTime > 0 && fe.expiryTime < System.currentTimeMillis())
+				// if expired, free the file entry (after releasing entries monitor)
+				if (expired)
 				{
 					free(fe);
 					return null;
 				}
 
 				// load serialized data from disk
-				data = new byte[fe.len];
-				file.getChannel().read(ByteBuffer.wrap(data), fe.offset);
+				data = new byte[fe.dataLen];
+				file.read(ByteBuffer.wrap(data), fe.offset + KEY_POS + fe.keyLen);
 			}
 			finally
 			{
@@ -482,64 +491,17 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 			for (Iterator<FileEntry> it = entries.values().iterator(); it.hasNext();)
 			{
 				FileEntry fe = it.next();
-				if (fe.expiryTime > 0 && fe.expiryTime < now)
+				if (fe.isExpired(now))
 				{
 					it.remove();
-					free(fe);
-				}
-			}
-		}
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException
-	{
-		synchronized (entries)
-		{
-			synchronized (freeList)
-			{
-				out.writeLong(filePos);
-				// write entries map
-				out.writeInt(entries.size());
-				for (Map.Entry<Object, FileEntry> me : entries.entrySet())
-				{
-					out.writeObject(me.getKey());
-					me.getValue().writeExternal(out);
-				}
-				// write free list
-				out.writeInt(freeList.size());
-				for (FileEntry fe : freeList)
-					fe.writeExternal(out);
-			}
-		}
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public void readExternal(ObjectInput in) throws IOException,
-		ClassNotFoundException
-	{
-		synchronized (entries)
-		{
-			synchronized (freeList)
-			{
-				filePos = in.readLong();
-				// read entries map
-				int sz = in.readInt();
-				for (int i = 0; i < sz; i++)
-				{
-					Object key = in.readObject();
-					FileEntry fe = new FileEntry();
-					fe.readExternal(in);
-					entries.put(key, fe);
-				}
-				// read free list
-				sz = in.readInt();
-				for (int i = 0; i < sz; i++)
-				{
-					FileEntry fe = new FileEntry();
-					fe.readExternal(in);
+					try
+					{
+						free(fe);
+					}
+					catch (Exception e)
+					{
+						throw new CacheLoaderException(e);
+					}
 				}
 			}
 		}
@@ -560,24 +522,55 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 	}
 
 	/**
-	 * Helper class to represent a section of the cache file.
+	 * Helper class to represent an entry in the cache file.
+	 * <p/>
+	 * The format of a FileEntry on disk is as follows:
+	 * <ul>
+	 * <li>4 bytes: {@link #size}</li>
+	 * <li>4 bytes: {@link #keyLen}, 0 if the block is unused</li>
+	 * <li>4 bytes: {@link #dataLen}</li>
+	 * <li>8 bytes: {@link #expiryTime}</li>
+	 * <li>{@link #keyLen} bytes: serialized key</li>
+	 * <li>{@link #dataLen} bytes: serialized data</li>
+	 * </ul>
 	 */
-	private static class FileEntry implements Comparable, Externalizable
+	private static class FileEntry implements Comparable
 	{
-		// file offset of this block (never changes, not final for readExternal)
-		private long offset;
+		/**
+		 * File offset of this block.
+		 */
+		private final long offset;
 
-		// total size of this block (never changes, not final for readExternal)
-		private int size;
+		/**
+		 * Total size of this block.
+		 */
+		private final int size;
 
-		// used size of this block
-		private int len;
+		/**
+		 * Size of serialized key.
+		 */
+		private int keyLen;
 
-		// number of current readers
-		private int readers = 0;
+		/**
+		 * Size of serialized data.
+		 */
+		private int dataLen;
 
-		// timestamp when the entry will expire (i.e. will be collected by purge)
+		/**
+		 * Time stamp when the entry will expire (i.e. will be collected by purge).
+		 */
 		private long expiryTime = -1;
+
+		/**
+		 * Number of current readers.
+		 */
+		private transient int readers = 0;
+
+		private FileEntry(long offset, int size)
+		{
+			this.offset = offset;
+			this.size = size;
+		}
 
 		private synchronized boolean isLocked()
 		{
@@ -611,24 +604,9 @@ public class FastFileCacheStore extends AbstractCacheStore implements
 			}
 		}
 
-		/** {@inheritDoc} */
-		public void writeExternal(ObjectOutput out) throws IOException
+		private boolean isExpired(long now)
 		{
-			out.writeLong(offset);
-			out.writeInt(size);
-			out.writeInt(len);
-			out.writeLong(expiryTime);
-		}
-
-		/** {@inheritDoc} */
-		public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException
-		{
-			offset = in.readLong();
-			size = in.readInt();
-			len = in.readInt();
-			expiryTime = in.readLong();
-			readers = 0;
+			return expiryTime > 0 && expiryTime < now;
 		}
 
 		/** {@inheritDoc} */
