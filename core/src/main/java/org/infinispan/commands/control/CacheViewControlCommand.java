@@ -123,14 +123,14 @@ public class CacheViewControlCommand implements CacheRpcCommand {
                cacheViewsManager.handleRequestLeave(sender, cacheName);
               return null;
             case PREPARE_VIEW:
-               cacheViewsManager.handlePrepareView(cacheName, new CacheView(newViewId, newMembers),
+               cacheViewsManager.handlePrepareView(sender, cacheName, new CacheView(newViewId, newMembers),
                      new CacheView(oldViewId, oldMembers));
                return null;
             case COMMIT_VIEW:
-               cacheViewsManager.handleCommitView(cacheName, newViewId);
+               cacheViewsManager.handleCommitView(sender, cacheName, newViewId);
                return null;
             case ROLLBACK_VIEW:
-               cacheViewsManager.handleRollbackView(cacheName, newViewId, oldViewId);
+               cacheViewsManager.handleRollbackView(sender, cacheName, newViewId, oldViewId);
                return null;
             case RECOVER_VIEW:
                return cacheViewsManager.handleRecoverViews();

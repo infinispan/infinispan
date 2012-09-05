@@ -310,13 +310,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       Future<Object> localFuture = asyncTransportExecutor.submit(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            handlePrepareView(cacheName, pendingView, committedView);
+            handlePrepareView(null, cacheName, pendingView, committedView);
             return null;
          }
       });
 
-      // wait for the remote commands to finish
-      Map<Address, Response> rspList = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
+      // wait for the remote commands to finish - no need for timeout, we'll get a timeout exception in JGroups
+      Map<Address, Response> rspList = remoteFuture.get();
       checkRemoteResponse(cacheName, cmd, rspList);
       // now wait for the local command
       localFuture.get(timeout, TimeUnit.MILLISECONDS);
@@ -352,7 +352,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // in the end we roll back locally, so any pending changes can trigger a new view installation
       if (includeCoordinator || validTargets.contains(self)) {
          try {
-            handleRollbackView(cacheName, newViewId, committedViewId);
+            handleRollbackView(null, cacheName, newViewId, committedViewId);
          } catch (Throwable t) {
             log.cacheViewRollbackFailure(t, committedViewId, cacheName);
          }
@@ -384,7 +384,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       // in the end we commit locally, so any pending changes can trigger a new view installation
       if (includeCoordinator || validTargets.contains(self)) {
          try {
-            handleCommitView(cacheName, viewId);
+            handleCommitView(null, cacheName, viewId);
          } catch (Throwable t) {
             log.cacheViewCommitFailure(t, viewId, cacheName);
          }
@@ -461,7 +461,12 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    @Override
-   public void handlePrepareView(String cacheName, CacheView pendingView, CacheView committedView) throws Exception {
+   public void handlePrepareView(Address sender, String cacheName, CacheView pendingView, CacheView committedView) throws Exception {
+      if (isCoordinator && sender != null) {
+         log.debugf("Ignoring cache view prepare command from previous coordinator for cache %s, pending view %s",
+               cacheName, pendingView);
+         return;
+      }
       CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
       if (cacheViewInfo == null) {
          throw new IllegalStateException(String.format("Received prepare request for cache %s, which is not running", cacheName));
@@ -492,7 +497,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    @Override
-   public void handleCommitView(String cacheName, int viewId) {
+   public void handleCommitView(Address sender, String cacheName, int viewId) {
+      if (isCoordinator && sender != null) {
+         log.debugf("Ignoring cache view commit command from previous coordinator for cache %s, pending view %s",
+               cacheName, viewId);
+         return;
+      }
+
       // on the coordinator: update the committed view and reset the view changes
       // on a cache member: call the listener and update the committed view
       // on a non-member: do nothing
@@ -525,7 +536,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    @Override
-   public void handleRollbackView(String cacheName, int newViewId, int committedViewId) {
+   public void handleRollbackView(Address sender, String cacheName, int newViewId, int committedViewId) {
+      if (isCoordinator && sender != null) {
+         log.debugf("Ignoring cache view rollback command from previous coordinator for cache %s, committed view %s",
+               cacheName, committedViewId);
+         return;
+      }
+
       CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
       if (cacheViewInfo == null) {
          log.tracef("Ignoring cache view rollback for unknown cache %s", cacheName);
