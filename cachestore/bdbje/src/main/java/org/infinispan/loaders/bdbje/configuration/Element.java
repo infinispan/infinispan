@@ -25,10 +25,10 @@ package org.infinispan.loaders.bdbje.configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.loaders.file.FileCacheStore;
+import org.infinispan.loaders.bdbje.BdbjeCacheStore;
 
 /**
- * An enumeration of all the recognized XML element local names for the {@link FileCacheStore}
+ * An enumeration of all the recognized XML element local names for the {@link BdbjeCacheStore}
  *
  * @author Tristan Tarrant
  * @since 5.2

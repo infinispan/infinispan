@@ -25,10 +25,8 @@ package org.infinispan.loaders.jdbc.configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.loaders.file.FileCacheStore;
-
 /**
- * An enumeration of all the recognized XML element local names for the {@link FileCacheStore}
+ * An enumeration of all the recognized XML element local names for the JDBC cache stores
  *
  * @author Tristan Tarrant
  * @since 5.2

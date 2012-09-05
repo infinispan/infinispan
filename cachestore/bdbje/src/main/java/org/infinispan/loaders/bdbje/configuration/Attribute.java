@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Enumerates the attributes used by the Remote cache store configuration
+ * Enumerates the attributes used by the Bdbje cache store configuration
  *
  * @author Tristan Tarrant
  * @since 5.2

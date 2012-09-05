@@ -93,7 +93,7 @@
         <xs:attribute name="protocolVersion" type="xs:string" default="1.1">
           <xs:annotation>
             <xs:documentation>
-              This property defines the protocol version that this client should use. Other valid values include 1.0.
+              This property defines the protocol version that this client should use. Defaults to 1.1. Other valid values include 1.0.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -108,14 +108,14 @@
         <xs:attribute name="socketTimeout" type="xs:int" default="60000">
           <xs:annotation>
             <xs:documentation>
-              This property defines the protocol version that this client should use. Other valid values include 1.0.
+              This property defines the maximum socket read timeout in milliseconds before giving up waiting for bytes from the server. Defaults to 60000 (1 minute)
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="tcpNoDelay" type="xs:boolean" default="true">
           <xs:annotation>
             <xs:documentation>
-              This property defines the protocol version that this client should use. Other valid values include 1.0.
+              Affects TCP NODELAY on the TCP stack. Defaults to enabled
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -129,7 +129,7 @@
         <xs:attribute name="valueSizeEstimate" type="xs:int" default="512">
           <xs:annotation>
             <xs:documentation>
-              his hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.
+              This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

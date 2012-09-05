@@ -25,10 +25,10 @@ package org.infinispan.loaders.remote.configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.loaders.file.FileCacheStore;
+import org.infinispan.loaders.remote.RemoteCacheStore;
 
 /**
- * An enumeration of all the recognized XML element local names for the {@link FileCacheStore}
+ * An enumeration of all the recognized XML element local names for the {@link RemoteCacheStore}
  *
  * @author Tristan Tarrant
  * @since 5.2
