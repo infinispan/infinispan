@@ -162,25 +162,6 @@ pageTracker._trackPageview();
                      <attach>false</attach>
                   </configuration>
                </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-dependency-plugin</artifactId>
-                  <executions>
-                  <execution>
-                     <id>create-classpath</id>
-                     <phase>package</phase>
-                     <goals>
-                       <goal>build-classpath</goal>
-                     </goals>
-                     <configuration>
-                       <includeScope>runtime</includeScope>
-                       <excludeScope>test</excludeScope>
-                       <prefix>$ISPN_HOME/lib</prefix>
-                       <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
-                    </configuration>
-                  </execution>
-                </executions>
-              </plugin>
             </plugins>
          </build>
       </profile>
