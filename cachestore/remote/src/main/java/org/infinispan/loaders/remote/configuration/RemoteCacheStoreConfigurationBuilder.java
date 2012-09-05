@@ -23,14 +23,16 @@ import java.util.List;
 
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.TypedProperties;
 
 /**
- * RemoteCacheStoreConfigurationBuilde. Configures a {@link RemoteCacheStore}
+ * RemoteCacheStoreConfigurationBuilder. Configures a {@link RemoteCacheStore}
  *
  * @author Tristan Tarrant
  * @since 5.2
@@ -106,6 +108,12 @@ public class RemoteCacheStoreConfigurationBuilder extends
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
+      this.marshaller = marshaller.getName();
+      return this;
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
       this.pingOnStartup = pingOnStartup;
       return this;
@@ -138,6 +146,12 @@ public class RemoteCacheStoreConfigurationBuilder extends
    @Override
    public RemoteCacheStoreConfigurationBuilder transportFactory(String transportFactory) {
       this.transportFactory = transportFactory;
+      return this;
+   }
+
+   @Override
+   public RemoteCacheStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
+      this.transportFactory = transportFactory.getName();
       return this;
    }
 
@@ -183,6 +197,18 @@ public class RemoteCacheStoreConfigurationBuilder extends
       this.tcpNoDelay = template.tcpNoDelay();
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
+      for(RemoteServerConfiguration server : template.servers()) {
+         this.addServer().host(server.host()).port(server.port());
+      }
+
+      // AbstractStore-specific configuration
+      fetchPersistentState = template.fetchPersistentState();
+      ignoreModifications = template.ignoreModifications();
+      properties = template.properties();
+      purgeOnStartup = template.purgeOnStartup();
+      purgeSynchronously = template.purgeSynchronously();
+      async.read(template.async());
+      singletonStore.read(template.singletonStore());
       return this;
    }
 

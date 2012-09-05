@@ -34,7 +34,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *
- * JdbcCacheStoreConfigurationParser52.
+ * BdbjeCacheStoreConfigurationParser52.
  *
  * @author Tristan Tarrant
  * @since 5.2

@@ -47,16 +47,27 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
       return this;
    }
 
+   /**
+    * The class name of a {@link Key2StringMapper} to use for mapping keys to strings suitable for storage in a database table.
+    * Defaults to {@link DefaultTwoWayKey2StringMapper}
+    */
    public JdbcStringBasedCacheStoreConfigurationBuilder key2StringMapper(String key2StringMapper) {
       this.key2StringMapper = key2StringMapper;
       return this;
    }
 
+   /**
+    * The class of a {@link Key2StringMapper} to use for mapping keys to strings suitable for storage in a database table.
+    * Defaults to {@link DefaultTwoWayKey2StringMapper}
+    */
    public JdbcStringBasedCacheStoreConfigurationBuilder key2StringMapper(Class<? extends Key2StringMapper> klass) {
       this.key2StringMapper = klass.getName();
       return this;
    }
 
+   /**
+    * Allows configuration of table-specific parameters such as column names and types
+    */
    public TableManipulationConfigurationBuilder table() {
       return table;
    }

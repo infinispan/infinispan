@@ -47,10 +47,18 @@ public class JdbcMixedCacheStoreConfigurationBuilder
       return this;
    }
 
+   /**
+    * Allows configuration of table-specific parameters such as column names and types
+    * for the table used to store entries with binary keys
+    */
    public TableManipulationConfigurationBuilder binaryTable() {
       return binaryTable;
    }
 
+   /**
+    * Allows configuration of table-specific parameters such as column names and types
+    * for the table used to store entries with string keys
+    */
    public TableManipulationConfigurationBuilder stringTable() {
       return stringTable;
    }
