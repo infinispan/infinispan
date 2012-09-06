@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
  *
  * @author Carsten Lohmann
  */
-@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional")
+@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RehashAfterJoinWithPreloadTest.class);
@@ -80,7 +80,6 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
          cb.clustering().cacheMode(CacheMode.DIST_SYNC);
          cb.clustering().hash().numOwners(1); // one owner!
 
-         cb.clustering().hash().numVirtualNodes(1);
          cb.clustering().stateTransfer().fetchInMemoryState(true);
          cb.clustering().hash().groups().enabled();
       }

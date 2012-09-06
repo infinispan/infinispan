@@ -58,7 +58,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
          for (Cache<Object, String> c : caches) {
             boolean isOwner = isOwner(c, key);
             if (isOwner) owners.add(addressOf(c));
-            boolean secondCheck = getConsistentHash(c).locate(key, 2).contains(addressOf(c));
+            boolean secondCheck = getConsistentHash(c).locateOwners(key).contains(addressOf(c));
             assert isOwner == secondCheck : "Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck;
          }
          // check consensus
@@ -68,10 +68,10 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    }
 
    private void assertOwnershipConsensus(String key) {
-      List l1 = getConsistentHash(c1).locate(key, 2);
-      List l2 = getConsistentHash(c2).locate(key, 2);
-      List l3 = getConsistentHash(c3).locate(key, 2);
-      List l4 = getConsistentHash(c4).locate(key, 2);
+      List l1 = getConsistentHash(c1).locateOwners(key);
+      List l2 = getConsistentHash(c2).locateOwners(key);
+      List l3 = getConsistentHash(c3).locateOwners(key);
+      List l4 = getConsistentHash(c4).locateOwners(key);
 
       assert l1.equals(l2) : "L1 "+l1+" and L2 "+l2+" don't agree.";
       assert l2.equals(l3): "L2 "+l2+" and L3 "+l3+" don't agree.";

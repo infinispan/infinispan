@@ -165,6 +165,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * Returns global configuration for this CacheManager
     *
     * @return the global configuration object associated to this CacheManager
+    *
+    * @deprecated Use {@link #getCacheManagerConfiguration()} instead.
+    * Please note that before this method was deprecated, modifications on the
+    * GlobalConfiguration returned would be applied to the cache manager if it
+    * was not started. Since the deprecation, this method returns a copy and
+    * so any changes to the returned object won't have any impact on the cache
+    * manager instance.
     */
    @Deprecated
    org.infinispan.config.GlobalConfiguration getGlobalConfiguration();
@@ -187,6 +194,12 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * Returns default configuration for this CacheManager
     *
     * @return the default configuration associated with this CacheManager
+    * @deprecated Use {@link #getDefaultCacheConfiguration()} instead.
+    * Please note that before this method was deprecated, modifications on the
+    * Configuration returned would be applied to the default cache if it
+    * was not started. Since the deprecation, this method returns a copy and
+    * so any changes to the returned object won't have any impact on the
+    * default cache instance.
     */
    @Deprecated
    org.infinispan.config.Configuration getDefaultConfiguration();

@@ -23,7 +23,6 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.CacheException;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
@@ -42,6 +41,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -94,7 +94,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    public void start() {
       if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
             cacheConfiguration.locking().writeSkewCheck() &&
-            cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ) {
+            cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
+            !cacheConfiguration.unsafe().unreliableReturnValues()) {
          lockAcquisitionVisitor = new LocalWriteSkewCheckingLockAcquisitionVisitor();
          needToMarkReads = true;
       } else {
@@ -104,7 +105,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    private void markKeyAsRead(InvocationContext ctx, Object key) {
-      if (needToMarkReads && ctx.isInTxScope()) {
+      if (needToMarkReads && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES) && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          tctx.getCacheTransaction().addReadKey(key);
       }
@@ -168,7 +169,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
+         // Regardless of whether is conditional so that
+         // write skews can be detected in both cases.
+         markKeyAsRead(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);

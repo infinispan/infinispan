@@ -467,6 +467,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                LegacyConfigurationAdaptor.adapt(configurationOverrides.get(cacheName));
          if (existing != null) {
             existing.applyOverrides(configOverride);
+            configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(existing));
             return existing.clone();
          }
       }
@@ -499,7 +500,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             ConfigurationBuilder builder = new ConfigurationBuilder();
             builder.read(existing);
             builder.read(configOverride);
-            return builder.build();
+            Configuration configuration = builder.build();
+            configurationOverrides.put(cacheName, configuration);
+            return configuration;
          }
       }
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -570,7 +573,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
       for (final String cacheName : cacheNames) {
 
-         String threadName = "CacheStartThread," + globalConfiguration.transport().clusterName() + "," + cacheName;
+         String threadName = "CacheStartThread," + globalConfiguration.transport().nodeName() + "," + cacheName;
          Thread thread = new Thread(threadName) {
             @Override
             public void run() {
@@ -716,7 +719,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
-      log.debugf("Started cache manager %s on %s", globalConfiguration.transport().clusterName(), getAddress());
+      String clusterName = globalConfiguration.transport().clusterName();
+      String nodeName = globalConfiguration.transport().nodeName();
+      log.debugf("Started cache manager %s on %s", clusterName, nodeName);
    }
 
    @Override

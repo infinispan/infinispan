@@ -33,13 +33,16 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.AbstractLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -54,6 +57,8 @@ import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
@@ -466,39 +471,39 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
                fcscb.purgeOnStartup(purgeOnStartup);
             if (purgeSynchronously != null)
                fcscb.purgeSynchronously(purgeSynchronously);
-            parseLoaderChildren(reader, fcscb);
-         } else {
-            LoaderConfigurationBuilder lcb = builder.loaders().addCacheLoader();
-            lcb.cacheLoader(loader);
+            parseStoreChildren(reader, fcscb);
+         } else if (loader instanceof CacheStore){
+            LegacyStoreConfigurationBuilder scb = builder.loaders().addStore();
+            scb.cacheStore((CacheStore)loader);
             if (fetchPersistentState != null)
-               lcb.fetchPersistentState(fetchPersistentState);
+               scb.fetchPersistentState(fetchPersistentState);
             if (ignoreModifications != null)
-               lcb.ignoreModifications(ignoreModifications);
+               scb.ignoreModifications(ignoreModifications);
             if (purgerThreads != null)
-               lcb.purgerThreads(purgerThreads);
+               scb.purgerThreads(purgerThreads);
             if (purgeOnStartup != null)
-               lcb.purgeOnStartup(purgeOnStartup);
+               scb.purgeOnStartup(purgeOnStartup);
             if (purgeSynchronously != null)
-               lcb.purgeSynchronously(purgeSynchronously);
+               scb.purgeSynchronously(purgeSynchronously);
+            parseStoreChildren(reader, scb);
+         } else if (loader instanceof ClusterCacheLoader) {
+            ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
+            parseLoaderChildren(reader, cclb);
+         } else {
+            LegacyLoaderConfigurationBuilder lcb = builder.loaders().addLoader();
+            lcb.cacheLoader(loader);
             parseLoaderChildren(reader, lcb);
          }
-
       }
 
    }
 
-   private void parseLoaderChildren(XMLStreamReader reader, AbstractLoaderConfigurationBuilder<?> loaderBuilder) throws XMLStreamException {
+   private void parseLoaderChildren(XMLStreamReader reader, LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
-            case ASYNC:
-               parseAsyncLoader(reader, loaderBuilder);
-               break;
             case PROPERTIES:
                loaderBuilder.withProperties(parseProperties(reader));
-               break;
-            case SINGLETON_STORE:
-               parseSingletonStore(reader, loaderBuilder);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -506,7 +511,26 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   private void parseSingletonStore(XMLStreamReader reader, AbstractLoaderConfigurationBuilder<?> loaderBuilder) throws XMLStreamException {
+   private void parseStoreChildren(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ASYNC:
+               parseAsyncStore(reader, storeBuilder);
+               break;
+            case PROPERTIES:
+               storeBuilder.withProperties(parseProperties(reader));
+               break;
+            case SINGLETON_STORE:
+               parseSingletonStore(reader, storeBuilder);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseSingletonStore(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -514,15 +538,15 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case ENABLED:
                if (Boolean.parseBoolean(value))
-                  loaderBuilder.singletonStore().enable();
+                  storeBuilder.singletonStore().enable();
                else
-                  loaderBuilder.singletonStore().disable();
+                  storeBuilder.singletonStore().disable();
                break;
             case PUSH_STATE_TIMEOUT:
-               loaderBuilder.singletonStore().pushStateTimeout(Long.parseLong(value));
+               storeBuilder.singletonStore().pushStateTimeout(Long.parseLong(value));
                break;
             case PUSH_STATE_WHEN_COORDINATOR:
-               loaderBuilder.singletonStore().pushStateWhenCoordinator(Boolean.parseBoolean(value));
+               storeBuilder.singletonStore().pushStateWhenCoordinator(Boolean.parseBoolean(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -532,7 +556,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAsyncLoader(XMLStreamReader reader, AbstractLoaderConfigurationBuilder<?> loaderBuilder) throws XMLStreamException {
+   private void parseAsyncStore(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -540,21 +564,21 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case ENABLED:
                if (Boolean.parseBoolean(value))
-                  loaderBuilder.async().enable();
+                  storeBuilder.async().enable();
                else
-                  loaderBuilder.async().disable();
+                  storeBuilder.async().disable();
                break;
             case FLUSH_LOCK_TIMEOUT:
-               loaderBuilder.async().flushLockTimeout(Long.parseLong(value));
+               storeBuilder.async().flushLockTimeout(Long.parseLong(value));
                break;
-            case MODIFICTION_QUEUE_SIZE:
-               loaderBuilder.async().modificationQueueSize(Integer.parseInt(value));
+            case MODIFICATION_QUEUE_SIZE:
+               storeBuilder.async().modificationQueueSize(Integer.parseInt(value));
                break;
             case SHUTDOWN_TIMEOUT:
-               loaderBuilder.async().shutdownTimeout(Long.parseLong(value));
+               storeBuilder.async().shutdownTimeout(Long.parseLong(value));
                break;
             case THREAD_POOL_SIZE:
-               loaderBuilder.async().threadPoolSize(Integer.parseInt(value));
+               storeBuilder.async().threadPoolSize(Integer.parseInt(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

@@ -285,7 +285,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          }
       }
    }
-   
+
+   @Test (enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
    public void testAtomicPutIfAbsentFromNonOwner() throws Exception {
       String key = "k1", value = "value", value2 = "v2";
       for (Cache<Object, String> c : caches) assert c.isEmpty();

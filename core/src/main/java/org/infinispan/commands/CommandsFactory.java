@@ -24,7 +24,6 @@ package org.infinispan.commands;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -46,15 +45,16 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.xa.Xid;
@@ -293,21 +293,14 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags);
 
    /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
-    * control command with just a command type and sender.
-    * @param subtype type of RehashControlCommand
-    * @param sender sender's Address
-    * @param viewId the last view id on the sender
-    * @return a RehashControlCommand
+    * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
     */
-   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId);
+   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments);
 
    /**
-    * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
-    * coordinates rehashing of nodes when a node join or leaves
+    * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
-                                                         Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

@@ -68,7 +68,7 @@
       <default name="foo">
         <clustering mode="DIST">
           <async asyncMarshalling="true" replQueueClass="com.acme.replQueue" replQueueInterval="1" replQueueMaxElements="1" useReplQueue="true"/>
-          <hash class="com.acme.Hash" hashFunctionClass="com.acme.HashFunction" numOwners="1" numVirtualNodes="1">
+          <hash factory="com.acme.ConsistentHashFactory" hashFunctionClass="com.acme.HashFunction" numOwners="1" numSegments="1">
             <groups enabled="true">
               <grouper class="com.acme.Grouper"/>
             </groups>
@@ -104,10 +104,10 @@
           <loader fetchPersistentState="true" ignoreModifications="true"
                   purgeOnStartup="true" purgerThreads="1" purgeSynchronously="true"
                   class="com.acme.TestCacheLoader">
-            <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>
             <properties>
               <property name="foo" value="bar"/>
             </properties>
+            <async enabled="true" flushLockTimeout="1" modificationQueueSize="1" shutdownTimeout="1" threadPoolSize="1"/>
             <singletonStore enabled="true"/>
           </loader>
         </loaders>

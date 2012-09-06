@@ -206,10 +206,10 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       assertEquals("CacheMode.LOCAL cache has no members list", null, manager(cache.getCache()).getMembers());
    }
 
-   public void testTreeCacheFactory() throws Exception {
+   public void testTreeCacheFactory() {
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().invocationBatching().enable().build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             TreeCacheFactory tcf = new TreeCacheFactory();
             tcf.createTreeCache(cm.getCache());
          }
@@ -217,10 +217,10 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions=ConfigurationException.class)
-   public void testFactoryNoBatching() throws Exception {
+   public void testFactoryNoBatching() {
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             TreeCacheFactory tcf = new TreeCacheFactory();
             tcf.createTreeCache(cm.getCache());
          }

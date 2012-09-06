@@ -40,7 +40,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
@@ -65,7 +64,7 @@ public class ConfigurationUnitTest {
    }
 
    @Test
-   public void testCreateCache() throws Exception {
+   public void testCreateCache() {
       withCacheManager(new CacheManagerCallable(
             new DefaultCacheManager(new ConfigurationBuilder().build())));
    }
@@ -104,29 +103,29 @@ public class ConfigurationUnitTest {
             .transactionManagerLookup(new DummyTransactionManagerLookup());
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager(cb.build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache();
          }
       });
    }
 
    @Test
-   public void testGetCache() throws Exception {
+   public void testGetCache() {
       withCacheManager(new CacheManagerCallable(
             new DefaultCacheManager(new ConfigurationBuilder().build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache();
          }
       });
    }
 
    @Test
-   public void testDefineNamedCache() throws Exception {
+   public void testDefineNamedCache() {
       withCacheManager(new CacheManagerCallable(
             new DefaultCacheManager(new ConfigurationBuilder().build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.defineConfiguration("foo", new ConfigurationBuilder().build());
          }
       });
@@ -137,7 +136,7 @@ public class ConfigurationUnitTest {
       withCacheManager(new CacheManagerCallable(
             new DefaultCacheManager(new ConfigurationBuilder().build())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<String, String> cache = cm.getCache();
             cache.put("Foo", "2");
             cache.put("Bar", "4");
@@ -174,12 +173,12 @@ public class ConfigurationUnitTest {
    }
 
    @Test
-   public void testDisableL1() throws Exception {
+   public void testDisableL1() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createClusteredCacheManager(
                   new ConfigurationBuilder(), new TransportFlags())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             ConfigurationBuilder cb = new ConfigurationBuilder();
             cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
             cm.defineConfiguration("testConfigCache", cb.build());
@@ -194,7 +193,7 @@ public class ConfigurationUnitTest {
    public void testClearCacheLoaders() {
       Configuration c = new ConfigurationBuilder()
             .loaders()
-               .addCacheLoader()
+               .addLoader()
             .loaders()
                .clearCacheLoaders()
          .build();
@@ -215,13 +214,13 @@ public class ConfigurationUnitTest {
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
    }
 
-   public void testEvictionWithoutStrategy() throws Exception {
+   public void testEvictionWithoutStrategy() {
       Configuration c = new ConfigurationBuilder()
             .eviction().maxEntries(76767)
             .build();
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager(c)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
             assert cfg.eviction().maxEntries() == 76767;
             assert cfg.eviction().strategy() != EvictionStrategy.NONE;
@@ -246,44 +245,44 @@ public class ConfigurationUnitTest {
    public void numVirtualNodes() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cb.clustering().hash().numVirtualNodes(5);
+      cb.clustering().hash().numSegments(5);
 
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
+      Assert.assertEquals(5, c.clustering().hash().numSegments());
 
       // negative test
-      cb.clustering().hash().numVirtualNodes(0);
+      cb.clustering().hash().numSegments(0);
    }
 
    public void testEnableVersioning() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.versioning().enable();
-      org.infinispan.config.Configuration adapt = 
+      org.infinispan.config.Configuration adapt =
             LegacyConfigurationAdaptor.adapt(builder.build());
       assert adapt.isEnableVersioning();
    }
 
-   public void testNoneIsolationLevel() throws Exception {
+   public void testNoneIsolationLevel() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.locking().isolationLevel(IsolationLevel.NONE);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
             assertEquals(IsolationLevel.NONE, cfg.locking().isolationLevel());
          }
       });
    }
 
-   public void testNoneIsolationLevelInCluster() throws Exception {
+   public void testNoneIsolationLevelInCluster() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.locking().isolationLevel(IsolationLevel.NONE)
             .clustering().cacheMode(CacheMode.REPL_SYNC).build();
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createClusteredCacheManager(builder)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
             assertEquals(IsolationLevel.READ_COMMITTED,
                   cfg.locking().isolationLevel());

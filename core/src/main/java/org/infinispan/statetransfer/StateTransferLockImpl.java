@@ -1,486 +1,106 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
- * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
- * of the GNU Lesser General Public License, v. 2.1.
- * This program is distributed in the hope that it will be useful, but WITHOUT A
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
- * You should have received a copy of the GNU Lesser General Public License,
- * v.2.1 along with this distribution; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA  02110-1301, USA.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.statetransfer;
 
-import org.infinispan.CacheException;
-import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.util.Util.currentMillisFromNanotime;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * This class implements a specialized lock that allows the state transfer process (which is not a single thread)
- * to block new write commands for the duration of the state transfer.
- * <p/>
- * At the same time the block call will not return until any running write commands have finished executing.
- * <p/>
- * Write commands in a transaction scope don't actually write anything, so they are ignored. Lock commands on
- * the other hand, both explicit and implicit, are considered as write commands for the purpose of this lock.
- * <p/>
- * Commit commands, rollback commands and unlock commands are special in that letting them proceed may speed up other
- * running commands, so they are allowed to proceed as long as there are any running write commands. Commit is also
- * a write command, so the block call will wait until all commit commands have finished.
+ * // TODO: Document this
  *
- * @author Manik Surtani
- * @author Dan Berindei &lt;dan@infinispan.org&gt;
- * @since 5.1
+ * @author anistor@redhat.com
+ * @since 5.2
  */
 public class StateTransferLockImpl implements StateTransferLock {
-   private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
 
-   // TODO Find a way to interrupt all transactions waiting for answers from remote nodes or waiting on key locks
-   // TODO Reuse the ReentrantReadWriteLock's Sync and put all the state in one volatile
-   private AtomicInteger runningWritesCount = new AtomicInteger(0);
-   private volatile boolean writesShouldBlock;
-   private volatile boolean writesBlocked;
-   private final ThreadLocal<Boolean> traceThreadWrites = new ThreadLocal<Boolean>();
-   private int blockingCacheViewId = NO_BLOCKING_CACHE_VIEW;
-   // blockingCacheViewId, writesShouldBlock and writesBlocked should only be modified while holding lock and always in this order
-   private final Object lock = new Object();
+   private final ReadWriteLock transactionTableLock = new ReentrantReadWriteLock();
 
-   // stored configuration options
-   private boolean pessimisticLocking;
-   private long lockTimeout;
-   private boolean isSync;
+   private final ReadWriteLock commandLock = new ReentrantReadWriteLock();
 
-   public StateTransferLockImpl() {
-   }
+   private volatile int topologyId;
 
-   @Inject
-   public void injectDependencies(Configuration config) {
-      pessimisticLocking =  config.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      isSync = config.clustering().cacheMode().isSynchronous();
-      lockTimeout = config.clustering().cacheMode().isDistributed() ?
-            config.clustering().hash().rehashWait() :
-            config.clustering().stateTransfer().timeout();
+   private final Object topologyLock = new Object();
+
+   @Override
+   public void transactionsSharedLock() {
+      transactionTableLock.readLock().lock();
    }
 
    @Override
-   public void releaseForCommand(InvocationContext ctx, WriteCommand command) {
-      if (shouldAcquireLock(ctx, command))
-         releaseLockForWrite();
+   public void transactionsSharedUnlock() {
+      transactionTableLock.readLock().unlock();
    }
 
    @Override
-   public void releaseForCommand(TxInvocationContext ctx, PrepareCommand command) {
-      if (shouldAcquireLock(ctx, command))
-         releaseLockForWrite();
+   public void transactionsExclusiveLock() {
+      transactionTableLock.writeLock().lock();
    }
 
    @Override
-   public void releaseForCommand(TxInvocationContext ctx, CommitCommand command) {
-      if (shouldAcquireLock(ctx, command))
-         releaseLockForWrite();
+   public void transactionsExclusiveUnlock() {
+      transactionTableLock.writeLock().unlock();
    }
 
    @Override
-   public void releaseForCommand(TxInvocationContext ctx, RollbackCommand command) {
-      // don't need to lock, rollbacks won't touch the data container
+   public void commandsExclusiveLock() {
+      commandLock.writeLock().lock();
    }
 
    @Override
-   public void releaseForCommand(TxInvocationContext ctx, LockControlCommand command) {
-      if (shouldAcquireLock(ctx, command))
-         releaseLockForWrite();
+   public void commandsExclusiveUnlock() {
+      commandLock.writeLock().unlock();
    }
 
    @Override
-   public boolean acquireForCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException {
-      if (!shouldAcquireLock(ctx, command))
-         return true;
-
-      return acquireLockForWriteCommand(ctx);
+   public void commandsSharedLock() {
+      commandLock.readLock().lock();
    }
 
    @Override
-   public boolean acquireForCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException {
-      if (!shouldAcquireLock(ctx, command))
-         return true;
-
-      return acquireLockForWriteCommand(ctx);
+   public void commandsSharedUnlock() {
+      commandLock.readLock().unlock();
    }
 
    @Override
-   public boolean acquireForCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException {
-      if (!shouldAcquireLock(ctx, command))
-         return true;
-
-      return acquireLockForCommitCommand(ctx);
+   public int getTopologyId() {
+      return topologyId;
    }
 
    @Override
-   public boolean acquireForCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException {
-      // do nothing, rollbacks won't touch the data container
-      return true;
-   }
-
-   @Override
-   public boolean acquireForCommand(TxInvocationContext ctx, LockControlCommand command) throws TimeoutException, InterruptedException {
-      if (!shouldAcquireLock(ctx, command))
-         return true;
-
-      return acquireLockForWriteCommand(ctx);
-   }
-
-
-   private boolean shouldAcquireLock(InvocationContext ctx, WriteCommand command) {
-      // For transactions with optimistic locking the real work starts with the prepare command, so don't block here.
-      // With pessimistic locking an implicit lock command is created, but the invocation skips some interceptors
-      // so we need to block for write commands as well.
-      return !(ctx.isInTxScope() && !pessimisticLocking) && !ctx.hasFlag(Flag.SKIP_LOCKING);
-   }
-
-   private boolean shouldAcquireLock(TxInvocationContext ctx, PrepareCommand command) {
-      return !ctx.hasFlag(Flag.SKIP_LOCKING);
-   }
-
-   private boolean shouldAcquireLock(TxInvocationContext ctx, CommitCommand command) {
-      return !ctx.hasFlag(Flag.SKIP_LOCKING);
-   }
-
-   private boolean shouldAcquireLock(TxInvocationContext ctx, RollbackCommand command) {
-      return false;
-   }
-
-   private boolean shouldAcquireLock(TxInvocationContext ctx, LockControlCommand command) {
-      return !command.isUnlock();
-   }
-
-
-   @Override
-   public void waitForStateTransferToEnd(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException {
-      // in the most common case there we don't know anything about a state transfer in progress so we return immediately
-      // it's ok to access blockingCacheViewId without a lock here, in the worst case scenario we do the lock below
-      if (!writesShouldBlock && newCacheViewId <= blockingCacheViewId)
-         return;
-
-      boolean shouldSuspendLock;
-      try {
-         shouldSuspendLock = (Boolean)command.acceptVisitor(ctx, new ShouldAcquireLockVisitor());
-      } catch (Throwable throwable) {
-         throw new CacheException("Unexpected exception", throwable);
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+      synchronized (topologyLock) {
+         topologyLock.notifyAll();
       }
+   }
 
-      if (shouldSuspendLock) {
-         log.tracef("Suspending shared state transfer lock to allow state transfer to start (and end)");
-         releaseLockForWrite();
-
-         // we got a newer cache view id from a remote node, so we know it will be installed on this node as well
-         // even if the cache view installation is cancelled, the rollback will increment the view id so we won't wait forever
-         long end = currentMillisFromNanotime() + lockTimeout;
-         long timeout = lockTimeout;
-         synchronized (lock) {
-            while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
-               if (trace) log.tracef("We are waiting for cache view %d, right now we have %d", newCacheViewId, blockingCacheViewId);
-               lock.wait(timeout);
-               timeout = end - currentMillisFromNanotime();
-            }
+   @Override
+   public void waitForTopology(int expectedTopologyId) throws InterruptedException {
+      while (topologyId <= expectedTopologyId) {
+         synchronized (topologyLock) {
+            topologyLock.wait();
          }
-
-         // only try to reacquire the lock if the timeout didn't expire yet
-         if (timeout <= 0 || !acquireLockForWriteCommand(ctx)) {
-            throw new StateTransferLockReacquisitionException("We released the state transfer lock temporarily but we cannot acquire it back");
-         }
-      }
-   }
-
-   @Override
-   public void blockNewTransactions(int cacheViewId) throws InterruptedException {
-      log.debugf("Blocking new write commands for cache view %d", cacheViewId);
-
-      synchronized (lock) {
-         writesShouldBlock = true;
-         if (writesBlocked) {
-            if (blockingCacheViewId < cacheViewId) {
-               log.tracef("Write commands were already blocked for cache view %d", blockingCacheViewId);
-            } else {
-               throw new IllegalStateException(String.format("Trying to block write commands but they are already blocked for view %d", blockingCacheViewId));
-            }
-         }
-
-         // TODO Add a timeout parameter
-         while (runningWritesCount.get() != 0) {
-            lock.wait();
-         }
-         writesBlocked = true;
-         blockingCacheViewId = cacheViewId;
-      }
-      log.tracef("New write commands blocked");
-   }
-
-   @Override
-   public void blockNewTransactionsAsync() {
-      if (!writesShouldBlock) {
-         log.debugf("Blocking new write commands because we'll soon start a state transfer");
-         writesShouldBlock = true;
-      }
-   }
-
-   @Override
-   public void unblockNewTransactions(int cacheViewId) {
-      log.debugf("Unblocking write commands for cache view %d", cacheViewId);
-      synchronized (lock) {
-         boolean writesWereBlocked = writesBlocked;
-         writesShouldBlock = false;
-         writesBlocked = false;
-         lock.notifyAll();
-
-         // throw any exceptions only after we have released the lock
-         // so that a future state transfer will be able to proceed normally
-         if (!writesWereBlocked)
-            throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d but they were not blocked", cacheViewId));
-
-         if (cacheViewId != blockingCacheViewId && blockingCacheViewId != NO_BLOCKING_CACHE_VIEW)
-            throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d, but they were blocked with view id %d",
-                  cacheViewId, blockingCacheViewId));
-      }
-      log.tracef("Unblocked write commands for cache view %d", cacheViewId);
-   }
-
-   @Override
-   public boolean areNewTransactionsBlocked() {
-      return writesShouldBlock;
-   }
-
-   @Override
-   public int getBlockingCacheViewId() {
-      return blockingCacheViewId;
-   }
-
-   private boolean acquireLockForWriteCommand(InvocationContext ctx) throws InterruptedException, TimeoutException {
-      // first we handle the fast path, when writes are not blocked
-      if (acquireLockForWriteNoWait()) return true;
-
-      // When the command is being replicated, the caller already holds the tx lock for read on the
-      // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
-      // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
-      // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command,
-      // unless we are async, in which case we can't retry
-      if (!ctx.isOriginLocal() && isSync)
-         return false;
-
-      // A state transfer is in progress, wait for it to end
-      long timeout = lockTimeout;
-      long endTime = currentMillisFromNanotime() + lockTimeout;
-      synchronized (lock) {
-         while (true) {
-            //check first before waiting
-            if (acquireLockForWriteNoWait())
-               return true;
-
-            // wait for the unblocker thread to notify us
-            lock.wait(timeout);
-
-            // retry, unless the timeout expired
-            timeout = endTime - currentMillisFromNanotime();
-            if (timeout <= 0)
-               return false;
-         }
-      }
-   }
-
-   private boolean acquireLockForWriteNoWait() {
-      // Because we use multiple volatile variables for the state this involves a lot of volatile reads
-      // (at least 1 read of writesShouldBlock, 1 read+write of runningWritesCount)
-      // With one state variable the fast path should go down to 1 read + 1 cas
-      if (!writesShouldBlock) {
-         int previousWrites = runningWritesCount.getAndIncrement();
-         // if there were no other write commands running someone could have blocked new writes
-         // check the local first to skip a volatile read on writesShouldBlock
-         // (even though the local might be wrong, allowing an extra write or two)
-         if (previousWrites > 0 || !writesShouldBlock) {
-            if (trace) {
-               if (traceThreadWrites.get() == Boolean.TRUE)
-                  log.error("Trying to acquire state transfer shared lock, but this thread already has it", new Exception());
-               traceThreadWrites.set(Boolean.TRUE);
-               log.tracef("Acquired shared state transfer shared lock, total holders: %d", runningWritesCount.get());
-            }
-            return true;
-         }
-
-         // roll back the runningWritesCount, we didn't get the lock
-         runningWritesCount.decrementAndGet();
-         // we have modified the blocking thread's waiting condition, so we need to wake it up
-         synchronized (lock) {
-            lock.notifyAll();
-         }
-      }
-      return false;
-   }
-
-   // Duplicated acquireLockForWriteCommand to allow commits while writesShouldBlock == true but writesBlocked == false
-   private boolean acquireLockForCommitCommand(InvocationContext ctx) throws InterruptedException, TimeoutException {
-      // first we handle the fast path, when writes are not blocked
-      if (acquireLockForCommitNoWait()) return true;
-
-      // When the command is being replicated, the caller already holds the tx lock for read on the
-      // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
-      // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
-      // origin, we never wait for the state transfer lock on remote nodes.
-      // The originator should wait for the state transfer to end and retry the command,
-      // unless we are async, in which case we can't retry
-      if (!ctx.isOriginLocal() && isSync)
-         return false;
-
-      // A state transfer is in progress, wait for it to end
-      // A commit command should never fail on the originator, so wait forever
-      synchronized (lock) {
-         while (true) {
-            //check before waiting on condition
-            if (acquireLockForCommitNoWait())
-               return true;
-
-            // wait for the unblocker thread to notify us
-            lock.wait();
-         }
-      }
-   }
-
-   private boolean acquireLockForCommitNoWait() {
-      // Because we use multiple volatile for the state this involves a lot of volatile reads
-      // (at least 1 read of writesShouldBlock, 1 read+write of runningWritesCount)
-      if (!writesBlocked) {
-         int previousWrites = runningWritesCount.getAndIncrement();
-         // if there were no other write commands running someone could have blocked new writes
-         // check the local first to skip a volatile read on writesBlocked
-         if (previousWrites > 0 || !writesBlocked) {
-            if (trace) {
-               if (traceThreadWrites.get() == Boolean.TRUE)
-                  log.error("Trying to acquire state transfer shared lock, but this thread already has it", new Exception());
-               traceThreadWrites.set(Boolean.TRUE);
-               log.tracef("Acquired shared state transfer shared lock (for commit), total holders: %d", runningWritesCount.get());
-            }
-            return true;
-         }
-
-         // roll back the runningWritesCount, we didn't get the lock
-         runningWritesCount.decrementAndGet();
-         // we have modified the blocking thread's waiting condition, so we need to wake it up
-         synchronized (lock) {
-            lock.notifyAll();
-         }
-      }
-      return false;
-   }
-
-   private void releaseLockForWrite() {
-      if (trace) {
-         if (traceThreadWrites.get() != Boolean.TRUE)
-            log.error("Trying to release state transfer shared lock without acquiring it first", new Exception());
-         traceThreadWrites.remove();
-      }
-      int remainingWrites = runningWritesCount.decrementAndGet();
-      if (remainingWrites < 0) {
-         // the error was most likely caused by anotherallow the command to proceed,
-         runningWritesCount.incrementAndGet();
-         log.error("Trying to release state transfer shared lock without acquiring it first", new Exception());
-      } else if (remainingWrites == 0 && writesShouldBlock) {
-         synchronized (lock) {
-            lock.notifyAll();
-         }
-      }
-
-      if (trace) log.tracef("Released shared state transfer shared lock, remaining holders: %d", remainingWrites);
-   }
-
-   @Override
-   public String toString() {
-      return "StateTransferLockImpl{" +
-            "runningWritesCount=" + runningWritesCount +
-            ", writesShouldBlock=" + writesShouldBlock +
-            ", writesBlocked=" + writesBlocked +
-            ", blockingCacheViewId=" + blockingCacheViewId +
-            '}';
-   }
-
-   private class ShouldAcquireLockVisitor extends AbstractVisitor {
-      @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         return shouldAcquireLock(ctx, command);
-      }
-
-      @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         return Boolean.FALSE;
       }
    }
 }

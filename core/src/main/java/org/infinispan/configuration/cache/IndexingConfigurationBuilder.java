@@ -62,6 +62,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   boolean enabled() {
+      return enabled;
+   }
+
    /**
     * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
     * are shared across a cluster to prevent redundant indexing of updates.
@@ -69,6 +73,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    public IndexingConfigurationBuilder indexLocalOnly(boolean b) {
       this.indexLocalOnly = b;
       return this;
+   }
+
+   boolean indexLocalOnly() {
+      return indexLocalOnly;
    }
 
    /**

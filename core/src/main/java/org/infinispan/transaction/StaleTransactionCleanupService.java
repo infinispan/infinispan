@@ -72,7 +72,7 @@ public class StaleTransactionCleanupService {
       this.transactionTable = transactionTable;
    }
 
-   private ExecutorService lockBreakingService;
+   private ExecutorService lockBreakingService; // a thread pool with max. 1 thread
 
    /**
     * Roll back remote transactions originating on nodes that have left the cluster.
@@ -106,19 +106,23 @@ public class StaleTransactionCleanupService {
       // for remote transactions, release locks for which we are no longer an owner
       // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
       log.tracef("Unlocking keys for which we are no longer an owner");
-      int numOwners = transactionTable.configuration.clustering().hash().numOwners();
       for (RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
          GlobalTransaction gtx = remoteTx.getGlobalTransaction();
          List<Object> keys = new ArrayList<Object>();
          boolean txHasLocalKeys = false;
          for (Object key : remoteTx.getLockedKeys()) {
-            boolean wasLocal = chOld.isKeyLocalToAddress(self, key, numOwners);
-            boolean isLocal = chNew.isKeyLocalToAddress(self, key, numOwners);
+            boolean wasLocal = chOld.isKeyLocalToNode(self, key);
+            boolean isLocal = chNew.isKeyLocalToNode(self, key);
             if (wasLocal && !isLocal) {
                keys.add(key);
             }
             txHasLocalKeys |= isLocal;
          }
+         for (Object key : remoteTx.getBackupLockedKeys()) {
+            boolean isLocal = chNew.isKeyLocalToNode(self, key);
+            txHasLocalKeys |= isLocal;
+         }
+
          if (keys.size() > 0) {
             log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
             Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
@@ -131,20 +135,20 @@ public class StaleTransactionCleanupService {
             } catch (Throwable t) {
                log.unableToUnlockRebalancedKeys(gtx, keys, self, t);
             }
+         }
 
-            // if the transaction doesn't touch local keys any more, we can roll it back
-            if (!txHasLocalKeys) {
-               log.tracef("Killing remote transaction without any local keys %s", gtx);
-               RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-               rc.init(invoker, transactionTable.icc, transactionTable);
-               try {
-                  rc.perform(null);
-                  log.tracef("Rollback of transaction %s complete.", gtx);
-               } catch (Throwable e) {
-                  log.unableToRollbackGlobalTx(gtx, e);
-               } finally {
-                  transactionTable.removeRemoteTransaction(gtx);
-               }
+         // if the transaction doesn't touch local keys any more, we can roll it back
+         if (!txHasLocalKeys) {
+            log.tracef("Killing remote transaction without any local keys %s", gtx);
+            RollbackCommand rc = new RollbackCommand(cacheName, gtx);
+            rc.init(invoker, transactionTable.icc, transactionTable);
+            try {
+               rc.perform(null);
+               log.tracef("Rollback of transaction %s complete.", gtx);
+            } catch (Throwable e) {
+               log.unableToRollbackGlobalTx(gtx, e);
+            } finally {
+               transactionTable.removeRemoteTransaction(gtx);
             }
          }
       }
@@ -158,14 +162,14 @@ public class StaleTransactionCleanupService {
             @Override
             public void run() {
                try {
-               transactionTable.updateStateOnNodesLeaving(leavers);
+                  transactionTable.updateStateOnNodesLeaving(leavers);
                } catch (Exception e) {
                   log.error("Exception whilst updating state", e);
                }
             }
          });
       } catch (RejectedExecutionException ree) {
-         log.debug("Unable to submit task to executor", ree);
+         log.error("Unable to submit task to executor", ree);
       }
    }
 

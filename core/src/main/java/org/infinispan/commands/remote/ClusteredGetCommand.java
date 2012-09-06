@@ -24,6 +24,7 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.Visitor;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.container.InternalEntryFactory;
@@ -36,6 +37,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -71,7 +73,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private DistributionManager distributionManager;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-
+   private int topologyId;
 
    private ClusteredGetCommand() {
       super(null); // For command id uniqueness test
@@ -218,5 +220,30 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+   }
+
+   @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitUnknownCommand(ctx, this);
+   }
+
+   @Override
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 }

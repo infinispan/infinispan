@@ -36,7 +36,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 14;
    /**
-    * This is sent back to callers if the global transaction is not reconised.  It can happen if a prepare is sent to one
+    * This is sent back to callers if the global transaction is not recognised.  It can happen if a prepare is sent to one
     * set of nodes, which then fail, and a commit is sent to a "new" data owner which has not seen the prepare.
     *
     * Responding with this value instructs the caller to re-send the prepare.  See DistributionInterceptor.visitCommitCommand()

@@ -43,9 +43,9 @@ import static java.lang.Math.*;
 @Test(testName = "distribution.ConsistentHashPerfTest", groups = "manual", description = "Disabled until we can configure Surefire to skip manual tests")
 public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
-   private Set<Address> createAddresses(int numNodes) {
+   private List<Address> createAddresses(int numNodes) {
       Random r = new Random();
-      Set<Address> addresses = new HashSet<Address>(numNodes);
+      List<Address> addresses = new ArrayList<Address>(numNodes);
       while (addresses.size() < numNodes)
          addresses.add(new JGroupsAddress(new org.jgroups.util.UUID(r.nextLong(), r.nextLong())));
       return addresses;
@@ -72,7 +72,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       long start = System.nanoTime();
       for (int i = 0; i < iterations; i++) {
          Object key = i;
-         dummy += ch.locate(key, numOwners).size();
+         dummy += ch.locateOwners(key).size();
       }
       long duration = System.nanoTime() - start;
       assert dummy == iterations * min(numOwners, numNodes);
@@ -97,7 +97,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       Map<Address, Integer> distribution = new HashMap<Address, Integer>();
 
       for (Object key : keys) {
-         Address a = ch.locate(key, 1).get(0);
+         Address a = ch.locateOwners(key).get(0);
          if (distribution.containsKey(a)) {
             int i = distribution.get(a);
             distribution.put(a, i + 1);

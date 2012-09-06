@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 5.1.1
  */
+@Test(groups = "functional", testName = "query.programmaticmapping.SearchMappingTest")
 public class SearchMappingTest {
 
    /**

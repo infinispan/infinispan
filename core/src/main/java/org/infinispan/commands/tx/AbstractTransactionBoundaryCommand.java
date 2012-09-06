@@ -52,6 +52,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
    private Address origin;
+   private int topologyId = -1;
 
    public AbstractTransactionBoundaryCommand(String cacheName) {
       this.cacheName = cacheName;
@@ -61,6 +62,16 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       this.invoker = chain;
       this.icc = icc;
       this.txTable = txTable;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 
    @Override
@@ -147,6 +158,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    public String toString() {
       return "gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
+            ", topologyId=" + topologyId +
             '}';
    }
 

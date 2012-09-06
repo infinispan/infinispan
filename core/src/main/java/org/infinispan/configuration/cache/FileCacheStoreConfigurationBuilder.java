@@ -32,24 +32,20 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> {
+public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportCacheStoreConfigurationBuilder<FileCacheStoreConfiguration, FileCacheStoreConfigurationBuilder> {
 
    private String location = "Infinispan-FileCacheStore";
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
-   // TODO: Sort out this duplication with LoaderConfigurationBuilder
-   private boolean fetchPersistentState = false;
-   private boolean ignoreModifications = false;
-   private boolean purgeOnStartup = false;
-   private int purgerThreads = 1;
-   private boolean purgeSynchronously = false;
-   private int lockConcurrencyLevel;
-   private long lockAcquistionTimeout;
-   private Properties properties = new Properties();
 
-   protected FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public FileCacheStoreConfigurationBuilder self() {
+      return this;
    }
 
    public FileCacheStoreConfigurationBuilder location(String location) {
@@ -77,56 +73,15 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    @Override
-   public void validate() {
-   }
-
-   // Shared with others cache stores...
-
-   public FileCacheStoreConfigurationBuilder purgeOnStartup(boolean purgeOnStartup) {
-      this.purgeOnStartup = purgeOnStartup;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder purgeSynchronously(boolean purgeSynchronously) {
-      this.purgeSynchronously = purgeSynchronously;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder purgerThreads(int i) {
-      this.purgerThreads = i;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder fetchPersistentState(boolean fetchPersistentState) {
-      this.fetchPersistentState = fetchPersistentState;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder ignoreModifications(boolean ignoreModifications) {
-      this.ignoreModifications = ignoreModifications;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout) {
-      this.lockAcquistionTimeout = lockAcquistionTimeout;
-      return this;
-   }
-
-   public FileCacheStoreConfigurationBuilder lockAcquistionTimeout(long lockAcquistionTimeout, TimeUnit unit) {
-      return lockAcquistionTimeout(unit.toMillis(lockAcquistionTimeout));
-   }
-
-   public FileCacheStoreConfigurationBuilder lockConcurrencyLevel(int lockConcurrencyLevel) {
-      this.lockConcurrencyLevel = lockConcurrencyLevel;
-      return this;
-   }
-
-   @Override
-   public AbstractLoaderConfigurationBuilder<FileCacheStoreConfiguration> withProperties(Properties p) {
+   public FileCacheStoreConfigurationBuilder withProperties(Properties p) {
       this.properties = p;
       // TODO: Remove this and any sign of properties when switching to new cache store configs
       XmlConfigHelper.setValues(this, properties, false, true);
       return this;
+   }
+
+   @Override
+   public void validate() {
    }
 
    public static enum FsyncMode {
@@ -144,20 +99,24 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLoaderConfigurat
 
    @Override
    public FileCacheStoreConfigurationBuilder read(FileCacheStoreConfiguration template) {
-      fetchPersistentState = template.fetchPersistentState();
+      // FileCacheStore-specific configuration
       fsyncInterval = template.fsyncInterval();
       fsyncMode = template.fsyncMode();
-      ignoreModifications = template.ignoreModifications();
       location = template.location();
+      streamBufferSize = template.streamBufferSize();
+
+      // AbstractLockSupportCacheStore-specific configuration
       lockAcquistionTimeout = template.lockAcquistionTimeout();
       lockConcurrencyLevel = template.lockConcurrencyLevel();
+
+      // AbstractStore-specific configuration
+      fetchPersistentState = template.fetchPersistentState();
+      ignoreModifications = template.ignoreModifications();
       properties = template.properties();
       purgeOnStartup = template.purgeOnStartup();
       purgeSynchronously = template.purgeSynchronously();
-      streamBufferSize = template.streamBufferSize();
-
-      this.async.read(template.async());
-      this.singletonStore.read(template.singletonStore());
+      async.read(template.async());
+      singletonStore.read(template.singletonStore());
 
       return this;
    }

@@ -25,7 +25,7 @@ package org.infinispan.distribution.topologyaware;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -77,17 +77,17 @@ public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
    }
 
    public void testHashesInitiated() {
-      TopologyAwareConsistentHash hash = (TopologyAwareConsistentHash) advancedCache(0, cacheName).getDistributionManager().getConsistentHash();
+      ConsistentHash hash = advancedCache(0, cacheName).getDistributionManager().getConsistentHash();
       containsAllHashes(hash);
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(1, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(2, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(3, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes(advancedCache(1, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes(advancedCache(2, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes(advancedCache(3, cacheName).getDistributionManager().getConsistentHash());
    }
 
-   private void containsAllHashes(TopologyAwareConsistentHash ch) {
-      assert ch.getCaches().contains(address(0));
-      assert ch.getCaches().contains(address(1));
-      assert ch.getCaches().contains(address(2));
-      assert ch.getCaches().contains(address(3));
+   private void containsAllHashes(ConsistentHash ch) {
+      assert ch.getMembers().contains(address(0));
+      assert ch.getMembers().contains(address(1));
+      assert ch.getMembers().contains(address(2));
+      assert ch.getMembers().contains(address(3));
    }
 }

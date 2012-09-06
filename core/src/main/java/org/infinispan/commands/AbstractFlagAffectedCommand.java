@@ -29,9 +29,11 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand {
+public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand, TopologyAffectedCommand {
 
    protected Set<Flag> flags;
+
+   private int topologyId = -1;
 
    @Override
    public Set<Flag> getFlags() {
@@ -48,4 +50,13 @@ public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand
       return flags != null && flags.contains(flag);
    }
 
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+   }
 }

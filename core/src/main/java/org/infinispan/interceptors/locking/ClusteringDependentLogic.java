@@ -46,6 +46,7 @@ import java.util.Collection;
 
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
+// todo [anistor] need to review this for NBST
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
  * href="http://en.wikipedia.org/wiki/Bridge_pattern">Bridge</a> pattern as described by the GoF: this plays the role of

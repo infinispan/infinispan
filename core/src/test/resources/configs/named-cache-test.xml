@@ -139,24 +139,22 @@
       <storeAsBinary enabled="true"/>
    </namedCache>
 
-   <namedCache name="withLoader">
+   <namedCache name="withFileStore">
       <loaders passivation="false" shared="false" preload="true">
 
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-                 ignoreModifications="true" purgeOnStartup="true">
-
-            <!-- See the documentation for more configuration examples and flags. -->
-            <properties>
-               <property name="location" value="/tmp/FileCacheStore-Location"/>
-               <property name="fsyncMode" value="periodic"/>
-               <property name="fsyncInterval" value="2000"/>
-            </properties>
+         <fileStore fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" fsyncMode="PERIODIC" fsyncInterval="2000">
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
-         </loader>
+         </fileStore>
+      </loaders>
+   </namedCache>
+   
+   <namedCache name="withClusterLoader">
+      <loaders passivation="false" shared="false" preload="true">
+         <clusterLoader remoteCallTimeout="15000" />
       </loaders>
    </namedCache>
 
@@ -183,7 +181,7 @@
       <clustering mode="distribution">
          <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" numVirtualNodes="1000"/>
+         <hash numOwners="3" numSegments="1000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>

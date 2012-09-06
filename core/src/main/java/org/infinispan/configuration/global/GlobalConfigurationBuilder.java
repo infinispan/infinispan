@@ -151,7 +151,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    public <T extends Builder<?>> T addModule(Class<T> klass) {
       try {
-         Constructor<T> constructor = klass.getConstructor(GlobalConfigurationBuilder.class);
+         Constructor<T> constructor = klass.getDeclaredConstructor(GlobalConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
          this.modules.add(builder);
          return builder;

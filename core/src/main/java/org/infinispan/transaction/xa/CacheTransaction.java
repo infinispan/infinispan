@@ -69,6 +69,8 @@ public interface CacheTransaction {
 
    int getViewId();
 
+   Set<Object> getBackupLockedKeys();
+
    void addBackupLockForKey(Object key);
 
    /**

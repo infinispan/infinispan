@@ -152,7 +152,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
                // T1 fileKey exists - T2 delete file and remove readlock - T1 putIfAbsent(readlock, 2)
                final FileCacheKey fileKey = new FileCacheKey(indexName, filename);
                if (metadataCache.get(fileKey) == null) {
-                  locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
+                  locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
                   return false;
                }
             }
@@ -186,13 +186,13 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i, bufferSize);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
-            chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).removeAsync(chunkKey);
+            chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(chunkKey);
          }
       }
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
       if (trace) log.tracef("deleting readlock: %s", readLockKey);
-      locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
+      locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
    }
    
    private static void verifyCacheHasNoEviction(AdvancedCache<?, ?> cache) {

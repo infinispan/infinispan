@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.infinispan.Version;
 
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -48,6 +49,7 @@ import org.infinispan.factories.scopes.Scopes;
  *
  */
 @Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 public class GlobalConfiguration {
 
    /**
@@ -117,6 +119,11 @@ public class GlobalConfiguration {
 
    public ShutdownConfiguration shutdown() {
       return shutdown;
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T module(Class<T> moduleClass) {
+      return (T)modules.get(moduleClass);
    }
 
    public Map<Class<?>, ?> modules() {

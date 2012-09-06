@@ -36,7 +36,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.infinispan.eviction.EvictionStrategy.*;
 import static org.infinispan.configuration.cache.CacheMode.*;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "configuration.ConfigurationOverrideTest")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;
@@ -80,7 +80,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
    public void testSimpleDistributedClusterModeDefault() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(DIST_SYNC)
-            .hash().numOwners(3).numVirtualNodes(51);
+            .hash().numOwners(3).numSegments(51);
 
       cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
 
@@ -90,14 +90,14 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
             cache.getCacheConfiguration().clustering();
       assertEquals(DIST_SYNC, clusteringCfg.cacheMode());
       assertEquals(3, clusteringCfg.hash().numOwners());
-      assertEquals(51, clusteringCfg.hash().numVirtualNodes());
+      assertEquals(51, clusteringCfg.hash().numSegments());
    }
    
    public void testSimpleDistributedClusterModeNamedCache() throws Exception {
       final String cacheName = "my-cache";
       final Configuration config = new ConfigurationBuilder()
             .clustering().cacheMode(DIST_SYNC)
-            .hash().numOwners(3).numVirtualNodes(51).build();
+            .hash().numOwners(3).numSegments(51).build();
 
       cm = TestCacheManagerFactory.createClusteredCacheManager();
       cm.defineConfiguration(cacheName, config);
@@ -106,7 +106,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
             cache.getCacheConfiguration().clustering();
       assertEquals(DIST_SYNC, clusteringCfg.cacheMode());
       assertEquals(3, clusteringCfg.hash().numOwners());
-      assertEquals(51, clusteringCfg.hash().numVirtualNodes());
+      assertEquals(51, clusteringCfg.hash().numSegments());
    }
 
 }

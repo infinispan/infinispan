@@ -19,8 +19,12 @@
 
 package org.infinispan.container.versioning;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -36,6 +40,7 @@ import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertTrue;
@@ -75,85 +80,81 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       ConcurrentSkipListSet<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<Integer>();
 
       // create both threads (simulate a node)
-      IncrementCounterThread ict1 = new IncrementCounterThread("Node-1", c1,
-                                                               uniqueValuesIncremented, counterMaxValue);
-      IncrementCounterThread ict2 = new IncrementCounterThread("Node-2", c1,
-                                                               uniqueValuesIncremented, counterMaxValue);
+      Future ict1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
+      Future ict2 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
 
-      // start and wait to finish
-      ict1.start();
-      ict2.start();
+      try {
+         // wait to finish
+         Boolean unique1 = (Boolean) ict1.get(30, TimeUnit.SECONDS);
+         Boolean unique2 = (Boolean) ict1.get(30, TimeUnit.SECONDS);
 
-      ict1.join();
-      ict2.join();
+         // check is any duplicate value is detected
+         assertTrue(unique1);
+         assertTrue(unique2);
 
-      // check if all caches obtains the counter_max_values
-      assertTrue(c1.get("counter") >= counterMaxValue);
-
-      // check is any duplicate value is detected
-      assertTrue(ict1.result);
-      assertTrue(ict2.result);
+         // check if all caches obtains the counter_max_values
+         assertTrue(c1.get("counter") >= counterMaxValue);
+      } finally {
+         ict1.cancel(true);
+         ict2.cancel(true);
+      }
    }
 
-   private static class IncrementCounterThread extends Thread {
-      Log log = LogFactory.getLog(IncrementCounterThread.class);
-
+   private class IncrementCounterTask implements Callable<Boolean> {
       private Cache<String, Integer> cache;
-
       private ConcurrentSkipListSet<Integer> uniqueValuesSet;
-
       private TransactionManager transactionManager;
-
       private int lastValue;
-
-      private boolean result = true;
-
+      private boolean unique = true;
       private int counterMaxValue;
 
-      public IncrementCounterThread(String name,
-                                    Cache<String, Integer> cache,
-                                    ConcurrentSkipListSet<Integer> uniqueValuesSet,
-                                    int counterMaxValue) {
-         super(name);
+      public IncrementCounterTask(Cache<String, Integer> cache, ConcurrentSkipListSet<Integer> uniqueValuesSet, int counterMaxValue) {
          this.cache = cache;
-         this.transactionManager = cache.getAdvancedCache()
-               .getTransactionManager();
+         this.transactionManager = cache.getAdvancedCache().getTransactionManager();
          this.uniqueValuesSet = uniqueValuesSet;
          this.lastValue = 0;
          this.counterMaxValue = counterMaxValue;
       }
 
       @Override
-      public void run() {
-         while (lastValue < counterMaxValue) {
+      public Boolean call() throws InterruptedException {
+         int failuresCounter = 0;
+         while (lastValue < counterMaxValue && !Thread.interrupted()) {
+            boolean success = false;
             try {
-               Integer value = 0;
-               try {
-                  // start transaction, get the counter value, increment
-                  // and put it again
-                  // check for duplicates in case of success
-                  transactionManager.begin();
+               //start transaction, get the counter value, increment and put it again
+               //check for duplicates in case of success
+               transactionManager.begin();
 
-                  value = cache.get("counter");
-                  value = value + 1;
-                  lastValue = value;
+               Integer value = cache.get("counter");
+               value = value + 1;
+               lastValue = value;
 
-                  cache.put("counter", value);
+               cache.put("counter", value);
 
-                  transactionManager.commit();
+               transactionManager.commit();
 
-                  result = result && uniqueValuesSet.add(value);
-                  log.warnf("Add value=%s, result is %b", value, result);
-               } catch (Throwable t) {
-                  log.errorf("Exception with value=%d", value);
-                  // lets rollback
-                  transactionManager.rollback();
+               unique = uniqueValuesSet.add(value);
+               success = true;
+            } catch (Exception e) {
+               // expected exception
+               failuresCounter++;
+               Assert.assertTrue(failuresCounter < 10 * counterMaxValue, "Too many failures incrementing the counter");
+            } finally {
+               if (!success) {
+                  try {
+                     //lets rollback
+                     if (transactionManager.getStatus() != Status.STATUS_NO_TRANSACTION)
+                        transactionManager.rollback();
+                  } catch (Throwable t) {
+                     //the only possible exception is thrown by the rollback. just ignore it
+                     log.trace("Exception during rollback", t);
+                  }
                }
-            } catch (Throwable t) {
-               // the only possible exception is thrown by the rollback.
-               // just ignore it
+               Assert.assertTrue(unique, "Duplicate value found (value=" + lastValue + ")");
             }
          }
+         return unique;
       }
    }
 }

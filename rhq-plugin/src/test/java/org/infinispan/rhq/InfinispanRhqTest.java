@@ -25,8 +25,6 @@ package org.infinispan.rhq;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -48,7 +46,7 @@ public class InfinispanRhqTest {
       myGlobalConfig.setExposeGlobalJmxStatistics(true);
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(myGlobalConfig)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             // org.infinispan:cache-name=myCustomcache(local),jmx-resource=CacheMgmgtInterceptor
             // org.infinispan:cache-name=myCustomcache(local),jmx-resource=MvccLockManager
             // org.infinispan:cache-name=myCustomcache(local),jmx-resource=TxInterceptor
@@ -65,7 +63,11 @@ public class InfinispanRhqTest {
 
             int i = 0;
             while (i < Integer.MAX_VALUE) {
-               Thread.sleep(12000);
+               try {
+                  Thread.sleep(12000);
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               }
                cache.put("key" + i, String.valueOf(i));
                cache.get("key" + ((int)(10000 * Math.random())));
                i++;

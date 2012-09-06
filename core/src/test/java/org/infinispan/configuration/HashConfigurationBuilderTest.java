@@ -48,16 +48,16 @@ public class HashConfigurationBuilderTest {
     }
 
     @Test
-    public void numVirtualNodes(){
+    public void testNumSegments(){
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-        cb.clustering().hash().numVirtualNodes(5);
+        cb.clustering().hash().numSegments(5);
 
         Configuration c = cb.build();
-        Assert.assertEquals(5, c.clustering().hash().numVirtualNodes());
+        Assert.assertEquals(5, c.clustering().hash().numSegments());
 
         try {
-            cb.clustering().hash().numVirtualNodes(0);
+            cb.clustering().hash().numSegments(0);
             Assert.fail("IllegalArgumentException expected");
         } catch(IllegalArgumentException e){
         }

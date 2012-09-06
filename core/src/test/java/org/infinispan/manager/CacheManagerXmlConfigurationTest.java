@@ -177,7 +177,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(
             xmlFile, xmlFile, xmlFile)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<Object, Object> c = cm.getCache();
             assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1111;
             Cache<Object, Object> c2 = cm.getCache("localCache");

@@ -69,7 +69,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
    public InfinispanIndexOutput(final AdvancedCache<?, ?> metadataCache, final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
       this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache;
       this.chunksCache = (Cache<ChunkCacheKey, Object>) chunksCache;
-      this.chunksCacheForStorage = (Cache<ChunkCacheKey, Object>) chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_INDEXING);
+      this.chunksCacheForStorage = (Cache<ChunkCacheKey, Object>) chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
@@ -205,7 +205,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       firstChunkBuffer = null;
       // override existing file header with updated accesstime
       file.touch();
-      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_INDEXING).put(fileKey, file);
+      metadataCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
       if (trace) {
          log.tracef("Closed IndexOutput for %s", fileKey);

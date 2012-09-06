@@ -52,7 +52,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
@@ -63,7 +62,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +81,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
-   StateTransferLock stateTransferLock;
    CommandsFactory cf;
    DataContainer dataContainer;
    boolean isL1CacheEnabled, needReliableReturnValues;
@@ -113,11 +110,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,
+   public void injectDependencies(DistributionManager distributionManager,
                                   CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory,
                                   L1Manager l1Manager, LockManager lockManager) {
       this.dm = distributionManager;
-      this.stateTransferLock = stateTransferLock;
       this.cf = cf;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
@@ -163,7 +159,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return retvalCheck
             && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
             && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());
+            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES)
+            && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());   //todo [anistor] this condition seems wrong
    }
 
 
@@ -181,7 +178,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * @throws Throwable if there are problems
     */
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite) throws Throwable {
-      DataLocality locality = dm.getLocality(key);
+      DataLocality locality = dm.getLocality(key);  //todo [anistor] checking this here is a bit late as the state transfer was probably started or even completed since this command entered the chain
 
       if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
          return realRemoteGet(ctx, key, true, isWrite);
@@ -309,8 +306,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
          final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, true, true);
@@ -329,9 +324,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
-
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
          Future<?> f = flushL1Caches(ctx);
@@ -407,9 +399,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         int newCacheViewId = -1;
-         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
-
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
@@ -448,7 +437,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private boolean isNeedReliableReturnValues(InvocationContext ctx) {
-      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && needReliableReturnValues;
+      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    /**
@@ -475,8 +465,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             NotifyingNotifiableFuture<Object> futureToReturn = null;
             Future<?> invalidationFuture = null;
             if (ctx.isOriginLocal()) {
-               int newCacheViewId = -1;
-               stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
@@ -487,7 +475,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
                	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
-               		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
+               		if (trace) log.tracef("Put occurring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                      if (useFuture) {
                		   futureToReturn = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue,
                                                               ctx.getOrigin(), !(command instanceof RemoveCommand));
@@ -517,7 +505,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             	// Piggyback remote puts and cause L1 invalidations
             	if (isL1CacheEnabled && !skipL1Invalidation) {
                	// Command was successful and L1 should be flushed, so request any L1 invalidations from this node
-            		if (trace) log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
+            		if (trace) log.tracef("Put occurring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
                   // If this is a remove command, then don't pass in the origin - since the entru would be removed from the origin's L1 cache.
             		invalidationFuture = l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),
                                                                             returnValue, ctx.getOrigin(), !(command instanceof RemoveCommand));
@@ -592,9 +580,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       @Override
       public List<Address> generateRecipients() {
          if (recipients == null) {
-            Set<Address> addresses = new HashSet<Address>();
-            Map<Object, List<Address>> recipientsMap = dm.locateAll(keys);
-            for (List<Address> a : recipientsMap.values()) addresses.addAll(a);
+            Set<Address> addresses = dm.locateAll(keys);
             recipients = Immutables.immutableListConvert(addresses);
          }
          return recipients;

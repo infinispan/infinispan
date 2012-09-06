@@ -35,7 +35,7 @@ public class CacheManagerCallable {
       this.cm = cm;
    }
 
-   public void call() throws Exception {
+   public void call() {
       // No-op
    }
 

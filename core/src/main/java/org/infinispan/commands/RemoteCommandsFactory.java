@@ -23,9 +23,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
@@ -61,6 +59,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.topology.CacheTopologyControlCommand;
 
 import java.util.Map;
 
@@ -140,7 +141,10 @@ public class RemoteCommandsFactory {
                break;
             case ApplyDeltaCommand.COMMAND_ID:
                command = new ApplyDeltaCommand();
-               break;      
+               break;
+            case CacheTopologyControlCommand.COMMAND_ID:
+               command = new CacheTopologyControlCommand();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }
@@ -195,8 +199,11 @@ public class RemoteCommandsFactory {
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
                break;
-            case StateTransferControlCommand.COMMAND_ID:
-               command = new StateTransferControlCommand(cacheName);
+            case StateRequestCommand.COMMAND_ID:
+               command = new StateRequestCommand(cacheName);
+               break;
+            case StateResponseCommand.COMMAND_ID:
+               command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
                command = new RemoveCacheCommand(cacheName, cacheManager, registry);
@@ -219,9 +226,6 @@ public class RemoteCommandsFactory {
             case CompleteTransactionCommand.COMMAND_ID:
                command = new CompleteTransactionCommand(cacheName);
                break;
-            case CacheViewControlCommand.COMMAND_ID:
-               command = new CacheViewControlCommand(cacheName);
-               break;                      
             case CreateCacheCommand.COMMAND_ID:
                command = new CreateCacheCommand(cacheName);   
                break;

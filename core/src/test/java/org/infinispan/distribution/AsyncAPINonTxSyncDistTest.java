@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
-@Test (groups = "functional", testName = "distribution.AsyncAPINonTxSyncReplTest")
+@Test (groups = "functional", testName = "distribution.AsyncAPINonTxSyncDistTest")
 public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
 
    protected Configuration getConfig(boolean txEnabled) {

@@ -33,14 +33,15 @@ import java.util.Map;
 public enum Element {
     // must be first
     UNKNOWN(null),
-    
-    // 
+
+    //
     ADVANCED_EXTERNALIZER("advancedExternalizer"),
     ADVANCED_EXTERNALIZERS("advancedExternalizers"),
     ASYNC("async"),
     ASYNC_LISTENER_EXECUTOR("asyncListenerExecutor"),
     ASYNC_TRANSPORT_EXECUTOR("asyncTransportExecutor"),
     CLUSTERING("clustering"),
+    CLUSTER_LOADER("clusterLoader"),
     CUSTOM_INTERCEPTORS("customInterceptors"),
     DATA_CONTAINER("dataContainer"),
     DEADLOCK_DETECTION("deadlockDetection"),
@@ -48,6 +49,7 @@ public enum Element {
     EVICTION("eviction"),
     EVICTION_SCHEDULED_EXECUTOR("evictionScheduledExecutor"),
     EXPIRATION("expiration"),
+    FILE_STORE("fileStore"),
     GROUPS("groups"),
     GROUPER("grouper"),
     GLOBAL("global"),
@@ -62,6 +64,7 @@ public enum Element {
     LOADER("loader"),
     LOADERS("loaders"),
     LOCKING("locking"),
+    MODULES("modules"),
     NAMED_CACHE("namedCache"),
     PROPERTIES("properties"),
     PROPERTY("property"),
@@ -73,6 +76,7 @@ public enum Element {
     SINGLETON_STORE("singletonStore"),
     STATE_RETRIEVAL("stateRetrieval"),
     STATE_TRANSFER("stateTransfer"),
+    STORE("store"),
     STORE_AS_BINARY("storeAsBinary"),
     SYNC("sync"),
     TRANSACTION("transaction"),

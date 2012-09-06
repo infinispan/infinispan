@@ -29,7 +29,6 @@ import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
-import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
@@ -53,10 +52,8 @@ import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.ch.ReplicatedConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -77,13 +74,16 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
-import org.infinispan.statetransfer.LockInfo;
+import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -276,12 +276,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new RemoveOperation.Externalizer());
       addInternalExternalizer(new ClearOperation.Externalizer());
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
-      addInternalExternalizer(new UnionConsistentHash.Externalizer());
+      addInternalExternalizer(new ReplicatedConsistentHash.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
-      addInternalExternalizer(new TopologyAwareConsistentHash.Externalizer());
       addInternalExternalizer(new ByteArrayKey.Externalizer());
 
-      addInternalExternalizer(new RemoteTransactionLogDetails.Externalizer());
       addInternalExternalizer(new SerializableXid.XidExternalizer());
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());
 
@@ -289,8 +287,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MurmurHash2Compat.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
 
-      addInternalExternalizer(new CacheView.Externalizer());
-      addInternalExternalizer(new LockInfo.Externalizer());
+      addInternalExternalizer(new CacheTopology.Externalizer());
+      addInternalExternalizer(new CacheJoinInfo.Externalizer());
+      addInternalExternalizer(new TransactionInfo.Externalizer());
+      addInternalExternalizer(new StateChunk.Externalizer());
 
       addInternalExternalizer(new Flag.Externalizer());
    }
@@ -357,7 +357,7 @@ public class ExternalizerTable implements ObjectTable {
    private int checkInternalIdLimit(int id, AdvancedExternalizer<?> ext) {
       if (id >= Ids.MAX_ID)
          throw new ConfigurationException(String.format(
-               "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
+               "Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d",
                ext, id, Ids.MAX_ID));
       return id;
    }

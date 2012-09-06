@@ -49,12 +49,7 @@ public class SingleJoinTest extends RehashTestBase {
       TestingUtil.blockUntilViewsReceived(60000, allCaches);
       waitForClusterToForm(cacheName);
 
-      // where does the joiner sit in relation to the other caches?
-      int joinerPos = locateJoiner(joinerManager.getAddress());
-
-      log.info("***>>> Joiner is in position " + joinerPos);
-
-      cacheManagers.add(joinerPos, joinerManager);
-      caches.add(joinerPos, joiner);
+      cacheManagers.add(joinerManager);
+      caches.add(joiner);
    }
 }

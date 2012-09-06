@@ -53,7 +53,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private static final boolean trace = log.isTraceEnabled();
 
    private Set<Address> remoteLockedNodes;
-   protected Set<Object> readKeys = null;
+   private Set<Object> readKeys = null;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -71,7 +71,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public void addModification(WriteCommand mod) {
       if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
-         modifications = new LinkedList<WriteCommand>();
+         // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
+         modifications = Collections.synchronizedList(new LinkedList<WriteCommand>());
       }
       modifications.add(mod);
    }

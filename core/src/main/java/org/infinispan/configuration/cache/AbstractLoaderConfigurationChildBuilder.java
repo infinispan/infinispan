@@ -18,23 +18,18 @@
  */
 package org.infinispan.configuration.cache;
 
-public abstract class AbstractLoaderConfigurationChildBuilder<T> extends AbstractLoadersConfigurationChildBuilder<T> implements LoaderConfigurationChildBuilder {
-   
-   private final AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> loaderConfigurationBuilder;
-   
-   AbstractLoaderConfigurationChildBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
-      super(builder.getLoadersBuilder());
-      this.loaderConfigurationBuilder = builder;
-   }
+/**
+ *
+ * AbstractLoaderConfigurationChildBuilder.
+ *
+ * @author Pete Muir
+ * @author Tristan Tarrant
+ * @since 5.1
+ */
+public abstract class AbstractLoaderConfigurationChildBuilder<T> extends AbstractLoadersConfigurationChildBuilder<T> {
 
-   @Override
-   public AsyncLoaderConfigurationBuilder async() {
-      return loaderConfigurationBuilder.async();
-   }
-   
-   @Override
-   public SingletonStoreConfigurationBuilder singletonStore() {
-      return loaderConfigurationBuilder.singletonStore();
+   AbstractLoaderConfigurationChildBuilder(LoadersConfigurationBuilder builder) {
+      super(builder);
    }
 
 }

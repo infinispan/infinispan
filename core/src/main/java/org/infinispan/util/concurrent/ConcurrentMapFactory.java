@@ -93,7 +93,7 @@ public class ConcurrentMapFactory {
       boolean allowExperimentalMap = Boolean.getBoolean("infinispan.unsafe.allow_jdk8_chm");
 
       try {
-         Class.forName("com.sun.unsafe.Unsafe");
+         Class.forName("sun.misc.Unsafe");
          sunIncompatibleJvm = false;
       } catch (ClassNotFoundException e) {
          sunIncompatibleJvm = true;

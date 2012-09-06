@@ -72,6 +72,7 @@ public class TableManipulation implements Cloneable {
    private String insertRowSql;
    private String updateRowSql;
    private String selectRowSql;
+   private String selectIdRowSql;
    private String deleteRowSql;
    private String loadAllRowsSql;
    private String loadAllNonExpiredRowsSql;
@@ -287,6 +288,23 @@ public class TableManipulation implements Cloneable {
          }
       }
       return selectRowSql;
+   }
+
+   public String getSelectIdRowSql() {
+      if (selectIdRowSql == null) {
+         switch(getDatabaseType()) {
+            case SYBASE:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
+         }
+      }
+      return selectIdRowSql;
    }
 
    public String getDeleteRowSql() {

@@ -22,16 +22,16 @@ import java.util.List;
 
 /**
  * Configuration for cache loaders and stores.
- * 
+ *
  */
 public class LoadersConfiguration {
 
    private final boolean passivation;
    private final boolean preload;
    private final boolean shared;
-   private final List<AbstractLoaderConfiguration> cacheLoaders;
+   private final List<LoaderConfiguration> cacheLoaders;
 
-   LoadersConfiguration(boolean passivation, boolean preload, boolean shared, List<AbstractLoaderConfiguration> cacheLoaders) {
+   LoadersConfiguration(boolean passivation, boolean preload, boolean shared, List<LoaderConfiguration> cacheLoaders) {
       this.passivation = passivation;
       this.preload = preload;
       this.shared = shared;
@@ -77,7 +77,7 @@ public class LoadersConfiguration {
       return shared;
    }
 
-   public List<AbstractLoaderConfiguration> cacheLoaders() {
+   public List<LoaderConfiguration> cacheLoaders() {
       return cacheLoaders;
    }
 
@@ -86,8 +86,8 @@ public class LoadersConfiguration {
     * any of them
     */
    public Boolean fetchPersistentState() {
-      for (AbstractLoaderConfiguration c : cacheLoaders) {
-         if (c.fetchPersistentState())
+      for (LoaderConfiguration c : cacheLoaders) {
+         if (c instanceof StoreConfiguration && ((StoreConfiguration)c).fetchPersistentState())
             return true;
       }
       return false;
@@ -98,8 +98,8 @@ public class LoadersConfiguration {
    }
 
    public boolean usingAsyncStore() {
-      for (AbstractLoaderConfiguration loaderConfig : cacheLoaders) {
-         if (loaderConfig.async().enabled())
+      for (LoaderConfiguration c : cacheLoaders) {
+         if (c instanceof StoreConfiguration && ((StoreConfiguration)c).async().enabled())
             return true;
       }
       return false;

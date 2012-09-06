@@ -127,7 +127,8 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>11.0.2</version.guava>
       <version.h2.driver>1.3.166</version.h2.driver>
-      <version.hbase>0.90.4</version.hbase>
+      <version.hadoop.core>1.0.3</version.hadoop.core>
+      <version.hbase>0.94.1</version.hbase>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
       <version.hibernate.search>4.2.0.Beta1</version.hibernate.search>
@@ -135,7 +136,7 @@
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.marshalling>1.3.11.GA</version.jboss.marshalling>
+      <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
       <version.jbossjta>4.16.3.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.1.1.GA</version.jboss.logging>
@@ -146,7 +147,7 @@
       <version.jclouds>1.1.0</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.1.0.Final</version.jgroups>
+      <version.jgroups>3.2.0.Alpha1</version.jgroups>
       <version.jreadline>0.16</version.jreadline>
       <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
@@ -376,6 +377,11 @@
             <version>${version.cassandra.pool}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>${version.hadoop.core}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase</artifactId>
             <version>${version.hbase}</version>
@@ -472,6 +478,12 @@
                     <artifactId>hibernate-search-analyzers</artifactId>
                 </exclusion>
             </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-infinispan</artifactId>
+            <version>${version.hibernate.search}</version>
+            <optional>true</optional>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
@@ -1270,6 +1282,10 @@
                      <name>java.net.preferIPv4Stack</name>
                      <value>true</value>
                   </property>
+                  <property>
+                     <name>infinispan.unsafe.allow_jdk8_chm</name>
+                     <value>true</value>
+                  </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1323,7 +1339,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
-            <version>2.13-SNASPHOT</version>
+            <version>2.12.2</version>
          </plugin>
          <!-- Findbugs report -->
          <plugin>
@@ -1499,7 +1515,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <version>2.4.3-JBOSS</version>
                   <configuration>
                      <parallel>tests</parallel>
                      <threadCount>${infinispan.test.parallel.threads}</threadCount>

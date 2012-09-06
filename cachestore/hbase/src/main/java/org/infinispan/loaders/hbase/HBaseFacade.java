@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -53,7 +55,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Adapter class for HBase. Provides a logical abstraction on top of the basic HBase API that makes
  * it easier to use.
- * 
+ *
  * @author Justin Hayes
  * @since 5.2
  */
@@ -81,9 +83,18 @@ public class HBaseFacade {
       }
    }
 
+   private void close(HBaseAdmin admin) {
+      if(admin!=null) {
+         try {
+            admin.close();
+         } catch (IOException e) {
+         }
+      }
+   }
+
    /**
     * Creates a new HBase table.
-    * 
+    *
     * @param name
     *           the name of the table
     * @param columnFamilies
@@ -96,7 +107,7 @@ public class HBaseFacade {
 
    /**
     * Creates a new HBase table.
-    * 
+    *
     * @param name
     *           the name of the table
     * @param columnFamilies
@@ -110,9 +121,9 @@ public class HBaseFacade {
       if (name == null || "".equals(name)) {
          throw new HBaseException("Table name must not be empty.");
       }
-
+      HBaseAdmin admin = null;
       try {
-         HBaseAdmin admin = new HBaseAdmin(CONFIG);
+         admin = new HBaseAdmin(CONFIG);
 
          HTableDescriptor desc = new HTableDescriptor(name.getBytes());
 
@@ -125,15 +136,27 @@ public class HBaseFacade {
             }
          }
 
+         int retries = 0;
+         do {
+            try {
+              admin.createTable(desc);
+              return;
+            } catch (PleaseHoldException e) {
+               TimeUnit.SECONDS.sleep(1);
+               retries++;
+            }
+         } while(retries < 10);
          admin.createTable(desc);
       } catch (Exception ex) {
          throw new HBaseException("Exception occurred when creating HBase table.", ex);
+      } finally {
+         close(admin);
       }
    }
 
    /**
     * Deletes a HBase table.
-    * 
+    *
     * @param name
     *           the name of the table
     * @throws HBaseException
@@ -143,19 +166,22 @@ public class HBaseFacade {
          throw new HBaseException("Table name must not be empty.");
       }
 
+      HBaseAdmin admin = null;
       try {
-         HBaseAdmin admin = new HBaseAdmin(CONFIG);
+         admin = new HBaseAdmin(CONFIG);
 
          admin.disableTable(name);
          admin.deleteTable(name);
       } catch (Exception ex) {
          throw new HBaseException("Exception occurred when deleting HBase table.", ex);
+      } finally {
+         close(admin);
       }
    }
 
    /**
     * Checks to see if a table exists.
-    * 
+    *
     * @param name
     *           the name of the table
     * @throws HBaseException
@@ -165,18 +191,21 @@ public class HBaseFacade {
          throw new HBaseException("Table name must not be empty.");
       }
 
+      HBaseAdmin admin = null;
       try {
-         HBaseAdmin admin = new HBaseAdmin(CONFIG);
+         admin = new HBaseAdmin(CONFIG);
 
          return admin.isTableAvailable(name);
       } catch (Exception ex) {
          throw new HBaseException("Exception occurred when deleting HBase table.", ex);
+      } finally {
+         close(admin);
       }
    }
 
    /**
     * Adds a row to a HBase table.
-    * 
+    *
     * @param tableName
     *           the table to add to
     * @param key
@@ -227,7 +256,7 @@ public class HBaseFacade {
 
    /**
     * Reads the values in a row from a table.
-    * 
+    *
     * @param tableName
     *           the table to read from
     * @param key
@@ -294,7 +323,7 @@ public class HBaseFacade {
     * Reads the values from multiple rows from a table, using a key prefix and a timestamp. For
     * example, if rows were added with keys: key1 key2 key3 key4 Then readRows("myTable", "key", 3,
     * ...) would return the data for rows with key1, key1, and key3.
-    * 
+    *
     * @param tableName
     *           the table to read from
     * @param keyPrefix
@@ -381,7 +410,7 @@ public class HBaseFacade {
 
    /**
     * Removes a row from a table.
-    * 
+    *
     * @param tableName
     *           the table to remove from
     * @param key
@@ -427,7 +456,7 @@ public class HBaseFacade {
 
    /**
     * Removes rows from a table.
-    * 
+    *
     * @param tableName
     *           the table to remove from
     * @param keys
@@ -469,10 +498,10 @@ public class HBaseFacade {
    /**
     * Scans an entire table, returning the values from the given column family and field for each
     * row.
-    * 
+    *
     * TODO - maybe update to accept multiple column families and fields and return a Map<String,
     * Map<String, Map<String, byte[]>>>
-    * 
+    *
     * @param tableName
     *           the table to scan
     * @param columnFamily
@@ -490,10 +519,10 @@ public class HBaseFacade {
    /**
     * Scans an entire table, returning the values from the given column family and field for each
     * row.
-    * 
+    *
     * TODO - maybe update to accept multiple column families and fields and return a Map<String,
     * Map<String, Map<String, byte[]>>>
-    * 
+    *
     * @param tableName
     *           the table to scan
     * @param numEntries
@@ -581,7 +610,7 @@ public class HBaseFacade {
 
    /**
     * Returns a set of all unique keys for a given table.
-    * 
+    *
     * @param tableName
     *           the table to return the keys for
     * @return
@@ -654,14 +683,14 @@ public class HBaseFacade {
    /**
     * Returns true if the argument is null or is "empty", which is determined based on the type of
     * the argument.
-    * 
+    *
     * @param o
     * @return
     */
    private boolean isEmpty(Object o) {
       if (o == null) {
          return true;
-      } else if (o instanceof String && "".equals((String) o)) {
+      } else if (o instanceof String && "".equals(o)) {
          return true;
       } else if (o instanceof List<?> && ((List<?>) o).size() < 1) {
          return true;

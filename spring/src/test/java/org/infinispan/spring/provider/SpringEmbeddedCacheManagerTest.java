@@ -154,10 +154,10 @@ public class SpringEmbeddedCacheManagerTest {
     * @throws IOException
     */
    @Test
-   public final void stopShouldStopTheNativeEmbeddedCacheManager() throws Exception {
+   public final void stopShouldStopTheNativeEmbeddedCacheManager() {
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache(); // Implicitly starts EmbeddedCacheManager
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
                   cm);
@@ -178,11 +178,10 @@ public class SpringEmbeddedCacheManagerTest {
     * @throws IOException
     */
    @Test
-   public final void getNativeCacheShouldReturnTheEmbeddedCacheManagerSuppliedAtConstructionTime()
-         throws Exception {
+   public final void getNativeCacheShouldReturnTheEmbeddedCacheManagerSuppliedAtConstructionTime() {
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
                   cm);
 

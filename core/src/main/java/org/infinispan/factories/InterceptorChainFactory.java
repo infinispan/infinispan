@@ -25,16 +25,18 @@ package org.infinispan.factories;
 
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.AbstractLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -117,7 +119,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // the state transfer lock ensures that the cache member list is up-to-date
       // so it's necessary even if state transfer is disabled
       if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())
-         interceptorChain.appendInterceptor(createInterceptor(new StateTransferLockInterceptor(), StateTransferLockInterceptor.class), false);
+         interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
 
       // load the tx interceptor
       if (configuration.transaction().transactionMode().isTransactional())
@@ -240,9 +242,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    private boolean hasAsyncStore() {
-      List<AbstractLoaderConfiguration> loaderConfigs = configuration.loaders().cacheLoaders();
-      for (AbstractLoaderConfiguration loaderConfig : loaderConfigs) {
-         if (loaderConfig.async().enabled())
+      List<LoaderConfiguration> loaderConfigs = configuration.loaders().cacheLoaders();
+      for (LoaderConfiguration loaderConfig : loaderConfigs) {
+         if (loaderConfig instanceof StoreConfiguration && ((StoreConfiguration)loaderConfig).async().enabled())
             return true;
       }
       return false;

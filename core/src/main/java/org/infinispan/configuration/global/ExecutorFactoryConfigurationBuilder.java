@@ -57,7 +57,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
     *
     * @param key   property key
     * @param value property value
-    * @return previous value if exists, null otherwise
+    * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder addProperty(String key, String value) {
       this.properties.put(key, value);

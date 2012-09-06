@@ -242,7 +242,8 @@ public class KeyTransformationHandler {
     * @return a KeyTransformationHandler instance
     */
    public static KeyTransformationHandler getInstance(AdvancedCache<?, ?> cache) {
-      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       return queryInterceptor.getKeyTransformationHandler();
    }
+
 }

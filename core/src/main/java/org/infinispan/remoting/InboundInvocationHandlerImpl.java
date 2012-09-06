@@ -22,10 +22,7 @@
  */
 package org.infinispan.remoting;
 
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.CacheViewControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -34,13 +31,12 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.NamedCacheNotFoundException;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,47 +48,23 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
-   GlobalComponentRegistry gcr;
+   private GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
-   private CacheViewsManager cacheViewsManager;
-
-   /**
-    * How to handle an invocation based on the join status of a given cache *
-    */
-   private enum JoinHandle {
-      OK, IGNORE
-   }
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, Transport transport,
-                      GlobalConfiguration globalConfiguration, CacheViewsManager cacheViewsManager) {
+                      GlobalConfiguration globalConfiguration) {
       this.gcr = gcr;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
-      this.cacheViewsManager = cacheViewsManager;
-   }
-
-   private boolean hasJoinStarted(final ComponentRegistry componentRegistry) throws InterruptedException {
-      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
-      return stateTransferManager == null || stateTransferManager.hasJoinStarted();
    }
 
    @Override
    public Response handle(final CacheRpcCommand cmd, Address origin) throws Throwable {
       cmd.setOrigin(origin);
-
-      // TODO Support global commands separately
-      if (cmd instanceof CacheViewControlCommand) {
-         ((CacheViewControlCommand) cmd).init(cacheViewsManager);
-         try {
-            return SuccessfulResponse.create(cmd.perform(null));
-         } catch (Exception e) {
-            return new ExceptionResponse(e);
-         }
-      }
 
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
@@ -107,7 +79,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
       }
 
-      return handleWithRetry(cmd, cr);
+      return handleWithWaitForBlocks(cmd, cr);
    }
 
 
@@ -129,6 +101,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private Response handleWithWaitForBlocks(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
+      StateTransferManager stm = cr.getStateTransferManager();
+      // We must have completed the join before handling commands
+      // (even if we didn't complete the initial state transfer)
+      if (!stm.isJoinComplete())
+         return null;
+
       Response resp = handleInternal(cmd, cr);
 
       // A null response is valid and OK ...
@@ -140,22 +118,5 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return resp;
    }
 
-   private Response handleWithRetry(final CacheRpcCommand cmd, final ComponentRegistry componentRegistry) throws Throwable {
-      // RehashControlCommands are the mechanism used for joining the cluster,
-      // so they don't need to wait until the cache starts up.
-      boolean isStateTransferCommand = cmd instanceof StateTransferControlCommand;
-      if (!isStateTransferCommand) {
-         // For normal commands, reject them if we didn't start joining yet
-         if (!hasJoinStarted(componentRegistry)) {
-            log.cacheCanNotHandleInvocations(cmd.getCacheName());
-            return new ExceptionResponse(new NamedCacheNotFoundException(cmd.getCacheName(),
-                  "Cache has not been started on node " + transport.getAddress()));
-         }
-         // if we did start joining, the StateTransferLockInterceptor will make it wait until the state transfer is complete
-         // TODO There is a small window between starting the join and blocking the transactions, we need to eliminate it
-         //waitForStart(cmd.getComponentRegistry());
-      }
-      return handleWithWaitForBlocks(cmd, componentRegistry);
-   }
 }
 

@@ -39,6 +39,7 @@ import static junit.framework.Assert.assertEquals;
 @Test(groups = "functional", testName = "jdbc.stringbased.NonStringKeyStateTransferTest")
 public class NonStringKeyStateTransferTest extends AbstractCacheTest {
 
+   @Test (enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
    public void testReplicatedStateTransfer() {
       EmbeddedCacheManager cm1 = null, cm2 = null;
       try {

@@ -24,23 +24,16 @@ package org.infinispan.lock;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.HashSet;
 
 import static org.testng.Assert.assertNull;
 
@@ -80,8 +73,8 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       InterceptorChain ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
       ic.addInterceptorBefore(interceptor, DistributionInterceptor.class);
 
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       if (mods) {

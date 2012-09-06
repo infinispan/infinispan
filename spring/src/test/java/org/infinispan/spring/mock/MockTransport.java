@@ -43,16 +43,6 @@ import java.util.concurrent.ExecutorService;
 public final class MockTransport implements Transport {
 
    @Override
-   public void setConfiguration(final GlobalConfiguration gc) {
-   }
-
-   @Override
-   public void initialize(final StreamingMarshaller marshaller,
-            final ExecutorService asyncExecutor, final InboundInvocationHandler handler,
-            final CacheManagerNotifier notifier) {
-   }
-
-   @Override
    public Map<Address, Response> invokeRemotely(final Collection<Address> recipients,
             final ReplicableCommand rpcCommand, final ResponseMode mode, final long timeout,
             final boolean usePriorityQueue, final ResponseFilter responseFilter) throws Exception {

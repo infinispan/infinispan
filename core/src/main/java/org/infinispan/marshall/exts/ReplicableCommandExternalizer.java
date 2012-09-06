@@ -25,6 +25,7 @@ package org.infinispan.marshall.exts;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -41,6 +42,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -70,7 +72,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       writeCommandParameters(output, command);
    }
 
-   protected static void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
+   protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
 
@@ -84,6 +86,10 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
          } else {
             output.writeObject(arg);
          }
+      }
+
+      if (command instanceof TopologyAffectedCommand) {
+         output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }
    }
 
@@ -105,7 +111,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       byte type = input.readByte();
       short methodId = input.readShort();
       Object[] args = readParameters(input);
-      return cmdFactory.fromStream((byte) methodId, args, type);
+      ReplicableCommand replicableCommand = cmdFactory.fromStream((byte) methodId, args, type);
+      if (replicableCommand instanceof TopologyAffectedCommand) {
+         int topologyId = input.readInt();
+         ((TopologyAffectedCommand) replicableCommand).setTopologyId(topologyId);
+      }
+      return replicableCommand;
    }
 
    protected Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
@@ -133,7 +144,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
        Set<Class<? extends ReplicableCommand>> coreCommands = Util.<Class<? extends ReplicableCommand>>asSet(
-            DistributedExecuteCommand.class, GetKeyValueCommand.class,
+            CacheTopologyControlCommand.class, DistributedExecuteCommand.class, GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,

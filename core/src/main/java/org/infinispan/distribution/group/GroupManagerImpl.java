@@ -36,7 +36,7 @@ public class GroupManagerImpl implements GroupManager {
             if (!String.class.isAssignableFrom(method.getReturnType()))
                 throw new IllegalArgumentException(Util.formatString("@Group method %s must return java.lang.String", method));
             if (method.getParameterTypes().length > 0)
-                throw new IllegalArgumentException(Util.formatString("@Group method %s must jave zero arguments", method));
+                throw new IllegalArgumentException(Util.formatString("@Group method %s must have zero arguments", method));
             this.method = method;
         }
 

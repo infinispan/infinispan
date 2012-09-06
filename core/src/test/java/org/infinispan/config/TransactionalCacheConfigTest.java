@@ -125,26 +125,26 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       assert c.isTransactionalCache();
    }
 
-   public void testInvocationBatchingAndInducedTm() throws Exception {
+   public void testInvocationBatchingAndInducedTm() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
       assert c.isTransactionalCache();
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(c)){
          @Override
-         public void call() throws Exception {
+         public void call() {
             assert cm.getCache().getAdvancedCache().getTransactionManager() != null;
          }
       });
    }
 
-   public void testOverride() throws Exception {
+   public void testOverride() {
       final Configuration c = new Configuration();
       c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
 
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.defineConfiguration("transactional", c);
             Cache cache = cm.getCache("transactional");
             assert cache.getConfiguration().isTransactionalCache();
@@ -152,7 +152,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       });
    }
 
-   public void testBatchingAndTransactionalCache() throws Exception {
+   public void testBatchingAndTransactionalCache() {
       final Configuration c = new Configuration();
       c.fluent().invocationBatching();
 
@@ -161,7 +161,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
          @Override
-         public void call() throws Exception {
+         public void call() {
             assert !cm.getCache().getConfiguration().isTransactionalCache();
 
             cm.defineConfiguration("a", c);
@@ -173,7 +173,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       });
    }
 
-   public void testBatchingAndTransactionalCache2() throws Exception {
+   public void testBatchingAndTransactionalCache2() {
       final Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
 
@@ -182,7 +182,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
       withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
          @Override
-         public void call() throws Exception {
+         public void call() {
             assert !cm.getCache().getConfiguration().isTransactionalCache();
 
             cm.defineConfiguration("a", c);

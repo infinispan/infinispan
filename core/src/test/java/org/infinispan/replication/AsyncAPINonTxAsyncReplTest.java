@@ -26,7 +26,7 @@ package org.infinispan.replication;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-@Test (groups = "functional")
+@Test (groups = "functional", testName = "replication.AsyncAPINonTxAsyncReplTest")
 public class AsyncAPINonTxAsyncReplTest extends AsyncAPINonTxSyncReplTest {
 
    @Override

@@ -32,12 +32,11 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -45,7 +44,6 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
@@ -53,13 +51,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The default distribution manager implementation
@@ -69,6 +61,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @author Bela Ban
  * @author Dan Berindei <dan@infinispan.org>
+ * @author anistor@redhat.com
  * @since 4.0
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
@@ -80,10 +73,8 @@ public class DistributionManagerImpl implements DistributionManager {
    private Configuration configuration;
    private RpcManager rpcManager;
    private CommandsFactory cf;
-   private CacheNotifier cacheNotifier;
    private StateTransferManager stateTransferManager;
 
-   private volatile ConsistentHash consistentHash;
    private GlobalConfiguration globalCfg;
 
    /**
@@ -93,12 +84,11 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf, CacheNotifier cacheNotifier,
+   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
                     StateTransferManager stateTransferManager, GlobalConfiguration globalCfg) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.cf = cf;
-      this.cacheNotifier = cacheNotifier;
       this.stateTransferManager = stateTransferManager;
       this.globalCfg = globalCfg;
    }
@@ -107,12 +97,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Start(priority = 20)
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
-      consistentHash = ConsistentHashHelper.createConsistentHash(configuration,
-            globalCfg.transport().hasTopologyInfo(), Collections.singleton(rpcManager.getAddress()));
-   }
-
-   private int getReplCount() {
-      return configuration.clustering().hash().numOwners();
    }
 
    private Address getAddress() {
@@ -127,8 +111,10 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public DataLocality getLocality(Object key) {
-      boolean local = getConsistentHash().isKeyLocalToAddress(getAddress(), key, getReplCount());
-      if (isRehashInProgress()) {
+      boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
+      boolean local = stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+
+      if (transferInProgress) {
          if (local) {
             return DataLocality.LOCAL_UNCERTAIN;
          } else {
@@ -145,22 +131,17 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public List<Address> locate(Object key) {
-      return getConsistentHash().locate(key, getReplCount());
+      return getConsistentHash().locateOwners(key);
    }
 
    @Override
    public Address getPrimaryLocation(Object key) {
-      return getConsistentHash().primaryLocation(key);
+      return getConsistentHash().locatePrimaryOwner(key);
    }
 
    @Override
-   public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
-      return locateAll(keys, getReplCount());
-   }
-
-   @Override
-   public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
-      return getConsistentHash().locateAll(keys, numOwners);
+   public Set<Address> locateAll(Collection<Object> keys) {
+      return getConsistentHash().locateAllOwners(keys);
    }
 
    @Override
@@ -174,7 +155,7 @@ public class DistributionManagerImpl implements DistributionManager {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
 
-      List<Address> targets = locate(key);
+      List<Address> targets = new ArrayList<Address>(getReadConsistentHash().locateOwners(key));
       // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
       targets.retainAll(rpcManager.getTransport().getMembers());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, getAddress());
@@ -195,26 +176,23 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public ConsistentHash getConsistentHash() {
-      return consistentHash;
+      return getWriteConsistentHash();
    }
 
-   @Override
-   public ConsistentHash setConsistentHash(ConsistentHash newCH) {
-      if (trace) log.tracef("Installing new consistent hash %s", newCH);
-      ConsistentHash oldCH = consistentHash;
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
-      this.consistentHash = newCH;
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
-      return oldCH;
+   public ConsistentHash getReadConsistentHash() {
+      return stateTransferManager.getCacheTopology().getReadConsistentHash();
    }
 
+   public ConsistentHash getWriteConsistentHash() {
+      return stateTransferManager.getCacheTopology().getWriteConsistentHash();
+   }
 
    // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
    @Override
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
-      return stateTransferManager.isLocationInDoubt(key);
+      return stateTransferManager.isStateTransferInProgressForKey(key);
    }
 
    /**
@@ -238,8 +216,7 @@ public class DistributionManagerImpl implements DistributionManager {
          return Collections.emptyList();
       }
 
-      Set<Address> an = new HashSet<Address>();
-      for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
+      Set<Address> an = locateAll(affectedKeys);
       return Immutables.immutableListConvert(an);
    }
 
@@ -255,10 +232,5 @@ public class DistributionManagerImpl implements DistributionManager {
       List<String> l = new LinkedList<String>();
       for (Address a : locate(key)) l.add(a.toString());
       return l;
-   }
-
-   @Override
-   public String toString() {
-      return "DistributionManagerImpl[consistentHash=" + consistentHash + "]";
    }
 }

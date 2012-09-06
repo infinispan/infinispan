@@ -67,6 +67,14 @@ public class DummyTxTest extends SingleCacheManagerTest {
    }
 
    public void testConcurrentRemove() throws Exception {
+      runConcurrentRemove(false);
+   }
+
+   public void testConcurrentConditionalRemove() throws Exception {
+      runConcurrentRemove(true);
+   }
+
+   private void runConcurrentRemove(final boolean useConditionalRemove) throws Exception {
       cache.put("k1", "v1");
 
       // multiple threads will try to remove "k1" and commit.
@@ -88,7 +96,14 @@ public class DummyTxTest extends SingleCacheManagerTest {
 
                   tm().begin();
                   try {
-                     boolean success = cache.remove("k1", "v1");
+                     boolean success;
+                     if (useConditionalRemove) {
+                        success = cache.remove("k1", "v1");
+                     } else {
+                        success = cache.remove("k1") != null;
+                     }
+
+                     log.trace("Remove call success: " + success);
                      TestingUtil.sleepRandom(200);
                      tm().commit();
 

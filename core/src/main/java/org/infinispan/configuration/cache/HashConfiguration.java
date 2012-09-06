@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -28,28 +29,36 @@ import org.infinispan.distribution.ch.ConsistentHash;
  */
 public class HashConfiguration {
 
-   private final ConsistentHash consistentHash;
+   private final ConsistentHashFactory consistentHashFactory;
    private final Hash hash;
    private final int numOwners;
-   private final int numVirtualNodes;
+   private final int numSegments;
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
 
-   HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
+   HashConfiguration(ConsistentHashFactory consistentHashFactory, Hash hash, int numOwners, int numSegments,
                      GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
-      this.consistentHash = consistentHash;
+      this.consistentHashFactory = consistentHashFactory;
       this.hash = hash;
       this.numOwners = numOwners;
-      this.numVirtualNodes = numVirtualNodes;
+      this.numSegments = numSegments;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
    }
 
    /**
-    * The consistent hash in use.
+    * @deprecated Since 5.2, replaced by {@link #consistentHashFactory()}.
     */
+   @Deprecated
    public ConsistentHash consistentHash() {
-      return consistentHash;
+      return null;
+   }
+
+   /**
+    * The consistent hash factory in use.
+    */
+   public ConsistentHashFactory consistentHashFactory() {
+       return consistentHashFactory;
    }
 
    /**
@@ -69,22 +78,25 @@ public class HashConfiguration {
    }
 
    /**
-    * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
-    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
-    * </p>
-    * 
-    * <p>
-    * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
-    * must be used if you wish to take advnatage of virtual nodes.
-    * </p>
-    * 
-    * <p>
-    * A default of 1 is used.
-    * </p>
+    * @deprecated No longer used since 5.2, replaced by {@link #numSegments()} (which works like a
+    *    {@code numVirtualNodes} value for the entire cluster).
     */
+   @Deprecated
    public int numVirtualNodes() {
-      return numVirtualNodes;
+      return 1;
+   }
+
+   /**
+    * Controls the total number of hash space segments (per cluster).
+    *
+    * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own
+    * (or primary-own) one or more full segments, but not a fraction of a segment. As such, larger
+    * {@code numSegments} values will mean a more even distribution of keys between nodes.
+    * <p>On the other hand, the memory/bandwidth usage of the new consistent hash grows linearly with
+    * {@code numSegments}. So we recommend keeping {@code numSegments <= 10 * clusterSize}.
+    */
+   public int numSegments() {
+      return numSegments;
    }
 
    /**
@@ -124,10 +136,10 @@ public class HashConfiguration {
    @Override
    public String toString() {
       return "HashConfiguration{" +
-            "consistentHash=" + consistentHash +
+            "consistentHashFactory=" + consistentHashFactory +
             ", hash=" + hash +
             ", numOwners=" + numOwners +
-            ", numVirtualNodes=" + numVirtualNodes +
+            ", numSegments=" + numSegments +
             ", groupsConfiguration=" + groupsConfiguration +
             ", stateTransferConfiguration=" + stateTransferConfiguration +
             '}';
@@ -141,8 +153,8 @@ public class HashConfiguration {
       HashConfiguration that = (HashConfiguration) o;
 
       if (numOwners != that.numOwners) return false;
-      if (numVirtualNodes != that.numVirtualNodes) return false;
-      if (consistentHash != null ? !consistentHash.equals(that.consistentHash) : that.consistentHash != null)
+      if (numSegments != that.numSegments) return false;
+      if (consistentHashFactory != null ? !consistentHashFactory.equals(that.consistentHashFactory) : that.consistentHashFactory != null)
          return false;
       if (groupsConfiguration != null ? !groupsConfiguration.equals(that.groupsConfiguration) : that.groupsConfiguration != null)
          return false;
@@ -156,10 +168,10 @@ public class HashConfiguration {
 
    @Override
    public int hashCode() {
-      int result = consistentHash != null ? consistentHash.hashCode() : 0;
+      int result = consistentHashFactory != null ? consistentHashFactory.hashCode() : 0;
       result = 31 * result + (hash != null ? hash.hashCode() : 0);
       result = 31 * result + numOwners;
-      result = 31 * result + numVirtualNodes;
+      result = 31 * result + numSegments;
       result = 31 * result + (groupsConfiguration != null ? groupsConfiguration.hashCode() : 0);
       result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
       return result;
