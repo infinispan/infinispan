@@ -282,8 +282,10 @@ public class StateProviderImpl implements StateProvider {
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
          if (transferTasks != null) {
-            for (OutboundTransferTask transferTask : transferTasks) {
-               transferTask.cancelSegments(segments);
+            // get an array copy of the collection to avoid ConcurrentModificationException if the entire task gets cancelled and removeTransfer(transferTask) is called
+            OutboundTransferTask[] tasks = transferTasks.toArray(new OutboundTransferTask[transferTasks.size()]);
+            for (OutboundTransferTask transferTask : tasks) {
+               transferTask.cancelSegments(segments); //this can potentially result in a removeTransfer(transferTask)
             }
          }
       }
