@@ -1,6 +1,6 @@
 /* 
  * JBoss, Home of Professional Open Source 
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tag. All rights reserved. 
  * See the copyright.txt in the distribution for a 
  * full listing of individual contributors.
@@ -16,19 +16,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA  02110-1301, USA.
  */
-package org.infinispan.distexec.mapreduce.spi;
+package org.infinispan.cdi;
 
-import org.infinispan.Cache;
-import org.infinispan.distexec.mapreduce.Mapper;
-import org.infinispan.distexec.mapreduce.Reducer;
+import javax.enterprise.inject.Default;
+import javax.enterprise.util.AnnotationLiteral;
 
-public interface MapReduceTaskLifecycle {
+/**
+ * Annotation literal for {@link Input}
+ *
+ * @author Vladimir Blagojevic
+ * @since 5.2
+ */
+@SuppressWarnings("all")
+public class InputLiteral extends AnnotationLiteral<Input> implements Input {
 
-   <KIn, VIn, KOut, VOut> void onPreExecute(Mapper <KIn, VIn, KOut, VOut> mapper, Cache<KIn, VIn> inputCache);
 
-   <KIn, VIn, KOut, VOut> void onPostExecute(Mapper <KIn, VIn, KOut, VOut> mapper);
-   
-   <KOut, VOut> void onPreExecute(Reducer <KOut, VOut> reducer);
+    /** The serialVersionUID */
+   private static final long serialVersionUID = -6499058493830063773L;
 
-   <KOut, VOut> void onPostExecute(Reducer <KOut, VOut> reducer);
 }
