@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author esalter
  */
-@Test(testName = "org.infinispan.RehashStressTest", enabled = false)
+@Test(testName = "org.infinispan.RehashStressTest", enabled = true)
 public class RehashStressTest extends AbstractInfinispanTest {
 
     @AfterMethod(alwaysRun = true)
@@ -66,14 +66,19 @@ public class RehashStressTest extends AbstractInfinispanTest {
     private static final int KEY_RANGE = 10;
     private static final int TEST_THREADS = 40;
     private static final int TEST_LOOPS = 30000;
+    private static final String CACHE_NAME = "testCache";
+    
     public static final int MAX_INTERVAL_BETWEEN_TASK = 1000;
+    
+    
+    
     LinkedList<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
     Random random = new Random();
 
     public void testRehash() throws IOException, InterruptedException {
         EmbeddedCacheManager cacheManager = buildCacheManager();
         cacheManagers.addLast(cacheManager);
-        cacheManager.getCache("serviceGroup");
+        cacheManager.getCache(CACHE_NAME);
 
 
         new AddNodeTask().run();
@@ -115,6 +120,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
 
     static class TestKey implements Serializable {
 
+        private static final long serialVersionUID = 1L;
         int key;
 
         @Group
@@ -163,7 +169,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
     }
 
     private EmbeddedCacheManager buildCacheManager() throws IOException {
-        EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("erm-cluster.xml");
+        EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("configs/rehash-test-cluster.xml");
         return cacheManager;
     }
 
@@ -184,7 +190,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
 
                 log.info("Submitting a task " + key);
                 EmbeddedCacheManager cacheManager = cacheManagers.get(random.nextInt(cacheManagers.size()));
-                DistributedExecutorService ispnExecutor = new DefaultExecutorService(cacheManager.getCache("serviceGroup"));
+                DistributedExecutorService ispnExecutor = new DefaultExecutorService(cacheManager.getCache(CACHE_NAME));
 
                 Future<String> z = ispnExecutor.submit(new TransactionTask(), key);
                 log.info("Task result=" + z.get());
@@ -197,12 +203,17 @@ public class RehashStressTest extends AbstractInfinispanTest {
     static class TransactionTask
             implements DistributedCallable<TestKey, Integer, String>, Serializable {
 
-        private Cache cache;
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+        
+        private Cache<TestKey, Integer> cache;
         private TransactionManager tm;
         private TestKey key;
 
         @Override
-        public void setEnvironment(Cache cache, Set inputKeys) {
+        public void setEnvironment(Cache<TestKey, Integer> cache, Set<TestKey> inputKeys) {
             log.info("Setting env..." + cache.getAdvancedCache().getCacheManager().getAddress() + ", keys: " + inputKeys);
             this.cache = cache;
             this.key = (TestKey) inputKeys.iterator().next();
@@ -238,7 +249,13 @@ public class RehashStressTest extends AbstractInfinispanTest {
             log.info( "Locking " + key);
             cache.getAdvancedCache().lock(key);
 
-            return "locked " + key;
+            Integer value = cache.get(key);
+            if( value == null ) {
+                value = new Integer(0);
+            }
+            
+            cache.put(key, ++value);            
+            return value.toString();
         }
     }
 
@@ -269,7 +286,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
 
             log.info("Starting a new cache manager");
                 EmbeddedCacheManager cacheManager = buildCacheManager();
-                cacheManager.getCache("serviceGroup");
+                cacheManager.getCache(CACHE_NAME);
                 cacheManagers.addLast(cacheManager);
 
             } catch (Exception e) {

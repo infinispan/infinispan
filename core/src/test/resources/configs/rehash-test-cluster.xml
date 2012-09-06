@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+      xmlns="urn:infinispan:config:5.1">
+
+  <global>
+    <!--
+      use chn-cluster for changbai, ana-cluster for annapurna
+    -->
+    <transport
+      transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport"
+      clusterName="rehash-test-cluster"> 
+      <properties>
+        <property name="configurationFile" value="stacks/tcp.xml" />
+      </properties>
+    </transport>
+  </global>
+
+  <default>
+    <locking isolationLevel="READ_COMMITTED" lockAcquisitionTimeout="5000" useLockStriping="false" concurrencyLevel="512"/>
+    <!--
+      This element specifies that the cache is clustered. modes supported:
+      distribution (d), replication (r) or invalidation (i). default is
+      local, non-clustered mode
+    -->
+    <clustering mode="d">
+      <hash numOwners="2">
+          <groups enabled="true"/>
+      </hash>
+      <sync replTimeout="15000" />
+    </clustering>
+
+   <transaction transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
+  </default>
+</infinispan>
