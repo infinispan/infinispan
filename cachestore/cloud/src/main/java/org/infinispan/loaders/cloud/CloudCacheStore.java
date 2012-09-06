@@ -60,6 +60,7 @@ import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.BlobStoreContextFactory;
 import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.blobstore.domain.BlobBuilder;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.domain.Location;
@@ -342,7 +343,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    @Override
    protected void updateBucket(Bucket bucket) throws CacheLoaderException {
-      Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketIdAsString()));
+      BlobBuilder builder = blobStore.blobBuilder(encodeBucketName(bucket.getBucketIdAsString()));
+      Blob blob = builder.build();
       writeToBlob(blob, bucket);
 
       List<Future<?>> futures = asyncCommandFutures.get();
