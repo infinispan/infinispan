@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
+import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.util.logging.Log;
@@ -50,10 +51,10 @@ public final class MapReduceTaskLifecycleService {
       return service;
    }
 
-   public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
+   public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper,  Cache<KIn, VIn> inputCache) {
       try {
          for (MapReduceTaskLifecycle l : lifecycles) {
-            l.onPreExecute(mapper);
+            l.onPreExecute(mapper, inputCache);
          }
       } catch (ServiceConfigurationError serviceError) {
          log.errorReadingProperties(new IOException(

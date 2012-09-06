@@ -44,6 +44,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
+   public static String CACHE_NAME = "DistributedExecutorTest-DIST_SYNC";
+   
    public DistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_TEST;
    }
@@ -55,7 +57,7 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    protected String cacheName() {
-      return "DistributedExecutorTest-DIST_SYNC";
+      return CACHE_NAME;
    }
 
    protected CacheMode getCacheMode() {

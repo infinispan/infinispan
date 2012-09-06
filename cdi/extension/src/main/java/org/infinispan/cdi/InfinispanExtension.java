@@ -55,7 +55,9 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
 import javax.enterprise.util.AnnotationLiteral;
+import javax.enterprise.util.TypeLiteral;
 
+import org.infinispan.Cache;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.interceptor.CachePutInterceptor;
 import org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor;
@@ -204,6 +206,29 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
                                 }
                              }).create());
       }
+   }
+   
+   <K, V> void registerInputCacheCustomBean(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
+      
+      @SuppressWarnings("serial")
+      TypeLiteral<Cache<K, V>> typeLiteral = new TypeLiteral<Cache<K, V>>() {};
+      event.addBean(new BeanBuilder<Cache<K, V>>(beanManager)
+               .readFromType(beanManager.createAnnotatedType(typeLiteral.getRawType()))
+               .addType(typeLiteral.getType()).qualifiers(new InputLiteral())
+               .beanLifecycle(new ContextualLifecycle<Cache<K, V>>() {
+
+                  @Override
+                  public Cache<K, V> create(Bean<Cache<K, V>> bean,
+                           CreationalContext<Cache<K, V>> creationalContext) {
+                     return ContextInputCache.get();
+                  }
+
+                  @Override
+                  public void destroy(Bean<Cache<K, V>> bean, Cache<K, V> instance,
+                           CreationalContext<Cache<K, V>> creationalContext) {
+
+                  }
+               }).create());
    }
 
    public void registerCacheConfigurations(CacheManagerEventBridge eventBridge, Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {

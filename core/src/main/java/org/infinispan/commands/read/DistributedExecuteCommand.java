@@ -96,7 +96,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       Callable<V> callable = getCallable();
       V result = null;
       try {
-         taskLifecycleService.onPreExecute(callable);
+         taskLifecycleService.onPreExecute(callable, cache);
          if (callable instanceof DistributedCallable<?, ?, ?>) {
             DistributedCallable<Object, Object, Object> dc = (DistributedCallable<Object, Object, Object>) callable;
             dc.setEnvironment(cache, keys);
