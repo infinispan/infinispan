@@ -29,6 +29,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.Status;
@@ -65,16 +66,20 @@ public class RehashStressTest extends AbstractInfinispanTest {
     */
     private static final int KEY_RANGE = 10;
     private static final int TEST_THREADS = 40;
-    private static final int TEST_LOOPS = 30000;
+    private static final int TEST_LOOPS = 3000;
     private static final String CACHE_NAME = "testCache";
     
     public static final int MAX_INTERVAL_BETWEEN_TASK = 1000;
     
-    
-    
+            
     LinkedList<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
     Random random = new Random();
 
+    @BeforeClass(alwaysRun=true)
+    public static void beforeTest() {
+        System.setProperty("java.net.preferIPv4Stack", "true");        
+    }
+    
     public void testRehash() throws IOException, InterruptedException {
         EmbeddedCacheManager cacheManager = buildCacheManager();
         cacheManagers.addLast(cacheManager);
@@ -113,6 +118,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
         }
 
         log.info("Rehash phase is completed...");
+        
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.DAYS);
 
@@ -266,7 +272,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
             try {
                 int size = cacheManagers.size();
                 int index = random.nextInt(size);
-                EmbeddedCacheManager cacheManager = cacheManagers.remove(index); //This is not thread safe, but should be ok for this test since the main thread is the only writrer to this list.
+                EmbeddedCacheManager cacheManager = cacheManagers.remove(index); //This is not thread safe, but should be ok for this test since the main thread is the only writer to this list.
 
 
             log.info("Shutting down " + cacheManager.getAddress());
