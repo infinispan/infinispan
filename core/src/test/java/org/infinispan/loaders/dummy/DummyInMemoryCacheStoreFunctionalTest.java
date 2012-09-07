@@ -22,6 +22,7 @@
  */
 package org.infinispan.loaders.dummy;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.testng.annotations.AfterClass;
@@ -37,10 +38,11 @@ public class DummyInMemoryCacheStoreFunctionalTest extends BaseCacheStoreFunctio
 
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg()
-         .storeName(getClass().getName())
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      DummyInMemoryCacheStoreConfigurationBuilder loader = builder.loaders().addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
+      loader.storeName(getClass().getName())
          .purgeOnStartup(false)
-         .purgeSynchronously(true); // for more accurate unit testing
-      return cfg;
+         .purgeSynchronously(true);
+      return loader.create().adapt();
    }
 }
