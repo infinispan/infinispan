@@ -28,8 +28,9 @@ import java.util.Properties;
 
 import net.dataforte.cassandra.pool.PoolProperties;
 
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
@@ -37,7 +38,7 @@ import org.infinispan.util.Util;
 /**
  * Configures {@link CassandraCacheStore}.
  */
-public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
+public class CassandraCacheStoreConfig extends AbstractCacheStoreConfig {
 
    /**
     * @configRef desc="The Cassandra keyspace"
@@ -199,13 +200,12 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
       return configurationPropertiesFile;
    }
 
-   public void setConfigurationPropertiesFile(String configurationPropertiesFile)
-            throws CacheLoaderException {
+   public void setConfigurationPropertiesFile(String configurationPropertiesFile) {
       this.configurationPropertiesFile = configurationPropertiesFile;
       readConfigurationProperties();
    }
 
-   private void readConfigurationProperties() throws CacheLoaderException {
+   private void readConfigurationProperties() {
       if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
          return;
       InputStream i = FileLookupFactory.newInstance().lookupFile(configurationPropertiesFile, getClassLoader());
@@ -214,8 +214,8 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
          try {
             p.load(i);
          } catch (IOException ioe) {
-            throw new CacheLoaderException("Unable to read environment properties file "
-                     + configurationPropertiesFile, ioe);
+            throw new ConfigurationException("Unable to read environment properties file " + configurationPropertiesFile,
+                  ioe);
          } finally {
             Util.close(i);
          }
@@ -242,6 +242,13 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
    public void setAutoCreateKeyspace(boolean autoCreateKeyspace) {
       this.autoCreateKeyspace = autoCreateKeyspace;
    }
-   
-   
+
+   public void setReadConsistencyLevel(ConsistencyLevel readConsistencyLevel) {
+      this.readConsistencyLevel = readConsistencyLevel.toString();
+   }
+
+   public void setWriteConsistencyLevel(ConsistencyLevel writeConsistencyLevel) {
+      this.writeConsistencyLevel = writeConsistencyLevel.toString();
+   }
+
 }
