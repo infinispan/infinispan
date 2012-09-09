@@ -51,7 +51,8 @@ public class TreeCacheFactory {
 
       // If invocationBatching is not enabled, throw a new configuration exception.
       if (!cache.getCacheConfiguration().invocationBatching().enabled()) {
-         throw new ConfigurationException("invocationBatching is not enabled. Make sure this is enabled by" +
+         throw new ConfigurationException("invocationBatching is not enabled for cache '" +
+               cache.getName() + "'. Make sure this is enabled by" +
                " calling configurationBuilder.invocationBatching().enable()");
       }
 
