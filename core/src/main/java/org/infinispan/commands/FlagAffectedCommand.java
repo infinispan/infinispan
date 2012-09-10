@@ -50,6 +50,12 @@ public interface FlagAffectedCommand extends TopologyAffectedCommand {
    void setFlags(Set<Flag> flags);
 
    /**
+    * Use it to store the flags from the InvocationContext into the Command before remoting the Command.
+    * @param flags
+    */
+   void setFlags(Flag... flags);
+
+   /**
     * Check whether a particular flag is present in the command
     *
     * @param flag to lookup in the command

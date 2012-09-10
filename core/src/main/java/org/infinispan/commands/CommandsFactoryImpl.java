@@ -177,23 +177,23 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public InvalidateCommand buildInvalidateCommand(Object... keys) {
-      return new InvalidateCommand(notifier, keys);
+   public InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys) {
+      return new InvalidateCommand(notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys) {
-      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys) {
-      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
+      return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
@@ -249,8 +249,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public EvictCommand buildEvictCommand(Object key) {
-      return new EvictCommand(key, notifier);
+   public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
+      return new EvictCommand(key, notifier, flags);
    }
 
    @Override

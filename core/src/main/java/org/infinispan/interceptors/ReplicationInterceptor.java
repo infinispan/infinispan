@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -173,8 +175,8 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
          if (returnValue == null && ctx.isOriginLocal()) {
-            if (needsRemoteGet(ctx, command.getKey())) {
-               returnValue = remoteGet(ctx, command.getKey(), false);
+            if (needsRemoteGet(ctx, command)) {
+               returnValue = remoteGet(ctx, command, false);
             }
          }
          return returnValue;
@@ -184,10 +186,11 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private boolean needsRemoteGet(InvocationContext ctx, Object key) {
+   private boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
+      Object key = command.getKey();
       final CacheEntry entry;
-      return !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
-            && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)   //todo [anistor] do we need this? it should normally be used only in distributed mode, never in replicated mode
+      return !command.hasFlag(Flag.CACHE_MODE_LOCAL)
+            && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)   //todo [anistor] do we need this? it should normally be used only in distributed mode, never in replicated mode
             && !stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)
             && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());
    }
@@ -202,11 +205,12 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
     *
     *
     * @param ctx invocation context
-    * @param key key to retrieve
+    * @param command
     * @return value of a remote get, or null
     * @throws Throwable if there are problems
     */
-   private Object remoteGet(InvocationContext ctx, Object key, boolean isWrite) throws Throwable {
+   private Object remoteGet(InvocationContext ctx, AbstractDataCommand command, boolean isWrite) throws Throwable {
+      Object key = command.getKey();
       if (trace) {
          log.tracef("Key %s is not yet available on %s, so we may need to look elsewhere", key, rpcManager.getAddress());
       }
@@ -216,7 +220,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
       }
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock);
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command.getFlags());
 
       if (acquireRemoteLock) {
          ((TxInvocationContext) ctx).addAffectedKey(key);
@@ -225,9 +229,9 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return ice != null ? ice.getValue() : null;
    }
 
-   private InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) {
+   private InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, Set<Flag> flags) {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, flags, acquireRemoteLock, gtx);
 
       List<Address> targets = new ArrayList<Address>(stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key));
       // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
@@ -280,23 +284,16 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    private Object handleCrudMethod(final InvocationContext ctx, final WriteCommand command) throws Throwable {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       final Object returnValue = invokeNextInterceptor(ctx, command);
-      populateCommandFlags(command, ctx);
-      if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
+      if (!isLocalModeForced(command) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
          if (ctx.isUseFutureReturnType()) {
             NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
             rpcManager.broadcastRpcCommandInFuture(command, future);
             return future;
          } else {
-            rpcManager.broadcastRpcCommand(command, isSynchronous(ctx));
+            rpcManager.broadcastRpcCommand(command, isSynchronous(command));
          }
       }
       return returnValue;
    }
 
-   /**
-    * Makes sure the context Flags are bundled in the command, so that they are re-read remotely
-    */
-   private void populateCommandFlags(WriteCommand command, InvocationContext ctx) {
-      command.setFlags(ctx.getFlags());
-   }
 }

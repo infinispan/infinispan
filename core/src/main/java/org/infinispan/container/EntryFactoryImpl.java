@@ -25,6 +25,7 @@ package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
@@ -83,7 +84,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          if (useRepeatableRead) {
-            MVCCEntry mvccEntry = null;
+            MVCCEntry mvccEntry;
             if (cacheEntry == null) {
                mvccEntry = createWrappedEntry(key, null, null, false, false, -1);
             } else {
@@ -144,7 +145,8 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry, boolean undeleteIfNeeded) throws InterruptedException {
+   public final MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
       if (cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
@@ -154,7 +156,7 @@ public class EntryFactoryImpl implements EntryFactory {
       } else {
          InternalCacheEntry ice = (icEntry == null ? getFromContainer(key) : icEntry);
          // A putForExternalRead is putIfAbsent, so if key present, do nothing
-         if (ice != null && ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ))
+         if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ))
             return null;
 
          mvccEntry = ice != null ?

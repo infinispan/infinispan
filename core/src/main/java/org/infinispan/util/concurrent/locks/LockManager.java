@@ -141,15 +141,13 @@ public interface LockManager {
     * @throws org.infinispan.util.concurrent.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
     */
-   boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
-
-   boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException, TimeoutException;
+   boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException;
 
    /**
-    * Same as {@link #acquireLock(org.infinispan.context.InvocationContext, Object)}, but doesn't check whether the
+    * Same as {@link #acquireLock(org.infinispan.context.InvocationContext, Object, long, boolean)}, but doesn't check whether the
     * lock is already acquired by the caller. Useful in the case of transactions that use {@link OwnableReentrantLock}s
     * ,as these locks already perform this check internally.
     */
-   boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+   boolean acquireLockNoCheck(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException;
 
 }

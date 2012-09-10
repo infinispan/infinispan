@@ -27,7 +27,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionalInvocationContextFlagsOverride;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.RemoteTransaction;
@@ -36,8 +35,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -146,11 +147,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          transaction = txTable.createRemoteTransaction(globalTx, null);
       }
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(transaction, getOrigin());
-      TxInvocationContext ctx = ctxt;
-      if (flags != null && !flags.isEmpty()) {
-         ctx = new TransactionalInvocationContextFlagsOverride(ctxt, flags);
-      }
-      return invoker.invoke(ctx, this);
+      return invoker.invoke(ctxt, this);
    }
 
    @Override
@@ -160,7 +157,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{globalTx, unlock, keys, flags};
+      return new Object[]{globalTx, unlock, keys, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -236,6 +233,15 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    @Override
    public boolean hasFlag(Flag flag) {
       return flags != null && flags.contains(flag);
+   }
+
+   @Override
+   public void setFlags(Flag... flags) {
+      if (flags == null || flags.length == 0) return;
+      if (this.flags == null)
+         this.flags = EnumSet.copyOf(Arrays.asList(flags));
+      else
+         this.flags.addAll(Arrays.asList(flags));
    }
 
 }

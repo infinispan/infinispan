@@ -69,7 +69,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
       if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx);
+      if (command.isOnePhaseCommit()) commitContextEntries(ctx, false);
       return retval;
    }
 
@@ -84,7 +84,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       } finally {
          if (!ctx.isOriginLocal())
             ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
-         commitContextEntries(ctx);
+         commitContextEntries(ctx, false);
       }
    }
 

@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -203,7 +204,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (shouldEnlist(ctx)) {
          localTransaction = enlist((TxInvocationContext) ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         if (localModeNotForced(ctx)) shouldAddMod = true;
+         if (localModeNotForced(command)) shouldAddMod = true;
          localTxContext.setLocalTransaction(localTransaction);
       }
       Object rv;
@@ -211,7 +212,7 @@ public class TxInterceptor extends CommandInterceptor {
          rv = invokeNextInterceptor(ctx, command);
       } catch (Throwable throwable) {
          // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
-         if (ctx.isOriginLocal() && ctx.isInTxScope() && !ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+         if (ctx.isOriginLocal() && ctx.isInTxScope() && !command.hasFlag(Flag.FAIL_SILENTLY)) {
             TxInvocationContext txCtx = (TxInvocationContext) ctx;
             txCtx.getTransaction().setRollbackOnly();
          }
@@ -240,8 +241,8 @@ public class TxInterceptor extends CommandInterceptor {
       return ctx.isInTxScope() && ctx.isOriginLocal();
    }
 
-   private boolean localModeNotForced(InvocationContext icx) {
-      if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+   private boolean localModeNotForced(FlagAffectedCommand command) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (getLog().isTraceEnabled()) getLog().debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return false;
       }

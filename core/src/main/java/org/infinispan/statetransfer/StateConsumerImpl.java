@@ -31,6 +31,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -296,11 +297,11 @@ public class StateConsumerImpl implements StateConsumer {
       for (InternalCacheEntry e : cacheEntries) {
          InvocationContext ctx = icc.createInvocationContext(false, 1);
          // locking not necessary as during rehashing we block all transactions
-         ctx.setFlags(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK);
+         EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK);
          try {
             PutKeyValueCommand put = useVersionedPut ?
-                  commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), ctx.getFlags())
-                  : commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), ctx.getFlags());
+                  commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), flags)
+                  : commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), flags);
             put.setPutIfAbsent(true); //todo [anistor] this still does not solve removal cases. we need tombstones for deleted keys. we need to keep a separate set of deleted keys an use it during apply state
             interceptorChain.invoke(ctx, put);
          } catch (Exception ex) {
@@ -502,9 +503,8 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (!keysToRemove.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, keysToRemove);
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove);
             InvocationContext ctx = icc.createNonTxInvocationContext();
-            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_LOCKING);
             interceptorChain.invoke(ctx, invalidateCmd);
 
             log.debugf("Invalidated %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());

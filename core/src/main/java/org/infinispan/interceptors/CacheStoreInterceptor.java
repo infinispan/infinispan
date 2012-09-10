@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -117,14 +118,22 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    /**
     * if this is a shared cache loader and the call is of remote origin, pass up the chain
     */
+   protected boolean skip(InvocationContext ctx, FlagAffectedCommand command) {
+      return skip(ctx, command.hasFlag(SKIP_CACHE_STORE), command.hasFlag(SKIP_SHARED_CACHE_STORE));
+   }
+
    protected boolean skip(InvocationContext ctx) {
+      return skip(ctx, false, false);
+   }
+
+   private boolean skip(InvocationContext ctx, boolean skipCacheStore, boolean skipSharedCacheStore) {
       if (store == null || !enabled) return true;  // could be because the cache loader does not implement cache store, or the store is disabled
-      if ((!ctx.isOriginLocal() && loaderConfig.shared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
+      if ((!ctx.isOriginLocal() && loaderConfig.shared()) || skipCacheStore) {
          log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
       }
 
-      if (loaderConfig.shared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
+      if (loaderConfig.shared() && skipSharedCacheStore) {
          log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
       }
@@ -206,7 +215,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (!skip(ctx) && !ctx.isInTxScope() && command.isSuccessful()) {
+      if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
          if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
@@ -216,7 +225,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!skip(ctx) && !ctx.isInTxScope())
+      if (!skip(ctx, command) && !ctx.isInTxScope())
          clearCacheStore();
 
       return invokeNextInterceptor(ctx, command);
@@ -230,7 +239,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -244,7 +253,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -258,7 +267,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx) || ctx.isInTxScope()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope()) return returnValue;
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {

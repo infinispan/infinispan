@@ -23,6 +23,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -32,6 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 
 /**
@@ -49,12 +51,14 @@ public class InvalidateCommand extends RemoveCommand {
    public InvalidateCommand() {
    }
 
-   public InvalidateCommand(CacheNotifier notifier, Object... keys) {
+   public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Object... keys) {
+      super(null, null, notifier, flags);
       this.keys = keys;
       this.notifier = notifier;
    }
 
-   public InvalidateCommand(CacheNotifier notifier, Collection<Object> keys) {
+   public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
+      super(null, null, notifier, flags);
       if (keys == null || keys.isEmpty())
          this.keys = Util.EMPTY_OBJECT_ARRAY;
       else

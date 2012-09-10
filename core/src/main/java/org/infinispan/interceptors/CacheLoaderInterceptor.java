@@ -167,7 +167,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (e == null || e.isNull() || e.getValue() == null) {
          InternalCacheEntry loaded = loader.load(key);
          if (loaded != null) {
-            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false);
+            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
             recordLoadedEntry(ctx, key, mvccEntry, loaded);
             return true;
          } else {
