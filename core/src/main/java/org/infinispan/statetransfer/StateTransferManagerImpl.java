@@ -37,6 +37,7 @@ import org.infinispan.distribution.group.GroupingConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheJoinInfo;
@@ -50,6 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@MBean(objectName = "StateTransferManager", description = "Component that handles state transfer")
 public class StateTransferManagerImpl implements StateTransferManager {
 
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
