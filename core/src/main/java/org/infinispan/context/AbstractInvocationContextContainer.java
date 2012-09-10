@@ -50,12 +50,7 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin) {
       if (cacheCommand instanceof FlagAffectedCommand) {
          InvocationContext context = createRemoteInvocationContext(origin);
-         FlagAffectedCommand command = (FlagAffectedCommand) cacheCommand;
-         Set<Flag> flags = command.getFlags();
-         if (flags != null && !flags.isEmpty()) {
-            context = new InvocationContextFlagsOverride(context, flags);
-            ctxHolder.set(context);
-         }
+         ctxHolder.set(context);
          return context;
       } else {
          return this.createRemoteInvocationContext(origin);

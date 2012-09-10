@@ -35,6 +35,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -47,6 +48,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
@@ -588,18 +590,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @Override
    public void removeCache(String cacheName) {
-      RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry);
-      Transport transport = getTransport();
-      try {
-         if (transport != null) {
-            Configuration c = getConfiguration(cacheName);
-            // Use sync replication timeout
-            transport.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, c.clustering().sync().replTimeout(), false, null);
+      ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
+      if (cacheComponentRegistry != null) {
+         RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry,
+               cacheComponentRegistry.getComponent(CacheLoaderManager.class));
+         Transport transport = getTransport();
+         try {
+            if (transport != null) {
+               Configuration c = getConfiguration(cacheName);
+               // Use sync replication timeout
+               transport.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, c.clustering().sync().replTimeout(), false, null);
+            }
+            // Once sent to the cluster, remove the local cache
+            cmd.perform(null);
+         } catch (Throwable t) {
+            throw new CacheException("Error removing cache", t);
          }
-         // Once sent to the cluster, remove the local cache
-         cmd.perform(null);
-      } catch (Throwable t) {
-         throw new CacheException("Error removing cache", t);
       }
    }
 

@@ -24,7 +24,6 @@ package org.infinispan.loaders;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.REMOVE_DATA_ON_STOP;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
@@ -295,14 +294,6 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    public void stop() {
       if (loader != null) {
          try {
-            CacheStore store = getCacheStore();
-            if (store != null) {
-               InvocationContext ctx = icc.getInvocationContext(false);
-               if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
-                  log.trace("Requested removal of data on stop, so clear cache store");
-                  store.clear();
-               }
-            }
             loader.stop();
          } catch (CacheLoaderException e) {
             throw new CacheException(e);

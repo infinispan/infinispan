@@ -23,6 +23,7 @@
 package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -80,5 +81,6 @@ public interface EntryFactory {
     * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the
     * supplied InvocationContext.
     */
-   MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice, boolean undeleteIfNeeded) throws InterruptedException;
+   MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice,
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException;
 }

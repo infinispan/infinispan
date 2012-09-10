@@ -23,9 +23,9 @@
 package org.infinispan.distribution;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -75,8 +75,6 @@ public class DistributionManagerImpl implements DistributionManager {
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
 
-   private GlobalConfiguration globalCfg;
-
    /**
     * Default constructor
     */
@@ -85,12 +83,11 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
-                    StateTransferManager stateTransferManager, GlobalConfiguration globalCfg) {
+                    StateTransferManager stateTransferManager) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.cf = cf;
       this.stateTransferManager = stateTransferManager;
-      this.globalCfg = globalCfg;
    }
 
    // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
@@ -151,9 +148,9 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception {
+   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags(), acquireRemoteLock, gtx);
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
 
       List<Address> targets = new ArrayList<Address>(getReadConsistentHash().locateOwners(key));
       // if any of the recipients has left the cluster since the command was issued, just don't wait for its response

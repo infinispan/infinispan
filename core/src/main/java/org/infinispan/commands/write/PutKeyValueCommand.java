@@ -81,7 +81,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e == null && ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      if (e == null && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          successful = false;
          return null;
       }
@@ -124,7 +124,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

@@ -185,7 +185,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, flags};
+      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

@@ -100,7 +100,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

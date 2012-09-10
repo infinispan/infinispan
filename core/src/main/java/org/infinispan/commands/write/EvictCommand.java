@@ -24,8 +24,11 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -33,13 +36,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  */
 public class EvictCommand extends RemoveCommand implements LocalCommand {
 
-   public EvictCommand(Object key, CacheNotifier notifier) {
-      this.key = key;
-      this.notifier = notifier;
-   }
-
-   public void initialize(CacheNotifier notifier) {
-      this.notifier = notifier;
+   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
+      super(key, null, notifier, flags);
    }
 
    @Override
