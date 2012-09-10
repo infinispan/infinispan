@@ -20,7 +20,6 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBuilder<TransportConfiguration> {
 
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
-   public static final Class<? extends Transport> DEFAULT_TRANSPORT = JGroupsTransport.class;
+   public static final String DEFAULT_TRANSPORT = "org.infinispan.remoting.transport.jgroups.JGroupsTransport";
 
    private String clusterName = "ISPN";
    private String machineId;
@@ -193,7 +192,8 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    public TransportConfigurationBuilder defaultTransport() {
-      transport(Util.getInstance(DEFAULT_TRANSPORT));
+      Transport transport = Util.getInstance(DEFAULT_TRANSPORT, this.getGlobalConfig().getClassLoader());
+      transport(transport);
       return this;
    }
 
