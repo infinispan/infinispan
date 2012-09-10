@@ -116,9 +116,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
 
       manager(0).getCache().put("k", "v");
-      manager(0).getCache().get("k").equals("v");
-      manager(1).getCache().get("k").equals("v");
-      manager(2).getCache().get("k").equals("v");
+      assertEquals("v", cache(0).get("k"));
+      assertEquals("v", cache(1).get("k"));
+      assertEquals("v", cache(2).get("k"));
 
       log.info("Local replication test passed!");
 

@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
-@Test(testName = "container.versioning.VersionedDistStateTransferTest", groups = "functional", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(testName = "container.versioning.VersionedDistStateTransferTest", groups = "functional")
 @CleanupAfterMethod
 public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
    ConfigurationBuilder builder;
