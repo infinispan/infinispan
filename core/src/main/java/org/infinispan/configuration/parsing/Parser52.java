@@ -48,7 +48,6 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
@@ -1393,7 +1392,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       } else {
          // The transport *has* been parsed.  If we don't have a transport set, make sure we set the default.
          if (builder.transport().getTransport() == null) {
-            builder.transport().transport(Util.getInstance(TransportConfigurationBuilder.DEFAULT_TRANSPORT));
+            builder.transport().defaultTransport();
          }
       }
    }
