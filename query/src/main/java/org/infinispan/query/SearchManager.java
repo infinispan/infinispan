@@ -71,6 +71,13 @@ public interface SearchManager {
    CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes);
 
    /**
+    * The MassIndexer can be used to rebuild the Lucene indexes from
+    * the entries stored in Infinispan.
+    * @return the MassIndexer component
+    */
+   MassIndexer getMassIndexer();
+
+   /**
     * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
     * When storing keys in cache that are neither simple (String, int, ...) nor annotated with @Transformable,
     * Infinispan-Query will need to know what Transformer to use when transforming the keys to Strings. Clients
