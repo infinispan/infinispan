@@ -146,8 +146,8 @@
             We can have multiple cache loaders, which get chained
          -->
          <fileStore fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" fsyncMode="PERIODIC" fsyncInterval="2000">
-            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
+            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
          </fileStore>
       </loaders>
    </namedCache>
@@ -242,15 +242,14 @@
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
-      	<loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-                        ignoreModifications="true" purgeOnStartup="true"> 
+         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true"> 
            <properties> 
              <property name="location" value="${java.io.tmpdir}"/>
-            </properties>
+           </properties>
+           <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
-            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
        </loader>
-     </loaders>   
+     </loaders>
    </namedCache>
 
    <namedCache name="withReplicationQueue">

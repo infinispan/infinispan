@@ -52,7 +52,7 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      DefaultCacheManager manager = new DefaultCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();
       for (int i = 0; i < NUM_CACHES; i++) {
          manager.defineConfiguration("cache" + i, TestCacheManagerFactory.getDefaultConfiguration(true));
       }

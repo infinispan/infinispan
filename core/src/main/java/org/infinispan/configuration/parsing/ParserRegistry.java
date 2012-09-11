@@ -71,12 +71,15 @@ public class ParserRegistry {
 
    public ConfigurationBuilderHolder parse(InputStream is) {
       try {
-
          BufferedInputStream input = new BufferedInputStream(is);
          XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
          xmlMapper.parseDocument(holder, streamReader);
          streamReader.close();
+         // Fire all parsingComplete events if any
+         for(ParserContext parserContext : holder.getParserContexts().values()) {
+            parserContext.fireParsingComplete();
+         }
          return holder;
       } catch (ConfigurationException e) {
          throw e;
