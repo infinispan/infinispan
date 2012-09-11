@@ -20,6 +20,7 @@ package org.infinispan.configuration.module;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,7 +28,8 @@ import java.io.InputStream;
 
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -55,7 +57,15 @@ public class ExtendedParserTest {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
-      DefaultCacheManager cacheManager = new DefaultCacheManager(holder, false);
-      Assert.assertEquals(cacheManager.getDefaultCacheConfiguration().module(MyModuleConfiguration.class).attribute(), "test-value");
+
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(holder)) {
+
+         @Override
+         public void call() {
+            Assert.assertEquals(cm.getDefaultCacheConfiguration().module(MyModuleConfiguration.class).attribute(), "test-value");
+         }
+
+      });
+
    }
 }

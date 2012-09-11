@@ -81,8 +81,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    private void assertCacheMode(String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
-      Assert.assertEquals(cm.getDefaultCacheConfiguration().clustering().cacheMode(), CacheMode.REPL_SYNC);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+
+         @Override
+         public void call() {
+            Assert.assertEquals(cm.getDefaultCacheConfiguration().clustering().cacheMode(), CacheMode.REPL_SYNC);
+         }
+      });
+
    }
 
    public void testShortMode() throws Exception {
@@ -114,13 +120,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheFile() throws IOException {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true);
-      assertNamedCacheFile(cm, false);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true)) {
+         @Override
+         public void call() {
+            assertNamedCacheFile(cm, false);
+         }
+      });
    }
 
    public void testOldNamedCacheFile() throws IOException {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test-51.xml", true);
-      assertNamedCacheFile(cm, true);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test-51.xml", true)) {
+         @Override
+         public void call() {
+            assertNamedCacheFile(cm, true);
+         }
+      });
    }
 
    public void testNoNamedCaches() throws Exception {
@@ -136,14 +150,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
-      GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
 
-      assert globalCfg.transport().transport() instanceof JGroupsTransport;
-      assert globalCfg.transport().clusterName().equals("demoCluster");
+         @Override
+         public void call() {
+            GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
 
-      Configuration cfg = cm.getDefaultCacheConfiguration();
-      assert cfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+            assert globalCfg.transport().transport() instanceof JGroupsTransport;
+            assert globalCfg.transport().clusterName().equals("demoCluster");
+
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+         }
+
+      });
+
    }
 
    @Test(expectedExceptions = ConfigurationException.class)
@@ -161,7 +182,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      TestCacheManagerFactory.fromStream(is);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)));
    }
 
    public void testNoSchemaWithStuff() throws IOException {
@@ -172,11 +193,17 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
 
-      Configuration cfg = cm.getDefaultCacheConfiguration();
-      assert cfg.locking().concurrencyLevel() == 10000;
-      assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.locking().concurrencyLevel() == 10000;
+            assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+         }
+
+      });
+
    }
 
    public void testPassivationOnDefaultEvictionOnNamed() throws Exception {
@@ -218,8 +245,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "</default>\n" +
             INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
-      cm.getDefaultCacheConfiguration();
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            cm.getDefaultCacheConfiguration();
+         }
+      });
+
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
