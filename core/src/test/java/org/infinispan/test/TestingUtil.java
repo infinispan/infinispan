@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
@@ -59,6 +60,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -1183,6 +1185,19 @@ public class TestingUtil {
 
    public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) throws Exception {
       return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
+   }
+
+   public static boolean existsObject(ObjectName objectName) {
+      return PerThreadMBeanServerLookup.getThreadMBeanServer().isRegistered(objectName);
+   }
+
+   public static boolean existsDomains(String... domains) {
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      Set<String> domainSet = new HashSet<String>(Arrays.asList(domains));
+      for (String domain : mBeanServer.getDomains()) {
+         if (domainSet.contains(domain)) return true;
+      }
+      return false;
    }
 
    public static String generateRandomString(int numberOfChars) {
