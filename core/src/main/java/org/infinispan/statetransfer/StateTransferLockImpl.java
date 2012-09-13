@@ -26,6 +26,9 @@ package org.infinispan.statetransfer;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * // TODO: Document this
  *
@@ -33,6 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 5.2
  */
 public class StateTransferLockImpl implements StateTransferLock {
+   private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
 
    private final ReadWriteLock transactionTableLock = new ReentrantReadWriteLock();
 
@@ -97,8 +101,14 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public void waitForTopology(int expectedTopologyId) throws InterruptedException {
-      while (topologyId <= expectedTopologyId) {
-         synchronized (topologyLock) {
+      if (topologyId >= expectedTopologyId)
+         return;
+
+      log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
+      synchronized (topologyLock) {
+         // Do the comparison inside the synchronized lock
+         // otherwise the setter might be able to call notifyAll before we wait()
+         while (topologyId < expectedTopologyId) {
             topologyLock.wait();
          }
       }

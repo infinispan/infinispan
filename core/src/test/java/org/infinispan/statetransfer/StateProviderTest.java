@@ -122,7 +122,7 @@ public class StateProviderTest {
       stateTransferLock = mock(StateTransferLock.class);
    }
 
-   public void test1() {
+   public void test1() throws InterruptedException {
       // create list of 6 members
       List<Address> members1 = new ArrayList<Address>();
       for (int i = 0; i < 6; i++) {
@@ -203,7 +203,7 @@ public class StateProviderTest {
       assertFalse(stateProvider.isStateTransferInProgress());
    }
 
-   public void test2() {
+   public void test2() throws InterruptedException {
       // create list of 6 members
       List<Address> members1 = new ArrayList<Address>();
       for (int i = 0; i < 6; i++) {
