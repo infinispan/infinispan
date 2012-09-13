@@ -28,7 +28,7 @@ public interface MapReduceTaskLifecycle {
 
    <KIn, VIn, KOut, VOut> void onPostExecute(Mapper <KIn, VIn, KOut, VOut> mapper);
    
-   <KOut, VOut> void onPreExecute(Reducer <KOut, VOut> reducer);
+   <KOut, VOut> void onPreExecute(Reducer <KOut, VOut> reducer, Cache<?, ?> inputCache);
 
    <KOut, VOut> void onPostExecute(Reducer <KOut, VOut> reducer);
 }

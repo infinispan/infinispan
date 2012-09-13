@@ -43,7 +43,7 @@ public class CDIMapReduceTaskLifecycle extends BeanManagerAware implements MapRe
 
    @Override
    @SuppressWarnings({ "unchecked" })
-   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer) {
+   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?,?> cache) {
       BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
       Class<Reducer<KOut, VOut>> clazz = (Class<Reducer<KOut, VOut>>) reducer.getClass();
       AnnotatedType<Reducer<KOut, VOut>> type = bm.createAnnotatedType(clazz);
