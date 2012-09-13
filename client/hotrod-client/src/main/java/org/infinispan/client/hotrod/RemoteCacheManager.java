@@ -162,7 +162,8 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
-   private AtomicInteger topologyId = new AtomicInteger();
+   // Use an invalid topologyID (-1) so we always get a topology update on connection.
+   private AtomicInteger topologyId = new AtomicInteger(-1);
    private ClassLoader classLoader;
    private Codec codec;
 
