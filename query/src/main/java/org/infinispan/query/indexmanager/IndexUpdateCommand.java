@@ -18,11 +18,20 @@
  */
 package org.infinispan.query.indexmanager;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.hibernate.search.SearchException;
+import org.hibernate.search.backend.AddLuceneWork;
+import org.hibernate.search.backend.DeleteLuceneWork;
+import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.LuceneWork;
+import org.hibernate.search.backend.OptimizeLuceneWork;
+import org.hibernate.search.backend.PurgeAllLuceneWork;
+import org.hibernate.search.backend.UpdateLuceneWork;
+import org.hibernate.search.backend.impl.WorkVisitor;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commands.ReplicableCommand;
@@ -31,6 +40,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.query.CommandInitializer;
 import org.infinispan.query.CustomQueryCommand;
 import org.infinispan.query.ModuleCommandIds;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 
 /**
@@ -70,8 +80,21 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
          throw new SearchException("Unknown index referenced");
       }
       List<LuceneWork> luceneWorks = indexManager.getSerializer().toLuceneWorks(this.serializedModel);
-      indexManager.performOperations(luceneWorks, null);
+      List<LuceneWork> workToApply = transformKeysToStrings(luceneWorks);//idInString field is not serialized, we need to extract it from the key object
+      indexManager.performOperations(workToApply, null);
       return Boolean.TRUE; //Return value to be ignored
+   }
+
+   private List<LuceneWork> transformKeysToStrings(final List<LuceneWork> luceneWorks) {
+      final KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
+      ArrayList<LuceneWork> transformedWorks = new ArrayList<LuceneWork>(luceneWorks.size());
+      for (LuceneWork lw : luceneWorks) {
+         LuceneWork transformedLuceneWork = lw
+               .getWorkDelegate(LuceneWorkTransformationVisitor.INSTANCE)
+               .cloneOverridingIdString(lw, keyTransformationHandler);
+         transformedWorks.add(transformedLuceneWork);
+      }
+      return transformedWorks;
    }
 
    @Override
