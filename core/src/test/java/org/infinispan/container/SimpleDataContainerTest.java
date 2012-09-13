@@ -22,6 +22,7 @@
  */
 package org.infinispan.container;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -55,7 +56,8 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    protected DataContainer createContainer() {
       DefaultDataContainer dc = new DefaultDataContainer(16);
-      dc.initialize(null, null, new InternalEntryFactoryImpl());
+      dc.initialize(null, null, new InternalEntryFactoryImpl(),
+            new ConfigurationBuilder().build(), null);
       return dc;
    }
 

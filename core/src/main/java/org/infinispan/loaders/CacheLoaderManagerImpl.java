@@ -350,7 +350,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             // async?
             CacheStoreConfig cfg2 = (CacheStoreConfig) cfg;
             if (cfg2.getAsyncStoreConfig().isEnabled()) {
-               tmpStore = new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
+               tmpStore = createAsyncStore(tmpStore, cfg2);
                tmpLoader = tmpStore;
             }
 
@@ -372,6 +372,10 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          tmpLoader.init(cfg, cache, m);
       }
       return tmpLoader;
+   }
+
+   protected AsyncStore createAsyncStore(CacheStore tmpStore, CacheStoreConfig cfg2) {
+      return new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
    }
 
    void assertNotSingletonAndShared(StoreConfiguration cfg) {

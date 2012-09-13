@@ -105,7 +105,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    private final ConcurrentMap<String, Component> componentLookup = new ConcurrentHashMap<String, AbstractComponentRegistry.Component>(1);
 
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
-   protected final ClassLoader defaultClassLoader;
 
    private static final PrioritizedMethod[] EMPTY_PRIO_METHODS = {};
 
@@ -120,9 +119,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected abstract Log getLog();
 
-   protected AbstractComponentRegistry(ClassLoader classLoader) {
-      defaultClassLoader = registerDefaultClassLoader(classLoader);
-   }
+   public abstract ComponentMetadataRepo getComponentMetadataRepo();
 
    /**
     * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
@@ -136,7 +133,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    public void wireDependencies(Object target) throws ConfigurationException {
       try {
          Class<?> targetClass = target.getClass();
-         ComponentMetadata metadata = ComponentMetadataRepo.findComponentMetadata(targetClass);
+         ComponentMetadata metadata = getComponentMetadataRepo().findComponentMetadata(targetClass);
          if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
             // search for anything we need to inject
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
@@ -212,7 +209,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          componentLookup.put(name, c);
       }
 
-      c.metadata = ComponentMetadataRepo.findComponentMetadata(component.getClass());
+      c.metadata = getComponentMetadataRepo().findComponentMetadata(component.getClass());
       try {
          c.buildInjectionMethodsList();
       } catch (ClassNotFoundException cnfe) {
@@ -310,7 +307,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return component factory capable of constructing such components
     */
    protected AbstractComponentFactory getFactory(Class<?> componentClass) {
-      String cfClass = ComponentMetadataRepo.findFactoryForComponent(componentClass);
+      String cfClass = getComponentMetadataRepo().findFactoryForComponent(componentClass);
       if (cfClass == null) {
          throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
       }
@@ -435,7 +432,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param loader a class loader to use by default.  If this is null, the class loader used to load this instance of
     *               ComponentRegistry is used.
     */
-   private ClassLoader registerDefaultClassLoader(ClassLoader loader) {
+   protected ClassLoader registerDefaultClassLoader(ClassLoader loader) {
       ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
       registerComponent(loaderToUse, ClassLoader.class);
       // make sure the class loader is non-volatile, so it survives restarts.

@@ -23,13 +23,18 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalNullEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
@@ -64,6 +69,10 @@ public class DefaultDataContainer implements DataContainer {
    final protected DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
+   private boolean isAsyncStore;
+   private CacheLoaderManager cacheLoaderManager;
+   private Configuration config;
+   private AsyncStore asyncStore;
 
    public DefaultDataContainer(int concurrencyLevel) {
       entries = ConcurrentMapFactory.makeConcurrentMap(128, concurrencyLevel);
@@ -71,7 +80,6 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
-
       // translate eviction policy and strategy
       switch (policy) {
          case PIGGYBACK:
@@ -99,10 +107,20 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    @Inject
-   public void initialize(EvictionManager evictionManager, PassivationManager passivator, InternalEntryFactory entryFactory) {
+   public void initialize(EvictionManager evictionManager, PassivationManager passivator,
+         InternalEntryFactory entryFactory, Configuration config, CacheLoaderManager cacheLoaderManager) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
+      this.config = config;
+      this.cacheLoaderManager = cacheLoaderManager;
+   }
+
+   @Start(priority = 11) // Start after cache loader manager
+   public void start() {
+      this.isAsyncStore = config.loaders().usingAsyncStore();
+      if (isAsyncStore)
+         this.asyncStore = (AsyncStore) cacheLoaderManager.getCacheStore();
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
@@ -116,7 +134,15 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public InternalCacheEntry peek(Object key) {
-      return entries.get(key);
+      InternalCacheEntry entry = entries.get(key);
+      // If the entry was passivated to an async store, it would have been
+      // marked as 'evicted', so check whether the key has been flushed to
+      // the cache store, and if it has, return null so that it can go through
+      // the activation process.
+      if (entry != null && entry.isEvicted() && isKeyFlushedToStore(key))
+         return null;
+
+      return entry;
    }
 
    @Override
@@ -136,7 +162,7 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle) {
-      InternalCacheEntry e = entries.get(k);
+      InternalCacheEntry e = peek(k);
       if (e != null) {
          e.setValue(v);
          InternalCacheEntry original = e;
@@ -165,7 +191,12 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public InternalCacheEntry remove(Object k) {
-      InternalCacheEntry e = entries.remove(k);
+      InternalCacheEntry e;
+      if (isAsyncStore) {
+         e = entries.replace(k, new InternalNullEntry(asyncStore));
+      } else {
+         e = entries.remove(k);
+      }
       return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
    }
 
@@ -199,10 +230,22 @@ public class DefaultDataContainer implements DataContainer {
       long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
          InternalCacheEntry e = purgeCandidates.next();
+         if (isAsyncStore && e instanceof InternalNullEntry) {
+            InternalNullEntry nullEntry = (InternalNullEntry) e;
+            if (nullEntry.isExpired(asyncStore.getAsyncProcessorId())) {
+               purgeCandidates.remove();
+               continue;
+            }
+         }
+
          if (e.isExpired(currentTimeMillis)) {
             purgeCandidates.remove();
          }
       }
+   }
+
+   private boolean isKeyFlushedToStore(Object key) {
+      return !isAsyncStore || (isAsyncStore && !asyncStore.isLocked(key));
    }
 
    @Override
@@ -211,14 +254,30 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    private final class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
+
       @Override
       public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
          evictionManager.onEntryEviction(evicted);
       }
 
       @Override
-      public void onEntryChosenForEviction(InternalCacheEntry internalCacheEntry) {
-         passivator.passivate(internalCacheEntry);
+      public boolean onEntryChosenForEviction(InternalCacheEntry entry) {
+         boolean allowEviction = isKeyFlushedToStore(entry.getKey());
+
+         if (allowEviction) {
+            passivator.passivate(entry);
+            if (isAsyncStore) {
+               // Storing in cache store is still in flight, so don't remove
+               // the entry from memory yet. Instead, mark the entry as 'evicted'
+               // and if someone requests it, check whether it's locked on the
+               // cache store. If it's not, assume that the entry was stored
+               // in the async store and the container can return null.
+               entry.setEvicted(true);
+               return false;
+            }
+         }
+
+         return allowEviction;
       }
    }
 
@@ -234,7 +293,6 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public static class EntryIterator implements Iterator<InternalCacheEntry> {
-
 
       private final Iterator<InternalCacheEntry> it;
 
@@ -326,4 +384,5 @@ public class DefaultDataContainer implements DataContainer {
          return currentIterator.next().getValue();
       }
    }
+
 }
