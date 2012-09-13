@@ -47,6 +47,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
    public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
    private GlobalComponentRegistry globalReg;
+   private boolean needToUnregister = false;
 
    @Inject
    public void init(GlobalComponentRegistry registry, GlobalConfiguration configuration) {
@@ -58,8 +59,10 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
     * On start, the mbeans are registered.
     */
    public void start() {
-      if (globalConfig.globalJmxStatistics().enabled()) {
-         registerMBeans(globalReg.getRegisteredComponents(), globalConfig);
+      if (registerMBeans(globalReg.getRegisteredComponents(), globalConfig)) {
+         needToUnregister = true;
+      } else {
+         log.unableToRegisterCacheManagerMBeans();
       }
    }
 
@@ -70,8 +73,13 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       // This method might get called several times.
       // After the first call the cache will become null, so we guard this
       if (globalReg == null) return;
-      if (globalConfig.globalJmxStatistics().enabled()) {
-         unregisterMBeans(globalReg.getRegisteredComponents());
+      if (needToUnregister) {
+         try {
+            unregisterMBeans(globalReg.getRegisteredComponents());
+            needToUnregister = false;
+         } catch (Exception e) {
+            log.problemsUnregisteringMBeans(e);
+         }
       }
       globalReg = null;
    }

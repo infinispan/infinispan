@@ -174,8 +174,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
    public void testCreateWithMultipleXmlFiles() throws Exception {
       String xmlFile = "configs/local-singlenamedcache-test.xml";
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(
-            xmlFile, xmlFile, xmlFile)) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(xmlFile, xmlFile, xmlFile)) {
          @Override
          public void call() {
             Cache<Object, Object> c = cm.getCache();

@@ -25,6 +25,7 @@ package org.infinispan.jmx;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -41,6 +42,8 @@ import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.existsDomains;
 
 /**
  * Functional test for checking jmx statistics exposure.
@@ -60,12 +63,6 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
    @AfterMethod(alwaysRun = true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
-      if (cm != null)
-         assert !existsDomains(cm.getGlobalConfiguration().getJmxDomain());
-      if (cm2 != null)
-         assert !existsDomains(cm2.getGlobalConfiguration().getJmxDomain());
-      if (cm3 != null)
-         assert !existsDomains(cm3.getGlobalConfiguration().getJmxDomain());
       cm = null;
       cm2 = null;
       cm3 = null;
@@ -142,9 +139,16 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("local_cache");
       cm.getCache("remote1");
 
-      assert !existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
       assert existsObject(getCacheManagerObjectName(jmxDomain));
-      assert !existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "RpcManager"));
+
+      assert !existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
+      assert !existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "Statistics"));
+
+      // Since ISPN-2290
+      assert existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "LockManager"));
+      assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "LockManager"));
+
+
    }
 
    public void testOnlyPerCacheJmxStatsEnabled() throws Exception {
@@ -166,7 +170,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("remote1");
 
       assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
-      assert !existsObject(getCacheManagerObjectName(jmxDomain));
+      // Since ISPN-2290
+      assert existsObject(getCacheManagerObjectName(jmxDomain));
       assert existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "RpcManager"));
    }
 
@@ -328,19 +333,6 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       cm = TestCacheManagerFactory.createCacheManager(false, globalConfiguration);
       cm.stop();
-   }
-
-   static boolean existsObject(ObjectName objectName) {
-      return PerThreadMBeanServerLookup.getThreadMBeanServer().isRegistered(objectName);
-   }
-
-   public boolean existsDomains(String... domains) {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      Set<String> domainSet = new HashSet<String>(Arrays.asList(domains));
-      for (String domain : mBeanServer.getDomains()) {
-         if (domainSet.contains(domain)) return true;
-      }
-      return false;
    }
 
    private Configuration config() {

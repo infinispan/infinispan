@@ -34,6 +34,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,9 +48,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * If {@link org.infinispan.configuration.cache.Configuration#jmxStatistics()}
- * is enabled, then class will register all the MBeans from cache local's
- * ConfigurationRegistry to the MBean server.
+ * If {@link org.infinispan.configuration.cache.Configuration#jmxStatistics()} is enabled, then class will register all
+ * the MBeans from cache local's ConfigurationRegistry to the MBean server.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -63,6 +63,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
    private AdvancedCache<?, ?> cache;
    private Set<Component> nonCacheComponents;
+   private boolean needToUnregister = false;
 
    @Inject
    public void initialize(Cache<?, ?> cache, GlobalConfiguration globalConfig) {
@@ -78,11 +79,17 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       if (cache == null)
          throw new IllegalStateException("The cache should had been injected before a call to this method");
       Configuration config = cache.getCacheConfiguration();
-      if (config.jmxStatistics().enabled()) {
-         Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
-         nonCacheComponents = getNonCacheComponents(components);
-         registerMBeans(components, cache.getCacheManager().getCacheManagerConfiguration());
+      Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
+      nonCacheComponents = getNonCacheComponents(components);
+      if (registerMBeans(components, cache.getCacheManager().getCacheManagerConfiguration())) {
+         needToUnregister = true;
          log.mbeansSuccessfullyRegistered();
+      } else {
+         if (cache.getName().equals(CacheContainer.DEFAULT_CACHE_NAME)) {
+            log.unableToRegisterMBeans();
+         } else {
+            log.unableToRegisterMBeans(cache.getName());
+         }
       }
    }
 
@@ -95,14 +102,14 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       // After the first call the cache will become null, so we guard this
       if (cache == null) return;
       Configuration config = cache.getCacheConfiguration();
-      if (config.jmxStatistics().enabled()) {
+      if (needToUnregister) {
          // Only unregister the non cache MBean so that it can be restarted
          try {
             unregisterMBeans(nonCacheComponents);
+            needToUnregister = false;
          } catch (Exception e) {
             log.problemsUnregisteringMBeans(e);
          }
-         log.trace("MBeans were successfully unregistered from the mbean server.");
       }
 
       // make sure we don't set cache to null, in case it needs to be restarted via JMX.

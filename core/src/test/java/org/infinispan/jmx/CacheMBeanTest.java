@@ -34,6 +34,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
+
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -111,14 +113,15 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
 
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
+      CacheContainer otherContainer = null;
       try {
+         otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
          otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
-         assert e.getCause() instanceof JmxDomainConflictException;
+         assert e instanceof JmxDomainConflictException;
       } finally {
-         otherContainer.stop();
+         TestingUtil.killCacheManagers(otherContainer);
       }
    }
 
