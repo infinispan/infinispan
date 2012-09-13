@@ -100,6 +100,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
    @Override
    public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut,VOut> reduceCommand) {
+      Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
       Set<KOut> keys = reduceCommand.getKeys();
       String taskId = reduceCommand.getTaskId();
       Reducer<KOut, VOut> reducer = reduceCommand.getReducer();
@@ -116,7 +117,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, localAddress);
          try {
-            taskLifecycleService.onPreExecute(reducer);         
+            taskLifecycleService.onPreExecute(reducer, cache);
             for (KOut key : keys) {
                //load result value from map phase
                List<VOut> value = null;
@@ -204,11 +205,12 @@ public class MapReduceManagerImpl implements MapReduceManager {
       DistributionManager dm = tmpCache.getAdvancedCache().getDistributionManager();
 
       if (combiner != null) {
+         Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, localAddress);
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          Map<KOut, VOut> combinedMap = new ConcurrentHashMap<KOut, VOut>();
          try {
-            taskLifecycleService.onPreExecute(combiner);
+            taskLifecycleService.onPreExecute(combiner, cache);
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {
                List<VOut> list = e.getValue();
@@ -296,7 +298,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, localAddress);
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          try {
-            taskLifecycleService.onPreExecute(combiner);
+            Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
+            taskLifecycleService.onPreExecute(combiner, cache);
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {
                VOut combined = null;

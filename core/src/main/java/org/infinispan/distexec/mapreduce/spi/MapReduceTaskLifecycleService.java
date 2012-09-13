@@ -75,10 +75,10 @@ public final class MapReduceTaskLifecycleService {
       }
    }
 
-   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer) {
+   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?, ?> inputCache) {
       try {
          for (MapReduceTaskLifecycle l : lifecycles) {
-            l.onPreExecute(reducer);
+            l.onPreExecute(reducer, inputCache);
          }
       } catch (ServiceConfigurationError serviceError) {
          log.errorReadingProperties(new IOException(
