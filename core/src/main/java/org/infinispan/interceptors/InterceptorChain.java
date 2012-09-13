@@ -61,12 +61,14 @@ public class InterceptorChain {
    private volatile CommandInterceptor firstInChain;
 
    final ReentrantLock lock = new ReentrantLock();
+   final ComponentMetadataRepo componentMetadataRepo;
 
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
     */
-   public InterceptorChain(CommandInterceptor first) {
+   public InterceptorChain(CommandInterceptor first, ComponentMetadataRepo componentMetadataRepo) {
       this.firstInChain = first;
+      this.componentMetadataRepo = componentMetadataRepo;
    }
 
    @Start
@@ -81,7 +83,7 @@ public class InterceptorChain {
       if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
-            ComponentMetadataRepo.findComponentMetadata(i.getName()) == null) {
+            componentMetadataRepo.findComponentMetadata(i.getName()) == null) {
          log.customInterceptorExpectsInjection(i.getName());
       }      
    }

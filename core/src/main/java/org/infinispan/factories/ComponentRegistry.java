@@ -64,6 +64,8 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;
 
+   protected final ClassLoader defaultClassLoader;
+
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
       this.cacheManagerNotifier = cacheManagerNotifier;
@@ -78,7 +80,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      super(defaultClassLoader); // registers the default classloader
+      this.defaultClassLoader = defaultClassLoader;
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
@@ -177,7 +179,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    private boolean isGlobal(String className) {
-      ComponentMetadata m = ComponentMetadataRepo.findComponentMetadata(className);
+      ComponentMetadata m = getComponentMetadataRepo().findComponentMetadata(className);
       return m != null && m.isGlobalScope();
    }
 
@@ -266,6 +268,11 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       stateTransferManager = getComponent(StateTransferManager.class);
       responseGenerator = getComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);
+   }
+
+   @Override
+   public ComponentMetadataRepo getComponentMetadataRepo() {
+      return globalComponents.getComponentMetadataRepo();
    }
 
 }

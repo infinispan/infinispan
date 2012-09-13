@@ -23,10 +23,10 @@
 package org.infinispan.config;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -79,7 +79,8 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(),
+               new ConfigurationBuilder().build(), null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -112,7 +113,8 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         ((DefaultDataContainer) ddc).initialize(
+               null, null,new InternalEntryFactoryImpl(), new ConfigurationBuilder().build(), null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

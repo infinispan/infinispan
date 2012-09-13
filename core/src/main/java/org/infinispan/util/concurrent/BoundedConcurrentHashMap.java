@@ -286,8 +286,21 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    }
 
    public interface EvictionListener<K, V> {
+
       void onEntryEviction(Map<K, V> evicted);
-      void onEntryChosenForEviction(V internalCacheEntry);
+
+      /**
+       * Callback when an entry has been selected for eviction.
+       * Implementations can use this method to make a decision on whether the
+       * evicted entry should really be evicted, and they can use the return
+       * of this method to signal that.
+       *
+       * @param internalCacheEntry
+       * @return true if the eviction should go through, false if the
+       * eviction process should halt.
+       */
+      boolean onEntryChosenForEviction(V internalCacheEntry);
+
    }
 
    static final class NullEvictionListener<K, V> implements EvictionListener<K, V> {
@@ -296,8 +309,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          // Do nothing.
       }
       @Override
-      public void onEntryChosenForEviction(V internalCacheEntry) {
+      public boolean onEntryChosenForEviction(V internalCacheEntry) {
          // Do nothing.
+         return false;
       }
    }
 
@@ -510,9 +524,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          boolean aboveThreshold = isAboveThreshold();
          if(aboveThreshold){
             HashEntry<K, V> evictedEntry = eldest.getKey();
-            segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
-            segment.remove(evictedEntry.key, evictedEntry.hash, null);
-            evicted.add(evictedEntry);
+            boolean evict = segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+            if (evict) {
+               segment.remove(evictedEntry.key, evictedEntry.hash, null);
+               evicted.add(evictedEntry);
+            }
          }
          return aboveThreshold;
       }
@@ -1052,8 +1068,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
          for (HashEntry<K, V> e : evicted) {
             ((LIRSHashEntry<K, V>)e).evict();
-            segment.evictionListener.onEntryChosenForEviction(e.value);
-            segment.remove(e.key, e.hash, null);
+            boolean evict = segment.evictionListener.onEntryChosenForEviction(e.value);
+            if (evict)
+               segment.remove(e.key, e.hash, null);
          }
       }
 

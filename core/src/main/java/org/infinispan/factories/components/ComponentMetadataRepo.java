@@ -41,13 +41,13 @@ import java.util.Map;
  * @see ComponentMetadata
  */
 public class ComponentMetadataRepo {
-   static final Map<String, ComponentMetadata> COMPONENT_METADATA_MAP = new HashMap<String, ComponentMetadata>(128);
-   static final Map<String, String> FACTORIES = new HashMap<String, String>(16);
-   private static final ComponentMetadata DEPENDENCY_FREE_COMPONENT = new ComponentMetadata();
+   final Map<String, ComponentMetadata> componentMetadataMap = new HashMap<String, ComponentMetadata>(128);
+   final Map<String, String> factories = new HashMap<String, String>(16);
+   private final ComponentMetadata dependencyFreeComponent = new ComponentMetadata();
    private static final Log log = LogFactory.getLog(ComponentMetadataRepo.class);
 
    @SuppressWarnings("unchecked")
-   public synchronized static void readMetadata(URL metadataFile) throws IOException, ClassNotFoundException {
+   public synchronized void readMetadata(URL metadataFile) throws IOException, ClassNotFoundException {
       Map<String, ComponentMetadata> comp;
       Map<String, String> fact;
       InputStream inputStream = metadataFile.openStream();
@@ -68,8 +68,8 @@ public class ComponentMetadataRepo {
          inputStream.close();
       }
 
-      COMPONENT_METADATA_MAP.putAll(comp);
-      FACTORIES.putAll(fact);
+      componentMetadataMap.putAll(comp);
+      factories.putAll(fact);
    }
 
    /**
@@ -80,17 +80,17 @@ public class ComponentMetadataRepo {
     * @param componentType component type to look for
     * @return metadata expressed as a ComponentMetadata instance
     */
-   public static ComponentMetadata findComponentMetadata(Class<?> componentType) {
+   public ComponentMetadata findComponentMetadata(Class<?> componentType) {
       ComponentMetadata md = null;
       while (md == null) {
          String componentName = componentType.getName();
-         md = COMPONENT_METADATA_MAP.get(componentName);
+         md = componentMetadataMap.get(componentName);
          if (md == null) {
             // Test superclasses/superinterfaces.
             if (!componentType.equals(Object.class) && !componentType.isInterface())
                componentType = componentType.getSuperclass();
             else
-               md = DEPENDENCY_FREE_COMPONENT;
+               md = dependencyFreeComponent;
          }
       }
 
@@ -103,8 +103,8 @@ public class ComponentMetadataRepo {
     * @param componentName name of component type to look for
     * @return metadata expressed as a ComponentMetadata instance, or null
     */
-   public static ComponentMetadata findComponentMetadata(String componentName) {
-      return COMPONENT_METADATA_MAP.get(componentName);
+   public ComponentMetadata findComponentMetadata(String componentName) {
+      return componentMetadataMap.get(componentName);
    }
 
    /**
@@ -113,8 +113,8 @@ public class ComponentMetadataRepo {
     * @param componentType component to create
     * @return a factory, or null if not found.
     */
-   public static String findFactoryForComponent(Class<?> componentType) {
-      return FACTORIES.get(componentType.getName());
+   public String findFactoryForComponent(Class<?> componentType) {
+      return factories.get(componentType.getName());
    }
 
    /**
@@ -123,7 +123,7 @@ public class ComponentMetadataRepo {
     * iterable.
     * @param moduleMetadataFiles file finders to iterate through and load into the repository
     */
-   public static void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
+   public void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
       // First init core module metadata
       try {
          readMetadata(cl.getResource("infinispan-core-component-metadata.dat"));
@@ -139,6 +139,16 @@ public class ComponentMetadataRepo {
             throw new CacheException("Unable to load component metadata in file " + finder.getMetadataFilename(), e);
          }
       }
-
    }
+
+   /**
+    * Inject a factory for a given component type.
+    *
+    * @param componentType Component type that the factory will produce
+    * @param factoryType Factory that produces the given type of components
+    */
+   public void injectFactoryForComponent(Class<?> componentType, Class<?> factoryType) {
+      factories.put(componentType.getName(), factoryType.getName());
+   }
+
 }

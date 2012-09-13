@@ -100,7 +100,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          first = createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class);
       }
 
-      InterceptorChain interceptorChain = new InterceptorChain(first);
+      InterceptorChain interceptorChain = new InterceptorChain(first, componentRegistry.getComponentMetadataRepo());
 
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);

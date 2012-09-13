@@ -57,6 +57,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ComponentMetadataPersister extends ComponentMetadataRepo {
 
+   private static ComponentMetadataRepo repo;
+
    /**
     * Usage: ComponentMetadataPersister [path containing .class files to scan] [output file to generate]
     */
@@ -69,33 +71,35 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
 
       System.out.printf(" [ComponentMetadataPersister] Starting component metadata generation.  Scanning classes in %s%n", path);
 
+      repo = new ComponentMetadataRepo();
+
       // Wipe any stale data from memory first
-      FACTORIES.clear();
-      COMPONENT_METADATA_MAP.clear();
+      repo.factories.clear();
+      repo.componentMetadataMap.clear();
 
       File f = new File(path);
       process(path, f);
 
       // Test that all dependencies now exist in the component metadata map.
       Map<String, String> dependencies = new HashMap<String, String>(128);
-      for (ComponentMetadata md : COMPONENT_METADATA_MAP.values()) {
+      for (ComponentMetadata md : repo.componentMetadataMap.values()) {
          if (md.getDependencies() != null) dependencies.putAll(md.getDependencies());
       }
 
       ClassLoader cl = ComponentMetadataRepo.class.getClassLoader();
       for (String s : dependencies.keySet()) {
-         if (!COMPONENT_METADATA_MAP.containsKey(s)) {
+         if (!repo.componentMetadataMap.containsKey(s)) {
             // See if anything we already have is assignable from here.
             try {
                Class<?> dependencyType = Util.loadClass(s, cl);
                ComponentMetadata equivalent = null;
-               for (ComponentMetadata cm : COMPONENT_METADATA_MAP.values()) {
+               for (ComponentMetadata cm : repo.componentMetadataMap.values()) {
                   if (dependencyType.isAssignableFrom(cm.getClazz())) {
                      equivalent = cm;
                      break;
                   }
                }
-               if (equivalent != null) COMPONENT_METADATA_MAP.put(s, equivalent);
+               if (equivalent != null) repo.componentMetadataMap.put(s, equivalent);
             } catch (Exception e) {
             }
          }
@@ -104,7 +108,7 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
          // Perform this sanity check
          boolean hasErrors = false;
          for (Map.Entry<String, String> e : dependencies.entrySet()) {
-            if (!COMPONENT_METADATA_MAP.containsKey(e.getKey())) {
+            if (!repo.componentMetadataMap.containsKey(e.getKey())) {
                if (!hasFactory(e.getKey()) && !hasFactory(e.getValue()) && !KnownComponentNames.ALL_KNOWN_COMPONENT_NAMES.contains(e.getKey())) {
                   System.out.printf(" [ComponentMetadataPersister]     **** WARNING!!!  Missing components or factories for dependency on %s%n", e.getKey());
                   hasErrors = true;
@@ -117,11 +121,12 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       }
       writeMetadata(outputFile);
 
-      System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n", COMPONENT_METADATA_MAP.size(), FACTORIES.size(), Util.prettyPrintTime(System.nanoTime() - startTime, TimeUnit.NANOSECONDS));
+      System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n",
+            repo.componentMetadataMap.size(), repo.factories.size(), Util.prettyPrintTime(System.nanoTime() - startTime, TimeUnit.NANOSECONDS));
    }
 
    private static boolean hasFactory(String name) {
-      return FACTORIES.containsKey(name);
+      return repo.factories.containsKey(name);
    }
 
    private static void process(String path, File f) throws ClassNotFoundException {
@@ -169,14 +174,14 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       }
 
       if (metadata != null) {
-         COMPONENT_METADATA_MAP.put(metadata.getName(), metadata);
+         repo.componentMetadataMap.put(metadata.getName(), metadata);
       }
 
       // and also lets check if this class is a factory for anything.
       DefaultFactoryFor dff = ReflectionUtil.getAnnotation(clazz, DefaultFactoryFor.class);
 
       if (dff != null) {
-         for (Class<?> target : dff.classes()) FACTORIES.put(target.getName(), className);
+         for (Class<?> target : dff.classes()) repo.factories.put(target.getName(), className);
       }
    }
 
@@ -188,8 +193,8 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       FileOutputStream fileOutputStream = new FileOutputStream(metadataFile);
       BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
       ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream);
-      objectOutputStream.writeObject(COMPONENT_METADATA_MAP);
-      objectOutputStream.writeObject(FACTORIES);
+      objectOutputStream.writeObject(repo.componentMetadataMap);
+      objectOutputStream.writeObject(repo.factories);
       objectOutputStream.flush();
       objectOutputStream.close();
       bufferedOutputStream.flush();
