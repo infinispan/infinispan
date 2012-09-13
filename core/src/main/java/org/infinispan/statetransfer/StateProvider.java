@@ -60,7 +60,7 @@ public interface StateProvider {
     * @param segments
     * @return list transactions and locks for the given segments
     */
-   List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments);
+   List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException;
 
    /**
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a
