@@ -171,6 +171,8 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     */
    @Override
    protected boolean skip(InvocationContext ctx) {
+      if (!enabled) return true;
+
       if (store == null) {
          log.trace("Skipping cache store because the cache loader does not implement CacheStore");
          return true;

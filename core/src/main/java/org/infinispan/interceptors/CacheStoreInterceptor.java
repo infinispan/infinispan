@@ -88,6 +88,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManager loaderManager;
    private InternalEntryFactory entryFactory;
    private TransactionManager transactionManager;
+   protected volatile boolean enabled = true;
 
    private static final Log log = LogFactory.getLog(CacheStoreInterceptor.class);
 
@@ -117,7 +118,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
     * if this is a shared cache loader and the call is of remote origin, pass up the chain
     */
    protected boolean skip(InvocationContext ctx) {
-      if (store == null) return true;  // could be because the cache loader does not implement cache store
+      if (store == null || !enabled) return true;  // could be because the cache loader does not implement cache store, or the store is disabled
       if ((!ctx.isOriginLocal() && loaderConfig.shared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
          log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
@@ -384,5 +385,9 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       } else {
          return entryFactory.create(entry);
       }
+   }
+
+   public void disableInterceptor() {
+      enabled = false;
    }
 }
