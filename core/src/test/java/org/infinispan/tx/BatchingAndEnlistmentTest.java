@@ -2,10 +2,12 @@ package org.infinispan.tx;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -24,9 +26,9 @@ public class BatchingAndEnlistmentTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(false);
-      config.fluent().invocationBatching();
-      return new DefaultCacheManager(config);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.invocationBatching().enable();
+      return TestCacheManagerFactory.createCacheManager(cb);
    }
 
    public void testExpectedEnlistmentMode() {

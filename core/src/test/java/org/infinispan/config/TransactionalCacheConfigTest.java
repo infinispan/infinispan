@@ -24,6 +24,7 @@
 package org.infinispan.config;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
@@ -180,7 +181,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       assert c.isInvocationBatchingEnabled();
       assert c.isTransactionalCache();
 
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())){
          @Override
          public void call() {
             assert !cm.getCache().getConfiguration().isTransactionalCache();

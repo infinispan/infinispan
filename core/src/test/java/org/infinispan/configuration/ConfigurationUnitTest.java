@@ -24,6 +24,7 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.testng.Assert.assertEquals;
 
@@ -65,8 +66,7 @@ public class ConfigurationUnitTest {
 
    @Test
    public void testCreateCache() {
-      withCacheManager(new CacheManagerCallable(
-            new DefaultCacheManager(new ConfigurationBuilder().build())));
+      withCacheManager(new CacheManagerCallable(createCacheManager()));
    }
 
    @Test
@@ -101,7 +101,7 @@ public class ConfigurationUnitTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().use1PcForAutoCommitTransactions(true)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(cb.build())) {
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
             cm.getCache();
@@ -111,8 +111,7 @@ public class ConfigurationUnitTest {
 
    @Test
    public void testGetCache() {
-      withCacheManager(new CacheManagerCallable(
-            new DefaultCacheManager(new ConfigurationBuilder().build())) {
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
             cm.getCache();
@@ -122,8 +121,7 @@ public class ConfigurationUnitTest {
 
    @Test
    public void testDefineNamedCache() {
-      withCacheManager(new CacheManagerCallable(
-            new DefaultCacheManager(new ConfigurationBuilder().build())) {
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
             cm.defineConfiguration("foo", new ConfigurationBuilder().build());
@@ -133,8 +131,7 @@ public class ConfigurationUnitTest {
 
    @Test
    public void testGetAndPut() throws Exception {
-      withCacheManager(new CacheManagerCallable(
-            new DefaultCacheManager(new ConfigurationBuilder().build())) {
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
             Cache<String, String> cache = cm.getCache();
@@ -157,13 +154,12 @@ public class ConfigurationUnitTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testInvocationBatchingAndNonTransactional() throws Exception {
-      Configuration c = new ConfigurationBuilder()
-            .transaction()
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.transaction()
             .transactionMode(NON_TRANSACTIONAL)
             .invocationBatching()
-            .enable()
-            .build();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(c)));
+            .enable();
+      withCacheManager(new CacheManagerCallable(createCacheManager(cb)));
    }
 
    @Test
@@ -215,10 +211,9 @@ public class ConfigurationUnitTest {
    }
 
    public void testEvictionWithoutStrategy() {
-      Configuration c = new ConfigurationBuilder()
-            .eviction().maxEntries(76767)
-            .build();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(c)) {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.eviction().maxEntries(76767);
+      withCacheManager(new CacheManagerCallable(createCacheManager(cb)) {
          @Override
          public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
@@ -266,7 +261,7 @@ public class ConfigurationUnitTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.locking().isolationLevel(IsolationLevel.NONE);
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(builder)) {
+            createCacheManager(builder)) {
          @Override
          public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();

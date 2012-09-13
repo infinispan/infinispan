@@ -220,7 +220,7 @@ public interface Log extends BasicLogger {
    void passivatedEntries(int numEntries, String duration);
 
    @LogMessage(level = INFO)
-   @Message(value = "MBeans were successfully registered to the platform mbean server.", id = 31)
+   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
    void mbeansSuccessfullyRegistered();
 
    @LogMessage(level = WARN)
@@ -885,4 +885,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Error updating cluster member list", id = 197)
    void errorUpdatingMembersList(@Cause Throwable cause);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for default cache", id = 198)
+   void unableToRegisterMBeans();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for named cache %s", id = 199)
+   void unableToRegisterMBeans(String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for cache manager", id = 200)
+   void unableToRegisterCacheManagerMBeans();
 }
