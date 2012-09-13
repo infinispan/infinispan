@@ -68,21 +68,21 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object retval = super.visitPutKeyValueCommand(ctx, command);
-      removeFromStore(command.getKey());
+      if (enabled) removeFromStore(command.getKey());
       return retval;
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = super.visitRemoveCommand(ctx, command);
-      removeFromStore(command.getKey());
+      if (enabled) removeFromStore(command.getKey());
       return retval;
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object retval = super.visitReplaceCommand(ctx, command);
-      removeFromStore(command.getKey());
+      if (enabled) removeFromStore(command.getKey());
       return retval;
    }
 
@@ -90,7 +90,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object retval = super.visitPutMapCommand(ctx, command);
-      removeFromStore(command.getMap().keySet().toArray());
+      if (enabled) removeFromStore(command.getMap().keySet().toArray());
       return retval;
    }
 
@@ -99,7 +99,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object retval = super.visitGetKeyValueCommand(ctx, command);
-      removeFromStore(command.getKey());
+      if (enabled) removeFromStore(command.getKey());
       return retval;
    }
 

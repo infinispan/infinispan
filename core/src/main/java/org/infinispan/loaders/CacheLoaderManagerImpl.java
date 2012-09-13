@@ -53,10 +53,13 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheStoreInterceptor;
 import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
@@ -175,6 +178,40 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    @Override
    public boolean isEnabled() {
       return clmConfig != null;
+   }
+
+   @Override
+   public void disableCacheStore(String loaderType) {
+      if (isEnabled()) {
+         boolean disableInterceptors = false;
+         ComponentRegistry cr = cache.getComponentRegistry();
+         CacheLoaderInterceptor cli = cr.getComponent(CacheLoaderInterceptor.class);
+         CacheStoreInterceptor csi = cr.getComponent(CacheStoreInterceptor.class);
+
+         if (loader instanceof ChainingCacheStore) {
+            ChainingCacheStore ccs = (ChainingCacheStore) loader;
+            ccs.removeCacheLoader(loaderType);
+            if (ccs.getStores().isEmpty()) disableInterceptors = true;
+         } else {
+            if (loader.getClass().getName().equals(loaderType)) {
+               try {
+                  log.debugf("Stopping and removing cache loader %s", loaderType);
+                  loader.stop();
+               } catch (Exception e) {
+                  log.infof("Problems shutting down cache loader %s", loaderType, e);
+               }
+               disableInterceptors = true;
+            }
+         }
+
+         if (disableInterceptors) {
+            cli.disableInterceptor();
+            csi.disableInterceptor();
+            cache.removeInterceptor(cli.getClass());
+            cache.removeInterceptor(csi.getClass());
+            clmConfig = null;
+         }
+      }
    }
 
    /**

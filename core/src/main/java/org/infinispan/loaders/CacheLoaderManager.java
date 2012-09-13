@@ -47,6 +47,8 @@ public interface CacheLoaderManager extends Lifecycle {
    void preload();
 
    boolean isEnabled();
+
+   void disableCacheStore(String loaderType);
 }
 
 
