@@ -26,6 +26,7 @@ package org.infinispan.marshall;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 
 /**
  * One of the key aspects of Infinispan is that it often needs to marshall or
@@ -84,7 +85,7 @@ import java.io.ObjectOutput;
  * @author Galder Zamarreño
  * @since 5.0
  */
-public interface Externalizer<T> {
+public interface Externalizer<T> extends Serializable {
 
    /**
     * Write the object reference to the stream.
