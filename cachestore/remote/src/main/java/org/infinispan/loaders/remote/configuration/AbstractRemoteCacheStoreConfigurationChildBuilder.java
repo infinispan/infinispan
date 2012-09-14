@@ -120,5 +120,4 @@ public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<T> exten
    public RemoteCacheStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);
    }
-
 }

@@ -31,6 +31,7 @@ import java.util.StringTokenizer;
 import javax.inject.Inject;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.Input;
 import org.infinispan.distexec.mapreduce.BaseWordCountMapReduceTest;
 import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
@@ -76,6 +77,16 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
       count = mapReduce.get("Boston");
       assert count == 1;
    }
+   
+   public void testinvokeMapReduceWithInputCacheOnSubsetOfKeys() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = delegate.invokeMapReduce(new String[] {
+               "1", "2", "3" }, new WordCountImpliedInputCacheMapper(), new WordCountReducer());
+      Map<String, Integer> mapReduce = task.execute();
+      Integer count = mapReduce.get("Infinispan");
+      assert count == 1;
+      count = mapReduce.get("Boston");
+      assert count == 1;
+   }
 
    private static class WordCountMapper implements Mapper<String, String, String, Integer> {
       /** The serialVersionUID */
@@ -87,6 +98,28 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
          Assert.assertNotNull(cache, "Cache not injected into " + this);
+         StringTokenizer tokens = new StringTokenizer(value);
+         while (tokens.hasMoreElements()) {
+            String s = (String) tokens.nextElement();
+            collector.emit(s, 1);
+         }
+      }
+   }
+   
+   private static class WordCountImpliedInputCacheMapper implements Mapper<String, String, String, Integer> {
+    
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 7525403183805551028L;
+      
+      @Inject
+      @Input
+      private Cache<String, String> cache;
+
+      @Override
+      public void map(String key, String value, Collector<String, Integer> collector) {
+         Assert.assertNotNull(cache, "Cache not injected into " + this);
+         //the right cache injected         
+         Assert.assertTrue(cache.getName().equals("mapreducecache")); 
          StringTokenizer tokens = new StringTokenizer(value);
          while (tokens.hasMoreElements()) {
             String s = (String) tokens.nextElement();

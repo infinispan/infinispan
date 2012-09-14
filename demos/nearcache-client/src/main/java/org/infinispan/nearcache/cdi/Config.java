@@ -41,7 +41,7 @@ public class Config {
    public Configuration addressCache() {
       return new ConfigurationBuilder()
          .eviction().strategy(EvictionStrategy.LRU).maxEntries(4)
-         .loaders().shared(true).addCacheLoader().cacheLoader(new RemoteEventCacheStore())
+         .loaders().shared(true).addStore().cacheStore(new RemoteEventCacheStore())
          .build();
    }
 

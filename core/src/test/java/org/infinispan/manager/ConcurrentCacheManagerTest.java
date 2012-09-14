@@ -79,7 +79,10 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
                   barrier.await();
                   cacheManager.getCache(name).put("a", "b");
                   return null;
-               } finally {
+               } catch (Throwable t) {
+                  log.error("Got", t);
+                  throw new RuntimeException(t);
+               }  finally {
                   log.debug("Wait for all execution paths to finish");
                   barrier.await();
                }

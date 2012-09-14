@@ -20,10 +20,12 @@ package org.infinispan.distexec.spi;
 
 import java.util.concurrent.Callable;
 
+import org.infinispan.Cache;
+
 public class DefaultDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
    @Override
-   public <T> void onPreExecute(Callable<T> task) {
+   public <T, K, V> void onPreExecute(Callable<T> task, Cache <K,V> inputCache) {
       // intentionally no-op
    }
 

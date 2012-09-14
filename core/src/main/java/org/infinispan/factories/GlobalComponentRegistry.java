@@ -22,6 +22,7 @@
  */
 package org.infinispan.factories;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
@@ -48,10 +49,11 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A global component registry where shared components are stored.
@@ -61,6 +63,7 @@ import java.util.Set;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
+@ThreadSafe
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
@@ -85,7 +88,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final ModuleProperties moduleProperties = new ModuleProperties();
    final List<ModuleLifecycle> moduleLifecycles;
 
-   final Map<String, ComponentRegistry> namedComponents = new HashMap<String, ComponentRegistry>(4);
+   final ConcurrentMap<String, ComponentRegistry> namedComponents = new ConcurrentHashMap<String, ComponentRegistry>(4);
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -134,13 +137,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected void removeShutdownHook() {
+   protected synchronized void removeShutdownHook() {
       // if this is called from a source other than the shutdown hook, de-register the shutdown hook.
       if (!invokedFromShutdownHook && shutdownHook != null) Runtime.getRuntime().removeShutdownHook(shutdownHook);
    }
 
    @Override
-   protected void addShutdownHook() {
+   protected synchronized void addShutdownHook() {
       ArrayList<MBeanServer> al = MBeanServerFactory.findMBeanServer(null);
       ShutdownHookBehavior shutdownHookBehavior = globalConfiguration.shutdown().hookBehavior();
       boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && al.isEmpty())
@@ -168,28 +171,30 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public final ComponentRegistry getNamedComponentRegistry(String name) {
+      //no need so sync this method as namedComponents is thread safe and correctly published (final)
       return namedComponents.get(name);
    }
 
-   public final void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
+   public synchronized final void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
       namedComponents.put(name, componentRegistry);
    }
 
-   public final void unregisterNamedComponentRegistry(String name) {
+   public synchronized final void unregisterNamedComponentRegistry(String name) {
       namedComponents.remove(name);
    }
 
-   public final void rewireNamedRegistries() {
+   public synchronized final void rewireNamedRegistries() {
       for (ComponentRegistry cr : namedComponents.values())
          cr.rewire();
    }
 
    public Map<Byte,ModuleCommandInitializer> getModuleCommandInitializers() {
-      return moduleProperties.moduleCommandInitializers();
+      //moduleProperties is final so we don't need to synchronize this method for safe-publishing
+      return Collections.unmodifiableMap(moduleProperties.moduleCommandInitializers());
    }
 
    @Override
-   public void start() {
+   public synchronized void start() {
       try {
          boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
          if (needToNotify) {
@@ -224,7 +229,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public void stop() {
+   public synchronized void stop() {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
@@ -242,13 +247,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public final GlobalConfiguration getGlobalConfiguration() {
+      //this is final so no need to synchronise it
       return globalConfiguration;
    }
 
    /**
     * Removes a cache with the given name, returning true if the cache was removed.
     */
-   public boolean removeCache(String cacheName) {
+   public synchronized boolean removeCache(String cacheName) {
       return createdCaches.remove(cacheName);
    }
 

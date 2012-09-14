@@ -279,7 +279,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       } finally {
          stateTransferLock.commandsSharedUnlock();
 
-         log.tracef("Forwarding command %s to new targets %", command, newTargets);
+         log.tracef("Forwarding command %s to new targets %s", command, newTargets);
          if (newTargets != null && !newTargets.isEmpty()) {
             rpcManager.invokeRemotely(newTargets, command, true);
          }

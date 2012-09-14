@@ -283,7 +283,7 @@ public class InfinispanDirectory extends Directory {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
-         throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+         throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
       }
       else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
          //files smaller than chunkSize don't need a readLock
@@ -293,7 +293,7 @@ public class InfinispanDirectory extends Directory {
          boolean locked = readLocks.acquireReadLock(name);
          if (!locked) {
             // safest reaction is to tell this file doesn't exist anymore.
-            throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+            throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
          }
          return new InfinispanIndexInput(chunksCache, fileKey, fileMetadata, readLocks);
       }

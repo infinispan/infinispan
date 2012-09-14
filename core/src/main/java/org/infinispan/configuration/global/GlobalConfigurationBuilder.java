@@ -31,8 +31,6 @@ import java.util.List;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.BuiltBy;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-
 import static java.util.Arrays.asList;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
@@ -217,7 +215,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
       builder
             .transport()
-               .transport(new JGroupsTransport())
+               .defaultTransport()
             .asyncTransportExecutor()
                .addProperty("threadNamePrefix", "asyncTransportThread");
 

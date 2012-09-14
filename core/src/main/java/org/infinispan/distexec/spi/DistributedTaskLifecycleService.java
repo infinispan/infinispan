@@ -25,6 +25,7 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 
+import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,10 +49,10 @@ public final class DistributedTaskLifecycleService {
       return service;
    }
 
-   public <T> void onPreExecute(Callable<T> task) {
+   public <T,K,V> void onPreExecute(Callable<T> task, Cache <K,V> inputCache) {
       try {
          for (DistributedTaskLifecycle l : lifecycles) {
-            l.onPreExecute(task);
+            l.onPreExecute(task, inputCache);
          }
       } catch (ServiceConfigurationError serviceError) {
          log.errorReadingProperties(new IOException(

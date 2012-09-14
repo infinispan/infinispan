@@ -445,7 +445,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
                try {
                   //hook into lifecycle
-                  taskLifecycleService.onPreExecute(future.getCommand().getCallable());
+                  taskLifecycleService.onPreExecute(future.getCommand().getCallable(),cache);
                   result = future.getCommand().perform(null);
                   return Collections.singletonMap(rpc.getAddress(), SuccessfulResponse.create(result));
                } catch (Throwable e) {
