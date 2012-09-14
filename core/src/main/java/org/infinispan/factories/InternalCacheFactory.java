@@ -89,9 +89,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, defaultClassLoader);
 
-      // Notify any registered module lifecycle listeners that the cache is starting.
-      componentRegistry.notifyCacheStarting(configuration);
-
       /*
          --------------------------------------------------------------------------------------------------------------
          This is where the bootstrap really happens.  Registering the cache in the component registry will cause

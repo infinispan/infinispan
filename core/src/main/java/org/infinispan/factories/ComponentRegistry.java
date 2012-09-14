@@ -147,12 +147,29 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+   protected final <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentClass.getName())) {
+         return globalComponents.getOrCreateComponent(componentClass, name, nameIsFQCN);
+      } else {
+         return super.getOrCreateComponent(componentClass, name, nameIsFQCN);
+      }
+   }
+
+   @Override
+   protected final void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
          globalComponents.registerComponentInternal(component, name, nameIsFQCN);
       } else {
          super.registerComponentInternal(component, name, nameIsFQCN);
       }
+   }
+
+   @Override
+   protected AbstractComponentFactory createComponentFactoryInternal(Class<?> componentClass, String cfClass) {
+      if (isGlobal(cfClass)) {
+         return globalComponents.createComponentFactoryInternal(componentClass, cfClass);
+      }
+      return super.createComponentFactoryInternal(componentClass, cfClass);
    }
 
    private boolean isGlobal(String className) {
@@ -169,19 +186,14 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       // able to locate this registry via the InboundInvocationHandler
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
-      // Cache starting notification happens earlier in the call stack trace
-
-      // But do call cache starting if terminated, this is needed for user invocations of #start()
-      if (state == ComponentStatus.TERMINATED) {
-          notifyCacheStarting(getComponent(Configuration.class));
-      }
+      notifyCacheStarting(getComponent(Configuration.class));
 
       super.start();
 
       if (needToNotify && state == ComponentStatus.RUNNING) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStarted(this, cacheName);
-         } 
+         }
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
    }
@@ -194,7 +206,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    public void stop() {
-      if (state.stopAllowed())globalComponents.unregisterNamedComponentRegistry(cacheName);
+      if (state.stopAllowed()) globalComponents.unregisterNamedComponentRegistry(cacheName);
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {

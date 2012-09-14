@@ -338,7 +338,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          // Update the list of joiners
          // TODO Add some cleanup for nodes that left the cluster before getting any state
          cacheStatus.getJoiners().removeAll(newCurrentCH.getMembers());
-         log.tracef("After rebalance, joiners without state are %", cacheStatus.getJoiners());
+         log.tracef("After rebalance, joiners without state are %s", cacheStatus.getJoiners());
 
          // If we have postponed some joiners, start a new rebalance for them now
          // If the CH is still not balanced (perhaps because of a leaver), restart the rebalance process
