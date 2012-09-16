@@ -112,7 +112,7 @@ public class LazyIteratorTest {
          }
       });
 
-      iterator = new LazyIterator(hsQuery, cache, new KeyTransformationHandler(), fetchSize);
+      iterator = new LazyIterator(hsQuery, new EntityLoader(cache, new KeyTransformationHandler()), fetchSize );
    }
 
    @AfterMethod(alwaysRun = false)

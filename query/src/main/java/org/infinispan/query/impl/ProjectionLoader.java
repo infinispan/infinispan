@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,46 +20,41 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.infinispan.query.impl;
+
+import org.hibernate.search.query.engine.spi.EntityInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
-
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
- * @author Marko Luksa
- * @since 5.0
+ * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
-public class EntityLoader implements QueryResultLoader {
+public class ProjectionLoader implements QueryResultLoader {
 
-   private final AdvancedCache<?, ?> cache;
-   private final KeyTransformationHandler keyTransformationHandler;
+   private final ProjectionConverter projectionConverter;
+   private final EntityLoader entityLoader;
 
-   public EntityLoader(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.keyTransformationHandler = keyTransformationHandler;
-      this.cache = cache;
+   public ProjectionLoader(ProjectionConverter projectionConverter, EntityLoader entityLoader) {
+      this.projectionConverter = projectionConverter;
+      this.entityLoader = entityLoader;
    }
 
-   public Object load(EntityInfo entityInfo) {
-      Object cacheKey = keyTransformationHandler.stringToKey( entityInfo.getId().toString(), cache.getClassLoader() );
-      return cache.get(cacheKey);
-   }
-
+   @Override
    public List<Object> load(Collection<EntityInfo> entityInfos) {
-      ArrayList<Object> list = new ArrayList<Object>(entityInfos.size());
-      for (EntityInfo e : entityInfos) {
-          Object entity = load(e);
-          if (entity != null) {
-              list.add(entity);
-          }
+      List<Object> list = new ArrayList<Object>(entityInfos.size());
+      for (EntityInfo entityInfo : entityInfos) {
+         list.add( load( entityInfo ) );
       }
       return list;
    }
 
+   public Object[] load(EntityInfo entityInfo) {
+      Object[] projection = entityInfo.getProjection();
+      if (entityInfo.isProjectThis()) {
+         entityInfo.populateWithEntityInstance(entityLoader.load(entityInfo));
+      }
+      return projectionConverter.convert(projection);
+   }
 }

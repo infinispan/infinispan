@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
 
 import net.jcip.annotations.NotThreadSafe;
 
-import org.infinispan.AdvancedCache;
+import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,22 +40,24 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  *
  * @author Navin Surtani
+ * @author Marko Luksa
  */
 @NotThreadSafe
 public class EagerIterator extends AbstractIterator {
    //private final int size;
-   private List<Object> idList;
+   private List<EntityInfo> entityInfos;
+   private QueryResultLoader resultLoader;
 
    private static final Log log = LogFactory.getLog(EagerIterator.class);
 
 
-   public EagerIterator(List<Object> idList, AdvancedCache<?, ?> cache, int fetchSize) {
+   public EagerIterator(List<EntityInfo> entityInfos, QueryResultLoader resultLoader, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
 
-      this.idList = idList;
-      this.cache = cache;
+      this.entityInfos = entityInfos;
+      this.resultLoader = resultLoader;
       this.fetchSize = fetchSize;
 
       // Set the values of first and max so that they can be used by the methods on the superclass.
@@ -66,7 +68,7 @@ public class EagerIterator extends AbstractIterator {
       // Similarly max can be set to the size of the list that gets passed in - 1. Using -1 because max is on base 0 while
       // the size of the list is base 1.
 
-      max = idList.size() - 1;
+      max = entityInfos.size() - 1;
 
       buffer = new Object[this.fetchSize];
    }
@@ -79,7 +81,7 @@ public class EagerIterator extends AbstractIterator {
     */
    @Override
    public void jumpToResult(int index) throws IndexOutOfBoundsException {
-      if (index > idList.size() || index < 0) {
+      if (index > entityInfos.size() || index < 0) {
          throw new IndexOutOfBoundsException("The index you entered is either greater than the size of the list or negative");
       }
       this.index = index;
@@ -114,7 +116,7 @@ public class EagerIterator extends AbstractIterator {
       } else {
          // We need to populate the buffer.
 
-         toReturn = cache.get(idList.get(index));
+         toReturn = loadResult(index);
 
          //Wiping bufferObjects and the bufferIndex so that there is no stale data.
 
@@ -130,7 +132,7 @@ public class EagerIterator extends AbstractIterator {
                break;
             }
 
-            Object toBuffer = cache.get(idList.get(index + i));
+            Object toBuffer = loadResult(index + i);
             buffer[i] = toBuffer;
          }
          bufferIndex = index;
@@ -141,6 +143,9 @@ public class EagerIterator extends AbstractIterator {
       return toReturn;
    }
 
+   private Object loadResult(int index) {
+      return resultLoader.load(entityInfos.get(index));
+   }
 
    /**
     * Returns the previous element in the list.
@@ -164,7 +169,7 @@ public class EagerIterator extends AbstractIterator {
          int indexToReturn = bufferIndex - index;        // Unlike next() we have to make sure that we are subtracting index from bufferIndex
          toReturn = buffer[indexToReturn];
       } else {
-         toReturn = cache.get(idList.get(index));
+         toReturn = loadResult(index);
          // Wiping bufferObjects and the bufferIndex so that there is no stale data.
 
          Arrays.fill(buffer, null);
@@ -179,8 +184,7 @@ public class EagerIterator extends AbstractIterator {
                log.debug("Your current index - bufferSize exceeds the size of your number of hits");
                break;
             }
-            Object toBuffer = cache.get(idList.get(index - i));
-            buffer[i] = toBuffer;
+            buffer[i] = loadResult(index - i);
          }
          bufferIndex = index;
       }

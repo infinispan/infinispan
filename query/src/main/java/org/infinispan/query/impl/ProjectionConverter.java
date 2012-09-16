@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,46 +20,49 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.infinispan.query.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
+import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
- * @author Marko Luksa
- * @since 5.0
+ * Converts between Infinispan and HSearch projection fields.
+ *
+ * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
-public class EntityLoader implements QueryResultLoader {
+public class ProjectionConverter {
 
    private final AdvancedCache<?, ?> cache;
    private final KeyTransformationHandler keyTransformationHandler;
+   private final String[] hibernateSearchFields;
+   private final List<Integer> indexesOfKey = new LinkedList<Integer>();
 
-   public EntityLoader(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.keyTransformationHandler = keyTransformationHandler;
+   public ProjectionConverter(String[] fields, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
-   }
+      this.keyTransformationHandler = keyTransformationHandler;
 
-   public Object load(EntityInfo entityInfo) {
-      Object cacheKey = keyTransformationHandler.stringToKey( entityInfo.getId().toString(), cache.getClassLoader() );
-      return cache.get(cacheKey);
-   }
-
-   public List<Object> load(Collection<EntityInfo> entityInfos) {
-      ArrayList<Object> list = new ArrayList<Object>(entityInfos.size());
-      for (EntityInfo e : entityInfos) {
-          Object entity = load(e);
-          if (entity != null) {
-              list.add(entity);
-          }
+      hibernateSearchFields = fields.clone();
+      for (int i = 0; i < hibernateSearchFields.length; i++) {
+         String field = hibernateSearchFields[i];
+         if (field.equals( ProjectionConstants.KEY )) {
+            hibernateSearchFields[i] = ProjectionConstants.ID;
+            indexesOfKey.add(i);
+         }
       }
-      return list;
    }
 
+   public String[] getHSearchProjection() {
+      return hibernateSearchFields;
+   }
+
+   public Object[] convert(Object[] projection) {
+      for (Integer index : indexesOfKey) {
+         projection[index] = keyTransformationHandler.stringToKey((String) projection[index], cache.getClassLoader());
+      }
+      return projection;
+   }
 }

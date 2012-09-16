@@ -23,7 +23,6 @@
 
 package org.infinispan.query.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +56,7 @@ public class CacheQueryImpl implements CacheQuery {
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
    protected HSQuery hSearchQuery;
+   private ProjectionConverter projectionConverter;
 
    public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
          KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
@@ -152,8 +152,7 @@ public class CacheQueryImpl implements CacheQuery {
    public QueryIterator iterator(int fetchSize) throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      List<Object> keyList = fromEntityInfosToKeys(entityInfos);
-      return new EagerIterator(keyList, cache, fetchSize);
+      return new EagerIterator(entityInfos, getResultLoader(), fetchSize );
    }
 
    @Override
@@ -163,29 +162,30 @@ public class CacheQueryImpl implements CacheQuery {
 
    @Override
    public QueryIterator lazyIterator(int fetchSize) {
-      return new LazyIterator(hSearchQuery, cache, keyTransformationHandler, fetchSize);
+      return new LazyIterator(hSearchQuery, getResultLoader(), fetchSize);
    }
 
    @Override
    public List<Object> list() throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      EntityLoader loader = getLoader();
-      List<Object> list = loader.load( entityInfos.toArray( new EntityInfo[entityInfos.size()] ) );
-      return list;
+      return getResultLoader().load( entityInfos );
    }
 
-   private EntityLoader getLoader() {
+   private QueryResultLoader getResultLoader() {
+      return isProjected() ? getProjectionLoader() : getEntityLoader();
+   }
+
+   private boolean isProjected() {
+      return hSearchQuery.getProjectedFields() != null;
+   }
+
+   private ProjectionLoader getProjectionLoader() {
+      return new ProjectionLoader( projectionConverter, getEntityLoader() );
+   }
+
+   private EntityLoader getEntityLoader() {
       return new EntityLoader(cache, keyTransformationHandler);
-   }
-
-   private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
-      List<Object> keyList = new ArrayList<Object>(entityInfos.size());
-      for (EntityInfo ei : entityInfos) {
-         Object cacheKey = keyTransformationHandler.stringToKey(ei.getId().toString(), cache.getClassLoader());
-         keyList.add(cacheKey);
-      }
-      return keyList;
    }
 
    @Override
@@ -200,7 +200,8 @@ public class CacheQueryImpl implements CacheQuery {
 
    @Override
    public CacheQuery projection(String... fields) {
-      hSearchQuery.projection(fields);
+      this.projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
+      hSearchQuery.projection( projectionConverter.getHSearchProjection() );
       return this;
    }
 

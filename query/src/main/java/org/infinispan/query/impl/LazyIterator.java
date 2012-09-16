@@ -30,10 +30,9 @@ import java.util.NoSuchElementException;
 import net.jcip.annotations.NotThreadSafe;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
-import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
-import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link
@@ -47,17 +46,16 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 public class LazyIterator extends AbstractIterator {
 
    private final DocumentExtractor extractor;
-   private final KeyTransformationHandler keyTransformationHandler;
+   private final QueryResultLoader resultLoader;
 
-   public LazyIterator(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, int fetchSize) {
+   public LazyIterator(HSQuery hSearchQuery, QueryResultLoader resultLoader, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
-      this.keyTransformationHandler = keyTransformationHandler;
       this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
+      this.resultLoader = resultLoader;
       this.index = 0;
       this.max = hSearchQuery.queryResultSize() - 1;
-      this.cache = cache;
       this.fetchSize = fetchSize;
       //Create an buffer with size fetchSize (which is the size of the required buffer).
       buffer = new Object[this.fetchSize];
@@ -95,8 +93,7 @@ public class LazyIterator extends AbstractIterator {
          // else we need to populate the buffer and get what we need.
 
          try {
-            String documentId = (String) extractor.extract(index).getId();
-            toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
+            toReturn = loadResult(index);
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
             Arrays.fill(buffer, null);
@@ -107,9 +104,7 @@ public class LazyIterator extends AbstractIterator {
             //now loop through bufferSize times to add the rest of the objects into the list.
 
             for (int i = 1; i < bufferSize; i++) {
-               String bufferDocumentId = (String) extractor.extract(index + i).getId();
-               Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
-               buffer[i] = toBuffer;
+               buffer[i] = loadResult( index + i );
             }
             bufferIndex = index;
          }
@@ -144,16 +139,13 @@ public class LazyIterator extends AbstractIterator {
          //Wiping the buffer
          Arrays.fill(buffer, null);
 
-         String documentId = (String) extractor.extract(index).getId();
-         toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
+         toReturn = loadResult( index );
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
-            String bufferDocumentId = (String) extractor.extract(index - i).getId();    //In this case it has to be index - i because previous() is called.
-            Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
-            buffer[i] = toBuffer;
+            buffer[i] = loadResult( index - i );    //In this case it has to be index - i because previous() is called.
          }
 
          bufferIndex = index;
@@ -163,6 +155,11 @@ public class LazyIterator extends AbstractIterator {
       }
       index--;
       return toReturn;
+   }
+
+   private Object loadResult(int index) throws IOException {
+      EntityInfo entityInfo = extractor.extract( index );
+      return resultLoader.load( entityInfo );
    }
 
    @Override
