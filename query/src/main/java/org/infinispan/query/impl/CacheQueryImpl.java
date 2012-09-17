@@ -181,7 +181,7 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    private ProjectionLoader getProjectionLoader() {
-      return new ProjectionLoader( projectionConverter );
+      return new ProjectionLoader( projectionConverter, getEntityLoader() );
    }
 
    private EntityLoader getEntityLoader() {

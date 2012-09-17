@@ -59,6 +59,15 @@ public class ProjectionTest extends SingleCacheManagerTest {
       assertQueryReturns(cacheQuery, new Object[] {"1"});
    }
 
+   @Test
+   public void testValueProjectionConstant() throws Exception {
+      Foo foo = new Foo( "bar1", "baz1" );
+      cache.put( "1", foo );
+
+      CacheQuery cacheQuery = createProjectionQuery( ProjectionConstants.VALUE );
+      assertQueryReturns(cacheQuery, new Object[] {foo});
+   }
+
    private CacheQuery createProjectionQuery(String projection) {
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass( Foo.class ).get();
       Query query = queryBuilder.keyword().onField("bar").matching("bar1").createQuery();
@@ -105,6 +114,26 @@ public class ProjectionTest extends SingleCacheManagerTest {
       @Field(name = "baz")
       public String getBaz() {
          return baz;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Foo foo = (Foo) o;
+
+         if (bar != null ? !bar.equals( foo.bar ) : foo.bar != null) return false;
+         if (baz != null ? !baz.equals( foo.baz ) : foo.baz != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = bar != null ? bar.hashCode() : 0;
+         result = 31 * result + (baz != null ? baz.hashCode() : 0);
+         return result;
       }
    }
 

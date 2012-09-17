@@ -14,9 +14,11 @@ import java.util.List;
 public class ProjectionLoader implements QueryResultLoader {
 
    private final ProjectionConverter projectionConverter;
+   private final EntityLoader entityLoader;
 
-   public ProjectionLoader(ProjectionConverter projectionConverter) {
+   public ProjectionLoader(ProjectionConverter projectionConverter, EntityLoader entityLoader) {
       this.projectionConverter = projectionConverter;
+      this.entityLoader = entityLoader;
    }
 
    @Override
@@ -30,6 +32,9 @@ public class ProjectionLoader implements QueryResultLoader {
 
    public Object[] load(EntityInfo entityInfo) {
       Object[] projection = entityInfo.getProjection();
+      if (entityInfo.isProjectThis()) {
+         entityInfo.populateWithEntityInstance(entityLoader.load(entityInfo));
+      }
       return projectionConverter.convert(projection);
    }
 }

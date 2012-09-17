@@ -9,4 +9,6 @@ public interface ProjectionConstants {
 
    String KEY = "__ISPN_Key";
 
+   String VALUE = org.hibernate.search.ProjectionConstants.THIS;
+
 }
