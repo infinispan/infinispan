@@ -40,21 +40,27 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupReceiverRepository;
+import org.infinispan.xsite.XSiteBackup;
 import org.jgroups.Channel;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
 import org.jgroups.View;
+import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.stack.AddressGenerator;
+import org.jgroups.util.Buffer;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
@@ -73,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
@@ -113,6 +120,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
    private GlobalComponentRegistry gcr;
+   private BackupReceiverRepository backupReceiverRepository;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -169,12 +177,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                           @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                           InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier,
-                          GlobalComponentRegistry gcr) {
+                          GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.notifier = notifier;
       this.gcr = gcr;
+      this.backupReceiverRepository = backupReceiverRepository;
    }
 
    @Override
@@ -310,7 +319,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler, gcr);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler, gcr, backupReceiverRepository);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -537,6 +546,24 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          responses = retval;
       }
       return responses;
+   }
+
+   @Override
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
+      log.tracef("About to send to backups %s, command %s",backups, rpcCommand);
+      Buffer buf = dispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
+      Map<XSiteBackup, Future<Object>> syncBackupCalls = new HashMap<XSiteBackup, Future<Object>>(backups.size());
+      for (XSiteBackup xsb : backups) {
+         SiteMaster recipient = new SiteMaster(xsb.getSiteName());
+         if (xsb.isSync()) {
+            RequestOptions sync = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL, xsb.getTimeout());
+            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
+         } else {
+            RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
+            dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
+         }
+      }
+      return new JGroupsBackupResponse(syncBackupCalls);
    }
 
    private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {

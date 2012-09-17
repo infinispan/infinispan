@@ -103,6 +103,11 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
       return builder.unsafe();
    }
 
+   @Override
+   public SitesConfigurationBuilder sites() {
+      return builder.sites();
+   }
+
    protected ConfigurationBuilder getBuilder() {
       return builder;
    }

@@ -208,7 +208,12 @@ public enum Flag {
     * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
     * {@link Flag#SKIP_CACHE_LOAD}.
     */
-   IGNORE_RETURN_VALUES;
+   IGNORE_RETURN_VALUES,
+
+   /**
+    * If cross-site replication is enabled, this would skip the replication to any remote site.
+    */
+   SKIP_XSITE_BACKUP;
 
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.

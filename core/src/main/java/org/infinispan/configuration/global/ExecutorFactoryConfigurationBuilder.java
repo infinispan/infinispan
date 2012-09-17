@@ -89,8 +89,8 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
    protected
    ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
       this.factory = template.factory();
-      this.properties = template.properties();
-
+      this.properties = new Properties();
+      this.properties.putAll(template.properties());
       return this;
    }
 

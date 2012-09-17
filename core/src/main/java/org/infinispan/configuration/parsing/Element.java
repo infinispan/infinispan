@@ -82,7 +82,12 @@ public enum Element {
     TRANSACTION("transaction"),
     TRANSPORT("transport"),
     UNSAFE("unsafe"),
-    VERSIONING("versioning")
+    VERSIONING("versioning"),
+    SITES("sites"),
+    SITE("site"),
+    BACKUPS("backups"),
+    BACKUP("backup"),
+    BACKUP_FOR("backupFor"),
     ;
 
     private final String name;

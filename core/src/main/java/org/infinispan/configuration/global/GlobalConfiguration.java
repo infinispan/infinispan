@@ -66,12 +66,14 @@ public class GlobalConfiguration {
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
    private final Map<Class<?>, ?> modules;
+   private final SitesConfiguration sites;
    private final ClassLoader cl;
 
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, List<?> modules, ClassLoader cl) {
+         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
+         List<?> modules, SitesConfiguration sites ,ClassLoader cl) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -80,12 +82,12 @@ public class GlobalConfiguration {
       this.transport = transport;
       this.serialization = serialization;
       this.shutdown = shutdown;
-
       Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
       for(Object module : modules) {
          moduleMap.put(module.getClass(), module);
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
+      this.sites = sites;
       this.cl = cl;
    }
 
@@ -132,13 +134,15 @@ public class GlobalConfiguration {
 
    /**
     * Get the classloader in use by this configuration.
-    *
-    * @return
     */
    public ClassLoader classLoader() {
       return cl;
    }
 
+   public SitesConfiguration sites() {
+      return sites;
+   }
+   
    @Override
    public String toString() {
       return "GlobalConfiguration{" +
@@ -151,8 +155,8 @@ public class GlobalConfiguration {
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
             ", modules=" + modules +
+            ", sites=" + sites +
             ", cl=" + cl +
             '}';
    }
-
 }

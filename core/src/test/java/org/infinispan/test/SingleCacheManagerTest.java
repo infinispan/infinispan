@@ -133,4 +133,12 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
 
    protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
+
+   protected Cache cache() {
+      return cache;
+   }
+
+   protected Cache cache(String name) {
+      return cacheManager.getCache(name);
+   }
 }

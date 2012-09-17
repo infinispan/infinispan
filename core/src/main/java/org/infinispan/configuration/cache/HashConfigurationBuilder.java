@@ -22,8 +22,6 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

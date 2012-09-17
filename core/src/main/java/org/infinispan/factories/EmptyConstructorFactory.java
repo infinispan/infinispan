@@ -36,6 +36,8 @@ import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.RebalancePolicy;
+import org.infinispan.xsite.BackupReceiverRepository;
+import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
 /**
  * Factory for building global-scope components which have default empty constructors
@@ -45,7 +47,7 @@ import org.infinispan.topology.RebalancePolicy;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              LocalTopologyManager.class, ClusterTopologyManager.class, RebalancePolicy.class})
+                              LocalTopologyManager.class, ClusterTopologyManager.class, RebalancePolicy.class, BackupReceiverRepository.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -64,6 +66,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new ClusterTopologyManagerImpl();
       else if (componentType.equals(RebalancePolicy.class))
          return (T) new DefaultRebalancePolicy();
+      else if (componentType.equals(BackupReceiverRepository.class))
+         return (T) new BackupReceiverRepositoryImpl();
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());
    }

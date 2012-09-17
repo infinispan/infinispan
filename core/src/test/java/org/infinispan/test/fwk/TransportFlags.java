@@ -29,8 +29,11 @@ package org.infinispan.test.fwk;
  */
 public class TransportFlags {
 
-   boolean withFD;
-   boolean withMerge;
+   private boolean withFD;
+   private boolean withMerge;
+   private int sideIndex = -1;
+   private String siteName;
+   private String relayConfig;
 
    public TransportFlags withFD(boolean withFD) {
       this.withFD = withFD;
@@ -50,4 +53,34 @@ public class TransportFlags {
       return withMerge;
    }
 
+   public TransportFlags withSiteIndex(int siteIndex) {
+      this.sideIndex = siteIndex;
+      return this;
+   }
+
+   public TransportFlags withSiteName(String siteName) {
+      this.siteName = siteName;
+      return this;
+   }
+
+   public TransportFlags withRelayConfig(String relayConf) {
+      this.relayConfig = relayConf;
+      return this;
+   }
+
+   public String siteName() {
+      return siteName;
+   }
+
+   public String relayConfig() {
+      return relayConfig;
+   }
+
+   public int siteIndex() {
+      return sideIndex;
+   }
+
+   public boolean isSiteIndexSpecified() {
+      return siteIndex() >= 0;
+   }
 }

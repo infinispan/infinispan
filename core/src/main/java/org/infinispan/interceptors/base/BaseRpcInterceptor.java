@@ -27,6 +27,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -41,10 +42,14 @@ import org.infinispan.remoting.rpc.RpcManager;
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;
+   protected ComponentRegistry componentRegistry;
+
+   protected String cacheName;
 
    @Inject
-   public void init(RpcManager rpcManager) {
+   public void init(RpcManager rpcManager, ComponentRegistry componentRegistry ) {
       this.rpcManager = rpcManager;
+      this.componentRegistry = componentRegistry;
    }
 
    protected boolean defaultSynchronous;
@@ -52,6 +57,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
+      cacheName = componentRegistry.getCacheName();
    }
 
    @Override

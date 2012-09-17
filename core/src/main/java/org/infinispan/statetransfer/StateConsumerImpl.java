@@ -297,7 +297,7 @@ public class StateConsumerImpl implements StateConsumer {
       for (InternalCacheEntry e : cacheEntries) {
          InvocationContext ctx = icc.createInvocationContext(false, 1);
          // locking not necessary as during rehashing we block all transactions
-         EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK);
+         EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
          try {
             PutKeyValueCommand put = useVersionedPut ?
                   commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), flags)

@@ -206,9 +206,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
-            Map<Address, Response> rspList = transport.invokeRemotely(null, command,
+            return transport.invokeRemotely(null, command,
                   ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null);
-            return rspList;
          }
       });
 
