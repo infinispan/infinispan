@@ -44,11 +44,19 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
 
    @Test
-   public void testQueryProjection() throws Exception {
+   public void testQueryProjectionWithSingleField() throws Exception {
       cache.put( "1", new Foo( "bar1", "baz1" ) );
 
       CacheQuery cacheQuery = createProjectionQuery( "bar" );
       assertQueryReturns( cacheQuery, new Object[] {"bar1"} );
+   }
+
+   @Test
+   public void testQueryProjectionWithMultipleFields() throws Exception {
+      cache.put( "1", new Foo( "bar1", "baz1" ) );
+
+      CacheQuery cacheQuery = createProjectionQuery( "bar", "baz" );
+      assertQueryReturns( cacheQuery, new Object[] {"bar1", "baz1"} );
    }
 
    @Test
@@ -68,7 +76,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
       assertQueryReturns(cacheQuery, new Object[] {foo});
    }
 
-   private CacheQuery createProjectionQuery(String projection) {
+   private CacheQuery createProjectionQuery(String... projection) {
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass( Foo.class ).get();
       Query query = queryBuilder.keyword().onField("bar").matching("bar1").createQuery();
       CacheQuery cacheQuery = searchManager.getQuery( query );
@@ -111,7 +119,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
          return bar;
       }
 
-      @Field(name = "baz")
+      @Field(name = "baz", store = Store.YES)
       public String getBaz() {
          return baz;
       }
