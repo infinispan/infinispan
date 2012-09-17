@@ -178,12 +178,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
       ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
 
       // TODO Improve notification to contain both CHs
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, true);
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), true);
 
       stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
       stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
 
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, false);
+      cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), false);
 
       if (newCacheTopology.getCurrentCH().getMembers().contains(rpcManager.getAddress())) {
          initialStateTransferComplete.countDown();
@@ -191,6 +191,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Start(priority = 1000)
+   @SuppressWarnings("unused")
    public void waitForInitialStateTransferToComplete() throws InterruptedException {
       if (trace) log.tracef("Waiting for initial state transfer to finish");
       boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);

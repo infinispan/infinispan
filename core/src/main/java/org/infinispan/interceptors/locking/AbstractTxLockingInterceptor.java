@@ -35,7 +35,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.TransactionTable;
@@ -58,13 +57,8 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    public void setDependencies(TransactionTable txTable, RpcManager rpcManager) {
       this.txTable = txTable;
       this.rpcManager = rpcManager;
-   }
-
-   @Start
-   private void setClustered() {
       clustered = rpcManager != null;
    }
-
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
@@ -169,10 +163,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       int transactionViewId = -1;
+      boolean useStrictComparison = true;
       if (clustered) {
          transactionViewId = txContext.getCacheTransaction().getViewId();
          if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
-            checkForPendingLocks = transactionViewId > txTable.getMinViewId();
+            useStrictComparison = txTable.useStrictTopologyIdComparison();
+            checkForPendingLocks = isFromOlderTopology(txTable.getMinViewId(), transactionViewId, useStrictComparison);
          }
       }
 
@@ -183,7 +179,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
          // Check local transactions first
          for (CacheTransaction ct: txTable.getLocalTransactions()) {
-            if (ct.getViewId() < transactionViewId) {
+            if (isFromOlderTopology(ct.getViewId(), transactionViewId, useStrictComparison)) {
                long remaining = expectedEndTime - nowMillis();
                if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
             }
@@ -191,7 +187,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
          // ... then remote ones
          for (CacheTransaction ct: txTable.getRemoteTransactions()) {
-            if (ct.getViewId() < transactionViewId) {
+            if (isFromOlderTopology(ct.getViewId(), transactionViewId, useStrictComparison)) {
                long remaining = expectedEndTime - nowMillis();
                if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
             }
@@ -209,6 +205,19 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          getLog().tracef("Locking key %s, no need to check for pending locks.", key);
          lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
       }
+   }
+
+   /**
+    * Checks if first topology id is smaller than the second. The comparison can be strict or non-strict,
+    * depending on the isStrictComparison flag.
+    *
+    * @param tx1TopologyId topology id of first transaction
+    * @param tx2TopologyId topology id of second transaction
+    * @param useStrictComparison a flag indicating if comparison must be strict
+    * @return if the first transaction was started in an older topology than the second transaction
+    */
+   private boolean isFromOlderTopology(int tx1TopologyId, int tx2TopologyId, boolean useStrictComparison) {
+      return useStrictComparison ? tx1TopologyId < tx2TopologyId : tx1TopologyId <= tx2TopologyId;
    }
 
    private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {
