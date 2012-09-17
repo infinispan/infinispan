@@ -28,60 +28,50 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * Configures {@link FastFileCacheStore}.
  * <p/>
  * <ul>
- * <li><tt>location</tt> - a location on disk where the store can write internal
- * files. This defaults to <tt>Infinispan-FileCacheStore</tt> in the current
- * working directory.</li>
- * <li><tt>maxEntries</tt> - maximum number of entries allowed in the cache
- * store. If more entries are added, the least recently used (LRU) entry is
- * removed.</li>
+ * <li><tt>location</tt> - a location on disk where the store can write internal files. This
+ * defaults to <tt>Infinispan-FileCacheStore</tt> in the current working directory.</li>
+ * <li><tt>maxEntries</tt> - maximum number of entries allowed in the cache store. If more entries
+ * are added, the least recently used (LRU) entry is removed.</li>
  * </ul>
  * 
  * @author Karsten Blees
  */
-public class FastFileCacheStoreConfig extends AbstractCacheStoreConfig
-{
-	private static final long serialVersionUID = 1L;
+public class FastFileCacheStoreConfig extends AbstractCacheStoreConfig {
+   private static final long serialVersionUID = 1L;
 
-	private String location = "Infinispan-FileCacheStore";
+   private String location = "Infinispan-FileCacheStore";
 
-	private int maxEntries = -1;
+   private int maxEntries = -1;
 
-	public FastFileCacheStoreConfig()
-	{
-		setCacheLoaderClassName(FastFileCacheStore.class.getName());
-	}
+   public FastFileCacheStoreConfig() {
+      setCacheLoaderClassName(FastFileCacheStore.class.getName());
+   }
 
-	public String getLocation()
-	{
-		return location;
-	}
+   public String getLocation() {
+      return location;
+   }
 
-	public void setLocation(String location)
-	{
-		testImmutability("location");
-		this.location = location;
-	}
+   public void setLocation(String location) {
+      testImmutability("location");
+      this.location = location;
+   }
 
-	public FastFileCacheStoreConfig location(String location)
-	{
-		setLocation(location);
-		return this;
-	}
+   public FastFileCacheStoreConfig location(String location) {
+      setLocation(location);
+      return this;
+   }
 
-	public int getMaxEntries()
-	{
-		return maxEntries;
-	}
+   public int getMaxEntries() {
+      return maxEntries;
+   }
 
-	public void setMaxEntries(int maxEntries)
-	{
-		testImmutability("maxEntries");
-		this.maxEntries = maxEntries;
-	}
+   public void setMaxEntries(int maxEntries) {
+      testImmutability("maxEntries");
+      this.maxEntries = maxEntries;
+   }
 
-	public FastFileCacheStoreConfig maxEntries(int maxEntries)
-	{
-		setMaxEntries(maxEntries);
-		return this;
-	}
+   public FastFileCacheStoreConfig maxEntries(int maxEntries) {
+      setMaxEntries(maxEntries);
+      return this;
+   }
 }
