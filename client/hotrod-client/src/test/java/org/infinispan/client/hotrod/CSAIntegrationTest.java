@@ -60,7 +60,8 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest")
+@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest",
+      enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private HotRodServer hotRodServer1;
@@ -144,7 +145,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       super.destroy();
    }
 
-   @Test (enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
    public void testHashInfoRetrieved() throws InterruptedException {
       assertEquals(3, tcpConnectionFactory.getServers().size());
       for (int i = 0; i < 10; i++) {
