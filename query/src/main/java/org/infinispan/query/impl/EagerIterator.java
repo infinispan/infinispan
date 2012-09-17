@@ -100,7 +100,7 @@ public class EagerIterator extends AbstractIterator {
     */
    @Override
    public Object next() {
-      if (!hasNext()) throw new IndexOutOfBoundsException("Out of boundaries. There is no next");
+      if (!hasNext()) throw new NoSuchElementException("Out of boundaries. There is no next");
 
       Object toReturn;
       int bufferSize = buffer.length;
@@ -154,7 +154,7 @@ public class EagerIterator extends AbstractIterator {
     */
    @Override
    public Object previous() {
-      if (!hasPrevious()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
+      if (!hasPrevious()) throw new NoSuchElementException("Index is out of bounds. There is no previous");
 
       Object toReturn;
       int bufferSize = buffer.length;
@@ -199,7 +199,6 @@ public class EagerIterator extends AbstractIterator {
     */
    @Override
    public int nextIndex() {
-      if (!hasNext()) throw new NoSuchElementException("Out of boundaries");
       return index + 1;
    }
 
@@ -210,7 +209,6 @@ public class EagerIterator extends AbstractIterator {
     */
    @Override
    public int previousIndex() {
-      if (!hasPrevious()) throw new NoSuchElementException("Out of boundaries");
       return index - 1;
    }
 

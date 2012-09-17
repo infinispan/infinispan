@@ -76,7 +76,7 @@ public class LazyIterator extends AbstractIterator {
 
    @Override
    public Object next() {
-      if (!hasNext()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no next");
+      if (!hasNext()) throw new NoSuchElementException("Index is out of bounds. There is no next");
 
       Object toReturn = null;
       int bufferSize = buffer.length;
@@ -92,25 +92,20 @@ public class LazyIterator extends AbstractIterator {
       } else {
          // else we need to populate the buffer and get what we need.
 
-         try {
-            toReturn = loadResult( index );
+         toReturn = loadResult( index );
 
-            //Wiping bufferObjects and the bufferIndex so that there is no stale data.
-            Arrays.fill(buffer, null);
-            buffer[0] = toReturn;
+         //Wiping bufferObjects and the bufferIndex so that there is no stale data.
+         Arrays.fill(buffer, null);
+         buffer[0] = toReturn;
 
-            // we now need to buffer item at index "index", as well as the next "fetchsize - 1" elements.  I.e., a total of fetchsize elements will be buffered.
-            // ignore loop below, in needs fixing
-            //now loop through bufferSize times to add the rest of the objects into the list.
+         // we now need to buffer item at index "index", as well as the next "fetchsize - 1" elements.  I.e., a total of fetchsize elements will be buffered.
+         // ignore loop below, in needs fixing
+         //now loop through bufferSize times to add the rest of the objects into the list.
 
-            for (int i = 1; i < bufferSize; i++) {
-               buffer[i] = loadResult( index + i );
-            }
-            bufferIndex = index;
+         for (int i = 1; i < bufferSize; i++) {
+            buffer[i] = loadResult( index + i );
          }
-         catch (IOException e) {
-            throw new CacheException();
-         }
+         bufferIndex = index;
       }
 
       index++;
@@ -119,9 +114,9 @@ public class LazyIterator extends AbstractIterator {
 
    @Override
    public Object previous() {
-      if (!hasPrevious()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
+      if (!hasPrevious()) throw new NoSuchElementException("Index is out of bounds. There is no previous");
 
-      Object toReturn = null;
+      Object toReturn;
       int bufferSize = buffer.length;
 
       // make sure the index we are after is in the buffer.  If it is, then index >= bufferIndex and index <= (bufferIndex + bufferSize).
@@ -135,42 +130,40 @@ public class LazyIterator extends AbstractIterator {
          toReturn = buffer[indexToReturn];
       }
 
-      try {
-         //Wiping the buffer
-         Arrays.fill(buffer, null);
+      //Wiping the buffer
+      Arrays.fill(buffer, null);
 
-         toReturn = loadResult( index );
+      toReturn = loadResult( index );
 
-         buffer[0] = toReturn;
+      buffer[0] = toReturn;
 
-         //now loop through bufferSize times to add the rest of the objects into the list.
-         for (int i = 1; i < bufferSize; i++) {
-            buffer[i] = loadResult( index - i );    //In this case it has to be index - i because previous() is called.
-         }
-
-         bufferIndex = index;
+      //now loop through bufferSize times to add the rest of the objects into the list.
+      for (int i = 1; i < bufferSize; i++) {
+         buffer[i] = loadResult( index - i );    //In this case it has to be index - i because previous() is called.
       }
-      catch (IOException e) {
-         e.printStackTrace();
-      }
+
+      bufferIndex = index;
+
       index--;
       return toReturn;
    }
 
-   private Object loadResult(int index) throws IOException {
-      EntityInfo entityInfo = extractor.extract( index );
-      return resultLoader.load( entityInfo );
+   private Object loadResult(int index) throws CacheException {
+      try {
+         EntityInfo entityInfo = extractor.extract( index );
+         return resultLoader.load( entityInfo );
+      } catch (IOException e) {
+         throw new CacheException("Cannot load result at index " + index, e);
+      }
    }
 
    @Override
    public int nextIndex() {
-      if (!hasNext()) throw new NoSuchElementException("Out of boundaries");
       return index + 1;
    }
 
    @Override
    public int previousIndex() {
-      if (!hasPrevious()) throw new NoSuchElementException("Out of boundaries.");
       return index - 1;
    }
 
