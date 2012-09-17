@@ -111,6 +111,14 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    public Callable<V> getCallable() {
       return callable;
    }
+   
+   public Set<Object> getKeys(){
+      return keys;
+   }
+   
+   public boolean hasKeys(){
+      return keys.isEmpty();
+   }
 
    @Override
    public byte getCommandId() {
@@ -131,26 +139,36 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       this.callable = (Callable<V>) args[i++];
    }
    
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof DistributedExecuteCommand)) {
-         return false;
-      }
-      if (!super.equals(o)) {
-         return false;
-      }
-      DistributedExecuteCommand<?> that = (DistributedExecuteCommand<?>) o;
-      return !keys.equals(that.keys);
-   }
+  
 
    @Override
    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (keys != null ? keys.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((keys == null) ? 0 : keys.hashCode());
       return result;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (obj == null) {
+         return false;
+      }
+      if (!(obj instanceof DistributedExecuteCommand)) {
+         return false;
+      }
+      DistributedExecuteCommand other = (DistributedExecuteCommand) obj;
+      if (keys == null) {
+         if (other.keys != null) {
+            return false;
+         }
+      } else if (!keys.equals(other.keys)) {
+         return false;
+      }
+      return true;
    }
 
    @Override
