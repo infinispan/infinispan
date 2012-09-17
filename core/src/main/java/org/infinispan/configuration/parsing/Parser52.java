@@ -33,19 +33,9 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
-import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.LockSupportCacheStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.container.DataContainer;
@@ -208,6 +198,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             case VERSIONING:
                parseVersioning(reader, holder);
                break;
+            case SITES:
+               parseLocalSites(reader, holder);
+               break;
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
@@ -242,6 +235,113 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
 
       ParseUtils.requireNoContent(reader);
    }
+
+   private void parseGlobalSites(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
+      ParseUtils.requireSingleAttribute(reader, "local");
+      String value = replaceProperties(reader.getAttributeValue(0));
+      gcb.sites().localSite(value);
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case SITE:
+               ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
+               value = replaceProperties(reader.getAttributeValue(0));
+               gcb.sites().addSite().name(value);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+         ParseUtils.requireNoContent(reader);
+      }
+   }
+
+   private void parseLocalSites(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder ccb = holder.getCurrentConfigurationBuilder();
+      ParseUtils.requireNoAttributes(reader);
+      boolean isEmptyTag = false;
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         isEmptyTag = true;
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case BACKUPS:
+               ParseUtils.requireNoAttributes(reader);
+               //if backups is present then remove any existing backups as they were added
+               // by the default config.
+               ccb.sites().backups().clear();
+               parseBackups(reader, ccb);
+               break;
+            case BACKUP_FOR:
+               ccb.sites().backupFor().reset();
+               BackupForBuilder backupForBuilder = ccb.sites().backupFor();
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  ParseUtils.requireNoNamespaceAttribute(reader, i);
+                  String value = replaceProperties(reader.getAttributeValue(i));
+                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                  switch (attribute) {
+                     case REMOTE_SITE:
+                        backupForBuilder.remoteSite(value);
+                        break;
+                     case REMOTE_CACHE:
+                        backupForBuilder.remoteCache(value);
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedElement(reader);
+                  }
+               }
+               ParseUtils.requireNoContent(reader);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+      if (!isEmptyTag) {
+         ccb.sites().backups().clear();
+         ccb.sites().backupFor().reset();
+      }
+
+   }
+
+   private void parseBackups(XMLExtendedStreamReader reader, ConfigurationBuilder ccb) throws XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case BACKUP:
+               BackupConfigurationBuilder backup = ccb.sites().addBackup();
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  ParseUtils.requireNoNamespaceAttribute(reader, i);
+                  String value = replaceProperties(reader.getAttributeValue(i));
+                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                  switch (attribute) {
+                     case TIMEOUT:
+                        backup.replicationTimeout(Long.parseLong(value));
+                        break;
+                     case STRATEGY:
+                        backup.strategy(BackupConfiguration.BackupStrategy.valueOf(value));
+                        break;
+                     case SITE:
+                        backup.site(value);
+                        break;
+                     case BACKUP_FAILURE_POLICY:
+                        backup.backupFailurePolicy(BackupFailurePolicy.valueOf(value));
+                        break;
+                     case FAILURE_POLICY_CLASS:
+                        backup.failurePolicyClass(value);
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedElement(reader);
+                  }
+               }
+            default: {
+               ParseUtils.unexpectedElement(reader);
+            }
+            ParseUtils.requireNoContent(reader);
+         }
+      }
+   }
+
    private void parseTransaction(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       boolean forceSetTransactional = false;
@@ -1378,6 +1478,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             case TRANSPORT: {
                parseTransport(reader, holder);
                transportParsed = true;
+               break;
+            } case SITES: {
+               parseGlobalSites(reader, holder);
                break;
             }
             default: {

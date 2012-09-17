@@ -53,6 +53,8 @@ import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryL
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
+import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.BackupSenderImpl;
 
 import static org.infinispan.util.Util.getInstance;
 
@@ -67,7 +69,7 @@ import static org.infinispan.util.Util.getInstance;
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, LockContainer.class,
-                              L1Manager.class, TransactionFactory.class})
+                              L1Manager.class, TransactionFactory.class, BackupSender.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -117,6 +119,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new L1ManagerImpl();
          } else if (componentType.equals(TransactionFactory.class)) {
             return (T) new TransactionFactory();
+         } else if (componentType.equals(BackupSender.class)) {
+            if (globalConfiguration.sites() == null || globalConfiguration.sites().localSite() == null) {
+               throw new ConfigurationException("Local site must be defined in the global configuration when using cross site replication.");
+            }
+            return (T) new BackupSenderImpl(globalConfiguration.sites().localSite());
          }
       }
 

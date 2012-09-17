@@ -49,6 +49,8 @@ public interface ConfigurationChildBuilder {
    VersioningConfigurationBuilder versioning();
   
    UnsafeConfigurationBuilder unsafe();
-   
+
+   SitesConfigurationBuilder sites();
+
    Configuration build();
 }

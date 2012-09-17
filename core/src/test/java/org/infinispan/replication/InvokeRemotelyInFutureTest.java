@@ -25,7 +25,6 @@ package org.infinispan.replication;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.math.stat.inference.TestUtils;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.Configuration;

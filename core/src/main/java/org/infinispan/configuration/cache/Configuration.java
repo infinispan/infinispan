@@ -42,17 +42,18 @@ public class Configuration {
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
    private final Map<Class<?>, ?> moduleConfiguration;
+   private final SitesConfiguration sites;
 
    Configuration(ClusteringConfiguration clusteringConfiguration,
-         CustomInterceptorsConfiguration customInterceptorsConfiguration,
-         DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
-         EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
-         IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
-         JMXStatisticsConfiguration jmxStatisticsConfiguration,
-         LoadersConfiguration loadersConfiguration,
-         LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
-         TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
-         VersioningConfiguration versioningConfiguration, List<?> modules, ClassLoader cl) {
+                 CustomInterceptorsConfiguration customInterceptorsConfiguration,
+                 DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
+                 EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
+                 IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
+                 JMXStatisticsConfiguration jmxStatisticsConfiguration,
+                 LoadersConfiguration loadersConfiguration,
+                 LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
+                 TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
+                 VersioningConfiguration versioningConfiguration, List<?> modules, SitesConfiguration sites, ClassLoader cl) {
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -73,12 +74,12 @@ public class Configuration {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
+      this.sites = sites;
       this.classLoader = cl;
    }
 
    /**
     * Will be removed with no replacement
-    * @return
     */
    @Deprecated
    public ClassLoader classLoader() {
@@ -150,6 +151,10 @@ public class Configuration {
       return unsafeConfiguration;
    }
 
+   public SitesConfiguration sites() {
+      return sites;
+   }
+
    public VersioningConfiguration versioning() {
       return versioningConfiguration;
    }
@@ -174,6 +179,7 @@ public class Configuration {
             ", transaction=" + transactionConfiguration +
             ", versioning=" + versioningConfiguration +
             ", unsafe=" + unsafeConfiguration +
+            ", sites=" + sites +
             '}';
    }
 
@@ -216,6 +222,8 @@ public class Configuration {
          return false;
       if (unsafeConfiguration != null ? !unsafeConfiguration.equals(that.unsafeConfiguration) : that.unsafeConfiguration != null)
          return false;
+      if (sites != null ? !sites.equals(that.sites) : that.sites != null)
+         return false;
       if (versioningConfiguration != null ? !versioningConfiguration.equals(that.versioningConfiguration) : that.versioningConfiguration != null)
          return false;
 
@@ -241,8 +249,7 @@ public class Configuration {
       result = 31 * result + (transactionConfiguration != null ? transactionConfiguration.hashCode() : 0);
       result = 31 * result + (versioningConfiguration != null ? versioningConfiguration.hashCode() : 0);
       result = 31 * result + (unsafeConfiguration != null ? unsafeConfiguration.hashCode() : 0);
+      result = 31 * result + (sites != null ? sites.hashCode() : 0);
       return result;
    }
-
-
 }

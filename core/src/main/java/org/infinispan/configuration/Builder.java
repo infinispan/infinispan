@@ -41,8 +41,9 @@ public interface Builder<T> {
     * Reads the configuration from an already created configuration bean into this builder.
     * Returns an appropriate builder to allow fluent configuration
     *
-    * @param template
-    * @return
+    *
+    * @param template the configuration from which to "clone" this config if needed.
+    *
     */
    Builder<?> read(T template);
 }

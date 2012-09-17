@@ -1470,6 +1470,13 @@
          </properties>
       </profile>
       <profile>
+         <id>test-xsite</id>
+         <properties>
+            <defaultTestGroup>xsite</defaultTestGroup>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
          <id>test-unit</id>
          <properties>
             <defaultTestGroup>unit</defaultTestGroup>

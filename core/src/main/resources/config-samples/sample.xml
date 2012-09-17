@@ -116,24 +116,34 @@
          Enables collection of global JMX statistics, and allows you to customize the JMX domain name under which
          MBeans are registered.
       -->
-      <globalJmxStatistics 
+      <globalJmxStatistics
             enabled="true" 
             jmxDomain="org.infinispan" 
             cacheManagerName="SampleCacheManager"/>
+     <!--
+        Defines the sites needed for Infinispan 's cross-site (x-site) replication.
+     -->
+     <!--
+     <sites local="LON">
+       <site name="LON"/>
+       <site name="SFO"/>
+       <site name="NYC"/>
+     </sites>
+     -->
 
-      <!--
-         If the transport is omitted, there is no way to create distributed or clustered caches.
-         There is no added cost to defining a transport and not creating a cache that uses one, since the transport
-         is created and initialized lazily.  By default, the JGroupsTransport is used.
+     <!--
+        If the transport is omitted, there is no way to create distributed or clustered caches.
+        There is no added cost to defining a transport and not creating a cache that uses one, since the transport
+        is created and initialized lazily.  By default, the JGroupsTransport is used.
 
-         Note that the JGroups transport uses sensible defaults if no configuration property is defined.
+        Note that the JGroups transport uses sensible defaults if no configuration property is defined.
 
-         See:
+        See:
 
-            http://community.jboss.org/wiki/ClusteredConfigurationQuickStart
-            http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
+           http://community.jboss.org/wiki/ClusteredConfigurationQuickStart
+           http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
 
-      -->
+     -->
       <transport 
             clusterName="infinispan-cluster" 
             machineId="m1" 
@@ -279,6 +289,21 @@
          />
          -->
       </clustering>
+
+
+      <!--
+       When x-site replication is used, configures the sites and caches where this (default) cache backs up the data.
+      -->
+      <!--
+        <sites>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003"/>
+                <backup site="SFO" strategy="ASYNC"/>
+            </backups>
+            <backupFor remoteCache="someCache" remoteSite="SFO"/>
+        </sites>
+      -->
+
 
    </default>
 

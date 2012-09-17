@@ -192,4 +192,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
+   public Object getValue() {
+      return value;
+   }
 }

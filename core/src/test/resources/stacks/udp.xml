@@ -88,4 +88,6 @@
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <FC max_credits="500000" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
+   <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"
+                 relay_multicasts="false" />
 </config>

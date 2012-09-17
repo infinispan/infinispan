@@ -135,8 +135,13 @@ public enum Attribute {
     WAKE_UP_INTERVAL("wakeUpInterval"),
     WRITE_SKEW_CHECK("writeSkewCheck"),
     USE_1PC_FOR_AUTOCOMMIT_TX("use1PcForAutoCommitTransactions"),
-    VERSIONING_SCHEME("versioningScheme")
-    ;
+    VERSIONING_SCHEME("versioningScheme"),
+    SITE("site"),
+    BACKUP_FAILURE_POLICY("backupFailurePolicy"),
+    REMOTE_SITE("remoteSite"),
+    REMOTE_CACHE("remoteCache"),
+    FAILURE_POLICY_CLASS("failurePolicyClass")
+   ;
 
     private final String name;
 

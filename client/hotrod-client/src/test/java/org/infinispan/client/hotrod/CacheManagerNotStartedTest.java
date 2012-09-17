@@ -94,55 +94,55 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testPut() {
-      cache().put("k", "v");
+      remoteCache().put("k", "v");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testPutAsync() {
-      cache().putAsync("k", "v");
+      remoteCache().putAsync("k", "v");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testGet() {
-      cache().get("k");
+      remoteCache().get("k");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testReplace() {
-      cache().replace("k", "v");
+      remoteCache().replace("k", "v");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testReplaceAsync() {
-      cache().replaceAsync("k", "v");
+      remoteCache().replaceAsync("k", "v");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testPutAll() {
-      cache().putAll(new HashMap<Object, Object>());
+      remoteCache().putAll(new HashMap<Object, Object>());
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testPutAllAsync() {
-      cache().putAllAsync(new HashMap<Object, Object>());
+      remoteCache().putAllAsync(new HashMap<Object, Object>());
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testVersionedGet() {
-      cache().getVersioned("key");
+      remoteCache().getVersioned("key");
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testVersionedRemove() {
-      cache().removeWithVersion("key", 12312321l);
+      remoteCache().removeWithVersion("key", 12312321l);
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
    public void testVersionedRemoveAsync() {
-      cache().removeWithVersionAsync("key", 12312321l);
+      remoteCache().removeWithVersionAsync("key", 12312321l);
    }
 
-   private RemoteCache<Object, Object> cache() {
+   private RemoteCache<Object, Object> remoteCache() {
       return remoteCacheManager.getCache();
    }
 }

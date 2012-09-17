@@ -57,7 +57,6 @@ public interface CacheLoaderConfig extends Cloneable, Serializable {
    
    /**
     * Get the classloader that should be used to load resources from the classpath
-    * @return
     */
    ClassLoader getClassLoader();
 }

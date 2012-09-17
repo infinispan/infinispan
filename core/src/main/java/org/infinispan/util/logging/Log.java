@@ -897,4 +897,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Unable to register MBeans for cache manager", id = 200)
    void unableToRegisterCacheManagerMBeans();
+
+   @LogMessage(level = WARN)
+   @Message(value = "This cache is configured to backup to its own site (%s).", id = 201)
+   void cacheBackupsDataToSameSite(String siteName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Problems backing up data for cache %s to site %s: %s", id = 202)
+   void warnXsiteBackupFailed(String cacheName, String key, Object value);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The rollback request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id=203)
+   void cannotRespondToRollback(GlobalTransaction globalTransaction, String cacheName);
 }
