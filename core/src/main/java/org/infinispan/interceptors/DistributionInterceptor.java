@@ -50,8 +50,6 @@ import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LockingMode;
@@ -64,9 +62,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -317,21 +313,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   /**
-    * If the response to a commit is a request to resend the prepare, respond accordingly *
-    */
-   private boolean needToResendPrepare(Response r) {
-      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
-   }
-
    // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
-
          Future<?> f = flushL1Caches(ctx);
-         sendCommitCommand(ctx, command, preparedOn);
+         sendCommitCommand(ctx, command);
          blockOnL1FutureIfNeeded(f);
 
       } else if (isL1CacheEnabled && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
@@ -360,40 +347,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn)
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
          throws TimeoutException, InterruptedException {
       // we only send the commit command to the nodes that
       Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-
-      // By default, use the configured commit sync settings
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      for (Address a : preparedOn) {
-         if (!recipients.contains(a)) {
-            // However if we have prepared on some nodes and are now committing on different nodes, make sure we
-            // force sync commit so we can respond to prepare resend requests.
-            syncCommitPhase = true;
-         }
-      }
-
-      Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
-      if (!responses.isEmpty()) {
-         List<Address> resendTo = new LinkedList<Address>();
-         for (Map.Entry<Address, Response> r : responses.entrySet()) {
-            if (needToResendPrepare(r.getValue()))
-               resendTo.add(r.getKey());
-         }
-
-         if (!resendTo.isEmpty()) {
-            log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
-            rpcManager.invokeRemotely(resendTo, pc, true, true);
-         }
-      }
-   }
-   
-   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
-      // Make sure this is 1-Phase!!
-      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+      rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
    }
 
    @Override
