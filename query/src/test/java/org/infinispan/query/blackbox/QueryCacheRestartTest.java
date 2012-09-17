@@ -61,7 +61,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       builder.indexing().enable().indexLocalOnly(localOnly)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder.build())) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
             Cache<Object,Object> cache = cm.getCache();
