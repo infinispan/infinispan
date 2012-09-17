@@ -1,7 +1,6 @@
 package org.infinispan.query.projection;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.ProjectionConstants;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
@@ -10,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -17,6 +17,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,49 +44,46 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
 
    @Test
-   public void searchHonorsProjection() throws Exception {
+   public void testQueryProjection() throws Exception {
       cache.put( "1", new Foo( "bar1", "baz1" ) );
 
-      Query query = createQueryBuilder().keyword().onField("bar").matching("bar1").createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery( query );
-      cacheQuery.projection("bar");
-      List list = cacheQuery.list();
-
-      assert list.size() == 1;
-      Object[] array = (Object[])list.get( 0 );
-      assert array.length == 1;
-      assert array[0].equals("bar1");
-
-      QueryIterator iterator = cacheQuery.iterator();
-      assert iterator.hasNext();
-      array = (Object[]) iterator.next();
-      assert array.length == 1;
-      assert array[0].equals("bar1");
-
-      iterator = cacheQuery.lazyIterator();
-      assert iterator.hasNext();
-      array = (Object[]) iterator.next();
-      assert array.length == 1;
-      assert array[0].equals("bar1");
+      CacheQuery cacheQuery = createProjectionQuery( "bar" );
+      assertQueryReturns( cacheQuery, new Object[] {"bar1"} );
    }
 
    @Test
-   public void testProjectionConstants() throws Exception {
+   public void testKeyProjectionConstant() throws Exception {
       cache.put( "1", new Foo( "bar1", "baz1" ) );
 
-      Query query = createQueryBuilder().keyword().onField("bar").matching("bar1").createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery( query );
-      cacheQuery.projection( ProjectionConstants.ID);
-      List list = cacheQuery.list();
-
-      assert list.size() == 1;
-      Object[] array = (Object[])list.get( 0 );
-      assert array.length == 1;
-      System.out.println( "array = " + array[0] );
+      CacheQuery cacheQuery = createProjectionQuery( ProjectionConstants.KEY );
+      assertQueryReturns(cacheQuery, new Object[] {"1"});
    }
 
-   private QueryBuilder createQueryBuilder() {
-      return searchManager.buildQueryBuilderForClass(Foo.class).get();
+   private CacheQuery createProjectionQuery(String projection) {
+      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass( Foo.class ).get();
+      Query query = queryBuilder.keyword().onField("bar").matching("bar1").createQuery();
+      CacheQuery cacheQuery = searchManager.getQuery( query );
+      cacheQuery.projection( projection );
+      return cacheQuery;
+   }
+
+   private void assertQueryReturns(CacheQuery cacheQuery, Object[] expected) {
+      assertQueryListContains( cacheQuery.list(), expected );
+      assertQueryIteratorContains( cacheQuery.iterator(), expected );
+      assertQueryIteratorContains( cacheQuery.lazyIterator(), expected );
+   }
+
+   private void assertQueryListContains(List list, Object[] expected) {
+      assert list.size() == 1;
+      Object[] array = (Object[]) list.get( 0 );
+      assert Arrays.equals( array, expected );
+   }
+
+   private void assertQueryIteratorContains(QueryIterator iterator, Object[] expected) {
+      assert iterator.hasNext();
+      Object[] array = (Object[]) iterator.next();
+      assert Arrays.equals( array, expected );
+      assert !iterator.hasNext();
    }
 
 

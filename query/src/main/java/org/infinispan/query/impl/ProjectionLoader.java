@@ -7,9 +7,17 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ *
+ *
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
 public class ProjectionLoader implements QueryResultLoader {
+
+   private final ProjectionConverter projectionConverter;
+
+   public ProjectionLoader(ProjectionConverter projectionConverter) {
+      this.projectionConverter = projectionConverter;
+   }
 
    @Override
    public List<Object> load(Collection<EntityInfo> entityInfos) {
@@ -21,6 +29,7 @@ public class ProjectionLoader implements QueryResultLoader {
    }
 
    public Object[] load(EntityInfo entityInfo) {
-      return entityInfo.getProjection();
+      Object[] projection = entityInfo.getProjection();
+      return projectionConverter.convert(projection);
    }
 }

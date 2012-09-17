@@ -56,6 +56,7 @@ public class CacheQueryImpl implements CacheQuery {
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
    protected HSQuery hSearchQuery;
+   private ProjectionConverter projectionConverter;
 
    public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
          KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
@@ -180,7 +181,7 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    private ProjectionLoader getProjectionLoader() {
-      return new ProjectionLoader();
+      return new ProjectionLoader( projectionConverter );
    }
 
    private EntityLoader getEntityLoader() {
@@ -199,7 +200,8 @@ public class CacheQueryImpl implements CacheQuery {
 
    @Override
    public CacheQuery projection(String... fields) {
-      hSearchQuery.projection(fields);
+      this.projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
+      hSearchQuery.projection( projectionConverter.getHSearchProjection() );
       return this;
    }
 
