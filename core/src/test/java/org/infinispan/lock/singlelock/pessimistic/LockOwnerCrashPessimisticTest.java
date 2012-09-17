@@ -36,7 +36,6 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
-import javax.transaction.Status;
 import javax.transaction.SystemException;
 
 import static org.testng.Assert.assertEquals;
@@ -45,7 +44,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.pessimistic.LockOwnerCrashPessimisticTest", enabled = false, description = "See ISPN-2113")
+@Test (groups = "functional", testName = "lock.singlelock.pessimistic.LockOwnerCrashPessimisticTest")
 @CleanupAfterMethod
 public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 

@@ -80,7 +80,7 @@ public class StateProviderImpl implements StateProvider {
    private volatile ConsistentHash readCh;
 
    /**
-    * A map that keeps track of current outbound state transfers by source address. There could be multiple transfers
+    * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
     * flowing to the same destination (but for different segments) so the values are lists.
     */
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<Address, List<OutboundTransferTask>>();
@@ -124,6 +124,7 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @TopologyChanged
+   @SuppressWarnings("unused")
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       // do all the work AFTER the consistent hash has changed
       if (tce.isPre())
@@ -236,12 +237,14 @@ public class StateProviderImpl implements StateProvider {
                lockedKeys.add(key);
             }
          }
-         List<WriteCommand> txModifications = tx.getModifications();
-         WriteCommand[] modifications = null;
-         if (txModifications != null) {
-            modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+         if (!lockedKeys.isEmpty()) {
+            List<WriteCommand> txModifications = tx.getModifications();
+            WriteCommand[] modifications = null;
+            if (txModifications != null) {
+               modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+            }
+            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getViewId(), modifications, lockedKeys));
          }
-         transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), modifications, lockedKeys));
       }
    }
 

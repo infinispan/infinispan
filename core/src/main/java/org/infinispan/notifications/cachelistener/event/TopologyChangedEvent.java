@@ -40,5 +40,7 @@ public interface TopologyChangedEvent<K, V> extends Event<K, V> {
     */
    ConsistentHash getConsistentHashAtEnd();
 
+   int getNewTopologyId();
+
    //todo [anistor] add topologyId, prevReadCH, prevWriteCH, newReadCH2, newWriteCH
 }

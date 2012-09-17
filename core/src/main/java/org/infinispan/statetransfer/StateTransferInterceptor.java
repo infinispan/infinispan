@@ -48,10 +48,9 @@ import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
+//todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
  * // TODO: Document this
  *
@@ -317,8 +316,8 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       } finally {
          stateTransferLock.commandsSharedUnlock();
 
-         log.tracef("Forwarding command %s to new targets %s", command, newTargets);
          if (newTargets != null && !newTargets.isEmpty()) {
+            log.tracef("Forwarding command %s to new targets %s", command, newTargets);
             rpcManager.invokeRemotely(newTargets, command, true);
          }
       }

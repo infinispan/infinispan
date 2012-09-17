@@ -95,7 +95,7 @@ public class StateConsumerImpl implements StateConsumer {
    private AtomicInteger activeTopologyUpdates = new AtomicInteger(0);
 
    /**
-    * Indicates if currently executing topology update is a rabalance.
+    * Indicates if the currently executing topology update is a rebalance.
     */
    private AtomicBoolean rebalanceInProgress = new AtomicBoolean(false);
 
@@ -197,8 +197,10 @@ public class StateConsumerImpl implements StateConsumer {
             removedSegments.removeAll(newSegments);
 
             // remove inbound transfers and any data for segments we no longer own
-            log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",
-                  removedSegments, newSegments, previousSegments);
+            if (trace) {
+               log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",
+                     removedSegments, newSegments, previousSegments);
+            }
             discardSegments(removedSegments);
 
             if (fetchEnabled) {

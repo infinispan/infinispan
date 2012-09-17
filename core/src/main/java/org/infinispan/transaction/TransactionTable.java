@@ -38,11 +38,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
@@ -57,9 +56,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -76,7 +73,7 @@ import static org.infinispan.util.Util.currentMillisFromNanotime;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Listener(sync = false)
+@Listener
 public class TransactionTable {
 
    public static final int CACHE_STOPPED_VIEW_ID = -1;
@@ -95,25 +92,23 @@ public class TransactionTable {
    protected CommandsFactory commandsFactory;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
-   private EmbeddedCacheManager cm;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ClusteringDependentLogic clusteringLogic;
    protected boolean clustered = false;
    private Lock minViewRecalculationLock;
 
    /**
-    * minTxViewId is the minimum view ID across all ongoing local and remote transactions. It doesn't update on
-    * transaction creation, but only on removal. That's because it is not possible for a newly created transaction to
-    * have an bigger view ID than the current one.
+    * minTxViewId is the minimum view ID across all ongoing local and remote transactions.
     */
    private volatile int minTxViewId = CACHE_STOPPED_VIEW_ID;
    private volatile int currentViewId = CACHE_STOPPED_VIEW_ID;
+   private volatile boolean useStrictTopologyIdComparison = true;
    private String cacheName;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator,
+                          TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                           CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache) {
       this.rpcManager = rpcManager;
@@ -122,7 +117,6 @@ public class TransactionTable {
       this.invoker = invoker;
       this.notifier = notifier;
       this.txFactory = gtf;
-      this.cm = cm;
       this.txCoordinator = txCoordinator;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.commandsFactory = commandsFactory;
@@ -139,24 +133,20 @@ public class TransactionTable {
          minViewRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
          remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-         cleanupService.start(cacheName, rpcManager, invoker);
-         cm.addListener(cleanupService);
-         cm.addListener(this);
+         cleanupService.start(cacheName, rpcManager, invoker, configuration.clustering().cacheMode().isDistributed());
          notifier.addListener(cleanupService);
-         minTxViewId = rpcManager.getTransport().getViewId();
-         currentViewId = minTxViewId;
-         log.debugf("Min view id set to %s", minTxViewId);
+         notifier.addListener(this);
          clustered = true;
       }
    }
 
    @Stop
+   @SuppressWarnings("unused")
    private void stop() {
       if (clustered) {
          notifier.removeListener(cleanupService);
-         cm.removeListener(cleanupService);
          cleanupService.stop();
-         cm.removeListener(this);
+         notifier.removeListener(this);
          currentViewId = CACHE_STOPPED_VIEW_ID; // indicate that the cache has stopped
       }
       shutDownGracefully();
@@ -223,6 +213,17 @@ public class TransactionTable {
       return minTxViewId;
    }
 
+   /**
+    * Indicates if topology id comparisons should be strict if one wants to compare topology ids in oder to tell
+    * if a transaction was started in an older topology than a second transaction. This flag is true most of the time
+    * except when the current topology did not increase its id (it's not caused by a rebalance).
+    *
+    * @return true if strict topology id comparisons should be used, false otherwise
+    */
+   public boolean useStrictTopologyIdComparison() {
+      return useStrictTopologyIdComparison;
+   }
+
    protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
       Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
       for (GlobalTransaction gt : remoteTransactions.keySet()) {
@@ -263,14 +264,24 @@ public class TransactionTable {
    }
 
    /**
-    * Creates and register a {@link RemoteTransaction} with no modifications. Returns the created transaction.
+    * Creates and register a {@link RemoteTransaction}. Returns the created transaction.
     *
     * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction} for an already registered id is
     *                               made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
-      RemoteTransaction remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, currentViewId)
-            : txFactory.newRemoteTransaction(modifications, globalTx, currentViewId);
+      return createRemoteTransaction(globalTx, modifications, currentViewId);
+   }
+
+   /**
+    * Creates and register a {@link RemoteTransaction}. Returns the created transaction.
+    *
+    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction} for an already registered id is
+    *                               made.
+    */
+   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
+      RemoteTransaction remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
+            : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
       registerRemoteTransaction(globalTx, remoteTransaction);
       return remoteTransaction;
    }
@@ -283,6 +294,10 @@ public class TransactionTable {
       }
 
       log.tracef("Created and registered remote transaction %s", rtx);
+      if (rtx.getViewId() < minTxViewId) {
+         log.tracef("Changing minimum view ID from %d to %d", minTxViewId, rtx.getViewId());
+         minTxViewId = rtx.getViewId();
+      }
    }
 
    /**
@@ -293,6 +308,9 @@ public class TransactionTable {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
+         if (rpcManager != null && currentViewId < 0) {
+            throw new IllegalStateException("Cannot create transactions if topology id is not known yet!");
+         }
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          current = txFactory.newLocalTransaction(transaction, tx, ctx.isImplicitTransaction(), currentViewId);
          log.tracef("Created a new local transaction: %s", current);
@@ -308,10 +326,6 @@ public class TransactionTable {
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
       return localTransaction != null && (removeLocalTransactionInternal(localTransaction.getTransaction()) != null);
-   }
-
-   public LocalTransaction removeLocalTransaction(Transaction tx) {
-      return removeLocalTransactionInternal(tx);
    }
 
    protected final LocalTransaction removeLocalTransactionInternal(Transaction tx) {
@@ -357,8 +371,8 @@ public class TransactionTable {
 
    /**
     * Looks up a LocalTransaction given a GlobalTransaction.
-    * @param txId
-    * @return
+    * @param txId the global transaction identifier
+    * @return the LocalTransaction or null if not found
     */
    public LocalTransaction getLocalTransaction(GlobalTransaction txId) {
       for (LocalTransaction localTx : localTransactions.values()) { //todo [anistor] optimize lookup!
@@ -402,16 +416,20 @@ public class TransactionTable {
       }
    }
 
-   @ViewChanged
-   public void recalculateMinViewIdOnTopologyChange(ViewChangedEvent vce) {
-      // don't do anything if this cache is not clustered - view changes are global
+   @TopologyChanged
+   @SuppressWarnings("unused")
+   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
+      // don't do anything if this cache is not clustered
       if (clustered) {
-         log.debugf("View changed, recalculating minViewId");
-         currentViewId = vce.getViewId();
-         calculateMinViewId(-1);
+         if (tce.isPre()) {
+            useStrictTopologyIdComparison = tce.getNewTopologyId() != currentViewId;
+            currentViewId = tce.getNewTopologyId();
+         } else {
+            log.debugf("Topology changed, recalculating minViewId");
+            calculateMinViewId(-1);
+         }
       }
    }
-
 
    /**
     * This method calculates the minimum view ID known by the current node.  This method is only used in a clustered
@@ -442,7 +460,7 @@ public class TransactionTable {
                int viewId = ct.getViewId();
                if (viewId < minViewIdFound) minViewIdFound = viewId;
             }
-            if (minViewIdFound > minTxViewId) {
+            if (minViewIdFound != minTxViewId) {
                log.tracef("Changing minimum view ID from %s to %s", minTxViewId, minViewIdFound);
                minTxViewId = minViewIdFound;
             } else {

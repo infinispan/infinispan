@@ -43,7 +43,7 @@ public interface DataRehashedEvent<K, V> extends Event<K, V> {
    Collection<Address> getMembersAtEnd();
 
    /**
-    * @return Retrieves the new view id after rehashing was triggered.
+    * @return Retrieves the new topology id after rehashing was triggered.
     */
-   long getNewViewId();
+   int getNewTopologyId();
 }
