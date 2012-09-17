@@ -1,3 +1,26 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.infinispan.lock.singlelock.optimistic;
 
 import org.infinispan.config.Configuration;
@@ -8,6 +31,7 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * @author Mircea Markus
@@ -97,7 +121,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       cache(1).put(k, "v3");
       try {
          tm(1).commit();
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          e.printStackTrace();
       }
@@ -107,7 +131,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       cache(0).put(k, "v2");
       try {
          tm(0).commit();
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          //expected
       }
