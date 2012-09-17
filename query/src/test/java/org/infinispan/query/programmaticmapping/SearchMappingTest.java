@@ -28,14 +28,16 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Verify programmatic configuration of indexing properties via SearchMapping
@@ -64,26 +66,27 @@ public class SearchMappingTest {
       properties.put("hibernate.search.default.directory_provider", "ram");
       properties.put(Environment.MODEL_MAPPING, mapping);
 
-      final Configuration config = new ConfigurationBuilder().indexing()
-            .enable().indexLocalOnly(true).withProperties(properties).build();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing()
+            .enable().indexLocalOnly(true).withProperties(properties);
 
-      final DefaultCacheManager cacheManager = new DefaultCacheManager(config);
-      try {
-         final Cache<Long, BondPVO> cache = cacheManager.getCache();
-         final SearchManager sm = Search.getSearchManager(cache);
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            final Cache<Long, BondPVO> cache = cm.getCache();
+            final SearchManager sm = Search.getSearchManager(cache);
 
-         final BondPVO bond = new BondPVO(1, "Test", "DE000123");
-         cache.put(bond.getId(), bond);
+            final BondPVO bond = new BondPVO(1, "Test", "DE000123");
+            cache.put(bond.getId(), bond);
 
-         final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
-         final Query q = qb.keyword().onField("name").matching("Test")
-            .createQuery();
-         final CacheQuery cq = sm.getQuery(q, BondPVO.class);
-         Assert.assertEquals(cq.getResultSize(), 1);
-      }
-      finally {
-         cacheManager.stop();
-      }
+            final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
+            final Query q = qb.keyword().onField("name").matching("Test")
+                  .createQuery();
+            final CacheQuery cq = sm.getQuery(q, BondPVO.class);
+            Assert.assertEquals(cq.getResultSize(), 1);
+         }
+      });
    }
 
    public static final class BondPVO {
@@ -128,30 +131,29 @@ public class SearchMappingTest {
     */
    @Test
    public void testWithoutSearchMapping() {
-
       final Properties properties = new Properties();
       properties.put("hibernate.search.default.directory_provider", "ram");
 
-      final Configuration config = new ConfigurationBuilder().indexing()
-            .enable().indexLocalOnly(true).withProperties(properties).build();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable().indexLocalOnly(true).withProperties(properties);
 
-      final DefaultCacheManager cacheManager = new DefaultCacheManager(config);
-      try {
-         final Cache<Long, BondPVO2> cache = cacheManager.getCache();
-         final SearchManager sm = Search.getSearchManager(cache);
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            final Cache<Long, BondPVO2> cache = cm.getCache();
+            final SearchManager sm = Search.getSearchManager(cache);
 
-         final BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
-         cache.put(bond.getId(), bond);
-         final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO2.class)
-               .get();
-         final Query q = qb.keyword().onField("name").matching("Test")
-               .createQuery();
-         final CacheQuery cq = sm.getQuery(q, BondPVO2.class);
-         Assert.assertEquals(cq.getResultSize(), 1);
-      }
-      finally {
-         cacheManager.stop();
-      }
+            final BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
+            cache.put(bond.getId(), bond);
+            final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO2.class)
+                  .get();
+            final Query q = qb.keyword().onField("name").matching("Test")
+                  .createQuery();
+            final CacheQuery cq = sm.getQuery(q, BondPVO2.class);
+            Assert.assertEquals(cq.getResultSize(), 1);
+         }
+      });
    }
 
    @Indexed

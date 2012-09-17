@@ -64,7 +64,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected Person person3;
    protected Person person4;
    protected Person person5;
-   protected Person person6;
    protected AnotherGrassEater anotherGrassEater;
    protected QueryParser queryParser;
    protected String key1 = "Navin";
@@ -333,7 +332,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
-      return TestCacheManagerFactory.createCacheManager(cfg.build());
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
    
    public void testEntityDiscovery() {
@@ -350,7 +349,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    /**
     * Verifies if the indexing interceptor is aware of a specific list of types.
-    * @param cache
+    * @param cache the cache containing the indexes
     * @param types vararg listing the types the indexing engine should know
     */
    private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {

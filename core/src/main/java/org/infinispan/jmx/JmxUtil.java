@@ -70,7 +70,8 @@ public class JmxUtil {
       String configJmxDomain = cfg.globalJmxStatistics().domain();
       if (!jmxDomain.equals(configJmxDomain) && !cfg.globalJmxStatistics().allowDuplicateDomains()) {
          log.cacheManagerAlreadyRegistered(configJmxDomain);
-         throw new JmxDomainConflictException(String.format("Domain already registered %s", configJmxDomain));
+         throw new JmxDomainConflictException(String.format(
+               "Domain already registered %s when trying to register: %s", configJmxDomain, groupName));
       }
       return jmxDomain;
    }

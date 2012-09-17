@@ -78,7 +78,6 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    public void start() {
       if (cache == null)
          throw new IllegalStateException("The cache should had been injected before a call to this method");
-      Configuration config = cache.getCacheConfiguration();
       Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
       nonCacheComponents = getNonCacheComponents(components);
       if (registerMBeans(components, cache.getCacheManager().getCacheManagerConfiguration())) {

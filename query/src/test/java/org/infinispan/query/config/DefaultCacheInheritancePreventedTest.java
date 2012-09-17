@@ -21,15 +21,17 @@ package org.infinispan.query.config;
 import java.io.IOException;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Similar to QueryParsingTest but that one only looks at the configuration; in this case we check the components are actually
@@ -38,36 +40,36 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@Test(groups = "unit", testName = "config.parsing.QueryParsingTest")
+@Test(groups = "unit", testName = "query.config.QueryParsingTest")
 public class DefaultCacheInheritancePreventedTest {
 
    @Test
    public void verifyIndexDisabledCorrectly() throws IOException {
-      DefaultCacheManager cacheManager = new DefaultCacheManager("configuration-parsing-test-enbledInDefault.xml");
-      try {
-         assertIndexingEnabled(cacheManager.getCache(), true, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("simple"), true, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("not-searchable"), false, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
-      }
-      finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.fromXml("configuration-parsing-test-enbledInDefault.xml")) {
+         @Override
+         public void call() {
+            assertIndexingEnabled(cm.getCache(), true, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("simple"), true, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("not-searchable"), false, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
+         }
+      });
    }
 
    @Test
    public void verifyIndexEnabledCorrectly() throws IOException {
-      DefaultCacheManager cacheManager = new DefaultCacheManager("configuration-parsing-test.xml");
-      try {
-         assertIndexingEnabled(cacheManager.getCache(), false, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("simple"), false, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("memory-searchable"), true, QueryInterceptor.class);
-         assertIndexingEnabled(cacheManager.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
-      }
-      finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
+         @Override
+         public void call() {
+            assertIndexingEnabled(cm.getCache(), false, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("simple"), false, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true, QueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
+         }
+      });
    }
 
    /**
