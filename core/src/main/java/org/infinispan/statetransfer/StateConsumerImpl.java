@@ -47,6 +47,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
@@ -255,7 +256,7 @@ public class StateConsumerImpl implements StateConsumer {
       //todo [anistor] this check should be based on topologyId
       if (!cacheTopology.getWriteConsistentHash().getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
          if (trace) {
-            log.tracef("Discarding received cache entries for segment %d because they do not belong to this node.", segmentId);
+            log.warnf("Discarding received cache entries for segment %d because they do not belong to this node.", segmentId);
          }
          return;
       }
@@ -319,6 +320,7 @@ public class StateConsumerImpl implements StateConsumer {
                tx = transactionTable.getRemoteTransaction(transactionInfo.getGlobalTransaction());
                if (tx == null) {
                   tx = transactionTable.createRemoteTransaction(transactionInfo.getGlobalTransaction(), transactionInfo.getModifications());
+                  ((RemoteTransaction) tx).setMissingLookedUpEntries(true);
                }
             }
             for (Object key : transactionInfo.getLockedKeys()) {

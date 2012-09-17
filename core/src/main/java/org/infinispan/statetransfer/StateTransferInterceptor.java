@@ -23,16 +23,14 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commands.tx.*;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
@@ -44,6 +42,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,7 +70,11 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
 
    private RpcManager rpcManager;
 
+   private CommandsFactory commandFactory;
+
    private long rpcTimeout;
+
+   private boolean useVersioning;
 
    @Override
    protected Log getLog() {
@@ -77,22 +82,53 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager, StateTransferManager stateTransferManager) {
+   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager,
+                    CommandsFactory commandFactory, StateTransferManager stateTransferManager) {
       this.stateTransferLock = stateTransferLock;
       this.rpcManager = rpcManager;
+      this.commandFactory = commandFactory;
       this.stateTransferManager = stateTransferManager;
+
       // no need to retry for asynchronous caches
-      this.rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
+      rpcTimeout = configuration.clustering().cacheMode().isSynchronous()
             ? configuration.clustering().sync().replTimeout() : 0;
+
+      useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
+            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
+         ((RemoteTransaction) ctx.getCacheTransaction()).setMissingLookedUpEntries(false);
+      }
+
       return handleTxCommand(ctx, command);
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
+         // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
+         // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
+         // was not received by local node because it was executed on the previous key owners. We need to re-prepare
+         // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
+         RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
+         if (remoteTx.isMissingLookedUpEntries()) {
+            remoteTx.setMissingLookedUpEntries(false);
+
+            PrepareCommand prepareCommand;
+            if (useVersioning) {
+               prepareCommand = commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+               WriteSkewHelper.setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) prepareCommand, ctx);
+            } else {
+               prepareCommand = commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+            }
+            commandFactory.initializeReplicableCommand(prepareCommand, true);
+            prepareCommand.perform(null);
+         }
+      }
+
       return handleTxCommand(ctx, command);
    }
 
