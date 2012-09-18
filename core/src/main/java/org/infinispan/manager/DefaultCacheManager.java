@@ -674,12 +674,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       globalComponentRegistry.start();
       Configuration c = getConfiguration(cacheName);
 
+      log.tracef("About to wire and start cache %s", cacheName);
       Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
       cacheWrapper.setCache(cache);
 
       // start the cache-level components
       try {
-         log.tracef("About to start cache %s", cacheName);
          cache.start();
       } finally {
          // allow other threads to access the cache
