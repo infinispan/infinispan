@@ -61,7 +61,9 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       this.key = key;
       this.value = value;
       this.wrappedEntry = wrappedEntry;
-      this.uncommittedChanges = new AtomicHashMap();
+      if(value instanceof AtomicHashMap){
+         this.uncommittedChanges = ((AtomicHashMap) value).copy(); 
+      }
       this.deltas = new LinkedList<Delta>();
    }
 
@@ -203,6 +205,9 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       oldValue = null;
       deltas.clear();
       flags = 0;
+      if (uncommittedChanges != null) {
+         uncommittedChanges.clear();
+      }
       setValid(true);
    }
 
