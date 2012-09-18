@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -46,14 +47,12 @@ import org.testng.annotations.Test;
 public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true)
-            .fluent()
-               .transaction()
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configurationBuilder.transaction()
                   .transactionMode(TransactionMode.TRANSACTIONAL)
                   .lockingMode(LockingMode.PESSIMISTIC)
-                  .locking().lockAcquisitionTimeout(100l)
-            .build();
-      createClusteredCaches(2, "atomic", c);
+                  .locking().lockAcquisitionTimeout(100l);
+      createCluster( configurationBuilder, 2 );
    }
 
    @Test(enabled=true)
@@ -380,6 +379,77 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
 
       assert map.size() == 2;
       assert map.get("blah").equals("blah");
+
+      //now remove one of the elements in a transaction:
+      TestingUtil.getTransactionManager(cache1).begin();
+      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      String removed = map.remove("key one");
+      assert "value one".equals(removed);
+      assert ! map.containsKey("key one");
+      assert ! map.containsValue("value one");
+      assert map.size() == 1;
+      assert ! map.isEmpty();
+      entrySet = map.entrySet();
+      assert entrySet.size() == 1;
+      for (Entry<String, String> entry : entrySet) {
+         assert "blah".equals(entry.getKey());
+         assert "blah".equals(entry.getValue());
+      }
+      TestingUtil.getTransactionManager(cache1).commit();
+
+      //verify state after commit:
+      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      removed = map.remove("key one");
+      assert removed == null;
+      assert ! map.containsKey("key one");
+      assert ! map.containsValue("value one");
+      assert map.size() == 1;
+      assert ! map.isEmpty();
+      entrySet = map.entrySet();
+      assert entrySet.size() == 1;
+      for (Entry<String, String> entry : entrySet) {
+         assert "blah".equals(entry.getKey());
+         assert "blah".equals(entry.getValue());
+      }
+
+      //add the removed element back:
+      TestingUtil.getTransactionManager(cache1).begin();
+      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      map.put("key one", "value one");
+      TestingUtil.getTransactionManager(cache1).commit();
+      assert map.size() == 2;
+
+      //now test for element replacement:
+      TestingUtil.getTransactionManager(cache1).begin();
+      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      map.put("key one", "value two");
+      assert map.containsKey("key one");
+      assert ! map.containsValue("value one");
+      assert map.containsValue("value two");
+      assert map.size() == 2;
+      assert ! map.isEmpty();
+      entrySet = map.entrySet();
+      assert entrySet.size() == 2;
+      for (Entry<String, String> entry : entrySet) {
+         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value two");
+         if(entry.getKey().equals("blah")) assert entry.getValue().equals("blah");
+      }
+      TestingUtil.getTransactionManager(cache1).commit();
+
+      //verify state after commit:
+      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      assert map.containsKey("key one");
+      assert ! map.containsValue("value one");
+      assert map.containsValue("value two");
+      assert map.size() == 2;
+      assert ! map.isEmpty();
+      entrySet = map.entrySet();
+      assert entrySet.size() == 2;
+      for (Entry<String, String> entry : entrySet) {
+         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value two");
+         if(entry.getKey().equals("blah")) assert entry.getValue().equals("blah");
+      }
+
    }
 
    @Test(enabled=true)
@@ -394,7 +464,11 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       TestingUtil.getTransactionManager(cache1).commit();
 
       TestingUtil.getTransactionManager(cache1).begin();
+      map.put("key one", "fake one");
       map.put("key one", "value one");
+      map.put("blah", "montevideo");
+      map.put("blah", "buenos aires");
+      map.remove("blah");
       map.put("blah", "toronto");
 
       assert "value one".equals(map.get("key one"));
