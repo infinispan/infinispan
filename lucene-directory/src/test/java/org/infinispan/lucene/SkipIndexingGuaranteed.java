@@ -20,7 +20,7 @@ package org.infinispan.lucene;
 
 import junit.framework.AssertionFailedError;
 
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -71,8 +71,8 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
       return handleDefaultCheckingAssertion(ctx, command);
    }
 
-   protected Object handleDefaultCheckingAssertion(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (! ctx.hasFlag(Flag.SKIP_INDEXING)) {
+   protected Object handleDefaultCheckingAssertion(InvocationContext ctx, AbstractFlagAffectedCommand command) throws Throwable {
+      if (! command.hasFlag(Flag.SKIP_INDEXING)) {
          throw new AssertionFailedError("A write operation was detected which is not using SKIP_INDEXING flag");
       }
       return super.invokeNextInterceptor(ctx, command);
