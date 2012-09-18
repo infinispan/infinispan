@@ -47,11 +47,9 @@ import static org.testng.Assert.assertEquals;
 /**
  * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory, or if the
  * Flag.SKIP_CACHE_STORE is applied.
- * A test to ensure that flag REMOVE_DATA_ON_STOP is working properly.
  *
  * @author Manik Surtani
  * @author Sanne Grinovero
- * @author Tomas Sykora
  * @version 4.1
  */
 @Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", sequential = true)
@@ -169,37 +167,6 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       final Object put = cache.getAdvancedCache().put("home-second", "Newcastle Upon Tyne, second");
       assertEquals(put, "Newcastle Upon Tyne");
       assert countingCS.numLoads == 1;
-   }
-
-   public void testRemoveDataOnStopFlagUsage() throws CacheLoaderException {
-      cache.put("k1", "v1");
-      assert "v1".equals(cache.get("k1"));
-      assert store.containsKey("k1") : "Does NOT contain k1 key.";
-      cache.put("k2", "v2");
-      assert "v2".equals(cache.get("k2"));
-      assert store.containsKey("k2") : "Does NOT contain k2 key.";
-
-      cache.getAdvancedCache().withFlags(Flag.REMOVE_DATA_ON_STOP).stop();
-      cache.start();
-
-      assert cache.get("k1") == null;
-      assert !store.containsKey("k1") : "Should NOT contain k1 key after REMOVE_DATA_ON_STOP flag usage.";
-      assert cache.get("k2") == null;
-      assert !store.containsKey("k2") : "Should NOT contain k2 key after REMOVE_DATA_ON_STOP flag usage.";
-
-      cache.stop();
-      cache.start();
-
-      store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
-
-      cache.put("k3", "v3");
-      assert "v3".equals(cache.get("k3"));
-      assert store.containsKey("k3") : "Does NOT contain k3 key.";
-
-      cache.stop();
-      cache.start();
-
-      assert store.containsKey("k3") : "Should contain k3 key. Put was used WITHOUT REMOVE_DATA_ON_STOP flag.";
    }
 
    private void reset(Cache cache, CountingCacheStore countingCS) {
