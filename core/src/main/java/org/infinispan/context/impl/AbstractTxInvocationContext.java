@@ -75,12 +75,6 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    }
 
    @Override
-   public void reset() {
-      super.reset();
-      implicitTransaction = false;
-   }
-
-   @Override
    public boolean isInTxScope() {
       return true;
    }

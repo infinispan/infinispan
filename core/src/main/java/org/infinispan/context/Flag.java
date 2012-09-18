@@ -179,7 +179,10 @@ public enum Flag {
     * org.infinispan.Cache#stop()} and its effect is that apart from stopping
     * the cache, it removes all of its content from both memory and any backing
     * cache store.
+    *
+    * @deprecated No longer in use.
     */
+   @Deprecated
    REMOVE_DATA_ON_STOP,
    /**
     * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
@@ -205,7 +208,12 @@ public enum Flag {
     * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
     * {@link Flag#SKIP_CACHE_LOAD}.
     */
-   IGNORE_RETURN_VALUES;
+   IGNORE_RETURN_VALUES,
+
+   /**
+    * If cross-site replication is enabled, this would skip the replication to any remote site.
+    */
+   SKIP_XSITE_BACKUP;
 
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
@@ -214,9 +222,9 @@ public enum Flag {
     * @param flags
     * @return might return the same instance
     */
-   protected static Set<Flag> copyWithouthRemotableFlags(Set<Flag> flags) {
+   public static Set<Flag> copyWithoutRemotableFlags(Set<Flag> flags) {
       //FAIL_SILENTLY should not be sent to remote nodes
-      if (flags.contains(Flag.FAIL_SILENTLY)) {
+      if (flags != null && flags.contains(Flag.FAIL_SILENTLY)) {
          EnumSet<Flag> copy = EnumSet.copyOf(flags);
          copy.remove(Flag.FAIL_SILENTLY);
          if (copy.isEmpty()) {
@@ -243,8 +251,8 @@ public enum Flag {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Flag object) throws IOException {
-         output.writeByte(object.ordinal());
+      public void writeObject(ObjectOutput output, Flag flag) throws IOException {
+         output.writeByte(flag.ordinal());
       }
 
       @Override

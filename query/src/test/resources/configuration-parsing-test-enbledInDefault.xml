@@ -3,6 +3,10 @@
     xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
     xmlns="urn:infinispan:config:5.2">
 
+    <global>
+        <globalJmxStatistics allowDuplicateDomains="true" />
+    </global>
+
     <default>
         <indexing enabled="true">
             <properties>

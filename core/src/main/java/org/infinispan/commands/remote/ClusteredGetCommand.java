@@ -43,6 +43,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -210,6 +211,15 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    @Override
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
+   }
+
+   @Override
+   public void setFlags(Flag... flags) {
+      if (flags == null || flags.length == 0) return;
+      if (this.flags == null)
+         this.flags = EnumSet.copyOf(Arrays.asList(flags));
+      else
+         this.flags.addAll(Arrays.asList(flags));
    }
 
    @Override

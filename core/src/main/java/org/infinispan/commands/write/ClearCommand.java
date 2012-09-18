@@ -77,7 +77,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{flags};
+      return new Object[]{Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

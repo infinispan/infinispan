@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -162,24 +163,25 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
     * @throws Throwable
     */
    private Object handleTxCommand(InvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command);
+      return handleTopologyAffectedCommand(ctx, command, false);
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command);
+      return handleTopologyAffectedCommand(ctx, command, command.hasFlag(Flag.CACHE_MODE_LOCAL));
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (command instanceof TopologyAffectedCommand) {
-         return handleTopologyAffectedCommand(ctx, (TopologyAffectedCommand) command);
+      if (command instanceof FlagAffectedCommand) {
+         FlagAffectedCommand flaggedCommand = (FlagAffectedCommand) command;
+         return handleTopologyAffectedCommand(ctx, flaggedCommand, flaggedCommand.hasFlag(Flag.CACHE_MODE_LOCAL));
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
-   private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command) throws Throwable {
-      if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+   private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command, boolean cacheModeLocal) throws Throwable {
+      if (cacheModeLocal) {
          final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
          try {
             if (isTxCommand) {

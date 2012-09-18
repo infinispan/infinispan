@@ -35,6 +35,8 @@
          </properties>         
       </asyncListenerExecutor>
 
+      <globalJmxStatistics allowDuplicateDomains="true" />
+
    </global>
 
    <default>

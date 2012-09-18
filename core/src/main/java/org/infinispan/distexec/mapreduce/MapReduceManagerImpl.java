@@ -75,7 +75,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
    }
    
    @Inject
-   public void init(EmbeddedCacheManager cacheManager,  CacheLoaderManager cacheLoaderManager) {     
+   public void init(EmbeddedCacheManager cacheManager, CacheLoaderManager cacheLoaderManager) {
       this.cacheManager = cacheManager;
       this.cacheLoaderManager = cacheLoaderManager;
       this.localAddress = cacheManager.getAddress();

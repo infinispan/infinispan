@@ -24,7 +24,6 @@ package org.infinispan.loaders;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.REMOVE_DATA_ON_STOP;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
@@ -53,10 +52,13 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheStoreInterceptor;
 import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
@@ -177,6 +179,40 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return clmConfig != null;
    }
 
+   @Override
+   public void disableCacheStore(String loaderType) {
+      if (isEnabled()) {
+         boolean disableInterceptors = false;
+         ComponentRegistry cr = cache.getComponentRegistry();
+         CacheLoaderInterceptor cli = cr.getComponent(CacheLoaderInterceptor.class);
+         CacheStoreInterceptor csi = cr.getComponent(CacheStoreInterceptor.class);
+
+         if (loader instanceof ChainingCacheStore) {
+            ChainingCacheStore ccs = (ChainingCacheStore) loader;
+            ccs.removeCacheLoader(loaderType);
+            if (ccs.getStores().isEmpty()) disableInterceptors = true;
+         } else {
+            if (loader.getClass().getName().equals(loaderType)) {
+               try {
+                  log.debugf("Stopping and removing cache loader %s", loaderType);
+                  loader.stop();
+               } catch (Exception e) {
+                  log.infof("Problems shutting down cache loader %s", loaderType, e);
+               }
+               disableInterceptors = true;
+            }
+         }
+
+         if (disableInterceptors) {
+            cli.disableInterceptor();
+            csi.disableInterceptor();
+            cache.removeInterceptor(cli.getClass());
+            cache.removeInterceptor(csi.getClass());
+            clmConfig = null;
+         }
+      }
+   }
+
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
     * The preload will happen only on the first node to start this cache in a cluster - the other nodes
@@ -258,14 +294,6 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    public void stop() {
       if (loader != null) {
          try {
-            CacheStore store = getCacheStore();
-            if (store != null) {
-               InvocationContext ctx = icc.getInvocationContext(false);
-               if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
-                  log.trace("Requested removal of data on stop, so clear cache store");
-                  store.clear();
-               }
-            }
             loader.stop();
          } catch (CacheLoaderException e) {
             throw new CacheException(e);

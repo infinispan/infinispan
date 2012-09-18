@@ -76,6 +76,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
    protected abstract int clusterSize();
 
    // This test is based on a contribution by Pedro Ruivo of INESC-ID, working on the Cloud-TM project.
+   @Test(enabled = false, description = "Fails randomly, see ISPN-2264")
    public void testSharedCounter() {
       int counterMaxValue = 200;
       Cache<String, Integer> c1 = cache(0);

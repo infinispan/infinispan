@@ -245,7 +245,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";
 
-      InvalidateCommand c71 = new InvalidateL1Command(false, null, null, null, null, "key1", "key2");
+      InvalidateCommand c71 = new InvalidateL1Command(false, null, null, null, null, Collections.<Flag>emptySet(), "key1", "key2");
       bytes = marshaller.objectToByteBuffer(c71);
       InvalidateCommand rc71 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc71.getCommandId() == c71.getCommandId() : "Writen[" + c71.getCommandId() + "] and read[" + rc71.getCommandId() + "] objects should be the same";

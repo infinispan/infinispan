@@ -111,7 +111,7 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateCommand
     */
-   InvalidateCommand buildInvalidateCommand(Object... keys);
+   InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys);
 
    /**
     * Builds an InvalidateFromL1Command
@@ -119,7 +119,7 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys);
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys);
 
    /**
     * Builds an InvalidateFromL1Command
@@ -127,13 +127,13 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys);
 
 
    /**
-    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Collection)
+    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Set, java.util.Collection)
     */
-   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand
@@ -197,7 +197,7 @@ public interface CommandsFactory {
     * @param key key to evict
     * @return an EvictCommand
     */
-   EvictCommand buildEvictCommand(Object key);
+   EvictCommand buildEvictCommand(Object key, Set<Flag> flags);
 
    /**
     * Builds a PrepareCommand

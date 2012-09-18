@@ -61,8 +61,10 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
+         boolean skipLocking = hasSkipLocking(command);
+         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
          for (Object key : command.getKeys()) {
-            lockKey(ctx, key);
+            lockKey(ctx, key, lockTimeout, skipLocking);
          }
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -72,7 +74,6 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
-
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
          getLog().trace("Skipping invalidation as the write operation originated here.");
          return null;
@@ -83,9 +84,9 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
          if (keys != null && keys.length >= 1) {
             ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
             for (Object key : command.getKeys()) {
-               ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+               boolean skipLocking = hasSkipLocking(command);
                try {
-                  lockKey(ctx, key);
+                  lockKey(ctx, key, 0, skipLocking);
                } catch (TimeoutException te) {
                   getLog().unableToLockToInvalidate(key, cdl.getAddress());
                   keysCopy.remove(key);
@@ -110,7 +111,8 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       return te;
    }
 
-   protected final void lockKey(InvocationContext ctx, Object key) throws InterruptedException {
-      lockManager.acquireLockNoCheck(ctx, key);
+   protected final void lockKey(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException {
+      lockManager.acquireLockNoCheck(ctx, key, timeoutMillis, skipLocking);
    }
+
 }

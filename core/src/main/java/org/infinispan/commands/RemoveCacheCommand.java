@@ -24,9 +24,10 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.Util;
 
@@ -43,20 +44,31 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    private EmbeddedCacheManager cacheManager;
    private GlobalComponentRegistry registry;
+   private CacheLoaderManager cacheLoaderManager;
 
    private RemoveCacheCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager,
+         GlobalComponentRegistry registry, CacheLoaderManager cacheLoaderManager) {
       super(cacheName);
       this.cacheManager = cacheManager;
       this.registry = registry;
+      this.cacheLoaderManager = cacheLoaderManager;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      cacheManager.getCache(cacheName).getAdvancedCache().withFlags(Flag.REMOVE_DATA_ON_STOP).stop();
+      // To avoid reliance of a thread local flag, get a reference for the
+      // cache store to be able to clear it after cache has stopped.
+      CacheStore store = cacheLoaderManager.getCacheStore();
+      cacheManager.getCache(cacheName).stop();
+
+      // After stopping the cache, clear it
+      if (store != null)
+         store.clear();
+
       registry.removeCache(cacheName);
       return null;
    }

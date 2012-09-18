@@ -75,7 +75,6 @@ import org.jgroups.util.UUID;
  */
 public class TestCacheManagerFactory {
 
-
    private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
@@ -274,6 +273,14 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
       return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
+   }
+
+   public static EmbeddedCacheManager createCacheManager() {
+      return createCacheManager(new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createCacheManager(boolean start) {
+      return newDefaultCacheManager(start, new GlobalConfigurationBuilder().nonClusteredDefault(), new ConfigurationBuilder(), false);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
@@ -603,12 +610,6 @@ public class TestCacheManagerFactory {
    static void testFinished(String testName) {
       perThreadCacheManagers.get().checkManagersClosed(testName);
       perThreadCacheManagers.get().unsetTestName();
-   }
-
-   public static DefaultCacheManager createCacheManager(org.infinispan.configuration.cache.Configuration config) {
-      GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
-      return new DefaultCacheManager(globalConfigBuilder.build(), config);
    }
 
    private static class PerThreadCacheManagers {

@@ -27,6 +27,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -94,8 +95,8 @@ public class QueryInterceptor extends CommandInterceptor {
       this.asyncExecutor = e;
    }
 
-   protected boolean shouldModifyIndexes(InvocationContext ctx) {
-      return ! ctx.hasFlag(Flag.SKIP_INDEXING);
+   protected boolean shouldModifyIndexes(AbstractFlagAffectedCommand command, InvocationContext ctx) {
+      return !command.hasFlag(Flag.SKIP_INDEXING);
    }
 
    /**
@@ -113,7 +114,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
          getLog().debug("Infinispan Query indexing is triggered");
@@ -138,7 +139,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx)) {
+      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command, ctx)) {
          Object value = extractValue(valueRemoved);
          if (updateKnownTypesIfNeeded( value )) {
             removeFromIndexes(value, extractValue(command.getKey()));
@@ -150,7 +151,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object valueReplaced = invokeNextInterceptor(ctx, command);
-      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(ctx)) {
+      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
 
          Object[] parameters = command.getParameters();
          Object p1 = extractValue(parameters[1]);
@@ -174,7 +175,7 @@ public class QueryInterceptor extends CommandInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object mapPut = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          Map<Object, Object> dataMap = command.getMap();
 
          // Loop through all the keys and put those key, value pairings into lucene.
@@ -195,7 +196,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
 
          for (Class c : this.knownClasses.keySet()) {

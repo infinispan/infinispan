@@ -22,11 +22,12 @@
  */
 package org.infinispan.interceptors.base;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -41,10 +42,14 @@ import org.infinispan.remoting.rpc.RpcManager;
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;
+   protected ComponentRegistry componentRegistry;
+
+   protected String cacheName;
 
    @Inject
-   public void init(RpcManager rpcManager) {
+   public void init(RpcManager rpcManager, ComponentRegistry componentRegistry ) {
       this.rpcManager = rpcManager;
+      this.componentRegistry = componentRegistry;
    }
 
    protected boolean defaultSynchronous;
@@ -52,6 +57,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
+      cacheName = componentRegistry.getCacheName();
    }
 
    @Override
@@ -60,24 +66,23 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       if (ctx.isOriginLocal()) {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
-         command.setFlags(ctx.getFlags());
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
          rpcManager.broadcastRpcCommand(command, sync, false);
       }
       return retVal;
    }
 
-   protected final boolean isSynchronous(InvocationContext ctx) {
-      if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS))
+   protected final boolean isSynchronous(FlagAffectedCommand command) {
+      if (command.hasFlag(Flag.FORCE_SYNCHRONOUS))
          return true;
-      else if (ctx.hasFlag(Flag.FORCE_ASYNCHRONOUS))
+      else if (command.hasFlag(Flag.FORCE_ASYNCHRONOUS))
          return false;
 
       return defaultSynchronous;
    }
 
-   protected final boolean isLocalModeForced(InvocationContext ctx) {
-      if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+   protected final boolean isLocalModeForced(FlagAffectedCommand command) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (getLog().isTraceEnabled()) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }

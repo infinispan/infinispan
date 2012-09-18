@@ -23,7 +23,9 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -145,8 +147,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
-         if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
-            returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
+         if (needsRemoteGet(ctx, command, returnValue == null))
+            returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false, command);
          return returnValue;
       } catch (SuspectException e) {
          // retry
@@ -154,13 +156,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private boolean needsRemoteGet(InvocationContext ctx, Object key, boolean retvalCheck) {
+   private boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command, boolean retvalCheck) {
       final CacheEntry entry;
       return retvalCheck
-            && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
-            && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES)
-            && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());   //todo [anistor] this condition seems wrong
+            && !command.hasFlag(Flag.CACHE_MODE_LOCAL)
+            && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES)
+            && ((entry = ctx.lookupEntry(command.getKey())) == null || entry.isNull() || entry.isLockPlaceholder());   //todo [anistor] this condition seems wrong
    }
 
 
@@ -177,18 +179,18 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * @return value of a remote get, or null
     * @throws Throwable if there are problems
     */
-   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite) throws Throwable {
+   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       DataLocality locality = dm.getLocality(key);  //todo [anistor] checking this here is a bit late as the state transfer was probably started or even completed since this command entered the chain
 
       if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
-         return realRemoteGet(ctx, key, true, isWrite);
+         return realRemoteGet(ctx, key, true, isWrite, command);
       } else {
          // maybe we are still rehashing as a joiner? ISPN-258
          if (locality.isUncertain()) {
             if (trace)
                log.tracef("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere", key, rpcManager.getAddress());
             // try a remote lookup all the same
-            return realRemoteGet(ctx, key, false, isWrite);
+            return realRemoteGet(ctx, key, false, isWrite, command);
          } else {
             if (trace)
                log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
@@ -197,7 +199,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return null;
    }
 
-   private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite) throws Throwable {
+   private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
 
       boolean acquireRemoteLock = false;
@@ -206,7 +208,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
       }
       // attempt a remote lookup
-      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx, acquireRemoteLock);
+      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command);
 
       if (acquireRemoteLock) {
          ((TxInvocationContext)ctx).addAffectedKey(key);
@@ -221,8 +223,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                try {
                   long l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
                   long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
-                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
-                  lockAndWrap(ctx, key, ice);
+                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, command.getFlags());
+                  lockAndWrap(ctx, key, ice, command);
                   invokeNextInterceptor(ctx, put);
                } catch (Exception e) {
                   // Couldn't store in L1 for some reason.  But don't fail the transaction!
@@ -236,7 +238,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                      ce.setValue(ice.getValue());
                   } else {
                      if (isWrite)
-                        lockAndWrap(ctx, key, ice);
+                        lockAndWrap(ctx, key, ice, command);
                      else
                         ctx.putLookedUpEntry(key, ice);
                   }
@@ -250,9 +252,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return null;
    }
 
-   private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice) throws InterruptedException {
-      lockManager.acquireLock(ctx, key);
-      entryFactory.wrapEntryForPut(ctx, key, ice, false);
+   private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
+      boolean skipLocking = hasSkipLocking(command);
+      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+      lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
    }
 
    /**
@@ -396,7 +400,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
 
-      boolean sync = isSynchronous(ctx);
+      boolean sync = cacheConfiguration.clustering().cacheMode().isSynchronous();
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
@@ -427,18 +431,21 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private void remoteGetBeforeWrite(InvocationContext ctx, boolean isConditionalCommand, KeyGenerator keygen) throws Throwable {
+   private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
-      if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
-         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, true);
+      if (isNeedReliableReturnValues(command) || (command.isConditional() && ctx.isInTxScope())) {
+         boolean skipLocking = hasSkipLocking(command);
+         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+         for (Object k : keygen.getKeys())
+            remoteGetAndStoreInL1(ctx, k, true, command);
       }
    }
 
-   private boolean isNeedReliableReturnValues(InvocationContext ctx) {
-      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !ctx.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
+   private boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
+      return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    /**
@@ -448,11 +455,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
       // see if we need to load values from remote srcs first
       if (ctx.isOriginLocal() && !skipRemoteGet)
-         remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
-      boolean sync = isSynchronous(ctx);
+         remoteGetBeforeWrite(ctx, command, recipientGenerator);
+      boolean sync = isSynchronous(command);
 
       // if this is local mode then skip distributing
-      if (isLocalModeForced(ctx)) {
+      if (isLocalModeForced(command)) {
          return invokeNextInterceptor(ctx, command);
       }
 

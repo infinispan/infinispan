@@ -48,6 +48,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final VersioningConfigurationBuilder versioning;
    private final UnsafeConfigurationBuilder unsafe;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
+   private final SitesConfigurationBuilder sites;
 
    public ConfigurationBuilder() {
       this.clustering = new ClusteringConfigurationBuilder(this);
@@ -65,6 +66,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.transaction = new TransactionConfigurationBuilder(this);
       this.versioning = new VersioningConfigurationBuilder(this);
       this.unsafe = new UnsafeConfigurationBuilder(this);
+      this.sites = new SitesConfigurationBuilder(this);
    }
 
    public ConfigurationBuilder classLoader(ClassLoader cl) {
@@ -171,12 +173,16 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
    }
 
+   public SitesConfigurationBuilder sites() {
+      return sites;
+   }
+
    @SuppressWarnings("unchecked")
    public void validate() {
       for (AbstractConfigurationChildBuilder<?> validatable:
             asList(clustering, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, loaders, locking, storeAsBinary, transaction,
-                   versioning, unsafe)) {
+                   versioning, unsafe, sites)) {
          validatable.validate();
       }
       for (Builder<?> m : modules) {
@@ -202,7 +208,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), loaders.create(), locking.create(), storeAsBinary.create(),
-               transaction.create(), unsafe.create(), versioning.create(), modulesConfig, classLoader);// TODO
+               transaction.create(), unsafe.create(), versioning.create(), modulesConfig,sites.create() , classLoader);
    }
 
    public ConfigurationBuilder read(Configuration template) {
@@ -221,6 +227,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.storeAsBinary.read(template.storeAsBinary());
       this.transaction.read(template.transaction());
       this.unsafe.read(template.unsafe());
+      this.sites.read(template.sites());
       this.versioning.read(template.versioning());
 
       for (Object c : template.modules().values()) {
@@ -255,6 +262,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", transaction=" + transaction +
             ", versioning=" + versioning +
             ", unsafe=" + unsafe +
+            ", sites=" + sites +
             '}';
    }
 

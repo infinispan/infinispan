@@ -62,6 +62,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private final boolean implicitTransaction;
 
+   private volatile boolean isFromRemoteSite;
+
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
       super(tx, viewId);
       this.transaction = transaction;
@@ -183,5 +185,20 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    @Override
    public boolean keyRead(Object key) {
       return readKeys != null && readKeys.contains(key);
+   }
+
+   /**
+    * When x-site replication is used, this returns when this operation
+    * happens as a result of backing up data from a remote site.
+    */
+   public boolean isFromRemoteSite() {
+      return isFromRemoteSite;
+   }
+
+   /**
+    * @see #isFromRemoteSite()
+    */
+   public void setFromRemoteSite(boolean fromRemoteSite) {
+      isFromRemoteSite = fromRemoteSite;
    }
 }

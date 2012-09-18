@@ -126,7 +126,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void stop() {
-      cacheImplementation.stop(flags, classLoader);
+      cacheImplementation.stop(classLoader);
    }
 
    @Override

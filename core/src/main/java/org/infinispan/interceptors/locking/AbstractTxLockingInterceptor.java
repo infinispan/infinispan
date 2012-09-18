@@ -78,9 +78,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    @Override
    public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       // ensure keys are properly locked for evict commands
-      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.CACHE_MODE_LOCAL);
+      command.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.CACHE_MODE_LOCAL);
       try {
-         lockKey(ctx, command.getKey());
+         lockKey(ctx, command.getKey(), 0, command.hasFlag(Flag.SKIP_LOCKING));
          return invokeNextInterceptor(ctx, command);
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
@@ -132,9 +132,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * locks to be released. The backup lock will be released either by a commit/rollback/unlock command or by
     * the originator leaving the cluster (if recovery is disabled).
     */
-   protected final void lockAndRegisterBackupLock(TxInvocationContext ctx, Object key) throws InterruptedException {
+   protected final void lockAndRegisterBackupLock(TxInvocationContext ctx, Object key, long lockTimeout, boolean skipLocking) throws InterruptedException {
       if (cdl.localNodeIsPrimaryOwner(key)) {
-         lockKeyAndCheckOwnership(ctx, key);
+         lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
       } else if (cdl.localNodeIsOwner(key)) {
          ctx.getCacheTransaction().addBackupLockForKey(key);
       }
@@ -160,11 +160,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * Note: The algorithm described below only when nodes leave the cluster, so it doesn't add a performance burden
     * when the cluster is stable.
     */
-   protected final void lockKeyAndCheckOwnership(InvocationContext ctx, Object key) throws InterruptedException {
+   protected final void lockKeyAndCheckOwnership(InvocationContext ctx, Object key, long lockTimeout, boolean skipLocking) throws InterruptedException {
       boolean checkForPendingLocks = false;
       //this is possible when the put is originated as a result of a state transfer
       if (!ctx.isInTxScope()) {
-         lockManager.acquireLock(ctx, key);
+         lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
          return;
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
@@ -203,11 +203,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
             throw newTimeoutException(key, txContext);
          } else {
             getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
-            lockManager.acquireLock(ctx, key, remaining);
+            lockManager.acquireLock(ctx, key, remaining, skipLocking);
          }
       } else {
          getLog().tracef("Locking key %s, no need to check for pending locks.", key);
-         lockManager.acquireLock(ctx, key);
+         lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
       }
    }
 

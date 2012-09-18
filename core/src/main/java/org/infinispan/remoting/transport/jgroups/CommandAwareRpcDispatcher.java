@@ -26,6 +26,7 @@ import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -38,6 +39,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupReceiverRepository;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.Message;
@@ -48,6 +50,7 @@ import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.blocks.mux.Muxer;
+import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
@@ -84,17 +87,19 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
    private final JGroupsTransport transport;
    private final GlobalComponentRegistry gcr;
+   private final BackupReceiverRepository backupReceiverRepository;
 
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
                                     InboundInvocationHandler inboundInvocationHandler,
-                                    GlobalComponentRegistry gcr) {
+                                    GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
       this.server_obj = transport;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.transport = transport;
       this.gcr = gcr;
+      this.backupReceiverRepository = backupReceiverRepository;
 
       // MessageDispatcher superclass constructors will call start() so perform all init here
       this.setMembershipListener(transport);
@@ -205,7 +210,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          ReplicableCommand cmd = null;
          try {
             cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            return executeCommand(cmd, req);
+            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+            if (req.getSrc() instanceof SiteAddress) {
+               return executeCommandFromRemoteSite(cmd, (SiteAddress)req.getSrc());
+            } else {
+               return executeCommandFromLocalCluster(cmd, req);
+            }
          } catch (InterruptedException e) {
             log.warnf("Shutdown while handling command %s", cmd);
             return new ExceptionResponse(new CacheException("Cache is shutting down"));
@@ -221,8 +231,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private Object executeCommand(ReplicableCommand cmd, Message req) throws Throwable {
-      if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+   private Object executeCommandFromRemoteSite(ReplicableCommand cmd, SiteAddress src) throws Throwable {
+      if (! (cmd instanceof SingleRpcCommand)) {
+         throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
+      }
+      return backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src);
+   }
+
+   private Object executeCommandFromLocalCluster(ReplicableCommand cmd, Message req) throws Throwable {
       if (cmd instanceof CacheRpcCommand) {
          if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
          return inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()));
@@ -240,7 +256,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
 
-   private static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {
+   protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {
       Message msg = new Message();
       msg.setBuffer(buf);
       if (oob) msg.setFlag(Message.OOB);
@@ -254,7 +270,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return msg;
    }
 
-   private static Buffer marshallCall(Marshaller marshaller, ReplicableCommand command) {
+   static Buffer marshallCall(Marshaller marshaller, ReplicableCommand command) {
       Buffer buf;
       try {
          buf = marshaller.objectToBuffer(command);

@@ -328,6 +328,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    protected synchronized AbstractComponentFactory createComponentFactoryInternal(Class<?> componentClass, String cfClass) {
+      //first check as it might have been created in between by another thread
+      AbstractComponentFactory component = getComponent(cfClass);
+      if (component != null) return component;
+
       //hasn't yet been created.  Create and put in registry
       AbstractComponentFactory cf = instantiateFactory(cfClass);
       if (cf == null)

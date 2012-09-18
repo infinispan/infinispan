@@ -31,7 +31,6 @@ import junit.framework.Assert;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -51,11 +50,9 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      Configuration configuration = builder
-            .clustering().cacheMode(CacheMode.LOCAL)
-            .invocationBatching().enable()
-            .build();
-      return TestCacheManagerFactory.createCacheManager(configuration);
+      builder.clustering().cacheMode(CacheMode.LOCAL)
+            .invocationBatching().enable();
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
    
    @Test

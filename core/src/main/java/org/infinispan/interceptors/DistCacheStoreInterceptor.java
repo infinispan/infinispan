@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -89,7 +90,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
       Object key = command.getKey();
-      if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, key, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
       log.tracef("Stored entry %s under key %s", se, key);
@@ -100,7 +101,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx) || ctx.isInTxScope()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope()) return returnValue;
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {
@@ -118,7 +119,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
       Object key = command.getKey();
-      if (!skip(ctx, key) && !ctx.isInTxScope() && command.isSuccessful()) {
+      if (!skip(ctx, key, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          boolean resp = store.remove(key);
          log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
@@ -130,7 +131,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
          throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
       Object key = command.getKey();
-      if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, key, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
 
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
@@ -152,7 +153,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       // Clear is not key specific, so take into account origin of call
-      if ((ctx.isOriginLocal() || !loaderConfig.shared()) && !skip(ctx) && !ctx.isInTxScope())
+      if ((ctx.isOriginLocal() || !loaderConfig.shared()) && !skip(ctx, command) && !ctx.isInTxScope())
          clearCacheStore();
 
       return invokeNextInterceptor(ctx, command);
@@ -162,25 +163,34 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or, - The
     * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
     */
-   private boolean skip(InvocationContext ctx, Object key) {
-      return skip(ctx) || skipKey(key);
+   private boolean skip(InvocationContext ctx, Object key, FlagAffectedCommand command) {
+      return skip(ctx, command) || skipKey(key);
    }
 
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
    @Override
-   protected boolean skip(InvocationContext ctx) {
-      if (store == null) {
-         log.trace("Skipping cache store because the cache loader does not implement CacheStore");
-         return true;
-      }
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+   protected boolean skip(InvocationContext ctx, FlagAffectedCommand command) {
+      if (skip(ctx)) return true;
+
+      if (command.hasFlag(Flag.SKIP_CACHE_STORE)) {
          log.trace("Skipping cache store since the call contain a skip cache store flag");
          return true;
       }
-      if (loaderConfig.shared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+      if (loaderConfig.shared() && command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
          log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
+      }
+      return false;
+   }
+
+   @Override
+   protected boolean skip(InvocationContext ctx) {
+      if (!enabled) return true;
+
+      if (store == null) {
+         log.trace("Skipping cache store because the cache loader does not implement CacheStore");
+         return true;
       }
       return false;
    }

@@ -58,6 +58,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -206,7 +207,8 @@ public class RemoteCommandsFactory {
                command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheName, cacheManager, registry);
+               command = new RemoveCacheCommand(cacheName, cacheManager, registry,
+                     registry.getNamedComponentRegistry(cacheName).getComponent(CacheLoaderManager.class));
                break;
             case TxCompletionNotificationCommand.COMMAND_ID:
                command = new TxCompletionNotificationCommand(cacheName);

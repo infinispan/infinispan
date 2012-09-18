@@ -144,7 +144,7 @@
       <version.jboss.logmanager>1.3.1.Final</version.jboss.logmanager>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.1.0</version.jclouds>
+      <version.jclouds>1.4.1</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>3.2.0.Alpha1</version.jgroups>
@@ -181,6 +181,7 @@
       <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
+      <version.jacoco>0.5.10.201208310627</version.jacoco>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -1124,6 +1125,16 @@
                   <scalaVersion>${version.scala}</scalaVersion>
                </configuration>
             </plugin>
+            <plugin>
+               <groupId>org.jacoco</groupId>
+               <artifactId>jacoco-maven-plugin</artifactId>
+               <version>${version.jacoco}</version>
+               <configuration>
+                  <includes>
+                     <include>org.infinispan.*</include>
+                  </includes>
+               </configuration>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
@@ -1459,6 +1470,13 @@
          </properties>
       </profile>
       <profile>
+         <id>test-xsite</id>
+         <properties>
+            <defaultTestGroup>xsite</defaultTestGroup>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
          <id>test-unit</id>
          <properties>
             <defaultTestGroup>unit</defaultTestGroup>
@@ -1553,6 +1571,85 @@
          <properties>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
+      </profile>
+
+      <profile>
+         <id>coverage</id>
+
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.jacoco</groupId>
+                  <artifactId>jacoco-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <goals>
+                           <goal>prepare-agent</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <inherited>false</inherited>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.7</version>
+                  <executions>
+                     <execution>
+                        <id>jacoco-report</id>
+                           <!-- this must happen after Tomcat has been shut down -->
+                           <phase>verify</phase>
+                           <configuration>
+                               <!-- we use the jacoco ant task because the maven plugin does not
+                            support enough configuration options for report generation -->
+                              <target xmlns:jacoco="antlib:org.jacoco.ant">
+                                 <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
+                                            classpathref="maven.plugin.classpath" />
+                                 <jacoco:report>
+                                    <executiondata>
+                                       <fileset dir="..">
+                                          <include name="**/jacoco.exec" />
+                                          </fileset>
+                                    </executiondata>
+                                    <structure name="infinispan">
+                                       <classfiles>
+                                          <fileset dir="..">
+                                             <include name="**/target/classes/**/*.class" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles encoding="UTF-8">
+                                          <dirset dir="..">
+                                             <include name="**/src/main/java" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </structure>
+                                    <!-- to produce reports in different formats. -->
+                                    <html destdir="target/jacoco-html" />
+                                 </jacoco:report>
+                              </target>
+                           </configuration>
+                           <goals>
+                              <goal>run</goal>
+                           </goals>
+                     </execution>
+                  </executions>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>org.jacoco.ant</artifactId>
+                        <version>${version.jacoco}</version>
+                     </dependency>
+                  </dependencies>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 </project>

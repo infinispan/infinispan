@@ -23,26 +23,20 @@
 package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
+import org.infinispan.xsite.XSiteBackup;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 import static org.infinispan.factories.KnownComponentNames.*;
 
@@ -75,6 +69,9 @@ public interface Transport extends Lifecycle {
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                          boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception;
+
+
+   BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception;
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

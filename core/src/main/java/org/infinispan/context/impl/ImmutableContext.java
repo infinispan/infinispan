@@ -21,11 +21,9 @@ package org.infinispan.context.impl;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -76,30 +74,6 @@ public final class ImmutableContext implements InvocationContext {
    @Override
    public boolean hasLockedKey(Object key) {
       return false;
-   }
-
-   @Override
-   public boolean hasFlag(Flag o) {
-      return false;
-   }
-
-   @Override
-   public Set<Flag> getFlags() {
-      return Collections.emptySet();
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      throw newUnsupportedMethod();
-   }
-
-   @Override
-   public void setFlags(Collection<Flag> flags) {
-      throw newUnsupportedMethod();
-   }
-
-   @Override
-   public void reset() {
    }
 
    @Override

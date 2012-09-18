@@ -22,12 +22,6 @@
  */
 package org.infinispan.context.impl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Set;
-
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
@@ -39,8 +33,6 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.0
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
-
-   protected EnumSet<Flag> flags;
 
    // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
    // an EnumSet.
@@ -104,35 +96,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
          unsetContextFlag(flag);
    }
 
-
-   @Override
-   public boolean hasFlag(Flag o) {
-      return flags != null && flags.contains(o);
-   }
-
-   @Override
-   public Set<Flag> getFlags() {
-      return flags;
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      if (flags == null || flags.length == 0) return;
-      if (this.flags == null)
-         this.flags = EnumSet.copyOf(Arrays.asList(flags));
-      else
-         this.flags.addAll(Arrays.asList(flags));
-   }
-
-   @Override
-   public void setFlags(Collection<Flag> flags) {
-      if (flags == null || flags.isEmpty()) return;
-      if (this.flags == null)
-         this.flags = EnumSet.copyOf(flags);
-      else
-         this.flags.addAll(flags);
-   }
-   
    @Override
    public Address getOrigin() {
 	   return origin;
@@ -140,16 +103,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    
    public void setOrigin(Address origin) {
 	   this.origin = origin;
-   }
-
-   @Override
-   public void reset() {
-      flags = null;
-      contextFlags = 0;
-   }
-
-   public boolean isFlagsUninitialized() {
-      return flags == null;
    }
 
    @Override
@@ -171,9 +124,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    @Override
    public AbstractInvocationContext clone() {
       try {
-         AbstractInvocationContext dolly = (AbstractInvocationContext) super.clone();
-         if (flags != null) dolly.flags = flags.clone();
-         return dolly;
+         return (AbstractInvocationContext) super.clone();
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!");
       }
@@ -189,10 +140,4 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       this.classLoader = classLoader;
    }
 
-   @Override
-   public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "flags=" + flags +
-            '}';
-   }
 }

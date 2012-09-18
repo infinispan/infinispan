@@ -220,7 +220,7 @@ public interface Log extends BasicLogger {
    void passivatedEntries(int numEntries, String duration);
 
    @LogMessage(level = INFO)
-   @Message(value = "MBeans were successfully registered to the platform mbean server.", id = 31)
+   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
    void mbeansSuccessfullyRegistered();
 
    @LogMessage(level = WARN)
@@ -885,4 +885,28 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Error updating cluster member list", id = 197)
    void errorUpdatingMembersList(@Cause Throwable cause);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for default cache", id = 198)
+   void unableToRegisterMBeans();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for named cache %s", id = 199)
+   void unableToRegisterMBeans(String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for cache manager", id = 200)
+   void unableToRegisterCacheManagerMBeans();
+
+   @LogMessage(level = WARN)
+   @Message(value = "This cache is configured to backup to its own site (%s).", id = 201)
+   void cacheBackupsDataToSameSite(String siteName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Problems backing up data for cache %s to site %s: %s", id = 202)
+   void warnXsiteBackupFailed(String cacheName, String key, Object value);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The rollback request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id=203)
+   void cannotRespondToRollback(GlobalTransaction globalTransaction, String cacheName);
 }

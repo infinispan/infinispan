@@ -46,7 +46,7 @@ public class RecoveryAdminOperations {
 
    private static final Log log = LogFactory.getLog(RecoveryAdminOperations.class);
 
-   public static final String SEPARAOR = ", ";
+   public static final String SEPARATOR = ", ";
 
    private RecoveryManager recoveryManager;
 
@@ -63,8 +63,8 @@ public class RecoveryAdminOperations {
       }
       StringBuilder result = new StringBuilder();
       for (RecoveryManager.InDoubtTxInfo i : info) {
-         result.append("xid = [").append(i.getXid()).append("], ").append(SEPARAOR)
-               .append("internalId = ").append(i.getInternalId()).append(SEPARAOR);
+         result.append("xid = [").append(i.getXid()).append("], ").append(SEPARATOR)
+               .append("internalId = ").append(i.getInternalId()).append(SEPARATOR);
          result.append("status = [ ");
          for (Integer status : i.getStatus()) {
             if (status == Status.STATUS_PREPARED) {

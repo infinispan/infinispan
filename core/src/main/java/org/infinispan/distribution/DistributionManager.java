@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -110,7 +111,7 @@ public interface DistributionManager {
     * @param key key to look up
     * @return an internal cache entry, or null if it cannot be located
     */
-   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception;
+   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception;
 
    /**
     * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash

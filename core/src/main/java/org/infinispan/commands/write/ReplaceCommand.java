@@ -117,7 +117,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis,
+                          Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
