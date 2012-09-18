@@ -51,7 +51,6 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -154,7 +153,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          final CountDownLatch v2Latch = new CountDownLatch(1);
          final CountDownLatch endLatch = new CountDownLatch(1);
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
-         store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
+         store = new MockAsyncStore(v1Latch, v2Latch, endLatch, underlying, asyncConfig);
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
          dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
@@ -183,9 +182,16 @@ public class AsyncTest extends AbstractInfinispanTest {
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
          store = new AsyncStore(underlying, asyncConfig) {
             @Override
-            protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
-               for (Map.Entry<Object, Modification> entry : mods.entrySet()) {
-                  localMods.put(entry.getKey(), entry.getValue());
+            protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
+               for (Modification mod : mods) {
+                  switch (mod.getType()) {
+                  case STORE:
+                     localMods.put(((Store)mod).getStoredEntry().getKey(), mod);
+                     break;
+                  case REMOVE:
+                     localMods.put(((Remove)mod).getKey(), mod);
+                     break;
+                  }
                }
                super.applyModificationsSync(mods);
                try {
@@ -257,7 +263,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          };
          store = new AsyncStore(underlying, asyncConfig) {
             @Override
-            protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
+            protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
                super.applyModificationsSync(mods);
                try {
                   barrier.await(5, TimeUnit.SECONDS);
@@ -421,20 +427,18 @@ public class AsyncTest extends AbstractInfinispanTest {
       final CountDownLatch v1Latch;
       final CountDownLatch v2Latch;
       final CountDownLatch endLatch;
-      final Object key;
 
-      MockAsyncStore(Object key, CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch,
+      MockAsyncStore(CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch,
                      CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
          super(delegate, asyncStoreConfig);
          this.v1Latch = v1Latch;
          this.v2Latch = v2Latch;
          this.endLatch = endLatch;
-         this.key = key;
       }
 
       @Override
-      protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
-         if (mods.get(key) != null && block) {
+      protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
+         if (block) {
             log.trace("Wait for v1 latch");
             try {
                v2Latch.countDown();
@@ -443,7 +447,7 @@ public class AsyncTest extends AbstractInfinispanTest {
             } catch (InterruptedException e) {
             }
             super.applyModificationsSync(mods);
-         } else if (mods.get(key) != null && !block) {
+         } else {
             log.trace("Do v2 modification and unleash v1 latch");
             super.applyModificationsSync(mods);
             v1Latch.countDown();
