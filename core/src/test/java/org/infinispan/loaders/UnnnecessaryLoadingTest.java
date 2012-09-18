@@ -171,6 +171,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numLoads == 1;
    }
 
+   @Test(enabled=false) // The REMOVE_DATA_ON_STOP flag is deprecated, the test shoudl probably be removed
    public void testRemoveDataOnStopFlagUsage() throws CacheLoaderException {
       cache.put("k1", "v1");
       assert "v1".equals(cache.get("k1"));
