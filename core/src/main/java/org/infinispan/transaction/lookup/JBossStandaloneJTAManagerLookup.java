@@ -68,7 +68,7 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    }
 
    @Override
-   public TransactionManager getTransactionManager() throws Exception {
+   public synchronized TransactionManager getTransactionManager() throws Exception {
       TransactionManager tm = (TransactionManager) manager.invoke(null);
       if (log.isInfoEnabled()) log.retrievingTm(tm);
       return tm;
