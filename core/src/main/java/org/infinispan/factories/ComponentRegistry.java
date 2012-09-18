@@ -132,8 +132,10 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : componentClassName)) {
+         log.tracef("Looking up global component %s", componentClassName);
          return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
+         log.tracef("Looking up local component %s", componentClassName);
          return lookupLocalComponent(componentClassName, name, nameIsFQCN);
       }
    }
@@ -149,8 +151,10 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected final <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : componentClass.getName())) {
+         log.tracef("Get or create global component %s", componentClass);
          return globalComponents.getOrCreateComponent(componentClass, name, nameIsFQCN);
       } else {
+         log.tracef("Get or create local component %s", componentClass);
          return super.getOrCreateComponent(componentClass, name, nameIsFQCN);
       }
    }

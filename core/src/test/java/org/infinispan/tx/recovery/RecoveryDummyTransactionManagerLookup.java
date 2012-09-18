@@ -12,7 +12,7 @@ import javax.transaction.TransactionManager;
 public class RecoveryDummyTransactionManagerLookup implements TransactionManagerLookup {
 
    @Override
-   public TransactionManager getTransactionManager() throws Exception {
+   public synchronized TransactionManager getTransactionManager() throws Exception {
       DummyTransactionManager dtm = new DummyTransactionManager();
       dtm.setUseXaXid(true);
       return dtm;

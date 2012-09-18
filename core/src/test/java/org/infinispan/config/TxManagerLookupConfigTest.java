@@ -70,7 +70,7 @@ public class TxManagerLookupConfigTest {
    public static class TxManagerLookupA implements TransactionManagerLookup {
 
       @Override
-      public TransactionManager getTransactionManager() throws Exception {
+      public synchronized TransactionManager getTransactionManager() throws Exception {
          return tma;
       }
    }
@@ -78,7 +78,7 @@ public class TxManagerLookupConfigTest {
    public static class TxManagerLookupB implements TransactionManagerLookup {
 
       @Override
-      public TransactionManager getTransactionManager() throws Exception {
+      public synchronized TransactionManager getTransactionManager() throws Exception {
          return tmb;
       }
    }
