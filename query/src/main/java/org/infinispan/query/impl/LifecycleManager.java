@@ -81,8 +81,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
          queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
+
          // Interceptor registration not needed, core configuration handling
-         // already does it for all custom interceptors
+         // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
+         InterceptorChain ic = cr.getComponent(InterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder();
          InterceptorConfigurationBuilder interceptorBuilder =
@@ -90,11 +92,18 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          interceptorBuilder.interceptor(queryInterceptor);
 
          if (!cfg.transaction().transactionMode().isTransactional()) {
+            if (ic != null) ic.addInterceptorAfter(queryInterceptor, NonTransactionalLockingInterceptor.class);
             interceptorBuilder.after(NonTransactionalLockingInterceptor.class);
          } else if (cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+            if (ic != null) ic.addInterceptorAfter(queryInterceptor, OptimisticLockingInterceptor.class);
             interceptorBuilder.after(OptimisticLockingInterceptor.class);
          } else {
+            if (ic != null) ic.addInterceptorAfter(queryInterceptor, PessimisticLockingInterceptor.class);
             interceptorBuilder.after(PessimisticLockingInterceptor.class);
+         }
+         if (ic != null) {
+            cr.registerComponent(queryInterceptor, QueryInterceptor.class);
+            cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
          }
          cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
       }
