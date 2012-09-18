@@ -22,18 +22,23 @@
  */
 package org.infinispan.loaders.decorators;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
@@ -55,6 +60,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
@@ -375,28 +381,9 @@ public class AsyncTest extends AbstractInfinispanTest {
          store.store(cacheEntry);
       }
 
-      store.stop();
-      store.start();
-
-      InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
-         entries[i] = store.load(key + i);
-      }
-
-      for (int i = 0; i < number; i++) {
-         InternalCacheEntry entry = entries[i];
-         if (entry != null) {
-            assert entry.getValue().equals(value + i);
-         } else {
-            while (entry == null) {
-               entry = store.load(key + i);
-               if (entry != null) {
-                  assert entry.getValue().equals(value + i);
-               } else {
-                  TestingUtil.sleepThreadInt(20, "still waiting for key to appear: " + key + i);
-               }
-            }
-         }
+         InternalCacheEntry ice = store.load(key + i);
+         assert ice != null && (value + i).equals(ice.getValue());
       }
    }
 
@@ -404,65 +391,28 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          store.store(TestInternalCacheEntryFactory.create(key, value + i));
       }
-
-      store.stop();
-      store.start();
-      InternalCacheEntry entry;
-      boolean success = false;
-      for (int i = 0; i < 120; i++) {
-         TestingUtil.sleepThreadInt(20, null);
-         entry = store.load(key);
-         success = entry.getValue().equals(value + (number - 1));
-         if (success) break;
-      }
-      assert success;
+      InternalCacheEntry ice = store.load(key);
+      assert ice != null && (value + (number - 1)).equals(ice.getValue());
    }
 
    private void doTestRemove(int number, String key) throws Exception {
       for (int i = 0; i < number; i++) store.remove(key + i);
 
-      store.stop();//makes sure the store is flushed
-      store.start();
-
-      InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
-         entries[i] = store.load(key + i);
-      }
-
-      for (int i = 0; i < number; i++) {
-         InternalCacheEntry entry = entries[i];
-         while (entry != null) {
-            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
-            entry = store.load(key + i);
-         }
+         assert store.load(key + i) == null;
       }
    }
 
    private void doTestSameKeyRemove(String key) throws Exception {
       store.remove(key);
-      InternalCacheEntry entry;
-      do {
-         TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key);
-         entry = store.load(key);
-      } while (entry != null);
+      assert store.load(key) == null;
    }
 
    private void doTestClear(int number, String key) throws Exception {
       store.clear();
-      store.stop();
-      store.start();
-
-      InternalCacheEntry[] entries = new InternalCacheEntry[number];
-      for (int i = 0; i < number; i++) {
-         entries[i] = store.load(key + i);
-      }
 
       for (int i = 0; i < number; i++) {
-         InternalCacheEntry entry = entries[i];
-         while (entry != null) {
-            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
-            entry = store.load(key + i);
-         }
+         assert store.load(key + i) == null;
       }
    }
 
@@ -501,5 +451,158 @@ public class AsyncTest extends AbstractInfinispanTest {
          }
       }
 
+   }
+
+   private final static ThreadLocal<LockableCacheStore> STORE = new ThreadLocal<LockableCacheStore>();
+
+   public static class LockableCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
+      private static final long serialVersionUID = 1L;
+
+      public LockableCacheStoreConfig() {
+         setCacheLoaderClassName(LockableCacheStore.class.getName());
+      }
+   }
+
+   @CacheLoaderMetadata(configurationClass = LockableCacheStoreConfig.class)
+   public static class LockableCacheStore extends DummyInMemoryCacheStore {
+      private final ReentrantLock lock = new ReentrantLock();
+
+      public LockableCacheStore() {
+         super();
+         STORE.set(this);
+      }
+
+      @Override
+      public Class<? extends CacheLoaderConfig> getConfigurationClass() {
+         return LockableCacheStoreConfig.class;
+      }
+
+      @Override
+      public void store(InternalCacheEntry ed) {
+         lock.lock();
+         try {
+            super.store(ed);
+         } finally {
+            lock.unlock();
+         }
+      }
+
+      @Override
+      public boolean remove(Object key) {
+         lock.lock();
+         try {
+            return super.remove(key);
+         } finally {
+            lock.unlock();
+         }
+      }
+   }
+
+   public void testModificationQueueSize(final Method m) throws Exception {
+      LockableCacheStore underlying = new LockableCacheStore();
+      asyncConfig.modificationQueueSize(10);
+      store = new AsyncStore(underlying, asyncConfig);
+      store.init(new LockableCacheStoreConfig(), null, null);
+      store.start();
+      final CountDownLatch done = new CountDownLatch(1);
+
+      underlying.lock.lock();
+      try {
+         Thread t = new Thread() {
+            @Override
+            public void run() {
+               try {
+                  for (int i = 0; i < 100; i++)
+                     store.store(TestInternalCacheEntryFactory.create(k(m, i), v(m, i)));
+               } catch (Exception e) {
+               }
+               done.countDown();
+            }
+         };
+         t.start();
+
+         assert !done.await(1, TimeUnit.SECONDS) : "Background thread should have blocked after adding 10 entries";
+      } finally {
+         underlying.lock.unlock();
+      }
+   }
+
+   private static abstract class OneEntryCacheManagerCallable extends CacheManagerCallable {
+      protected final Cache<String, String> cache;
+      protected final LockableCacheStore store;
+
+      private static ConfigurationBuilder config(boolean passivation) {
+         ConfigurationBuilder config = new ConfigurationBuilder();
+         config.eviction().maxEntries(1).loaders().passivation(passivation).addStore()
+               .cacheStore(new LockableCacheStore()).async().enable();
+         return config;
+      }
+
+      OneEntryCacheManagerCallable(boolean passivation) {
+         super(TestCacheManagerFactory.createCacheManager(config(passivation)));
+         cache = cm.getCache();
+         store = STORE.get();
+      }
+   }
+
+   public void testEndToEndPutPutPassivation() throws Exception {
+      testEndToEndPutPut(true);
+   }
+   public void testEndToEndPutPut() throws Exception {
+      testEndToEndPutPut(false);
+   }
+   private void testEndToEndPutPut(boolean passivation) throws Exception {
+      TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation) {
+         @Override
+         public void call() {
+            cache.put("X", "1");
+            cache.put("Y", "1"); // force eviction of "X"
+
+            // wait for X == 1 to appear in store
+            while (store.load("X") == null)
+               TestingUtil.sleepThread(10);
+
+            // simulate slow back end store
+            store.lock.lock();
+            try {
+               cache.put("X", "2");
+               cache.put("Y", "2"); // force eviction of "X"
+
+               assert "2".equals(cache.get("X")) : "cache must return X == 2";
+            } finally {
+               store.lock.unlock();
+            }
+         }
+      });
+   }
+
+   public void testEndToEndPutRemovePassivation() throws Exception {
+      testEndToEndPutRemove(true);
+   }
+   public void testEndToEndPutRemove() throws Exception {
+      testEndToEndPutRemove(false);
+   }
+   private void testEndToEndPutRemove(boolean passivation) throws Exception {
+      TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation) {
+         @Override
+         public void call() {
+            cache.put("X", "1");
+            cache.put("Y", "1"); // force eviction of "X"
+
+            // wait for "X" to appear in store
+            while (store.load("X") == null)
+               TestingUtil.sleepThread(10);
+
+            // simulate slow back end store
+            store.lock.lock();
+            try {
+               cache.remove("X");
+
+               assert null == cache.get("X") : "cache must return X == null";
+            } finally {
+               store.lock.unlock();
+            }
+         }
+      });
    }
 }
