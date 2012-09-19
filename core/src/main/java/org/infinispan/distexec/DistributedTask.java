@@ -43,6 +43,13 @@ public interface DistributedTask<T> {
     * @return task DistributedTaskExecutionPolicy
     */
    DistributedTaskExecutionPolicy getTaskExecutionPolicy();
+   
+   /**
+    * Returns custom {@link DistributedTaskFailoverPolicy}  for this task
+    * 
+    * @return
+    */
+   DistributedTaskFailoverPolicy getTaskFailoverPolicy();
 
    /**
     * Returns {@link Callable} for this task
