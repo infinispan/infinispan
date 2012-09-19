@@ -31,7 +31,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Pete Muir
@@ -103,7 +102,6 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
       final Cache owner = getOwners("groupA")[0];
       int ownerIndex = -1;
 
-      final List<Cache<Object,Object>> caches = caches(cacheName);
       for (int i = 0; i < caches.size(); i++) {
          if (owner == caches.get(i)) {
             ownerIndex = i;
