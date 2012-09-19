@@ -169,6 +169,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       backupKeyLocks.add(key);
    }
 
+   @Override
+   public void removeBackupLockForKey(Object key) {
+      if (backupKeyLocks != null) {
+         backupKeyLocks.remove(key);
+      }
+   }
+
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
       if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));

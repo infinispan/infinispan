@@ -25,6 +25,7 @@ package org.infinispan.lock.singlelock;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
@@ -93,8 +94,8 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          public void run() {
             try {
                log.trace("This thread runs a different tx");
-               cache(secondTxNode).put(k, "v2");
                tm(secondTxNode).resume(suspend);
+               cache(secondTxNode).put(k, "v2");
                tm(secondTxNode).commit();
             } catch (Exception e) {
                e.printStackTrace();
@@ -102,6 +103,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          }
       }, false);
 
+      // this 'ensures' transaction called 'suspend' has the chance to start the prepare phase and is waiting to acquire the locks on k held by first transaction before it gets resumed
       Thread.sleep(1000);
 
       log.trace("Before completing the transaction!");
@@ -122,6 +124,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
+            log.trace("Remote transactions: " + TestingUtil.getTransactionTable(cache(1)).getRemoteTransactions());
             return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
          }
       });
