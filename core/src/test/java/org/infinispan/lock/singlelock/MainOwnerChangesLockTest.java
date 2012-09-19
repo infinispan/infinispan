@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.assertFalse;
 /**
  * @since 5.1
  */
-@Test(groups = "functional", testName = "lock.singlelock.MainOwnerChangesLockTest", enabled = false) //todo [anistor] temporarily disabled for NBST
+@Test(groups = "functional", testName = "lock.singlelock.MainOwnerChangesLockTest", enabled = true) //todo [anistor] temporarily disabled for NBST
 @CleanupAfterMethod
 public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
 

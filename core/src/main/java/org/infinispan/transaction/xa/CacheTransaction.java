@@ -73,6 +73,8 @@ public interface CacheTransaction {
 
    void addBackupLockForKey(Object key);
 
+   void removeBackupLockForKey(Object key);
+
    /**
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
     */
