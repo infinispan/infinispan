@@ -33,6 +33,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -59,6 +61,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private GlobalComponentRegistry gcr;
 
    private ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
+   private volatile boolean running;
 
    @Inject
    public void inject(Transport transport,
@@ -67,6 +70,18 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
+   }
+
+   // Arbitrary value, only need to start after JGroupsTransport
+   @Start(priority = 100)
+   public void start() {
+      running = true;
+   }
+
+   // Need to stop before the JGroupsTransport
+   @Stop(priority = 9)
+   public void stop() {
+      running = false;
    }
 
    @Override
@@ -84,8 +99,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       while (true) {
          try {
             CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
-            handleConsistentHashUpdate(cacheName, initialTopology, viewId);
-            return initialTopology;
+            // if the current coordinator is shutting down, it will return a null CacheTopology
+            if (initialTopology != null) {
+               handleConsistentHashUpdate(cacheName, initialTopology, viewId);
+               return initialTopology;
+            }
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
             if (endTime <= System.nanoTime()) {
@@ -140,6 +158,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    @Override
    public void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
+      if (!running) {
+         log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is shutting down",
+               cacheTopology.getTopologyId(), cacheName);
+         return;
+      }
       waitForView(viewId);
 
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
@@ -174,6 +197,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    @Override
    public void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
+      if (!running) {
+         log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is shutting down",
+               cacheTopology.getTopologyId(), cacheName);
+         return;
+      }
       waitForView(viewId);
 
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);

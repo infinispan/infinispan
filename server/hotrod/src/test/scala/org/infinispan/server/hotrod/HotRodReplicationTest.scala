@@ -177,7 +177,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertEquals(hashTopologyResp.members.size, 2)
       servers.map(_.getAddress).foreach(
          addr => assertTrue(hashTopologyResp.members.exists(_ == addr)))
-      assertHashIds(hashTopologyResp.hashIds, servers, cacheName)
+      assertReplicatedHashIds(hashTopologyResp.hashIds, servers, cacheName)
 
       assertEquals(hashTopologyResp.numOwners, 0)
       assertEquals(hashTopologyResp.hashFunction, 0)

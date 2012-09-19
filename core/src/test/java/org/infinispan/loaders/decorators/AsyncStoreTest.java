@@ -60,8 +60,8 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "unit", testName = "loaders.decorators.AsyncTest", sequential=true)
-public class AsyncTest extends AbstractInfinispanTest {
-   private static final Log log = LogFactory.getLog(AsyncTest.class);
+public class AsyncStoreTest extends AbstractInfinispanTest {
+   private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    AsyncStore store;
    ExecutorService asyncExecutor;
    DummyInMemoryCacheStore underlying;
@@ -73,7 +73,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       underlying = new DummyInMemoryCacheStore();
       asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncTest.class.getName());
+      dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
       store.init(dummyCfg, null, null);
       store.start();
       asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
@@ -130,7 +130,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       // stop the cache store
       store.stop();
       try {
-         store.remove("blah");
+         store.store(null);
          assert false : "Should have restricted this entry from being made";
       }
       catch (CacheException expected) {

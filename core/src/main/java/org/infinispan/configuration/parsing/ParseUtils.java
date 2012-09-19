@@ -217,7 +217,7 @@ public final class ParseUtils {
      * @param attributeName the attribute name
      * @throws javax.xml.stream.XMLStreamException if an error occurs
      */
-    public static void requireSingleAttribute(final XMLStreamReader reader, final String attributeName)
+    public static String requireSingleAttribute(final XMLStreamReader reader, final String attributeName)
             throws XMLStreamException {
         final int count = reader.getAttributeCount();
         if (count == 0) {
@@ -230,6 +230,7 @@ public final class ParseUtils {
         if (count > 1) {
             throw unexpectedAttribute(reader, 1);
         }
+        return reader.getAttributeValue(0);
     }
 
     /**
@@ -270,4 +271,5 @@ public final class ParseUtils {
     public static String getWarningMessage(final String msg, final Location location) {
         return String.format("Parsing problem at [row,col]:[%d ,%d]%nMessage: %s%n", location.getLineNumber(), location.getColumnNumber(), msg);
     }
+
 }

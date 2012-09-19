@@ -30,6 +30,7 @@ public class ConfigurationBuilderHolder {
    private final ConfigurationBuilder defaultConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
+   private final Map<Class<? extends ConfigurationParser<?>>, ParserContext> parserContexts;
    private final ClassLoader classLoader;
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
@@ -37,6 +38,7 @@ public class ConfigurationBuilderHolder {
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
       this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
       this.currentConfigurationBuilder = defaultConfigurationBuilder;
+      this.parserContexts = new HashMap<Class<? extends ConfigurationParser<?>>, ParserContext>();
       this.classLoader = classLoader;
    }
 
@@ -66,7 +68,21 @@ public class ConfigurationBuilderHolder {
       return currentConfigurationBuilder;
    }
 
+   @SuppressWarnings("unchecked")
+   public <T extends ParserContext> T getParserContext(Class<? extends ConfigurationParser<?>> parserClass) {
+      return (T) parserContexts.get(parserClass);
+   }
+
+   public void setParserContext(Class<? extends ConfigurationParser<?>> parserClass, ParserContext context) {
+      parserContexts.put(parserClass, context);
+   }
+
    public ClassLoader getClassLoader() {
       return classLoader;
    }
+
+   Map<Class<? extends ConfigurationParser<?>>, ParserContext> getParserContexts() {
+      return parserContexts;
+   }
+
 }

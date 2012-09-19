@@ -247,28 +247,45 @@ object HotRodTestingUtil extends Log {
       val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
       val numSegments = consistentHash.getNumSegments
       val numOwners = consistentHash.getNumOwners
-      assert(hashIds.size == servers.size)
+      assertEquals(hashIds.size, servers.size)
 
       val segmentSize = math.ceil(Int.MaxValue.toDouble / numSegments).toInt
-      val owners = new Array[ArrayBuffer[ServerAddress]](numSegments)
+      val owners = new Array[collection.mutable.Map[Int, ServerAddress]](numSegments)
 
       for ((serverAddress, serverHashIds) <- hashIds) {
          for (hashId <- serverHashIds) {
-            val segmentIdx = hashId / segmentSize
+            val segmentIdx = (hashId / segmentSize + numSegments - 1) % numSegments
+            val ownerIdx = hashId % segmentSize;
             if (owners(segmentIdx) == null) {
-               owners(segmentIdx) = new ArrayBuffer[ServerAddress]
+               owners(segmentIdx) = collection.mutable.Map[Int, ServerAddress]()
             }
-            owners(segmentIdx) += serverAddress
+            owners(segmentIdx) += (ownerIdx -> serverAddress)
          }
       }
 
       for (i <- 0 until numSegments) {
-         val segmentOwners = owners(i)
-         assert(segmentOwners.size == numOwners)
-         val uniqueOwners = segmentOwners.toSet
+         val segmentOwners = owners(i).toList.sortBy(_._1).map(_._2)
+         assertEquals(segmentOwners.size, numOwners)
          val chOwners = consistentHash.locateOwnersForSegment(i)
-               .map(a => clusterAddressToServerAddress(servers, a)).toSet
-         assert(uniqueOwners == chOwners)
+               .map(a => clusterAddressToServerAddress(servers, a))
+         assertEquals(segmentOwners, chOwners)
+      }
+   }
+
+   def assertReplicatedHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
+      val cache = servers.head.getCacheManager.getCache(cacheName)
+      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
+      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
+      val numSegments = consistentHash.getNumSegments
+      val numOwners = consistentHash.getNumOwners
+
+      // replicated responses have just one segment, and each server should have only one hash id: 0
+      assertEquals(hashIds.size, servers.size)
+      assertEquals(numSegments, 1)
+
+      for ((serverAddress, serverHashIds) <- hashIds) {
+         assertEquals(serverHashIds.size, 1)
+         assertEquals(serverHashIds(0), 0)
       }
    }
 

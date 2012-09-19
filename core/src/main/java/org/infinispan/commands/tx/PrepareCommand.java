@@ -22,7 +22,6 @@
  */
 package org.infinispan.commands.tx;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -141,14 +140,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       return onePhaseCommit;
    }
 
-   public boolean existModifications() {
-      return modifications != null && modifications.length > 0;
-   }
-
-   public int getModificationsCount() {
-      return modifications != null ? modifications.length : 0;
-   }
-
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -194,15 +185,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
             "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
             ", " + super.toString();
-   }
-
-   public boolean containsModificationType(Class<? extends ReplicableCommand> replicableCommandClass) {
-      for (WriteCommand mod : getModifications()) {
-         if (mod.getClass().equals(replicableCommandClass)) {
-            return true;
-         }
-      }
-      return false;
    }
 
    public boolean hasModifications() {

@@ -442,7 +442,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
       log.tracef("For m/r task %s invoking %s locally", taskId, reducer);
       try {
-         taskLifecycleService.onPreExecute(reducer);
+         taskLifecycleService.onPreExecute(reducer, cache);
          for (Entry<KOut, List<VOut>> e : mapPhasesResult.entrySet()) {
             // TODO in parallel with futures
             reducedResult.put(e.getKey(), reducer.reduce(e.getKey(), e.getValue().iterator()));

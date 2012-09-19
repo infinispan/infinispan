@@ -35,7 +35,7 @@ public class DefaultMapReduceTaskLifecycle implements MapReduceTaskLifecycle {
    }
 
    @Override
-   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer) {
+   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?, ?> inputCache) {
    // intentionally no-op
    }
 

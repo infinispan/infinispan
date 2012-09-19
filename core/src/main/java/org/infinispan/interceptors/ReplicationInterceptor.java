@@ -63,7 +63,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,41 +105,16 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         sendCommitCommand(ctx, command);
+         sendCommitCommand(command);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
-   /**
-    * If the response to a commit is a request to resend the prepare, respond accordingly *
-    */
-   private boolean needToResendPrepare(Response r) {
-      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
-   }
-
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
+   private void sendCommitCommand(CommitCommand command)
          throws TimeoutException, InterruptedException {
       // may need to resend, so make the commit command synchronous
       // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true);
-      if (!responses.isEmpty()) {
-         List<Address> resendTo = new LinkedList<Address>();
-         for (Map.Entry<Address, Response> r : responses.entrySet()) {
-            if (needToResendPrepare(r.getValue()))
-               resendTo.add(r.getKey());
-         }
-
-         if (!resendTo.isEmpty()) {
-            getLog().debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-            PrepareCommand pc = buildPrepareCommandForResend(ctx, command);
-            rpcManager.invokeRemotely(resendTo, pc, true, true);
-         }
-      }
-   }
-
-   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand command) {
-      // Make sure this is 1-Phase!!
-      return cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+      rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true);
    }
 
    @Override
