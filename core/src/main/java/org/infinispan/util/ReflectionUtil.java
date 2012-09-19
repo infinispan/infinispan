@@ -105,59 +105,26 @@ public class ReflectionUtil {
       return fields;
    }
 
-   private static void getFieldsHelper(List<Field> list, Class<?> c, Class<?> type) {
-      Field[] declaredFields = c.getDeclaredFields();
-      for (Field field : declaredFields) {
-         if (type.isAssignableFrom(field.getType())) {
-            list.add(field);
-         }
-      }
-   }
-
-   public static List<Field> getFields(Class<?> c, Class<?> type) {
-      List<Field> fields = new ArrayList<Field>(4);
-      for (; !c.equals(Object.class); c = c.getSuperclass()) {
-         getFieldsHelper(fields, c, type);
-      }
-      return fields;
-   }
-
    public static Method findMethod(Class<?> type, String methodName) {
-      return findRecursively(type, methodName);
-   }
-
-   private static Method findRecursively(Class<?> type, String methodName) {
       try {
          return type.getDeclaredMethod(methodName);
       } catch (NoSuchMethodException e) {
-         if (!type.equals(Object.class)) {
-            if (!type.isInterface()) {
-               return findRecursively(type.getSuperclass(), methodName);
-            }
+         if (type.equals(Object.class) || type.isInterface()) {
+            throw new CacheException(e);
          }
+         return findMethod(type.getSuperclass(), methodName);
       }
-      return null;
    }
 
-   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) {
-      return findRecursively(type, methodName, parameters);
-   }
-
-   public static Method findMethod(Class<?> type, String methodName, String[] parameters) throws ClassNotFoundException {
-      return findRecursively(type, methodName, toClassArray(parameters));
-   }
-
-   private static Method findRecursively(Class<?> type, String methodName, Class<?>[] parameters) {
+   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) throws ClassNotFoundException {
       try {
          return type.getDeclaredMethod(methodName, parameters);
       } catch (NoSuchMethodException e) {
-         if (!type.equals(Object.class)) {
-            if (!type.isInterface()) {
-               return findRecursively(type.getSuperclass(), methodName, parameters);
-            }
+         if (type.equals(Object.class) || type.isInterface()) {
+            throw new CacheException(e);
          }
+         return findMethod(type.getSuperclass(), methodName, parameters);
       }
-      return null;
    }
 
    /**
@@ -371,23 +338,6 @@ public class ReflectionUtil {
     */
    public static boolean isAnnotationPresent(Class<?> clazz, Class<? extends Annotation> annotation) {
       return getAnnotation(clazz, annotation) != null;
-   }
-
-   public static boolean isSetMethod(Method method) {
-      return (method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method
-            .getReturnType() == java.lang.Void.TYPE);
-   }
-
-   public static boolean isGetMethod(Method method) {
-      return (method.getParameterTypes().length == 0
-                    && method.getReturnType() != java.lang.Void.TYPE && method.getName().startsWith(
-            "get"));
-   }
-
-   public static boolean isIsMethod(Method method) {
-      return (method.getParameterTypes().length == 0
-                    && (method.getReturnType() == boolean.class || method.getReturnType() == Boolean.class) && method
-            .getName().startsWith("is"));
    }
 
    public static Class<?>[] toClassArray(String[] typeList) throws ClassNotFoundException {
