@@ -49,7 +49,7 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       gcr.registerComponent(interpreter, Interpreter.class);
 
       // Pick up metadata from the component metadata repository
-      ManageableComponentMetadata meta = ComponentMetadataRepo.findComponentMetadata(Interpreter.class)
+      ManageableComponentMetadata meta = gcr.getComponentMetadataRepo().findComponentMetadata(Interpreter.class)
             .toManageableComponentMetadata();
       // And use this metadata when registering the transport as a dynamic MBean
       try {
