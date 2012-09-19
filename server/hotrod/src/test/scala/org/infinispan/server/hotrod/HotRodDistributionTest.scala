@@ -42,8 +42,7 @@ import scala.collection.JavaConversions._
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = Array("functional"), testName = "server.hotrod.HotRodDistributionTest", enabled = false,
-      description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRodDistributionTest")
 class HotRodDistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName: String = "hotRodDistSync"

@@ -60,8 +60,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest",
-      enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest")
 public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private HotRodServer hotRodServer1;
