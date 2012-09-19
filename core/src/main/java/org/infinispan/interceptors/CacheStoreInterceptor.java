@@ -63,6 +63,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -299,9 +300,15 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();
          store.prepare(modsBuilder.modifications, tx, onePhase);
 
-         preparingTxs.put(tx, modsBuilder.affectedKeys);
-         if (getStatisticsEnabled() && modsBuilder.putCount > 0) {
-            txStores.put(tx, modsBuilder.putCount);
+
+         boolean shouldCountStores = getStatisticsEnabled() && modsBuilder.putCount > 0;
+         if (!onePhase) {
+            preparingTxs.put(tx, modsBuilder.affectedKeys);
+            if (shouldCountStores) {
+               txStores.put(tx, modsBuilder.putCount);
+            }
+         } else if (shouldCountStores) {
+            cacheStores.getAndAdd(modsBuilder.putCount);
          }
       }
    }
@@ -398,5 +405,13 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    public void disableInterceptor() {
       enabled = false;
+   }
+
+   public Map<GlobalTransaction, Set<Object>> getPreparingTxs() {
+      return Collections.unmodifiableMap(preparingTxs);
+   }
+
+   public Map<GlobalTransaction, Integer> getTxStores() {
+      return Collections.unmodifiableMap(txStores);
    }
 }
