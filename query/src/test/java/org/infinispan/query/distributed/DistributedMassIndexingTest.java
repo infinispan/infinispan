@@ -64,22 +64,27 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    public void testReindexing() {
-      caches.get(0).put("F1NUM", new Car("megane", "white", 300));
+      caches.get(0).put(key("F1NUM"), new Car("megane", "white", 300));
       verifyFindsCar(1, "megane");
-      caches.get(1).put("F2NUM", new Car("megane", "blue", 300));
+      caches.get(1).put(key("F2NUM"), new Car("megane", "blue", 300));
       verifyFindsCar(2, "megane");
       //add an entry without indexing it:
-      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put("F3NUM", new Car("megane", "blue", 300));
+      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F3NUM"), new Car("megane", "blue", 300));
       verifyFindsCar(2, "megane");
       //re-sync datacontainer with indexes:
       rebuildIndexes();
       verifyFindsCar(3, "megane");
       //verify we cleanup old stale index values:
-      caches.get(3).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove("F2NUM");
+      caches.get(3).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
       verifyFindsCar(3, "megane");
       //re-sync
       rebuildIndexes();
       verifyFindsCar(2, "megane");
+   }
+
+   private Object key(String keyId) {
+      //Used to verify remoting is fine with non serializable keys
+      return new NonSerializableKeyType(keyId);
    }
 
    private void rebuildIndexes() {

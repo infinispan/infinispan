@@ -84,8 +84,14 @@ public class LuceneWorkTransformationVisitor implements WorkVisitor<LuceneWorkId
       @Override
       public AddLuceneWork cloneOverridingIdString(final AddLuceneWork lw, final KeyTransformationHandler keyTransformationHandler) {
          final Serializable id = lw.getId();
-         final String transformedId = keyTransformationHandler.keyToString(id);
-         return new AddLuceneWork(id, transformedId, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+         if (id == null) {
+            //this is serialized work received from a remote node: take the getIdAsString instead
+            final String idInString = lw.getIdInString();
+            return new AddLuceneWork(idInString, idInString, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+         }
+         else {
+            return lw;
+         }
       }
    }
 
@@ -93,8 +99,14 @@ public class LuceneWorkTransformationVisitor implements WorkVisitor<LuceneWorkId
       @Override
       public UpdateLuceneWork cloneOverridingIdString(final UpdateLuceneWork lw, final KeyTransformationHandler keyTransformationHandler) {
          final Serializable id = lw.getId();
-         final String transformedId = keyTransformationHandler.keyToString(id);
-         return new UpdateLuceneWork(id, transformedId, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+         if (id == null) {
+            //this is serialized work received from a remote node: take the getIdAsString instead
+            final String idInString = lw.getIdInString();
+            return new UpdateLuceneWork(idInString, idInString, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+         }
+         else {
+            return lw;
+         }
       }
    }
 
@@ -102,8 +114,14 @@ public class LuceneWorkTransformationVisitor implements WorkVisitor<LuceneWorkId
       @Override
       public DeleteLuceneWork cloneOverridingIdString(final DeleteLuceneWork lw, final KeyTransformationHandler keyTransformationHandler) {
          final Serializable id = lw.getId();
-         final String transformedId = keyTransformationHandler.keyToString(id);
-         return new DeleteLuceneWork(id, transformedId, lw.getEntityClass());
+         if (id == null) {
+            //this is serialized work received from a remote node: take the getIdAsString instead
+            final String idInString = lw.getIdInString();
+            return new DeleteLuceneWork(idInString, idInString, lw.getEntityClass());
+         }
+         else {
+            return lw;
+         }
       }
    }
 
