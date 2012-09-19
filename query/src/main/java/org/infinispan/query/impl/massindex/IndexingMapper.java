@@ -73,7 +73,7 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
       UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
             clazz,
             value,
-            (Serializable)key,
+            idInString,
             idInString,
             SimpleInitializer.INSTANCE,
             conversionContext
