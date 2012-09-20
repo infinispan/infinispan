@@ -77,7 +77,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
       try {
          val decoder = version match {
-            case VERSION_10 | VERSION_11 => Decoder10
+            case VERSION_10 | VERSION_11 | VERSION_12 => Decoder10
             case _ => throw new UnknownVersionException(
                "Unknown version:" + version, version, messageId)
          }

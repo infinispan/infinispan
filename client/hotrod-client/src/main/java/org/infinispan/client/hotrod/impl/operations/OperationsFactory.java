@@ -93,6 +93,11 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
+   public GetWithMetadataOperation newGetWithMetadataOperation(byte[] key) {
+      return new GetWithMetadataOperation(
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+   }
+
    public StatsOperation newStatsOperation() {
       return new StatsOperation(
             codec, transportFactory, cacheNameBytes, topologyId, flags());

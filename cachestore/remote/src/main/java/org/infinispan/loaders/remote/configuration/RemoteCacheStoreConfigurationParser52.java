@@ -248,6 +248,10 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
             builder.protocolVersion(value);
             break;
          }
+         case RAW_VALUES: {
+            builder.rawValues(Boolean.parseBoolean(value));
+            break;
+         }
          case REMOTE_CACHE_NAME: {
             builder.remoteCacheName(value);
             break;

@@ -112,6 +112,28 @@ class GetWithVersionResponse(override val version: Byte, override val messageId:
    }
 }
 
+class GetWithMetadataResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
+                             override val clientIntel: Short, override val operation: OperationResponse,
+                             override val status: OperationStatus,
+                             override val topologyId: Int,
+                             override val data: Option[Array[Byte]], val dataVersion: Long, val created: Long, val lifespan: Int, val lastUsed: Long, val maxIdle: Int)
+      extends GetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data) {
+   override def toString = {
+      new StringBuilder().append("GetWithMetadataResponse").append("{")
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
+         .append(", operation=").append(operation)
+         .append(", status=").append(status)
+         .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
+         .append(", dataVersion=").append(dataVersion)
+         .append(", created=").append(created)
+         .append(", lifespan=").append(lifespan)
+         .append(", lastUsed=").append(lastUsed)
+         .append(", maxIdle=").append(maxIdle)
+         .append("}").toString
+   }
+}
+
 class ErrorResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
                     override val clientIntel: Short, override val status: OperationStatus,
                     override val topologyId: Int, val msg: String)

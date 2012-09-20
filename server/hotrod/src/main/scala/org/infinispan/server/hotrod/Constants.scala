@@ -31,6 +31,7 @@ trait Constants {
    val MAGIC_RES = 0xA1
    val VERSION_10: Byte = 10
    val VERSION_11: Byte = 11
+   val VERSION_12: Byte = 12
    val DEFAULT_HASH_FUNCTION_VERSION: Byte = 2
 
 }

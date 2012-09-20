@@ -45,6 +45,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
    private final String marshaller;
    private final boolean pingOnStartup;
    private final String protocolVersion;
+   private final boolean rawValues;
    private final String remoteCacheName;
    private final List<RemoteServerConfiguration> servers;
    private final long socketTimeout;
@@ -54,7 +55,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
 
    RemoteCacheStoreConfiguration(ExecutorFactoryConfiguration asyncExecutorFactory, String balancingStrategy,
          ConnectionPoolConfiguration connectionPool, long connectionTimeout, boolean forceReturnValues,
-         int keySizeEstimate, String marshaller, boolean pingOnStartup, String protocolVersion, String remoteCacheName,
+         int keySizeEstimate, String marshaller, boolean pingOnStartup, String protocolVersion, boolean rawValues, String remoteCacheName,
          List<RemoteServerConfiguration> servers, long socketTimeout, boolean tcpNoDelay, String transportFactory,
          int valueSizeEstimate, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads,
          boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
@@ -70,6 +71,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       this.marshaller = marshaller;
       this.pingOnStartup = pingOnStartup;
       this.protocolVersion = protocolVersion;
+      this.rawValues = rawValues;
       this.remoteCacheName = remoteCacheName;
       this.servers = Collections.unmodifiableList(servers);
       this.socketTimeout = socketTimeout;
@@ -114,6 +116,10 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       return protocolVersion;
    }
 
+   public boolean rawValues() {
+      return rawValues;
+   }
+
    public String remoteCacheName() {
       return remoteCacheName;
    }
@@ -145,6 +151,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       LegacyConfigurationAdaptor.adapt(this, config);
 
       // RemoteCacheStoreConfiguration
+      config.setRawValues(rawValues);
       config.setRemoteCacheName(remoteCacheName);
       config.setAsyncExecutorFactory(asyncExecutorFactory.factory());
 
