@@ -45,7 +45,7 @@ public class ProjectionLoader implements QueryResultLoader {
    public List<Object> load(Collection<EntityInfo> entityInfos) {
       List<Object> list = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo entityInfo : entityInfos) {
-         list.add( load( entityInfo ) );
+         list.add(load(entityInfo));
       }
       return list;
    }

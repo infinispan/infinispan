@@ -22,7 +22,6 @@
  */
 package org.infinispan.query.impl;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.query.QueryIterator;
 
 /**

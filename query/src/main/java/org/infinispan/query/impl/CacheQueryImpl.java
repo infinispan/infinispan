@@ -85,7 +85,7 @@ public class CacheQueryImpl implements CacheQuery {
     */
    @Override
    public CacheQuery filter(Filter filter) {
-      hSearchQuery.filter( filter );
+      hSearchQuery.filter(filter);
       return this;
    }
 
@@ -99,7 +99,7 @@ public class CacheQueryImpl implements CacheQuery {
 
    @Override
    public CacheQuery sort(Sort sort) {
-      hSearchQuery.sort( sort );
+      hSearchQuery.sort(sort);
       return this;
    }
 
@@ -111,7 +111,7 @@ public class CacheQueryImpl implements CacheQuery {
     */
    @Override
    public FullTextFilter enableFullTextFilter(String name) {
-      return hSearchQuery.enableFullTextFilter( name );
+      return hSearchQuery.enableFullTextFilter(name);
    }
 
    /**
@@ -121,7 +121,7 @@ public class CacheQueryImpl implements CacheQuery {
     */
    @Override
    public CacheQuery disableFullTextFilter(String name) {
-      hSearchQuery.disableFullTextFilter( name );
+      hSearchQuery.disableFullTextFilter(name);
       return this;
    }
 
@@ -133,13 +133,13 @@ public class CacheQueryImpl implements CacheQuery {
     */
    @Override
    public CacheQuery firstResult(int firstResult) {
-      hSearchQuery.firstResult( firstResult );
+      hSearchQuery.firstResult(firstResult);
       return this;
    }
 
    @Override
    public CacheQuery maxResults(int maxResults) {
-      hSearchQuery.maxResults( maxResults );
+      hSearchQuery.maxResults(maxResults);
       return this;
    }
 
@@ -152,7 +152,7 @@ public class CacheQueryImpl implements CacheQuery {
    public QueryIterator iterator(int fetchSize) throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      return new EagerIterator(entityInfos, getResultLoader(), fetchSize );
+      return new EagerIterator(entityInfos, getResultLoader(), fetchSize);
    }
 
    @Override
@@ -169,7 +169,7 @@ public class CacheQueryImpl implements CacheQuery {
    public List<Object> list() throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      return getResultLoader().load( entityInfos );
+      return getResultLoader().load(entityInfos);
    }
 
    private QueryResultLoader getResultLoader() {
@@ -181,7 +181,7 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    private ProjectionLoader getProjectionLoader() {
-      return new ProjectionLoader( projectionConverter, getEntityLoader() );
+      return new ProjectionLoader(projectionConverter, getEntityLoader());
    }
 
    private EntityLoader getEntityLoader() {
@@ -201,7 +201,7 @@ public class CacheQueryImpl implements CacheQuery {
    @Override
    public CacheQuery projection(String... fields) {
       this.projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
-      hSearchQuery.projection( projectionConverter.getHSearchProjection() );
+      hSearchQuery.projection(projectionConverter.getHSearchProjection());
       return this;
    }
 

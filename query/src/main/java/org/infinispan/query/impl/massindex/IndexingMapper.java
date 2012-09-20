@@ -18,8 +18,6 @@
  */
 package org.infinispan.query.impl.massindex;
 
-import java.io.Serializable;
-
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.bridge.spi.ConversionContext;

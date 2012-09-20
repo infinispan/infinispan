@@ -72,7 +72,7 @@ public class EagerIteratorTest {
       for (int i = 1; i <= 10; i++) {
          String key = "key" + i;
          keys.add(key);
-         entityInfos.add( new MockEntityInfo( keyTransformationHandler.keyToString( key ) ) );
+         entityInfos.add(new MockEntityInfo(keyTransformationHandler.keyToString(key)));
          dummyResults.put(key, "Result number " + i);
       }
 
@@ -88,7 +88,7 @@ public class EagerIteratorTest {
 
       });
 
-      iterator = new EagerIterator( entityInfos, new EntityLoader(cache, keyTransformationHandler ), fetchSize );
+      iterator = new EagerIterator(entityInfos, new EntityLoader(cache, keyTransformationHandler), fetchSize);
    }
 
    @AfterMethod (alwaysRun = true)

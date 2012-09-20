@@ -47,17 +47,17 @@ public class EntityLoader implements QueryResultLoader {
    }
 
    public Object load(EntityInfo entityInfo) {
-      Object cacheKey = keyTransformationHandler.stringToKey( entityInfo.getId().toString(), cache.getClassLoader() );
+      Object cacheKey = keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
       return cache.get(cacheKey);
    }
 
    public List<Object> load(Collection<EntityInfo> entityInfos) {
       ArrayList<Object> list = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo e : entityInfos) {
-          Object entity = load(e);
-          if (entity != null) {
-              list.add(entity);
-          }
+         Object entity = load(e);
+         if (entity != null) {
+            list.add(entity);
+         }
       }
       return list;
    }

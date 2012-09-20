@@ -133,13 +133,13 @@ public class LazyIterator extends AbstractIterator {
       //Wiping the buffer
       Arrays.fill(buffer, null);
 
-      toReturn = loadResult( index );
+      toReturn = loadResult(index);
 
       buffer[0] = toReturn;
 
       //now loop through bufferSize times to add the rest of the objects into the list.
       for (int i = 1; i < bufferSize; i++) {
-         buffer[i] = loadResult( index - i );    //In this case it has to be index - i because previous() is called.
+         buffer[i] = loadResult(index - i); // In this case it has to be index - i because previous() is called.
       }
 
       bufferIndex = index;
@@ -150,8 +150,8 @@ public class LazyIterator extends AbstractIterator {
 
    private Object loadResult(int index) throws CacheException {
       try {
-         EntityInfo entityInfo = extractor.extract( index );
-         return resultLoader.load( entityInfo );
+         EntityInfo entityInfo = extractor.extract(index);
+         return resultLoader.load(entityInfo);
       } catch (IOException e) {
          throw new CacheException("Cannot load result at index " + index, e);
       }

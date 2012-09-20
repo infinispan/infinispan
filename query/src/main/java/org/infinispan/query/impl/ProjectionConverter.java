@@ -48,7 +48,7 @@ public class ProjectionConverter {
       hibernateSearchFields = fields.clone();
       for (int i = 0; i < hibernateSearchFields.length; i++) {
          String field = hibernateSearchFields[i];
-         if (field.equals( ProjectionConstants.KEY )) {
+         if (field.equals(ProjectionConstants.KEY)) {
             hibernateSearchFields[i] = ProjectionConstants.ID;
             indexesOfKey.add(i);
          }
