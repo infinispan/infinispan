@@ -26,7 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.testng.annotations.*;
 
@@ -94,7 +95,8 @@ public class MapStressTest {
          .expiration().wakeUpInterval(5000L).maxIdle(120000L)
          .build();
 
-      DefaultCacheManager cm = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(), config);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(
+            GlobalConfiguration.getNonClusteredDefault(), config);
       cm.start();
       return cm.getCache();
    }

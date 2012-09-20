@@ -26,10 +26,6 @@ package org.infinispan.spring.support.embedded;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -108,13 +104,6 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanContextTest extends
                         + INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME
                         + "\" that has been configured using configuration mode NAMED. However, it doesn't.",
                infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeNamed);
-   }
-
-   public static class TestInfinispanEmbeddedCacheManagerFactoryBean extends InfinispanEmbeddedCacheManagerFactoryBean {
-      @Override
-      protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
-         return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
-      }
    }
 
 }

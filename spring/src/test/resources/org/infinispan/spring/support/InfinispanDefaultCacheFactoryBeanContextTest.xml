@@ -32,7 +32,9 @@
 
    <bean
       id="infinispanCacheContainer"
-      class="org.infinispan.manager.DefaultCacheManager" />
+      class="org.infinispan.test.fwk.TestCacheManagerFactory"
+      factory-method="createCacheManager"
+      destroy-method="stop"/>
 
    <bean
       id="testDefaultCache"

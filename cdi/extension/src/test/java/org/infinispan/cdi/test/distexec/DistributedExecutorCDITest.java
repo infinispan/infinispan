@@ -31,6 +31,7 @@ import javax.inject.Inject;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.Input;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.distexec.DistributedExecutorTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -59,7 +60,8 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
    
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addClass(DistributedExecutorCDITest.class);
+      return baseDeployment().addClass(DistributedExecutorCDITest.class)
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
    
    public void testBasicInvocation() throws Exception {

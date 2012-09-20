@@ -95,9 +95,8 @@ public abstract class CacheTestSupport {
    }
 
    public static CacheContainer createLocalCacheManager() {
-      ConfigurationBuilder localCacheConfigurationBuilder = createLocalCacheConfiguration();
-      Configuration configuration = localCacheConfigurationBuilder.build();
-      return new DefaultCacheManager(configuration);
+      ConfigurationBuilder builder = createLocalCacheConfiguration();
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
    public static ConfigurationBuilder createLocalCacheConfiguration() {

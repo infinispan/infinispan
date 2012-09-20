@@ -32,6 +32,7 @@ import javax.inject.Inject;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.Input;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.distexec.mapreduce.BaseWordCountMapReduceTest;
 import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
@@ -65,7 +66,8 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
 
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addClass(WordCountMapReduceCDITest.class);
+      return baseDeployment().addClass(WordCountMapReduceCDITest.class)
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    public void testinvokeMapReduceOnSubsetOfKeys() throws Exception {

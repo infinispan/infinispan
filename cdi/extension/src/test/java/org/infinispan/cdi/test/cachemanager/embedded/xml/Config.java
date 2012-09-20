@@ -25,11 +25,13 @@ package org.infinispan.cdi.test.cachemanager.embedded.xml;
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.solder.resourceLoader.Resource;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +51,7 @@ public class Config {
    @VeryLarge
    @ConfigureCache("very-large")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration veryLargeConfiguration;
 
    /**
@@ -57,6 +60,7 @@ public class Config {
    @Quick
    @ConfigureCache("quick-very-large")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration quickVeryLargeConfiguration;
 
    /**
@@ -64,8 +68,9 @@ public class Config {
     */
    @Produces
    @ApplicationScoped
+   @SuppressWarnings("unused")
    public EmbeddedCacheManager defaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
-      EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);
+      EmbeddedCacheManager externalCacheContainerManager = TestCacheManagerFactory.fromStream(xml);
 
       externalCacheContainerManager.defineConfiguration("quick-very-large", new ConfigurationBuilder()
             .read(externalCacheContainerManager.getDefaultCacheConfiguration())
@@ -74,4 +79,15 @@ public class Config {
 
       return externalCacheContainerManager;
    }
+
+   /**
+    * Stops cache manager.
+    *
+    * @param cacheManager to be stopped
+    */
+   @SuppressWarnings("unused")
+   public void killCacheManager(@Disposes EmbeddedCacheManager cacheManager) {
+      TestingUtil.killCacheManagers(cacheManager);
+   }
+
 }

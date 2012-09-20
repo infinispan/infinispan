@@ -27,7 +27,9 @@ import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -79,8 +81,8 @@ public class DefaultCacheTest extends Arquillian {
 
    @AfterTest(alwaysRun = true)
    public void afterMethod() {
-      embeddedCacheManager.stop();
-      hotRodServer.stop();
+      TestingUtil.killCacheManagers(embeddedCacheManager);
+      ServerTestingUtil.killServer(hotRodServer);
    }
 
    public void testDefaultCache() {

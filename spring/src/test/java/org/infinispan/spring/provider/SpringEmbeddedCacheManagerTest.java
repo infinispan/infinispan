@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -155,7 +154,7 @@ public class SpringEmbeddedCacheManagerTest {
     */
    @Test
    public final void stopShouldStopTheNativeEmbeddedCacheManager() {
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
             cm.getCache(); // Implicitly starts EmbeddedCacheManager
@@ -179,7 +178,7 @@ public class SpringEmbeddedCacheManagerTest {
     */
    @Test
    public final void getNativeCacheShouldReturnTheEmbeddedCacheManagerSuppliedAtConstructionTime() {
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
