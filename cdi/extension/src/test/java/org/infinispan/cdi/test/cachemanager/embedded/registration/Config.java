@@ -25,8 +25,8 @@ package org.infinispan.cdi.test.cachemanager.embedded.registration;
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -43,6 +43,7 @@ public class Config {
    @Small
    @ConfigureCache("small")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration smallConfiguration;
 
    /**
@@ -53,6 +54,7 @@ public class Config {
    @Large
    @ConfigureCache("large")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration largeConfiguration() {
       return new ConfigurationBuilder()
             .eviction().maxEntries(1024)
@@ -67,6 +69,7 @@ public class Config {
    @VeryLarge
    @ConfigureCache("very-large")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration veryLargeConfiguration() {
       return new ConfigurationBuilder()
             .eviction().maxEntries(4096)
@@ -81,7 +84,8 @@ public class Config {
    @VeryLarge
    @Produces
    @ApplicationScoped
+   @SuppressWarnings("unused")
    public EmbeddedCacheManager specificCacheManager() {
-      return new DefaultCacheManager();
+      return TestCacheManagerFactory.createCacheManager();
    }
 }

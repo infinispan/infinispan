@@ -27,7 +27,6 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -207,7 +206,10 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testTreeCacheFactory() {
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().invocationBatching().enable().build())) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.invocationBatching().enable();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
             TreeCacheFactory tcf = new TreeCacheFactory();
@@ -218,7 +220,9 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions=ConfigurationException.class)
    public void testFactoryNoBatching() {
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().build())) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
             TreeCacheFactory tcf = new TreeCacheFactory();

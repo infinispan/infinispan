@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,30 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached
+package org.infinispan.spring.provider;
 
-import org.testng.annotations.Test
-import org.testng.Assert._
-import org.infinispan.server.core.test.Stoppable
-import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * Memcached server unit test.
+ * Bean that creates cache manager instances produced
+ * by the test cache manager factory.
  *
  * @author Galder Zamarreño
- * @since 4.1
+ * @since 5.2
  */
-@Test(groups = Array("functional"), testName = "server.memcached.MemcachedServerTest")
-class MemcachedServerTest {
+public class TestSpringEmbeddedCacheManagerFactoryBean extends SpringEmbeddedCacheManagerFactoryBean {
 
-   def testValidateProtocolServerNullProperties {
-      Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>
-         Stoppable.useServer(new MemcachedServer) { server =>
-            server.start(null, cm)
-            assertEquals(server.getHost, "127.0.0.1")
-            assertEquals(server.getPort, 11211)
-         }
-      }
+   @Override
+   protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager(InputStream is) throws IOException {
+      return TestCacheManagerFactory.fromStream(is);
    }
 
 }

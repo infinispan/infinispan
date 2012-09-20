@@ -31,6 +31,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -48,7 +49,8 @@ public class CacheRegistrationTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(CacheRegistrationTest.class.getPackage());
+            .addPackage(CacheRegistrationTest.class.getPackage())
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    @Inject

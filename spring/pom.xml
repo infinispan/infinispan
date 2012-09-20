@@ -105,6 +105,12 @@
          <artifactId>infinispan-core</artifactId>
          <scope>compile</scope>
       </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+      </dependency>
       <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
       <dependency>
          <groupId>org.rhq.helpers</groupId>

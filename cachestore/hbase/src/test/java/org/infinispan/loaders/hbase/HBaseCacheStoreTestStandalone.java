@@ -30,7 +30,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -71,9 +71,9 @@ public class HBaseCacheStoreTestStandalone {
       System.setProperty("java.net.preferIPv4Stack", "true");
 
       if (USE_EMBEDDED) {
-         CACHE = new DefaultCacheManager("hbase-cachestore-ispn-embedded.xml").getCache();
+         CACHE = TestCacheManagerFactory.fromXml("hbase-cachestore-ispn-embedded.xml").getCache();
       } else {
-         CACHE = new DefaultCacheManager("hbase-cachestore-ispn.xml").getCache();
+         CACHE = TestCacheManagerFactory.fromXml("hbase-cachestore-ispn.xml").getCache();
       }
    }
 

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,66 +20,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptor.config;
+package org.infinispan.cdi.test;
 
-import org.infinispan.cdi.ConfigureCache;
+import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * <p>The alternative default {@link EmbeddedCacheManager} producer for the test environment.</p>
+ *
+ * @author Galder Zamarreño
  */
-public class Config {
-   /**
-    * <p>Associates the "custom" cache with the qualifier {@link Custom}.</p>
-    *
-    * <p>The default configuration will be used.</p>
-    */
-   @Custom
-   @ConfigureCache("custom")
-   @Produces
-   @SuppressWarnings("unused")
-   public Configuration customConfiguration;
+public class DefaultTestEmbeddedCacheManagerProducer {
 
    /**
-    * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    * Produces the default embedded cache manager.
     *
-    * <p>The default configuration will be used.</p>
+    * @param providedDefaultEmbeddedCacheManager the provided default embedded cache manager.
+    * @param defaultConfiguration the default configuration produced by the {@link DefaultTestEmbeddedCacheManagerProducer}.
+    * @return the default embedded cache manager used by the application.
     */
-   @Small
-   @ConfigureCache("small")
-   @Produces
-   @SuppressWarnings("unused")
-   public Configuration smallConfiguration;
-
-   /**
-    * Associates the "small" cache with the small cache manager.
-    */
-   @Small
    @Produces
    @ApplicationScoped
-   @SuppressWarnings("unused")
-   EmbeddedCacheManager smallCacheManager() {
+   public EmbeddedCacheManager getDefaultEmbeddedCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultEmbeddedCacheManager, Configuration defaultConfiguration) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().maxEntries(4);
+      builder.read(defaultConfiguration);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
    /**
-    * Stops cache manager.
+    * Stops the default embedded cache manager when the corresponding instance is released.
     *
-    * @param cacheManager to be stopped
+    * @param defaultEmbeddedCacheManager the default embedded cache manager.
     */
-   @SuppressWarnings("unused")
-   public void killCacheManager(@Disposes @Small EmbeddedCacheManager cacheManager) {
-      TestingUtil.killCacheManagers(cacheManager);
+   private void stopCacheManager(@Disposes EmbeddedCacheManager defaultEmbeddedCacheManager) {
+      defaultEmbeddedCacheManager.stop();
    }
-
 }
