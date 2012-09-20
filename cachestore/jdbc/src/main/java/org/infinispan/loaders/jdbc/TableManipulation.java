@@ -227,8 +227,9 @@ public class TableManipulation implements Cloneable {
    public void start(ConnectionFactory connectionFactory) throws CacheLoaderException {
       this.connectionFactory = connectionFactory;
       if (isCreateTableOnStart()) {
-         Connection conn = this.connectionFactory.getConnection();
+         Connection conn = null;
          try {
+            conn = this.connectionFactory.getConnection();
             if (!tableExists(conn, getTableName())) {
                createTable(conn);
             }
@@ -240,8 +241,9 @@ public class TableManipulation implements Cloneable {
 
    public void stop() throws CacheLoaderException {
       if (isDropTableOnExit()) {
-         Connection conn = connectionFactory.getConnection();
+         Connection conn = null;
          try {
+            conn = connectionFactory.getConnection();
             dropTable(conn);
          } finally {
             connectionFactory.releaseConnection(conn);
@@ -521,19 +523,26 @@ public class TableManipulation implements Cloneable {
    private DatabaseType getDatabaseType() {
       if (databaseType == null) {
          // need to guess from the database type!
+         Connection connection = null;
          try {
-            String dbProduct = connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+            connection = connectionFactory.getConnection();
+            String dbProduct = connection.getMetaData().getDatabaseProductName();
             databaseType = guessDatabaseType(dbProduct);
          } catch (Exception e) {
             log.debug("Unable to guess database type from JDBC metadata.", e);
+         } finally {
+            connectionFactory.releaseConnection(connection);
          }
          if (databaseType == null) {
             log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
             try {
+               connection = connectionFactory.getConnection();
                String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
                databaseType = guessDatabaseType(dbProduct);
             } catch (Exception e) {
                log.debug("Unable to guess database type from JDBC driver name.", e);
+            } finally {
+               connectionFactory.releaseConnection(connection);
             }
          }
          if (databaseType == null) {

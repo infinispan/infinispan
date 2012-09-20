@@ -24,6 +24,7 @@ package org.infinispan.loaders.jdbc;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,6 +35,7 @@ import java.sql.Statement;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -61,6 +63,26 @@ public class TableManipulationTest {
    @AfterTest(alwaysRun = true)
    public void closeConnection() throws SQLException {
       connection.close();
+   }
+
+   public void testConnectionLeakGuessDatabaseType() throws Exception {
+      TableManipulation tableManipulation = UnitTestDatabaseManager.buildStringTableManipulation();
+      // database type must now be determined
+      tableManipulation.databaseType = null;
+      tableManipulation.setCacheName("GuessDatabaseType");
+
+      PooledConnectionFactory factory = new PooledConnectionFactory();
+      ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+      factory.start(config, Thread.currentThread().getContextClassLoader());
+
+      tableManipulation.start(factory);
+
+      tableManipulation.getUpdateRowSql();
+
+      assertEquals(factory.getPooledDataSource().getNumBusyConnections(), 0);
+
+      tableManipulation.stop();
+      factory.stop();
    }
 
    public void testInsufficientConfigParams() throws Exception {
