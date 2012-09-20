@@ -431,26 +431,63 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
    }
 
-   static final class LRU<K, V> extends LinkedHashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
+   private static class LRUHashEntry<K,V> extends HashEntry<K,V> {
+
+      //variables for creating a doubly-linked list
+      LRUHashEntry<K,V> previousEntry, nextEntry;
+
+      LRUHashEntry(K key, int hash, HashEntry<K,V> next, V value) {
+         super(key, hash, next, value);
+      }
+
+      private void remove() {
+         previousEntry.nextEntry = nextEntry;
+         nextEntry.previousEntry = previousEntry;
+      }
+
+      private void addBefore(LRUHashEntry<K,V> entry) {
+         nextEntry = entry;
+         previousEntry = entry.previousEntry;
+         previousEntry.nextEntry = this;
+         nextEntry.previousEntry = this;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) {
+            return true;
+         }
+         if (o == null) {
+            return false;
+         }
+         HashEntry<?, ?> other = (HashEntry<?, ?>) o;
+         return hash == other.hash && key.equals(other.key);
+      }
+   }
+
+   static final class LRU<K, V> extends HashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -7645068174197717838L;
 
-      private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
+      private final ConcurrentLinkedQueue<LRUHashEntry<K, V>> accessQueue;
       private final Segment<K,V> segment;
       private final int maxBatchQueueSize;
       private final int trimDownSize;
       private final float batchThresholdFactor;
       private final Set<HashEntry<K, V>> evicted;
+      private LRUHashEntry<K, V> head;
 
       public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-         super(capacity, lf, true);
+         super(capacity, lf);
          this.segment = s;
          this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
          this.batchThresholdFactor = batchThresholdFactor;
-         this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
+         this.accessQueue = new ConcurrentLinkedQueue<LRUHashEntry<K, V>>();
          this.evicted = new HashSet<HashEntry<K, V>>();
+         this.head = (LRUHashEntry<K, V>) createNewEntry(null,-1, null, null);
+         this.head.previousEntry = this.head.nextEntry = this.head;
       }
 
       @Override
@@ -458,6 +495,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
          for (HashEntry<K, V> e : accessQueue) {
             put(e, e.value);
+            addAndRemoveEldest(e);
          }
          evictedCopy.addAll(evicted);
          accessQueue.clear();
@@ -468,6 +506,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
          put(e, e.value);
+         addAndRemoveEldest(e);
          if (!evicted.isEmpty()) {
             Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
             evictedCopy.addAll(evicted);
@@ -478,19 +517,33 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
       }
 
-      /*
-       * Invoked without holding a lock on Segment
-       */
-      @Override
-      public boolean onEntryHit(HashEntry<K, V> e) {
-         accessQueue.add(e);
-         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+      public void addAndRemoveEldest(HashEntry<K, V> entry) {
+         ((LRUHashEntry<K, V>)entry).addBefore(head);
+         if (isAboveThreshold()) {
+            remove(head.nextEntry);
+            LRUHashEntry<K, V> evictedEntry = head.nextEntry;
+            //remove eldest entry from doubly-linked list
+            head.nextEntry.remove();
+            boolean evict = segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+            if (evict) {
+               segment.remove(evictedEntry.key, evictedEntry.hash, null);
+               evicted.add(evictedEntry);
+            }
+         }
       }
 
       /*
        * Invoked without holding a lock on Segment
        */
       @Override
+      public boolean onEntryHit(HashEntry<K, V> e) {
+         accessQueue.add((LRUHashEntry<K, V>) e);
+         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
       public boolean thresholdExpired() {
          return accessQueue.size() >= maxBatchQueueSize;
       }
@@ -498,6 +551,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public void onEntryRemove(HashEntry<K, V> e) {
          remove(e);
+         //remove entry from doubly-linked list
+         ((LRUHashEntry<K, V>)e).remove();
          // we could have multiple instances of e in accessQueue; remove them all
          while (accessQueue.remove(e)) {
             continue;
@@ -507,6 +562,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public void clear() {
          super.clear();
+         head.previousEntry = head.nextEntry = head;
          accessQueue.clear();
       }
 
@@ -519,23 +575,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          return size() > trimDownSize;
       }
 
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<HashEntry<K,V>,V> eldest){
-         boolean aboveThreshold = isAboveThreshold();
-         if(aboveThreshold){
-            HashEntry<K, V> evictedEntry = eldest.getKey();
-            boolean evict = segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
-            if (evict) {
-               segment.remove(evictedEntry.key, evictedEntry.hash, null);
-               evicted.add(evictedEntry);
-            }
-         }
-         return aboveThreshold;
-      }
-
-      @Override
       public HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value) {
-         return new HashEntry<K, V>(key, hash, next, value);
+         return new LRUHashEntry<K, V>(key, hash, next, value);
       }
    }
    
