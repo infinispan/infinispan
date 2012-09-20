@@ -31,10 +31,10 @@ public class HBaseCacheStoreConfigTest {
 
    public void setConfigurationPropertiesFileTest() throws CacheLoaderException {
       HBaseCacheStoreConfig config = new HBaseCacheStoreConfig();
-      
+
       assert config.entryTable == "ISPNCacheStore";
       assert config.hbaseZookeeperQuorum == "localhost";
-      assert config.hbaseZookeeperPropertyClientPort == "2181";
+      assert config.hbaseZookeeperPropertyClientPort == 2181;
       assert config.entryColumnFamily == "E";
       assert config.entryValueField == "EV";
       assert config.expirationTable == "ISPNCacheStoreExpiration";

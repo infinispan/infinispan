@@ -108,7 +108,7 @@ public class HBaseCacheStore extends AbstractCacheStore {
 
          Map<String, String> props = new HashMap<String, String>();
          props.put("hbase.zookeeper.quorum", config.hbaseZookeeperQuorum);
-         props.put("hbase.zookeeper.property.clientPort", config.hbaseZookeeperPropertyClientPort);
+         props.put("hbase.zookeeper.property.clientPort", Integer.toString(config.hbaseZookeeperPropertyClientPort));
          hbf = new HBaseFacade(props);
       } catch (Exception e) {
          throw new ConfigurationException(e);

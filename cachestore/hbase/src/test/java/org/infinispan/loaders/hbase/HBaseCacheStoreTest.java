@@ -63,8 +63,7 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
 
       if (USE_EMBEDDED) {
          // overwrite the ZooKeeper client port with the port from the embedded server
-         conf.setHbaseZookeeperPropertyClientPort(Integer
-                  .toString(EmbeddedServerHelper.zooKeeperPort));
+         conf.setHbaseZookeeperPropertyClientPort(EmbeddedServerHelper.zooKeeperPort);
       }
 
       cs.init(conf, getCache(), getMarshaller());
