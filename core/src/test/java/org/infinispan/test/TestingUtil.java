@@ -23,10 +23,32 @@
 
 package org.infinispan.test;
 
+import static java.io.File.separator;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
@@ -38,9 +60,11 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractDelegatingMarshaller;
@@ -51,7 +75,10 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.DefaultRebalancePolicy;
+import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -62,35 +89,19 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
-import javax.management.ObjectName;
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-
-import static java.io.File.separator;
-
 public class TestingUtil {
 
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
-   public static final String TEST_PATH = "target" + separator + "tempFiles";
+   public static final String TEST_PATH = "infinispanTempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
            "      xmlns=\"urn:infinispan:config:5.2\">";
+   public static final String INFINISPAN_START_TAG_51 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
+         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+         "      xsi:schemaLocation=\"urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:5.1\">";
    public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
@@ -156,74 +167,46 @@ public class TestingUtil {
       // give it 1 second to start rehashing
       // TODO Should look at the last committed view instead and check if it contains all the caches
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 30000; // 30 seconds?
+      int gracetime = 90000; // 60 seconds
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), CacheViewsManager.class);
+         LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), LocalTopologyManager.class);
+         DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         while (cacheViewsManager.getCommittedView(c.getName()).getMembers().size() != caches.length) {
+         while (true) {
+            CacheTopology cacheTopology = localTopologyManager.getCacheTopology(c.getName());
+            boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
+            boolean chIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            boolean stateTransferInProgress = cacheTopology.getPendingCH() != null;
+            if (chContainsAllMembers && chIsBalanced && !stateTransferInProgress)
+               break;
+
             if (System.currentTimeMillis() > giveup) {
-               String message = String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",
-                     rpcManager.getAddress(), Arrays.toString(caches), cacheViewsManager.getCommittedView(c.getName()));
+               String message;
+               if (!chContainsAllMembers) {
+                  Address[] addresses = new Address[caches.length];
+                  for (int i = 0; i < caches.length; i++) {
+                     addresses[i] = caches[i].getCacheManager().getAddress();
+                  }
+                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
+                        "expected member list is %s, current member list is %s!",
+                        rpcManager.getAddress(), Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
+               } else {
+                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
+                        "current topology is %s", c.getCacheManager().getAddress(), cacheTopology);
+               }
                log.error(message);
                throw new RuntimeException(message);
             }
+
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
-         log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+         log.trace("Node " + rpcManager.getAddress() + " finished state transfer.");
       }
-   }
-   
-   public static void waitForRehashToComplete(Cache cache, int groupSize) {
-      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 30000; // 30 seconds?
-      long giveup = System.currentTimeMillis() + gracetime;
-      CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(cache.getCacheManager(), CacheViewsManager.class);
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      while (cacheViewsManager.getCommittedView(cache.getName()).getMembers().size() != groupSize) {
-         if (System.currentTimeMillis() > giveup) {
-            String message = String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",
-                  rpcManager.getAddress(), groupSize, cacheViewsManager.getCommittedView(cache.getName()));
-            log.error(message);
-            throw new RuntimeException(message);
-         }
-         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
-      }
-      log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
    }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
       waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
-   }
-
-   /**
-    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
-    */
-   public static void waitForInitRehashToComplete(Cache... caches) {
-      int gracetime = 30000; // 30 seconds?
-      long giveup = System.currentTimeMillis() + gracetime;
-      for (Cache c : caches) {
-         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
-         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         while (!stateTransferManager.isJoinComplete()) {
-            if (System.currentTimeMillis() > giveup) {
-               String message = "Timed out waiting for join to complete on node " + rpcManager.getAddress() + " !";
-               log.error(message);
-               throw new RuntimeException(message);
-            }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
-         }
-         log.trace("Node " + rpcManager.getAddress() + " finished join task.");
-      }
-   }
-
-   /**
-    * @deprecated Should use {@link #waitForRehashToComplete(org.infinispan.Cache[])} instead, this is not reliable with merges
-    */
-   public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
-      Set<Cache> cachesSet = new HashSet<Cache>();
-      cachesSet.addAll(caches);
-      waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
    }
 
    /**
@@ -387,6 +370,17 @@ public class TestingUtil {
     */
    public static void blockUntilViewReceived(Cache cache, int groupSize, long timeout) {
       blockUntilViewReceived(cache, groupSize, timeout, true);
+   }
+
+   /**
+    * Loops, continually calling {@link #areCacheViewsComplete(Cache[])} until
+    * it either returns true or a default timeout has elapsed.
+    *
+    * @param groupSize number of caches expected in the group
+    */
+   public static void blockUntilViewReceived(Cache cache, int groupSize) {
+      // Default 10 seconds
+      blockUntilViewReceived(cache, groupSize, 10000, true);
    }
 
    public static void blockUntilViewReceived(Cache cache, int groupSize, long timeout, boolean barfIfTooManyMembersInView) {
@@ -734,6 +728,13 @@ public class TestingUtil {
             throw new RuntimeException(e);
          }
       }
+   }
+
+   public static <K, V> List<CacheStore> cachestores(List<Cache<K, V>> caches) {
+      List<CacheStore> l = new LinkedList<CacheStore>();
+      for (Cache<?, ?> c: caches)
+         l.add(TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore());
+      return l;
    }
 
    private static void removeInMemoryData(Cache cache) {
@@ -1118,20 +1119,17 @@ public class TestingUtil {
    }
 
    /**
-    * Creates a path to a temp directory based on a base directory and a test.
+    * Creates a path to a unique (per test) temporary directory.
+    * By default, the directory is created in the platform's temp directory, but the location
+    * can be overridden with the {@code infinispan.test.tmpdir} system property.
     *
-    * @param basedir may be null, if relative directories are to be used.
-    * @param test    test that requires this directory.
+    * @param test  test that requires this directory.
     *
-    * @return a path, relative or absolute.
+    * @return an absolute path
     */
-   public static String tmpDirectory(String basedir, AbstractInfinispanTest test) {
-      String prefix = "";
-      if (basedir != null) {
-         prefix = basedir;
-         if (!prefix.endsWith(separator)) prefix += separator;
-      }
-      return prefix + TEST_PATH + separator + test.getClass().getSimpleName();
+   public static String tmpDirectory(AbstractInfinispanTest test) {
+      String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
+      return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 
    public static String k(Method method, int index) {
@@ -1189,6 +1187,19 @@ public class TestingUtil {
       return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
    }
 
+   public static boolean existsObject(ObjectName objectName) {
+      return PerThreadMBeanServerLookup.getThreadMBeanServer().isRegistered(objectName);
+   }
+
+   public static boolean existsDomains(String... domains) {
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      Set<String> domainSet = new HashSet<String>(Arrays.asList(domains));
+      for (String domain : mBeanServer.getDomains()) {
+         if (domainSet.contains(domain)) return true;
+      }
+      return false;
+   }
+
    public static String generateRandomString(int numberOfChars) {
       Random r = new Random(System.currentTimeMillis());
       StringBuilder sb = new StringBuilder();
@@ -1235,10 +1246,8 @@ public class TestingUtil {
     * completed, regardless of the task outcome.
     *
     * @param c task to execute
-    * @throws Exception if the task fails somehow
     */
-   public static void withCacheManager(CacheManagerCallable c)
-            throws Exception {
+   public static void withCacheManager(CacheManagerCallable c) {
       try {
          c.call();
       } finally {
@@ -1252,10 +1261,8 @@ public class TestingUtil {
     * task has completed, regardless of the task outcome.
     *
     * @param c task to execute
-    * @throws Exception if the task fails somehow
     */
-   public static void withCacheManagers(MultiCacheManagerCallable c)
-            throws Exception {
+   public static void withCacheManagers(MultiCacheManagerCallable c) {
       try {
          c.call();
       } finally {

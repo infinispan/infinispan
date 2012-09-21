@@ -23,9 +23,11 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.CacheException;
+import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -37,11 +39,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.Configuration;
-import org.infinispan.container.DataContainer;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -86,15 +88,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Inject
+   @SuppressWarnings("unused")
    public void setDependencies(EntryFactory entryFactory) {
       this.entryFactory = entryFactory;
    }
    
    @Start
    public void start() {
-      if (configuration.getCacheMode() == Configuration.CacheMode.LOCAL && 
-            configuration.isWriteSkewCheck() &&
-            configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ) {
+      if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
+            cacheConfiguration.locking().writeSkewCheck() &&
+            cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
+            !cacheConfiguration.unsafe().unreliableReturnValues()) {
          lockAcquisitionVisitor = new LocalWriteSkewCheckingLockAcquisitionVisitor();
          needToMarkReads = true;
       } else {
@@ -103,8 +107,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
    }
 
-   private void markKeyAsRead(InvocationContext ctx, Object key) {
-      if (needToMarkReads && ctx.isInTxScope()) {
+   private void markKeyAsRead(InvocationContext ctx, AbstractDataCommand command) {
+      Object key = command.getKey();
+      if (needToMarkReads && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          tctx.getCacheTransaction().addReadKey(key);
       }
@@ -126,7 +131,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          } else {
             log.tracef("Using lock reordering, order is: %s", orderedKeys);
             acquireAllLocks(ctx, orderedKeys);
-            ctx.addAllAffectedKeys(Arrays.asList(orderedKeys));
          }
       }
       return invokeNextAndCommitIf1Pc(ctx, command);
@@ -135,7 +139,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
+         if (command.isConditional()) markKeyAsRead(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -144,7 +148,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      markKeyAsRead(ctx, command.getKey());
+      markKeyAsRead(ctx, command);
       return super.visitGetKeyValueCommand(ctx, command);
    }
    
@@ -169,7 +173,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         if (command.isConditional()) markKeyAsRead(ctx, command.getKey());
+         // Regardless of whether is conditional so that
+         // write skews can be detected in both cases.
+         markKeyAsRead(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -179,7 +185,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         markKeyAsRead(ctx, command.getKey());
+         markKeyAsRead(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -199,7 +205,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      throw new CacheException("Explicit locking is not allowed with optimistic caches!");
+      throw new InvalidCacheUsageException(
+            "Explicit locking is not allowed with optimistic caches!");
    }
 
    private class LockAcquisitionVisitor extends AbstractVisitor {
@@ -208,78 +215,84 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         final TxInvocationContext txC = (TxInvocationContext) ctx;
-         for (Object key : dataContainer.keySet()) {
-            lockAndRegisterBackupLock(txC, key);
-            performWriteSkewCheck(txC, key);
-            txC.addAffectedKey(key);
-         }
-         return null;
+         return visitMultiKeyCommand(ctx, command, dataContainer.keySet());
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         return visitMultiKeyCommand(ctx, command, command.getMap().keySet());
+      }
+
+      private Object visitMultiKeyCommand(InvocationContext ctx, FlagAffectedCommand command, Set<Object> keys) throws Throwable {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
-         for (Object key : command.getMap().keySet()) {
-            performWriteSkewCheck(txC, key);
-            lockAndRegisterBackupLock(txC, key);
-            txC.addAffectedKey(key);
+         boolean skipLocking = hasSkipLocking(command);
+         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+         for (Object key : keys) {
+            lockAndRecord(txC, skipLocking, lockTimeout, key);
          }
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         final TxInvocationContext txC = (TxInvocationContext) ctx;
-         lockAndRegisterBackupLock(txC, command.getKey());
-         performWriteSkewCheck(txC, command.getKey());
-         txC.addAffectedKey(command.getKey());
-         return null;
+         return visitSingleKeyCommand(ctx, command);
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return visitSingleKeyCommand(ctx, command);
+      }
+
+      private Object visitSingleKeyCommand(InvocationContext ctx, AbstractDataCommand command) throws InterruptedException {
          final TxInvocationContext txC = (TxInvocationContext) ctx;
-         lockAndRegisterBackupLock(txC, command.getKey());
-         performWriteSkewCheck(txC, command.getKey());
-         txC.addAffectedKey(command.getKey());
+         boolean skipLocking = hasSkipLocking(command);
+         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+         lockAndRecord(txC, skipLocking, lockTimeout, command.getKey());
          return null;
       }
-      
+
+      private void lockAndRecord(TxInvocationContext txC, boolean skipLocking, long lockTimeout, Object key) throws InterruptedException {
+         lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);
+         performWriteSkewCheck(txC, key);
+         txC.addAffectedKey(key);
+      }
+
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             Object[] compositeKeys = command.getCompositeKeys();
             TxInvocationContext txC = (TxInvocationContext) ctx;
-            for (Object key : compositeKeys) {               
+            boolean skipLocking = hasSkipLocking(command);
+            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            for (Object key : compositeKeys) {
                performWriteSkewCheck(txC, key);
-               lockAndRegisterBackupLock(txC, key);
-            }            
+               lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);
+               txC.addAffectedKey(key);
+            }
          }
          return null;
       }
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         final TxInvocationContext txC = (TxInvocationContext) ctx;
-         lockAndRegisterBackupLock(txC, command.getKey());
-         performWriteSkewCheck(txC, command.getKey());
-         txC.addAffectedKey(command.getKey());
-         return null;
+         return visitSingleKeyCommand(ctx, command);
       }
    }
    
    private class LocalWriteSkewCheckingLockAcquisitionVisitor extends LockAcquisitionVisitor {
       @Override
       protected void performWriteSkewCheck(TxInvocationContext ctx, Object key) {
-         CacheEntry ce = ctx.lookupEntry(key);
-         if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
-               ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
-         }
+         performLocalWriteSkewCheck(ctx, key);
       }
    }
-   
-   
+
+   private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
+      CacheEntry ce = ctx.lookupEntry(key);
+      if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
+         ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
+      }
+   }
+
    private Object[] sort(WriteCommand[] writes) {
       Set<Object> set = new HashSet<Object>();
       for (WriteCommand wc: writes) {
@@ -310,7 +323,12 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    private void acquireAllLocks(TxInvocationContext ctx, Object[] orderedKeys) throws InterruptedException {
-      for (Object key: orderedKeys) lockAndRegisterBackupLock(ctx, key);
+      long lockTimeout = cacheConfiguration.locking().lockAcquisitionTimeout();
+      for (Object key: orderedKeys) {
+         lockAndRegisterBackupLock(ctx, key, lockTimeout, false);
+         performLocalWriteSkewCheck(ctx, key);
+         ctx.addAffectedKey(key);
+      }
    }
 
    private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

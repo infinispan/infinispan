@@ -27,6 +27,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -94,8 +95,8 @@ public class QueryInterceptor extends CommandInterceptor {
       this.asyncExecutor = e;
    }
 
-   protected boolean shouldModifyIndexes(InvocationContext ctx) {
-      return ! ctx.hasFlag(Flag.SKIP_INDEXING);
+   protected boolean shouldModifyIndexes(AbstractFlagAffectedCommand command, InvocationContext ctx) {
+      return !command.hasFlag(Flag.SKIP_INDEXING);
    }
 
    /**
@@ -113,7 +114,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
          getLog().debug("Infinispan Query indexing is triggered");
@@ -138,7 +139,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx)) {
+      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command, ctx)) {
          Object value = extractValue(valueRemoved);
          if (updateKnownTypesIfNeeded( value )) {
             removeFromIndexes(value, extractValue(command.getKey()));
@@ -150,7 +151,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object valueReplaced = invokeNextInterceptor(ctx, command);
-      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(ctx)) {
+      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
 
          Object[] parameters = command.getParameters();
          Object p1 = extractValue(parameters[1]);
@@ -174,7 +175,7 @@ public class QueryInterceptor extends CommandInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object mapPut = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          Map<Object, Object> dataMap = command.getMap();
 
          // Loop through all the keys and put those key, value pairings into lucene.
@@ -195,18 +196,24 @@ public class QueryInterceptor extends CommandInterceptor {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(command, ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
-
-         for (Class c : this.knownClasses.keySet()) {
-            EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
-            if ( binder != null ) { //check as not all known classes are indexed
-               searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
-                     WorkType.PURGE_ALL), new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
-            }
-         }
+         purgeAllIndexes();
       }
       return returnValue;
+   }
+
+   /**
+    * Remove all entries from all known indexes
+    */
+   public void purgeAllIndexes() {
+      for (Class c : this.knownClasses.keySet()) {
+         EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
+         if ( binder != null ) { //check as not all known classes are indexed
+            searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
+                  WorkType.PURGE_ALL), new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
+         }
+      }
    }
 
    // Method that will be called when data needs to be removed from Lucene.
@@ -237,12 +244,12 @@ public class QueryInterceptor extends CommandInterceptor {
    }
 
    public void enableClasses(Class<?>[] classes) {
-      if ( classes == null || classes.length == 0 ) {
+      if (classes == null || classes.length == 0) {
          return;
       }
       enableClassesIncrementally(classes, false);
    }
-   
+
    private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
       ArrayList<Class<?>> toAdd = null;
       for (Class<?> type : classes) {
@@ -256,13 +263,8 @@ public class QueryInterceptor extends CommandInterceptor {
          return;
       }
       if (locked) {
-         Set<Class<?>> existingClasses = knownClasses.keySet();
-         int index = existingClasses.size();
-         Class<?>[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
-         for (Class<?> toAddClass : toAdd) {
-            all[index++] = toAddClass;
-         }
-         searchFactory.addClasses(all);
+         Class[] array = toAdd.toArray(new Class[toAdd.size()]);
+         searchFactory.addClasses(array);
          for (Class<?> type : toAdd) {
             if (searchFactory.getIndexBindingForEntity(type) != null) {
                knownClasses.put(type, Boolean.TRUE);
@@ -281,7 +283,7 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean updateKnownTypesIfNeeded(Object value) {
+   public boolean updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
          Class<?> potentialNewType = value.getClass();
          if ( ! this.knownClasses.containsKey(potentialNewType) ) {
@@ -310,5 +312,14 @@ public class QueryInterceptor extends CommandInterceptor {
 
    public KeyTransformationHandler getKeyTransformationHandler() {
       return keyTransformationHandler;
+   }
+
+   public void enableClasses(Set<Class> knownIndexedTypes) {
+      Class[] classes = knownIndexedTypes.toArray(new Class[knownIndexedTypes.size()]);
+      enableClasses(classes);
+   }
+
+   public SearchFactoryIntegrator getSearchFactory() {
+      return searchFactory;
    }
 }

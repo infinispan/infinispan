@@ -22,6 +22,7 @@
  */
 package org.infinispan.transaction.xa;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -49,15 +50,18 @@ public class XaTransactionTable extends TransactionTable {
 
    protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
    private RecoveryManager recoveryManager;
+   private String cacheName;
 
    @Inject
-   public void init(RecoveryManager recoveryManager) {
+   public void init(RecoveryManager recoveryManager, Cache cache) {
       this.recoveryManager = recoveryManager;
+      this.cacheName = cache.getName();
    }
 
-   @Start
+   @Start(priority = 9) // Start before cache loader manager
+   @SuppressWarnings("unused")
    private void startXidMapping() {
-      final int concurrencyLevel = configuration.getConcurrencyLevel();
+      final int concurrencyLevel = configuration.locking().concurrencyLevel();
       xid2LocalTx = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
    }
 
@@ -97,9 +101,10 @@ public class XaTransactionTable extends TransactionTable {
       LocalXaTransaction localTransaction = (LocalXaTransaction) ltx;
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, recoveryManager,
-                                                                txCoordinator, commandsFactory, rpcManager,
-                                                                clusteringLogic, configuration));
+            transaction.enlistResource(new TransactionXaAdapter(
+                  localTransaction, this, recoveryManager,
+                  txCoordinator, commandsFactory, rpcManager,
+                  clusteringLogic, configuration, cacheName));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {

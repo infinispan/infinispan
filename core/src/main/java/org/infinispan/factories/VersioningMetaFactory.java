@@ -28,12 +28,12 @@ public class VersioningMetaFactory extends AbstractNamedCacheComponentFactory im
    @SuppressWarnings("unchecked")
    @Override
    public <T> T construct(Class<T> componentType) {
-      if (!configuration.isEnableVersioning())
+      if (!configuration.versioning().enabled())
          return null;
 
-      switch (configuration.getVersioningScheme()) {
+      switch (configuration.versioning().scheme()) {
          case SIMPLE: {
-            if (configuration.getCacheMode().isClustered())
+            if (configuration.clustering().cacheMode().isClustered())
                return (T) new SimpleClusteredVersionGenerator();
             else
                return null;

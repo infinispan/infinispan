@@ -29,14 +29,12 @@ import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
-import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -53,10 +51,9 @@ import org.infinispan.container.entries.versioned.VersionedTransientCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
 import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
-import org.infinispan.distribution.RemoteTransactionLogDetails;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.ch.ReplicatedConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -77,13 +74,16 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
-import org.infinispan.statetransfer.LockInfo;
+import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -92,7 +92,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
@@ -101,7 +100,6 @@ import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -200,8 +198,6 @@ public class ExternalizerTable implements ObjectTable {
                throw new IOException(String.format(
                      "Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",
                      readerIndex), new InterruptedException());
-            } else if (gcr.getStatus().isStopping() || gcr.getStatus().isTerminated()) {
-               log.tracef("Cache manager is shutting down and type (id=%d) cannot be resolved (thread not interrupted)", readerIndex);
             } else {
                throw new CacheException(String.format(
                      "Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)",
@@ -280,12 +276,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new RemoveOperation.Externalizer());
       addInternalExternalizer(new ClearOperation.Externalizer());
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
-      addInternalExternalizer(new UnionConsistentHash.Externalizer());
+      addInternalExternalizer(new ReplicatedConsistentHash.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
-      addInternalExternalizer(new TopologyAwareConsistentHash.Externalizer());
       addInternalExternalizer(new ByteArrayKey.Externalizer());
 
-      addInternalExternalizer(new RemoteTransactionLogDetails.Externalizer());
       addInternalExternalizer(new SerializableXid.XidExternalizer());
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());
 
@@ -293,8 +287,12 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MurmurHash2Compat.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
 
-      addInternalExternalizer(new CacheView.Externalizer());
-      addInternalExternalizer(new LockInfo.Externalizer());
+      addInternalExternalizer(new CacheTopology.Externalizer());
+      addInternalExternalizer(new CacheJoinInfo.Externalizer());
+      addInternalExternalizer(new TransactionInfo.Externalizer());
+      addInternalExternalizer(new StateChunk.Externalizer());
+
+      addInternalExternalizer(new Flag.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {
@@ -320,21 +318,19 @@ public class ExternalizerTable implements ObjectTable {
 
    private void loadForeignMarshallables(GlobalConfiguration globalCfg) {
       log.trace("Loading user defined externalizers");
-      List<AdvancedExternalizerConfig> configs = globalCfg.getExternalizers();
-      for (AdvancedExternalizerConfig config : configs) {
-         AdvancedExternalizer<?> ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
-               : (AdvancedExternalizer<?>) Util.getInstance(config.getExternalizerClass(), globalCfg.getClassLoader());
+      for (Map.Entry<Integer, AdvancedExternalizer<?>> config : globalCfg.serialization().advancedExternalizers().entrySet()) {
+         AdvancedExternalizer<?> ext = config.getValue();
 
          // If no XML or programmatic config, id in annotation is used
          // as long as it's not default one (meaning, user did not set it).
          // If XML or programmatic config in use ignore @Marshalls annotation and use value in config.
          Integer id = ext.getId();
-         if (config.getId() == null && id == null)
+         if (config.getKey() == null && id == null)
             throw new ConfigurationException(String.format(
                   "No advanced externalizer identifier set for externalizer %s",
                   ext.getClass().getName()));
-         else if (config.getId() != null)
-            id = config.getId();
+         else if (config.getKey() != null)
+            id = config.getKey();
 
          id = checkForeignIdLimit(id, ext);
          updateExtReadersWritersWithTypes(new ForeignExternalizerAdapter(id, ext), generateForeignReaderIndex(id));
@@ -361,7 +357,7 @@ public class ExternalizerTable implements ObjectTable {
    private int checkInternalIdLimit(int id, AdvancedExternalizer<?> ext) {
       if (id >= Ids.MAX_ID)
          throw new ConfigurationException(String.format(
-               "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
+               "Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d",
                ext, id, Ids.MAX_ID));
       return id;
    }

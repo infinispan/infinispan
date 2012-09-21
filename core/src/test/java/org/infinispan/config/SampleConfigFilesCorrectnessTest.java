@@ -26,7 +26,7 @@ import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -62,7 +62,7 @@ public class SampleConfigFilesCorrectnessTest {
       log4jLogger.addAppender(appender);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDownTest() {
       Logger log4jLogger = Logger.getRootLogger();
       log4jLogger.setLevel(oldLevel);
@@ -135,7 +135,8 @@ public class SampleConfigFilesCorrectnessTest {
                   "Property ec2.bucket could not be replaced as intended",
                   "S3_PING could not be substituted",
                   "This might lead to performance problems. Please set your", // TCP and UDP send/recv buffer warnings
-                  "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use"
+                  "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use",
+                  "unable to find an address other than loopback for IP version IPv4"
             };
       String unknownWarning;
 

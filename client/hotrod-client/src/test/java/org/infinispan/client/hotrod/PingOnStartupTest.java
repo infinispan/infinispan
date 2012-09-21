@@ -24,6 +24,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -32,7 +33,9 @@ import org.testng.annotations.Test;
 
 import java.util.Properties;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,38 +53,109 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testTopologyFetched() throws Exception {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
-      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.server_list",
+            "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
       props.put("timeBetweenEvictionRunsMillis", "500");
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      for (int i = 0; i < 10; i++) {
-         try {
-            if (tcpConnectionFactory.getServers().size() == 1) {
-               Thread.sleep(1000);
-            } else {
-               break;
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
+                  TestingUtil.extractField(rcm, "transportFactory");
+            for (int i = 0; i < 10; i++) {
+               if (tcpConnectionFactory.getServers().size() == 1) {
+                  Thread.sleep(1000);
+               } else {
+                  break;
+               }
             }
-         } finally {
-            remoteCacheManager.stop();
+            assertEquals(2, tcpConnectionFactory.getServers().size());
          }
-      }
-      assertEquals(2, tcpConnectionFactory.getServers().size());
+      });
    }
 
-   public void testTopologyNotFetched() {
+   public void testTopologyNotFetched() throws Exception {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
-      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.server_list",
+            "localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      try {
-         assertEquals(1, tcpConnectionFactory.getServers().size());
-      } finally {
-         remoteCacheManager.stop();
-      }
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
+                  TestingUtil.extractField(rcm, "transportFactory");
+            assertEquals(1, tcpConnectionFactory.getServers().size());
+         }
+      });
    }
+
+   public void testGetCacheWithPingOnStartupDisabledSingleNode() throws Exception {
+      Properties props = new Properties();
+      props.put("infinispan.client.hotrod.server_list", "boomoo:12345");
+      props.put("infinispan.client.hotrod.ping_on_startup", "false");
+
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            rcm.getCache();
+         }
+      });
+   }
+
+   public void testGetCacheWithPingOnStartupDisabledMultipleNodes() throws Exception {
+      Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
+      props.put("infinispan.client.hotrod.server_list",
+            "boomoo:12345;localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "false");
+
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            RemoteCache<Object, Object> cache = rcm.getCache();
+            assertFalse(cache.containsKey("k"));
+         }
+      });
+   }
+
+   public void testGetCacheWorksIfNodeDown() throws Exception {
+      Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
+      props.put("infinispan.client.hotrod.server_list",
+            "boomoo:12345;localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "true");
+      props.put("timeBetweenEvictionRunsMillis", "500");
+
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            rcm.getCache();
+         }
+      });
+   }
+
+   public void testGetCacheWorksIfNodeNotDown() throws Exception {
+      Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
+      props.put("infinispan.client.hotrod.server_list",
+            "localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "true");
+      props.put("timeBetweenEvictionRunsMillis", "500");
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new RemoteCacheManager(props)) {
+         @Override
+         public void call() throws Exception {
+            rcm.getCache();
+         }
+      });
+   }
+
 }

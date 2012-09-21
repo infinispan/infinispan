@@ -22,7 +22,6 @@
  */
 package org.infinispan.commands.tx;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -52,25 +51,27 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
-   protected Configuration configuration;
    private Address origin;
+   private int topologyId = -1;
 
    public AbstractTransactionBoundaryCommand(String cacheName) {
       this.cacheName = cacheName;
-   }
-
-   public void injectComponents(Configuration configuration) {
-      this.configuration = configuration;
-   }
-
-   public Configuration getConfiguration() {
-      return configuration;
    }
 
    public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {
       this.invoker = chain;
       this.icc = icc;
       this.txTable = txTable;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 
    @Override
@@ -96,7 +97,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
     * Returning a null usually means the transactional command succeeded.
     * @return return value to respond to a remote caller with if the transaction context is invalid.
     */
-   protected Object invalidRemoteTxReturnValue() {
+   protected Object invalidRemoteTxReturnValue() {     //todo [anistor] no longer used
       return null;
    }
 
@@ -105,7 +106,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       if (ctx != null) throw new IllegalStateException("Expected null context!");
       markGtxAsRemote();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
-      if (transaction == null || transaction.isMissingModifications()) {
+      if (transaction == null) {
          if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
          return invalidRemoteTxReturnValue();
       }
@@ -157,6 +158,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    public String toString() {
       return "gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
+            ", topologyId=" + topologyId +
             '}';
    }
 

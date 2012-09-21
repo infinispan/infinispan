@@ -43,7 +43,7 @@ import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 5.1
  */
-public class DeltaAwareCacheEntry implements CacheEntry {
+public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    private static final Log log = LogFactory.getLog(DeltaAwareCacheEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -61,14 +61,30 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       this.key = key;
       this.value = value;
       this.wrappedEntry = wrappedEntry;
-      this.uncommittedChanges = new AtomicHashMap();
+      if (value instanceof AtomicHashMap) {
+         this.uncommittedChanges = ((AtomicHashMap) value).copy();
+      }
       this.deltas = new LinkedList<Delta>();
+   }
+
+   @Override
+   public byte getStateFlags() {
+      if (wrappedEntry instanceof StateChangingEntry) {
+         return ((StateChangingEntry)wrappedEntry).getStateFlags();
+      }
+
+      return flags;
+   }
+
+   @Override
+   public void copyStateFlagsFrom(StateChangingEntry other) {
+      this.flags = other.getStateFlags();
    }
 
    public void appendDelta(Delta d) {
       deltas.add(d);
       d.merge(uncommittedChanges);
-      setChanged();    
+      setChanged();
    }
 
    public AtomicHashMap<?, ?> getUncommittedChages() {
@@ -189,6 +205,9 @@ public class DeltaAwareCacheEntry implements CacheEntry {
       oldValue = null;
       deltas.clear();
       flags = 0;
+      if (uncommittedChanges != null) {
+         uncommittedChanges.clear();
+      }
       setValid(true);
    }
 

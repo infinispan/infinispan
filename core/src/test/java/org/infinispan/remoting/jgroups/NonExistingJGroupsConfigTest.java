@@ -57,7 +57,7 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             try {
                cm.getCache();
             } catch (Exception e) {

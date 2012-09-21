@@ -19,19 +19,11 @@
 
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.WriteSkewHelper;
-import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,16 +45,6 @@ public class VersionedReplicationInterceptor extends ReplicationInterceptor {
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Override
-   protected PrepareCommand buildPrepareCommandForResend(TxInvocationContext ctx, CommitCommand commit) {
-      // Make sure this is 1-Phase!!
-      PrepareCommand command = cf.buildVersionedPrepareCommand(commit.getGlobalTransaction(), ctx.getModifications(), true);
-
-      setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
-
-      return command;
    }
 
    @Override

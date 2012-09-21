@@ -59,7 +59,7 @@ public class TcpTransportFactory implements TransportFactory {
     * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
     * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
     */
-   private Object lock = new Object();
+   private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
    private GenericKeyedObjectPool connectionPool;
    private RequestBalancingStrategy balancer;
@@ -71,6 +71,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile boolean tcpNoDelay;
    private volatile int soTimeout;
    private volatile int connectTimeout;
+   private volatile int transportCount;
 
    @Override
    public void start(Codec codec, ConfigurationProperties cfg,
@@ -95,6 +96,7 @@ public class TcpTransportFactory implements TransportFactory {
                new TransportObjectFactory(codec, this, topologyId, pingOnStartup), cfg.getProperties());
          createAndPreparePool(staticConfiguredServers, poolFactory);
          balancer.setServers(servers);
+         updateTransportCount();
       }
    }
 
@@ -196,9 +198,9 @@ public class TcpTransportFactory implements TransportFactory {
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
             log.tracef("Current list: %s", servers);
-            log.tracef("New list: ", newServers);
-            log.tracef("Added servers: ", addedServers);
-            log.tracef("Removed servers: ", failedServers);
+            log.tracef("New list: %s", newServers);
+            log.tracef("Added servers: %s", addedServers);
+            log.tracef("Removed servers: %s", failedServers);
          }
          if (failedServers.isEmpty() && newServers.isEmpty()) {
             log.debug("Same list of servers, not changing the pool");
@@ -228,6 +230,7 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          servers = Collections.unmodifiableList(new ArrayList(newServers));
+         updateTransportCount();
       }
    }
 
@@ -238,8 +241,8 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    private void logConnectionInfo(SocketAddress server) {
-      KeyedObjectPool pool = getConnectionPool();
       if (log.isTraceEnabled()) {
+         KeyedObjectPool pool = getConnectionPool();
          log.tracef("For server %s: active = %d; idle = %d", server, pool.getNumActive(server), pool.getNumIdle(server));
       }
    }
@@ -282,13 +285,7 @@ public class TcpTransportFactory implements TransportFactory {
       if (Thread.currentThread().isInterrupted()) { 
          return -1;
       }
-      synchronized (lock) {
-         if (connectionPool.getMaxActive() > 0) {
-            return Math.max(connectionPool.getMaxActive() * servers.size(), connectionPool.getMaxActive()); //to avoid int overflow when maxActive is very high!
-         } else {
-            return 10 * servers.size();
-         }
-      }
+      return transportCount;
    }
 
    @Override
@@ -313,6 +310,17 @@ public class TcpTransportFactory implements TransportFactory {
    public GenericKeyedObjectPool getConnectionPool() {
       synchronized (lock) {
          return connectionPool;
+      }
+   }
+
+   private void updateTransportCount() {
+      synchronized (lock) {
+         int maxActive = connectionPool.getMaxActive();
+         if (maxActive > 0) {
+            transportCount = Math.max(maxActive * servers.size(), maxActive); //to avoid int overflow when maxActive is very high!
+         } else {
+            transportCount = 10 * servers.size();
+         }
       }
    }
 }

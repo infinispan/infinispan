@@ -21,11 +21,11 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 /**
- * SingletonStore is a delegating cache store used for situations when only one 
+ * SingletonStore is a delegating cache store used for situations when only one
  * instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for
- * the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always 
+ * the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always
  * delegates reads to the real CacheStore.
- * 
+ *
  * @author pmuir
  *
  */
@@ -34,8 +34,8 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    private boolean enabled = false;
    private long pushStateTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean pushStateWhenCoordinator = true;
-   
-   SingletonStoreConfigurationBuilder(AbstractLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration> builder) {
+
+   SingletonStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 
@@ -46,7 +46,7 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
       this.enabled = true;
       return this;
    }
-   
+
    /**
     * If true, the singleton store cache store is enabled.
     */
@@ -54,7 +54,7 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
       this.enabled = enabled;
       return this;
    }
-   
+
    /**
     * Enable the singleton store cache store
     */
@@ -73,6 +73,14 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    /**
+    * If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds
+    * that the process of pushing the in-memory state to the underlying cache loader should take.
+    */
+   public SingletonStoreConfigurationBuilder pushStateTimeout(long l, TimeUnit unit) {
+      return pushStateTimeout(unit.toMillis(l));
+   }
+
+   /**
     * If true, when a node becomes the coordinator, it will transfer in-memory state to the
     * underlying cache store. This can be very useful in situations where the coordinator crashes
     * and there's a gap in time until the new coordinator is elected.
@@ -83,20 +91,20 @@ public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurat
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   SingletonStoreConfiguration create() {
+   public SingletonStoreConfiguration create() {
       return new SingletonStoreConfiguration(enabled, pushStateTimeout, pushStateWhenCoordinator);
    }
-   
+
    @Override
    public SingletonStoreConfigurationBuilder read(SingletonStoreConfiguration template) {
       this.enabled = template.enabled();
       this.pushStateTimeout = template.pushStateTimeout();
       this.pushStateWhenCoordinator = template.pushStateWhenCoordinator();
-      
+
       return this;
    }
 

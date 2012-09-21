@@ -61,7 +61,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cacheContainers.clear();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       MBeanServerFactory.releaseMBeanServer(mBeanServer);
       TestingUtil.killCacheManagers(cacheContainers);

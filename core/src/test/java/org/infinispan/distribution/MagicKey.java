@@ -25,9 +25,11 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Random;
 
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
@@ -46,28 +48,49 @@ public class MagicKey implements Serializable {
    int hashcode;
    String address;
 
-   public MagicKey(Cache<?, ?> toMapTo) {
-      address = addressOf(toMapTo).toString();
+   public MagicKey(Cache<?, ?> primaryOwner) {
+      address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
       do {
          // create a dummy object with this hashcode
          final int hc = r.nextInt();
-         dummy = new Object() {
-            @Override
-            public int hashCode() {
-               return hc;
-            }
-         };
+         dummy = new Integer(hc);
 
-      } while (!isFirstOwner(toMapTo, dummy));
+      } while (!isFirstOwner(primaryOwner, dummy));
 
       // we have found a hashcode that works!
       hashcode = dummy.hashCode();
    }
 
-   public MagicKey(Cache<?, ?> toMapTo, String name) {
-      this(toMapTo);
+   public MagicKey(Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+      address = addressOf(primaryOwner).toString();
+      Random r = new Random();
+      Object dummy;
+      int attemptsLeft = 1000;
+      do {
+         // create a dummy object with this hashcode
+         final int hc = r.nextInt();
+         dummy = new Integer(hc);
+         attemptsLeft--;
+
+      } while (!hasOwners(dummy, primaryOwner, backupOwners) && attemptsLeft >= 0);
+
+      if (attemptsLeft < 0) {
+         throw new IllegalStateException("Could not find any key owned by " + primaryOwner + ", "
+               + Arrays.toString(backupOwners));
+      }
+      // we have found a hashcode that works!
+      hashcode = dummy.hashCode();
+   }
+
+   public MagicKey(String name, Cache<?, ?> primaryOwner) {
+      this(primaryOwner);
+      this.name = name;
+   }
+
+   public MagicKey(String name, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+      this(primaryOwner, backupOwners);
       this.name = name;
    }
 

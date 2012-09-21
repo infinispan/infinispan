@@ -230,6 +230,7 @@ public class DummyTransaction implements Transaction {
             s.beforeCompletion();
          } catch (Throwable t) {
             retval = false;
+            status = Status.STATUS_MARKED_ROLLBACK;
             log.beforeCompletionFailed(s, t);
          }
       }
@@ -261,6 +262,11 @@ public class DummyTransaction implements Transaction {
             throw new SystemException(th.getMessage());
          }
       }
+
+      if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
+         return false;
+      }
+
       status = Status.STATUS_PREPARED;
       return true;
    }

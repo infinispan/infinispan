@@ -33,14 +33,14 @@ import org.apache.lucene.search.FieldDoc;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredFieldDoc extends FieldDoc implements ClusteredDoc{
+public final class ClusteredFieldDoc extends FieldDoc implements ClusteredDoc {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 1834188214178689282L;
 
    private final UUID nodeUuid;
 
-   private int index;
+   private final int index;
 
    public ClusteredFieldDoc(FieldDoc scoreDoc, UUID nodeUuid, int index) {
       super(scoreDoc.doc, scoreDoc.score, scoreDoc.fields);
@@ -52,7 +52,7 @@ public class ClusteredFieldDoc extends FieldDoc implements ClusteredDoc{
    public UUID getNodeUuid() {
       return nodeUuid;
    }
-   
+
    @Override
    public int getIndex(){
       return index;

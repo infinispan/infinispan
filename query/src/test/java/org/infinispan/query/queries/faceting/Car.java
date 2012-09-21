@@ -23,18 +23,18 @@
 
 package org.infinispan.query.queries.faceting;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 
 /**
  * @author Hardy Ferentschik
  */
 @Indexed
-@ProvidedId
-public class Car {
+public class Car implements Serializable {
 
    @Field(analyze=Analyze.NO)
    private String color;

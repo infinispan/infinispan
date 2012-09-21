@@ -22,12 +22,12 @@
  */
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.marshall.MarshalledValue;
@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -95,11 +94,6 @@ public class LockManagerImpl implements LockManager {
       return false;
    }
 
-   protected long getLockAcquisitionTimeout(InvocationContext ctx) {
-      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-            0 : configuration.getLockAcquisitionTimeout();
-   }
-
    @Override
    public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
       log.tracef("Attempting to unlock keys %s", lockedKeys);
@@ -153,7 +147,7 @@ public class LockManagerImpl implements LockManager {
    @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")
    @Metric(displayName = "Concurrency level", dataType = DataType.TRAIT)
    public int getConcurrencyLevel() {
-      return configuration.getConcurrencyLevel();
+      return configuration.locking().concurrencyLevel();
    }
 
    @Override
@@ -174,31 +168,32 @@ public class LockManagerImpl implements LockManager {
       return lockContainer.getLockId(key);
    }
 
-   @Override
-   public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
-      return acquireLock(ctx, key, -1);
-   }
+//   @Override
+//   public final boolean acquireLock(InvocationContext ctx, Object key, boolean skipLocking) throws InterruptedException, TimeoutException {
+//      return acquireLock(ctx, key, -1, skipLocking);
+//   }
 
    @Override
-   public boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException, TimeoutException {
+   public boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException {
       // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
       // lock which may be shared with another key that we have a lock for already.
       // nothing wrong, just means that we fail to record the lock.  And that is a problem.
       // Better to check our records and lock again if necessary.
-      if (!ctx.hasLockedKey(key) && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
-         return lock(ctx, key, timeoutMillis < 0 ? getLockAcquisitionTimeout(ctx) : timeoutMillis);
+      if (!ctx.hasLockedKey(key) && !skipLocking) {
+//         return lock(ctx, key, timeoutMillis < 0 ? getLockAcquisitionTimeout(ctx) : timeoutMillis);
+         return lock(ctx, key, timeoutMillis);
       } else {
-         logLockNotAcquired(ctx);
+         logLockNotAcquired(skipLocking);
       }
       return false;
    }
 
    @Override
-   public final boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
-      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
-         return lock(ctx, key, getLockAcquisitionTimeout(ctx));
+   public final boolean acquireLockNoCheck(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException {
+      if (!skipLocking) {
+         return lock(ctx, key, timeoutMillis);
       } else {
-         logLockNotAcquired(ctx);
+         logLockNotAcquired(skipLocking);
       }
       return false;
    }
@@ -213,14 +208,14 @@ public class LockManagerImpl implements LockManager {
          if (key instanceof MarshalledValue) {
             key = ((MarshalledValue) key).get();
          }
-         throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
+         throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(timeoutMillis) + "] on key [" + key + "] for requestor [" +
                ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
       }
    }
 
-   private void logLockNotAcquired(InvocationContext ctx) {
+   private void logLockNotAcquired(boolean skipLocking) {
       if (trace) {
-         if (ctx.hasFlag(Flag.SKIP_LOCKING))
+         if (skipLocking)
             log.trace("SKIP_LOCKING flag used!");
          else
             log.trace("Already own lock for entry");

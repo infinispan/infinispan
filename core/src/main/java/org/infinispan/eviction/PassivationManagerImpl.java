@@ -22,8 +22,8 @@
  */
 package org.infinispan.eviction;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
@@ -73,7 +73,7 @@ public class PassivationManagerImpl implements PassivationManager {
          }
 
          enabled = cacheLoaderManager.isEnabled() && cacheLoaderManager.isUsingPassivation();
-         statsEnabled = cfg.isExposeJmxStatistics();
+         statsEnabled = cfg.jmxStatistics().enabled();
       }
    }
 

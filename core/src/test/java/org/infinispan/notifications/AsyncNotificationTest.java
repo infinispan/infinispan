@@ -46,7 +46,7 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
       c = cm.getCache();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

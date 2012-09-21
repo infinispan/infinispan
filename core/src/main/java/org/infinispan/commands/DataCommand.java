@@ -30,6 +30,6 @@ package org.infinispan.commands;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public interface DataCommand extends VisitableCommand {
+public interface DataCommand extends VisitableCommand, TopologyAffectedCommand {
    Object getKey();
 }

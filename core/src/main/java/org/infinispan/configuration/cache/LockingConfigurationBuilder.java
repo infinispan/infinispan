@@ -26,9 +26,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
 
@@ -72,6 +72,13 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
+    * Maximum time to attempt a particular lock acquisition
+    */
+   public LockingConfigurationBuilder lockAcquisitionTimeout(long l, TimeUnit unit) {
+      return lockAcquisitionTimeout(unit.toMillis(l));
+   }
+
+   /**
     * If true, a pool of shared locks is maintained for all entries that need to be locked.
     * Otherwise, a lock is created per entry in the cache. Lock striping helps control memory
     * footprint but may reduce concurrency in the system.
@@ -93,7 +100,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   void validate() {
+   public void validate() {
       if (writeSkewCheck) {
          if (isolationLevel != IsolationLevel.REPEATABLE_READ)
             throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
@@ -107,10 +114,19 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             throw new ConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
                   + clustering().cacheMode() + " cannot be used with write-skew checking");
       }
+
+      if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel == IsolationLevel.NONE)
+         isolationLevel = IsolationLevel.READ_COMMITTED;
+
+      if (isolationLevel == IsolationLevel.READ_UNCOMMITTED)
+         isolationLevel = IsolationLevel.READ_COMMITTED;
+
+      if (isolationLevel == IsolationLevel.SERIALIZABLE)
+         isolationLevel = IsolationLevel.REPEATABLE_READ;
    }
 
    @Override
-   LockingConfiguration create() {
+   public LockingConfiguration create() {
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
 

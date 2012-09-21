@@ -25,17 +25,21 @@ package org.infinispan.remoting.transport.jgroups;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.CacheViewControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupReceiverRepository;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.Message;
@@ -46,6 +50,7 @@ import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.blocks.mux.Muxer;
+import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
@@ -81,11 +86,21 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
    private final JGroupsTransport transport;
+   private final GlobalComponentRegistry gcr;
+   private final BackupReceiverRepository backupReceiverRepository;
 
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
-                                    InboundInvocationHandler inboundInvocationHandler) {
+                                    InboundInvocationHandler inboundInvocationHandler,
+                                    GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
+      this.server_obj = transport;
+      this.asyncExecutor = asyncExecutor;
+      this.inboundInvocationHandler = inboundInvocationHandler;
+      this.transport = transport;
+      this.gcr = gcr;
+      this.backupReceiverRepository = backupReceiverRepository;
+
       // MessageDispatcher superclass constructors will call start() so perform all init here
       this.setMembershipListener(transport);
       this.setChannel(channel);
@@ -97,10 +112,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          mux.setDefaultHandler(this.prot_adapter);
       }
       channel.addChannelListener(this);
-      this.server_obj = transport;
-      this.asyncExecutor = asyncExecutor;
-      this.inboundInvocationHandler = inboundInvocationHandler;
-      this.transport = transport;
    }
 
    private boolean isValid(Message req) {
@@ -199,7 +210,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          ReplicableCommand cmd = null;
          try {
             cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            return executeCommand(cmd, req);
+            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+            if (req.getSrc() instanceof SiteAddress) {
+               return executeCommandFromRemoteSite(cmd, (SiteAddress)req.getSrc());
+            } else {
+               return executeCommandFromLocalCluster(cmd, req);
+            }
          } catch (InterruptedException e) {
             log.warnf("Shutdown while handling command %s", cmd);
             return new ExceptionResponse(new CacheException("Cache is shutting down"));
@@ -215,14 +231,23 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private Object executeCommand(ReplicableCommand cmd, Message req) throws Throwable {
-      if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+   private Object executeCommandFromRemoteSite(ReplicableCommand cmd, SiteAddress src) throws Throwable {
+      if (! (cmd instanceof SingleRpcCommand)) {
+         throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
+      }
+      return backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src);
+   }
+
+   private Object executeCommandFromLocalCluster(ReplicableCommand cmd, Message req) throws Throwable {
       if (cmd instanceof CacheRpcCommand) {
          if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
          return inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()));
       } else {
          if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
-         return cmd.perform(null);
+         gcr.wireDependencies(cmd);
+
+         //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
+         return cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
       }
    }
 
@@ -231,7 +256,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
 
-   private static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {
+   protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {
       Message msg = new Message();
       msg.setBuffer(buf);
       if (oob) msg.setFlag(Message.OOB);
@@ -245,7 +270,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return msg;
    }
 
-   private static Buffer marshallCall(Marshaller marshaller, ReplicableCommand command) {
+   static Buffer marshallCall(Marshaller marshaller, ReplicableCommand command) {
       Buffer buf;
       try {
          buf = marshaller.objectToBuffer(command);
@@ -262,8 +287,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (trace) log.tracef("Replication task sending %s to single recipient %s with response mode %s", command, destination, mode);
 
       // Replay capability requires responses from all members!
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache view control command.
-      boolean rsvp = command instanceof StateTransferControlCommand || command instanceof CacheViewControlCommand;
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache topology control command.
+      boolean rsvp = command instanceof StateRequestCommand || command instanceof StateResponseCommand
+            || command instanceof CacheTopologyControlCommand;
 
       Response retval;
       Buffer buf;
@@ -291,8 +317,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
 
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache view control command.
-      boolean rsvp = command instanceof CacheViewControlCommand;
+      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache topology control command.
+      boolean rsvp = command instanceof CacheTopologyControlCommand;
 
       RspList<Object> retval = null;
       Buffer buf;

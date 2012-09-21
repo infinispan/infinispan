@@ -56,7 +56,6 @@ import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
-import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
@@ -371,6 +370,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       RemoveOperation removeOperation = operationsFactory.newRemoveOperation(obj2bytes(key, true));
       byte[] existingValue = (byte[]) removeOperation.execute();
+      // TODO: It sucks that you need the prev value to see if it works...
+      // We need to find a better API for RemoteCache...
       return (V) bytes2obj(existingValue);
    }
 
@@ -427,8 +428,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return result;
    }
 
-   public PingOperation.PingResult ping(Transport transport) {
-      return operationsFactory.newPingOperation(transport).execute();
+   public PingOperation.PingResult ping() {
+      return operationsFactory.newFaultTolerantPingOperation().execute();
    }
 
    private byte[] obj2bytes(Object o, boolean isKey) {

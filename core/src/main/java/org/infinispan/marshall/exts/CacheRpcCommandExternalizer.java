@@ -19,11 +19,12 @@
 
 package org.infinispan.marshall.exts;
 
+import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
-import org.infinispan.commands.control.CacheViewControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -44,10 +45,11 @@ import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.BufferSizePredictor;
-import org.infinispan.marshall.BufferSizePredictorFactory;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -79,13 +81,14 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(
-            MapReduceCommand.class, LockControlCommand.class,
-            StateTransferControlCommand.class, ClusteredGetCommand.class,
+            MapCombineCommand.class, ReduceCommand.class, LockControlCommand.class,
+            StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
             MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
             TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-            CacheViewControlCommand.class, VersionedPrepareCommand.class, VersionedCommitCommand.class);
+            VersionedPrepareCommand.class, CreateCacheCommand.class,
+            VersionedCommitCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
@@ -100,8 +103,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
       StreamingMarshaller marshaller;
       if (registry == null) {
-         // TODO This is a hack to support global commands CacheViewControlCommand
-         // but they should not be CacheRpcCommands at all
+         // TODO This is a hack to able to externalize commands while a cache is stopping
          marshaller = globalMarshaller;
       } else {
          marshaller = registry.getCacheMarshaller();
@@ -111,13 +113,16 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       // the original payload.
       ExposedByteArrayOutputStream os = marshallParameters(command, marshaller);
       UnsignedNumeric.writeUnsignedInt(output, os.size());
-      // Do not rely on the raw buffer's lenght which is likely to be much longer!
+      // Do not rely on the raw buffer's length which is likely to be much longer!
       output.write(os.getRawBuffer(), 0, os.size());
+      if (command instanceof TopologyAffectedCommand) {
+         output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
+      }
    }
 
    private ExposedByteArrayOutputStream marshallParameters(
          CacheRpcCommand cmd, StreamingMarshaller marshaller) throws IOException {
-      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
+      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
       int estimatedSize = sizePredictor.nextSize(cmd);
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput output = marshaller.startObjectOutput(baos, true, estimatedSize);
@@ -140,7 +145,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       if (registry == null) {
          // Even though the command is directed at a cache, it could happen
          // that the cache is not yet started, so fallback on global marshaller.
-         marshaller = globalMarshaller;
+         marshaller = globalMarshaller;  // TODO [anistor] in this case it is better to return null rather than continue deserializing
       } else {
          marshaller = registry.getCacheMarshaller();
       }
@@ -161,9 +166,12 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
       try {
          Object[] args = cmdExt.readParameters(paramsInput);
-         return cmdExt.fromStream(methodId, args, type, cacheName);
-      } catch (IOException e) {
-         throw e;
+         CacheRpcCommand cacheRpcCommand = cmdExt.fromStream(methodId, args, type, cacheName);
+         if (cacheRpcCommand instanceof TopologyAffectedCommand) {
+            int topologyId = input.readInt();
+            ((TopologyAffectedCommand)cacheRpcCommand).setTopologyId(topologyId);
+         }
+         return cacheRpcCommand;
       } finally {
          marshaller.finishObjectInput(paramsInput);
       }

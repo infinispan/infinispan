@@ -33,8 +33,8 @@ import org.jboss.netty.channel._
 import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
 import logging.Log
-import org.infinispan.server.core.transport.CustomReplayingDecoder
 import java.lang.StringBuilder
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -43,8 +43,7 @@ import java.lang.StringBuilder
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
-      extends CustomReplayingDecoder[DecoderState](DECODE_HEADER, true,
-           AbstractProtocolDecoder.DefaultSlimDownSize) with Log {
+      extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with Log {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -191,7 +190,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       // into a request that has no params
       params = null.asInstanceOf[SuitableParameters]
       rawValue = null.asInstanceOf[Array[Byte]] // Clear reference to value
-      slimDownBuffer() // Slim down buffer in case it's grown too big
       null
    }
 
@@ -366,18 +364,16 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       ctx.sendUpstream(e)
    }
 
-   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) = {
+   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
       transport.updateTotalBytesRead(e)
       super.messageReceived(ctx, e)
    }
-
 
 }
 
 object AbstractProtocolDecoder extends Log {
    private val SecondsInAMonth = 60 * 60 * 24 * 30
    private val DefaultTimeUnit = TimeUnit.MILLISECONDS
-   private val DefaultSlimDownSize = 5 * 1024 * 1024
 }
 
 class RequestHeader {

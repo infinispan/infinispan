@@ -36,8 +36,7 @@ public class IndexingConfigurationIgnored {
    public void testIndexingParametersForNamedCache() {
       Cache<Object, Object> inMemory = manager.getCache("memory-searchable");
       inMemory.start();
-      assertFalse(inMemory.getConfiguration()
-            .getIndexingProperties().isEmpty(),
+      assertFalse(inMemory.getCacheConfiguration().indexing().properties().isEmpty(),
             "should contain definition from xml");
    }
 
@@ -46,7 +45,7 @@ public class IndexingConfigurationIgnored {
       manager = TestCacheManagerFactory.fromXml("configuration-parsing-test.xml");
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void destroy() throws Exception {
       TestingUtil.killCacheManagers(manager);
    }

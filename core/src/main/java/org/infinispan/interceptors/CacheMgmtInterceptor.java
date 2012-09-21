@@ -94,24 +94,26 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       Object retval = invokeNextInterceptor(ctx, command);
       long t2 = System.nanoTime();
       long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
-      if (retval == null) {
-         missTimes.getAndAdd(intervalMilliseconds);
-         misses.incrementAndGet();
-      } else {
-         hitTimes.getAndAdd(intervalMilliseconds);
-         hits.incrementAndGet();
+      if (ctx.isOriginLocal()) {
+         if (retval == null) {
+            missTimes.getAndAdd(intervalMilliseconds);
+            misses.incrementAndGet();
+         } else {
+            hitTimes.getAndAdd(intervalMilliseconds);
+            hits.incrementAndGet();
+         }
       }
       return retval;
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map<Object, Object> data = command.getMap();
-      long t1 = System.nanoTime();
-      Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.nanoTime();
-      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
-      if (data != null && !data.isEmpty()) {
+      final Map<Object, Object> data = command.getMap();
+      final long t1 = System.nanoTime();
+      final Object retval = invokeNextInterceptor(ctx, command);
+      final long t2 = System.nanoTime();
+      final long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
+      if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
          storeTimes.getAndAdd(intervalMilliseconds);
          stores.getAndAdd(data.size());
       }
@@ -123,7 +125,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
-      if (command.isSuccessful()) {
+      if (ctx.isOriginLocal() && command.isSuccessful()) {
          long t2 = System.nanoTime();
          long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
          storeTimes.getAndAdd(intervalMilliseconds);
@@ -135,10 +137,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (retval == null) {
-         removeMisses.incrementAndGet();
-      } else {
-         removeHits.incrementAndGet();
+      if (ctx.isOriginLocal()) {
+         if (retval == null) {
+            removeMisses.incrementAndGet();
+         } else {
+            removeHits.incrementAndGet();
+         }
       }
       return retval;
    }

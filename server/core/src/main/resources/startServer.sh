@@ -2,11 +2,14 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath "${ISPN_HOME}"/*.jar
-add_classpath "${ISPN_HOME}/lib"
-add_classpath "${ISPN_HOME}/modules/memcached"
-add_classpath "${ISPN_HOME}/modules/hotrod"
-add_classpath "${ISPN_HOME}/modules/websocket"
+add_classpath ${ISPN_HOME}/modules/memcached/*.jar
+add_classpath ${ISPN_HOME}/modules/hotrod/*.jar
+add_classpath ${ISPN_HOME}/modules/websocket/*.jar
+add_classpath ${ISPN_HOME}/modules/cli-server/*.jar
+add_classpath ${ISPN_HOME}/modules/memcached/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/modules/hotrod/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/modules/websocket/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/modules/cli-server/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djava.net.preferIPv4Stack=true'

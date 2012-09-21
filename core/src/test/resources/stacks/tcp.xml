@@ -22,7 +22,7 @@
   -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
+        xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-3.1.xsd">
    <TCP bind_port="7800"
         loopback="true"
         port_range="30"
@@ -98,11 +98,12 @@
               xmit_table_msgs_per_row="10000"
               xmit_table_max_compaction_time="10000"
               max_msg_batch_size="100"/> 
-   <RSVP />           
-   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
+   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="5000"
                   max_bytes="400000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="7000" view_bundling="true"/>
    <FC max_credits="2000000"
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>
+   <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml" relay_multicasts="false" />
+
 </config>

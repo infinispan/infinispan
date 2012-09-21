@@ -32,7 +32,13 @@ import java.lang.annotation.Target;
 
 /**
  * Indicate that this class should be serialized with an instance of the given
- * externalizer class.
+ * {@link Externalizer} class.
+ *
+ * Any externalizer type referred by this annotation must be either
+ * {@link java.io.Serializable} or {@link java.io.Externalizable} because the
+ * marshalling infrastructure will ship an instance of the externalizer to any
+ * node that's no aware of this externalizer, hence allowing for dynamic
+ * externalizer discovery.
  *
  * @author Galder Zamarreño
  * @since 5.0

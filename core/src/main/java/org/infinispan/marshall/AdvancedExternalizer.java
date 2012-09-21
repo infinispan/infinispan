@@ -55,6 +55,12 @@ import java.util.Set;
  * recommended that implementations extend that abstract class instead of
  * implementing {@link AdvancedExternalizer} directly.
  *
+ * Even though {@link AdvancedExternalizer} currently extends
+ * {@link java.io.Serializable} indirectly, there's no requirement for the
+ * advanced externalizer to be marshalled, because the pre-registration done
+ * on startup allows the marshaller to identify the externalizer from the
+ * given id.
+ *
  * @author Galder Zamarreño
  * @since 5.0
  */

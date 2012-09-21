@@ -72,6 +72,8 @@ public class ConsistentHashV1Test {
 
    public void simpleTest() {
       setUp(1);
+      hash.value = 0;
+      assert v1.getServer(new byte[0]).equals(a1);
       hash.value = 1;
       assert v1.getServer(new byte[0]).equals(a2);
       hash.value = 1001;
@@ -84,6 +86,9 @@ public class ConsistentHashV1Test {
 
    public void numOwners2Test() {
       setUp(2);
+      hash.value = 0;
+      assert list(a1, a2).contains(v1.getServer(new byte[0]));
+
       hash.value = 1;
       assert list(a2, a3).contains(v1.getServer(new byte[0]));
 
@@ -99,6 +104,9 @@ public class ConsistentHashV1Test {
 
    public void numOwners3Test() {
       setUp(3);
+      hash.value = 0;
+      assert list(a1, a2, a3).contains(v1.getServer(new byte[0]));
+
       hash.value = 1;
       assert list(a2, a3, a4).contains(v1.getServer(new byte[0]));
 
@@ -115,8 +123,13 @@ public class ConsistentHashV1Test {
    //now a bit more extreme...
    public void numOwners4Test() {
       setUp(4);
-      hash.value = 1;
+
       List<InetSocketAddress> list = list(a1, a2, a3, a4);
+
+      hash.value = 0;
+      assert list.contains(v1.getServer(new byte[0]));
+
+      hash.value = 1;
       assert list.contains(v1.getServer(new byte[0]));
 
       hash.value = 1001;
@@ -139,7 +152,7 @@ public class ConsistentHashV1Test {
       v1.getServer(new byte[0]);
    }
 
-   public class DummyHash implements Hash {
+   public static class DummyHash implements Hash {
 
       public int value;
 

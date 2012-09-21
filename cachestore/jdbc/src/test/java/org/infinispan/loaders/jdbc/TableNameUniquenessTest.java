@@ -65,7 +65,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_STRING_TABLE_second", "ISPN_STRING_TABLE_first", "ISPN_STRING_TABLE");
+         String quote = firstCs.getTableManipulation().getIdentifierQuoteString();
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_STRING_TABLE_second", "ISPN_STRING_TABLE_first", "ISPN_STRING_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -83,7 +84,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_BUCKET_TABLE_second", "ISPN_BUCKET_TABLE_first", "IISPN_BUCKET_TABLE");
+         String quote = firstCs.getTableManipulation().getIdentifierQuoteString();
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_BUCKET_TABLE_second", "ISPN_BUCKET_TABLE_first", "IISPN_BUCKET_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -103,8 +105,9 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_STR_TABLE_second", "ISPN_MIXED_STR_TABLE_first", "ISPN_MIXED_STR_TABLE");
-         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_BINARY_TABLE_second", "ISPN_MIXED_BINARY_TABLE_first", "ISPN_MIXED_BINARY_TABLE");
+         String quote = firstCs.getStringBasedCacheStore().getTableManipulation().getIdentifierQuoteString();
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_MIXED_STR_TABLE_second", "ISPN_MIXED_STR_TABLE_first", "ISPN_MIXED_STR_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_MIXED_BINARY_TABLE_second", "ISPN_MIXED_BINARY_TABLE_first", "ISPN_MIXED_BINARY_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
 
@@ -159,11 +162,15 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       }
    }
 
-   private void asserTableExistance(Connection connection, String secondTable, String firstTable, String tablePrefix) throws Exception {
-      assert !TableManipulationTest.existsTable(connection, tablePrefix) : "this table should not exist!";
-      assert TableManipulationTest.existsTable(connection, firstTable);
-      assert TableManipulationTest.existsTable(connection, secondTable);
+   private void assertTableExistence(Connection connection, String quote, String secondTable, String firstTable, String tablePrefix) throws Exception {
+      assert !TableManipulationTest.existsTable(connection, quoteTableName(quote, tablePrefix)) : "this table should not exist!";
+      assert TableManipulationTest.existsTable(connection, quoteTableName(quote, firstTable));
+      assert TableManipulationTest.existsTable(connection, quoteTableName(quote, secondTable));
       connection.close();
+   }
+
+   private String quoteTableName(String quote, String tableName) {
+      return quote + tableName + quote;
    }
 
    private void assertNoOverlapingState(Cache<String, String> first, Cache<String, String> second, CacheStore firstCs, CacheStore secondCs) throws CacheLoaderException {

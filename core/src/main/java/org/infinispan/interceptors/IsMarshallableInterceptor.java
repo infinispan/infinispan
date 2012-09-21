@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -83,78 +84,81 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    @Start
    protected void start() {
-      storeAsBinary = configuration.isStoreAsBinary() && (configuration.isStoreKeysAsBinary() || configuration.isStoreValuesAsBinary());
+      storeAsBinary = cacheConfiguration.storeAsBinary().enabled()
+            && (cacheConfiguration.storeAsBinary().storeKeysAsBinary()
+                      || cacheConfiguration.storeAsBinary().storeValuesAsBinary());
    }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
-      if (isStoreAsBinary() || getMightGoRemote(ctx, key))
+      if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
       return super.visitGetKeyValueCommand(ctx, command);
    }
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command))
          checkMarshallable(command.getKeys());
       return super.visitLockControlCommand(ctx, command);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getKey(), command.getValue());
       return super.visitPutKeyValueCommand(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getMap());
       return super.visitPutMapCommand(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getKey());
       return super.visitRemoveCommand(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getKey(), command.getNewValue());
       return super.visitReplaceCommand(ctx, command);
    }
 
-   private boolean isClusterInvocation(InvocationContext ctx) {
+   private boolean isClusterInvocation(InvocationContext ctx, FlagAffectedCommand command) {
       // If the cache is local, the interceptor should only be enabled in case
       // of lazy deserialization or when an async store is in place. So, if
       // any cache store is configured, check whether it'll be skipped
       return ctx.isOriginLocal()
-            && configuration.getCacheMode().isClustered()
-            && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL);
+            && cacheConfiguration.clustering().cacheMode().isClustered()
+            && !command.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 
-   private boolean isStoreInvocation(InvocationContext ctx) {
+   private boolean isStoreInvocation(FlagAffectedCommand command) {
       // If the cache is local, the interceptor should only be enabled in case
       // of lazy deserialization or when an async store is in place. So, if
       // any cache store is configured, check whether it'll be skipped
-      return !configuration.getCacheMode().isClustered()
-            && configuration.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig() != null
-            && !ctx.hasFlag(Flag.SKIP_CACHE_STORE);
+      return !cacheConfiguration.clustering().cacheMode().isClustered()
+            && !cacheConfiguration.loaders().cacheLoaders().isEmpty()
+            && !command.hasFlag(Flag.SKIP_CACHE_STORE);
    }
 
    private boolean isStoreAsBinary() {
       return storeAsBinary;
    }
 
-   private boolean getMightGoRemote(InvocationContext ctx, Object key) {
+   private boolean getMightGoRemote(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       return ctx.isOriginLocal()
-            && configuration.getCacheMode().isDistributed()
-            && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && cacheConfiguration.clustering().cacheMode().isDistributed()
+            && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES)
             && !distManager.getLocality(key).isLocal();
    }
 

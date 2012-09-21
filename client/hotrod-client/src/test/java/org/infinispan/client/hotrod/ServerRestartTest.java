@@ -66,7 +66,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
    }
 
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void testDestroyRemoteCacheFactory() {
       remoteCacheManager.stop();
       hotrodServer.stop();

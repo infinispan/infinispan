@@ -38,7 +38,7 @@ import org.infinispan.util.Util;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
-public final class FileListCacheKey implements Serializable {
+public final class FileListCacheKey implements Serializable, IndexScopedKey {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 8965108175527988255L;
@@ -59,7 +59,12 @@ public final class FileListCacheKey implements Serializable {
    public String getIndexName() {
       return indexName;
    }
-   
+
+   @Override
+   public Object accept(KeyVisitor visitor) throws Exception {
+      return visitor.visit(this);
+   }
+
    @Override
    public int hashCode() {
       return hashCode;

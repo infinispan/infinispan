@@ -20,9 +20,9 @@ package org.infinispan.configuration.cache;
 
 /**
  * Defines clustered characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder<ClusteringConfiguration> implements
       ClusteringConfigurationChildBuilder {
@@ -102,6 +102,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
+   public
    void validate() {
       asyncConfigurationBuilder.validate();
       hashConfigurationBuilder.validate();
@@ -111,6 +112,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
+   public
    ClusteringConfiguration create() {
       return new ClusteringConfiguration(cacheMode, asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(),
             l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create());

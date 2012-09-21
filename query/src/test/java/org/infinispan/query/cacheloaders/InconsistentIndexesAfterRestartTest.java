@@ -25,27 +25,26 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -56,7 +55,7 @@ import static org.testng.Assert.assertEquals;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "query.cacheloaders.InconsistentIndexesAfterRestartTest")
 public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest {
 
     private static String TMP_DIR;
@@ -81,22 +80,26 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
        testPutOperation(batching, inTran);
     }
 
-    private void testPutOperation(boolean batching, boolean inTran) throws Exception {
-       EmbeddedCacheManager cacheManager = getCacheManager(batching);
-       try {
-          Cache<Object, Object> c = cacheManager.getCache();
-          if (inTran) c.getAdvancedCache().getTransactionManager().begin();
-          c.put("key1", new SEntity(1, "name1", "surname1"));
-          if (inTran) c.getAdvancedCache().getTransactionManager().commit();
-          assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
-       }
-       finally {
-          cacheManager.stop();
-       }
+    private void testPutOperation(boolean batching, final boolean inTran) throws Exception {
+       withCacheManager(new CacheManagerCallable(getCacheManager(batching)) {
+          @Override
+          public void call() {
+             try {
+                Cache<Object, Object> c = cm.getCache();
+                if (inTran) c.getAdvancedCache().getTransactionManager().begin();
+                c.put("key1", new SEntity(1, "name1", "surname1"));
+                if (inTran) c.getAdvancedCache().getTransactionManager().commit();
+                assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
+             } catch (Exception e) {
+                throw new RuntimeException(e);
+             }
+          }
+       });
     }
 
     private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) throws Exception {
-       IndexingConfigurationBuilder cfgBuilder = new ConfigurationBuilder()
+       ConfigurationBuilder builder = new ConfigurationBuilder();
+       builder
           .loaders()
              .passivation(false)
              .preload(false)
@@ -111,15 +114,13 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .addProperty("hibernate.search.default.indexBase", TMP_DIR + File.separator + "idx");
 
        if (batchingEnabled) {
-          cfgBuilder.invocationBatching().enable();
+          builder.invocationBatching().enable();
        }
        else {
-          cfgBuilder.invocationBatching().disable();
+          builder.invocationBatching().disable();
        }
-       org.infinispan.configuration.cache.Configuration configuration = cfgBuilder.build();
 
-       EmbeddedCacheManager manager = new DefaultCacheManager(configuration);
-       return manager;
+       return TestCacheManagerFactory.createCacheManager(builder);
     }
 
     private List searchByName(String name, Cache c) {
@@ -131,7 +132,6 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
         return q.list();
     }
 
-    @ProvidedId
     @Indexed
     public static class SEntity implements Serializable {
 
@@ -183,13 +183,12 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     }
 
     @BeforeClass
-    @Parameters( { "basedir" })
-    protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
-       TMP_DIR = TestingUtil.tmpDirectory(basedir, this);
+    protected void setUpTempDir() {
+       TMP_DIR = TestingUtil.tmpDirectory(this);
        new File(TMP_DIR).mkdirs();
     }
 
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     protected void clearTempDir() {
        TestingUtil.recursiveFileRemove(TMP_DIR);
     }

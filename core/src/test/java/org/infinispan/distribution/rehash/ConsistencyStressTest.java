@@ -27,7 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
-import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -143,7 +143,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       // lets make sure any rehashing work has completed
       TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
       TestingUtil.waitForRehashToComplete(cacheMap.values());
-      AbstractWheelConsistentHash hash = (AbstractWheelConsistentHash) cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash hash = cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
 
       for (int i = 0; i < NUM_NODES; i++) {
          for (int j = 0; j < WORKERS_PER_NODE; j++) {
@@ -152,13 +152,13 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                if (keysToIgnore.contains(key)) {
                   log.infof("Skipping test on failing key %s", key);
                } else {
-                  List<Address> owners = hash.locate(key, 2);
+                  List<Address> owners = hash.locateOwners(key);
                   for (Map.Entry<Address, Cache<Object, Object>> e : cacheMap.entrySet()) {
                      try {
                         if (owners.contains(e.getKey())) DistributionTestHelper.assertIsInContainerImmortal(e.getValue(), key);
                         // Don't bother testing non-owners since invalidations caused by rehashing are async!
                      } catch (Throwable th) {
-                        log.fatalf("Key %s (hash %s) should be on owners %s according to %s", key, hash.getNormalizedHash(key), owners, hash);
+                        log.fatalf("Key %s (segment %s) should be on owners %s according to %s", key, hash.getSegment(key), owners, hash);
                         throw th;
                      }
                   }

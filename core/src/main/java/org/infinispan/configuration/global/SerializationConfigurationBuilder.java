@@ -19,6 +19,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.Version;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
@@ -85,6 +86,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param advancedExternalizer
     */
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer) {
+      AdvancedExternalizer<?> ext = advancedExternalizers.get(id);
+      if (ext != null)
+         throw new ConfigurationException(String.format(
+               "Duplicate externalizer id found! Externalizer id=%d for %s is shared by another externalizer (%s)",
+               id, advancedExternalizer.getClass().getName(), ext.getClass().getName()));
+
       advancedExternalizers.put(id, advancedExternalizer);
       return this;
    }
@@ -97,7 +104,13 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param advancedExternalizer
     */
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T> advancedExternalizer) {
-      this.addAdvancedExternalizer(advancedExternalizer.getId(), advancedExternalizer);
+      Integer id = advancedExternalizer.getId();
+      if (id == null)
+         throw new ConfigurationException(String.format(
+               "No advanced externalizer identifier set for externalizer %s",
+               advancedExternalizer.getClass().getName()));
+
+      this.addAdvancedExternalizer(id.intValue(), advancedExternalizer);
       return this;
    }
 
@@ -136,10 +149,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
+   protected
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.advancedExternalizers = template.advancedExternalizers();
       this.marshaller = template.marshaller();
       this.marshallVersion = template.version();
+      this.classResolver = template.classResolver();
 
       return this;
    }
@@ -175,7 +190,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public int hashCode() {
       int result = marshaller != null ? marshaller.hashCode() : 0;
-      result = 31 * result + (int) marshallVersion;
+      result = 31 * result + marshallVersion;
       result = 31 * result + (advancedExternalizers != null ? advancedExternalizers.hashCode() : 0);
       result = 31 * result + (classResolver != null ? classResolver.hashCode() : 0);
       return result;

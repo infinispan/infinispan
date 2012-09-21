@@ -22,12 +22,10 @@
  */
 package org.infinispan.profiling;
 
-import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.Random;
@@ -44,11 +42,11 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 @Test(groups = "functional", testName = "profiling.CacheCreationStressTest")
 public class CacheCreationStressTest extends AbstractInfinispanTest {
 
-   public void testCreateCachesFromSameContainer() throws Exception {
+   public void testCreateCachesFromSameContainer() {
       final long start = System.currentTimeMillis();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             for (int i = 0; i < 1000; i++) {
                cm.getCache(generateRandomString(20));
             }

@@ -39,7 +39,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
    }

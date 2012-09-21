@@ -25,10 +25,12 @@ package org.infinispan.interceptors.base;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -64,10 +66,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class CommandInterceptor extends AbstractVisitor {
+
    private CommandInterceptor next;
 
-
-   protected Configuration configuration;
+   protected Configuration cacheConfiguration;
 
    protected Log getLog() {
       return LogFactory.getLog(CommandInterceptor.class);
@@ -75,7 +77,7 @@ public abstract class CommandInterceptor extends AbstractVisitor {
 
    @Inject
    private void injectConfiguration(Configuration configuration) {
-      this.configuration = configuration;
+      this.cacheConfiguration = configuration;
    }
 
    /**
@@ -129,4 +131,17 @@ public abstract class CommandInterceptor extends AbstractVisitor {
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return invokeNextInterceptor(ctx, command);
    }
+
+   protected final long getLockAcquisitionTimeout(FlagAffectedCommand command, boolean skipLocking) {
+      if (!skipLocking)
+         return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+               0 : cacheConfiguration.locking().lockAcquisitionTimeout();
+
+      return -1;
+   }
+
+   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
+      return command.hasFlag(Flag.SKIP_LOCKING);
+   }
+
 }

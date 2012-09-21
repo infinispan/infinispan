@@ -69,7 +69,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       Cache c = cm.getCache();
 
       Configuration overrides = TestCacheManagerFactory.getDefaultConfiguration(true);
-      overrides.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      overrides.setTransactionManagerLookup(new DummyTransactionManagerLookup());
       cm.defineConfiguration("transactional", overrides);
       Cache transactional = cm.getCache("transactional");
 

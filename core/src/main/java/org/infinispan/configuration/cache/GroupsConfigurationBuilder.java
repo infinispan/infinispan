@@ -26,9 +26,9 @@ import java.util.List;
 
 /**
  * Configuration for various grouper definitions. See the user guide for more information.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<GroupsConfiguration> {
 
@@ -38,7 +38,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
    protected GroupsConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
    }
-   
+
    /**
     * Enable grouping support so that {@link Group} annotations are honored and any configured
     * groupers will be invoked
@@ -47,7 +47,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       this.enabled = true;
       return this;
    }
-   
+
    /**
     * Enable grouping support so that {@link Group} annotations are honored and any configured
     * groupers will be invoked
@@ -56,7 +56,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       this.enabled = enabled;
       return this;
    }
-   
+
    /**
     * Disable grouping support so that {@link Group} annotations are not used and any configured
     * groupers will not be be invoked
@@ -73,7 +73,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       this.groupers = groupers;
       return this;
    }
-   
+
    /**
     * Clear the groupers
     */
@@ -81,7 +81,7 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       this.groupers = new LinkedList<Grouper<?>>();
       return this;
    }
-   
+
    /**
     * Add a grouper
     */
@@ -91,11 +91,11 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
    }
 
    @Override
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   GroupsConfiguration create() {
+   public GroupsConfiguration create() {
       return new GroupsConfiguration(enabled, groupers);
    }
 

@@ -44,7 +44,8 @@ public interface ServerStatistics {
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
-    * Number of entries stored in Hot Rod server.
+    * Number of entries stored in Hot Rod server
+    * since the server started running.
     */
    String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
 

@@ -26,8 +26,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -64,6 +64,8 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;
 
+   protected final ClassLoader defaultClassLoader;
+
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
       this.cacheManagerNotifier = cacheManagerNotifier;
@@ -78,7 +80,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      super(defaultClassLoader); // registers the default classloader
+      this.defaultClassLoader = defaultClassLoader;
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
@@ -132,8 +134,10 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : componentClassName)) {
+         log.tracef("Looking up global component %s", componentClassName);
          return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
+         log.tracef("Looking up local component %s", componentClassName);
          return lookupLocalComponent(componentClassName, name, nameIsFQCN);
       }
    }
@@ -147,7 +151,18 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+   protected final <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
+      if (isGlobal(nameIsFQCN ? name : componentClass.getName())) {
+         log.tracef("Get or create global component %s", componentClass);
+         return globalComponents.getOrCreateComponent(componentClass, name, nameIsFQCN);
+      } else {
+         log.tracef("Get or create local component %s", componentClass);
+         return super.getOrCreateComponent(componentClass, name, nameIsFQCN);
+      }
+   }
+
+   @Override
+   protected final void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
          globalComponents.registerComponentInternal(component, name, nameIsFQCN);
       } else {
@@ -155,8 +170,16 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   @Override
+   protected AbstractComponentFactory createComponentFactoryInternal(Class<?> componentClass, String cfClass) {
+      if (isGlobal(cfClass)) {
+         return globalComponents.createComponentFactoryInternal(componentClass, cfClass);
+      }
+      return super.createComponentFactoryInternal(componentClass, cfClass);
+   }
+
    private boolean isGlobal(String className) {
-      ComponentMetadata m = ComponentMetadataRepo.findComponentMetadata(className);
+      ComponentMetadata m = getComponentMetadataRepo().findComponentMetadata(className);
       return m != null && m.isGlobalScope();
    }
 
@@ -169,14 +192,14 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       // able to locate this registry via the InboundInvocationHandler
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
-      // Cache starting notification happens earlier in the call stack trace
+      notifyCacheStarting(getComponent(Configuration.class));
 
       super.start();
 
       if (needToNotify && state == ComponentStatus.RUNNING) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStarted(this, cacheName);
-         } 
+         }
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
    }
@@ -189,7 +212,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    public void stop() {
-      if (state.stopAllowed())globalComponents.unregisterNamedComponentRegistry(cacheName);
+      if (state.stopAllowed()) globalComponents.unregisterNamedComponentRegistry(cacheName);
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
@@ -224,7 +247,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
-    * Caching shortcut for #getComponent(StateTransferManager.class);
+    * Caching shortcut for #getComponent(ResponseGenerator.class);
     */
    public ResponseGenerator getResponseGenerator() {
       return responseGenerator;
@@ -245,6 +268,11 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       stateTransferManager = getComponent(StateTransferManager.class);
       responseGenerator = getComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);
+   }
+
+   @Override
+   public ComponentMetadataRepo getComponentMetadataRepo() {
+      return globalComponents.getComponentMetadataRepo();
    }
 
 }

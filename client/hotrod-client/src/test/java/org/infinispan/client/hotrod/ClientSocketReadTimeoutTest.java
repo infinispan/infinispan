@@ -26,29 +26,24 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.net.SocketTimeoutException;
-import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * This test is used to verify that clients get a timeout when the server does
@@ -88,10 +83,10 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       return new RemoteCacheManager(config);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyRemoteCacheFactory() {
-      remoteCacheManager.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
    }
 
    @Test(expectedExceptions = SocketTimeoutException.class)
@@ -105,6 +100,9 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    }
 
    private static class HangingCacheManager extends AbstractDelegatingEmbeddedCacheManager {
+
+      static Log log = LogFactory.getLog(HangingCacheManager.class);
+
       final CountDownLatch latch;
 
       public HangingCacheManager(EmbeddedCacheManager delegate, CountDownLatch latch) {
@@ -114,14 +112,17 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
 
       @Override
       public <K, V> Cache<K, V> getCache() {
+         log.info("Retrieve cache from hanging cache manager");
          // TODO: Hacky but it's the easiest thing to do - consider ByteMan
          // ByteMan apparently supports testng since 1.5.1 but no clear
          // example out there, with more time it should be considered.
          String threadName = Thread.currentThread().getName();
-         if (threadName.startsWith("HotRodServerWorker")) {
+         if (threadName.startsWith("HotRod")) {
+            log.info("Thread is a HotRod server worker thread, so force wait");
             try {
                // Wait a max of 3 minutes, otherwise socket timeout's not working
                latch.await(180, TimeUnit.SECONDS);
+               log.info("Wait finished, return the cache");
                return super.getCache();
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();

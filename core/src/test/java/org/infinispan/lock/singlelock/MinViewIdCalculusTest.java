@@ -60,6 +60,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
+   @Test(enabled = false, description = "See ISPN-2113")
    public void testMinViewId1() throws Exception {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));

@@ -26,24 +26,27 @@ package org.infinispan.client.hotrod;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * @author Mircea Markus
@@ -99,12 +102,12 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void cleanUp() {
       ex.shutdownNow();
       kas.stop();
@@ -119,11 +122,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void stopServer(HotRodServer hrs) {
-      try {
-         hrs.stop();
-      } catch (Exception e) {
-         //ignore
-      }
+      killServers(hrs);
    }
 
    public void testCorrectBalancingOfKeys() {
@@ -134,26 +133,25 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(int cacheIndex) {
-      List<Address> backups = advancedCache(cacheIndex).getDistributionManager().getConsistentHash().locate(address(cacheIndex), 2);
-      assert backups.contains(address(cacheIndex));
-      Map<Address, Integer> hitNodes = new HashMap<Address, Integer>();
-      hitNodes.put(backups.get(0), 0);
-      hitNodes.put(backups.get(1), 0);
+      ConsistentHash serverCH = advancedCache(cacheIndex).getDistributionManager().getConsistentHash();
 
+      // compatibility with 1.0/1.1 clients is not perfect, so we must allow for some misses
+      int misses = 0;
       for (int i = 0; i < 1000; i++) {
-         String key = getKey(cacheIndex);
+         byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));
+         String key = DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
+         List<Address> serverBackups = serverCH.locateOwners(keyBytes);
+         assert serverBackups.contains(address(cacheIndex));
          remoteCache.put(key, "v");
-         Address hitServer = getHitServer();
-         assert backups.contains(hitServer) : String.format("i=%s, backups: %s, hit server: %s, key=%s", i, backups, hitServer, Util.printArray(key.getBytes(), false));
-         hitNodes.put(hitServer, hitNodes.get(hitServer) + 1);
-      }
-      System.out.println("hitNodes = " + hitNodes);
-      assert backups.containsAll(hitNodes.keySet()) : String.format("Backups %s. hit nodes %s", backups, hitNodes);
-   }
 
-   private String getKey(int cacheIndex) {
-      byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));
-      return DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
+         Address hitServer = getHitServer();
+         if (!serverBackups.contains(hitServer)) {
+            misses++;
+         }
+
+         assert misses < 10 : String.format("i=%s, backups: %s, hit server: %s, key=%s", i, serverBackups, hitServer, Util.printArray(key.getBytes(), false));
+      }
+
    }
 
    private Address getHitServer() {
@@ -161,7 +159,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 4; i++) {
          InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
          HitsAwareCacheManagersTest.HitCountInterceptor interceptor =
-               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClassName(HitsAwareCacheManagersTest.HitCountInterceptor.class.getName()).get(0);
+               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
          if (interceptor.getHits() == 1) {
             result.add(address(i));
          }

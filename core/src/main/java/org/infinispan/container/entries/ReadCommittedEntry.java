@@ -58,6 +58,16 @@ public class ReadCommittedEntry implements MVCCEntry {
       this.lifespan = lifespan;
    }
 
+   @Override
+   public byte getStateFlags() {
+      return flags;
+   }
+
+   @Override
+   public void copyStateFlagsFrom(StateChangingEntry other) {
+      this.flags = other.getStateFlags();
+   }
+
    // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
    // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
@@ -158,7 +168,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void setLockPlaceholder(boolean placeholder) {
+   public void setLockPlaceholder(boolean placeholder) {   //todo [anistor] why is this method never used?
       if (placeholder)
          setFlag(LOCK_PLACEHOLDER);
       else
@@ -178,7 +188,11 @@ public class ReadCommittedEntry implements MVCCEntry {
          // Ugh!
          if (value instanceof AtomicHashMap) {
             AtomicHashMap<?, ?> ahm = (AtomicHashMap<?, ?>) value;
-            ahm.commit();
+            // Removing commit() call should not be an issue.
+            // If marshalling is needed (clustering, or cache store), calling
+            // delta() will clear the delta, avoiding leaking values in delta.
+            // For local caches, using atomic hash maps does not make sense,
+            // so leaking delta values is not so important.
             if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
          }
 

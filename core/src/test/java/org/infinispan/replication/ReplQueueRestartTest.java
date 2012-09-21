@@ -33,7 +33,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -54,16 +55,16 @@ public class ReplQueueRestartTest extends AbstractInfinispanTest {
 
       RpcManager rpc = mock(RpcManager.class);
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
-      Configuration c = new Configuration();
-      c.setUseReplQueue(true);
 
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.REPL_ASYNC)
+            .async().useReplQueue(true);
 
-      rqi.injectDependencies(ses, rpc, c, commandsFactory);
+      rqi.injectDependencies(ses, rpc, builder.build(), commandsFactory, "");
 
       rqi.start();
 
       rqi.stop();
-
-
    }
+
 }

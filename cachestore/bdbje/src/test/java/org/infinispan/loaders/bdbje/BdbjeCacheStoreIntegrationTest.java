@@ -54,16 +54,15 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    private TransactionFactory gts = new TransactionFactory();
 
    public BdbjeCacheStoreIntegrationTest() {
-      gts.init(false, false, true);
+      gts.init(false, false, true, false);
    }
 
    @BeforeClass
-   @Parameters({"basedir"})
-   protected void setUpTempDir(@Optional("/tmp") String basedir) {
-      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
+   protected void setUpTempDir() {
+      tmpDirectory = TestingUtil.tmpDirectory(this);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();

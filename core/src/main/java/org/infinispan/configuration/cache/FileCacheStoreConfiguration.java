@@ -19,7 +19,10 @@
 
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
+import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -28,7 +31,8 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration {
+@BuiltBy(FileCacheStoreConfigurationBuilder.class)
+public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration implements LegacyLoaderAdapter<FileCacheStoreConfig>{
 
    private final String location;
    private final long fsyncInterval;
@@ -39,7 +43,7 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
          FsyncMode fsyncMode, int streamBufferSize, long lockAcquistionTimeout,
          int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
          int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncLoaderConfiguration async,
+         TypedProperties properties, AsyncStoreConfiguration async,
          SingletonStoreConfiguration singletonStore) {
       super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
             purgeSynchronously, purgerThreads, fetchPersistentState,
@@ -111,6 +115,22 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
       result = 31 * result + (fsyncMode != null ? fsyncMode.hashCode() : 0);
       result = 31 * result + streamBufferSize;
       return result;
+   }
+
+   @Override
+   public FileCacheStoreConfig adapt() {
+      FileCacheStoreConfig config = new FileCacheStoreConfig();
+
+      LegacyConfigurationAdaptor.adapt(this, config);
+
+      config.fsyncInterval(fsyncInterval);
+      config.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(fsyncMode.name()));
+      config.streamBufferSize(streamBufferSize);
+      config.location(location);
+
+      XmlConfigHelper.setValues(config, properties(), false, true);
+
+      return config;
    }
 
 }

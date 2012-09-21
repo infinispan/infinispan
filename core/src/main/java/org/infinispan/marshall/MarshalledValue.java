@@ -24,8 +24,9 @@ package org.infinispan.marshall;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.io.ExpandableMarshalledValueByteStream;
+import org.infinispan.io.ImmutableMarshalledValueByteStream;
+import org.infinispan.io.MarshalledValueByteStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.remoting.transport.Address;
@@ -69,9 +70,9 @@ import java.util.Set;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-public class MarshalledValue implements Serializable {
+public final class MarshalledValue implements Serializable {
    volatile protected Object instance;
-   volatile protected byte[] raw;
+   volatile protected MarshalledValueByteStream raw;
    volatile protected int serialisedSize = 128; //size of serialized representation: initial value is a guess
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
@@ -94,48 +95,39 @@ public class MarshalledValue implements Serializable {
 
    private void init(byte[] raw, int cachedHashCode) {
       // for unmarshalling
-      this.raw = raw;
+      this.raw = new ImmutableMarshalledValueByteStream(raw);
       this.serialisedSize = raw.length;
       this.cachedHashCode = cachedHashCode;
    }
 
-   public synchronized byte[] serialize() {
+   public synchronized MarshalledValueByteStream serialize() {
       return serialize0();
    }
 
    /**
     * Should only be called from a synchronized method
     */
-   private byte[] serialize0() {
-      byte[] rawValue = raw;
-      if (rawValue == null) {
+   private MarshalledValueByteStream serialize0() {
+      MarshalledValueByteStream localRaw = raw;
+      if (localRaw == null) {
          try {
             // Do NOT set instance to null over here, since it may be used elsewhere (e.g., in a cache listener).
             // this will be compacted by the MarshalledValueInterceptor when the call returns.
-            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(this.serialisedSize);
+            MarshalledValueByteStream baos = new ExpandableMarshalledValueByteStream(this.serialisedSize);
             ObjectOutput out = marshaller.startObjectOutput(baos, true, this.serialisedSize);
             try {
                marshaller.objectToObjectStream(instance, out);
             } finally {
                marshaller.finishObjectOutput(out);
             }
-            final byte[] buf = baos.getRawBuffer();
-            final int length = baos.size();
-            if (buf.length == length) {
-               // in this case we can avoid duplicating the buffer
-               rawValue = buf;
-            }
-            else {
-               serialisedSize = length;
-               rawValue = new byte[length];
-               System.arraycopy(buf, 0, rawValue, 0, length);
-            }
-            raw = rawValue;
+            serialisedSize = baos.size();
+            localRaw = baos;
+            raw = baos;
          } catch (Exception e) {
             throw new CacheException("Unable to marshall value " + instance, e);
          }
       }
-      return rawValue;
+      return localRaw;
    }
 
    public synchronized Object deserialize() {
@@ -150,7 +142,7 @@ public class MarshalledValue implements Serializable {
       if (instanceValue == null) {
          try {
             // StreamingMarshaller underneath deals with making sure the right classloader is set.
-            instanceValue = marshaller.objectFromByteBuffer(raw);
+            instanceValue = marshaller.objectFromByteBuffer(raw.getRaw(), 0, raw.size());
             instance = instanceValue;
             return instanceValue;
          }
@@ -178,7 +170,7 @@ public class MarshalledValue implements Serializable {
       // reset the equalityPreference
       equalityPreferenceForInstance = true;
       Object thisInstance = this.instance;
-      byte[] thisRaw = this.raw;
+      MarshalledValueByteStream thisRaw = this.raw;
       if (force) {
          if (preferSerializedRepresentation && thisRaw == null) {
             // Accessing a synchronized method from an already synchronized
@@ -206,8 +198,8 @@ public class MarshalledValue implements Serializable {
       }
    }
 
-   public byte[] getRaw() {
-      byte[] rawValue = raw;
+   public MarshalledValueByteStream getRaw() {
+      MarshalledValueByteStream rawValue = raw;
       if (rawValue == null){
          rawValue = serialize();
       }
@@ -228,7 +220,9 @@ public class MarshalledValue implements Serializable {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null || MarshalledValue.class != o.getClass()) {
+         return false;
+      }
 
       MarshalledValue that = (MarshalledValue) o;
       final boolean preferInstanceEquality = equalityPreferenceForInstance && that.equalityPreferenceForInstance;
@@ -238,12 +232,16 @@ public class MarshalledValue implements Serializable {
       Object thisInstance = this.instance;
       Object thatInstance = that.instance;
       //test the default equality first so we might skip some work:
-      if (preferInstanceEquality && thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
-      
-      byte[] thisRaw = this.raw;
-      byte[] thatRaw = that.raw;
-      if (thisRaw != null && thatRaw != null) return Arrays.equals(thisRaw, thatRaw);
-      if (thisInstance != null && thatInstance != null) return thisInstance.equals(thatInstance);
+      if (preferInstanceEquality && thisInstance != null && thatInstance != null) {
+         return thisInstance.equals(thatInstance);
+      }
+
+      MarshalledValueByteStream thisRaw = this.raw;
+      MarshalledValueByteStream thatRaw = that.raw;
+      if (thisRaw != null && thatRaw != null) return thisRaw.equals(thatRaw);
+      if (thisInstance != null && thatInstance != null) {
+         return thisInstance.equals(thatInstance);
+      }
 
       // if conversion of one representation to the other is necessary, then see which we prefer converting.
       if (preferInstanceEquality) {
@@ -261,7 +259,7 @@ public class MarshalledValue implements Serializable {
          if (thatRaw == null) {
             thatRaw = that.serialize();
          }
-         return Arrays.equals(thisRaw, thatRaw);
+         return thisRaw.equals(thatRaw);
       }
    }
 
@@ -286,7 +284,7 @@ public class MarshalledValue implements Serializable {
       StringBuilder sb = new StringBuilder()
          .append("MarshalledValue{")
          .append("instance=").append(instance != null ? instance.toString() : "<serialized>")
-         .append(", serialized=").append(raw != null ?  Util.printArray(raw, false) : "false")
+         .append(", serialized=").append(raw != null ?  Util.printArray(raw == null ? Util.EMPTY_BYTE_ARRAY : raw.getRaw(), false) : "false")
          .append(", cachedHashCode=").append(cachedHashCode)
          .append("}@").append(Util.hexIdHashCode(this));
       return sb.toString();
@@ -321,9 +319,10 @@ public class MarshalledValue implements Serializable {
 
       @Override
       public void writeObject(ObjectOutput output, MarshalledValue mv) throws IOException {
-         byte[] raw = mv.getRaw();
-         UnsignedNumeric.writeUnsignedInt(output, raw.length);
-         output.write(raw);
+         MarshalledValueByteStream raw = mv.getRaw();
+         int rawLength = raw.size();
+         UnsignedNumeric.writeUnsignedInt(output, rawLength);
+         output.write(raw.getRaw(), 0, rawLength);
          output.writeInt(mv.hashCode());
       }
 
@@ -359,6 +358,5 @@ public class MarshalledValue implements Serializable {
       public Set<Class<? extends MarshalledValue>> getTypeClasses() {
          return Util.<Class<? extends MarshalledValue>>asSet(MarshalledValue.class);
       }
-
    }
 }

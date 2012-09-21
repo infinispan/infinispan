@@ -24,6 +24,7 @@ package org.infinispan.loaders.remote;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.CacheException;
@@ -33,6 +34,7 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,6 +66,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setRemoteCacheName(String remoteCacheName) {
       this.remoteCacheName = remoteCacheName;
+      setProperty("remoteCacheName", remoteCacheName);
    }
 
    public String getRemoteCacheName() {
@@ -74,6 +77,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
       if (useDefaultRemoteCache) {
          setRemoteCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME);
       }
+      setProperty("useDefaultRemoteCache", Boolean.toString(useDefaultRemoteCache));
    }
 
    public boolean isUseDefaultRemoteCache() {
@@ -81,11 +85,17 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
    }
 
    public Properties getHotRodClientProperties() {
+      // Copy properties into Hot Rod client properties for adaptation
+      // between configuration objects to work
+      hotRodClientProperties.putAll(properties);
       return hotRodClientProperties;
    }
 
    public void setHotRodClientProperties(Properties props) {
       hotRodClientProperties.putAll(props);
+      // Store properties in main properties too to allow properties to be shipped
+      for (Map.Entry<Object, Object> entry : props.entrySet())
+         setProperty(entry.getKey().toString(), entry.getValue().toString());
    }
 
    public ExecutorFactory getAsyncExecutorFactory() {
@@ -108,4 +118,17 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
          Util.close(inputStream);
       }
    }
+
+   private void setProperty(String key, String value) {
+      Properties p = getProperties();
+      try {
+         p.setProperty(key, value);
+      } catch (UnsupportedOperationException e) {
+         // Most likely immutable, so let's work around that
+         TypedProperties writableProperties = new TypedProperties(p);
+         writableProperties.setProperty(key, value);
+         setProperties(writableProperties);
+      }
+   }
+
 }

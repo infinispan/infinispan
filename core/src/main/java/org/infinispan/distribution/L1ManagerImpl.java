@@ -25,9 +25,10 @@ package org.infinispan.distribution;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -43,6 +44,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -92,17 +94,17 @@ public class L1ManagerImpl implements L1Manager {
    
    @Start (priority = 3)
    public void start() {
-      this.threshold = configuration.getL1InvalidationThreshold();
-      this.rpcTimeout = configuration.getSyncReplTimeout();
-      this.l1Lifespan = configuration.getL1Lifespan();
-      if (configuration.getL1InvalidationCleanupTaskFrequency() > 0) {
+      this.threshold = configuration.clustering().l1().invalidationThreshold();
+      this.rpcTimeout = configuration.clustering().sync().replTimeout();
+      this.l1Lifespan = configuration.clustering().l1().lifespan();
+      if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
          scheduledRequestorsCleanupTask = scheduledExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                cleanUpRequestors();
             }
-         }, configuration.getL1InvalidationCleanupTaskFrequency(),
-            configuration.getL1InvalidationCleanupTaskFrequency(), TimeUnit.MILLISECONDS);
+         }, configuration.clustering().l1().cleanupTaskFrequency(),
+               configuration.clustering().l1().cleanupTaskFrequency(), TimeUnit.MILLISECONDS);
       } else {
          log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");
       }
@@ -114,7 +116,6 @@ public class L1ManagerImpl implements L1Manager {
    }
 
    private void cleanUpRequestors() {
-      int sz = requestors.size();
       long expiryTime = System.currentTimeMillis() - l1Lifespan;
       for (Map.Entry<Object, ConcurrentMap<Address, Long>> entry: requestors.entrySet()) {
          Object key = entry.getKey();
@@ -175,7 +176,7 @@ public class L1ManagerImpl implements L1Manager {
 
          if (multicast) {
             if (trace) log.tracef("Invalidating keys %s via multicast", keys);
-            final InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, keys);
+            final InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, Collections.<Flag>emptySet(), keys);
             if (useNotifyingFuture) {
                NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
                rpcManager.broadcastRpcCommandInFuture(ic, future);
@@ -190,7 +191,8 @@ public class L1ManagerImpl implements L1Manager {
                });
             }
          } else {
-            final CacheRpcCommand rpc = commandsFactory.buildSingleRpcCommand(commandsFactory.buildInvalidateFromL1Command(origin, false, keys));
+            final CacheRpcCommand rpc = commandsFactory.buildSingleRpcCommand(
+                  commandsFactory.buildInvalidateFromL1Command(origin, false, Collections.<Flag>emptySet(), keys));
             // Ask the caches who have requested from us to remove
             if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
             if (useNotifyingFuture) {

@@ -19,12 +19,9 @@
 
 package org.infinispan.loaders;
 
-import org.infinispan.loaders.jdbm.JdbmCacheStoreConfig;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbm.JdbmCacheStore;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -42,21 +39,21 @@ public class TreeCacheWithJdbmLoaderTest extends TreeCacheWithLoaderTest {
    private String tmpDirectory;
 
    @Override
-   protected CacheStoreConfig getCacheStoreCfg() {
-      JdbmCacheStoreConfig cfg = new JdbmCacheStoreConfig();
-      cfg.setLocation(tmpDirectory);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      return cfg;
+   protected void addCacheStore(LegacyStoreConfigurationBuilder cb) {
+      cb.cacheStore(new JdbmCacheStore())
+         .purgeSynchronously(true) // for more accurate unit testing
+         .addProperty("location", tmpDirectory);
    }
 
-   @BeforeClass
-   @Parameters({"basedir"})
-   protected void setUpTempDir(@Optional("/tmp") String basedir) {
-      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
+   @Override
+   protected void setup() throws Exception {
+      tmpDirectory = TestingUtil.tmpDirectory(this);
+      super.setup();
    }
 
-   @AfterClass
-   protected void clearTempDir() {
+   @Override
+   protected void teardown() {
+      super.teardown();
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
    }

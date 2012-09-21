@@ -110,7 +110,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          cache(0).put("k0", "other");
          assert false;
       } catch (Throwable e) {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       eventually(new AbstractInfinispanTest.Condition() {
@@ -126,7 +126,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          cache(1).put("k0", "other");
          assert false;
       } catch (Throwable e) {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       eventually(new AbstractInfinispanTest.Condition() {
@@ -165,7 +165,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          cache(0).put("k0", "other");
          assert false;
       } catch (Throwable e) {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       eventually(new AbstractInfinispanTest.Condition() {
@@ -181,7 +181,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          cache(1).put("k0", "other");
          assert false;
       } catch (Throwable e) {
-         tm(0).suspend();
+         tm(0).rollback();
       }
 
       eventually(new AbstractInfinispanTest.Condition() {

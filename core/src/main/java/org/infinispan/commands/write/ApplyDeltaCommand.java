@@ -48,7 +48,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       super();
    }
    
-   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys) {      
+   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys) {
+      //todo [anistor] should invoke super(deltaAwareValueKey)
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
       else
@@ -229,6 +230,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
             return false;
          }
          return true;
-      }          
+      }
+
+      @Override
+      public String toString() {
+         //This is used by logger messages when debugging
+         return "ApplyDeltaCommand#DeltaCompositeKey[deltaAwareValueKey=" + deltaAwareValueKey + ", entryKey=" + entryKey + ']';
+      }
    }
 }

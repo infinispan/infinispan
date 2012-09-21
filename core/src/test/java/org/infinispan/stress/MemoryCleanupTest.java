@@ -23,10 +23,10 @@
 package org.infinispan.stress;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.Cache;
 
 /**
@@ -42,7 +42,7 @@ public class MemoryCleanupTest {
 
    public void testMemoryConsumption () throws InterruptedException {
       final Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.LOCAL);
-      DefaultCacheManager cm = new DefaultCacheManager(config, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
 
       Cache<Object,Object> cache = cm.getCache();
 

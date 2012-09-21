@@ -34,7 +34,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    private boolean enabled = false;
    private boolean storeKeysAsBinary = true;
    private boolean storeValuesAsBinary = true;
-   
+
    StoreAsBinaryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
@@ -82,21 +82,21 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
-   void validate() {
+   public void validate() {
       // Nothing to validate.
    }
 
    @Override
-   StoreAsBinaryConfiguration create() {
+   public StoreAsBinaryConfiguration create() {
       return new StoreAsBinaryConfiguration(enabled, storeKeysAsBinary, storeValuesAsBinary);
-   }   
-   
+   }
+
    @Override
    public StoreAsBinaryConfigurationBuilder read(StoreAsBinaryConfiguration template) {
       this.enabled = template.enabled();
       this.storeKeysAsBinary = template.storeKeysAsBinary();
       this.storeValuesAsBinary = template.storeValuesAsBinary();
-      
+
       return this;
    }
 

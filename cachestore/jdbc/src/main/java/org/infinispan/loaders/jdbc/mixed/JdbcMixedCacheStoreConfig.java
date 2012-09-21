@@ -30,6 +30,8 @@ import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 
+import java.util.Properties;
+
 /**
  * Configuration for {@link org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore}.
  *
@@ -46,11 +48,33 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
    private int stringsConcurrencyLevel = LockSupportCacheStoreConfig.DEFAULT_CONCURRENCY_LEVEL / 2;
    private int lockAcquistionTimeout = LockSupportCacheStoreConfig.DEFAULT_LOCK_ACQUISITION_TIMEOUT;
 
-
    public JdbcMixedCacheStoreConfig(ConnectionFactoryConfig connectionFactoryConfig, TableManipulation binaryTableManipulation, TableManipulation stringsTableManipulation) {
-      this.connectionFactoryConfig = connectionFactoryConfig;
+      super(connectionFactoryConfig);
+
+      Properties p = this.getProperties();
+      setProperty(stringsTableManipulation.getTableNamePrefix(), "tableNamePrefixForStrings", p);
+      setProperty(stringsTableManipulation.getDataColumnName(), "dataColumnNameForStrings", p);
+      setProperty(stringsTableManipulation.getDataColumnType(), "dataColumnTypeForStrings", p);
+      setProperty(stringsTableManipulation.getIdColumnName(), "idColumnNameForStrings", p);
+      setProperty(stringsTableManipulation.getIdColumnType(), "idColumnTypeForStrings", p);
+      setProperty(stringsTableManipulation.getTimestampColumnName(), "timestampColumnNameForStrings", p);
+      setProperty(stringsTableManipulation.getTimestampColumnType(), "timestampColumnTypeForStrings", p);
+      setProperty(Boolean.toString(stringsTableManipulation.isCreateTableOnStart()), "createTableOnStartForStrings", p);
+      setProperty(Boolean.toString(stringsTableManipulation.isDropTableOnExit()), "dropTableOnExitForStrings", p);
+
+      setProperty(binaryTableManipulation.getIdColumnName(), "idColumnNameForBinary", p);
+      setProperty(binaryTableManipulation.getIdColumnType(), "idColumnTypeForBinary", p);
+      setProperty(binaryTableManipulation.getTableNamePrefix(), "tableNamePrefixForBinary", p);
+      setProperty(binaryTableManipulation.getDataColumnName(), "dataColumnNameForBinary", p);
+      setProperty(binaryTableManipulation.getDataColumnType(), "dataColumnTypeForBinary", p);
+      setProperty(binaryTableManipulation.getTimestampColumnName(), "timestampColumnNameForBinary", p);
+      setProperty(binaryTableManipulation.getTimestampColumnType(), "timestampColumnTypeForBinary", p);
+      setProperty(Boolean.toString(binaryTableManipulation.isCreateTableOnStart()), "createTableOnStartForBinary", p);
+      setProperty(Boolean.toString(binaryTableManipulation.isDropTableOnExit()), "dropTableOnExitForBinary", p);
+
       this.binaryTableManipulation = binaryTableManipulation;
       this.stringsTableManipulation = stringsTableManipulation;
+      this.cacheLoaderClassName = JdbcMixedCacheStore.class.getName();
    }
 
    public JdbcMixedCacheStoreConfig() {

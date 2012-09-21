@@ -22,7 +22,7 @@
   -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
+        xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-3.1.xsd">
    <UDP
          mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
          mcast_port="${jgroups.udp.mcast_port:46655}"
@@ -62,7 +62,8 @@
    <PING timeout="3000" num_initial_members="3"/>
    <MERGE2 max_interval="30000" min_interval="10000"/>
    <FD_SOCK/>
-   <FD_ALL/>
+   <FD_ALL timeout="15000"/>
+   <VERIFY_SUSPECT timeout="5000"/>
    <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)
    <pbcast.NAKACK  exponential_backoff="0"
                    use_mcast_xmit="true"

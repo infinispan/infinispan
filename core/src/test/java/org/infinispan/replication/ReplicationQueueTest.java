@@ -23,6 +23,8 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
+import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -32,6 +34,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -42,6 +45,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests ReplicationQueue's functionality.
@@ -246,6 +252,28 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       assert replicationQueue.getElementsCount() == numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS;
    }
 
+   public void testAtomicHashMap() throws Exception {
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
+      transactionManager.begin();
+      AtomicMap am = AtomicMapLookup.getAtomicMap(cache1, "foo");
+      am.put("sub-key", "sub-value");
+      transactionManager.commit();
+
+      ReplQueueTestScheduledExecutorFactory.command.run();
+
+      //in next 5 secs, expect the replication to occur
+      long start = System.currentTimeMillis();
+      while (System.currentTimeMillis() - start < 5000) {
+         if (cache2.get("foo") != null) break;
+         Thread.sleep(50);
+      }
+
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo", false) != null;
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key") != null;
+      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key").equals("sub-value");
+   }
 
    public static class ReplQueueTestScheduledExecutorFactory implements ScheduledExecutorFactory {
       static Properties myProps = new Properties();
@@ -260,13 +288,14 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          myProps.put("ddd", "ccc");
       }
 
+
       public ScheduledExecutorService getScheduledExecutor(Properties p) {
-         Properties toCompareWith = new Properties();
-         for (Map.Entry<Object, Object> entry: myProps.entrySet())
-            toCompareWith.setProperty((String) entry.getKey(), (String) entry.getValue()); 
-         toCompareWith.setProperty("componentName", "replicationQueue-thread");
-         toCompareWith.setProperty("threadPriority", "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
-         assert p.equals(toCompareWith) : "Expected " + p + " but was " + toCompareWith;
+         assertEquals(p.size(), 5);
+         assertEquals(p.get("componentName"), "replicationQueue-thread");
+         assertEquals(p.get("threadPriority"), "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
+         assertEquals(p.get("aaa"), "bbb");
+         assertEquals(p.get("ddd"), "ccc");
+         assertTrue(p.containsKey("threadNameSuffix")); // don't check p.get("threadNameSuffix"), it depends on the node name
          methodCalled = true;
          return new ScheduledThreadPoolExecutor(1) {
             @Override
@@ -280,6 +309,5 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          };
       }
    }
-
 
 }

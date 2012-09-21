@@ -75,13 +75,13 @@ public class JdbcStringBasedCacheStoreTest2 {
       cacheStore.start();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void clearStore() throws Exception {
       cacheStore.clear();
       assert rowCount() == 0;
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
    }

@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -50,9 +49,12 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private volatile boolean valid = true;
 
    /**
-    * During state transfer only the locks are being migrated over, but no modifications.
+    * This flag can only be true for transactions received via state transfer. During state transfer we do not migrate
+    * lookedUpEntries to save bandwidth. If missingLookedUpEntries is true at the time a CommitCommand is received this
+    * indicates the preceding PrepareCommand was received by previous owner before state transfer but not by the
+    * current owner which now has to re-execute prepare to populate lookedUpEntries (and acquire the locks).
     */
-   private boolean missingModifications;
+   private volatile boolean missingLookedUpEntries = false;
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int viewId) {
       super(tx, viewId);
@@ -125,16 +127,16 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", lookedUpEntries=" + lookedUpEntries +
             ", lockedKeys= " + lockedKeys +
             ", backupKeyLocks " + backupKeyLocks +
-            ", isMissingModifications " + missingModifications +
+            ", missingLookedUpEntries " + missingLookedUpEntries +
             ", tx=" + tx +
             '}';
    }
 
-   public void setMissingModifications(boolean missingModifications) {
-      this.missingModifications = missingModifications;
+   public void setMissingLookedUpEntries(boolean missingLookedUpEntries) {
+      this.missingLookedUpEntries = missingLookedUpEntries;
    }
 
-   public boolean isMissingModifications() {
-      return missingModifications;
+   public boolean isMissingLookedUpEntries() {
+      return missingLookedUpEntries;
    }
 }

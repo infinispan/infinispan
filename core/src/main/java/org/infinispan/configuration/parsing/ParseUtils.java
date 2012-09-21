@@ -22,15 +22,16 @@
 
 package org.infinispan.configuration.parsing;
 
-import javax.xml.XMLConstants;
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import javax.xml.XMLConstants;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -43,10 +44,6 @@ public final class ParseUtils {
     public static Element nextElement(XMLStreamReader reader) throws XMLStreamException {
         if (reader.nextTag() == END_ELEMENT) {
             return null;
-        }
-        Namespace readerNS = Namespace.forUri(reader.getNamespaceURI());
-        if (!readerNS.isSupported()) {
-            throw unexpectedElement(reader);
         }
         return Element.forName(reader.getLocalName());
     }
@@ -220,7 +217,7 @@ public final class ParseUtils {
      * @param attributeName the attribute name
      * @throws javax.xml.stream.XMLStreamException if an error occurs
      */
-    public static void requireSingleAttribute(final XMLStreamReader reader, final String attributeName)
+    public static String requireSingleAttribute(final XMLStreamReader reader, final String attributeName)
             throws XMLStreamException {
         final int count = reader.getAttributeCount();
         if (count == 0) {
@@ -233,6 +230,7 @@ public final class ParseUtils {
         if (count > 1) {
             throw unexpectedAttribute(reader, 1);
         }
+        return reader.getAttributeValue(0);
     }
 
     /**
@@ -273,4 +271,5 @@ public final class ParseUtils {
     public static String getWarningMessage(final String msg, final Location location) {
         return String.format("Parsing problem at [row,col]:[%d ,%d]%nMessage: %s%n", location.getLineNumber(), location.getColumnNumber(), msg);
     }
+
 }

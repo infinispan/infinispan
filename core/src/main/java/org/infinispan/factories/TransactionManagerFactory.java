@@ -28,7 +28,6 @@ import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,35 +45,29 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
 
    @Override
    public <T> T construct(Class<T> componentType) {
-
-      if (!configuration.isTransactionalCache()) {
+      if (!configuration.transaction().transactionMode().isTransactional()) {
          return null;
       }
 
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;
-      TransactionManagerLookup lookup = configuration.getTransactionManagerLookup();
 
-      if (lookup == null) {
-         // Nope. See if we can look it up from JNDI
-         if (configuration.getTransactionManagerLookupClass() != null) {
-            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass(), configuration.getClassLoader());
-         }
-      }
-
-      try {
-         if (lookup != null) {
-            componentRegistry.wireDependencies(lookup);
-            transactionManager = lookup.getTransactionManager();
-         }
-      }
-      catch (Exception e) {
-         log.couldNotInstantiateTransactionManager(e);
-      }
-
-      if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
+      if (configuration.invocationBatching().enabled()) {
          log.usingBatchModeTransactionManager();
          transactionManager = BatchModeTransactionManager.getInstance();
+      }
+
+      if (transactionManager == null) {
+         TransactionManagerLookup lookup = configuration.transaction().transactionManagerLookup();
+         try {
+            if (lookup != null) {
+               componentRegistry.wireDependencies(lookup);
+               transactionManager = lookup.getTransactionManager();
+            }
+         }
+         catch (Exception e) {
+            log.couldNotInstantiateTransactionManager(e);
+         }
       }
 
       if (transactionManager == null) {

@@ -23,14 +23,13 @@
 
 package org.infinispan.spring.support.embedded;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Properties;
-
-import javax.management.MBeanServer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
@@ -40,11 +39,12 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
+import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.spring.mock.MockExecutorFatory;
+import org.infinispan.spring.mock.MockScheduleExecutorFactory;
 import org.infinispan.spring.mock.MockTransport;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.CacheManagerCallable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -74,15 +74,17 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldCreateACacheManagerEvenIfNoDefaultConfigurationLocationHasBeenSet()
             throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertNotNull(
-               "getObject() should have returned a valid EmbeddedCacheManager, even if no defaulConfigurationLocation "
-                        + "has been specified. However, it returned null.", embeddedCacheManager);
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertNotNull(
+                  "getObject() should have returned a valid EmbeddedCacheManager, even if no defaulConfigurationLocation "
+                        + "has been specified. However, it returned null.", cm);
+         }
+      });
    }
 
    /**
@@ -98,33 +100,30 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
                getClass());
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
-         @Override
-         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
-            return TestCacheManagerFactory.createCacheManager(
-                  template.globalConfiguration, template.defaultConfiguration);
-         }
-      };
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
       objectUnderTest.afterPropertiesSet();
 
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-      assertNotNull(
-               "getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file "
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertNotNull(
+                  "getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file "
                         + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",
-               embeddedCacheManager);
-      final Cache<Object, Object> cacheDefinedInCustomConfiguration = embeddedCacheManager
-               .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-      final Configuration configuration = cacheDefinedInCustomConfiguration.getConfiguration();
-      assertEquals(
-               "The cache named ["
+                  cm);
+            final Cache<Object, Object> cacheDefinedInCustomConfiguration = cm
+                  .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
+            final Configuration configuration = cacheDefinedInCustomConfiguration.getConfiguration();
+            assertEquals(
+                  "The cache named ["
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "
                         + "the configuration file when instantiating EmbeddedCacheManager.",
-               CacheMode.REPL_ASYNC, configuration.getCacheMode());
-      embeddedCacheManager.stop();
+                  CacheMode.REPL_ASYNC, configuration.getCacheMode());
+         }
+      });
    }
 
    /**
@@ -137,16 +136,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldReportTheCorrectObjectType()
             throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "getObjectType() should return the most derived class of the actual EmbeddedCacheManager "
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "getObjectType() should return the most derived class of the actual EmbeddedCacheManager "
                         + "implementation returned from getObject(). However, it didn't.",
-               embeddedCacheManager.getClass(), objectUnderTest.getObjectType());
-      embeddedCacheManager.stop();
+                  cm.getClass(), objectUnderTest.getObjectType());
+         }
+      });
    }
 
    /**
@@ -156,7 +157,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldDeclareItselfToOnlyProduceSingletons() {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
 
       assertTrue("isSingleton() should always return true. However, it returned false",
                objectUnderTest.isSingleton());
@@ -172,18 +173,22 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldStopTheCreateEmbeddedCacheManagerWhenBeingDestroyed()
             throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
       final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
       embeddedCacheManager.getCache(); // Implicitly starts EmbeddedCacheManager
       objectUnderTest.destroy();
 
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should stop the created EmbeddedCacheManager when being destroyed. "
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should stop the created EmbeddedCacheManager when being destroyed. "
                         + "However, the created EmbeddedCacheManager is still not terminated.",
-               ComponentStatus.TERMINATED, embeddedCacheManager.getStatus());
-      embeddedCacheManager.stop();
+                  ComponentStatus.TERMINATED, embeddedCacheManager.getStatus());
+         }
+      });
    }
 
    // ~~~~ Testing overriding setters
@@ -198,22 +203,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedExposeGlobalJmxStatistics = true;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean() {
-         @Override
-         protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
-            return TestCacheManagerFactory.createCacheManager(
-                  template.globalConfiguration, template.defaultConfiguration);
-         }
-      };
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
 
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",
-               expectedExposeGlobalJmxStatistics, embeddedCacheManager.getGlobalConfiguration()
-                        .isExposeGlobalJmxStatistics());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",
+                  expectedExposeGlobalJmxStatistics, cm.getGlobalConfiguration()
+                  .isExposeGlobalJmxStatistics());
+         }
+      });
    }
 
    /**
@@ -229,12 +231,14 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setJmxDomain(expectedJmxDomain);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set JmxDomain. However, it didn't.",
-               expectedJmxDomain, embeddedCacheManager.getGlobalConfiguration().getJmxDomain());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set JmxDomain. However, it didn't.",
+                  expectedJmxDomain, cm.getGlobalConfiguration().getJmxDomain());
+         }
+      });
    }
 
    /**
@@ -248,16 +252,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedMBeanServerProperties = new Properties();
       expectedMBeanServerProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMBeanServerProperties(expectedMBeanServerProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerProperties. However, it didn't.",
-               expectedMBeanServerProperties, embeddedCacheManager.getGlobalConfiguration()
-                        .getMBeanServerProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerProperties. However, it didn't.",
+                  expectedMBeanServerProperties, cm.getGlobalConfiguration()
+                  .getMBeanServerProperties());
+         }
+      });
    }
 
    /**
@@ -268,23 +274,20 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseMBeanServerLookupClassPropIfExplicitlySet()
             throws Exception {
-      final MBeanServerLookup expectedMBeanServerLookup = new MBeanServerLookup() {
-         @Override
-         public MBeanServer getMBeanServer(final Properties properties) {
-            return null;
-         }
-      };
+      final MBeanServerLookup expectedMBeanServerLookup = new PlatformMBeanServerLookup();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMBeanServerLookupClass(expectedMBeanServerLookup.getClass().getName());
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",
-               expectedMBeanServerLookup.getClass().getName(), embeddedCacheManager
-                        .getGlobalConfiguration().getMBeanServerLookup());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",
+                  expectedMBeanServerLookup.getClass().getName(), cm
+                  .getGlobalConfiguration().getMBeanServerLookup());
+         }
+      });
    }
 
    /**
@@ -297,16 +300,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final MBeanServerLookup expectedMBeanServerLookup = new PlatformMBeanServerLookup();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMBeanServerLookup(expectedMBeanServerLookup);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertSame(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookup. However, it didn't.",
-               expectedMBeanServerLookup.getClass().getName(), embeddedCacheManager
-                        .getGlobalConfiguration().getMBeanServerLookup());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertSame(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookup. However, it didn't.",
+                  expectedMBeanServerLookup.getClass().getName(), cm
+                  .getGlobalConfiguration().getMBeanServerLookup());
+         }
+      });
    }
 
    /**
@@ -319,16 +324,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedAllowDuplicateDomains = true;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setAllowDuplicateDomains(expectedAllowDuplicateDomains);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AllowDuplicateDomains. However, it didn't.",
-               expectedAllowDuplicateDomains, embeddedCacheManager.getGlobalConfiguration()
-                        .isAllowDuplicateDomains());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AllowDuplicateDomains. However, it didn't.",
+                  expectedAllowDuplicateDomains, cm.getGlobalConfiguration()
+                  .isAllowDuplicateDomains());
+         }
+      });
    }
 
    /**
@@ -341,16 +348,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedCacheManagerName = "expected.cache.manager.Name";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setCacheManagerName(expectedCacheManagerName);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",
+                  expectedCacheManagerName, cm.getGlobalConfiguration()
+                  .getCacheManagerName());
+         }
+      });
 
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",
-               expectedCacheManagerName, embeddedCacheManager.getGlobalConfiguration()
-                        .getCacheManagerName());
-      embeddedCacheManager.stop();
    }
 
    /**
@@ -363,16 +373,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final boolean expectedStrictPeerToPeer = true;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setStrictPeerToPeer(expectedStrictPeerToPeer);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",
+                  expectedStrictPeerToPeer, cm.getGlobalConfiguration()
+                  .isStrictPeerToPeer());
+         }
+      });
 
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",
-               expectedStrictPeerToPeer, embeddedCacheManager.getGlobalConfiguration()
-                        .isStrictPeerToPeer());
-      embeddedCacheManager.stop();
    }
 
    /**
@@ -385,17 +398,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedAsyncListenerExecutorFactoryClass = MockExecutorFatory.class.getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setAsyncListenerExecutorFactoryClass(expectedAsyncListenerExecutorFactoryClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorFactoryClass. However, it didn't.",
-               expectedAsyncListenerExecutorFactoryClass, embeddedCacheManager
-                        .getGlobalConfiguration().getAsyncListenerExecutorFactoryClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorFactoryClass. However, it didn't.",
+                  expectedAsyncListenerExecutorFactoryClass, cm
+                  .getGlobalConfiguration().getAsyncListenerExecutorFactoryClass());
+         }
+      });
    }
 
    /**
@@ -406,19 +421,21 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseAsyncTransportExecutorFactoryClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedAsyncTransportExecutorFactoryClass = "expected.async.transport.executor.Factory";
+      final String expectedAsyncTransportExecutorFactoryClass = MockExecutorFatory.class.getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setAsyncTransportExecutorFactoryClass(expectedAsyncTransportExecutorFactoryClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",
-               expectedAsyncTransportExecutorFactoryClass, embeddedCacheManager
-                        .getGlobalConfiguration().getAsyncTransportExecutorFactoryClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",
+                  expectedAsyncTransportExecutorFactoryClass, cm
+                  .getGlobalConfiguration().getAsyncTransportExecutorFactoryClass());
+         }
+      });
    }
 
    /**
@@ -429,19 +446,21 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseEvictionScheduledExecutorFactoryClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedEvictionScheduledExecutorFactoryClass = "expected.eviction.scheduler.Factory";
+      final String expectedEvictionScheduledExecutorFactoryClass = MockScheduleExecutorFactory.class.getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setEvictionScheduledExecutorFactoryClass(expectedEvictionScheduledExecutorFactoryClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",
-               expectedEvictionScheduledExecutorFactoryClass, embeddedCacheManager
-                        .getGlobalConfiguration().getEvictionScheduledExecutorFactoryClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",
+                  expectedEvictionScheduledExecutorFactoryClass, cm
+                  .getGlobalConfiguration().getEvictionScheduledExecutorFactoryClass());
+         }
+      });
    }
 
    /**
@@ -452,20 +471,22 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseReplicationQueueScheduledExecutorFactoryClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedReplicationQueueScheduledExecutorFactoryClass = "expected.replication.queue.scheduled.executor.Factory";
+      final String expectedReplicationQueueScheduledExecutorFactoryClass = MockScheduleExecutorFactory.class.getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setReplicationQueueScheduledExecutorFactoryClass(expectedReplicationQueueScheduledExecutorFactoryClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorFactoryClass. However, it didn't.",
-               expectedReplicationQueueScheduledExecutorFactoryClass, embeddedCacheManager
-                        .getGlobalConfiguration()
-                        .getReplicationQueueScheduledExecutorFactoryClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorFactoryClass. However, it didn't.",
+                  expectedReplicationQueueScheduledExecutorFactoryClass, cm
+                  .getGlobalConfiguration()
+                  .getReplicationQueueScheduledExecutorFactoryClass());
+         }
+      });
    }
 
    /**
@@ -476,18 +497,20 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseMarshallerClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedMarshallerClass = "expected.marshaller.Class";
+      final String expectedMarshallerClass = new VersionAwareMarshaller().getClass().getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallerClass(expectedMarshallerClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",
-               expectedMarshallerClass, embeddedCacheManager.getGlobalConfiguration()
-                        .getMarshallerClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",
+                  expectedMarshallerClass, cm.getGlobalConfiguration()
+                  .getMarshallerClass());
+         }
+      });
    }
 
    /**
@@ -500,16 +523,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedTransportNodeName = "expected.transport.node.Name";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setTransportNodeName(expectedTransportNodeName);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportNodeName. However, it didn't.",
-               expectedTransportNodeName, embeddedCacheManager.getGlobalConfiguration()
-                        .getTransportNodeName());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportNodeName. However, it didn't.",
+                  expectedTransportNodeName, cm.getGlobalConfiguration()
+                  .getTransportNodeName());
+         }
+      });
    }
 
    /**
@@ -522,16 +547,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedTransportClass = MockTransport.class.getName();
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setTransportClass(expectedTransportClass);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",
-               expectedTransportClass, embeddedCacheManager.getGlobalConfiguration()
-                        .getTransportClass());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",
+                  expectedTransportClass, cm.getGlobalConfiguration()
+                  .getTransportClass());
+         }
+      });
    }
 
    /**
@@ -545,16 +572,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedTransportProperties = new Properties();
       expectedTransportProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setTransportProperties(expectedTransportProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportProperties. However, it didn't.",
-               expectedTransportProperties, embeddedCacheManager.getGlobalConfiguration()
-                        .getTransportProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportProperties. However, it didn't.",
+                  expectedTransportProperties, cm.getGlobalConfiguration()
+                  .getTransportProperties());
+         }
+      });
    }
 
    /**
@@ -567,15 +596,17 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedClusterName = "expected.cluster.Name";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setClusterName(expectedClusterName);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",
-               expectedClusterName, embeddedCacheManager.getGlobalConfiguration().getClusterName());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",
+                  expectedClusterName, cm.getGlobalConfiguration().getClusterName());
+         }
+      });
    }
 
    /**
@@ -588,15 +619,17 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedMachineId = "expected.machine.Id";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMachineId(expectedMachineId);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MachineId. However, it didn't.",
-               expectedMachineId, embeddedCacheManager.getGlobalConfiguration().getMachineId());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MachineId. However, it didn't.",
+                  expectedMachineId, cm.getGlobalConfiguration().getMachineId());
+         }
+      });
    }
 
    /**
@@ -609,15 +642,17 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedRackId = "expected.rack.Id";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setRackId(expectedRackId);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",
-               expectedRackId, embeddedCacheManager.getGlobalConfiguration().getRackId());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",
+                  expectedRackId, cm.getGlobalConfiguration().getRackId());
+         }
+      });
    }
 
    /**
@@ -630,15 +665,17 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final String expectedSiteId = "expected.site.Id";
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setSiteId(expectedSiteId);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set SiteId. However, it didn't.",
-               expectedSiteId, embeddedCacheManager.getGlobalConfiguration().getSiteId());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set SiteId. However, it didn't.",
+                  expectedSiteId, cm.getGlobalConfiguration().getSiteId());
+         }
+      });
    }
 
    /**
@@ -649,16 +686,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseShutdownHookBehaviorPropIfExplicitlySet()
             throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER.name());
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",
-               ShutdownHookBehavior.DONT_REGISTER, embeddedCacheManager.getGlobalConfiguration()
-                        .getShutdownHookBehavior());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",
+                  ShutdownHookBehavior.DONT_REGISTER, cm.getGlobalConfiguration()
+                  .getShutdownHookBehavior());
+         }
+      });
    }
 
    /**
@@ -672,16 +711,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedAsyncListenerExecutorProperties = new Properties();
       expectedAsyncListenerExecutorProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setAsyncListenerExecutorProperties(expectedAsyncListenerExecutorProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",
-               expectedAsyncListenerExecutorProperties, embeddedCacheManager
-                        .getGlobalConfiguration().getAsyncListenerExecutorProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",
+                  expectedAsyncListenerExecutorProperties, cm
+                  .getGlobalConfiguration().getAsyncListenerExecutorProperties());
+         }
+      });
    }
 
    /**
@@ -695,16 +736,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedAsyncTransportExecutorProperties = new Properties();
       expectedAsyncTransportExecutorProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setAsyncTransportExecutorProperties(expectedAsyncTransportExecutorProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorProperties. However, it didn't.",
-               expectedAsyncTransportExecutorProperties, embeddedCacheManager
-                        .getGlobalConfiguration().getAsyncTransportExecutorProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorProperties. However, it didn't.",
+                  expectedAsyncTransportExecutorProperties, cm
+                  .getGlobalConfiguration().getAsyncTransportExecutorProperties());
+         }
+      });
    }
 
    /**
@@ -718,17 +761,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedEvictionScheduledExecutorProperties = new Properties();
       expectedEvictionScheduledExecutorProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setEvictionScheduledExecutorProperties(expectedEvictionScheduledExecutorProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorProperties. However, it didn't.",
-               expectedEvictionScheduledExecutorProperties, embeddedCacheManager
-                        .getGlobalConfiguration().getEvictionScheduledExecutorProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorProperties. However, it didn't.",
+                  expectedEvictionScheduledExecutorProperties, cm
+                  .getGlobalConfiguration().getEvictionScheduledExecutorProperties());
+         }
+      });
    }
 
    /**
@@ -742,17 +787,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Properties expectedReplicationQueueScheduledExecutorProperties = new Properties();
       expectedReplicationQueueScheduledExecutorProperties.setProperty("key", "value");
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest
                .setReplicationQueueScheduledExecutorProperties(expectedReplicationQueueScheduledExecutorProperties);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",
-               expectedReplicationQueueScheduledExecutorProperties, embeddedCacheManager
-                        .getGlobalConfiguration().getReplicationQueueScheduledExecutorProperties());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",
+                  expectedReplicationQueueScheduledExecutorProperties, cm
+                  .getGlobalConfiguration().getReplicationQueueScheduledExecutorProperties());
+         }
+      });
    }
 
    /**
@@ -765,16 +812,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final short setMarshallVersion = 1234;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallVersion(setMarshallVersion);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
-               setMarshallVersion, embeddedCacheManager.getGlobalConfiguration()
-                        .getMarshallVersion());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
+                  setMarshallVersion, cm.getGlobalConfiguration()
+                  .getMarshallVersion());
+         }
+      });
    }
 
    /**
@@ -787,16 +836,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
             throws Exception {
       final long expectedDistributedSyncTimeout = 123456L;
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setDistributedSyncTimeout(expectedDistributedSyncTimeout);
       objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-
-      assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",
-               expectedDistributedSyncTimeout, embeddedCacheManager.getGlobalConfiguration()
-                        .getDistributedSyncTimeout());
-      embeddedCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
+         @Override
+         public void call() {
+            assertEquals(
+                  "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",
+                  expectedDistributedSyncTimeout, cm.getGlobalConfiguration()
+                  .getDistributedSyncTimeout());
+         }
+      });
    }
 
 }

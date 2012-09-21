@@ -26,6 +26,7 @@ package org.infinispan.query.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
@@ -36,6 +37,7 @@ import org.hibernate.search.SearchException;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
@@ -58,13 +60,22 @@ public class CacheQueryImpl implements CacheQuery {
 
    public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
          KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
+       this(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
+   }
+
+   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
+                         KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory,
+                         Class<?>... classes) {
       this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache;
       hSearchQuery = searchFactory.createHSQuery();
       hSearchQuery
          .luceneQuery( luceneQuery )
-         //      .timeoutExceptionFactory( exceptionFactory ) Make one if needed
          .targetedEntities( Arrays.asList( classes ) );
+
+      if (timeoutExceptionFactory != null) {
+         hSearchQuery.timeoutExceptionFactory( timeoutExceptionFactory );
+      }
    }
 
    /**
@@ -125,7 +136,7 @@ public class CacheQueryImpl implements CacheQuery {
       hSearchQuery.firstResult( firstResult );
       return this;
    }
-   
+
    @Override
    public CacheQuery maxResults(int maxResults) {
       hSearchQuery.maxResults( maxResults );
@@ -167,7 +178,7 @@ public class CacheQueryImpl implements CacheQuery {
    private EntityLoader getLoader() {
       return new EntityLoader(cache, keyTransformationHandler);
    }
-   
+
    private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
       List<Object> keyList = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo ei : entityInfos) {
@@ -190,6 +201,12 @@ public class CacheQueryImpl implements CacheQuery {
    @Override
    public CacheQuery projection(String... fields) {
       hSearchQuery.projection(fields);
+      return this;
+   }
+
+   @Override
+   public CacheQuery timeout(long timeout, TimeUnit timeUnit) {
+      hSearchQuery.getTimeoutManager().setTimeout(timeout, timeUnit);
       return this;
    }
 

@@ -76,7 +76,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    protected void tearDown() {
       try {
          tm.rollback();

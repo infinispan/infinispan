@@ -24,12 +24,14 @@ package org.infinispan.commands.write;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
@@ -61,8 +63,8 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
-                              CacheNotifier notifier, Object... keys) {
-      super(notifier, keys);
+                              CacheNotifier notifier, Set<Flag> flags, Object... keys) {
+      super(notifier, flags, keys);
       writeOrigin = null;
       this.dm = dm;
       this.forRehash = forRehash;
@@ -71,13 +73,13 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
-                              CacheNotifier notifier, Collection<Object> keys) {
-      this(null, forRehash, dc, config, dm, notifier, keys);
+                              CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
+      this(null, forRehash, dc, config, dm, notifier, flags, keys);
    }
 
    public InvalidateL1Command(Address writeOrigin, boolean forRehash, DataContainer dc, Configuration config,
-                              DistributionManager dm, CacheNotifier notifier, Collection<Object> keys) {
-      super(notifier, keys);
+                              DistributionManager dm, CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
+      super(notifier, flags, keys);
       this.writeOrigin = writeOrigin;
       this.dm = dm;
       this.forRehash = forRehash;
@@ -114,7 +116,7 @@ public class InvalidateL1Command extends InvalidateCommand {
             }
 
             if (!locality.isLocal()) {
-               if (forRehash && config.isL1OnRehash()) {
+               if (forRehash && config.clustering().l1().onRehash()) {
                   if (trace) log.trace("Not removing, instead entry will be stored in L1");
                   // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
                } else {

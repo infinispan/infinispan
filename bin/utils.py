@@ -370,7 +370,7 @@ class DryRunUploader(DryRun):
 
 def maven_build_distribution(version):
   """Builds the distribution in the current working dir"""
-  mvn_commands = [["clean"], ["install", "-Pjmxdoc"],["install", "-Pgenerate-schema-doc"], ["deploy", "-Pdistribution"]]
+  mvn_commands = [["clean"], ["install", "-Pjmxdoc"],["install", "-Pgenerate-schema-doc"], ["deploy", "-Pdistribution,extras"]]
     
   for c in mvn_commands:
     c.append("-Dmaven.test.skip.exec=true")
@@ -383,7 +383,7 @@ def maven_build_distribution(version):
 
 
 def get_version_pattern(): 
-  return re.compile("^([4-9]\.[0-9])\.[0-9]\.(Final|(ALPHA|BETA|CR)[1-9][0-9]?)$", re.IGNORECASE)
+  return re.compile("^([4-9]\.[0-9])\.[0-9]\.(Final|(Alpha|Beta|CR)[1-9][0-9]?)$")
 
 def get_version_major_minor(full_version):
   pattern = get_version_pattern()

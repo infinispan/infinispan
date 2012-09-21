@@ -19,6 +19,7 @@
 
 package org.infinispan.statetransfer;
 
+//todo [anistor] do we still use this?
 /**
  * Thrown when a state transfer is interrupted because there is another state transfer pending.
  */

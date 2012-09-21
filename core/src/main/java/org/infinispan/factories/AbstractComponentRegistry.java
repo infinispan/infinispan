@@ -44,12 +44,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,6 +73,9 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Cache configuration can only be changed and will only be re-injected if the cache is not in the {@link
  * org.infinispan.lifecycle.ComponentStatus#RUNNING} state.
+ *
+ * Thread Safety: instances of {@link GlobalComponentRegistry} can be concurrently updated so all
+ * the write operations are serialized through class intrinsic lock.
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
@@ -99,10 +102,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    private static final Object NULL_COMPONENT = new Object();
 
    // component and method containers
-   private final Map<String, Component> componentLookup = new HashMap<String, Component>(1);
+   private final ConcurrentMap<String, Component> componentLookup = new ConcurrentHashMap<String, AbstractComponentRegistry.Component>(1);
 
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
-   protected final ClassLoader defaultClassLoader;
 
    private static final PrioritizedMethod[] EMPTY_PRIO_METHODS = {};
 
@@ -117,9 +119,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected abstract Log getLog();
 
-   protected AbstractComponentRegistry(ClassLoader classLoader) {
-      defaultClassLoader = registerDefaultClassLoader(classLoader);
-   }
+   public abstract ComponentMetadataRepo getComponentMetadataRepo();
 
    /**
     * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
@@ -133,7 +133,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    public void wireDependencies(Object target) throws ConfigurationException {
       try {
          Class<?> targetClass = target.getClass();
-         ComponentMetadata metadata = ComponentMetadataRepo.findComponentMetadata(targetClass);
+         ComponentMetadata metadata = getComponentMetadataRepo().findComponentMetadata(targetClass);
          if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
             // search for anything we need to inject
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
@@ -163,27 +163,27 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param component component to register
     * @param type      type of component
     */
-   public final void registerComponent(Object component, Class<?> type) {
+   public synchronized final void registerComponent(Object component, Class<?> type) {
       registerComponent(component, type.getName(), type.equals(component.getClass()));
    }
 
-   public final void registerComponent(Object component, String name) {
+   public synchronized final void registerComponent(Object component, String name) {
       registerComponent(component, name, name.equals(component.getClass().getName()));
    }
 
-   public final void registerComponent(Object component, String name, boolean nameIsFQCN) {
+   public synchronized final void registerComponent(Object component, String name, boolean nameIsFQCN) {
       registerComponentInternal(component, name, nameIsFQCN);
    }
 
-   protected final void registerNonVolatileComponent(Object component, String name) {
+   protected synchronized final void registerNonVolatileComponent(Object component, String name) {
       registerComponentInternal(component, name, false);
    }
 
-   protected final void registerNonVolatileComponent(Object component, Class<?> type) {
+   protected synchronized final void registerNonVolatileComponent(Object component, Class<?> type) {
       registerComponentInternal(component, type.getName(), true);
    }
 
-   protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+   protected synchronized void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
@@ -209,7 +209,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          componentLookup.put(name, c);
       }
 
-      c.metadata = ComponentMetadataRepo.findComponentMetadata(component.getClass());
+      c.metadata = getComponentMetadataRepo().findComponentMetadata(component.getClass());
       try {
          c.buildInjectionMethodsList();
       } catch (ClassNotFoundException cnfe) {
@@ -268,12 +268,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return a fully wired component instance, or null if one cannot be found or constructed.
     * @throws ConfigurationException if there is a problem with constructing or wiring the instance.
     */
-   protected <T> T getOrCreateComponent(Class<T> componentClass) {
+   protected synchronized <T> T getOrCreateComponent(Class<T> componentClass) {
       return getOrCreateComponent(componentClass, componentClass.getName(), true);
    }
 
    @SuppressWarnings("unchecked")
-   protected <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
+   protected synchronized <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
 
       Object component;
@@ -307,25 +307,34 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return component factory capable of constructing such components
     */
    protected AbstractComponentFactory getFactory(Class<?> componentClass) {
-      String cfClass = ComponentMetadataRepo.findFactoryForComponent(componentClass);
+      String cfClass = getComponentMetadataRepo().findFactoryForComponent(componentClass);
       if (cfClass == null) {
          throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
       }
       // a component factory is a component too!  See if one has been created and exists in the registry
       AbstractComponentFactory cf = getComponent(cfClass);
       if (cf == null) {
-         // hasn't yet been created.  Create and put in registry
-         cf = instantiateFactory(cfClass);
-         if (cf == null)
-            throwStackAwareConfigurationException("Unable to locate component factory for component " + componentClass);
-         // we simply register this factory.  Registration will take care of constructing any dependencies.
-         registerComponent(cf, cfClass);
+         cf = createComponentFactoryInternal(componentClass, cfClass);
       }
 
       // ensure the component factory is in the STARTED state!
       Component c = lookupComponent(cfClass, cfClass, true);
       if (c.instance != cf)
          throwStackAwareConfigurationException("Component factory " + cfClass + " incorrectly registered!");
+      return cf;
+   }
+
+   protected synchronized AbstractComponentFactory createComponentFactoryInternal(Class<?> componentClass, String cfClass) {
+      //first check as it might have been created in between by another thread
+      AbstractComponentFactory component = getComponent(cfClass);
+      if (component != null) return component;
+
+      //hasn't yet been created.  Create and put in registry
+      AbstractComponentFactory cf = instantiateFactory(cfClass);
+      if (cf == null)
+         throwStackAwareConfigurationException("Unable to locate component factory for component " + componentClass);
+      // we simply register this factory.  Registration will take care of constructing any dependencies.
+      registerComponent(cf, cfClass);
       return cf;
    }
 
@@ -359,7 +368,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     *
     * @param name name of component to register as a null
     */
-   protected final void registerNullComponent(String name) {
+   protected synchronized final void registerNullComponent(String name) {
       registerComponent(NULL_COMPONENT, name, false);
    }
 
@@ -423,7 +432,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param loader a class loader to use by default.  If this is null, the class loader used to load this instance of
     *               ComponentRegistry is used.
     */
-   private ClassLoader registerDefaultClassLoader(ClassLoader loader) {
+   protected ClassLoader registerDefaultClassLoader(ClassLoader loader) {
       ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
       registerComponent(loaderToUse, ClassLoader.class);
       // make sure the class loader is non-volatile, so it survives restarts.
@@ -493,11 +502,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    /**
     * Removes any components not annotated as @SurvivesRestarts.
     */
-   public void resetVolatileComponents() {
+   public synchronized void resetVolatileComponents() {
       // destroy all components to clean up resources
+      getLog().tracef("Resetting volatile components");
       for (Component c : new HashSet<Component>(componentLookup.values())) {
          // the component is volatile!!
          if (!c.metadata.isSurvivesRestarts()) {
+            getLog().tracef("Removing volatile component %s", c.metadata.getName());
             componentLookup.remove(c.name);
          }
       }
@@ -514,7 +525,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, it will be initialized first.
     */
    @Override
-   public void start() {
+   public synchronized void start() {
 
       if (!state.startAllowed()) {
          if (state.needToDestroyFailedCache())
@@ -540,7 +551,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * no-op.
     */
    @Override
-   public void stop() {
+   public synchronized void stop() {
       if (!state.stopAllowed()) {
          getLog().debugf("Ignoring call to stop() as current state is %s", this);
          return;
@@ -671,7 +682,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       for (PrioritizedMethod em : stopMethods) {
          if (traceEnabled)
             getLog().tracef("Invoking stop method %s on component %s", em.metadata.getMethod(), em.component.getName());
-         em.invoke();
+         try {
+            em.invoke();
+         } catch (Throwable t) {
+            getLog().componentFailedToStop(t);
+         }
       }
 
       destroy();

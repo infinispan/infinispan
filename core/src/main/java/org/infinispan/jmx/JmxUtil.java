@@ -24,7 +24,7 @@
 package org.infinispan.jmx;
 
 import org.infinispan.CacheException;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,8 +52,8 @@ public class JmxUtil {
     * @return an instance of {@link javax.management.MBeanServer}
     */
    public static MBeanServer lookupMBeanServer(GlobalConfiguration cfg) {
-      MBeanServerLookup lookup = cfg.getMBeanServerLookupInstance();
-      return lookup.getMBeanServer(cfg.getMBeanServerProperties());
+      MBeanServerLookup lookup = cfg.globalJmxStatistics().mbeanServerLookup();
+      return lookup.getMBeanServer(cfg.globalJmxStatistics().properties());
    }
 
    /**
@@ -66,11 +66,12 @@ public class JmxUtil {
     * @return A string that combines the allowed JMX domain and the group name
     */
    public static String buildJmxDomain(GlobalConfiguration cfg, MBeanServer mBeanServer, String groupName) {
-      String jmxDomain = findJmxDomain(cfg.getJmxDomain(), mBeanServer, groupName);
-      String configJmxDomain = cfg.getJmxDomain();
-      if (!jmxDomain.equals(configJmxDomain) && !cfg.isAllowDuplicateDomains()) {
+      String jmxDomain = findJmxDomain(cfg.globalJmxStatistics().domain(), mBeanServer, groupName);
+      String configJmxDomain = cfg.globalJmxStatistics().domain();
+      if (!jmxDomain.equals(configJmxDomain) && !cfg.globalJmxStatistics().allowDuplicateDomains()) {
          log.cacheManagerAlreadyRegistered(configJmxDomain);
-         throw new JmxDomainConflictException(String.format("Domain already registered %s", configJmxDomain));
+         throw new JmxDomainConflictException(String.format(
+               "Domain already registered %s when trying to register: %s", configJmxDomain, groupName));
       }
       return jmxDomain;
    }

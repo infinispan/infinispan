@@ -82,6 +82,20 @@ import java.io.Serializable;
  * to provide externalizers is available via {@link AdvancedExternalizer}.
  * More details can be found in this interface's javadoc.
  *
+ * Please note that even though Externalizer is marked as {@link Serializable},
+ * the need to marshall the externalizer is only really needed when developing
+ * user friendly externalizers (using {@link SerializeWith}). {@link AdvancedExternalizer}
+ * instances do not require the externalizer to be serializable since the
+ * externalizer itself is not marshalled.
+ *
+ * Even though it's not strictly necessary, to avoid breaking compatibility
+ * with old clients, {@link Externalizer} implements {@link Serializable} but
+ * this requirement is only needed for those user friendly externalizers.
+ * There's a chance that in future major releases {@link Externalizer} won't
+ * extend {@link Serializable} any more, hence we strongly recommend that any
+ * user-friendly externalizer users mark their externalizer implementations as
+ * either {@link Serializable} or {@link java.io.Externalizable}.
+ *
  * @author Galder Zamarreño
  * @since 5.0
  */

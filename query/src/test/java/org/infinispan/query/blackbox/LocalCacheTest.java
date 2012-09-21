@@ -35,7 +35,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -55,7 +55,6 @@ import junit.framework.Assert;
 import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheTest")
@@ -65,7 +64,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected Person person3;
    protected Person person4;
    protected Person person5;
-   protected Person person6;
    protected AnotherGrassEater anotherGrassEater;
    protected QueryParser queryParser;
    protected String key1 = "Navin";
@@ -326,14 +324,15 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
    
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      FluentConfiguration cfg = getDefaultClusteredConfig(LOCAL, true).fluent();
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
+            .enable()
             .indexLocalOnly(false)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
-      return TestCacheManagerFactory.createCacheManager(cfg.build());
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
    
    public void testEntityDiscovery() {
@@ -350,7 +349,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    /**
     * Verifies if the indexing interceptor is aware of a specific list of types.
-    * @param cache
+    * @param cache the cache containing the indexes
     * @param types vararg listing the types the indexing engine should know
     */
    private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
@@ -395,7 +394,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cache.put(anotherGrassEaterKey, anotherGrassEater);
    }
    
-   protected void enhanceConfig(FluentConfiguration c) {
+   protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
    }
 

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -52,12 +53,30 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private final ExecutorService asyncExecutor;
 
+   // like QueryHits.DEFAULT_TOP_DOC_RETRIEVAL_SIZE = 100;
+   // (just to have the same default size of not clustered queries)
+   private int maxResults = 100;
+
+   private int firstResult = 0;
+
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
       hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
                .targetedEntities(Arrays.asList(classes));
+   }
+
+   @Override
+   public CacheQuery maxResults(int maxResults) {
+      this.maxResults = maxResults;
+      return super.maxResults(maxResults);
+   }
+
+   @Override
+   public CacheQuery firstResult(int firstResult) {
+      this.firstResult = firstResult;
+      return this;
    }
 
    @Override
@@ -68,43 +87,55 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public int getResultSize() {
+      int accumulator;
       if (resultSize == null) {
          ClusteredQueryCommand command = ClusteredQueryCommand.getResultSize(hSearchQuery, cache);
 
          ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
          List<QueryResponse> responses = invoker.broadcast(command);
 
-         resultSize = 0;
+         accumulator = 0;
          for (QueryResponse response : responses) {
-            resultSize += response.getResultSize();
+            accumulator += response.getResultSize();
          }
+         resultSize = Integer.valueOf(accumulator);
       }
-      return resultSize;
+      else {
+         accumulator = resultSize.intValue();
+      }
+      return accumulator;
    }
 
    @Override
    public QueryIterator iterator(int fetchSize) throws SearchException {
+      hSearchQuery.maxResults(getNodeMaxResults());
       ClusteredQueryCommand command = ClusteredQueryCommand
                .createEagerIterator(hSearchQuery, cache);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
-      DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize,
-               topDocsResponses, cache);
+      DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize, maxResults, firstResult,
+            topDocsResponses, cache);
 
       return it;
    }
 
    @Override
    public QueryIterator lazyIterator(int fetchSize) {
+      hSearchQuery.maxResults(getNodeMaxResults());
       UUID lazyItId = UUID.randomUUID();
       ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache,
                lazyItId);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
-      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize,
-               lazyItId, topDocsResponses, asyncExecutor, cache);
+      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize, maxResults,
+            firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
 
       return it;
+   }
+
+   // number of results of each node of cluster
+   private int getNodeMaxResults() {
+      return maxResults + firstResult;
    }
 
    private HashMap<UUID, ClusteredTopDocs> broadcastQuery(ClusteredQueryCommand command) {
@@ -139,4 +170,8 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       return values;
    }
 
+   @Override
+   public CacheQuery timeout(long timeout, TimeUnit timeUnit) {
+      throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");   // TODO
+   }
 }

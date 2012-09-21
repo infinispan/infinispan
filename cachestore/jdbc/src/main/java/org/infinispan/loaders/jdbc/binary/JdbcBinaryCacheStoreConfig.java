@@ -41,7 +41,8 @@ public class JdbcBinaryCacheStoreConfig extends AbstractNonDelegatingJdbcCacheSt
    }
 
    public JdbcBinaryCacheStoreConfig(ConnectionFactoryConfig connectionFactoryConfig, TableManipulation tm) {
-      this();
+      super(connectionFactoryConfig, tm);
+      this.cacheLoaderClassName = JdbcBinaryCacheStore.class.getName();
       this.connectionFactoryConfig = connectionFactoryConfig;
       this.tableManipulation = tm;
    }
@@ -58,4 +59,10 @@ public class JdbcBinaryCacheStoreConfig extends AbstractNonDelegatingJdbcCacheSt
       testImmutability("tableManipulation");
       this.tableManipulation.setTableNamePrefix(bucketTableName);
    }
+
+   public void setTableNamePrefix(String tableNamePrefix) {
+      testImmutability("tableManipulation");
+      this.tableManipulation.setTableNamePrefix(tableNamePrefix);
+   }
+
 }

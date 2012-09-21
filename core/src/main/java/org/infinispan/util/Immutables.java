@@ -88,7 +88,7 @@ public class Immutables {
     * @param properties the TypedProperties to copy
     * @return the immutable copy
     */
-   public static TypedProperties immutableTypedPropreties(TypedProperties properties) {
+   public static TypedProperties immutableTypedProperties(TypedProperties properties) {
       if (properties == null) return null;
       return new ImmutableTypedProperties(properties);
    }

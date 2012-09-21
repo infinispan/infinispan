@@ -47,6 +47,7 @@ public class ParallelCacheStartTest extends MultipleCacheManagersTest {
       cm1.defineConfiguration("cache2", cfg);
    }
 
+   @Test(enabled = false, description = "See ISPN-2162")
    public void testParallelStartup() throws Exception {
       // start both caches in parallel
       cm1.startCaches("cache1", "cache2");

@@ -37,10 +37,10 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * @since 5.0
  */
 public class EntityLoader {
-   
+
    private final AdvancedCache<?, ?> cache;
    private final KeyTransformationHandler keyTransformationHandler;
-   
+
    public EntityLoader(Cache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
       this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache.getAdvancedCache();
@@ -55,7 +55,10 @@ public class EntityLoader {
       int size = entityInfos.length;
       ArrayList<Object> list = new ArrayList<Object>(size);
       for (EntityInfo e : entityInfos) {
-         list.add(load(e));
+          Object entity = load(e);
+          if (entity != null) {
+              list.add(entity);
+          }
       }
       return list;
    }

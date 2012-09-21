@@ -55,7 +55,7 @@ public class GridInputStream extends InputStream {
          else if (isLastChunk())
             endReached = true;
       }
-      int retval = currentBuffer[localIndex++];
+      int retval = 0x0ff&currentBuffer[localIndex++];
       index++;
       return retval;
    }
@@ -104,13 +104,18 @@ public class GridInputStream extends InputStream {
    }
 
    @Override
-   public long skip(long n) throws IOException {
-      throw new UnsupportedOperationException();
+   public long skip(long len) throws IOException {
+       //naive and inefficient, but working
+       long count = 0;
+       while(len!=count && read()!=-1){
+           count++;
+       }
+       return count;
    }
 
    @Override
    public int available() throws IOException {
-      throw new UnsupportedOperationException();
+      return getBytesRemainingInChunk();
    }
 
    @Override

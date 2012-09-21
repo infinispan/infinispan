@@ -23,43 +23,40 @@ import java.util.Properties;
 
 /*
  * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
- * rather than delegate to existing ones. 
+ * rather than delegate to existing ones.
  */
-public abstract class AbstractLoaderConfigurationBuilder<T extends AbstractLoaderConfiguration> extends
-      AbstractLoadersConfigurationChildBuilder<T> {
-
-   protected final AsyncLoaderConfigurationBuilder async;
-   protected final SingletonStoreConfigurationBuilder singletonStore;
+public abstract class AbstractLoaderConfigurationBuilder<T extends LoaderConfiguration, S extends AbstractLoaderConfigurationBuilder<T, S>> extends
+      AbstractLoadersConfigurationChildBuilder<T> implements LoaderConfigurationBuilder<T, S> {
+   protected Properties properties = new Properties();
 
    public AbstractLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.async = new AsyncLoaderConfigurationBuilder(this);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
    /**
-    * Configuration for the async cache loader. If enabled, this provides you with asynchronous
-    * writes to the cache store, giving you 'write-behind' caching.
+    * <p>
+    * Defines a single property. Can be used multiple times to define all needed properties, but the
+    * full set is overridden by {@link #withProperties(Properties)}.
+    * </p>
+    * <p>
+    * These properties are passed directly to the cache store.
+    * </p>
     */
-   public AsyncLoaderConfigurationBuilder async() {
-      return async;
+   @Override
+   public S addProperty(String key, String value) {
+      this.properties.put(key, value);
+      return self();
    }
 
    /**
-    * SingletonStore is a delegating cache store used for situations when only one instance in a
-    * cluster should interact with the underlying store. The coordinator of the cluster will be
-    * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
-    * CacheStore implementation. It always delegates reads to the real CacheStore.
+    * <p>
+    * These properties are passed directly to the cache store.
+    * </p>
     */
-   public SingletonStoreConfigurationBuilder singletonStore() {
-      return singletonStore;
+   @Override
+   public S withProperties(Properties props) {
+      this.properties = props;
+      return self();
    }
-
-   /**
-    * Properties passed to the cache store or loader
-    * @param p
-    * @return
-    */
-   public abstract AbstractLoaderConfigurationBuilder<T> withProperties(Properties p);
 
 }

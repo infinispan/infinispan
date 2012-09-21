@@ -109,13 +109,14 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          isGlobalStatsEnabled)
 
       if (isGlobalStatsEnabled) {
-         val globalCfg = cacheManager.getGlobalConfiguration
+         val globalCfg = cacheManager.getCacheManagerConfiguration
          mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
          val groupName = "type=Server,name=%s".format(threadNamePrefix)
          val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
 
          // Pick up metadata from the component metadata repository
-         val meta = ComponentMetadataRepo.findComponentMetadata(transport.getClass).toManageableComponentMetadata
+         val meta = LifecycleCallbacks.componentMetadataRepo
+                 .findComponentMetadata(transport.getClass).toManageableComponentMetadata
          // And use this metadata when registering the transport as a dynamic MBean
          val dynamicMBean = new ResourceDMBean(transport, meta)
 

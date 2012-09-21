@@ -44,10 +44,10 @@ public class TxManagerLookupConfigTest {
    static TmA tma = new TmA();
    static TmB tmb = new TmB();
 
-   public void simpleTest() throws Exception {
+   public void simpleTest() {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())){
          @Override
-         public void call() throws Exception {
+         public void call() {
             Configuration customConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
             customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
             Configuration definedConfiguration = cm.defineConfiguration("aCache", customConfiguration);
@@ -70,7 +70,7 @@ public class TxManagerLookupConfigTest {
    public static class TxManagerLookupA implements TransactionManagerLookup {
 
       @Override
-      public TransactionManager getTransactionManager() throws Exception {
+      public synchronized TransactionManager getTransactionManager() throws Exception {
          return tma;
       }
    }
@@ -78,7 +78,7 @@ public class TxManagerLookupConfigTest {
    public static class TxManagerLookupB implements TransactionManagerLookup {
 
       @Override
-      public TransactionManager getTransactionManager() throws Exception {
+      public synchronized TransactionManager getTransactionManager() throws Exception {
          return tmb;
       }
    }

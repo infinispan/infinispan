@@ -53,7 +53,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private static final boolean trace = log.isTraceEnabled();
 
    private Set<Address> remoteLockedNodes;
-   protected Set<Object> readKeys = null;
+   private Set<Object> readKeys = null;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -61,6 +61,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private final Transaction transaction;
 
    private final boolean implicitTransaction;
+
+   private volatile boolean isFromRemoteSite;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
       super(tx, viewId);
@@ -71,13 +73,14 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public void addModification(WriteCommand mod) {
       if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
-         modifications = new LinkedList<WriteCommand>();
+         // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
+         modifications = Collections.synchronizedList(new LinkedList<WriteCommand>());
       }
       modifications.add(mod);
    }
 
    public void locksAcquired(Collection<Address> nodes) {
-      log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
+      if (trace) log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
       if (remoteLockedNodes == null)
          remoteLockedNodes = new HashSet<Address>(nodes);
       else
@@ -163,7 +166,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return "LocalTransaction{" +
             "remoteLockedNodes=" + remoteLockedNodes +
             ", isMarkedForRollback=" + isMarkedForRollback +
-            ", transaction=" + transaction +
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
             ", viewId=" + viewId +
@@ -183,5 +185,20 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    @Override
    public boolean keyRead(Object key) {
       return readKeys != null && readKeys.contains(key);
+   }
+
+   /**
+    * When x-site replication is used, this returns when this operation
+    * happens as a result of backing up data from a remote site.
+    */
+   public boolean isFromRemoteSite() {
+      return isFromRemoteSite;
+   }
+
+   /**
+    * @see #isFromRemoteSite()
+    */
+   public void setFromRemoteSite(boolean fromRemoteSite) {
+      isFromRemoteSite = fromRemoteSite;
    }
 }

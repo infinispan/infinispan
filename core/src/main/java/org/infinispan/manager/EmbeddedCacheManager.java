@@ -23,9 +23,9 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -81,10 +81,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param cacheName             name of cache whose configuration is being defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
-    * @deprecated Use {@link #defineConfiguration(String, String, org.infinispan.configuration.cache.Configuration)} instead
+    * @deprecated Use {@link #defineConfiguration(String, String, org.infinispan.config.Configuration)} instead
     */
    @Deprecated
-   Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
+   org.infinispan.config.Configuration defineConfiguration(String cacheName, org.infinispan.config.Configuration configurationOverride);
    
    /**
     * Defines a named cache's configuration using the following algorithm:
@@ -102,7 +102,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
     */
-   org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride);
+   Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
 
    /**
     * Defines a named cache's configuration using the following algorithm:
@@ -129,7 +129,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @deprecated Use {@link #defineConfiguration(String, org.infinispan.configuration.cache.Configuration)} instead
     */
    @Deprecated
-   Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
+   org.infinispan.config.Configuration defineConfiguration(String cacheName, String templateCacheName, org.infinispan.config.Configuration configurationOverride);
 
    /**
     * @return the name of the cluster.  Null if running in local mode.
@@ -165,30 +165,44 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * Returns global configuration for this CacheManager
     *
     * @return the global configuration object associated to this CacheManager
+    *
+    * @deprecated Use {@link #getCacheManagerConfiguration()} instead.
+    * Please note that before this method was deprecated, modifications on the
+    * GlobalConfiguration returned would be applied to the cache manager if it
+    * was not started. Since the deprecation, this method returns a copy and
+    * so any changes to the returned object won't have any impact on the cache
+    * manager instance.
     */
-   GlobalConfiguration getGlobalConfiguration();
+   @Deprecated
+   org.infinispan.config.GlobalConfiguration getGlobalConfiguration();
    
    /**
     * Returns global configuration for this CacheManager
     *
     * @return the global configuration object associated to this CacheManager
     */
-   org.infinispan.configuration.global.GlobalConfiguration getCacheManagerConfiguration();
+   GlobalConfiguration getCacheManagerConfiguration();
    
    /**
     * Returns the configuration for the given cache.
     *
     * @return the configuration for the given cache or null if no such cache is defined
     */
-   org.infinispan.configuration.cache.Configuration getCacheConfiguration(String name);
+   Configuration getCacheConfiguration(String name);
 
    /**
     * Returns default configuration for this CacheManager
     *
     * @return the default configuration associated with this CacheManager
+    * @deprecated Use {@link #getDefaultCacheConfiguration()} instead.
+    * Please note that before this method was deprecated, modifications on the
+    * Configuration returned would be applied to the default cache if it
+    * was not started. Since the deprecation, this method returns a copy and
+    * so any changes to the returned object won't have any impact on the
+    * default cache instance.
     */
    @Deprecated
-   Configuration getDefaultConfiguration();
+   org.infinispan.config.Configuration getDefaultConfiguration();
    
    /**
     * Returns default configuration for this CacheManager

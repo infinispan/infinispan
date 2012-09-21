@@ -23,7 +23,6 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -43,6 +42,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.topology.CacheTopologyControlCommand;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -310,15 +310,16 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Response handle(CacheRpcCommand cmd, Address origin) throws Throwable {
          boolean notifyRehashStarted = false;
-         if (cmd instanceof CacheViewControlCommand) {
-            CacheViewControlCommand rcc = (CacheViewControlCommand) cmd;
+         if (cmd instanceof CacheTopologyControlCommand) {
+            CacheTopologyControlCommand rcc = (CacheTopologyControlCommand) cmd;
             log.debugf("Intercepted command: %s", cmd);
             switch (rcc.getType()) {
-               case PREPARE_VIEW:
+               case REBALANCE_START:
                   txsReady.await();
                   notifyRehashStarted = true;
                   break;
-               case COMMIT_VIEW:
+               case CH_UPDATE:
+                  // TODO Use another type instead, e.g. REBASE_END
                   joinEnded.countDown();
                   break;
             }

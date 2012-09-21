@@ -4,7 +4,7 @@ import re
 import sys
 from utils import *
 
-command_file_name = re.compile('(commands/[a-zA-Z0-9/]*Command.java)')
+command_file_name = re.compile('([a-zA-Z0-9/]*Command.java)')
 
 def trim_name(nm):
   res = command_file_name.search(nm)
@@ -26,7 +26,7 @@ command_line_regexp = re.compile('COMMAND_ID\s*=\s*([0-9]+)\s*;')
 
 command_ids = {}
 warnings = []
-for test_file in GlobDirectoryWalker(get_search_path(sys.argv[0]) + 'core/src/main/java/org/infinispan/commands', '*Command.java'):
+for test_file in GlobDirectoryWalker(get_search_path(sys.argv[0]) + 'core/src/main/java/', '*Command.java'):
   tf = open(test_file)
   try:
     for line in tf:
@@ -46,7 +46,13 @@ sorted_keys = command_ids.keys()
 sorted_keys.sort()
 
 i=1
+prev_id = 0
 for k in sorted_keys:
+  prev_id += 1
+  while k > prev_id:
+    print '  ---'
+    prev_id += 1
+
   zeropad = ""
   if (i < 10 and len(sorted_keys) > 9):
     zeropad = " "

@@ -24,11 +24,9 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
@@ -49,8 +47,6 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -193,13 +189,17 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder defaultConfig) {
+      return addClusterEnabledCacheManager(globalBuilder, defaultConfig, new TransportFlags());
+   }
+
    /**
     * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
     * the current thread.  Uses a default clustered cache manager global config.
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
-    * @deprecacted Use {@link #addClusterEnabledCacheManager(
+    * @deprecated Use {@link #addClusterEnabledCacheManager(
     *    org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
     */
    @Deprecated
@@ -215,22 +215,30 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder, flags);
+      cacheManagers.add(cm);
+      return cm;
+   }
+
    /**
     * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
     * @param mode cache mode to use
     * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return an embedded cache manager
     */
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
       return addClusterEnabledCacheManager(mode, transactional, new TransportFlags());
    }
 
+   @Deprecated
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional, TransportFlags flags) {
       Configuration configuration = getDefaultClusteredConfig(mode, transactional);
       return addClusterEnabledCacheManager(configuration, flags);
    }
 
-
+   @Deprecated
    protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
    }
@@ -239,10 +247,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
    }
 
+   protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(globalBuilder, builder);
+   }
+
+   @Deprecated
    protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
    }
 
+   @Deprecated
    protected void createCluster(Configuration.CacheMode mode, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
    }
@@ -259,18 +273,21 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   private List<Cache> getCaches(String cacheName) {
-      List<Cache> caches;
-      caches = new ArrayList<Cache>();
+   private <K, V> List<Cache<K, V>> getCaches(String cacheName) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>();
       for (EmbeddedCacheManager cm : cacheManagers) {
-         caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+         Cache<K, V> c;
+         if (cacheName == null)
+            c = cm.getCache();
+         else
+            c = cm.getCache(cacheName);
+         caches.add(c);
       }
       return caches;
    }
 
    protected void waitForClusterToForm(String cacheName) {
-      List<Cache> caches;
-      caches = getCaches(cacheName);
+      List<Cache<Object, Object>> caches = getCaches(cacheName);
       Cache<Object, Object> cache = caches.get(0);
       TestingUtil.blockUntilViewsReceived(10000, caches);
       if (cache.getConfiguration().getCacheMode().isDistributed()) {
@@ -295,7 +312,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected TransactionManager tm(int i, String cacheName) {
       return cache(i, cacheName ).getAdvancedCache().getTransactionManager();
    }
-
 
    protected TransactionManager tm(int i) {
       return cache(i).getAdvancedCache().getTransactionManager();
@@ -355,10 +371,23 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches;
    }
 
+   @Deprecated
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig);
+         Cache<K, V> cache = cm.getCache();
+         caches.add(cache);
+
+      }
+      waitForClusterToForm();
+      return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, ConfigurationBuilder builder) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
 
@@ -422,16 +451,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected <K, V> List<Cache<K, V>> caches(String name) {
-      List<Cache<K, V>> result = new ArrayList<Cache<K, V>>();
-      for (EmbeddedCacheManager ecm : cacheManagers) {
-         Cache<K, V> c;
-         if (name == null)
-            c = ecm.getCache();
-         else
-            c = ecm.getCache(name);
-         result.add(c);
-      }
-      return result;
+      return getCaches(name);
    }
 
    protected <K, V> List<Cache<K, V>> caches() {
@@ -461,7 +481,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       List<Cache<Object, Object>> caches = caches();
       caches.remove(cacheIndex);
       manager(cacheIndex).stop();
-      TestingUtil.blockUntilViewsReceived(60000, false, caches.toArray(new Cache[0]));
+      TestingUtil.blockUntilViewsReceived(60000, false, caches);
+      TestingUtil.waitForRehashToComplete(caches);
    }
 
    /**

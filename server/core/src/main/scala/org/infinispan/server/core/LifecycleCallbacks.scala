@@ -26,7 +26,9 @@ package org.infinispan.server.core
 import org.infinispan.lifecycle.AbstractModuleLifecycle
 import org.infinispan.server.core.ExternalizerIds._
 import org.infinispan.factories.{ComponentRegistry, GlobalComponentRegistry}
-import org.infinispan.config.{Configuration, GlobalConfiguration}
+import org.infinispan.configuration.global.GlobalConfiguration
+import org.infinispan.configuration.cache.Configuration
+import org.infinispan.factories.components.ComponentMetadataRepo
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -37,13 +39,22 @@ import org.infinispan.config.{Configuration, GlobalConfiguration}
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
+      LifecycleCallbacks.componentMetadataRepo = gcr.getComponentMetadataRepo
       addExternalizer(globalCfg)
+   }
 
    override def cacheStarting(cr: ComponentRegistry, cfg: Configuration, cacheName: String) =
-      cfg.fluent.storeAsBinary.disable
+      cfg.storeAsBinary().enabled(false)
 
    private[core] def addExternalizer(globalCfg : GlobalConfiguration) =
-      globalCfg.fluent.serialization
-         .addAdvancedExternalizer(SERVER_CACHE_VALUE, new CacheValue.Externalizer)
+      globalCfg.serialization().advancedExternalizers().put(
+         SERVER_CACHE_VALUE, new CacheValue.Externalizer)
+
+}
+
+object LifecycleCallbacks {
+
+   var componentMetadataRepo: ComponentMetadataRepo = _
+
 }

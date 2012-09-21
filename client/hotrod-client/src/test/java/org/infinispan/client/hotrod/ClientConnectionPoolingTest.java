@@ -31,7 +31,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,6 +43,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.testng.AssertJUnit.assertEquals;
+
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -110,8 +112,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool) TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
+      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) extractField(remoteCacheManager, "transportFactory");
+      connectionPool = (GenericKeyedObjectPool) extractField(tcpConnectionFactory, "connectionPool");
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
@@ -125,8 +127,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() throws ExecutionException, InterruptedException {
-      hotRodServer1.stop();
-      hotRodServer2.stop();
+      killServers(hotRodServer1, hotRodServer2);
 
       workerThread1.stop();
       workerThread2.stop();
@@ -142,7 +143,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       workerThread5.awaitTermination();
       workerThread6.awaitTermination();
 
-      remoteCacheManager.stop();
+      killRemoteCacheManager(remoteCacheManager);
    }
 
    @Test
@@ -191,27 +192,36 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          workerThread1.putAsync("k3", "v3");
          workerThread2.putAsync("k4", "v4");
          log.info("Async calls for k3 and k4 is done.");
-         // give the worker thread some time to start their requests
-         Thread.sleep(100);
-         assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
-         assertEquals(1, connectionPool.getNumActive(hrServ2Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return 1 == connectionPool.getNumActive(hrServ1Addr) &&
+               1 == connectionPool.getNumActive(hrServ2Addr) &&
+               0 == connectionPool.getNumIdle(hrServ1Addr) &&
+               0 == connectionPool.getNumIdle(hrServ2Addr);
+            }
+         });
+
 
          // another operation for each server, creating new connections
          workerThread3.putAsync("k5", "v5");
          workerThread4.putAsync("k6", "v6");
-         Thread.sleep(100);
-         assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
-         assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return 2 == connectionPool.getNumActive(hrServ1Addr) &&
+                     2 == connectionPool.getNumActive(hrServ2Addr) &&
+                     0 == connectionPool.getNumIdle(hrServ1Addr) &&
+                     0 == connectionPool.getNumIdle(hrServ2Addr);
+            }
+         });
 
          // we've reached the connection pool limit, the new operations will block
          // until a connection is released
          workerThread5.putAsync("k7", "v7");
          workerThread6.putAsync("k8", "v8");
-         Thread.sleep(100);
+         Thread.sleep(2000); //sleep a bit longer to make sure the async threads do their job
          assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
          assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
          assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));

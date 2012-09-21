@@ -65,7 +65,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
       cm.stop();
    }
@@ -171,22 +171,15 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    private void withExpectedFailure(GlobalConfiguration globalCfg, String message) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
+      EmbeddedCacheManager cm = null;
       try {
-         getCacheWithExpectedFailure(message, cm);
-         // another getCache call should fail with the same exception
-         getCacheWithExpectedFailure(message, cm);
-      } finally {
-         cm.stop();
-      }
-   }
-
-   private void getCacheWithExpectedFailure(String message, EmbeddedCacheManager cm) {
-      try {
+         cm = TestCacheManagerFactory.createCacheManager(globalCfg);
          cm.getCache();
          fail(message);
       } catch (ConfigurationException e) {
          log.trace("Expected exception", e);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
       }
    }
 

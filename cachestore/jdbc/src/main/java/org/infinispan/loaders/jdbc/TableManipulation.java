@@ -72,6 +72,7 @@ public class TableManipulation implements Cloneable {
    private String insertRowSql;
    private String updateRowSql;
    private String selectRowSql;
+   private String selectIdRowSql;
    private String deleteRowSql;
    private String loadAllRowsSql;
    private String loadAllNonExpiredRowsSql;
@@ -82,6 +83,7 @@ public class TableManipulation implements Cloneable {
    public DatabaseType databaseType;
    private String loadAllKeysBinarySql;
    private String loadAllKeysStringSql;
+   private String identifierQuoteString;
 
    public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
@@ -225,8 +227,9 @@ public class TableManipulation implements Cloneable {
    public void start(ConnectionFactory connectionFactory) throws CacheLoaderException {
       this.connectionFactory = connectionFactory;
       if (isCreateTableOnStart()) {
-         Connection conn = this.connectionFactory.getConnection();
+         Connection conn = null;
          try {
+            conn = this.connectionFactory.getConnection();
             if (!tableExists(conn, getTableName())) {
                createTable(conn);
             }
@@ -238,8 +241,9 @@ public class TableManipulation implements Cloneable {
 
    public void stop() throws CacheLoaderException {
       if (isDropTableOnExit()) {
-         Connection conn = connectionFactory.getConnection();
+         Connection conn = null;
          try {
+            conn = connectionFactory.getConnection();
             dropTable(conn);
          } finally {
             connectionFactory.releaseConnection(conn);
@@ -286,6 +290,23 @@ public class TableManipulation implements Cloneable {
          }
       }
       return selectRowSql;
+   }
+
+   public String getSelectIdRowSql() {
+      if (selectIdRowSql == null) {
+         switch(getDatabaseType()) {
+            case SYBASE:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+               break;
+            case POSTGRES:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = cast(? as " + idColumnType + ")";
+               break;
+            default:
+               selectIdRowSql = "SELECT " + idColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+               break;
+         }
+      }
+      return selectIdRowSql;
    }
 
    public String getDeleteRowSql() {
@@ -355,9 +376,23 @@ public class TableManipulation implements Cloneable {
          if (tableNamePrefix == null || cacheName == null) {
             throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
          }
-         tableName = tableNamePrefix + "_" + cacheName.replace(".", "_");
+         tableName = getIdentifierQuoteString() + tableNamePrefix + "_" + cacheName.replace(".", "_") + getIdentifierQuoteString();
       }
       return tableName;
+   }
+
+   public String getIdentifierQuoteString() {
+      if (identifierQuoteString == null) {
+         switch (getDatabaseType()) {
+         case MYSQL:
+            identifierQuoteString = "`";
+            break;
+         default:
+            identifierQuoteString = "\"";
+            break;
+         }
+      }
+      return identifierQuoteString;
    }
 
    public String getTableNamePrefix() {
@@ -445,6 +480,7 @@ public class TableManipulation implements Cloneable {
                break;
             case DB2:
             case DB2_390:
+            case DERBY:
                loadSomeRowsSql = String.format("SELECT %s, %s FROM %s FETCH FIRST ? ROWS ONLY", dataColumnName, idColumnName, getTableName());
                break;
             case INFORMIX:
@@ -461,7 +497,7 @@ public class TableManipulation implements Cloneable {
                loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             default:
-               // the MySQL-style LIMIT clause
+               // the MySQL-style LIMIT clause (works for PostgreSQL too)
                loadSomeRowsSql = String.format("SELECT %s, %s FROM %s LIMIT ?", dataColumnName, idColumnName, getTableName());
                break;
          }
@@ -487,19 +523,26 @@ public class TableManipulation implements Cloneable {
    private DatabaseType getDatabaseType() {
       if (databaseType == null) {
          // need to guess from the database type!
+         Connection connection = null;
          try {
-            String dbProduct = connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+            connection = connectionFactory.getConnection();
+            String dbProduct = connection.getMetaData().getDatabaseProductName();
             databaseType = guessDatabaseType(dbProduct);
          } catch (Exception e) {
             log.debug("Unable to guess database type from JDBC metadata.", e);
+         } finally {
+            connectionFactory.releaseConnection(connection);
          }
          if (databaseType == null) {
             log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
             try {
+               connection = connectionFactory.getConnection();
                String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
                databaseType = guessDatabaseType(dbProduct);
             } catch (Exception e) {
                log.debug("Unable to guess database type from JDBC driver name.", e);
+            } finally {
+               connectionFactory.releaseConnection(connection);
             }
          }
          if (databaseType == null) {

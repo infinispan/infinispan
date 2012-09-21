@@ -23,18 +23,13 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -51,6 +46,7 @@ import java.util.Collection;
 
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
+// todo [anistor] need to review this for NBST
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
  * href="http://en.wikipedia.org/wiki/Bridge_pattern">Bridge</a> pattern as described by the GoF: this plays the role of
@@ -190,7 +186,7 @@ public interface ClusteringDependentLogic {
          boolean doCommit = true;
          // ignore locality for removals, even if skipOwnershipCheck is not true
          if (!skipOwnershipCheck && !entry.isRemoved() && !localNodeIsOwner(entry.getKey())) {
-            if (configuration.isL1CacheEnabled()) {
+            if (configuration.clustering().l1().enabled()) {
                dm.transformForL1(entry);
             } else {
                doCommit = false;

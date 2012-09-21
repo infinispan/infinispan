@@ -26,6 +26,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
 
@@ -41,17 +42,23 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    Object newValue;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+   CacheNotifier notifier;
    boolean successful = true;
 
    public ReplaceCommand() {
    }
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+   public ReplaceCommand(Object key, Object oldValue, Object newValue, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
       super(key, flags);
       this.oldValue = oldValue;
       this.newValue = newValue;
+      this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
       this.maxIdleTimeMillis = maxIdleTimeMillis;
+   }
+   
+   public void init(CacheNotifier notifier) {
+      this.notifier = notifier;
    }
 
    @Override
@@ -65,29 +72,37 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       if (e != null) {
          if (ctx.isOriginLocal()) {
         	 	//ISPN-514
-            if (e.isNull() || e.getValue() == null) return returnValue(null, false);    
+            if (e.isNull() || e.getValue() == null) return returnValue(null, false, ctx);    
 
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);
                e.setLifespan(lifespanMillis);
                e.setMaxIdle(maxIdleTimeMillis);
-               return returnValue(old, true);
+               return returnValue(old, true, ctx);
             }
-            return returnValue(null, false);
+            return returnValue(null, false, ctx);
          } else {
             // for remotely originating calls, this doesn't check the status of what is under the key at the moment
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
-            return returnValue(old, true);
+            return returnValue(old, true, ctx);
          }
       }
 
-      return returnValue(null, false);
+      return returnValue(null, false, ctx);
    }
 
-   private Object returnValue(Object beingReplaced, boolean successful) {
+   private Object returnValue(Object beingReplaced, boolean successful, 
+         InvocationContext ctx) {
       this.successful = successful;
+      
+      Object previousValue = oldValue == null ? beingReplaced : oldValue;
+      
+      if (successful) {
+         this.notifier.notifyCacheEntryModified(key, previousValue, true, ctx);
+         this.notifier.notifyCacheEntryModified(key, this.newValue, false, ctx);
+      }
       if (oldValue == null) {
          return beingReplaced;
       } else {
@@ -102,7 +117,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis,
+                          Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

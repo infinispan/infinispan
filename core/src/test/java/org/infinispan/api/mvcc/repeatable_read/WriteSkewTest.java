@@ -25,7 +25,10 @@ package org.infinispan.api.mvcc.repeatable_read;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
-import org.infinispan.config.Configuration;
+import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.atomic.FineGrainedAtomicMap;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -36,14 +39,15 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,6 +60,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -64,18 +69,24 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected LockManager lockManager;
    protected InvocationContextContainer icc;
    protected EmbeddedCacheManager cacheManager;
-   protected Cache cache;
+   protected volatile Cache<String, String> cache;
 
    @BeforeTest
    public void setUp() {
-      Configuration c = new Configuration();
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      c.setLockAcquisitionTimeout(200);
-      c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder
+         .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+         .locking()
+            .lockAcquisitionTimeout(3000)
+            .isolationLevel(IsolationLevel.REPEATABLE_READ);
+      // The default cache is NOT write skew enabled.
+      cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
+      configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+      cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       cacheManager = null;
@@ -95,29 +106,177 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       LockAssert.assertNoLocks(lockManager, icc);
    }
 
+   private void setCacheWithWriteSkewCheck() {
+      cache = cacheManager.getCache("writeSkew");
+   }
+
+   private void setCacheWithoutWriteSkewCheck() {
+      // Use the default cache here.
+      cache = cacheManager.getCache();
+   }
+
    public void testDontCheckWriteSkew() throws Exception {
-      Configuration noWriteSkewCheck = new Configuration();
-      noWriteSkewCheck.setWriteSkewCheck(false);
-      cacheManager.defineConfiguration("noWriteSkewCheck", noWriteSkewCheck);
-      cache = cacheManager.getCache("noWriteSkewCheck");
+      setCacheWithoutWriteSkewCheck();
       postStart();
       doTest(true);
    }
 
    public void testCheckWriteSkew() throws Exception {
-      Configuration writeSkewCheck = new Configuration();
-      writeSkewCheck.setWriteSkewCheck(true);
-      cacheManager.defineConfiguration("writeSkewCheck", writeSkewCheck);
-      cache = cacheManager.getCache("writeSkewCheck");
+      setCacheWithWriteSkewCheck();
       postStart();
       doTest(false);
    }
 
+   /**
+    * Tests write skew with two concurrent transactions that each execute two put() operations. One put() is done on the
+    * same key to create a write skew. The second put() is only needed to avoid optimizations done by
+    * OptimisticLockingInterceptor for single modification transactions and force it reach the code path that triggers
+    * ISPN-2092.
+    *
+    * @throws Exception
+    */
+   public void testCheckWriteSkewWithMultipleModifications() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      final AtomicInteger successes = new AtomicInteger();
+      final AtomicInteger rollbacks = new AtomicInteger();
+
+      final CountDownLatch latch1 = new CountDownLatch(1);
+      final CountDownLatch latch2 = new CountDownLatch(1);
+      final CountDownLatch latch3 = new CountDownLatch(1);
+
+      Thread t1 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch1.await();
+
+               tm.begin();
+               try {
+                  try {
+                     cache.get("k1");
+                     cache.put("k1", "v1");
+                     cache.put("k2", "thread 1");
+                  } finally {
+                     latch2.countDown();
+                  }
+                  latch3.await();
+                  tm.commit(); //this is expected to fail
+                  successes.incrementAndGet();
+               } catch (Exception e) {
+                  if (e instanceof RollbackException) {
+                     rollbacks.incrementAndGet();
+                  }
+
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                  if (tm.getTransaction() != null) {
+                     try {
+                        tm.rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+         }
+      }, "WriteSkewTest.Thread-1");
+
+      Thread t2 = new Thread(new Runnable() {
+         public void run() {
+            try {
+               latch2.await();
+
+               tm.begin();
+               try {
+                  try {
+                     cache.get("k1");
+                     cache.put("k1", "v2");
+                     cache.put("k3", "thread 2");
+                     tm.commit();
+                     successes.incrementAndGet();
+                  } finally {
+                     latch3.countDown();
+                  }
+               } catch (Exception e) {
+                  if (e instanceof RollbackException) {
+                     rollbacks.incrementAndGet();
+                  }
+
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                  if (tm.getTransaction() != null) {
+                     try {
+                        tm.rollback();
+                     } catch (SystemException e1) {
+                        log.error("Failed to rollback", e1);
+                     }
+                  }
+                  throw e;
+               }
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+         }
+      }, "WriteSkewTest.Thread-2");
+
+      t1.start();
+      t2.start();
+      latch1.countDown();
+      t1.join();
+      t2.join();
+
+      log.trace("successes= " + successes.get());
+      log.trace("rollbacks= " + rollbacks.get());
+
+      Assert.assertTrue(cache.containsKey("k1"));
+      Assert.assertEquals("v2", cache.get("k1"));
+      Assert.assertEquals(1, successes.get());
+      Assert.assertEquals(1, rollbacks.get());
+   }
+
+   /**
+    * Verifies we can insert and then remove a value in the same transaction.
+    * See also ISPN-2075.
+    */
+   public void testDontFailOnImmediateRemoval() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+      tm.begin();
+      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value");
+      Assert.assertEquals(cache.get("testDontOnImmediateRemoval-Key"), "testDontOnImmediateRemoval-Value");
+      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value-Second");
+      cache.remove("testDontOnImmediateRemoval-Key");
+      tm.commit();
+      Assert.assertFalse(cache.containsKey("testDontOnImmediateRemoval-Key"));
+   }
+
+   /**
+    * Verifies we can create a new AtomicMap, use it and then remove it while in the same transaction
+    * See also ISPN-2075.
+    */
+   public void testDontFailOnImmediateRemovalOfAtomicMaps() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+      final String key = "key1";
+      final String subKey = "subK";
+      tm.begin();
+      FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      fineGrainedAtomicMap.put(subKey, "some value");
+      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      fineGrainedAtomicMap.get(subKey);
+      fineGrainedAtomicMap.put(subKey, "v");
+      fineGrainedAtomicMap.put(subKey + 2, "v2");
+      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+      Object object = fineGrainedAtomicMap.get(subKey);
+      Assert.assertEquals( "v", object);
+      AtomicMapLookup.removeAtomicMap(cache, key);
+      tm.commit();
+   }
+
    public void testWriteSkewWithOnlyPut() throws Exception {
-      Configuration writeSkewCheck = new Configuration();
-      writeSkewCheck.setWriteSkewCheck(true);
-      cacheManager.defineConfiguration("writeSkewCheckWithOnlyPut", writeSkewCheck);
-      cache = cacheManager.getCache("writeSkewCheckWithOnlyPut");
+      setCacheWithWriteSkewCheck();
       postStart();
 
       tm.begin();
@@ -169,6 +328,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       final CountDownLatch threadSignal = new CountDownLatch(2);
 
       Thread w1 = new Thread("Writer-1, WriteSkewTest") {
+         @Override
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -190,6 +350,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       };
 
       Thread w2 = new Thread("Writer-2, WriteSkewTest") {
+         @Override
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -261,6 +422,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          this.barrier = barrier;
       }
 
+      @Override
       public Void call() throws Exception {
          try {
             log.debug("Wait for all executions paths to be ready to perform calls");

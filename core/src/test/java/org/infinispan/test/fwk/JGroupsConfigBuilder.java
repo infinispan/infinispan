@@ -51,12 +51,13 @@ public class JGroupsConfigBuilder {
    private static final ProtocolStackConfigurator tcpConfigurator = loadTcp();
    private static final ProtocolStackConfigurator udpConfigurator = loadUdp();
 
-   private static final ThreadLocal<String> threadTcpStartPort = new ThreadLocal<String>() {
+   public static final int TCP_PORT_RANGE_PER_THREAD = 100;
+   private static final ThreadLocal<Integer> threadTcpStartPort = new ThreadLocal<Integer>() {
       private final AtomicInteger uniqueAddr = new AtomicInteger(7900);
 
       @Override
-      protected String initialValue() {
-         return String.valueOf(uniqueAddr.getAndAdd(50));
+      protected Integer initialValue() {
+         return uniqueAddr.getAndAdd(TCP_PORT_RANGE_PER_THREAD);
       }
    };
 
@@ -104,11 +105,20 @@ public class JGroupsConfigBuilder {
       if (!flags.withFD())
          removeFailureDetectionTcp(jgroupsCfg);
 
+      if (!flags.isSiteIndexSpecified()) {
+         removeRela2(jgroupsCfg);
+      } else {
+         ProtocolConfiguration protocol = jgroupsCfg.getProtocol(RELAY2);
+         protocol.getProperties().put("site", flags.siteName());
+         if (flags.relayConfig() != null) //if not specified, use default
+            protocol.getProperties().put("config", flags.relayConfig());
+      }
+
       if (!flags.withMerge())
          removeMerge(jgroupsCfg);
 
       if (jgroupsCfg.containsProtocol(TEST_PING)) {
-         replaceTcpStartPort(jgroupsCfg);
+         replaceTcpStartPort(jgroupsCfg, flags);
          if (fullTestName == null)
             return jgroupsCfg.toString(); // IDE run of test
          else
@@ -123,14 +133,17 @@ public class JGroupsConfigBuilder {
    }
 
    public static String getUdpConfig(String fullTestName, TransportFlags flags) {
-      JGroupsProtocolCfg jgroupsCfg =
-            getJGroupsProtocolCfg(udpConfigurator.getProtocolStack());
+      JGroupsProtocolCfg jgroupsCfg = getJGroupsProtocolCfg(udpConfigurator.getProtocolStack());
 
       if (!flags.withFD())
          removeFailureDetectionUdp(jgroupsCfg);
 
       if (!flags.withMerge())
          removeMerge(jgroupsCfg);
+
+      if (!flags.isSiteIndexSpecified()) {
+         removeRela2(jgroupsCfg);
+      }
 
       if (jgroupsCfg.containsProtocol(TEST_PING)) {
          if (fullTestName != null)
@@ -150,6 +163,10 @@ public class JGroupsConfigBuilder {
             .removeProtocol(VERIFY_SUSPECT);
    }
 
+   private static void removeRela2(JGroupsProtocolCfg jgroupsCfg) {
+      jgroupsCfg.removeProtocol(RELAY2);
+   }
+
    private static String getTestPingDiscovery(String fullTestName, JGroupsProtocolCfg jgroupsCfg) {
       ProtocolType type = TEST_PING;
       Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
@@ -162,18 +179,25 @@ public class JGroupsConfigBuilder {
    }
 
    private static String replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg) {
-      ProtocolType type = UDP;
-      Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
+      Map<String, String> props = jgroupsCfg.getProtocol(UDP).getProperties();
       props.put("mcast_addr", threadMcastIP.get());
       props.put("mcast_port", threadMcastPort.get().toString());
-      return replaceProperties(jgroupsCfg, props, type);
+      return replaceProperties(jgroupsCfg, props, UDP);
    }
 
-   private static String replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg) {
-      ProtocolType type = TCP;
-      Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
-      props.put("bind_port", threadTcpStartPort.get());
-      return replaceProperties(jgroupsCfg, props, type);
+   private static String replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg, TransportFlags transportFlags) {
+      Map<String, String> props = jgroupsCfg.getProtocol(TCP).getProperties();
+      Integer startPort = threadTcpStartPort.get();
+      if (transportFlags.isSiteIndexSpecified()) {
+         int sitePortRange = 10;
+         int maxIndex = TCP_PORT_RANGE_PER_THREAD / sitePortRange - 1;
+         if (transportFlags.siteIndex() > maxIndex) {
+            throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " sites!");
+         }
+         startPort += transportFlags.siteIndex() * sitePortRange;
+      }
+      props.put("bind_port", startPort.toString());
+      return replaceProperties(jgroupsCfg, props, TCP);
    }
 
    private static String replaceProperties(
@@ -204,8 +228,7 @@ public class JGroupsConfigBuilder {
    private static JGroupsProtocolCfg getJGroupsProtocolCfg(List<ProtocolConfiguration> baseStack) {
       JGroupsXmxlConfigurator configurator = new JGroupsXmxlConfigurator(baseStack);
       List<ProtocolConfiguration> protoStack = configurator.getProtocolStack();
-      Map<ProtocolType, ProtocolConfiguration> protoMap =
-            new HashMap<ProtocolType, ProtocolConfiguration>(protoStack.size());
+      Map<ProtocolType, ProtocolConfiguration> protoMap = new HashMap<ProtocolType, ProtocolConfiguration>(protoStack.size());
       for (ProtocolConfiguration cfg : protoStack)
          protoMap.put(getProtocolType(cfg.getProtocolName()), cfg);
 
@@ -291,7 +314,8 @@ public class JGroupsConfigBuilder {
       GMS,
       UFC, MFC, FC,
       FRAG2,
-      STREAMING_STATE_TRANSFER;
+      STREAMING_STATE_TRANSFER,
+      RELAY2;
    }
 
 }

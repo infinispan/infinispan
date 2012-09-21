@@ -19,7 +19,6 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
@@ -83,7 +82,7 @@ public class WriteSkewHelper {
                   uv.put(k, newVersion);
                } else {
                   // Write skew check detected!
-                  throw new CacheException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
+                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
                }
             }
          }

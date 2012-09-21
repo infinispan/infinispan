@@ -31,9 +31,9 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
@@ -53,13 +53,13 @@ import javax.transaction.TransactionManager;
  */
 @Test(groups = "functional", testName = "api.tree.SyncReplTxTest")
 public class SyncReplTxTest extends MultipleCacheManagersTest {
-   TreeCache<Object, Object> cache1, cache2;
+   private TreeCache<Object, Object> cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      c.setInvocationBatchingEnabled(true);
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cb.invocationBatching().enable();
 
-      createClusteredCaches(2, "replSync", c);
+      createClusteredCaches(2, "replSync", cb);
 
       Cache c1 = cache(0, "replSync");
       Cache c2 = cache(1, "replSync");

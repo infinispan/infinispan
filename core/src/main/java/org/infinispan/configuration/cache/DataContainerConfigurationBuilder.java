@@ -25,20 +25,20 @@ import org.infinispan.util.TypedProperties;
 
 /**
  * Controls the data container for the cache.
- * 
+ *
  * @author pmuir
  *
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder<DataContainerConfiguration> {
 
-   // TODO provide a default here
+   // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;
    private Properties properties = new Properties();
-   
+
    DataContainerConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
-   
+
    /**
     * Specify the data container in use
     * @param dataContainer
@@ -48,7 +48,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       this.dataContainer = dataContainer;
       return this;
    }
-   
+
    /**
     * Add key/value property pair to this data container configuration
     *
@@ -73,19 +73,21 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
+   public
    void validate() {
    }
 
    @Override
+   public
    DataContainerConfiguration create() {
       return new DataContainerConfiguration(dataContainer, TypedProperties.toTypedProperties(properties));
    }
-   
+
    @Override
    public DataContainerConfigurationBuilder read(DataContainerConfiguration template) {
       this.dataContainer = template.dataContainer();
       this.properties = template.properties();
-      
+
       return this;
    }
 

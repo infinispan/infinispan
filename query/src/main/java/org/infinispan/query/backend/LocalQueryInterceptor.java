@@ -23,6 +23,7 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.KnownComponentNames;
@@ -72,7 +73,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    }
 
    @Override
-   protected boolean shouldModifyIndexes(InvocationContext ctx) {
-      return ctx.isOriginLocal() && ! ctx.hasFlag(Flag.SKIP_INDEXING);
+   protected boolean shouldModifyIndexes(AbstractFlagAffectedCommand command, InvocationContext ctx) {
+      return ctx.isOriginLocal() && ! command.hasFlag(Flag.SKIP_INDEXING);
    }
 }

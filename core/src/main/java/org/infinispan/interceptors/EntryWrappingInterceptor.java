@@ -21,7 +21,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -69,6 +69,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private CommandsFactory commandFactory;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -92,7 +93,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx);
+         commitContextEntries(ctx, false);
       }
       return result;
    }
@@ -102,7 +103,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         commitContextEntries(ctx);
+         commitContextEntries(ctx, false);
       }
    }
 
@@ -113,7 +114,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       } finally {
          //needed because entries might be added in L1
-         if (!ctx.isInTxScope()) commitContextEntries(ctx);
+         if (!ctx.isInTxScope())
+            commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
       }
    }
 
@@ -143,7 +145,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+      entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command);
       return invokeNextAndApplyChanges(ctx, command);
    }
    
@@ -168,7 +170,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       for (Object key : command.getMap().keySet()) {
-         entryFactory.wrapEntryForPut(ctx, key, null, true);
+         entryFactory.wrapEntryForPut(ctx, key, null, true, command);
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
@@ -178,10 +180,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitRemoveCommand(ctx, command);
    }
 
-   protected void commitContextEntries(final InvocationContext ctx) {
-      final boolean trace = log.isTraceEnabled();
-      boolean skipOwnershipCheck = ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
-
+   protected void commitContextEntries(final InvocationContext ctx, boolean skipOwnershipCheck) {
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          CacheEntry entry = ((SingleKeyNonTxInvocationContext)ctx).getCacheEntry();
          commitEntryIfNeeded(ctx, skipOwnershipCheck, entry);
@@ -208,9 +207,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       cll.commitEntry(entry, null, skipOwnershipCheck);
    }
 
-   private Object invokeNextAndApplyChanges(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isInTxScope()) commitContextEntries(ctx);
+      if (!ctx.isInTxScope())
+         commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
       return result;
    }
 
@@ -234,7 +234,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Map.Entry<Object, Object> e: command.getMap().entrySet()) {
             Object key = e.getKey();
             if (cll.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForPut(ctx, key, null, true);
+               entryFactory.wrapEntryForPut(ctx, key, null, true, command);
                newMap.put(key, e.getValue());
             }
          }
@@ -257,7 +257,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command);
             invokeNextInterceptor(ctx, command);
          }
          return null;

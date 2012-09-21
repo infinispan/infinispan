@@ -22,7 +22,7 @@
  */
 package org.infinispan.api.tree;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -52,17 +52,28 @@ public class NodeAPITest extends SingleCacheManagerTest {
    Fqn A_B = Fqn.fromRelativeFqn(A, B);
    Fqn A_C = Fqn.fromRelativeFqn(A, C);
    TransactionManager tm;
-   TreeCache cache;
+   TreeCache<Object, Object> cache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
-      cache = new TreeCacheImpl(cm.getCache());
+      ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(true);
+      cb.invocationBatching().enable();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cb);
+      cache = new TreeCacheImpl<Object, Object>(cm.getCache());
       tm = cache.getCache().getAdvancedCache().getTransactionManager();
       return cm;
+   }
+
+   /**
+    * Test method behaves according to javadoc.
+    */
+   public void testGetParent() {
+      Node<Object, Object> rootNode = cache.getRoot();
+      assertEquals(rootNode,  rootNode.getParent());
+
+      Node<Object, Object> nodeA = rootNode.addChild(A);
+      assertEquals(rootNode, nodeA.getParent());
    }
 
    public void testAddingData() {
@@ -373,8 +384,6 @@ public class NodeAPITest extends SingleCacheManagerTest {
    }
 
    public void testDoubleRemovalOfData2() throws Exception {
-
-
       cache.put("/foo/1/2", "item", 1);
       tm.begin();
       assertEquals(cache.get("/foo/1", "item"), null);

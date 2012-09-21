@@ -26,14 +26,15 @@ import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.Test;
 
 import java.io.ObjectInput;
@@ -44,17 +45,18 @@ import java.util.Set;
 import static org.testng.Assert.assertEquals;
 
 /**
- * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory,
- * or if the Flag.SKIP_CACHE_STORE is applied.
+ * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory, or if the
+ * Flag.SKIP_CACHE_STORE is applied.
  *
  * @author Manik Surtani
  * @author Sanne Grinovero
  * @version 4.1
  */
 @Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", sequential = true)
+@CleanupAfterMethod
 public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    CacheStore store;
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = getDefaultStandaloneConfig(true);
@@ -63,10 +65,13 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       clmc.addCacheLoaderConfig(new CountingCacheStoreConfig());
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
-      cache = cm.getCache();
+      return TestCacheManagerFactory.createCacheManager(cfg);
+   }
+
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
-      return cm;
    }
 
    public void testRepeatedLoads() throws CacheLoaderException {
@@ -89,7 +94,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
-      
+
       store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
 
       assert countingCS.numLoads == 0;
@@ -103,7 +108,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert "v1".equals(cache.get("k1"));
       assert countingCS.numLoads == 1 : "Expected 1, was " + countingCS.numLoads;
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
-      
+
       // now check that put won't return the stored value
       store.store(TestInternalCacheEntryFactory.create("k2", "v2"));
       Object putReturn = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).put("k2", "v2-second");
@@ -119,14 +124,14 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       //and verify that the put operation updated the store too:
       assert "v2-second".equals(store.load("k2").getValue());
       assert countingCS.numLoads == 2 : "Expected 2, was " + countingCS.numLoads;
-      
+
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       cache.containsKey("k1");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       assert false == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).containsKey("k3");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       assert countingCS.numLoads == 2 : "Expected 2, was " + countingCS.numLoads;
-      
+
       //now with batching:
       boolean batchStarted = cache.getAdvancedCache().startBatch();
       assert batchStarted;
@@ -144,10 +149,10 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       reset(cache, countingCS);
       return countingCS;
    }
-   
+
    public void testSkipCacheLoadFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
-      
+
       store.store(TestInternalCacheEntryFactory.create("home", "Vermezzo"));
       store.store(TestInternalCacheEntryFactory.create("home-second", "Newcastle Upon Tyne"));
 
@@ -155,7 +160,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       //load using SKIP_CACHE_LOAD should not find the object in the store
       assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("home") == null;
       assert countingCS.numLoads == 0;
-      
+
       assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("home", "Newcastle") == null;
       assert countingCS.numLoads == 0;
 
@@ -163,7 +168,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assertEquals(put, "Newcastle Upon Tyne");
       assert countingCS.numLoads == 1;
    }
-   
+
    private void reset(Cache cache, CountingCacheStore countingCS) {
       cache.clear();
       countingCS.numLoads = 0;

@@ -31,7 +31,7 @@
 
    <bean
       id="infinispanEmbeddedCacheManager"
-      class="org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBeanContextTest$TestInfinispanEmbeddedCacheManagerFactoryBean"
+      class="org.infinispan.spring.support.embedded.TestInfinispanEmbeddedCacheManagerFactoryBean"
       p:configurationFileLocation="classpath:/org/infinispan/spring/support/embedded/named-async-cache.xml" />
 
    <bean

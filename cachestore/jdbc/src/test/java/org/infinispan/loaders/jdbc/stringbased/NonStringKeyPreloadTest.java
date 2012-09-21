@@ -23,6 +23,8 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import static junit.framework.Assert.assertEquals;
+import static org.infinispan.test.TestingUtil.clearCacheLoader;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.sql.Connection;
 
@@ -37,9 +39,8 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
@@ -57,70 +58,83 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       String mapperName = PersonKey2StringMapper.class.getName();
       Configuration cfg = createCacheStoreConfig(mapperName, false, true);
 
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
-      try {
-         cacheManager.getCache();
-         assert false : " Preload with Key2StringMapper is not supported. Specify an TwoWayKey2StringMapper if you want to support it (or disable preload).";
-      } catch (CacheException ce) {
-         //expected
-      } finally {
-         cacheManager.stop();
-      }
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(cfg)) {
+         @Override
+         public void call() {
+            try {
+               cm.getCache();
+               assert false : " Preload with Key2StringMapper is not supported. Specify an TwoWayKey2StringMapper if you want to support it (or disable preload).";
+            } catch (CacheException e) {
+               // Expected
+            }
+         }
+      });
    }
 
    public void testPreloadWithTwoWayKey2StringMapper() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       Configuration config = createCacheStoreConfig(mapperName, true, true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
-      Cache<Object, Object> cache = cm.getCache();
-      Person mircea = new Person("Markus", "Mircea", 30);
-      cache.put(mircea, "me");
-      Person dan = new Person("Dan", "Dude", 30);
-      cache.put(dan, "mate");
-      cache.stop();
-      cm.stop();
+      final Person mircea = new Person("Markus", "Mircea", 30);
+      final Person dan = new Person("Dan", "Dude", 30);
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(config)) {
+         @Override
+         public void call() {
+            Cache<Object, Object> cache = cm.getCache();
+            cache.put(mircea, "me");
+            cache.put(dan, "mate");
+         }
+      });
 
-      cm = TestCacheManagerFactory.createCacheManager(config);
-      try {
-         cache = cm.getCache();
-         assert cache.containsKey(mircea);
-         assert cache.containsKey(dan);
-      } finally {
-         TestingUtil.clearCacheLoader(cache);
-         cache.stop();
-         cm.stop();
-      }
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(config)) {
+         @Override
+         public void call() {
+            Cache<Object, Object> cache = null;
+            try {
+               cache = cm.getCache();
+               assert cache.containsKey(mircea);
+               assert cache.containsKey(dan);
+            } finally {
+               clearCacheLoader(cache);
+            }
+         }
+      });
    }
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       Configuration config = createCacheStoreConfig(mapperName, true, true);
       config.setEvictionStrategy(EvictionStrategy.LRU);
       config.setEvictionMaxEntries(3);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
-      AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
-      for (int i = 0; i < 10; i++) {
-         Person p = new Person("name" + i, "surname" + i, 30);
-         cache.put(p, "" + i);
-      }
-      cache.stop();
-      cm.stop();
-
-      cm = TestCacheManagerFactory.createCacheManager(config);
-      try {
-         cache = cm.getCache().getAdvancedCache();
-         assertEquals(3, cache.size());
-         int found = 0;
-         for (int i = 0; i < 10; i++) {
-            Person p = new Person("name" + i, "surname" + i, 30);
-            if (cache.getDataContainer().containsKey(p)) {
-               found++;
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(config)) {
+         @Override
+         public void call() {
+            AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
+            for (int i = 0; i < 10; i++) {
+               Person p = new Person("name" + i, "surname" + i, 30);
+               cache.put(p, "" + i);
             }
          }
-         assertEquals(3, found);
-      } finally {
-         cache.stop();
-         cm.stop();
-      }
+      });
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(config)) {
+         @Override
+         public void call() {
+            AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
+            assertEquals(3, cache.size());
+            int found = 0;
+            for (int i = 0; i < 10; i++) {
+               Person p = new Person("name" + i, "surname" + i, 30);
+               if (cache.getDataContainer().containsKey(p)) {
+                  found++;
+               }
+            }
+            assertEquals(3, found);
+         }
+      });
    }
 
    static Configuration createCacheStoreConfig(String mapperName, boolean wrap, boolean preload) {
@@ -132,6 +146,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       JdbcStringBasedCacheStoreConfig csConfig = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       csConfig.setFetchPersistentState(true);
       csConfig.setKey2StringMapperClass(mapperName);
+      csConfig.getProperties().setProperty("key2StringMapperClass", mapperName);
 
       CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
       cacheLoaders.setPreload(preload);

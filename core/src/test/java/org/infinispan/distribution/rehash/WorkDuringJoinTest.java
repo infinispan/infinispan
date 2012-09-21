@@ -26,7 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
@@ -54,8 +55,8 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
 
    private List<MagicKey> init() {
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
-            new MagicKey(c1, "k1"), new MagicKey(c2, "k2"),
-            new MagicKey(c1, "k3"), new MagicKey(c2, "k4")
+            new MagicKey("k1", c1), new MagicKey("k2", c2),
+            new MagicKey("k3", c1), new MagicKey("k4", c2)
       ));
 
       int i = 0;
@@ -76,11 +77,14 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       List<MagicKey> keys = init();
       ConsistentHash chOld = getConsistentHash(c1);
       Address joinerAddress = startNewMember();
-      ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(chOld, chOld.getCaches(), joinerAddress);
+      List<Address> newMembers = new ArrayList<Address>(chOld.getMembers());
+      newMembers.add(joinerAddress);
+      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      ConsistentHash chNew = chf.rebalance(chf.updateMembers((DefaultConsistentHash) chOld, newMembers));
       // which key should me mapped to the joiner?
       MagicKey keyToTest = null;
       for (MagicKey k: keys) {
-         if (chNew.isKeyLocalToAddress(joinerAddress, k, numOwners)) {
+         if (chNew.isKeyLocalToNode(joinerAddress, k)) {
             keyToTest = k;
             break;
          }

@@ -23,14 +23,13 @@
 package org.infinispan.commands;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -59,7 +58,11 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.topology.CacheTopologyControlCommand;
 
 import java.util.Map;
 
@@ -139,7 +142,10 @@ public class RemoteCommandsFactory {
                break;
             case ApplyDeltaCommand.COMMAND_ID:
                command = new ApplyDeltaCommand();
-               break;      
+               break;
+            case CacheTopologyControlCommand.COMMAND_ID:
+               command = new CacheTopologyControlCommand();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }
@@ -194,11 +200,15 @@ public class RemoteCommandsFactory {
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
                break;
-            case StateTransferControlCommand.COMMAND_ID:
-               command = new StateTransferControlCommand(cacheName);
+            case StateRequestCommand.COMMAND_ID:
+               command = new StateRequestCommand(cacheName);
+               break;
+            case StateResponseCommand.COMMAND_ID:
+               command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheName, cacheManager, registry);
+               command = new RemoveCacheCommand(cacheName, cacheManager, registry,
+                     registry.getNamedComponentRegistry(cacheName).getComponent(CacheLoaderManager.class));
                break;
             case TxCompletionNotificationCommand.COMMAND_ID:
                command = new TxCompletionNotificationCommand(cacheName);
@@ -206,18 +216,21 @@ public class RemoteCommandsFactory {
             case GetInDoubtTransactionsCommand.COMMAND_ID:
                command = new GetInDoubtTransactionsCommand(cacheName);
                break;
-            case MapReduceCommand.COMMAND_ID:
-               command = new MapReduceCommand(cacheName);
+            case MapCombineCommand.COMMAND_ID:
+               command = new MapCombineCommand(cacheName);
                break;
+            case ReduceCommand.COMMAND_ID:
+               command = new ReduceCommand(cacheName);
+               break;   
             case GetInDoubtTxInfoCommand.COMMAND_ID:
                command = new GetInDoubtTxInfoCommand(cacheName);
                break;
             case CompleteTransactionCommand.COMMAND_ID:
                command = new CompleteTransactionCommand(cacheName);
                break;
-            case CacheViewControlCommand.COMMAND_ID:
-               command = new CacheViewControlCommand(cacheName);
-               break;                      
+            case CreateCacheCommand.COMMAND_ID:
+               command = new CreateCacheCommand(cacheName);   
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

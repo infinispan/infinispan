@@ -31,4 +31,9 @@
       <class>org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor</class>
       <class>org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor</class>
    </interceptors>
+
+   <alternatives>
+      <class>org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer</class>
+   </alternatives>
+
 </beans>

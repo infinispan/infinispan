@@ -22,7 +22,7 @@
  */
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.Util;
@@ -109,9 +109,10 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     * @return TransactionManager
     */
    @Override
-   public TransactionManager getTransactionManager() {
-      if (!lookupDone)
-         doLookups(configuration.getClassLoader());
+   public synchronized TransactionManager getTransactionManager() {
+      if (!lookupDone) {
+         doLookups(configuration.classLoader());
+      }
       if (tm != null)
          return tm;
       if (lookupFailed) {
@@ -179,7 +180,6 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
                return;
             }
          }
-         lookupDone = true;
       } finally {
          Util.close(ctx);
       }
@@ -220,6 +220,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       catch (Exception ex) {
          log.unableToInvokeWebsphereStaticGetTmMethod(ex, clazz.getName());
       }
+      lookupDone = true;
    }
 
 }

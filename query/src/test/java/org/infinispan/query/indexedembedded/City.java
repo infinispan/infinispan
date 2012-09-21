@@ -24,14 +24,12 @@
 package org.infinispan.query.indexedembedded;
 
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.ProvidedId;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
-@ProvidedId
 public class City {
-   
+
    @Field String name;
 
 }

@@ -33,6 +33,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.io.MarshalledValueByteStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.notifications.Listener;
@@ -54,6 +55,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests implicit marshalled values
@@ -111,7 +114,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       super.destroy();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       Pojo.serializationCount = 0;
       Pojo.deserializationCount = 0;
@@ -457,6 +460,28 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache1.put("1", v1);
       Pojo previous = (Pojo) cache1.put("1", new Pojo(2));
       assert previous.equals(v1);
+   }
+
+   public void testEquality() {
+      byte[] prevBytes = TestingUtil.generateRandomString(1310)
+            .getBytes(Charset.forName("UTF-8"));
+
+      String value = "galder";
+      MarshalledValue mv = new MarshalledValue(
+            value, true, extractCacheMarshaller(cache(0, "replSync")));
+      MarshalledValue mv2 = new MarshalledValue(
+            value, false, extractCacheMarshaller(cache(0, "replSync")));
+
+      // Simulate that the marshalled value had a bigger value before
+      mv2.instance = prevBytes;
+      mv2.serialize();
+      // Now back to the original instance and force it to serialize again
+      mv2.instance = value;
+      mv2.raw = null;
+      mv2.serialize();
+      mv2.instance = null;
+
+      assertEquals(mv, mv2);
    }
 
    @Listener

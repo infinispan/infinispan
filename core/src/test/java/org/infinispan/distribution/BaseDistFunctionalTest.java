@@ -25,16 +25,16 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.distribution.group.Grouper;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,7 +46,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -80,8 +79,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       // Create clustered caches with failure detection protocols on
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
                                      new TransportFlags().withFD(false));
-
-      reorderBasedOnCHPositions();
 
       if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
       if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
@@ -122,45 +119,18 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return configuration;
    }
 
-   protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
+   protected static ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
-         Configuration c = new Configuration();
-         c.setConsistentHashClass(DefaultConsistentHash.class.getName());
-         return ConsistentHashHelper.createConsistentHash(c, servers);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().hash()
+            .consistentHash(null);
+         // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
+         return new DefaultConsistentHashFactory().create(new MurmurHash3(), 2, 10, servers);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-   }
-
-   // only used if the CH impl does not order the hash ring based on the order of the view.
-   // in the case of the DefaultConsistentHash, the order is based on a has code of the addres modded by
-   // the hash space.  So this will not adhere to the positions in the view, but it is deterministic.
-   // so this function orders things such that the test can predict where keys get mapped to.
-   private void reorderBasedOnCHPositions() {
-      // wait for all joiners to join
-      assert caches.size() == INIT_CLUSTER_SIZE;
-      waitForClusterToForm(cacheName);
-
-      // seed this with an initial cache.  Any one will do.
-      Cache seed = caches.get(0);
-      ConsistentHash ch = getNonUnionConsistentHash(seed, SECONDS.toMillis(480));
-      List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
-
-      
-      for (Address a : ch.getCaches()) {
-         for (Cache<Object, String> c : caches) {
-            EmbeddedCacheManager cacheManager = c.getCacheManager();
-            if (a.equals(cacheManager.getAddress())) {
-               reordered.add(c);
-               break;
-            }
-         }
-      }
-
-      assert reordered.size() == INIT_CLUSTER_SIZE : "Reordering caches lost some caches: started with " + caches + ", ended with " + reordered;
-      caches = reordered;
    }
 
    // ----------------- HELPERS ----------------
@@ -244,18 +214,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
             }
          }
       }
-   }
-
-   protected int locateJoiner(Address joinerAddress) {
-      for (Cache c : caches) {
-         ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
-         int i = 0;
-         for (Address a : dch.getCaches()) {
-            if (a.equals(joinerAddress)) return i;
-            i++;
-         }
-      }
-      throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
    }
 
    protected String safeType(Object o) {
@@ -348,16 +306,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return getDistributionManager(c).getConsistentHash();
    }
 
-   protected ConsistentHash getNonUnionConsistentHash(Cache<?, ?> c, long timeout) {
-      long expTime = System.currentTimeMillis() + timeout;
-      while (System.currentTimeMillis() < expTime) {
-         ConsistentHash ch = getDistributionManager(c).getConsistentHash();
-         if (!(ch instanceof UnionConsistentHash)) return ch;
-         TestingUtil.sleepThread(100);
-      }
-      throw new RuntimeException("Timed out waiting for a non-UnionConsistentHash to be present on cache [" + addressOf(c) + "]");
-   }
-
    /**
     * Blocks and waits for a replication event on async caches
     *
@@ -368,14 +316,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     */
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... caches) {
       // no op.
-   }
-
-   protected void assertProperConsistentHashOnAllCaches() {
-      // check that ALL caches in the system DON'T have a temporary UnionCH
-      for (Cache c : caches) {
-         DistributionManager dm = getDistributionManager(c);
-         assert !(dm.getConsistentHash() instanceof UnionConsistentHash);
-      }
    }
 
    protected TransactionManager getTransactionManager(Cache<?, ?> cache) {

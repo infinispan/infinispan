@@ -49,11 +49,11 @@
    </developers>
    <mailingLists>
       <mailingList>
-         <name>Infinispan Commit Notificatons</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
-         <post>infinispan-commits@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
+         <name>Infinispan Issues</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+         <post>infinispan-issues@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
       </mailingList>
       <mailingList>
          <name>Infinispan Developers</name>
@@ -106,6 +106,7 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
+      <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.0.CR5</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR2</version.arquillian.container.weld>
@@ -120,30 +121,34 @@
       <version.commons.dbcp>1.4</version.commons.dbcp>
       <version.commons.pool>1.6</version.commons.pool>
       <version.commons.httpclient>3.1</version.commons.httpclient>
+      <version.commons.io>1.3.2</version.commons.io>
       <version.commons.logging>1.1</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>11.0.2</version.guava>
       <version.h2.driver>1.3.166</version.h2.driver>
+      <version.hadoop.core>1.0.3</version.hadoop.core>
+      <version.hbase>0.94.1</version.hbase>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.2.0-SNAPSHOT</version.hibernate.search>
+      <version.hibernate.search>4.2.0.Beta1</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.marshalling>1.3.11.GA</version.jboss.marshalling>
+      <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
       <version.jbossjta>4.16.3.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
-      <version.jboss.logging>3.1.0.GA</version.jboss.logging>
-      <version.jboss.logging.processor>1.0.1.Final</version.jboss.logging.processor>
-      <version.jboss.logmanager>1.2.0.GA</version.jboss.logmanager>
+      <version.jboss.logging>3.1.1.GA</version.jboss.logging>
+      <version.jboss.logging.processor>1.0.3.Final</version.jboss.logging.processor>
+      <version.jboss.logmanager>1.3.1.Final</version.jboss.logmanager>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.1.0</version.jclouds>
+      <version.jclouds>1.4.1</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.1.0.Beta1</version.jgroups>
+      <version.jgroups>3.2.0.Alpha1</version.jgroups>
+      <version.jreadline>0.16</version.jreadline>
       <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
@@ -155,7 +160,7 @@
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.8.5</version.mockito>
       <version.mysql.driver>5.1.19</version.mysql.driver>
-      <version.netty>3.2.6.Final</version.netty>
+      <version.netty>3.4.6.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.3.2.Final</version.resteasy>
       <version.rhq.helpers>3.0.4</version.rhq.helpers>
@@ -176,6 +181,7 @@
       <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
+      <version.jacoco>0.5.10.201208310627</version.jacoco>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -229,14 +235,19 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-core</artifactId>
+            <artifactId>infinispan-lucene-directory</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-query</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <version>${project.version}</version>
-            <type>test-jar</type>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -301,6 +312,11 @@
             <version>${version.commons.httpclient}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${version.commons.io}</version>
+         </dependency>
+         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>${version.commons.logging}</version>
@@ -362,9 +378,29 @@
             <version>${version.cassandra.pool}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>${version.hadoop.core}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <version>${version.hbase}</version>
+         </dependency>
+         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
+         </dependency>
+         <dependency>
             <groupId>net.sf.webdav-servlet</groupId>
             <artifactId>webdav-servlet</artifactId>
             <version>${version.webdav.servlet}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
+            <version>${version.antlr}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.cassandra</groupId>
@@ -445,6 +481,19 @@
             </exclusions>
          </dependency>
          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-infinispan</artifactId>
+            <version>${version.hibernate.search}</version>
+            <optional>true</optional>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>${version.hibernate.search}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-bom</artifactId>
             <version>${version.arquillian}</version>
@@ -494,7 +543,7 @@
             </exclusions>
          </dependency>
          <dependency>
-            <groupId>org.jboss.netty</groupId>
+            <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
             <version>${version.netty}</version>
          </dependency>
@@ -502,6 +551,11 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
             <version>${version.resteasy}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>staxmapper</artifactId>
+            <version>${version.org.jboss.staxmapper}</version>
          </dependency>
          <dependency>
             <groupId>org.jclouds</groupId>
@@ -527,6 +581,11 @@
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups</artifactId>
             <version>${version.jgroups}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.jboss.jreadline</groupId>
+             <artifactId>jreadline</artifactId>
+             <version>${version.jreadline}</version>
          </dependency>
          <dependency>
             <groupId>org.json</groupId>
@@ -847,6 +906,17 @@
          <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
          <url>https://repository.jboss.org/nexus/content/groups/public</url>
       </pluginRepository>
+      <pluginRepository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>jboss-public-thirdparty-snapshots</id>
+         <name>JBoss Public third party snapshots plugin repositories</name>
+         <url>https://repository.jboss.org/nexus/content/groups/public-thirdparty-snapshots</url>
+      </pluginRepository>
    </pluginRepositories>
    <build>
       <directory>${buildDirectory}</directory>
@@ -854,19 +924,31 @@
       <pluginManagement>
          <plugins>
             <plugin>
+               <groupId>org.antlr</groupId>
+               <artifactId>antlr3-maven-plugin</artifactId>
+               <version>${version.antlr}</version>
+               <executions>
+                 <execution>
+                     <goals>
+                         <goal>antlr</goal>
+                     </goals>
+                 </execution>
+             </executions>
+            </plugin>
+            <plugin>
                <groupId>org.apache.felix</groupId>
                <artifactId>maven-bundle-plugin</artifactId>
                <version>${version.maven.bundle}</version>
             </plugin>
             <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <version>2.2-beta-3</version>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-assembly-plugin</artifactId>
+               <version>2.3</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
-               <version>2.0</version>
+               <version>2.4</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -877,7 +959,7 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
                <!-- See also reporting plugins -->
-               <version>2.6</version>
+               <version>2.7.1</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>1.6</targetJdk>
@@ -888,13 +970,13 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
-               <version>2.12</version>
+               <version>2.12.2</version>
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
                <version>2.1.1</version>
                <configuration>
-                  <attachClasses>true</attachClasses>
+                  <attachClasses>false</attachClasses>
                </configuration>
             </plugin>
             <plugin>
@@ -1043,6 +1125,16 @@
                   <scalaVersion>${version.scala}</scalaVersion>
                </configuration>
             </plugin>
+            <plugin>
+               <groupId>org.jacoco</groupId>
+               <artifactId>jacoco-maven-plugin</artifactId>
+               <version>${version.jacoco}</version>
+               <configuration>
+                  <includes>
+                     <include>org.infinispan.*</include>
+                  </includes>
+               </configuration>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
@@ -1089,9 +1181,9 @@
                   </goals>
                   <configuration>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
-                     <tasks>
+                     <target>
                         <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"></copy>
-                     </tasks>
+                     </target>
                   </configuration>
                </execution>
             </executions>
@@ -1201,6 +1293,10 @@
                      <name>java.net.preferIPv4Stack</name>
                      <value>true</value>
                   </property>
+                  <property>
+                     <name>infinispan.unsafe.allow_jdk8_chm</name>
+                     <value>true</value>
+                  </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1249,18 +1345,18 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
             <!-- Needs to be re-defined and configured in pluginManagement section -->
-            <version>2.6</version>
+            <version>2.7.1</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
-            <version>2.4.3-JBOSS</version>
+            <version>2.12.2</version>
          </plugin>
          <!-- Findbugs report -->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-            <version>2.3</version>
+            <version>2.5</version>
             <configuration>
                <onlyAnalyze>org.infinispan.*</onlyAnalyze>
                <xmlOutput>true</xmlOutput>
@@ -1270,6 +1366,39 @@
       </plugins>
    </reporting>
    <profiles>
+      <profile>
+         <id>distribution</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
+
+         <build>
+            <plugins>
+               <!-- generate target/runtime-classpath.txt, to be included in bundle -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>create-classpath</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                           <includeScope>runtime</includeScope>
+                           <excludeScope>test</excludeScope>
+                           <!-- all jar paths are relative to bin dir inside the distribution bundle -->
+                           <prefix>$ISPN_HOME/lib</prefix>
+                           <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
          <id>extras</id>
          <activation>
@@ -1341,6 +1470,13 @@
          </properties>
       </profile>
       <profile>
+         <id>test-xsite</id>
+         <properties>
+            <defaultTestGroup>xsite</defaultTestGroup>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
          <id>test-unit</id>
          <properties>
             <defaultTestGroup>unit</defaultTestGroup>
@@ -1397,7 +1533,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <version>2.4.3-JBOSS</version>
                   <configuration>
                      <parallel>tests</parallel>
                      <threadCount>${infinispan.test.parallel.threads}</threadCount>
@@ -1436,6 +1571,85 @@
          <properties>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
+      </profile>
+
+      <profile>
+         <id>coverage</id>
+
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.jacoco</groupId>
+                  <artifactId>jacoco-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <goals>
+                           <goal>prepare-agent</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <inherited>false</inherited>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.7</version>
+                  <executions>
+                     <execution>
+                        <id>jacoco-report</id>
+                           <!-- this must happen after Tomcat has been shut down -->
+                           <phase>verify</phase>
+                           <configuration>
+                               <!-- we use the jacoco ant task because the maven plugin does not
+                            support enough configuration options for report generation -->
+                              <target xmlns:jacoco="antlib:org.jacoco.ant">
+                                 <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
+                                            classpathref="maven.plugin.classpath" />
+                                 <jacoco:report>
+                                    <executiondata>
+                                       <fileset dir="..">
+                                          <include name="**/jacoco.exec" />
+                                          </fileset>
+                                    </executiondata>
+                                    <structure name="infinispan">
+                                       <classfiles>
+                                          <fileset dir="..">
+                                             <include name="**/target/classes/**/*.class" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles encoding="UTF-8">
+                                          <dirset dir="..">
+                                             <include name="**/src/main/java" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </structure>
+                                    <!-- to produce reports in different formats. -->
+                                    <html destdir="target/jacoco-html" />
+                                 </jacoco:report>
+                              </target>
+                           </configuration>
+                           <goals>
+                              <goal>run</goal>
+                           </goals>
+                     </execution>
+                  </executions>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>org.jacoco.ant</artifactId>
+                        <version>${version.jacoco}</version>
+                     </dependency>
+                  </dependencies>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 </project>

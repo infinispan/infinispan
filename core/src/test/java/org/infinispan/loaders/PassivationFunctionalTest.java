@@ -69,12 +69,12 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void afterMethod() throws CacheLoaderException {
       if (cache != null) cache.clear();
       if (store != null) store.clear();

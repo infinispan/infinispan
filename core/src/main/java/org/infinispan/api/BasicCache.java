@@ -100,6 +100,16 @@ public interface BasicCache<K, V> extends ConcurrentMap<K, V>, Lifecycle {
    String getVersion();
 
    /**
+    * {@inheritDoc}
+    *
+    * If the return value of this operation will be ignored by the application,
+    * the user is strongly encouraged to use the {@link org.infinispan.context.Flag#IGNORE_RETURN_VALUES}
+    * flag when invoking this method in order to make it behave as efficiently
+    * as possible (i.e. avoiding needless remote or network calls).
+    */
+   V put(K key, V value);
+
+   /**
     * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.
     *
     * @param key      key to use
@@ -346,6 +356,16 @@ public interface BasicCache<K, V> extends ConcurrentMap<K, V>, Lifecycle {
     * @return a future containing the old value replaced
     */
    NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+
+   /**
+    * {@inheritDoc}
+    *
+    * If the return value of this operation will be ignored by the application,
+    * the user is strongly encouraged to use the {@link org.infinispan.context.Flag#IGNORE_RETURN_VALUES}
+    * flag when invoking this method in order to make it behave as efficiently
+    * as possible (i.e. avoiding needless remote or network calls).
+    */
+   V remove(Object key);
 
    /**
     * Asynchronous version of {@link #remove(Object)}.  This method does not block on remote calls, even if your cache

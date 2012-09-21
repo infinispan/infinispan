@@ -40,11 +40,15 @@ import java.util.concurrent.TimeUnit;
  * @since 5.1
  */
 public class AggregatingNotifyingFutureBuilder extends NotifyingFutureImpl {
-   final List<Future<Object>> futures;
+   private final List<Future<Object>> futures;
 
    public AggregatingNotifyingFutureBuilder(Object actualReturnValue, int capacity) {
       super(actualReturnValue);
       futures = new ArrayList<Future<Object>>(capacity);
+   }
+
+   public AggregatingNotifyingFutureBuilder(Object actualReturnValue) {
+      this(actualReturnValue, 10);
    }
 
    public NotifyingNotifiableFuture<?> build() {

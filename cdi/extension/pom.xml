@@ -116,6 +116,12 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-core</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
          <version>${project.version}</version>

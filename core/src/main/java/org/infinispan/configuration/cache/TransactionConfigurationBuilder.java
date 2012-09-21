@@ -23,9 +23,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -33,12 +30,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
- * 
+ *
  * @author pmuir
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
-
-   private static Log log = LogFactory.getLog(TransactionConfigurationBuilder.class);
 
    private boolean autoCommit = true;
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
@@ -46,7 +41,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
    private boolean syncRollbackPhase = false;
-   private TransactionManagerLookup transactionManagerLookup;
+   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
@@ -85,6 +80,19 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
+    * remote and local transactions to finish. The amount of time to wait for is defined by the
+    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
+    * because even if a new transaction was started just before the cache was stopped, this could
+    * only last as long as the transaction timeout allows it.
+    * <p/>
+    * This configuration property may be adjusted at runtime
+    */
+   public TransactionConfigurationBuilder cacheStopTimeout(long l, TimeUnit unit) {
+      return cacheStopTimeout(unit.toMillis(l));
+   }
+
+   /**
     * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
     * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
     * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node
@@ -103,7 +111,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    /**
     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
     * transactional then the locking mode is ignored.
-    * 
+    *
     * @see org.infinispan.config.Configuration#isTransactionalCache()
     */
    public TransactionConfigurationBuilder lockingMode(LockingMode lockingMode) {
@@ -131,9 +139,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions.
     * <p />
-    * 
+    *
     * This configuration property may be adjusted at runtime.
-    * 
+    *
     * @param b
     * @return
     */
@@ -176,7 +184,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * <p />
     * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
     * be enforced by setting transaction's locking mode to PESSIMISTIC.
-    * 
+    *
     * @param b
     * @return
     */
@@ -206,7 +214,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       recovery.enable();
       return recovery;
    }
-   
+
    /**
     * Before Infinispan 5.1 you could access the cache both transactionally and
     * non-transactionally. Naturally the non-transactional access is faster and
@@ -226,19 +234,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   void validate() {
-      if (transactionManagerLookup == null) {
-         if (!getBuilder().invocationBatching().enabled) {
-            transactionManagerLookup = new GenericTransactionManagerLookup();
-         } else {
-            if (!useSynchronization) log.debug("Switching to Synchronization based enlistment.");
-            useSynchronization = true;
-         }
-      }
+   public void validate() {
    }
 
    @Override
-   TransactionConfiguration create() {
+   public TransactionConfiguration create() {
       if (useEagerLocking) {
          lockingMode = LockingMode.PESSIMISTIC;
       }

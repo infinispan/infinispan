@@ -22,7 +22,22 @@
  */
 package org.infinispan.loaders.cassandra;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import net.dataforte.cassandra.pool.DataSource;
+
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
@@ -39,7 +54,6 @@ import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.SuperColumn;
-import org.apache.cassandra.utils.ByteBufferUtil;
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -51,31 +65,14 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.cassandra.logging.Log;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
-import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.loaders.modifications.Remove;
-import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * A persistent <code>CacheLoader</code> based on Apache Cassandra project. See
  * http://cassandra.apache.org/
- * 
+ *
  * @author Tristan Tarrant
  */
 @CacheLoaderMetadata(configurationClass = CassandraCacheStoreConfig.class)
@@ -424,8 +421,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
       try {
          cassandraClient = dataSource.getConnection();
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(
-                  2);
+         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
          store0(entry, mutationMap);
 
          cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
@@ -528,8 +524,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
          SlicePredicate predicate = new SlicePredicate();
          predicate.setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER, ByteBufferUtil
                   .bytes(System.currentTimeMillis()), false, SLICE_SIZE));
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+
          for (boolean complete = false; !complete;) {
+            Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(SLICE_SIZE);
             // Get all columns
             List<ColumnOrSuperColumn> slice = cassandraClient.get_slice(expirationKey,
                      expirationColumnParent, predicate, readConsistencyLevel);
@@ -546,42 +543,8 @@ public class CassandraCacheStore extends AbstractCacheStore {
                addMutation(mutationMap, expirationKey, config.expirationColumnFamily,
                         ByteBuffer.wrap(scol.getName()), null, null);
             }
+            cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
          }
-         cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
-      } catch (Exception e) {
-         throw new CacheLoaderException(e);
-      } finally {
-         dataSource.releaseConnection(cassandraClient);
-      }
-
-   }
-
-   @Override
-   protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
-      Cassandra.Client cassandraClient = null;
-
-      try {
-         cassandraClient = dataSource.getConnection();
-         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-
-         for (Modification m : mods) {
-            switch (m.getType()) {
-               case STORE:
-                  store0(((Store) m).getStoredEntry(), mutationMap);
-                  break;
-               case CLEAR:
-                  clear();
-                  break;
-               case REMOVE:
-                  remove0(ByteBufferUtil.bytes(hashKey(((Remove) m).getKey())), mutationMap);
-                  break;
-               default:
-                  throw new AssertionError();
-            }
-         }
-
-         cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
-
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       } finally {
@@ -647,7 +610,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
       } else { // Insert/update
          ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
          if (superColumn != null) {
-            List<Column> columns = new ArrayList<Column>();
+            List<Column> columns = new ArrayList<Column>(1);
             Column col = new Column(columnName);
             col.setValue(value);
             col.setTimestamp(microTimestamp());

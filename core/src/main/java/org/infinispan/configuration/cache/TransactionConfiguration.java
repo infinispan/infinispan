@@ -34,10 +34,10 @@ public class TransactionConfiguration {
    private final boolean autoCommit;
    private long cacheStopTimeout;
    private final boolean eagerLockingSingleNode;
-   private final LockingMode lockingMode;
+   private LockingMode lockingMode;
    private boolean syncCommitPhase;
    private boolean syncRollbackPhase;
-   private final TransactionManagerLookup transactionManagerLookup;
+   private TransactionManagerLookup transactionManagerLookup;
    private final TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    private final TransactionMode transactionMode;
    private boolean useEagerLocking;
@@ -114,8 +114,8 @@ public class TransactionConfiguration {
    }
 
    /**
-    * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
-    * transactional then the locking mode is ignored.
+    * Configures whether the cache uses optimistic or pessimistic locking.
+    * If the cache is not transactional then the locking mode is ignored.
     * 
     * @see TransactionConfiguration#transactionMode()
     */
@@ -123,6 +123,24 @@ public class TransactionConfiguration {
       return lockingMode;
    }
 
+   /**
+    * Configures whether the cache uses optimistic or pessimistic locking.
+    * If the cache is not transactional then the locking mode is ignored.
+    *
+    * @see TransactionConfiguration#transactionMode()
+    */
+    public TransactionConfiguration lockingMode(LockingMode lockingMode) {
+      this.lockingMode = lockingMode;
+      return this;
+   }
+
+   /**
+    * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
+    * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
+    * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
+    * performance of 2PC transactions, since any remote failures are trapped during the prepare
+    * phase anyway and appropriate rollbacks are issued.
+    */
    public boolean syncCommitPhase() {
       return syncCommitPhase;
    }
@@ -171,6 +189,11 @@ public class TransactionConfiguration {
     */
    public TransactionManagerLookup transactionManagerLookup() {
       return transactionManagerLookup;
+   }
+
+   public TransactionConfiguration transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
+      this.transactionManagerLookup = transactionManagerLookup;
+      return this;
    }
 
    /**

@@ -31,7 +31,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -195,6 +194,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.accept(new InjectComponentRegistryVisitor(cr));
    }
 
+   /**
+    * Use the {@link org.infinispan.configuration.cache.ConfigurationBuilder}
+    * hierarchy to configure Infinispan caches fluently.
+    */
+   @Deprecated
    public FluentConfiguration fluent() {
       return fluentConfig;
    }
@@ -1042,10 +1046,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Fully qualified name of class providing consistent hash algorithm
-    *
-    * @param consistentHashClass
-    * @deprecated Use {@link FluentConfiguration.HashConfig#consistentHashClass(Class)} instead
+    * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
     */
    @Deprecated
    public void setConsistentHashClass(String consistentHashClass) {
@@ -1412,21 +1413,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.l1.onRehash;
    }
 
+   /**
+    * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
+    */
    public String getConsistentHashClass() {
-      if (clustering.hash.consistentHashClass == null) {
-         clustering.hash.consistentHashClass = globalConfiguration == null || globalConfiguration.hasTopologyInfo() ? TopologyAwareConsistentHash.class.getName() : DefaultConsistentHash.class.getName();
-      }
       return clustering.hash.consistentHashClass;
    }
-   
-   public boolean hasConsistentHashClass() {
-      return clustering.hash.consistentHashClass != null;
-   }
 
+   /**
+    * @deprecated No longer useful, since {@link #getConsistentHashClass()} is not used.
+    */
    public boolean isCustomConsistentHashClass() {
-      return clustering.hash.consistentHashClass != null &&
-            !clustering.hash.consistentHashClass.equals(DefaultConsistentHash.class.getName()) &&
-            !clustering.hash.consistentHashClass.equals(TopologyAwareConsistentHash.class.getName());
+      return false;
    }
 
    public boolean isCustomHashFunctionClass() {
@@ -3507,13 +3505,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = 752218766840948822L;
 
-      @ConfigurationDocRef(name = "class", bean = Configuration.class, targetElement = "setConsistentHashClass")
+      @ConfigurationDocRef(name = "class", bean = HashConfig.class, targetElement = "setConsistentHashClass")
       protected String consistentHashClass;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "hashFunctionClass")
       protected String hashFunctionClass = MurmurHash3.class.getName();
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numOwners")
       protected Integer numOwners = 2;
 
       @ConfigurationDoc(desc = "Future flag. Currenly unused.")
@@ -3544,7 +3542,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       /**
-       * @deprecated The visibility of this will be reduced, use {@link #consistentHashClass(Class)}
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
        */
       @Deprecated
       public void setConsistentHashClass(String consistentHashClass) {
@@ -3603,7 +3601,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
       
       /**
-       * @deprecated The visibility of this will be reduced, use {@link #numVirtualNodes(Integer)}
+       * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#numSegments(int)} instead.
        */
       @Deprecated
       public void setNumVirtualNodes(Integer numVirtualNodes) {

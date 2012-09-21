@@ -115,7 +115,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     *
     * @param names List of names
     */
-   private Fqn(List<Object> names) {
+   private Fqn(List<?> names) {
       if (names != null)
          elements = names.toArray();
       else
@@ -205,7 +205,6 @@ public class Fqn implements Comparable<Fqn>, Serializable {
     * @param stringRepresentation String representation of the Fqn
     * @return an Fqn<String> constructed from the string representation passed in
     */
-   @SuppressWarnings("unchecked")
    public static Fqn fromString(String stringRepresentation) {
       if (stringRepresentation == null || stringRepresentation.equals(SEPARATOR) || stringRepresentation.length() == 0)
          return root();

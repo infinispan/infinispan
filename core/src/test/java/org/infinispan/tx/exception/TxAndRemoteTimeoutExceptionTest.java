@@ -77,7 +77,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       txTable0 = TestingUtil.getTransactionTable(cache(0));
       txTable1 = TestingUtil.getTransactionTable(cache(1));
       tm = cache(0).getAdvancedCache().getTransactionManager();
-      TestingUtil.blockUntilViewReceived(cache(0), 2, 10000);
+      TestingUtil.blockUntilViewReceived(cache(0), 2);
    }
 
    protected Configuration getDefaultConfig() {

@@ -25,7 +25,8 @@ package org.infinispan.jmx;
 import java.util.Set;
 
 import javax.management.MBeanServer;
-import org.infinispan.config.GlobalConfiguration;
+
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 
 /**
@@ -41,10 +42,26 @@ public abstract class AbstractJmxRegistration {
 
    protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
 
-   protected void registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
-      mBeanServer = JmxUtil.lookupMBeanServer(globalConfig);
-      ComponentsJmxRegistration registrar = buildRegistrar(components);
-      registrar.registerMBeans();
+   /**
+    * Registers a set of MBean components and returns true if successfully registered; false otherwise.
+    * @param components components to register
+    * @param globalConfig global configuration
+    * @return true if successfully registered; false otherwise.
+    */
+   protected boolean registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
+      try {
+         mBeanServer = JmxUtil.lookupMBeanServer(globalConfig);
+      } catch (Exception e) {
+         mBeanServer = null;
+      }
+
+      if (mBeanServer != null) {
+         ComponentsJmxRegistration registrar = buildRegistrar(components);
+         registrar.registerMBeans();
+         return true;
+      } else {
+         return false;
+      }
    }
 
    protected void unregisterMBeans(Set<AbstractComponentRegistry.Component> components) {

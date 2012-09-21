@@ -22,17 +22,39 @@
  */
 package org.infinispan.test.fwk;
 
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.xml.namespace.QName;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import org.infinispan.config.Configuration;
-import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.configuration.parsing.ConfigurationParser;
+import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -41,16 +63,8 @@ import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+import org.jboss.staxmapper.XMLMapper;
+import org.jgroups.util.UUID;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -61,12 +75,11 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
  */
 public class TestCacheManagerFactory {
 
-
    private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
-   
+
    private static volatile boolean shuttingDown;
    private static CountDownLatch shutDownLatch = new CountDownLatch(1);
 
@@ -109,13 +122,17 @@ public class TestCacheManagerFactory {
       return fromStream(is, keepJmxDomainName);
    }
 
+   public static EmbeddedCacheManager fromXml(String globalXmlFile, String defaultXmlFile, String namedXmlFile) throws IOException {
+      return new DefaultCacheManager(globalXmlFile, defaultXmlFile, namedXmlFile, true);
+   }
+
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
       return fromStream(is, false);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
-      ConfigurationBuilderHolder holder = new Parser(
-            Thread.currentThread().getContextClassLoader()).parse(is);
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       return createClusteredCacheManager(holder, keepJmxDomainName);
    }
 
@@ -139,14 +156,32 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, globalConfiguration, c, false);
    }
 
+   /**
+    * @deprecated Use {@link #markAsTransactional(
+    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
+    * instead
+    */
+   @Deprecated
    private static void markAsTransactional(boolean transactional, Configuration c) {
       c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+      if (transactional)
+         // Set volatile stores just in case...
+         JBossTransactionsUtils.setVolatileStores();
    }
 
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
       builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+      if (transactional)
+         // Set volatile stores just in case...
+         JBossTransactionsUtils.setVolatileStores();
    }
 
+   /**
+    * @deprecated Use {@link #updateTransactionSupport(
+    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
+    * instead
+    */
+   @Deprecated
    private static void updateTransactionSupport(Configuration c) {
       if (c.isTransactionalCache()) amendJTA(c);
    }
@@ -155,6 +190,11 @@ public class TestCacheManagerFactory {
       if (transactional) amendJTA(builder);
    }
 
+   /**
+    * @deprecated Use {@link #amendJTA(
+    * org.infinispan.configuration.cache.ConfigurationBuilder)} instead
+    */
+   @Deprecated
    private static void amendJTA(Configuration c) {
       if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
          c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
@@ -235,8 +275,20 @@ public class TestCacheManagerFactory {
       return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
    }
 
+   public static EmbeddedCacheManager createCacheManager() {
+      return createCacheManager(new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createCacheManager(boolean start) {
+      return newDefaultCacheManager(start, new GlobalConfigurationBuilder().nonClusteredDefault(), new ConfigurationBuilder(), false);
+   }
+
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
       return newDefaultCacheManager(true, globalBuilder, builder, false);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, boolean keepJmxDomain) {
+      return newDefaultCacheManager(true, globalBuilder, builder, keepJmxDomain);
    }
 
    /**
@@ -268,17 +320,21 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, configuration, new Configuration(), enforceJmxDomain);
    }
 
-   public static EmbeddedCacheManager createCacheManager(Configuration.CacheMode mode, boolean indexing) {
-      GlobalConfiguration gc = mode.isClustered() ? GlobalConfiguration.getClusteredDefault() : GlobalConfiguration.getNonClusteredDefault();
-      Configuration c = new Configuration();
-      FluentConfiguration fluentConfiguration = c.fluent();
-      if (indexing) {
-         //The property is not really needed as it defaults to the same value,
-         //but since it's recommended we set it explicitly to avoid logging a noisy warning.
-         fluentConfiguration.indexing().addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+   public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+         .clustering()
+            .cacheMode(mode)
+         .indexing()
+            .enabled(indexing)
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+         ;
+      if (mode.isClustered()) {
+         return createClusteredCacheManager(builder);
       }
-      fluentConfiguration.mode(mode);
-      return createCacheManager(gc, fluentConfiguration.build());
+      else {
+         return createCacheManager(builder);
+      }
    }
 
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {
@@ -328,6 +384,20 @@ public class TestCacheManagerFactory {
       return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, builder);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      amendGlobalConfiguration(globalBuilder, new TransportFlags());
+      globalBuilder.globalJmxStatistics()
+               .jmxDomain(jmxDomain)
+               .mBeanServerLookup(new PerThreadMBeanServerLookup())
+               .enabled(exposeGlobalJmx);
+      return createCacheManager(globalBuilder, builder, true);
+   }
+
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
@@ -366,6 +436,8 @@ public class TestCacheManagerFactory {
       markAsTransactional(transactional, builder);
       //don't changed the tx lookup.
       if (useCustomTxLookup) updateTransactionSupport(transactional, builder);
+      // reduce the number of hash segments
+      builder.clustering().hash().numSegments(12);
       return builder;
    }
 
@@ -502,7 +574,12 @@ public class TestCacheManagerFactory {
       }
       PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
       String methodName = extractMethodName();
-      log.trace("Adding DCM (" + cm.getAddress() + ") for method: '" + methodName + "'");
+      // In case JGroups' address cache expires, this will help us map the uuids in the log
+      if (cm.getAddress() != null) {
+         String uuid = ((UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
+         log.debugf("Started cache manager %s, UUID is %s", cm.getAddress(), uuid);
+      }
+      log.trace("Adding DCM (" + cm.getCacheManagerConfiguration().transport().nodeName() + ") for method: '" + methodName + "'");
       threadCacheManagers.add(methodName, cm);
       return cm;
    }
@@ -533,12 +610,6 @@ public class TestCacheManagerFactory {
    static void testFinished(String testName) {
       perThreadCacheManagers.get().checkManagersClosed(testName);
       perThreadCacheManagers.get().unsetTestName();
-   }
-
-   public static DefaultCacheManager createCacheManager(org.infinispan.configuration.cache.Configuration config) {
-      GlobalConfigurationBuilder globalConfigBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder, new TransportFlags());
-      return new DefaultCacheManager(globalConfigBuilder.build(), config);
    }
 
    private static class PerThreadCacheManagers {
@@ -572,7 +643,7 @@ public class TestCacheManagerFactory {
 
       public String getNextCacheName() {
          int index = cacheManagers.size();
-         char name = (char) ((int) 'A' + index);
+         char name = (char) ('A' + index);
          return (testName != null ? testName + "-" : "") + "Node" + name;
       }
 
@@ -592,5 +663,29 @@ public class TestCacheManagerFactory {
          Thread.currentThread().setName(oldThreadName);
          this.oldThreadName = null;
       }
+   }
+
+   public static ConfigurationBuilderHolder buildAggregateHolder(String... xmls)
+         throws XMLStreamException, FactoryConfigurationError {
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      // Configure the xml mapper
+      XMLMapper xmlMapper = XMLMapper.Factory.create();
+      @SuppressWarnings("rawtypes")
+      ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl);
+      for (ConfigurationParser<?> parser : parsers) {
+         for (Namespace ns : parser.getSupportedNamespaces()) {
+            xmlMapper.registerRootElement(new QName(ns.getUri(), ns.getRootElement()), parser);
+         }
+      }
+
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
+      for (int i = 0; i < xmls.length; ++i) {
+         BufferedInputStream input = new BufferedInputStream(
+               new ByteArrayInputStream(xmls[i].getBytes()));
+         XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
+         xmlMapper.parseDocument(holder, streamReader);
+      }
+
+      return holder;
    }
 }

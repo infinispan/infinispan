@@ -27,6 +27,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.*;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -280,6 +281,18 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       for (String k: stats.keySet()) stats.put(k, 0);
    }
 
+   public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
+      long killTime = System.currentTimeMillis() + timeout;
+      while (System.currentTimeMillis() < killTime) {
+         InternalCacheEntry entry = store.get(key);
+         if (entry != null && entry.getValue().equals(expectedValue)) return;
+         TestingUtil.sleepThread(50);
+      }
+      throw new RuntimeException(String.format(
+            "Timed out waiting (%d ms) for cache store to contain key=%s with value=%s",
+            timeout, key, expectedValue));
+   }
+
    public static class Cfg extends AbstractCacheStoreConfig {
 
       private static final long serialVersionUID = 4258914047690999424L;
@@ -381,6 +394,17 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       public Cfg purgeSynchronously(Boolean purgeSynchronously) {
          super.purgeSynchronously(purgeSynchronously);
          return this;
+      }
+
+      @Override
+      public Properties getProperties() {
+         Properties p = super.getProperties();
+         p.setProperty("debug", Boolean.toString(debug));
+         if (storeName != null)
+            p.setProperty("storeName", storeName);
+         if (failKey != null) // TODO: Find a better way...
+            p.setProperty("storeName", failKey.toString());
+         return p;
       }
    }
 }

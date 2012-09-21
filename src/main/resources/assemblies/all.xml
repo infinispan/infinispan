@@ -44,22 +44,22 @@
    + doc (release notes, etc from src/main/release)
 -->
 <assembly
-      xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+      xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+      xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
    <id>all</id>
+
+   <baseDirectory>${project.artifactId}-${project.version}-all</baseDirectory>
 
    <formats>
       <format>zip</format>
    </formats>
 
    <moduleSets>
-
+      <!-- Core module -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-api</include>
-            <include>org.infinispan:infinispan-commons</include>
             <include>org.infinispan:infinispan-core</include>
          </includes>
          <sources>
@@ -137,13 +137,21 @@
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
 
          <binaries>
 
-            <outputDirectory></outputDirectory>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
@@ -173,6 +181,8 @@
             <include>org.infinispan:infinispan-client-hotrod</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-spring</include>
+            <include>org.infinispan:infinispan-cli-client</include>
+            <include>org.infinispan:infinispan-cli-server</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -189,7 +199,7 @@
                      <include>**/*.dat.gz</include>
                   </includes>
                </fileSet>
-               
+
                <fileSet>
                   <directory>src/main/resources/</directory>
                   <outputDirectory>etc</outputDirectory>
@@ -243,12 +253,21 @@
                <fileSet>
                   <directory>src/main/release</directory>
                   <outputDirectory></outputDirectory>
-                  <lineEnding>dos</lineEnding>                  
+                  <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.txt</include>
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -265,8 +284,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -277,7 +294,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -291,6 +308,7 @@
             <include>org.infinispan:infinispan-cachestore-bdbje</include>
             <include>org.infinispan:infinispan-cachestore-cassandra</include>
             <include>org.infinispan:infinispan-cachestore-cloud</include>
+            <include>org.infinispan:infinispan-cachestore-hbase</include>
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
             <include>org.infinispan:infinispan-cachestore-jdbm</include>
             <include>org.infinispan:infinispan-cachestore-remote</include>
@@ -360,6 +378,15 @@
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/cachestores/${module.basedir.name}</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -376,8 +403,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -388,7 +413,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/cachestores/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -401,23 +426,6 @@
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
          </includes>
-
-         <sources>
-            <includeModuleDirectory>false</includeModuleDirectory>
-            <fileSets>
-               <fileSet>
-                  <directory>target</directory>
-                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-                  <includes>
-                     <include>*.jar</include>
-                  </includes>
-                  <excludes>
-                     <exclude>*tests.jar</exclude>
-                     <exclude>*sources.jar</exclude>
-                  </excludes>
-               </fileSet>
-            </fileSets>
-         </sources>
 
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
@@ -558,13 +566,21 @@
                <!-- EULAs and license files -->
                <fileSet>
                   <directory>src/main/release</directory>
-                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.txt</include>
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -581,8 +597,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -593,7 +607,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/demos/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -645,6 +659,15 @@
                   </includes>
                </fileSet>
 
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
             </fileSets>
 
          </sources>
@@ -659,6 +682,18 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+               <!-- runtime-classpath.txt file -->
+               <fileSet>
+                  <directory>target</directory>
+                  <lineEnding>keep</lineEnding>
+                  <outputDirectory>modules/cdi</outputDirectory>
+                  <includes>
+                     <include>runtime-classpath.txt</include>
+                  </includes>
+               </fileSet>
+            </fileSets>
          </sources>
 
          <!-- All modules except core and Webapp modules -->
@@ -673,8 +708,6 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-api*</exclude>
-                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
@@ -685,7 +718,7 @@
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>modules/cdi/lib</outputDirectory>
+                  <outputDirectory>lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 

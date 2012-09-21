@@ -22,18 +22,21 @@
  */
 package org.infinispan.cdi.test.cachemanager.embedded.registration;
 
+import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import org.infinispan.Cache;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-import java.util.Set;
-
-import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Tests that configured caches are registered in the corresponding cache manager.
@@ -46,17 +49,24 @@ public class CacheRegistrationTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(CacheRegistrationTest.class.getPackage());
+            .addPackage(CacheRegistrationTest.class.getPackage())
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    @Inject
    private EmbeddedCacheManager defaultCacheManager;
+   
+   @Inject
+   private Cache<String, String> cache;
 
    @VeryLarge
    @Inject
    private EmbeddedCacheManager specificCacheManager;
 
    public void testCacheRegistrationInDefaultCacheManager() {
+       // Make sure the cache is registered
+      cache.put("foo", "bar");
+      
       final Set<String> cacheNames = defaultCacheManager.getCacheNames();
 
       assertEquals(cacheNames.size(), 2);
@@ -65,6 +75,8 @@ public class CacheRegistrationTest extends Arquillian {
    }
 
    public void testCacheRegistrationInSpecificCacheManager() {
+      // Make sure the cache is registered
+      cache.put("foo", "bar");
       final Set<String> cacheNames = specificCacheManager.getCacheNames();
 
       assertEquals(cacheNames.size(), 1);

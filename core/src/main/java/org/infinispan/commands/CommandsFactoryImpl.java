@@ -25,13 +25,13 @@ package org.infinispan.commands;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -57,13 +57,13 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
@@ -72,10 +72,13 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.statetransfer.StateProvider;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.LockInfo;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -110,19 +113,21 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private String cacheName;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
-   SizeCommand cachedSizeCommand;
-   KeySetCommand cachedKeySetCommand;
-   ValuesCommand cachedValuesCommand;
-   EntrySetCommand cachedEntrySetCommand;
+   private SizeCommand cachedSizeCommand;
+   private KeySetCommand cachedKeySetCommand;
+   private ValuesCommand cachedValuesCommand;
+   private EntrySetCommand cachedEntrySetCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
    private TransactionTable txTable;
    private Configuration configuration;
    private RecoveryManager recoveryManager;
-   private StateTransferManager stateTransferManager;
+   private StateProvider stateProvider;
+   private StateConsumer stateConsumer;
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
+   private MapReduceManager mapReduceManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -131,8 +136,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager,
-                                 InternalEntryFactory entryFactory) {
+                                 RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
+                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -143,9 +148,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.configuration = configuration;
       this.moduleCommandInitializers = moduleCommandInitializers;
       this.recoveryManager = recoveryManager;
-      this.stateTransferManager = stateTransferManager;
+      this.stateProvider = stateProvider;
+      this.stateConsumer = stateConsumer;
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
+      this.mapReduceManager = mapReduceManager;
    }
 
    @Start(priority = 1)
@@ -170,28 +177,28 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public InvalidateCommand buildInvalidateCommand(Object... keys) {
-      return new InvalidateCommand(notifier, keys);
+   public InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys) {
+      return new InvalidateCommand(notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys) {
-      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys) {
-      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
+      return new InvalidateL1Command(origin, forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
-      return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis, flags);
+      return new ReplaceCommand(key, oldValue, newValue, notifier, lifespan, maxIdleTimeMillis, flags);
    }
 
    @Override
@@ -242,8 +249,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public EvictCommand buildEvictCommand(Object key) {
-      return new EvictCommand(key, notifier);
+   public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
+      return new EvictCommand(key, notifier, flags);
    }
 
    @Override
@@ -297,6 +304,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case VersionedPutKeyValueCommand.COMMAND_ID:
             ((PutKeyValueCommand) c).init(notifier);
             break;
+         case ReplaceCommand.COMMAND_ID:
+            ((ReplaceCommand) c).init(notifier);
+            break;
          case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);
             break;
@@ -336,7 +346,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                   initializeReplicableCommand(nested, false);
                }
             pc.markTransactionAsRemote(isRemote);
-            if (configuration.isEnableDeadlockDetection() && isRemote) {
+            if (configuration.deadlockDetection().enabled() && isRemote) {
                DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
                transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
             }
@@ -364,11 +374,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
             lcc.markTransactionAsRemote(isRemote);
-            if (configuration.isEnableDeadlockDetection() && isRemote) {
+            if (configuration.deadlockDetection().enabled() && isRemote) {
                DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();
                RemoteTransaction transaction = txTable.getRemoteTransaction(gtx);
                if (transaction != null) {
-                  if (!configuration.getCacheMode().isDistributed()) {
+                  if (!configuration.clustering().cacheMode().isDistributed()) {
                      Set<Object> keys = txTable.getLockedKeysForRemoteTransaction(gtx);
                      GlobalTransaction gtx2 = transaction.getGlobalTransaction();
                      ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(keys);
@@ -380,9 +390,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
                }
             }
             break;
-         case StateTransferControlCommand.COMMAND_ID:
-            StateTransferControlCommand rcc = (StateTransferControlCommand) c;
-            rcc.init(stateTransferManager, configuration, dataContainer, this);
+         case StateRequestCommand.COMMAND_ID:
+            ((StateRequestCommand) c).init(stateProvider);
+            break;
+         case StateResponseCommand.COMMAND_ID:
+            ((StateResponseCommand) c).init(stateConsumer);
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
@@ -392,10 +404,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
             ftx.init(txTable, lockManager, recoveryManager);
             break;
-         case MapReduceCommand.COMMAND_ID:
-            MapReduceCommand mrc = (MapReduceCommand)c;
-            mrc.init(this, interceptorChain, icc, distributionManager,cache.getAdvancedCache().getRpcManager().getAddress());
+         case MapCombineCommand.COMMAND_ID:
+            MapCombineCommand mrc = (MapCombineCommand)c;
+            mrc.init(mapReduceManager);
             break;
+         case ReduceCommand.COMMAND_ID:
+            ReduceCommand reduceCommand = (ReduceCommand)c;
+            reduceCommand.init(mapReduceManager);
+            break;   
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
@@ -410,6 +426,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ApplyDeltaCommand.COMMAND_ID:
             break;
+         case CreateCacheCommand.COMMAND_ID:
+            CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
+            createCacheCommand.init(cache.getCacheManager());
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -436,15 +455,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                                int viewId) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId);
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments) {
+      return new StateRequestCommand(cacheName, subtype, sender, viewId, segments);
    }
 
    @Override
-   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
-                                                                int viewId, Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo) {
-      return new StateTransferControlCommand(cacheName, type, sender, viewId, state, lockInfo);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks) {
+      return new StateResponseCommand(cacheName, sender, viewId, stateChunks);
    }
 
    @Override
@@ -469,12 +486,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return new DistributedExecuteCommand(keys, callable);
+      return new DistributedExecuteCommand<T>(keys, callable);
    }
 
    @Override
-   public MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys) {
-      return new MapReduceCommand(m, r, cacheName, keys);
+   public <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
+            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
+            Collection<KIn> keys) {
+      return new MapCombineCommand<KIn, VIn, KOut, VOut>(taskId, m, r, cacheName, keys);
    }
 
    @Override
@@ -490,5 +509,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
       return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);
+   }
+
+   @Override
+   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName) {
+      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName);
+   }
+
+   @Override
+   public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
+            String destintationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
+      return new ReduceCommand<KOut, VOut>(taskId, r, destintationCache, keys);
    }
 }

@@ -27,15 +27,15 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public abstract class AbstractLockSupportCacheStoreConfiguration extends AbstractLoaderConfiguration {
+public abstract class AbstractLockSupportCacheStoreConfiguration extends AbstractStoreConfiguration implements LockSupportCacheStoreConfiguration {
 
    private final int lockConcurrencyLevel;
    private final long lockAcquistionTimeout;
 
-   AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout,
+   protected AbstractLockSupportCacheStoreConfiguration(long lockAcquistionTimeout,
          int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
          int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncLoaderConfiguration async,
+         TypedProperties properties, AsyncStoreConfiguration async,
          SingletonStoreConfiguration singletonStore) {
       super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, properties, async, singletonStore);
@@ -43,10 +43,12 @@ public abstract class AbstractLockSupportCacheStoreConfiguration extends Abstrac
       this.lockConcurrencyLevel = lockConcurrencyLevel;
    }
 
+   @Override
    public long lockAcquistionTimeout() {
       return lockAcquistionTimeout;
    }
 
+   @Override
    public int lockConcurrencyLevel() {
       return lockConcurrencyLevel;
    }

@@ -53,6 +53,11 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
       return this;
    }
 
+   public AsyncConfigurationBuilder asyncMarshalling(boolean async) {
+      this.asyncMarshalling = async;
+      return this;
+   }
+
    /**
     * Enables synchronous marshalling. You can find more information at <a
     * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
@@ -65,7 +70,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
 
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
-    * 
+    *
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
@@ -82,6 +87,14 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    public AsyncConfigurationBuilder replQueueInterval(long interval) {
       this.replicationQueueInterval = interval;
       return this;
+   }
+
+   /**
+    * If useReplQueue is set to true, this attribute controls how often the asynchronous thread used
+    * to flush the replication queue runs.
+    */
+   public AsyncConfigurationBuilder replQueueInterval(long interval, TimeUnit unit) {
+      return replQueueInterval(unit.toMillis(interval));
    }
 
    /**
@@ -103,6 +116,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    @Override
+   public
    void validate() {
       if (useReplicationQueue && getClusteringBuilder().cacheMode().isDistributed())
          throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
@@ -112,10 +126,11 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    @Override
+   public
    AsyncConfiguration create() {
       return new AsyncConfiguration(asyncMarshalling, replicationQueue, replicationQueueInterval, replicationQueueMaxElements, useReplicationQueue);
    }
-   
+
    @Override
    public AsyncConfigurationBuilder read(AsyncConfiguration template) {
       this.asyncMarshalling = template.asyncMarshalling();

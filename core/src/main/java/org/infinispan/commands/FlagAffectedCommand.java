@@ -36,7 +36,7 @@ import org.infinispan.context.Flag;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.0
  */
-public interface FlagAffectedCommand {
+public interface FlagAffectedCommand extends TopologyAffectedCommand {
    
    /**
     * @return the Flags which where set in the context - only valid to invoke after {@link #setFlags(Set)}
@@ -48,6 +48,12 @@ public interface FlagAffectedCommand {
     * @param flags
     */
    void setFlags(Set<Flag> flags);
+
+   /**
+    * Use it to store the flags from the InvocationContext into the Command before remoting the Command.
+    * @param flags
+    */
+   void setFlags(Flag... flags);
 
    /**
     * Check whether a particular flag is present in the command

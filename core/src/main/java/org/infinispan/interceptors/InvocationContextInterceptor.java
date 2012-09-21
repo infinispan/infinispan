@@ -24,6 +24,8 @@ package org.infinispan.interceptors;
 
 
 import org.infinispan.CacheException;
+import org.infinispan.InvalidCacheUsageException;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
@@ -39,6 +41,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.StateTransferInProgressException;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -97,7 +100,6 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      boolean suppressExceptions = false;
       try {
          ComponentStatus status = componentRegistry.getStatus();
          if (command.ignoreCommandOnStatus(status)) {
@@ -123,13 +125,14 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
             if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
-            if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-               suppressExceptions = true;
-            }
-
             try {
                return invokeNextInterceptor(ctx, command);
+            } catch (InvalidCacheUsageException ex) {
+               throw ex; // Propagate back client usage errors regardless of flag
             } catch (Throwable th) {
+               // Only check for fail silently if there's a failure :)
+               boolean suppressExceptions = (command instanceof FlagAffectedCommand)
+                     && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
                // If we are shutting down there is every possibility that the invocation fails.
                suppressExceptions = suppressExceptions || shuttingDown;
                if (suppressExceptions) {
@@ -143,7 +146,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                   // and they not really exceptional (the originator will retry the command)
                   boolean logAsError = !(th instanceof StateTransferInProgressException && !ctx.isOriginLocal());
                   if (logAsError) {
-                     log.executionError(th);
+                     if (th instanceof WriteSkewException) {
+                        // We log this as DEBUG rather than ERROR - see ISPN-2076
+                        log.debug("Exception executing call", th);
+                     } else {
+                        log.executionError(th);
+                     }
                   } else {
                      log.trace("Exception while executing code", th);
                   }
@@ -154,8 +162,6 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                   }
                   throw th;
                }
-            } finally {
-               ctx.reset();
             }
          } finally {
             LogFactory.popNDC(trace);

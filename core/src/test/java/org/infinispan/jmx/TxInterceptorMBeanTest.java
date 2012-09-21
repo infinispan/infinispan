@@ -76,7 +76,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       tm = TestingUtil.getTransactionManager(cache1);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(txInterceptor, "resetStatistics", new Object[0], new String[0]);
       threadMBeanServer.invoke(txInterceptor2, "resetStatistics", new Object[0], new String[0]);

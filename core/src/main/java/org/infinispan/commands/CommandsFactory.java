@@ -24,12 +24,12 @@ package org.infinispan.commands;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -45,15 +45,16 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.LockInfo;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.xa.Xid;
@@ -110,7 +111,7 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateCommand
     */
-   InvalidateCommand buildInvalidateCommand(Object... keys);
+   InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys);
 
    /**
     * Builds an InvalidateFromL1Command
@@ -118,7 +119,7 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys);
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys);
 
    /**
     * Builds an InvalidateFromL1Command
@@ -126,13 +127,13 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys);
 
 
    /**
-    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Collection)
+    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Set, java.util.Collection)
     */
-   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand
@@ -196,7 +197,7 @@ public interface CommandsFactory {
     * @param key key to evict
     * @return an EvictCommand
     */
-   EvictCommand buildEvictCommand(Object key);
+   EvictCommand buildEvictCommand(Object key, Set<Flag> flags);
 
    /**
     * Builds a PrepareCommand
@@ -292,21 +293,14 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags);
 
    /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
-    * control command with just a command type and sender.
-    * @param subtype type of RehashControlCommand
-    * @param sender sender's Address
-    * @param viewId the last view id on the sender
-    * @return a RehashControlCommand
+    * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
     */
-   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId);
+   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments);
 
    /**
-    * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
-    * coordinates rehashing of nodes when a node join or leaves
+    * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
-                                                         Collection<InternalCacheEntry> state, Collection<LockInfo> lockInfo);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
@@ -335,15 +329,26 @@ public interface CommandsFactory {
    <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
    
    /**
-    * Builds a MapReduceCommand used for migration and execution of MapReduce tasks.
+    * Builds a MapCombineCommand used for migration and map phase execution of MapReduce tasks.
     * 
     * @param m Mapper for MapReduceTask
-    * @param r Reducer for MapReduceTask
-    * @param sender sender's Address
+    * @param r Combiner for MapReduceTask
     * @param keys keys used in MapReduceTask
-    * @return a MapReduceCommand
+    * @return created MapCombineCommand
     */
-   MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys);
+   <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
+            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
+            Collection<KIn> keys);
+   
+   /**
+    * Builds a ReduceCommand used for migration and reduce phase execution of MapReduce tasks.
+    * 
+    * @param r Reducer for MapReduceTask
+    * @param keys keys used in MapReduceTask
+    * @return created ReduceCommand
+    */
+   <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
+            String destinationCache, Reducer<KOut, VOut> r, Collection<KOut> keys);
 
    /**
     * @see GetInDoubtTxInfoCommand
@@ -371,4 +376,13 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
+   
+   /**
+    * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
+    * 
+    * @param cacheName name of the cache to construct and start
+    * @param cacheConfigurationName configuration name for the cache to create/start
+    * @return created CreateCacheCommand 
+    */
+   CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
 }

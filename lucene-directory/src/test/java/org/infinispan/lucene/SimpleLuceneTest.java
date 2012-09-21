@@ -31,7 +31,10 @@ import java.io.IOException;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -43,15 +46,21 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "lucene.SimpleLuceneTest")
-@SuppressWarnings("unchecked")
 public class SimpleLuceneTest extends MultipleCacheManagersTest {
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
-      createClusteredCaches(2, "lucene", configurationBuilder);
+      startClusterNode();
+      startClusterNode();
    }
-   
+
+   private void startClusterNode() {
+      ConfigurationBuilder configurationBuilder =
+            CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL);
+      configurationBuilder.customInterceptors().addInterceptor().after(NonTransactionalLockingInterceptor.class).interceptor(new SkipIndexingGuaranteed());
+      createClusteredCaches(1, "lucene", configurationBuilder);
+   }
+
    @Test
    public void testIndexWritingAndFinding() throws IOException {
       final String indexName = "indexName";
@@ -74,11 +83,11 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache0, "indexName");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache1, "indexName");
    }
-   
+
    @Test(description="Verifies the caches can be reused after a Directory close")
    public void testCacheReuse() throws IOException {
       testIndexWritingAndFinding();
-      cache(0, "lucene").clear();
+      cache(0, "lucene").getAdvancedCache().withFlags(Flag.SKIP_INDEXING).clear();
       testIndexWritingAndFinding();
    }
 

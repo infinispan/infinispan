@@ -55,6 +55,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -116,6 +117,13 @@ public class AsyncStore extends AbstractDelegatingStore {
    private long shutdownTimeout;
    private String cacheName;
 
+   /**
+    * Identifies each of the asynchronous processor runs. This incrementing
+    * counter can be used to decide whether a phantom null entry in the cache
+    * can be expired or not.
+    */
+   private final AtomicLong asyncProcessorId = new AtomicLong();
+
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
       this.asyncStoreConfig = asyncStoreConfig;
@@ -151,8 +159,16 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    @Override
    public boolean remove(Object key) {
-      enqueue(new Remove(key));
-      return true;
+      try {
+         InternalCacheEntry load = load(key);
+         if (load != null) {
+            enqueue(new Remove(key));
+            return true;
+         }
+         return false;
+      } catch (CacheLoaderException e) {
+         throw new CacheException("Could not load key/value entries from cacheloader", e);
+      }
    }
 
    @Override
@@ -237,6 +253,16 @@ public class AsyncStore extends AbstractDelegatingStore {
       super.stop();
    }
 
+   public boolean isLocked(Object key) {
+      boolean locked = lockContainer.isLocked(key);
+      if (log.isTraceEnabled()) log.tracef("Key %s is locked? %b", key, locked);
+      return locked;
+   }
+
+   public long getAsyncProcessorId() {
+      return asyncProcessorId.get();
+   }
+
    protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
       Set<Map.Entry<Object, Modification>> entries = mods.entrySet();
       for (Map.Entry<Object, Modification> entry : entries) {
@@ -296,6 +322,14 @@ public class AsyncStore extends AbstractDelegatingStore {
          // restore interrupted status
          Thread.currentThread().interrupt();
       }
+   }
+
+   private ConcurrentMap<Object, Modification> newStateMap() {
+      return ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
+   }
+
+   private void ensureMoreWorkIsHandled() {
+      executor.execute(new AsyncProcessor());
    }
 
    /**
@@ -399,6 +433,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          } finally {
             lockContainer.releaseLocks(lockedKeys);
             lockedKeys.clear();
+            asyncProcessorId.incrementAndGet();
          }
       }
 
@@ -413,10 +448,6 @@ public class AsyncStore extends AbstractDelegatingStore {
       }
    }
 
-   private ConcurrentMap<Object, Modification> newStateMap() {
-      return ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
-   }
-   
    private static class ReleaseAllLockContainer extends ReentrantPerEntryLockContainer {
       private ReleaseAllLockContainer(int concurrencyLevel) {
          super(concurrencyLevel);
@@ -430,10 +461,6 @@ public class AsyncStore extends AbstractDelegatingStore {
       }
    }
 
-   private void ensureMoreWorkIsHandled() {
-           executor.execute(new AsyncProcessor());
-   }
-   
    private class AsyncStoreCoordinator implements Runnable {
 
       @Override

@@ -29,6 +29,7 @@ import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link SearchManagerImpl}. This object can
@@ -38,10 +39,11 @@ import java.util.List;
  * @author Manik Surtani
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  * @see SearchManagerImpl#getQuery(org.apache.lucene.search.Query)
  */
 public interface CacheQuery extends Iterable<Object> {
-  
+
    /**
     * Returns the results of a search as a list.
     *
@@ -96,7 +98,7 @@ public interface CacheQuery extends Iterable<Object> {
     * @param numResults that are to be set to the maxResults.
     */
    CacheQuery maxResults(int numResults);
-   
+
    /**
     * @return return the manager for all faceting related operations
     */
@@ -108,7 +110,7 @@ public interface CacheQuery extends Iterable<Object> {
     * @return integer number of results.
     */
    int getResultSize();
-   
+
    /**
     * Return the Lucene {@link org.apache.lucene.search.Explanation}
     * object describing the score computation for the matching object/document
@@ -125,7 +127,7 @@ public interface CacheQuery extends Iterable<Object> {
     * @param s - lucene sort object
     */
    CacheQuery sort(Sort s);
-   
+
    /**
     * Defines the Lucene field names projected and returned in a query result
     * Each field is converted back to it's object representation, an Object[] being returned for each "row"
@@ -161,4 +163,14 @@ public interface CacheQuery extends Iterable<Object> {
     * @param f - lucene filter
     */
    CacheQuery filter(Filter f);
+
+   /**
+    * Set the timeout for this query. If the query hasn't finished processing before the timeout,
+    * an exception will be thrown.
+    *
+    * @param timeout the timeout duration
+    * @param timeUnit the time unit of the timeout parameter
+    * @return
+    */
+   CacheQuery timeout(long timeout, TimeUnit timeUnit);
 }

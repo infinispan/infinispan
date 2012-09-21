@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder<IndexingConfiguration>{
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
-   
+
    private boolean enabled = false;
    private boolean indexLocalOnly = false;
    private Properties properties = new Properties();
@@ -48,7 +48,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       this.enabled = true;
       return this;
    }
-   
+
    /**
     * Disable indexing
     */
@@ -56,10 +56,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       this.enabled = false;
       return this;
    }
-   
+
    public IndexingConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
       return this;
+   }
+
+   boolean enabled() {
+      return enabled;
    }
 
    /**
@@ -69,6 +73,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    public IndexingConfigurationBuilder indexLocalOnly(boolean b) {
       this.indexLocalOnly = b;
       return this;
+   }
+
+   boolean indexLocalOnly() {
+      return indexLocalOnly;
    }
 
    /**
@@ -81,7 +89,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * complete and up to date documentation about available properties refer to the the Hibernate Search
     * reference of the version used by Infinispan Query.
     * </p>
-    * 
+    *
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
@@ -126,7 +134,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * complete and up to date documentation about available properties refer to the Hibernate Search
     * reference of the version you're using with Infinispan Query.
     * </p>
-    * 
+    *
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
@@ -139,7 +147,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   void validate() {
+   public void validate() {
       if (enabled) {
          // Check that the query module is on the classpath.
          try {
@@ -151,10 +159,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   IndexingConfiguration create() {
+   public IndexingConfiguration create() {
       return new IndexingConfiguration(TypedProperties.toTypedProperties(properties), enabled, indexLocalOnly);
    }
-   
+
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
       this.enabled = template.enabled();

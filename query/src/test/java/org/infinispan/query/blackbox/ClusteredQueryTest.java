@@ -21,7 +21,6 @@
  */
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.config.Configuration.CacheMode.DIST_SYNC;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 import java.util.List;
@@ -32,7 +31,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.infinispan.Cache;
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.Search;
@@ -66,19 +66,21 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected void enhanceConfig(FluentConfiguration cacheCfg) {
+   protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
       // meant to be overridden
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      FluentConfiguration cacheCfg = getDefaultClusteredConfig(DIST_SYNC).fluent();
-      cacheCfg.indexing().indexLocalOnly(true)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      cacheCfg
+         .indexing()
+            .enable()
+            .indexLocalOnly(true)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg
-               .build());
+      List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
@@ -185,6 +187,23 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testGetResultSizeList() throws ParseException {
       populateCache();
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+   }
+
+   public void testPagination() throws ParseException {
+      populateCache();
+
+      cacheQuery.firstResult(2);
+      cacheQuery.maxResults(1);
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      List<Object> results = cacheQuery.list();
+      assert results.size() == 1;
+      assert cacheQuery.getResultSize() == 4;
+      assert ((Person) (results.get(0))).getAge() == 45;
    }
 
    private void populateCache() throws ParseException {

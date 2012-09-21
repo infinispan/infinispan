@@ -34,6 +34,7 @@ import org.infinispan.container.versioning.EntryVersion;
 public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    protected Object key;
+   private boolean evicted;
 
    protected AbstractInternalCacheEntry() {
    }
@@ -64,7 +65,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final void setEvicted(boolean evicted) {
-      // no-op
+      this.evicted = evicted;
    }
 
    @Override
@@ -94,7 +95,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final boolean isEvicted() {
-      return true;
+      return evicted;
    }
 
    @Override

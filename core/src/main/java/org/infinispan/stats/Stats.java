@@ -47,7 +47,7 @@ public interface Stats {
    int getCurrentNumberOfEntries();
 
    /**
-    * @return Number of entries stored in cache .
+    * Number of entries stored in cache since the cache started running.
     */
    long getTotalNumberOfEntries();
 

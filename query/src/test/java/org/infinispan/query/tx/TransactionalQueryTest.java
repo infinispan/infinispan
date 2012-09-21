@@ -24,67 +24,73 @@ package org.infinispan.query.tx;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.TransactionManager;
+import java.util.concurrent.Callable;
+
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
+import static org.infinispan.test.TestingUtil.withTx;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")
 public class TransactionalQueryTest extends SingleCacheManagerTest {
-   protected EmbeddedCacheManager m_cacheManager;
-   private Cache<String, Session> m_cache;
-   private TransactionManager m_transactionManager;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent()
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      m_cacheManager = TestCacheManagerFactory.createCacheManager(c);
-      m_cache = m_cacheManager.getCache();
-      m_transactionManager = m_cache.getAdvancedCache().getTransactionManager();
-      return m_cacheManager;
+            .enable()
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @BeforeMethod
    public void initialize() throws Exception {
       // Initialize the cache
-      m_transactionManager.begin();
-      for (int i = 0; i < 100; i++) {
-         m_cache.put(String.valueOf(i), new Session(String.valueOf(i)));
-      }
-      m_transactionManager.commit();
+      withTx(tm(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            for (int i = 0; i < 100; i++) {
+               cache.put(String.valueOf(i), new Session(String.valueOf(i)));
+            }
+            return null;
+         }
+      });
    }
 
    public void run() throws Exception {
       // Verify querying works
-      createCacheQuery(m_cache, "", "Id:2?");
+      createCacheQuery(cache, "", "Id:2?");
 
       // Remove something that exists
-      m_transactionManager.begin();
-      m_cache.remove("50");
-      m_transactionManager.commit();
+      withTx(tm(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            cache.remove("50");
+            return null;
+         }
+      });
 
       // Remove something that doesn't exist with a transaction
       // This also fails without using a transaction
-      m_transactionManager.begin();
-      m_cache.remove("200");
-      m_transactionManager.commit();
+      withTx(tm(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            cache.remove("200");
+            return null;
+         }
+      });
    }
 
-   @ProvidedId
    @Indexed(index = "SessionIndex")
-   public class Session {
+   public static class Session {
       private String m_id;
 
       public Session(String id) {

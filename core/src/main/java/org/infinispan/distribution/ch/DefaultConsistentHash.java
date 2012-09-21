@@ -1,99 +1,184 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
+ * as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA  02110-1301, USA.
  */
+
 package org.infinispan.distribution.ch;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
+import net.jcip.annotations.Immutable;
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.Immutables;
 
-public class DefaultConsistentHash extends AbstractWheelConsistentHash {
+/**
+ * Default {@link ConsistentHash} implementation. This object is immutable.
+ *
+ * @author Dan Berindei
+ * @author anistor@redhat.com
+ * @since 5.2
+ */
+@Immutable
+public class DefaultConsistentHash implements ConsistentHash {
 
-   private static final Log LOG = LogFactory.getLog(DefaultConsistentHash.class);
+   private final Hash hashFunction;
+   private final int numSegments;
+   private final int numOwners;
 
-   public DefaultConsistentHash() {
-   }
+   /**
+    * The membership of the cache topology that uses this CH.
+    */
+   private final List<Address> members;
 
-   public DefaultConsistentHash(Hash hash) {
-      setHashFunction(hash);
+   /**
+    * The routing table.
+    */
+   private final Address[][] segmentOwners;
+   private final int segmentSize;
+
+   public DefaultConsistentHash(Hash hashFunction, int numSegments, int numOwners, List<Address> members,
+                                List<Address>[] segmentOwners) {
+      if (numSegments < 1)
+         throw new IllegalArgumentException("The number of segments must be strictly positive");
+      if (numOwners < 1)
+         throw new IllegalArgumentException("The number of owners must be strictly positive");
+
+      this.numSegments = numSegments;
+      this.numOwners = numOwners;
+      this.hashFunction = hashFunction;
+      this.members = new ArrayList<Address>(members);
+      this.segmentOwners = new Address[numSegments][];
+      for (int i = 0; i < numSegments; i++) {
+         if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {
+            throw new IllegalArgumentException("Segment owner list cannot be null or empty");
+         }
+         this.segmentOwners[i] = segmentOwners[i].toArray(new Address[segmentOwners[i].size()]);
+      }
+      // this
+      this.segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
    }
 
    @Override
-   public List<Address> locate(final Object key, final int replCount) {
-      final int normalizedHash = getNormalizedHash(getGrouping(key));
-      final int actualReplCount = Math.min(replCount, caches.size());
-      final List<Address> owners = new ArrayList<Address>(actualReplCount);
-      final boolean virtualNodesEnabled = isVirtualNodesEnabled();
+   public Hash getHashFunction() {
+      return hashFunction;
+   }
 
-      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
-         Address a = it.next();
-         // if virtual nodes are enabled we have to avoid duplicate addresses
-         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
-         if (!isDuplicate) {
-            owners.add(a);
-            if (owners.size() >= actualReplCount)
-               return owners;
-         }
+   @Override
+   public int getNumSegments() {
+      return numSegments;
+   }
+
+   @Override
+   public Set<Integer> getSegmentsForOwner(Address owner) {
+      if (owner == null) {
+         throw new IllegalArgumentException("owner cannot be null");
+      }
+      if (!members.contains(owner)) {
+         throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      // might return < replCount owners if there aren't enough nodes in the list
+      Set<Integer> segments = new HashSet<Integer>();
+      for (int i = 0; i < segmentOwners.length; i++) {
+         for (Address a : segmentOwners[i]) {
+            if (a.equals(owner)) {
+               segments.add(i);
+               break;
+            }
+         }
+      }
+      return segments;
+   }
+
+   @Override
+   public int getSegment(Object key) {
+      // The result must always be positive, so we make sure the dividend is positive first
+      return getNormalizedHash(key) / segmentSize;
+   }
+
+   public int getNormalizedHash(Object key) {
+      return hashFunction.hash(key) & Integer.MAX_VALUE;
+   }
+
+   public List<Integer> getSegmentEndHashes() {
+      List<Integer> hashes = new ArrayList<Integer>(numSegments);
+      for (int i = 0; i < numSegments; i++) {
+         hashes.add(((i + 1) % numSegments) * segmentSize);
+      }
+      return hashes;
+   }
+
+   @Override
+   public List<Address> locateOwnersForSegment(int segmentId) {
+      return Immutables.immutableListWrap(segmentOwners[segmentId]);
+   }
+
+   @Override
+   public Address locatePrimaryOwnerForSegment(int segmentId) {
+      return segmentOwners[segmentId][0];
+   }
+
+   @Override
+   public List<Address> getMembers() {
+      return members;
+   }
+
+   @Override
+   public int getNumOwners() {
+      return numOwners;
+   }
+
+   @Override
+   public Address locatePrimaryOwner(Object key) {
+      return locatePrimaryOwnerForSegment(getSegment(key));
+   }
+
+   @Override
+   public List<Address> locateOwners(Object key) {
+      return locateOwnersForSegment(getSegment(key));
+   }
+
+   @Override
+   public Set<Address> locateAllOwners(Collection<Object> keys) {
+      // Use a HashSet assuming most of the time the number of keys is small.
+      HashSet<Integer> segments = new HashSet<Integer>();
+      for (Object key : keys) {
+         segments.add(getSegment(key));
+      }
+      HashSet<Address> owners = new HashSet<Address>();
+      for (Integer segment : segments) {
+         Collections.addAll(owners, segmentOwners[segment]);
+      }
       return owners;
    }
 
    @Override
-   public boolean isKeyLocalToAddress(final Address target, final Object key, final int replCount) {
-      final int actualReplCount = Math.min(replCount, caches.size());
-      final int normalizedHash = getNormalizedHash(getGrouping(key));
-      final List<Address> owners = new ArrayList<Address>(actualReplCount);
-      final boolean virtualNodesEnabled = isVirtualNodesEnabled();
-
-      for (Iterator<Address> it = getPositionsIterator(normalizedHash); it.hasNext();) {
-         Address a = it.next();
-         // if virtual nodes are enabled we have to avoid duplicate addresses
-         boolean isDuplicate = virtualNodesEnabled && owners.contains(a);
-         if (!isDuplicate) {
-            if (target.equals(a))
-               return true;
-
-            owners.add(a);
-            if (owners.size() >= actualReplCount)
-               return false;
-         }
+   public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
+      int segment = getSegment(key);
+      for (Address a : segmentOwners[segment]) {
+         if (a.equals(nodeAddress))
+            return true;
       }
-
       return false;
-   }
-
-   @Override
-   protected Log getLog() {
-      return LOG;
    }
 
    @Override
@@ -103,25 +188,63 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       DefaultConsistentHash that = (DefaultConsistentHash) o;
 
-      if (hashFunction != null ? !hashFunction.equals(that.hashFunction) : that.hashFunction != null) return false;
-      if (numVirtualNodes != that.numVirtualNodes) return false;
-      if (caches != null ? !caches.equals(that.caches) : that.caches != null) return false;
+      if (numOwners != that.numOwners) return false;
+      if (numSegments != that.numSegments) return false;
+      if (!hashFunction.equals(that.hashFunction)) return false;
+      if (!members.equals(that.members)) return false;
+      for (int i = 0; i < numSegments; i++) {
+         if (!Arrays.equals(segmentOwners[i], that.segmentOwners[i]))
+            return false;
+      }
 
       return true;
    }
 
    @Override
-   public int hashCode() {
-      int result = caches != null ? caches.hashCode() : 0;
-      result = 31 * result + hashFunction.hashCode();
-      result = 31 * result + numVirtualNodes;
-      return result;
+   public String toString() {
+      StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
+      sb.append("numSegments=").append(numSegments);
+      sb.append(", numOwners=").append(numOwners);
+      sb.append(", members=").append(members);
+      sb.append(", segmentOwners={");
+      for (int i = 0; i < numSegments; i++) {
+         if (i > 0) {
+            sb.append(", ");
+         }
+         sb.append(i).append(":");
+         for (int j = 0; j < segmentOwners[i].length; j++) {
+            sb.append(' ').append(members.indexOf(segmentOwners[i][j]));
+         }
+      }
+      sb.append('}');
+      return sb.toString();
    }
 
-   public static class Externalizer extends AbstractWheelConsistentHash.Externalizer<DefaultConsistentHash> {
+   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
+
       @Override
-      protected DefaultConsistentHash instance() {
-         return new DefaultConsistentHash();
+      public void writeObject(ObjectOutput output, DefaultConsistentHash ch) throws IOException {
+         output.writeInt(ch.numSegments);
+         output.writeInt(ch.numOwners);
+         output.writeObject(ch.members);
+         output.writeObject(ch.hashFunction);
+         output.writeObject(ch.segmentOwners);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         int numSegments = unmarshaller.readInt();
+         int numOwners = unmarshaller.readInt();
+         List<Address> members = (List<Address>) unmarshaller.readObject();
+         Hash hash = (Hash) unmarshaller.readObject();
+         Address[][] segmentOwners = (Address[][]) unmarshaller.readObject();
+
+         List<Address>[] segmentOwnerList = new List[segmentOwners.length];
+         for (int i = 0; i < segmentOwners.length; i++) {
+            segmentOwnerList[i] = Arrays.asList(segmentOwners[i]);
+         }
+         return new DefaultConsistentHash(hash, numSegments, numOwners, members, segmentOwnerList);
       }
 
       @Override
@@ -131,7 +254,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       @Override
       public Set<Class<? extends DefaultConsistentHash>> getTypeClasses() {
-         return Util.<Class<? extends DefaultConsistentHash>>asSet(DefaultConsistentHash.class);
+         return Collections.<Class<? extends DefaultConsistentHash>>singleton(DefaultConsistentHash.class);
       }
    }
 }

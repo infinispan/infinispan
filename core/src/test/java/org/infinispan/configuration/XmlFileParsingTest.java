@@ -22,9 +22,23 @@
  */
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
 import org.infinispan.Version;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
@@ -35,7 +49,6 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -51,15 +64,6 @@ import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "configuration.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
@@ -77,8 +81,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    private void assertCacheMode(String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
-      Assert.assertEquals(cm.getDefaultCacheConfiguration().clustering().cacheMode(), CacheMode.REPL_SYNC);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+
+         @Override
+         public void call() {
+            Assert.assertEquals(cm.getDefaultCacheConfiguration().clustering().cacheMode(), CacheMode.REPL_SYNC);
+         }
+      });
+
    }
 
    public void testShortMode() throws Exception {
@@ -110,8 +120,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheFile() throws IOException {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true);
-      assertNamedCacheFile(cm);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true)) {
+         @Override
+         public void call() {
+            assertNamedCacheFile(cm, false);
+         }
+      });
+   }
+
+   public void testOldNamedCacheFile() throws IOException {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test-51.xml", true)) {
+         @Override
+         public void call() {
+            assertNamedCacheFile(cm, true);
+         }
+      });
    }
 
    public void testNoNamedCaches() throws Exception {
@@ -127,14 +150,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
-      GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
 
-      assert globalCfg.transport().transport() instanceof JGroupsTransport;
-      assert globalCfg.transport().clusterName().equals("demoCluster");
+         @Override
+         public void call() {
+            GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
 
-      Configuration cfg = cm.getDefaultCacheConfiguration();
-      assert cfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+            assert globalCfg.transport().transport() instanceof JGroupsTransport;
+            assert globalCfg.transport().clusterName().equals("demoCluster");
+
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+         }
+
+      });
+
    }
 
    @Test(expectedExceptions = ConfigurationException.class)
@@ -152,7 +182,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      TestCacheManagerFactory.fromStream(is);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)));
    }
 
    public void testNoSchemaWithStuff() throws IOException {
@@ -163,22 +193,28 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(is);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
 
-      Configuration cfg = cm.getDefaultCacheConfiguration();
-      assert cfg.locking().concurrencyLevel() == 10000;
-      assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.locking().concurrencyLevel() == 10000;
+            assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+         }
+
+      });
+
    }
-      
+
    public void testPassivationOnDefaultEvictionOnNamed() throws Exception {
-      
+
       //should not throw a warning id 152 for each named caches, just for default
       //https://issues.jboss.org/browse/ISPN-1938
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
       "<default>\n" +
       "<transaction \n" +
       "transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" \n" +
-      "syncRollbackPhase=\"false\" syncCommitPhase=\"false\" useEagerLocking=\"false\" />\n" +      
+      "syncRollbackPhase=\"false\" syncCommitPhase=\"false\" useEagerLocking=\"false\" />\n" +
       "<loaders passivation=\"true\" shared=\"true\" preload=\"true\"> \n" +
       "<loader class=\"org.infinispan.loaders.file.FileCacheStore\" \n" +
       "fetchPersistentState=\"true\" purgerThreads=\"3\" purgeSynchronously=\"true\" \n" +
@@ -198,7 +234,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)));
    }
 
-   private void assertNamedCacheFile(EmbeddedCacheManager cm) {
+   public void testVersioning() throws Exception {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<locking isolationLevel=\"REPEATABLE_READ\" lockAcquisitionTimeout=\"15000\" writeSkewCheck=\"true\"/>\n" +
+            "<transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\" transactionMode=\"TRANSACTIONAL\" lockingMode=\"OPTIMISTIC\"/>\n" +
+            "<invocationBatching enabled=\"true\"/>\n" +
+            "<versioning versioningScheme=\"SIMPLE\" enabled=\"true\"/>\n" +
+            "<clustering mode=\"LOCAL\"/>\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            cm.getDefaultCacheConfiguration();
+         }
+      });
+
+   }
+
+   private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
       final GlobalConfiguration gc = cm.getCacheManagerConfiguration();
 
       assert gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory;
@@ -219,7 +275,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert gc.transport().transport() instanceof JGroupsTransport;
       assert gc.transport().clusterName().equals("infinispan-cluster");
       // Should be "Jalapeno" but it's overriden by the test cache manager factory
-      assert gc.transport().nodeName().contains("NodeB");
+      assert gc.transport().nodeName().contains("Node");
       assert gc.transport().distributedSyncTimeout() == 50000;
 
       assert gc.shutdown().hookBehavior().equals(ShutdownHookBehavior.REGISTER);
@@ -289,7 +345,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("storeAsBinary");
       assert c.storeAsBinary().enabled();
 
-      c = cm.getCacheConfiguration("withLoader");
+      c = cm.getCacheConfiguration("withFileStore");
       assert c.loaders().preload();
       assert !c.loaders().passivation();
       assert !c.loaders().shared();
@@ -300,7 +356,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert loaderCfg.fetchPersistentState();
       assert loaderCfg.ignoreModifications();
       assert loaderCfg.purgeOnStartup();
-      assert loaderCfg.location().equals("/tmp/FileCacheStore-Location");
+      assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
       assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.PERIODIC;
       assert loaderCfg.fsyncInterval() == 2000;
       assert loaderCfg.singletonStore().pushStateTimeout() == 20000;
@@ -309,6 +365,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert loaderCfg.async().flushLockTimeout() == 15000;
       assert loaderCfg.async().enabled();
       assert loaderCfg.async().modificationQueueSize() == 700;
+
+      c = cm.getCacheConfiguration("withClusterLoader");
+      assert c.loaders().cacheLoaders().size() == 1;
+      ClusterCacheLoaderConfiguration clusterLoaderCfg = (ClusterCacheLoaderConfiguration) c.loaders().cacheLoaders().get(0);
+      assert clusterLoaderCfg.remoteCallTimeout() == 15000;
 
       c = cm.getCacheConfiguration("withLoaderDefaults");
       loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);
@@ -325,7 +386,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("dist");
       assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
       assert c.clustering().l1().lifespan() == 600000;
-      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
       assert c.clustering().l1().cleanupTaskFrequency() == 1200;
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
@@ -335,12 +396,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("dist_with_vnodes");
       assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
       assert c.clustering().l1().lifespan() == 600000;
-      assert c.clustering().hash().rehashRpcTimeout() == 120000;
+      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
       assert c.clustering().stateTransfer().timeout() == 120000;
       assert c.clustering().hash().consistentHash() == null; // this is just an override.
       assert c.clustering().hash().numOwners() == 3;
       assert c.clustering().l1().enabled();
-      assert c.clustering().hash().numVirtualNodes() == 1000;
+      assert c.clustering().hash().numVirtualNodes() == 1;
+      if (!deprecated) assert c.clustering().hash().numSegments() == 1000;
 
       c = cm.getCacheConfiguration("groups");
       assert c.clustering().hash().groups().enabled();

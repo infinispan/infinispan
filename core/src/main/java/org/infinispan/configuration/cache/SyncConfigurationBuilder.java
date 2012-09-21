@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<SyncConfiguration> {
 
    private long replTimeout = TimeUnit.SECONDS.toMillis(15);
-   
+
    protected SyncConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
    }
@@ -42,16 +42,24 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
       return this;
    }
 
-   @Override
-   void validate() {
-      
+   /**
+    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * the call is aborted and an exception is thrown.
+    */
+   public SyncConfigurationBuilder replTimeout(long l, TimeUnit unit) {
+      return replTimeout(unit.toMillis(l));
    }
 
    @Override
-   SyncConfiguration create() {
+   public void validate() {
+
+   }
+
+   @Override
+   public SyncConfiguration create() {
       return new SyncConfiguration(replTimeout);
    }
-   
+
    @Override
    public SyncConfigurationBuilder read(SyncConfiguration template) {
       this.replTimeout = template.replTimeout();

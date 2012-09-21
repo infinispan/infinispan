@@ -5,17 +5,19 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
 
+import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
 import org.jboss.solder.beanManager.BeanManagerAware;
 
 public class CDIMapReduceTaskLifecycle extends BeanManagerAware implements MapReduceTaskLifecycle {
-
+  
    @Override
    @SuppressWarnings({ "unchecked" })
-   public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
+   public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper, Cache<KIn, VIn> inputCache) {
       BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+      ContextInputCache.set(inputCache);
       Class<Mapper<KIn, VIn, KOut, VOut>> clazz = (Class<Mapper<KIn, VIn, KOut, VOut>>) mapper.getClass();
       AnnotatedType<Mapper<KIn, VIn, KOut, VOut>> type = bm.createAnnotatedType(clazz);
       InjectionTarget<Mapper<KIn, VIn, KOut, VOut>> it = bm.createInjectionTarget(type);
@@ -27,17 +29,21 @@ public class CDIMapReduceTaskLifecycle extends BeanManagerAware implements MapRe
    @Override
    @SuppressWarnings({ "unchecked" })
    public <KIn, VIn, KOut, VOut> void onPostExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
-      BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
-      Class<Mapper<KIn, VIn, KOut, VOut>> clazz = (Class<Mapper<KIn, VIn, KOut, VOut>>) mapper.getClass();
-      AnnotatedType<Mapper<KIn, VIn, KOut, VOut>> type = bm.createAnnotatedType(clazz);
-      InjectionTarget<Mapper<KIn, VIn, KOut, VOut>> it = bm.createInjectionTarget(type);
-      it.preDestroy(mapper);
-      it.dispose(mapper);
+      try {
+         BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
+         Class<Mapper<KIn, VIn, KOut, VOut>> clazz = (Class<Mapper<KIn, VIn, KOut, VOut>>) mapper.getClass();
+         AnnotatedType<Mapper<KIn, VIn, KOut, VOut>> type = bm.createAnnotatedType(clazz);
+         InjectionTarget<Mapper<KIn, VIn, KOut, VOut>> it = bm.createInjectionTarget(type);
+         it.preDestroy(mapper);
+         it.dispose(mapper);
+      } finally {
+         ContextInputCache.clean();
+      }
    }
 
    @Override
    @SuppressWarnings({ "unchecked" })
-   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer) {
+   public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?,?> cache) {
       BeanManager bm = InfinispanExtension.getBeanManagerController().getRegisteredBeanManager();
       Class<Reducer<KOut, VOut>> clazz = (Class<Reducer<KOut, VOut>>) reducer.getClass();
       AnnotatedType<Reducer<KOut, VOut>> type = bm.createAnnotatedType(clazz);

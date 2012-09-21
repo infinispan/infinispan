@@ -22,24 +22,28 @@
  */
 package org.infinispan.remoting.rpc;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -87,42 +91,49 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private boolean stateTransferEnabled;
    private Configuration configuration;
+   private GlobalConfiguration globalCfg;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
-   private CacheViewsManager cvm;
-
+   private LocalTopologyManager localTopologyManager;
+   private StateTransferManager stateTransferManager;
+   private String cacheName;
 
    @Inject
-   public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
-                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                  CacheViewsManager cvm) {
+   public void injectDependencies(Transport t, Cache cache, Configuration cfg,
+            ReplicationQueue replicationQueue, CommandsFactory cf,
+            @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager,
+            GlobalConfiguration globalCfg) {
       this.t = t;
-      this.configuration = configuration;
+      this.configuration = cfg;
+      this.cacheName = cache.getName();
+      this.globalCfg = globalCfg;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
-      this.cvm = cvm;
+      this.localTopologyManager = localTopologyManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Start(priority = 9)
    private void start() {
-      stateTransferEnabled = configuration.isStateTransferEnabled();
-      statisticsEnabled = configuration.isExposeJmxStatistics();
+      statisticsEnabled = configuration.jmxStatistics().enabled();
    }
 
    @ManagedAttribute(description = "Retrieves the committed view.")
    @Metric(displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
-      return cvm == null ? "N/A" : cvm.getCommittedView(configuration.getName()).toString();
+      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
+            .getCurrentCH());
    }
 
    @ManagedAttribute(description = "Retrieves the pending view.")
    @Metric(displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
-      return cvm == null ? "N/A" : cvm.getPendingView(configuration.getName()).toString();
+      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
+            .getPendingCH());
    }
 
    private boolean useReplicationQueue(boolean sync) {
@@ -131,7 +142,7 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
-      if (!configuration.getCacheMode().isClustered())
+      if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
       List<Address> clusterMembers = t.getMembers();
@@ -142,21 +153,26 @@ public class RpcManagerImpl implements RpcManager {
          long startTimeNanos = 0;
          if (statisticsEnabled) startTimeNanos = System.nanoTime();
          try {
+            // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
             // add a response filter that will ensure we don't wait for replies from non-members
             // but only if the target is the whole cluster and the call is synchronous
             // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
-            if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
-               List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
-               // the filter won't work if there is no other member in the cache, so we have to 
-               if (cacheMembers.size() < 2) {
-                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
-                  return Collections.emptyMap();
-               }
-               // if there is already a response filter attached it means it must have its own way of dealing with non-members
-               // so skip installing the filter
-               if (responseFilter == null) {
-                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
-               }
+//            if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
+//               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
+//               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
+//               // the filter won't work if there is no other member in the cache, so we have to
+//               if (cacheMembers.size() < 2) {
+//                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", cacheName);
+//                  return Collections.emptyMap();
+//               }
+//               // if there is already a response filter attached it means it must have its own way of dealing with non-members
+//               // so skip installing the filter
+//               if (responseFilter == null) {
+//                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
+//               }
+//            }
+            if (rpcCommand instanceof TopologyAffectedCommand) {
+               ((TopologyAffectedCommand)rpcCommand).setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
             }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
             if (statisticsEnabled) replicationCount.incrementAndGet();
@@ -219,7 +235,7 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
-      return invokeRemotely(recipients, rpc, sync, usePriorityQueue, configuration.getSyncReplTimeout());
+      return invokeRemotely(recipients, rpc, sync, usePriorityQueue, configuration.clustering().sync().replTimeout());
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws RpcException {
@@ -251,7 +267,7 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
-      invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, configuration.getSyncReplTimeout());
+      invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, configuration.clustering().sync().replTimeout());
    }
 
    @Override
@@ -389,6 +405,6 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public Address getAddress() {
-      return t != null ? t.getAddress() : null;
+      return t != null ? t.getAddress() : null;  // todo [anistor] transport should never be null!
    }
 }

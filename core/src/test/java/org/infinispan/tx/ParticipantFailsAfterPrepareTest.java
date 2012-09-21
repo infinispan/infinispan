@@ -43,7 +43,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea Markus
  */
-@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest")
+@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
 public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest {
 
    @Override
@@ -65,7 +65,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
 
       int indexToKill = -1;
       //this tx spreads over 3 out of 4 nodes, let's find one that has the tx and kill it
-      final List<Address> locate = advancedCache(0).getDistributionManager().getConsistentHash().locate(key, 3);
+      final List<Address> locate = advancedCache(0).getDistributionManager().getConsistentHash().locateOwners(key);
       for (int i = 3; i > 0; i--) {
          if (locate.contains(address(i))) {
             indexToKill = i;

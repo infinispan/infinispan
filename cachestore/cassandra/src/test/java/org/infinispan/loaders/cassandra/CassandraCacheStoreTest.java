@@ -40,7 +40,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
 
    /**
     * Set embedded cassandra up and spawn it in a new thread.
-    * 
+    *
     * @throws TTransportException
     * @throws IOException
     * @throws InterruptedException
@@ -53,7 +53,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
       embedded.setup();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public static void cleanup() throws IOException {
       EmbeddedServerHelper.teardown();
       embedded = null;
@@ -63,6 +63,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
    protected CacheStore createCacheStore() throws Exception {
       CassandraCacheStore cs = new CassandraCacheStore();
       CassandraCacheStoreConfig clc = new CassandraCacheStoreConfig();
+      clc.setPurgeSynchronously(true);
       clc.setHost("127.0.0.1");
       clc.setAutoCreateKeyspace(true);
       clc.setKeySpace("Infinispan");

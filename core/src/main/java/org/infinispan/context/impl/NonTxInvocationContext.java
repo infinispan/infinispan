@@ -104,13 +104,6 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public void reset() {
-      super.reset();
-      clearLookedUpEntries();
-      if (lockedKeys != null) lockedKeys.clear();
-   }
-
-   @Override
    public NonTxInvocationContext clone() {
       NonTxInvocationContext dolly = (NonTxInvocationContext) super.clone();
       dolly.lookedUpEntries.putAll(lookedUpEntries);

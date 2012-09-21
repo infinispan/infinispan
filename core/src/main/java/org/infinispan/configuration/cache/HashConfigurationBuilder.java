@@ -20,23 +20,26 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class HashConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<HashConfiguration> {
+   private static final Log log = LogFactory.getLog(HashConfigurationBuilder.class);
 
-   private ConsistentHash consistentHash;
+   private ConsistentHashFactory consistentHashFactory;
    private Hash hash = new MurmurHash3();
    private int numOwners = 2;
-   // See VNodesKeyDistributionTest for an explanation of how we came up with the number of nodes
-   private int numVirtualNodes = 48;
-   private boolean activated = false;
+   // With the default consistent hash factory, this default gives us an even spread for clusters
+   // up to 6 members and the difference between nodes stays under 20% up to 12 members.
+   private int numSegments = 60;
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
 
@@ -46,15 +49,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    /**
-    * The consistent hash in use.
-    * 
-    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
-    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
-    * constructor to any instance. This will be resolved in Infinispan 5.2.0
+    * @deprecated Since 5.2, replaced by {@link #consistentHashFactory(ConsistentHashFactory)}.
     */
+   @Deprecated
    public HashConfigurationBuilder consistentHash(ConsistentHash consistentHash) {
-      this.consistentHash = consistentHash;
-      activated = true;
+      log.consistentHashDeprecated();
+      return this;
+   }
+
+   /**
+    * The consistent hash factory in use.
+    */
+   public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory consistentHashFactory) {
+      this.consistentHashFactory = consistentHashFactory;
       return this;
    }
 
@@ -64,32 +71,33 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public HashConfigurationBuilder numOwners(int numOwners) {
       if (numOwners < 1) throw new IllegalArgumentException("numOwners cannot be less than 1");
       this.numOwners = numOwners;
-      activated = true;
       return this;
    }
 
    /**
-    * <p>
-    * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes in Infinispan's
-    * <a href="https://docs.jboss.org/author/display/ISPN51">online user guide</a>.
-    * </p>
-    *
-    * <p>
-    * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
-    * must be used if you wish to take advnatage of virtual nodes.
-    * </p>
-    *
-    * <p>
-    * A default of 1 is used.
-    * </p>
-    *
-    * @param numVirtualNodes the number of virtual nodes. Must be &gt; 0.
-    * @throws IllegalArgumentException if numVirtualNodes &lt; 1
+    * @deprecated No longer used since 5.2, replaced by {@link #numSegments(int)} (which works like a
+    *    {@code numVirtualNodes} value for the entire cluster).
     */
+   @Deprecated
    public HashConfigurationBuilder numVirtualNodes(int numVirtualNodes) {
-      if (numVirtualNodes < 1) throw new IllegalArgumentException("numVirtualNodes cannot be less than 1");
-      this.numVirtualNodes = numVirtualNodes;
-      activated = true;
+      log.hashNumVirtualNodesDeprecated();
+      return this;
+   }
+
+   /**
+    * Controls the total number of hash space segments (per cluster).
+    *
+    * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own
+    * (or primary-own) one or more full segments, but not a fraction of a segment. As such, larger
+    * {@code numSegments} values will mean a more even distribution of keys between nodes.
+    * <p>On the other hand, the memory/bandwidth usage of the new consistent hash grows linearly with
+    * {@code numSegments}. So we recommend keeping {@code numSegments <= 10 * clusterSize}.
+    *
+    * @param numSegments the number of hash space segments. Must be strictly positive.
+    */
+   public HashConfigurationBuilder numSegments(int numSegments) {
+      if (numSegments < 1) throw new IllegalArgumentException("numSegments cannot be less than 1");
+      this.numSegments = numSegments;
       return this;
    }
 
@@ -101,10 +109,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Deprecated
    public HashConfigurationBuilder rehashEnabled() {
       stateTransfer().fetchInMemoryState(true);
-      activated = true;
       return this;
    }
-   
+
    /**
     * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
     * node leaves
@@ -149,43 +156,38 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * The hash function in use. Used as a bit spreader and a general hash code generator. Typically
     * used in conjunction with the many default
     * {@link org.infinispan.distribution.ch.ConsistentHash} implementations shipped.
-    * 
+    *
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
     */
    public HashConfigurationBuilder hash(Hash hash) {
       this.hash = hash;
-      activated = true;
       return this;
    }
 
    public GroupsConfigurationBuilder groups() {
-      activated = true;
       return groupsConfigurationBuilder;
    }
 
    @Override
-   void validate() {
-      if (activated && !clustering().cacheMode().isDistributed())
-         throw new ConfigurationException("Configuring the hashing behavior of entries is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
+   public void validate() {
       groupsConfigurationBuilder.validate();
    }
 
    @Override
-   HashConfiguration create() {
+   public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes,
-            groupsConfigurationBuilder.create(), stateTransfer().create(), activated);
+      return new HashConfiguration(null, hash, numOwners, numSegments,
+            groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 
    @Override
    public HashConfigurationBuilder read(HashConfiguration template) {
-      this.consistentHash = template.consistentHash();
+      this.consistentHashFactory = template.consistentHashFactory();
       this.hash = template.hash();
       this.numOwners = template.numOwners();
-      this.numVirtualNodes = template.numVirtualNodes();
-      this.activated = template.activated;
+      this.numSegments = template.numSegments();
       this.groupsConfigurationBuilder.read(template.groups());
       return this;
    }
@@ -193,11 +195,10 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public String toString() {
       return "HashConfigurationBuilder{" +
-            "activated=" + activated +
-            ", consistentHash=" + consistentHash +
+            "consistentHashFactory=" + consistentHashFactory +
             ", hash=" + hash +
             ", numOwners=" + numOwners +
-            ", numVirtualNodes=" + numVirtualNodes +
+            ", numSegments=" + numSegments +
             ", groups=" + groupsConfigurationBuilder +
             '}';
    }

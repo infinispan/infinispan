@@ -28,9 +28,11 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalNullEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -42,13 +44,21 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
@@ -59,6 +69,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheLoaderManager clm;
    protected CacheNotifier notifier;
    protected CacheLoader loader;
+   protected volatile boolean enabled = true;
    private EntryFactory entryFactory;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
@@ -82,9 +93,11 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object key;
-      if ((key = command.getKey()) != null) {
-         loadIfNeeded(ctx, key, false, command);
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeeded(ctx, key, false, command);
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -92,19 +105,23 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key;
-      if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, true, command);
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeededAndUpdateStats(ctx, key, true, command);
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      Object[] keys;
-      if ((keys = command.getKeys()) != null && keys.length > 0) {
-         for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key, false, command);
+      if (enabled) {
+         Object[] keys;
+         if ((keys = command.getKeys()) != null && keys.length > 0) {
+            for (Object key : command.getKeys()) {
+               loadIfNeeded(ctx, key, false, command);
+            }
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -112,46 +129,54 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      Object key;
-      if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, false, command);
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeededAndUpdateStats(ctx, key, false, command);
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object key;
-      if ((key = command.getKey()) != null) {
-         loadIfNeededAndUpdateStats(ctx, key, false, command);
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeededAndUpdateStats(ctx, key, false, command);
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected boolean isPrimaryOwner(Object key) {
+   protected boolean forceLoad(Object key, Set<Flag> flags) {
       return false;
    }
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)) {
+      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)
+            || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
          return false; //skip operation
       }
 
       // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
       // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && !isPrimaryOwner(key)) return false;
+      if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return false;
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull() || e.getValue() == null) {
          InternalCacheEntry loaded = loader.load(key);
          if (loaded != null) {
-            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false);
+            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
             recordLoadedEntry(ctx, key, mvccEntry, loaded);
             return true;
          } else {
             return false;
          }
+      } else if (e instanceof InternalNullEntry) {
+         ctx.putLookedUpEntry(key, null);
+         return false;
       } else {
          return true;
       }
@@ -228,5 +253,43 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);
+   }
+
+   @ManagedAttribute(description = "Returns a collection of cache loader types which configured and enabled")
+   @Metric(displayName = "Returns a collection of cache loader types which configured and enabled", displayType = DisplayType.DETAIL)
+   /**
+    * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.
+    */
+   public Collection<String> getCacheLoaders() {
+      if (enabled && clm.isEnabled()) {
+         if (loader instanceof ChainingCacheStore) {
+            ChainingCacheStore chainingStore = (ChainingCacheStore) loader;
+            LinkedHashMap<CacheStore, StoreConfiguration> stores = chainingStore.getStores();
+            Set<String> storeTypes = new HashSet<String>(stores.size());
+            for (CacheStore cs : stores.keySet()) storeTypes.add(cs.getClass().getName());
+            return storeTypes;
+         } else {
+            return Collections.singleton(loader.getClass().getName());
+         }
+      } else {
+         return Collections.emptySet();
+      }
+   }
+   @ManagedOperation(description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
+   @Operation(displayName = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
+   /**
+    * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link CacheLoader} implementation.
+    *
+    * If the given type cannot be found, this is a no-op.  If more than one cache loader of the same type is configured,
+    * all cache loaders of the given type are disabled.
+    *
+    * @param loaderType fully qualified class name of the cache loader type to disable
+    */
+   public void disableCacheLoader(String loaderType) {
+      if (enabled) clm.disableCacheStore(loaderType);
+   }
+
+   public void disableInterceptor() {
+      enabled = false;
    }
 }

@@ -22,8 +22,8 @@
  */
 package org.infinispan.lifecycle;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 
@@ -48,12 +48,21 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * <li><tt>infinispan.module.lifecycle</tt> - the name of the class implementing {@link ModuleLifecycle}.
  * This implementation would typically reside in the module's codebase.</li>
  * </ul>
+ * Modules who also have their own configuration (see {@see org.infinispan.configuration}), can access their
+ * configuration beans via {@link Configuration#module(Class)}
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public interface ModuleLifecycle {
+
     void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration);
+
+    /**
+    * Use {@link #cacheManagerStarting(org.infinispan.factories.GlobalComponentRegistry, org.infinispan.configuration.global.GlobalConfiguration)} instead
+    */
+    @Deprecated
+    void cacheManagerStarting(GlobalComponentRegistry gcr, org.infinispan.config.GlobalConfiguration globalConfiguration);
 
     void cacheManagerStarted(GlobalComponentRegistry gcr);
 
@@ -63,9 +72,16 @@ public interface ModuleLifecycle {
 
     void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName);
 
+    /**
+     * Use {@link #cacheStarting(org.infinispan.factories.ComponentRegistry, org.infinispan.configuration.cache.Configuration, String)} instead
+     */
+    @Deprecated
+    void cacheStarting(ComponentRegistry cr, org.infinispan.config.Configuration configuration, String cacheName);
+
     void cacheStarted(ComponentRegistry cr, String cacheName);
 
     void cacheStopping(ComponentRegistry cr, String cacheName);
 
     void cacheStopped(ComponentRegistry cr, String cacheName);
+
 }

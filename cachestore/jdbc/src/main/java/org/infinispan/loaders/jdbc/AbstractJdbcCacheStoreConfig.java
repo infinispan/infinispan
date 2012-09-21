@@ -24,6 +24,9 @@ package org.infinispan.loaders.jdbc;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.util.TypedProperties;
+
+import java.util.Properties;
 
 /**
  * This is an abstract configuration class containing common elements for all JDBC cache store types.
@@ -34,6 +37,21 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 public abstract class AbstractJdbcCacheStoreConfig extends LockSupportCacheStoreConfig {
 
    protected ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
+
+   protected AbstractJdbcCacheStoreConfig(ConnectionFactoryConfig connectionFactoryConfig) {
+      this.connectionFactoryConfig = connectionFactoryConfig;
+
+      Properties p = this.getProperties();
+      setProperty(connectionFactoryConfig.getDriverClass(), "driverClass", p);
+      setProperty(connectionFactoryConfig.getConnectionUrl(), "connectionUrl", p);
+      setProperty(connectionFactoryConfig.getUserName(), "userName", p);
+      setProperty(connectionFactoryConfig.getPassword(), "password", p);
+      setProperty(connectionFactoryConfig.getConnectionFactoryClass(), "connectionFactoryClass", p);
+      setProperty(connectionFactoryConfig.getDatasourceJndiLocation(), "datasourceJndiLocation", p);
+   }
+
+   protected AbstractJdbcCacheStoreConfig() {
+   }
 
    public void setConnectionFactoryClass(String connectionFactoryClass) {
       testImmutability("connectionFactoryConfig");
@@ -95,4 +113,18 @@ public abstract class AbstractJdbcCacheStoreConfig extends LockSupportCacheStore
             "connectionFactoryConfig=" + connectionFactoryConfig +
             "} " + super.toString();
    }
+
+   protected void setProperty(String properyValue, String propertyName, Properties p) {
+      if (properyValue != null) {
+         try {
+            p.setProperty(propertyName, properyValue);
+         } catch (UnsupportedOperationException e) {
+            // Most likely immutable, so let's work around that
+            TypedProperties writableProperties = new TypedProperties(p);
+            writableProperties.setProperty(propertyName, properyValue);
+            setProperties(writableProperties);
+         }
+      }
+   }
+
 }

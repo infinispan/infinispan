@@ -27,30 +27,36 @@
    subversion checkout.
 -->
 <assembly
-        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
     <id>src</id>
     <formats>
         <format>zip</format>
     </formats>
 
     <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>${project.artifactId}-${project.version}-src</baseDirectory>
+
     <fileSets>
         <fileSet>
             <excludes>
                 <exclude>**/target/**</exclude>
                 <exclude>**/output/**</exclude>
                 <exclude>**/test-output/**</exclude>
+                <exclude>**/out/**</exclude>
                 <exclude>**/jbossdb/**</exclude>
                 <exclude>**/testFiles/**</exclude>
                 <exclude>**/*.jdb</exclude>
                 <exclude>**/*.iml</exclude>
                 <exclude>**/*.ipr</exclude>
                 <exclude>**/*.iws</exclude>
+                <exclude>**/.idea/**</exclude>
                 <exclude>**/*.log</exclude>
                 <exclude>**/*.lck</exclude>
                 <exclude>**/*-BdbjeCacheStore/**</exclude>
+                <exclude>**/ObjectStore/**</exclude>
+                <exclude>**/PutObjectStoreDirHere/**</exclude>
                 <exclude>**/coretarget/**</exclude>
                 <exclude>**/.git/**</exclude>
             </excludes>

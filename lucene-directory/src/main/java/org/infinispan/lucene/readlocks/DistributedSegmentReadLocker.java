@@ -66,9 +66,9 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       if (indexName == null)
          throw new IllegalArgumentException("index name must not be null");
       this.indexName = indexName;
-      this.locksCache = locksCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
-      this.chunksCache = chunksCache.getAdvancedCache();
-      this.metadataCache = metadataCache.getAdvancedCache();
+      this.locksCache = locksCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD, Flag.SKIP_INDEXING);
+      this.chunksCache = chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+      this.metadataCache = metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       verifyCacheHasNoEviction(this.locksCache);
    }
 
@@ -152,7 +152,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
                // T1 fileKey exists - T2 delete file and remove readlock - T1 putIfAbsent(readlock, 2)
                final FileCacheKey fileKey = new FileCacheKey(indexName, filename);
                if (metadataCache.get(fileKey) == null) {
-                  locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
+                  locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
                   return false;
                }
             }
@@ -178,20 +178,21 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       final boolean trace = log.isTraceEnabled();
       final String indexName = readLockKey.getIndexName();
       final String filename = readLockKey.getFileName();
-      FileCacheKey key = new FileCacheKey(indexName, filename);
+      final FileCacheKey key = new FileCacheKey(indexName, filename);
       if (trace) log.tracef("deleting metadata: %s", key);
-      FileMetadata file = (FileMetadata) metadataCache.remove(key);
+      final FileMetadata file = (FileMetadata) metadataCache.remove(key);
+      final int bufferSize = file.getBufferSize();
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
-            ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
+            ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i, bufferSize);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
-            chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).removeAsync(chunkKey);
+            chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(chunkKey);
          }
       }
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
       if (trace) log.tracef("deleting readlock: %s", readLockKey);
-      locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
+      locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
    }
    
    private static void verifyCacheHasNoEviction(AdvancedCache<?, ?> cache) {

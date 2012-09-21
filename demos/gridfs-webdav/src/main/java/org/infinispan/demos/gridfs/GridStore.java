@@ -55,7 +55,7 @@ public class GridStore implements IWebdavStore {
    public GridStore(File root) {
       data = CacheManagerHolder.cacheContainer.getCache(CacheManagerHolder.dataCacheName);
       metadata = CacheManagerHolder.cacheContainer.getCache(CacheManagerHolder.metadataCacheName);
-      
+
       try {
          data.start();
          metadata.start();
@@ -70,24 +70,26 @@ public class GridStore implements IWebdavStore {
          throw new WebdavException("root path: " + root.getAbsolutePath() + " does not exist and could not be created");
    }
 
-   public void destroy() {
-      if (data != null)
-         data.stop();
-      if (metadata != null)
-         metadata.stop();
-   }
-
    @Override
    public ITransaction begin(Principal principal) throws WebdavException {
       log.trace("GridStore.begin()");
       if (!root.exists()) {
          if (!root.mkdirs()) {
             throw new WebdavException("root path: "
-                    + root.getAbsolutePath()
-                    + " does not exist and could not be created");
+                                            + root.getAbsolutePath()
+                                            + " does not exist and could not be created");
          }
       }
       return null;
+   }
+
+   // related to ISPN-2127
+   private String normalizeURI(String uri) {
+      // this stuff, also resolving of . or .. or things like // and so on must be implemented in the GridFS
+      if (uri.startsWith("/")) {
+         uri = uri.substring(1);
+      }
+      return uri;
    }
 
    @Override
@@ -107,22 +109,25 @@ public class GridStore implements IWebdavStore {
 
    @Override
    public void createFolder(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.createFolder(%s)", uri);
       File file = fs.getFile(root, uri);
-      if (!file.mkdir())
+      if (!file.mkdir()) {
          throw new WebdavException("cannot create folder: " + uri);
+      }
    }
 
    @Override
    public void createResource(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.createResource(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
-         if (!file.createNewFile())
+         if (!file.createNewFile()) {
             throw new WebdavException("cannot create file: " + uri);
-      }
-      catch (IOException e) {
-         log.error("GridStore.createResource(" + uri + ") failed");
+         }
+      } catch (IOException e) {
+         log.error("GridStore.createResource(" + uri + ") failed", e);
          throw new WebdavException(e);
       }
    }
@@ -130,8 +135,8 @@ public class GridStore implements IWebdavStore {
    @Override
    public long setResourceContent(ITransaction transaction, String uri,
                                   InputStream is, String contentType, String characterEncoding)
-           throws WebdavException {
-
+         throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.setResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
@@ -144,22 +149,19 @@ public class GridStore implements IWebdavStore {
             while ((read = is.read(copyBuffer, 0, copyBuffer.length)) != -1) {
                os.write(copyBuffer, 0, read);
             }
-         }
-         finally {
+         } finally {
             Util.close(is);
             Util.close(os);
          }
-      }
-      catch (IOException e) {
-         log.error("GridStore.setResourceContent(" + uri + ") failed");
+      } catch (IOException e) {
+         log.error("GridStore.setResourceContent(" + uri + ") failed", e);
          throw new WebdavException(e);
       }
       long length = -1;
 
       try {
          length = file.length();
-      }
-      catch (SecurityException e) {
+      } catch (SecurityException e) {
          log.error("GridStore.setResourceContent(" + uri + ") failed" + "\nCan't get file.length");
       }
       return length;
@@ -167,28 +169,34 @@ public class GridStore implements IWebdavStore {
 
    @Override
    public String[] getChildrenNames(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.getChildrenNames(%s)", uri);
       File file = fs.getFile(root, uri);
-      String[] childrenNames = null;
-      if (file.isDirectory()) {
-         File[] children = file.listFiles();
-         if (children != null)
-            throw new WebdavException("IO error while listing files for " + file);
-         List<String> childList = new ArrayList<String>();
-         String name = null;
-         for (int i = 0; i < children.length; i++) {
-            name = children[i].getName();
-            childList.add(name);
-            log.trace("Child " + i + ": " + name);
+      try {
+         String[] childrenNames = null;
+         if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children == null)
+               throw new WebdavException("IO error while listing files for " + file);
+            List<String> childList = new ArrayList<String>();
+            for (int i = 0; i < children.length; i++) {
+               String name = children[i].getName();
+               childList.add(name);
+               log.trace("Child " + i + ": " + name);
+            }
+            childrenNames = new String[childList.size()];
+            childrenNames = childList.toArray(childrenNames);
          }
-         childrenNames = new String[childList.size()];
-         childrenNames = childList.toArray(childrenNames);
+         return childrenNames;
+      } catch (Exception e) {
+         log.error("GridStore.getChildrenNames(" + uri + ") failed", e);
+         throw new WebdavException(e);
       }
-      return childrenNames;
    }
 
    @Override
    public void removeObject(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       File file = fs.getFile(root, uri);
       boolean success = file.delete();
       log.tracef("GridStore.removeObject(%s)=%s", uri, success);
@@ -198,6 +206,7 @@ public class GridStore implements IWebdavStore {
 
    @Override
    public InputStream getResourceContent(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.getResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
 
@@ -205,8 +214,7 @@ public class GridStore implements IWebdavStore {
       try {
          // in=new BufferedInputStream(fs.getInput(file));
          in = fs.getInput(file);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          log.error("GridStore.getResourceContent(" + uri + ") failed");
          throw new WebdavException(e);
       }
@@ -215,6 +223,7 @@ public class GridStore implements IWebdavStore {
 
    @Override
    public long getResourceLength(ITransaction transaction, String uri) throws WebdavException {
+      uri = normalizeURI(uri);
       log.tracef("GridStore.getResourceLength(%s)", uri);
       File file = fs.getFile(root, uri);
       return file.length();
@@ -222,7 +231,8 @@ public class GridStore implements IWebdavStore {
 
    @Override
    public StoredObject getStoredObject(ITransaction transaction, String uri) {
-
+      uri = normalizeURI(uri);
+      log.tracef("GridStore.getStoredObject(%s)", uri);
       StoredObject so = null;
 
       File file = fs.getFile(root, uri);

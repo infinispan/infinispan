@@ -61,12 +61,14 @@ public class InterceptorChain {
    private volatile CommandInterceptor firstInChain;
 
    final ReentrantLock lock = new ReentrantLock();
+   final ComponentMetadataRepo componentMetadataRepo;
 
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
     */
-   public InterceptorChain(CommandInterceptor first) {
+   public InterceptorChain(CommandInterceptor first, ComponentMetadataRepo componentMetadataRepo) {
       this.firstInChain = first;
+      this.componentMetadataRepo = componentMetadataRepo;
    }
 
    @Start
@@ -81,7 +83,7 @@ public class InterceptorChain {
       if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
-            ComponentMetadataRepo.findComponentMetadata(i.getName()) == null) {
+            componentMetadataRepo.findComponentMetadata(i.getName()) == null) {
          log.customInterceptorExpectsInjection(i.getName());
       }      
    }
@@ -389,12 +391,12 @@ public class InterceptorChain {
     * Returns all the interceptors that have the fully qualified name of their class equal with the supplied class
     * name.
     */
-   public List<CommandInterceptor> getInterceptorsWithClassName(String name) {
+   public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
       // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor iterator = firstInChain;
       List<CommandInterceptor> result = new ArrayList<CommandInterceptor>(2);
       while (iterator != null) {
-         if (iterator.getClass().getName().equals(name)) result.add(iterator);
+         if (iterator.getClass() == clazz) result.add(iterator);
          iterator = iterator.getNext();
       }
       return result;

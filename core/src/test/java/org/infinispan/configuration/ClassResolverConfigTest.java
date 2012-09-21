@@ -42,7 +42,7 @@ public class ClassResolverConfigTest extends WithClassLoaderTest {
 
    @Override
    @Test(expectedExceptions = AssertionError.class,
-         expectedExceptionsMessageRegExp = "Expected a ClassNotFoundException")
+      expectedExceptionsMessageRegExp = "Expected a ClassNotFoundException")
    public void testReadingWithCorrectClassLoaderAfterReplication() {
       // With the default context class resolver, if configured correctly,
       // the classloader that we set with the invocation context (i.e.

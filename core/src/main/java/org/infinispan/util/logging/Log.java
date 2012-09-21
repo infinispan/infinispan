@@ -23,7 +23,7 @@
 package org.infinispan.util.logging;
 
 import org.infinispan.CacheException;
-import org.infinispan.cacheviews.CacheView;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -67,8 +67,8 @@ import static org.jboss.logging.Logger.Level.*;
  * Infinispan's log abstraction layer on top of JBoss Logging.
  * <p/>
  * It contains explicit methods for all INFO or above levels so that they can
- * be internationalized. For the core module, message ids ranging from 00001
- * to 2000 inclusively have been reserved.
+ * be internationalized. For the core module, message ids ranging from 0001
+ * to 1000 inclusively have been reserved.
  * <p/>
  * <code> Log log = LogFactory.getLog( getClass() ); </code> The above will get
  * you an instance of <tt>Log</tt>, which can be used to generate log messages
@@ -220,7 +220,7 @@ public interface Log extends BasicLogger {
    void passivatedEntries(int numEntries, String duration);
 
    @LogMessage(level = INFO)
-   @Message(value = "MBeans were successfully registered to the platform mbean server.", id = 31)
+   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
    void mbeansSuccessfullyRegistered();
 
    @LogMessage(level = WARN)
@@ -385,7 +385,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Caught exception when handling command %s", id = 71)
-   void exceptionHandlingCommand(CacheRpcCommand cmd, @Cause Throwable t);
+   void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed replicating %d elements in replication queue", id = 72)
@@ -685,7 +685,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed loading value for key %s from cache store", id = 144)
-   void failedLoadingValueFromCacheStore(Object key);
+   void failedLoadingValueFromCacheStore(Object key, @Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error during rehash", id = 145)
@@ -717,7 +717,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Passivation configured without an eviction policy being selected. " +
-      "Only manually evicted entities will be pasivated.", id = 152)
+      "Only manually evicted entities will be passivated.", id = 152)
    void passivationWithoutEviction();
 
    @LogMessage(level = WARN)
@@ -781,16 +781,8 @@ public interface Log extends BasicLogger {
    void cacheViewCommitFailure(@Cause Throwable t, int committedViewId, String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
-   void prepareViewIdMismatch(CacheView lastCommittedView, CacheView committedView);
-
-   @LogMessage(level = INFO)
    @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
    void warnStrictPeerToPeerWithInjectedChannel();
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed to prepare view %s for cache  %s, rolling back to view %s", id = 172)
-   void cacheViewPrepareFailure(@Cause Throwable e, CacheView newView, String cacheName, CacheView committedView);
 
    @LogMessage(level = ERROR)
    @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
@@ -857,4 +849,64 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while processing a commit in a two-phase transaction", id = 188)
    void errorProcessing2pcCommitCommand(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "While stopping a cache or cache manager, one of its components failed to stop", id = 189)
+   void componentFailedToStop(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Use of the 'loader' element to configure a store is deprecated, please use the 'store' element instead", id = 190)
+   void deprecatedLoaderAsStoreConfiguration();
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "When indexing locally a cache with shared cache loader, preload must be enabled", id = 191)
+   void localIndexingWithSharedCacheLoaderRequiresPreload();
+
+   @LogMessage(level = WARN)
+   @Message(value = "hash's 'numVirtualNodes' attribute has been deprecated. Please use hash.numSegments instead", id = 192)
+   void hashNumVirtualNodesDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "hash's 'consistentHash' attribute has been deprecated. Please use hash.consistentHashFactory instead", id = 193)
+   void consistentHashDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed loading keys from cache store", id = 194)
+   void failedLoadingKeysFromCacheStore(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
+   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to recover cluster state after the current node became the coordinator", id = 196)
+   void failedToRecoverClusterState(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error updating cluster member list", id = 197)
+   void errorUpdatingMembersList(@Cause Throwable cause);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for default cache", id = 198)
+   void unableToRegisterMBeans();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for named cache %s", id = 199)
+   void unableToRegisterMBeans(String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Unable to register MBeans for cache manager", id = 200)
+   void unableToRegisterCacheManagerMBeans();
+
+   @LogMessage(level = WARN)
+   @Message(value = "This cache is configured to backup to its own site (%s).", id = 201)
+   void cacheBackupsDataToSameSite(String siteName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Problems backing up data for cache %s to site %s: %s", id = 202)
+   void warnXsiteBackupFailed(String cacheName, String key, Object value);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The rollback request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id=203)
+   void cannotRespondToRollback(GlobalTransaction globalTransaction, String cacheName);
 }

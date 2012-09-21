@@ -24,7 +24,7 @@ package org.infinispan.query.blackbox;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -32,11 +32,10 @@ import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 import java.util.List;
-
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 
 /**
  * Class that will put in different kinds of keys into the cache and run a query on it to see if
@@ -55,13 +54,16 @@ public class KeyTypeTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.fluent()
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
+         .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      cacheManager = TestCacheManagerFactory.createCacheManager(c);
+            .enable()
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
 
       person1 = new Person();
       person1.setName("Navin");

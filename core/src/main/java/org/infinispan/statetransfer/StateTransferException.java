@@ -22,6 +22,7 @@
  */
 package org.infinispan.statetransfer;
 
+//todo [anistor] do we still use this?
 /**
  * An exception to denote problems in transferring state between cache instances in a cluster
  *

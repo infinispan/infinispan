@@ -141,7 +141,7 @@ public class BdbjeCacheStoreTest {
       expiryMap = mock(StoredSortedMap.class);
       currentTransaction = mock(CurrentTransaction.class);
       gtf = new TransactionFactory();
-      gtf.init(false, false, true);
+      gtf.init(false, false, true, false);
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();
@@ -149,7 +149,7 @@ public class BdbjeCacheStoreTest {
       runner = mock(PreparableTransactionRunner.class);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws CacheLoaderException {
       runner = null;
       currentTransaction = null;

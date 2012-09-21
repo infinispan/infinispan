@@ -100,7 +100,9 @@ public class AtomicMapLookup {
     * @param <K>            key param of the AtomicMap
     * @param <V>            value param of the AtomicMap
     * @return an AtomicMap, or null if one did not exist.
+    * @deprecated use {@link #getAtomicMap(org.infinispan.Cache, Object)}
     */
+   @Deprecated
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, FlagContainer flagContainer) {
       return (AtomicMap<K, V>) getMap(cache, key, true, false, flagContainer);
    }
@@ -179,6 +181,6 @@ public class AtomicMapLookup {
     * @param <MK>  key param of the cache
     */
    public static <MK> void removeAtomicMap(Cache<MK, ?> cache, MK key) {
-      cache.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).remove(key);
+      cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).remove(key);
    }
 }

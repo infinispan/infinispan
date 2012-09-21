@@ -37,7 +37,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       // Verify that default caches should be started
       for (int i = 0; i < num; i++) assert manager(i).getCache() != null;
       // Block until views have been received
-      blockUntilViewReceived(manager(0).getCache(), num, 10000);
+      blockUntilViewReceived(manager(0).getCache(), num);
       // Verify that caches running
       for (int i = 0; i < num; i++) {
          blockUntilCacheStatusAchieved(

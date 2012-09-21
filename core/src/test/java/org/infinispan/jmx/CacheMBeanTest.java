@@ -23,17 +23,24 @@
 package org.infinispan.jmx;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -111,14 +118,15 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
 
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
+      CacheContainer otherContainer = null;
       try {
+         otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
          otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
-         assert e.getCause() instanceof JmxDomainConflictException;
+         assert e instanceof JmxDomainConflictException;
       } finally {
-         otherContainer.stop();
+         TestingUtil.killCacheManagers(otherContainer);
       }
    }
 
@@ -131,4 +139,26 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
          otherContainer.stop();
       }
    }
+
+   public void testAvoidLeakOfCacheMBeanWhenCacheStatisticsDisabled(Method m) {
+      final String jmxDomain = "jmx_" + m.getName();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain, false, false)) {
+         @Override
+         public void call() {
+            try {
+               cm.getCache();
+               ObjectName cacheObjectName = getCacheObjectName(jmxDomain);
+               assertTrue(cacheObjectName + " should be registered",
+                     server.isRegistered(cacheObjectName));
+               TestingUtil.killCacheManagers(cm);
+               assertFalse(cacheObjectName + " should NOT be registered",
+                     server.isRegistered(cacheObjectName));
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         }
+      });
+   }
+
 }

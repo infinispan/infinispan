@@ -23,26 +23,20 @@
 package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
+import org.infinispan.xsite.XSiteBackup;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 import static org.infinispan.factories.KnownComponentNames.*;
 
@@ -57,22 +51,6 @@ import static org.infinispan.factories.KnownComponentNames.*;
 @Scope(Scopes.GLOBAL)
 public interface Transport extends Lifecycle {
    // TODO discovery should be abstracted away into a separate set of interfaces such that it is not tightly coupled to the transport
-
-   @Inject
-   void setConfiguration(GlobalConfiguration gc);
-
-   /**
-    * Initializes the transport with global cache configuration and transport-specific properties.
-    *
-    * @param marshaller    marshaller to use for marshalling and unmarshalling
-    * @param asyncExecutor executor to use for asynchronous calls
-    * @param handler       handler for invoking remotely originating calls on the local cache
-    * @param notifier      notifier to use
-    */
-   @Inject
-   void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
-                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
-                   InboundInvocationHandler handler, CacheManagerNotifier notifier);
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -91,6 +69,9 @@ public interface Transport extends Lifecycle {
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                          boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception;
+
+
+   BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception;
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

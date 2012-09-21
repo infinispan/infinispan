@@ -14,7 +14,7 @@ except:
   prettyprint('''
         Welcome to the Infinispan Release Script.
         This release script requires that you use at least Python 2.5.0.  It appears
-        that you do not thave the ElementTree XML APIs available, which are available
+        that you do not have the ElementTree XML APIs available, which are available
         by default in Python 2.5.0.
         ''', Levels.FATAL)
   sys.exit(1)
@@ -44,9 +44,9 @@ def help_and_exit():
             
 %s        E.g.,%s
         
-            $ bin/release.py 4.1.1.BETA1 %s<-- this will tag off master.%s
+            $ bin/release.py 6.1.1.Beta1 %s<-- this will tag off master.%s
             
-            $ bin/release.py 4.1.1.BETA1 4.1.x %s<-- this will use the appropriate branch.%s
+            $ bin/release.py 6.1.1.Beta1 6.1.x %s<-- this will use the appropriate branch.%s
             
     ''' % (Colors.yellow(), Colors.end_color(), Colors.yellow(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color()), Levels.INFO)
     sys.exit(0)
@@ -54,7 +54,7 @@ def help_and_exit():
 def validate_version(version):  
   version_pattern = get_version_pattern()
   if version_pattern.match(version):
-    return version.strip().upper()
+    return version.strip()
   else:
     prettyprint("Invalid version '"+version+"'!\n", Levels.FATAL)
     help_and_exit()
@@ -179,7 +179,7 @@ def update_versions(base_dir, version):
   git.commit(modified_files, "'Release Script: update versions for %s'" % version)
   
   # And return the next version
-  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.FINAL' if snapshot else '-SNAPSHOT')
+  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.Final' if snapshot else '-SNAPSHOT')
 
 def get_module_name(pom_file):
   tree = ElementTree()
@@ -205,14 +205,14 @@ def upload_artifacts(base_dir, version):
 def unzip_archive(version):
   os.chdir("./target/distribution")
   ## Grab the distribution archive and un-arch it
-  shutil.rmtree("infinispan-%s" % version, ignore_errors = True)
+  shutil.rmtree("infinispan-%s-all" % version, ignore_errors = True)
   if settings['verbose']:
     subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
   else:
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
 def update_javadoc_tracker(base_dir, version):
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
 
@@ -229,7 +229,7 @@ def upload_javadocs(base_dir, version):
 
 def upload_schema(base_dir, version):
   """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
-  os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/etc/schema" % (base_dir, version))
   
   ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
@@ -240,7 +240,7 @@ def upload_configdocs(base_dir, version):
   """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
 
-  os.chdir("%s/target/distribution/infinispan-%s/doc" % (base_dir, version))
+  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
   os.rename("configdocs", "%s/configdocs" % version_short)
@@ -289,7 +289,7 @@ def release():
   else:
     uploader = Uploader()
   
-  git = Git(branch, version.upper())
+  git = Git(branch, version)
   if not git.is_upstream_clone():
     proceed = input_with_default('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END), 'N')
     if not proceed.upper().startswith('Y'):

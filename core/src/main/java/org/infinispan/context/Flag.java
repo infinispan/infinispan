@@ -22,6 +22,9 @@
  */
 package org.infinispan.context;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -31,6 +34,9 @@ import org.infinispan.config.Configuration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
 
 /**
  * Available flags, which may be set on a per-invocation basis.  These are provided using the {@link AdvancedCache}
@@ -66,6 +72,11 @@ import org.infinispan.loaders.CacheStore;
  *    <li> {@link #PUT_FOR_EXTERNAL_READ} - flags the invocation as a {@link Cache#putForExternalRead(Object, Object)}
  *                                          call, as opposed to a regular {@link Cache#put(Object, Object)}.</li>
  * </ul>
+ *
+ * When making modifications to these enum, do not change the order of
+ * enumerations, so always append any new enumerations after the last one.
+ * Finally, enumerations should not be removed.
+ *
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
@@ -102,7 +113,10 @@ public enum Flag {
    /**
     * Skips checking whether a cache is in a receptive state, i.e. is {@link ComponentStatus#RUNNING}.  May break
     * operation in weird ways!
+    *
+    * @deprecated This flag is no longer in use.
     */
+   @Deprecated
    SKIP_CACHE_STATUS_CHECK,
    /**
     * Forces asynchronous network calls where possible, even if otherwise configured to use synchronous network calls.
@@ -149,10 +163,13 @@ public enum Flag {
    SKIP_INDEXING,
 
    /**
-    * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)} call, as opposed to a regular
-    * {@link Cache#put(Object, Object)}.
+    * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)}
+    * call, as opposed to a regular {@link Cache#put(Object, Object)}. This
+    * flag was created purely for internal Infinispan usage, and should not be
+    * used by clients calling into Infinispan.
     */
    PUT_FOR_EXTERNAL_READ,
+
    /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
@@ -162,13 +179,41 @@ public enum Flag {
     * org.infinispan.Cache#stop()} and its effect is that apart from stopping
     * the cache, it removes all of its content from both memory and any backing
     * cache store.
+    *
+    * @deprecated No longer in use.
     */
+   @Deprecated
    REMOVE_DATA_ON_STOP,
    /**
     * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
     * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
     */
-   SKIP_OWNERSHIP_CHECK;
+   SKIP_OWNERSHIP_CHECK,
+   /**
+    * Signals when a particular cache write operation is writing a delta of
+    * the object, rather than the full object. This can be useful in order to
+    * make decisions such as whether the cache store needs checking to see if
+    * the previous value needs to be loaded and merged.
+    */
+   DELTA_WRITE,
+
+   /**
+    * Signals that an operation's return value will be ignored. Typical
+    * operations whose return value might be ignored include
+    * {@link java.util.Map#put(Object, Object)} whose return value indicates
+    * previous value. So, a user might decide to the put something in the
+    * cache but might not be interested in the return value.
+    *
+    * Not requiring return values makes the cache behave more efficiently by
+    * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
+    * {@link Flag#SKIP_CACHE_LOAD}.
+    */
+   IGNORE_RETURN_VALUES,
+
+   /**
+    * If cross-site replication is enabled, this would skip the replication to any remote site.
+    */
+   SKIP_XSITE_BACKUP;
 
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
@@ -177,9 +222,9 @@ public enum Flag {
     * @param flags
     * @return might return the same instance
     */
-   protected static Set<Flag> copyWithouthRemotableFlags(Set<Flag> flags) {
+   public static Set<Flag> copyWithoutRemotableFlags(Set<Flag> flags) {
       //FAIL_SILENTLY should not be sent to remote nodes
-      if (flags.contains(Flag.FAIL_SILENTLY)) {
+      if (flags != null && flags.contains(Flag.FAIL_SILENTLY)) {
          EnumSet<Flag> copy = EnumSet.copyOf(flags);
          copy.remove(Flag.FAIL_SILENTLY);
          if (copy.isEmpty()) {
@@ -192,4 +237,35 @@ public enum Flag {
          return flags;
       }
    }
+
+   public static class Externalizer extends AbstractExternalizer<Flag> {
+
+      @Override
+      public Integer getId() {
+         return Ids.FLAG;
+      }
+
+      @Override
+      public Set<Class<? extends Flag>> getTypeClasses() {
+         return Util.<Class<? extends Flag>>asSet(Flag.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, Flag flag) throws IOException {
+         output.writeByte(flag.ordinal());
+      }
+
+      @Override
+      public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         byte flagByte = input.readByte();
+         try {
+            // values() cached by Class.getEnumConstants()
+            return Flag.values()[flagByte];
+         } catch (ArrayIndexOutOfBoundsException e) {
+            throw new IllegalStateException("Unknown flag index: " + flagByte);
+         }
+      }
+
+   }
+
 }

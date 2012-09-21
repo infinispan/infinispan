@@ -27,11 +27,11 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
 
    private boolean enabled = false;
    private long spinDuration = TimeUnit.MILLISECONDS.toMillis(100);
-   
+
    DeadlockDetectionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
-   
+
    /**
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
@@ -40,7 +40,15 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
       this.spinDuration = l;
       return this;
    }
-   
+
+   /**
+    * Time period that determines how often is lock acquisition attempted within maximum time
+    * allowed to acquire a particular lock
+    */
+   public DeadlockDetectionConfigurationBuilder spinDuration(long l, TimeUnit unit) {
+      return spinDuration(unit.toMillis(l));
+   }
+
    /**
     * Enable deadlock detection
     */
@@ -56,7 +64,7 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
       this.enabled = false;
       return this;
    }
-   
+
    /**
     * Enable or disable deadlock detection
     */
@@ -66,19 +74,21 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
    }
 
    @Override
+   public
    void validate() {
    }
 
    @Override
+   public
    DeadlockDetectionConfiguration create() {
       return new DeadlockDetectionConfiguration(enabled, spinDuration);
    }
-   
+
    @Override
    public DeadlockDetectionConfigurationBuilder read(DeadlockDetectionConfiguration template) {
       this.enabled = template.enabled();
       this.spinDuration = template.spinDuration();
-      
+
       return this;
    }
 

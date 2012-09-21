@@ -108,6 +108,6 @@ public class GetKeyValueCommand extends AbstractDataCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, flags};
+      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
    }
 }

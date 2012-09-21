@@ -23,7 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -33,7 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -45,6 +45,7 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Clear;
@@ -59,7 +60,10 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,13 +82,15 @@ import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
-   CacheLoaderManagerConfig loaderConfig = null;
+   LoadersConfiguration loaderConfig = null;
    private Map<GlobalTransaction, Integer> txStores;
    private Map<GlobalTransaction, Set<Object>> preparingTxs;
    final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
    private InternalEntryFactory entryFactory;
+   private TransactionManager transactionManager;
+   protected volatile boolean enabled = true;
 
    private static final Log log = LogFactory.getLog(CacheStoreInterceptor.class);
 
@@ -94,31 +100,41 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory) {
+   protected void init(CacheLoaderManager loaderManager, InternalEntryFactory entryFactory, TransactionManager transactionManager) {
       this.loaderManager = loaderManager;
       this.entryFactory = entryFactory;
+      this.transactionManager = transactionManager;
    }
 
    @Start(priority = 15)
    protected void start() {
       store = loaderManager.getCacheStore();
-      this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
-      loaderConfig = configuration.getCacheLoaderManagerConfig();
-      txStores = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
-      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, configuration.getConcurrencyLevel());
+      this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      loaderConfig = cacheConfiguration.loaders();
+      int concurrencyLevel = cacheConfiguration.locking().concurrencyLevel();
+      txStores = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
+      preparingTxs = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
    }
 
    /**
     * if this is a shared cache loader and the call is of remote origin, pass up the chain
     */
-   public final boolean skip(InvocationContext ctx, VisitableCommand command) {
-      if (store == null) return true;  // could be because the cache loader does not implement cache store
-      if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
+   protected boolean skip(InvocationContext ctx, FlagAffectedCommand command) {
+      return skip(ctx, command.hasFlag(SKIP_CACHE_STORE), command.hasFlag(SKIP_SHARED_CACHE_STORE));
+   }
+
+   protected boolean skip(InvocationContext ctx) {
+      return skip(ctx, false, false);
+   }
+
+   private boolean skip(InvocationContext ctx, boolean skipCacheStore, boolean skipSharedCacheStore) {
+      if (store == null || !enabled) return true;  // could be because the cache loader does not implement cache store, or the store is disabled
+      if ((!ctx.isOriginLocal() && loaderConfig.shared()) || skipCacheStore) {
          log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
       }
 
-      if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
+      if (loaderConfig.shared() && skipSharedCacheStore) {
          log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
       }
@@ -128,37 +144,50 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!skip(ctx, command)) {
-         if (ctx.hasModifications()) {
-            // this is a commit call.
-            GlobalTransaction tx = ctx.getGlobalTransaction();
-            if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
-            try {
-               store.commit(tx);
-            } catch (Throwable t) {
-               throw t;
-            } finally {
-               // Regardless of outcome, remove from preparing txs
-               preparingTxs.remove(tx);
-            }
-            if (getStatisticsEnabled()) {
-               Integer puts = txStores.get(tx);
-               if (puts != null) {
-                  cacheStores.getAndAdd(puts);
-               }
-               txStores.remove(tx);
-            }
-            return invokeNextInterceptor(ctx, command);
-         } else {
-            if (getLog().isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
-         }
-      }
+      if (!skip(ctx))
+         commitCommand(ctx);
+
       return invokeNextInterceptor(ctx, command);
+   }
+
+   protected void commitCommand(TxInvocationContext ctx) throws Throwable {
+      if (ctx.hasModifications()) {
+         // this is a commit call.
+         GlobalTransaction tx = ctx.getGlobalTransaction();
+         if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
+
+         //hack for ISPN-586. This should be dropped once a proper fix for ISPN-604 is in place
+         Transaction xaTx = null;
+         if (transactionManager != null) {
+            xaTx = transactionManager.suspend();
+         }
+
+         try {
+            store.commit(tx);
+         } finally {
+            // Regardless of outcome, remove from preparing txs
+            preparingTxs.remove(tx);
+
+            //part of the hack for ISPN-586
+            if (transactionManager != null && xaTx != null) {
+               transactionManager.resume(xaTx);
+            }
+         }
+         if (getStatisticsEnabled()) {
+            Integer puts = txStores.get(tx);
+            if (puts != null) {
+               cacheStores.getAndAdd(puts);
+            }
+            txStores.remove(tx);
+         }
+      } else {
+         if (getLog().isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
+      }
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!skip(ctx, command)) {
+      if (!skip(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          if (ctx.hasModifications()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
@@ -177,7 +206,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!skip(ctx, command)) {
+      if (!skip(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
@@ -197,11 +226,15 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!skip(ctx, command) && !ctx.isInTxScope()) {
-         store.clear();
-         if (getLog().isTraceEnabled()) getLog().trace("Cleared cache store");
-      }
+      if (!skip(ctx, command) && !ctx.isInTxScope())
+         clearCacheStore();
+
       return invokeNextInterceptor(ctx, command);
+   }
+
+   protected void clearCacheStore() throws CacheLoaderException {
+      store.clear();
+      if (getLog().isTraceEnabled()) getLog().trace("Cleared cache store");
    }
 
    @Override
@@ -267,9 +300,15 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();
          store.prepare(modsBuilder.modifications, tx, onePhase);
 
-         preparingTxs.put(tx, modsBuilder.affectedKeys);
-         if (getStatisticsEnabled() && modsBuilder.putCount > 0) {
-            txStores.put(tx, modsBuilder.putCount);
+
+         boolean shouldCountStores = getStatisticsEnabled() && modsBuilder.putCount > 0;
+         if (!onePhase) {
+            preparingTxs.put(tx, modsBuilder.affectedKeys);
+            if (shouldCountStores) {
+               txStores.put(tx, modsBuilder.putCount);
+            }
+         } else if (shouldCountStores) {
+            cacheStores.getAndAdd(modsBuilder.putCount);
          }
       }
    }
@@ -350,6 +389,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(description = "number of cache loader stores")
    @Metric(displayName = "Number of cache stores", measurementType = MeasurementType.TRENDSUP)
+   @SuppressWarnings("unused")
    public long getCacheLoaderStores() {
       return cacheStores.get();
    }
@@ -361,5 +401,17 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       } else {
          return entryFactory.create(entry);
       }
+   }
+
+   public void disableInterceptor() {
+      enabled = false;
+   }
+
+   public Map<GlobalTransaction, Set<Object>> getPreparingTxs() {
+      return Collections.unmodifiableMap(preparingTxs);
+   }
+
+   public Map<GlobalTransaction, Integer> getTxStores() {
+      return Collections.unmodifiableMap(txStores);
    }
 }

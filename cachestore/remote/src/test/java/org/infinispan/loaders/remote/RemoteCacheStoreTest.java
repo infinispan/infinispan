@@ -50,6 +50,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
       RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
+      remoteCacheStoreConfig.setPurgeSynchronously(true);
       remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
       assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
 
@@ -69,6 +70,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       return remoteCacheStore;
    }
 
+   @Override
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
       hrServer.stop();

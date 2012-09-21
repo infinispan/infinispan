@@ -23,9 +23,9 @@
 package org.infinispan.server.memcached
 
 import org.testng.annotations.Test
-import org.infinispan.manager.DefaultCacheManager
 import org.testng.Assert._
 import org.infinispan.server.core.test.Stoppable
+import org.infinispan.test.fwk.TestCacheManagerFactory
 
 /**
  * Memcached server unit test.
@@ -37,7 +37,7 @@ import org.infinispan.server.core.test.Stoppable
 class MemcachedServerTest {
 
    def testValidateProtocolServerNullProperties {
-      Stoppable.useCacheManager(new DefaultCacheManager) { cm =>
+      Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>
          Stoppable.useServer(new MemcachedServer) { server =>
             server.start(null, cm)
             assertEquals(server.getHost, "127.0.0.1")

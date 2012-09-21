@@ -29,7 +29,6 @@ import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.util.Util;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -56,14 +55,16 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType, String componentName) {
       try {
+         String nodeName = globalConfiguration.transport().nodeName();
+
          // Construction happens only on startup of either CacheManager, or Cache, so
          // using synchronized protection does not have a great impact on app performance.
          if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
             synchronized (this) {
                if (notificationExecutor == null) {
                   notificationExecutor = buildAndConfigureExecutorService(
-                        globalConfiguration.getAsyncListenerExecutorFactoryClass(),
-                        globalConfiguration.getAsyncListenerExecutorProperties(), componentName);
+                        globalConfiguration.asyncListenerExecutor().factory(),
+                        globalConfiguration.asyncListenerExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) notificationExecutor;
@@ -71,8 +72,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (asyncTransportExecutor == null) {
                   asyncTransportExecutor = buildAndConfigureExecutorService(
-                        globalConfiguration.getAsyncTransportExecutorFactoryClass(),
-                        globalConfiguration.getAsyncTransportExecutorProperties(), componentName);
+                        globalConfiguration.asyncTransportExecutor().factory(),
+                        globalConfiguration.asyncTransportExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) asyncTransportExecutor;
@@ -80,8 +81,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (evictionExecutor == null) {
                   evictionExecutor = buildAndConfigureScheduledExecutorService(
-                        globalConfiguration.getEvictionScheduledExecutorFactoryClass(),
-                        globalConfiguration.getEvictionScheduledExecutorProperties(), componentName);
+                        globalConfiguration.evictionScheduledExecutor().factory(),
+                        globalConfiguration.evictionScheduledExecutor().properties(), componentName, nodeName);
                }
             }
             return (T) evictionExecutor;
@@ -89,8 +90,9 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (asyncReplicationExecutor == null) {
                   asyncReplicationExecutor = buildAndConfigureScheduledExecutorService(
-                        globalConfiguration.getReplicationQueueScheduledExecutorFactoryClass(),
-                        globalConfiguration.getReplicationQueueScheduledExecutorProperties(), componentName);
+                        globalConfiguration.replicationQueueScheduledExecutor().factory(),
+                        globalConfiguration.replicationQueueScheduledExecutor().properties(), componentName,
+                        nodeName);
                }
             }
             return (T) asyncReplicationExecutor;
@@ -112,23 +114,32 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (evictionExecutor != null) evictionExecutor.shutdownNow();
    }
 
-   private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties p, String componentName) throws Exception {
+   private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p,
+                                                            String componentName, String nodeName) throws Exception {
       Properties props = new Properties(p); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
-      ExecutorFactory f = (ExecutorFactory) Util.getInstance(factoryName, globalConfiguration.getClassLoader());
+      setThreadSuffix(nodeName, props);
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return new LazyInitializingExecutorService(f, props);
    }
 
-   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties p, String componentName) throws Exception {
+   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(ScheduledExecutorFactory f,
+                                                                              Properties p, String componentName,
+                                                                              String nodeName) throws Exception {
       Properties props = new Properties(); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
-      ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName, globalConfiguration.getClassLoader());
+      setThreadSuffix(nodeName, props);
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return new LazyInitializingScheduledExecutorService(f, props);
+   }
+
+   private void setThreadSuffix(String nodeName, Properties props) {
+      if (nodeName != null && !nodeName.isEmpty()) {
+         props.setProperty("threadNameSuffix", ',' + nodeName);
+      }
    }
 
    private void setDefaultThreadPrio(int prio, Properties props) {

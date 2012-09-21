@@ -125,7 +125,7 @@
    <namedCache name="txSyncRepl">
       <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL"/>
       <clustering mode="repl">
-         <stateRetrieval fetchInMemoryState="false"/>
+         <stateTransfer fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
@@ -139,24 +139,22 @@
       <storeAsBinary enabled="true"/>
    </namedCache>
 
-   <namedCache name="withLoader">
+   <namedCache name="withFileStore">
       <loaders passivation="false" shared="false" preload="true">
 
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-                 ignoreModifications="true" purgeOnStartup="true">
-
-            <!-- See the documentation for more configuration examples and flags. -->
-            <properties>
-               <property name="location" value="/tmp/FileCacheStore-Location"/>
-               <property name="fsyncMode" value="periodic"/>
-               <property name="fsyncInterval" value="2000"/>
-            </properties>
-            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
+         <fileStore fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" fsyncMode="PERIODIC" fsyncInterval="2000">
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
-         </loader>
+            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
+         </fileStore>
+      </loaders>
+   </namedCache>
+   
+   <namedCache name="withClusterLoader">
+      <loaders passivation="false" shared="false" preload="true">
+         <clusterLoader remoteCallTimeout="15000" />
       </loaders>
    </namedCache>
 
@@ -172,16 +170,18 @@
 
    <namedCache name="dist">
       <clustering mode="distribution">
+         <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" rehashRpcTimeout="120000"/>
+         <hash numOwners="3" />
          <l1 enabled="true" lifespan="600000" cleanupTaskFrequency="1200"/>
       </clustering>
    </namedCache>
 
    <namedCache name="dist_with_vnodes">
       <clustering mode="distribution">
+         <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" rehashRpcTimeout="120000" numVirtualNodes="1000"/>
+         <hash numOwners="3" numSegments="1000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
@@ -242,15 +242,14 @@
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
-      	<loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-                        ignoreModifications="true" purgeOnStartup="true"> 
+         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true"> 
            <properties> 
              <property name="location" value="${java.io.tmpdir}"/>
-            </properties>
+           </properties>
+           <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
-            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
        </loader>
-     </loaders>   
+     </loaders>
    </namedCache>
 
    <namedCache name="withReplicationQueue">

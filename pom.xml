@@ -54,6 +54,7 @@
       <module>cachestore/cloud</module>
       <module>cachestore/remote</module>
       <module>cachestore/cassandra</module>
+      <module>cachestore/hbase</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
@@ -63,6 +64,8 @@
       <module>client/hotrod-client</module>
       <module>rhq-plugin</module>
       <module>spring</module>
+      <module>cli/cli-server</module>
+      <module>cli/cli-client</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
       <module>demos/distexec</module>
@@ -74,17 +77,12 @@
       <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
       <module>cdi/tck-runner</module>
+      <module>integrationtests/luceneintegration</module>
    </modules>
 
    <profiles>
       <profile>
          <id>distribution</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <maven.test.skip.exec>true</maven.test.skip.exec>
-         </properties>
          <build>
             <plugins>
                <plugin>
@@ -99,7 +97,7 @@
                         </goals>
                         <configuration>
                            <quiet>true</quiet>
-                           <!-- In case you anyone needs to trace javadoc issues
+                           <!-- In case anyone needs to trace javadoc issues
                            <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
                            -->
                            <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>

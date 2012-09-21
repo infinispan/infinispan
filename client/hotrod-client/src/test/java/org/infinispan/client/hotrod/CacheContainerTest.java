@@ -23,7 +23,6 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.api.BasicCache;
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -31,6 +30,9 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -56,8 +58,8 @@ public class CacheContainerTest extends SingleCacheManagerTest {
 
    @AfterTest(alwaysRun = true)
    public void release() {
-      if (cacheManager != null) cacheManager.stop();
-      if (hotrodServer != null) hotrodServer.stop();
+      killCacheManagers(cacheManager);
+      killServers(hotrodServer);
    }
 
    public void testObtainingSameInstanceMultipleTimes() {

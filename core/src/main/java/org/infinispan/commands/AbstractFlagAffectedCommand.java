@@ -21,6 +21,8 @@ package org.infinispan.commands;
 
 import org.infinispan.context.Flag;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -29,9 +31,11 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand {
+public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand, TopologyAffectedCommand {
 
    protected Set<Flag> flags;
+
+   private int topologyId = -1;
 
    @Override
    public Set<Flag> getFlags() {
@@ -44,8 +48,26 @@ public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand
    }
 
    @Override
+   public void setFlags(Flag... flags) {
+      if (flags == null || flags.length == 0) return;
+      if (this.flags == null)
+         this.flags = EnumSet.copyOf(Arrays.asList(flags));
+      else
+         this.flags.addAll(Arrays.asList(flags));
+   }
+
+   @Override
    public boolean hasFlag(Flag flag) {
       return flags != null && flags.contains(flag);
    }
 
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+   }
 }

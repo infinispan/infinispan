@@ -43,8 +43,8 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
 
    public void testJoinComplete() {
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
-            new MagicKey(c1, "k1"), new MagicKey(c2, "k2"),
-            new MagicKey(c1, "k3"), new MagicKey(c2, "k4")
+            new MagicKey("k1", c1), new MagicKey("k2", c2),
+            new MagicKey("k3", c1), new MagicKey("k4", c2)
       ));
 
       int i = 0;

@@ -25,6 +25,8 @@ package org.infinispan.affinity;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
@@ -55,21 +57,21 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
 
    @BeforeMethod
    protected void setUp() throws Exception {
-      Configuration conf = new Configuration();
-      conf.fluent().invocationBatching();
-      conf.fluent().clustering().hash().numOwners(1);
-      conf.fluent().clustering().hash().rehashEnabled(false);
-      conf.fluent().clustering().mode(Configuration.CacheMode.DIST_SYNC);
+      ConfigurationBuilder configurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      configurationBuilder.transaction().invocationBatching().enable()
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .clustering().hash().numOwners(1)
+            .clustering().stateTransfer().fetchInMemoryState(false);
 
-      manager1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
-      manager1.defineConfiguration("test", conf);
+      manager1 = TestCacheManagerFactory.createClusteredCacheManager(configurationBuilder);
+      manager1.defineConfiguration("test", configurationBuilder.build());
       cache1 = manager1.getCache("test").getAdvancedCache();
       ex1 = Executors.newSingleThreadExecutor();
       keyAffinityService1 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache1, new RndKeyGenerator(), ex1, KEY_QUEUE_SIZE);
       System.out.println("Address for manager1: " + manager1.getAddress());
 
-      manager2 = TestCacheManagerFactory.createClusteredCacheManager(conf);
-      manager2.defineConfiguration("test", conf);
+      manager2 = TestCacheManagerFactory.createClusteredCacheManager(configurationBuilder);
+      manager2.defineConfiguration("test", configurationBuilder.build());
       cache2 = manager2.getCache("test").getAdvancedCache();
       ex2 = Executors.newSingleThreadExecutor();
       keyAffinityService2 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache2, new RndKeyGenerator(), ex2, KEY_QUEUE_SIZE);
@@ -79,7 +81,7 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       Thread.sleep(5000);
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    protected void tearDown() throws Exception {
       ex1.shutdownNow();
       ex2.shutdownNow();

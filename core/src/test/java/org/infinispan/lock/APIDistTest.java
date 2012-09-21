@@ -53,7 +53,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       registerCacheManager(cm1, cm2);
       cm1.getCache();
       waitForClusterToForm();
-      key = new MagicKey(cm2.getCache(), "Key mapped to Cache2");
+      key = new MagicKey("Key mapped to Cache2", cm2.getCache());
    }
 
    protected Configuration createConfig() {

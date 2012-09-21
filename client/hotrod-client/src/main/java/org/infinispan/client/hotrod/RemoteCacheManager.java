@@ -162,7 +162,8 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
-   private AtomicInteger topologyId = new AtomicInteger();
+   // Use an invalid topologyID (-1) so we always get a topology update on connection.
+   private AtomicInteger topologyId = new AtomicInteger(-1);
    private ClassLoader classLoader;
    private Codec codec;
 
@@ -515,15 +516,17 @@ public class RemoteCacheManager implements BasicCacheContainer {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? forceReturnValueDefault : forceReturnValueOverride);
             startRemoteCache(rcc);
-            // If ping not successful assume that the cache does not exist
-            // Default cache is always started, so don't do for it
-            if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
-                  ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
-               return null;
-            } else {
-               cacheName2RemoteCache.put(cacheName, rcc);
-               return result;
+            if (config.getPingOnStartup()) {
+               // If ping not successful assume that the cache does not exist
+               // Default cache is always started, so don't do for it
+               if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
+                     ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
+                  return null;
+               }
             }
+            // If ping on startup is disabled, or cache is defined in server
+            cacheName2RemoteCache.put(cacheName, rcc);
+            return result;
          } else {
             return (RemoteCache<K, V>) cacheName2RemoteCache.get(cacheName).remoteCache;
          }
@@ -535,12 +538,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
          return PingResult.FAIL;
       }
 
-      Transport transport = transportFactory.getTransport();
-      try {
-         return cache.ping(transport);
-      } finally {
-        transportFactory.releaseTransport(transport);
-      }
+      return cache.ping();
    }
 
    private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {

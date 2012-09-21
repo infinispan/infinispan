@@ -20,9 +20,8 @@
 package org.infinispan.stress;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.LinkedList;
@@ -32,11 +31,11 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(groups = {"performance", "manual"})
 public class CreateThousandCachesTest {
-   public void doTest() throws Exception {
+   public void doTest() {
       System.out.println("Starting... ");
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             List<Cache<?, ?>> thousandCaches = new LinkedList<Cache<?, ?>>();
             long start = System.currentTimeMillis();
             for (int i = 0; i < 1000; i++) {

@@ -39,6 +39,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -97,7 +98,7 @@ public class PerformanceCompareStressTest {
    }
    
    @Test
-   public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws Exception {
+   public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws InterruptedException, IOException {
       // TestingUtil.setDelayForCache(cache, 0, 0);
       InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, indexName, CHUNK_SIZE);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
@@ -158,13 +159,14 @@ public class PerformanceCompareStressTest {
 
    @BeforeMethod
    public void beforeTest() {
-      cacheFactory = TestCacheManagerFactory.createClusteredCacheManager(CacheTestSupport.createTestConfiguration());
+      cacheFactory = TestCacheManagerFactory.createClusteredCacheManager(
+            CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL));
       cacheFactory.start();
       cache = cacheFactory.getCache();
       cache.clear();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void afterTest() {
       TestingUtil.killCaches(cache);
       TestingUtil.killCacheManagers(cacheFactory);
@@ -173,6 +175,45 @@ public class PerformanceCompareStressTest {
    
    private void verifyDirectoryState() {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true);
+   }
+
+   /**
+    * It's much better to compare performance out of the scope of TestNG by
+    * running this directly as TestNG enables assertions.
+    * 
+    * Suggested test switches:
+    * -Xmx2G -Xms2G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Xbatch -server -XX:+UseCompressedOops -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+AlwaysPreTouch
+    */
+   public static void main(String[] args) throws InterruptedException, IOException {
+      PerformanceCompareStressTest test = new PerformanceCompareStressTest();
+      test.beforeTest();
+      try {
+         test.profileTestRAMDirectory();
+      }
+      finally {
+         test.afterTest();
+      }
+      test.beforeTest();
+      try {
+         test.profileTestFSDirectory();
+      }
+      finally {
+         test.afterTest();
+      }
+      test.beforeTest();
+      try {
+         test.profileInfinispanLocalDirectory();
+      }
+      finally {
+         test.afterTest();
+      }
+      test.beforeTest();
+      try {
+         test.profileTestInfinispanDirectoryWithNetworkDelayZero();
+      }
+      finally {
+         test.afterTest();
+      }
    }
 
 }

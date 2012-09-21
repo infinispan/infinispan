@@ -26,6 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.query.CommandInitializer;
+import org.infinispan.query.CustomQueryCommand;
 import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 
@@ -37,9 +39,10 @@ import java.util.UUID;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand {
+public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
+   private static final Integer ZERO = Integer.valueOf(0);
 
    private ClusteredQueryCommandType commandType;
 
@@ -52,7 +55,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    private UUID lazyQueryId;
 
    // for retrieve keys on a lazy query
-   private Integer docIndex = 0;
+   private Integer docIndex = ZERO;
 
    private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
       super(cacheName);
@@ -67,45 +70,40 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       super(cacheName);
    }
 
-   public void injectComponents(Cache<?, ?> cache) {
-      this.cache = cache;
+   @Override
+   public void fetchExecutionContext(CommandInitializer ci) {
+      this.cache = ci.getCache();
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache<?, ?> cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
       clQuery.query = query;
       clQuery.lazyQueryId = id;
       return clQuery;
    }
 
    public static ClusteredQueryCommand getResultSize(HSQuery query, Cache<?, ?> cache) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.GET_RESULT_SIZE, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.GET_RESULT_SIZE, cache.getName());
       clQuery.query = query;
       return clQuery;
    }
 
    public static ClusteredQueryCommand createEagerIterator(HSQuery query, Cache<?, ?> cache) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.CREATE_EAGER_ITERATOR, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_EAGER_ITERATOR, cache.getName());
       clQuery.query = query;
       return clQuery;
    }
 
    public static ClusteredQueryCommand destroyLazyQuery(Cache<?, ?> cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.DESTROY_LAZY_ITERATOR, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.DESTROY_LAZY_ITERATOR, cache.getName());
       clQuery.lazyQueryId = id;
       return clQuery;
    }
 
    public static ClusteredQueryCommand retrieveKeyFromLazyQuery(Cache<?, ?> cache, UUID id, int docIndex) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.GET_SOME_KEYS, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.GET_SOME_KEYS, cache.getName());
       clQuery.lazyQueryId = id;
       clQuery.docIndex = docIndex;
-
       return clQuery;
    }
 
@@ -130,8 +128,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public QueryResponse perform(Cache<?, ?> cache) {
-      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId,
-               docIndex);
+      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId, docIndex);
       return worker.perform();
    }
 

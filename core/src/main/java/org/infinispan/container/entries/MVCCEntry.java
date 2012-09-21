@@ -30,7 +30,7 @@ import org.infinispan.container.DataContainer;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface MVCCEntry extends CacheEntry {
+public interface MVCCEntry extends CacheEntry, StateChangingEntry {
 
    /**
     * Makes internal copies of the entry for updates

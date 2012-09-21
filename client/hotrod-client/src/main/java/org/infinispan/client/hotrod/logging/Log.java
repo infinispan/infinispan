@@ -68,16 +68,14 @@ public interface Log extends BasicLogger {
    void errorFromServer(String message);
 
    @LogMessage(level = INFO)
-   @Message(value = "New topology: %s", id = 4006)
-   void newTopology(Set<SocketAddress> topology);
+   @Message(value = "%s sent new topology view (id=%d) containing %d addresses: %s", id = 4006)
+   void newTopology(SocketAddress address, int viewId, int topologySize, Set<SocketAddress> topology);
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
    void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not connect to server: %s", id = 4008)
-   void couldNotConnectToServer(InetSocketAddress serverAddress, @Cause IOException e);
+//  id = 4008 is now logged to TRACE(ISPN-1794)
 
    @LogMessage(level = WARN)
    @Message(value = "Issues closing socket for %s: %s", id = 4009)

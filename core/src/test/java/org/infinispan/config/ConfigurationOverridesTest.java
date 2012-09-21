@@ -1,6 +1,5 @@
 package org.infinispan.config;
 
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.interceptors.IsMarshallableInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -24,12 +23,12 @@ public class ConfigurationOverridesTest extends AbstractInfinispanTest {
       try {
          Configuration c = new Configuration().fluent()
                .clustering().hash()
-                  .consistentHashClass(TopologyAwareConsistentHash.class)
+//                  .consistentHashClass(TopologyAwareConsistentHash.class)
                .versioning().enable()
                .build();
          Configuration c2 = cm.defineConfiguration("a", c);
-         assert c2.getConsistentHashClass().equals(
-               TopologyAwareConsistentHash.class.getName());
+//         assert c2.getConsistentHashClass().equals(
+//               TopologyAwareConsistentHash.class.getName());
          assert c2.isEnableVersioning();
 
          c = new Configuration().fluent().dataContainer()

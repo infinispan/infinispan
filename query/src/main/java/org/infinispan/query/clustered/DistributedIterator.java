@@ -53,18 +53,44 @@ public class DistributedIterator extends AbstractIterator {
 
    private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
+   /**
+    * Here we will have the top ScoreDoc of each node.
+    * So, this queue will always have n scoreDocs (where n is the number of nodes)
+    * This queue is actually doing the "merge" work
+    */
    private PriorityQueue<ScoreDoc> hq;
 
    private final int resultSize;
 
-   public DistributedIterator(Sort sort, int fetchSize, int resultSize,
-         HashMap<UUID, ClusteredTopDocs> topDocsResponses,
-         AdvancedCache<?, ?> cache) {
+   private final int maxResults;
+
+   private final int firstResult;
+
+   public DistributedIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult,
+         HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
       this.sort = sort;
       this.fetchSize = fetchSize;
       this.resultSize = resultSize;
+      this.maxResults = maxResults;
+      this.firstResult = firstResult;
       this.cache = cache;
       setTopDocs(topDocsResponses);
+      goToFirstResult();
+   }
+
+   /**
+    * As we don't know where (in what node) is the first result,
+    * we have to compare the results until we achieve the first result. 
+    */
+   private void goToFirstResult() {
+      for (int i = 0; i < firstResult; i++) {
+         // getting the next scoreDoc. If null, then there is no more results
+         ClusteredDoc scoreDoc = (ClusteredDoc) hq.pop();
+         if (scoreDoc == null) {
+            return;
+         }
+         rechargeQueue(scoreDoc);
+      }
    }
 
    private void setTopDocs(HashMap<UUID, ClusteredTopDocs> topDocsResponses) {
@@ -148,12 +174,7 @@ public class DistributedIterator extends AbstractIterator {
             return;
          }
 
-         // "recharging" the queue
-         ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc.getNodeUuid());
-         ScoreDoc score = topDoc.getNext();
-         if (score != null) {
-            hq.add(score);
-         }
+         ClusteredTopDocs topDoc = rechargeQueue(scoreDoc);
 
          // fetching the value
          Object value = fetchValue(scoreDoc, topDoc);
@@ -162,6 +183,25 @@ public class DistributedIterator extends AbstractIterator {
 
          fetched++;
       }
+   }
+
+   /**
+    * As the priority queue have one result for each node, when we fetch a result
+    * we have to recharge the queue (getting the next score doc from the correct
+    * node)
+    * @param scoreDoc
+    * @return
+    */
+   private ClusteredTopDocs rechargeQueue(ClusteredDoc scoreDoc) {
+      // "recharging" the queue
+      // the queue has a top element of each node. As we removed a element, we have to get the next element from this node and put on the queue.
+      ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc.getNodeUuid());
+      ScoreDoc score = topDoc.getNext();
+      // if score == null -> this node does not have more results...
+      if (score != null) {
+         hq.add(score);
+      }
+      return topDoc;
    }
 
    protected Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
@@ -188,7 +228,8 @@ public class DistributedIterator extends AbstractIterator {
 
    @Override
    public boolean hasNext() {
-      if (currentIndex + 1 >= resultSize) {
+      int nextIndex = currentIndex + 1;
+      if (firstResult + nextIndex >= resultSize || nextIndex >= maxResults) {
          return false;
       }
       return true;

@@ -24,11 +24,12 @@ package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
-import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.configuration.cache.LoaderConfiguration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfiguration;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.manager.CacheContainer;
@@ -49,6 +50,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
+      config.setPurgeSynchronously(true);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
       jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBinaryCacheStore.start();
@@ -64,12 +66,12 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         CacheLoaderConfig firstCacheLoaderConfig = first.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+         LoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
          assert firstCacheLoaderConfig != null;
-         CacheLoaderConfig secondCacheLoaderConfig = second.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+         LoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
          assert secondCacheLoaderConfig != null;
-         assert firstCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfig;
-         assert secondCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfig;
+         assert firstCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfiguration;
+         assert secondCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfiguration;
          CacheLoaderManager cacheLoaderManager = first.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
          JdbcBinaryCacheStore loader = (JdbcBinaryCacheStore) cacheLoaderManager.getCacheLoader();
          assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;

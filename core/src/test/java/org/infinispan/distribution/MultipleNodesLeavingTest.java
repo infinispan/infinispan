@@ -82,7 +82,7 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
 
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
       TestingUtil.waitForRehashToComplete(cache(0));
-      Set<Address> caches = advancedCache(0).getDistributionManager().getConsistentHash().getCaches();
+      List<Address> caches = advancedCache(0).getDistributionManager().getConsistentHash().getMembers();
       System.out.println("caches = " + caches);
       int size = caches.size();
       assert size == 1;

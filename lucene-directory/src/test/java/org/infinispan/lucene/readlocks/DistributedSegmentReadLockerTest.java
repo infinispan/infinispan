@@ -33,6 +33,7 @@ import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,7 +64,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration();
+      ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL);
       createClusteredCaches(2, CACHE_NAME, configurationBuilder);
    }
    

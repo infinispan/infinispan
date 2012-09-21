@@ -52,7 +52,7 @@ public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

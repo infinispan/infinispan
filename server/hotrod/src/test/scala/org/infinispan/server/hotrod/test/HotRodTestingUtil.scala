@@ -31,15 +31,20 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 import org.infinispan.util.{TypedProperties, Util}
-import org.infinispan.config.Configuration
 import org.testng.Assert._
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
 import java.util.concurrent.{TimeUnit, CountDownLatch}
-import collection.mutable.ListBuffer
+import collection.mutable.{ArrayBuffer, ListBuffer}
 import org.jboss.netty.channel.ChannelFuture
+import org.infinispan.configuration.cache.ConfigurationBuilder
+import scala.Byte
+import org.infinispan.distribution.ch.ConsistentHash
+import scala.collection.JavaConversions._
+import org.infinispan.test.TestingUtil
+import org.infinispan.statetransfer.StateTransferManager
 
 /**
  * Test utils for Hot Rod tests.
@@ -89,13 +94,12 @@ object HotRodTestingUtil extends Log {
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
       info("Start server in port %d", port)
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
             if (delay > 0)
                Thread.sleep(delay)
 
             val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
-            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }
@@ -120,10 +124,9 @@ object HotRodTestingUtil extends Log {
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
             val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
-            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }
@@ -200,46 +203,94 @@ object HotRodTestingUtil extends Log {
       }
    }
 
-   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
-            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]]) {
-      assertHashTopology10Received(topoResp, servers, hashIds, 2,
+   def assertHashTopology10Received(topoResp: AbstractTopologyResponse, servers: List[HotRodServer],
+                                  cacheName: String) {
+      assertHashTopology10Received(topoResp, servers, cacheName, 2,
             EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
    }
 
-   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse,
-            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]]) {
-      assertHashTopology10Received(topoResp, servers, hashIds, 0, 0, 0)
+   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer],
+                                    cacheName: String) {
+      assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0)
    }
 
    def assertHashTopology10Received(topoResp: AbstractTopologyResponse,
-            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]],
-            expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int) {
+                                    servers: List[HotRodServer], cacheName: String,
+                                    expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware10Response]
       assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
       assertEquals(hashTopologyResp.members.size, servers.size)
       hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
-      assertHashIds(hashTopologyResp.hashIds, hashIds)
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
       assertEquals(hashTopologyResp.hashFunction, expectedHashFct)
       assertEquals(hashTopologyResp.hashSpace, expectedHashSpace)
+      assertHashIds(hashTopologyResp.hashIds, servers, cacheName)
    }
 
 
    def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
-            servers: List[HotRodServer], expectedVirtualNodes: Int) {
+                                  servers: List[HotRodServer], cacheName: String,
+                                  expectedNumOwners: Int, expectedVirtualNodes: Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
       assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
       assertEquals(hashTopologyResp.membersToHash.size, servers.size)
       hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
-      assertEquals(hashTopologyResp.numOwners, 2)
+      assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
       assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, Integer.MAX_VALUE)
       assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes)
    }
 
-   def assertHashIds(hashIds: Map[ServerAddress, Seq[Int]],
-                     expectedHashIds: Map[ServerAddress, Seq[Int]]) {
-      assertEquals(hashIds, expectedHashIds)
+   def assertHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
+      val cache = servers.head.getCacheManager.getCache(cacheName)
+      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
+      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
+      val numSegments = consistentHash.getNumSegments
+      val numOwners = consistentHash.getNumOwners
+      assertEquals(hashIds.size, servers.size)
+
+      val segmentSize = math.ceil(Int.MaxValue.toDouble / numSegments).toInt
+      val owners = new Array[collection.mutable.Map[Int, ServerAddress]](numSegments)
+
+      for ((serverAddress, serverHashIds) <- hashIds) {
+         for (hashId <- serverHashIds) {
+            val segmentIdx = (hashId / segmentSize + numSegments - 1) % numSegments
+            val ownerIdx = hashId % segmentSize;
+            if (owners(segmentIdx) == null) {
+               owners(segmentIdx) = collection.mutable.Map[Int, ServerAddress]()
+            }
+            owners(segmentIdx) += (ownerIdx -> serverAddress)
+         }
+      }
+
+      for (i <- 0 until numSegments) {
+         val segmentOwners = owners(i).toList.sortBy(_._1).map(_._2)
+         assertEquals(segmentOwners.size, numOwners)
+         val chOwners = consistentHash.locateOwnersForSegment(i)
+               .map(a => clusterAddressToServerAddress(servers, a))
+         assertEquals(segmentOwners, chOwners)
+      }
+   }
+
+   def assertReplicatedHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
+      val cache = servers.head.getCacheManager.getCache(cacheName)
+      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
+      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
+      val numSegments = consistentHash.getNumSegments
+      val numOwners = consistentHash.getNumOwners
+
+      // replicated responses have just one segment, and each server should have only one hash id: 0
+      assertEquals(hashIds.size, servers.size)
+      assertEquals(numSegments, 1)
+
+      for ((serverAddress, serverHashIds) <- hashIds) {
+         assertEquals(serverHashIds.size, 1)
+         assertEquals(serverHashIds(0), 0)
+      }
+   }
+
+   def clusterAddressToServerAddress(servers : List[HotRodServer], clusterAddress : Address) : ServerAddress = {
+      return servers.find(_.getCacheManager.getAddress == clusterAddress).get.getAddress
    }
 
    def assertTopologyId(viewId: Int, cm: EmbeddedCacheManager) {

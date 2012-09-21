@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -32,7 +33,7 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -40,6 +41,7 @@ import java.util.Map;
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
+ * @author anistor@redhat.com
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -55,7 +57,7 @@ public interface DistributionManager {
     * @deprecated
     */
    @Deprecated
-   boolean isLocal(Object key);
+   boolean isLocal(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Returns the data locality characteristics of a given key.
@@ -63,7 +65,7 @@ public interface DistributionManager {
     * @return a DataLocality that allows you to test whether a key is mapped to the local node or not, and the degree of
     * certainty of such a result.
     */
-   DataLocality getLocality(Object key);
+   DataLocality getLocality(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Locates a key in a cluster.  The returned addresses <i>may not</i> be owners of the keys if a rehash happens to be
@@ -73,29 +75,25 @@ public interface DistributionManager {
     * @param key key to test
     * @return a list of addresses where the key may reside
     */
-   List<Address> locate(Object key);
+   List<Address> locate(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Returns the first Address containing the key.  Equivalent to returning the first element of {@link #locate(Object)}
     * @param key key to test
     * @return the first address on which the key may reside
     */
-   Address getPrimaryLocation(Object key);
+   Address getPrimaryLocation(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Locates a list of keys in a cluster.  Like {@link #locate(Object)} the returned addresses <i>may not</i> be owners
     * of the keys if a rehash happens to be in progress or is pending, so when querying these servers, invalid responses
     * should be checked for and the next address checked accordingly.
     *
+    *
     * @param keys list of keys to test
     * @return a list of addresses where the key may reside
     */
-   Map<Object, List<Address>> locateAll(Collection<Object> keys);
-
-   /**
-    * Same as {@link #locateAll(java.util.Collection)}, but the list of addresses only contains numOwners owners.
-    */
-   Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners);
+   Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
    /**
     * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done
@@ -113,7 +111,7 @@ public interface DistributionManager {
     * @param key key to look up
     * @return an internal cache entry, or null if it cannot be located
     */
-   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception;
+   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception;
 
    /**
     * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
@@ -123,12 +121,9 @@ public interface DistributionManager {
     */
    ConsistentHash getConsistentHash();
 
-   /**
-    * Sets the consistent hash implementation in use.
-    * @param consistentHash consistent hash to set to
-    * @return previous consistent hash, the last one for which rehash completed
-    */
-   ConsistentHash setConsistentHash(ConsistentHash consistentHash);
+   ConsistentHash getReadConsistentHash();
+
+   ConsistentHash getWriteConsistentHash();
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method

@@ -22,6 +22,9 @@
  */
 package org.infinispan.statetransfer;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -29,7 +32,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.StateTransferLockInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -41,7 +43,8 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.Test;
 
-@Test(testName = "lock.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")
+@Test(testName = "lock.StaleLocksWithCommitDuringStateTransferTest", groups = "functional",
+      enabled = false, description = "This test relies on implementation details of the old state algorithm")
 @CleanupAfterMethod
 public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheManagersTest {
 
@@ -80,9 +83,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
    /**
     * Check that the transaction commit/rollback recovers if we receive a StateTransferInProgressException from the remote node
     */
-   private void doStateTransferInProgressTest(boolean commit, boolean failOnOriginator) throws Exception {
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+   private void doStateTransferInProgressTest(boolean commit, final boolean failOnOriginator) throws Exception {
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       c1.put(k1, "v1");
@@ -96,27 +99,31 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       LocalTransaction localTx = txTable.getLocalTransaction(tm(c1).getTransaction());
       txCoordinator.prepare(localTx);
 
-      // Before calling commit we block transactions on one of the nodes to simulate a state transfer
-      final StateTransferLock blockFirst = TestingUtil.extractComponent(failOnOriginator ? c1 : c2, StateTransferLock.class);
-      final StateTransferLock blockSecond = TestingUtil.extractComponent(failOnOriginator ? c2 : c1, StateTransferLock.class);
-      blockFirst.blockNewTransactions(1000);
-
-      // Schedule the unblock on another thread since the main thread will be busy with the commit call
+      final CountDownLatch commitLatch = new CountDownLatch(1);
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {
          @Override
          public void run() {
             try {
+               // Before calling commit we block transactions on one of the nodes to simulate a state transfer
+               final StateTransferLock blockFirst = TestingUtil.extractComponent(failOnOriginator ? c1 : c2, StateTransferLock.class);
+               final StateTransferLock blockSecond = TestingUtil.extractComponent(failOnOriginator ? c2 : c1, StateTransferLock.class);
+               blockFirst.transactionsExclusiveLock();
+
+               commitLatch.countDown();
+
                // should be much larger than the lock acquisition timeout
                Thread.sleep(1000);
-               blockSecond.blockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-               blockFirst.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-               blockSecond.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-            } catch (InterruptedException e) {
-               log.errorf(e, "Error blocking/unblocking transactions");
+               blockSecond.transactionsExclusiveLock();
+               blockFirst.transactionsExclusiveUnlock();
+               blockSecond.transactionsExclusiveUnlock();
+            } catch (Throwable t) {
+               log.errorf(t, "Error blocking/unblocking transactions");
             }
          }
       };
       worker.start();
+
+      commitLatch.await(10, TimeUnit.SECONDS);
 
       try {
          // finally commit or rollback the transaction
@@ -152,8 +159,8 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
     * Check that the transaction commit/rollback recovers if the remote node dies during the RPC
     */
    private void doTestSuspect(boolean commit) throws Exception {
-      MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
+      MagicKey k1 = new MagicKey("k1", c1);
+      MagicKey k2 = new MagicKey("k2", c2);
 
       tm(c1).begin();
       c1.put(k1, "v1");
@@ -176,7 +183,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
             }
             return super.handleDefault(ctx, command);
          }
-      }, StateTransferLockInterceptor.class);
+      }, StateTransferInterceptor.class);
 
       // Schedule the remote node to stop on another thread since the main thread will be busy with the commit call
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {

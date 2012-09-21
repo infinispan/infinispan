@@ -84,9 +84,11 @@ public class InfinispanDirectory extends Directory {
 
    private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
    private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
+
    // indexName is required when one common cache is used
    private final String indexName;
-   // chunk size used in this directory, static filed not used as we want to have different chunk
+
+   // chunk size used in this directory, static field not used as we want to have different chunk
    // size per dir
    private final int chunkSize;
 
@@ -220,26 +222,26 @@ public class InfinispanDirectory extends Directory {
    public void renameFile(String from, String to) {
       ensureOpen();
 
+      final FileCacheKey fromKey = new FileCacheKey(indexName, from);
+      final FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+      final int bufferSize = metadata.getBufferSize();
       // preparation: copy all chunks to new keys
       int i = -1;
       Object ob;
       do {
-         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i);
+         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
          ob = chunksCache.get(fromChunkKey);
          if (ob == null) {
             break;
          }
-         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
-         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(toChunkKey, ob);
+         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
+         chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey, ob);
       } while (true);
-      
+
       // rename metadata first
-      boolean batching = metadataCache.startBatch();
-      FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
-      if (batching) metadataCache.endBatch(true);
       
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);
@@ -281,7 +283,7 @@ public class InfinispanDirectory extends Directory {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
-         throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+         throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
       }
       else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
          //files smaller than chunkSize don't need a readLock
@@ -291,7 +293,7 @@ public class InfinispanDirectory extends Directory {
          boolean locked = readLocks.acquireReadLock(name);
          if (!locked) {
             // safest reaction is to tell this file doesn't exist anymore.
-            throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+            throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
          }
          return new InfinispanIndexInput(chunksCache, fileKey, fileMetadata, readLocks);
       }

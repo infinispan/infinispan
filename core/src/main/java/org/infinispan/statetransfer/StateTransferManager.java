@@ -20,52 +20,56 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.statetransfer;
 
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-import java.util.Collection;
-
+//todo [anistor] remove this class and move the remaining functionality to StateConsumer
 /**
  * A component that manages the state transfer when the topology of the cluster changes.
  *
  * @author Dan Berindei <dan@infinispan.org>
  * @author Mircea Markus
+ * @author anistor@redhat.com
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface StateTransferManager {
 
+   //todo [anistor] this is inaccurate. this node does not hold state yet in current implementation
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
-   void waitForJoinToComplete() throws InterruptedException;
-
-   boolean hasJoinStarted();
-
-   void waitForJoinToStart() throws InterruptedException;
-
-   @ManagedAttribute(description = "Checks whether there is a pending state transfer in the cluster.")
+   /**
+    * Checks if an inbound state transfer is in progress.
+    */
+   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.")
    @Metric(displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 
-   void waitForStateTransferToComplete() throws InterruptedException;
+   /**
+    * Checks if an inbound state transfer is in progress for a given key.
+    *
+    * @param key
+    * @return
+    */
+   boolean isStateTransferInProgressForKey(Object key);
 
-   void applyState(Collection<InternalCacheEntry> state, Address sender, int viewId) throws InterruptedException;
+   CacheTopology getCacheTopology();
 
-   void applyLocks(Collection<LockInfo> locks, Address sender, int viewId) throws InterruptedException;
+   void start() throws Exception;
+
+   void stop();
 
    /**
-    * @return <code>true</code> if the key should be local but has not yet been copied to the local node
+    * @return {@code true} if the local node was the first to start this cache in the cluster.
     */
-   boolean isLocationInDoubt(Object key);
-
+   boolean isLocalNodeFirst();
 }
-

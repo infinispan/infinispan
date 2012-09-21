@@ -57,6 +57,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    private CacheStore buildCloudCacheStoreWithStubCloudService(String bucketName) throws CacheLoaderException {
       CloudCacheStore cs = new CloudCacheStore();
       CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
+      cfg.setPurgeSynchronously(true);
       cfg.setBucketPrefix(bucketName);
       cfg.setCloudService("transient");
       cfg.setIdentity("unit-test-stub");
@@ -71,6 +72,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       return cs;
    }
 
+   @Override
    protected CacheStore createCacheStore() throws Exception {
       CacheStore store = buildCloudCacheStoreWithStubCloudService(csBucket);
       store.start();
@@ -97,7 +99,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    }
 
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    @Override
    public void tearDown() throws CacheLoaderException {
       for (CacheStore cacheStore : Arrays.asList(cs, cs2)) {

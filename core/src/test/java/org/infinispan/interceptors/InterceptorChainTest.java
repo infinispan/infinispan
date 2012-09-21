@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +46,7 @@ public class InterceptorChainTest {
    private static final Log log = LogFactory.getLog(InterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
-      InterceptorChain ic = new InterceptorChain(new CallInterceptor());
+      InterceptorChain ic = new InterceptorChain(new CallInterceptor(), new ComponentMetadataRepo());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(2);

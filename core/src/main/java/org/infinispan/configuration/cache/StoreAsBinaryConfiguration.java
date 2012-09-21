@@ -31,7 +31,7 @@ package org.infinispan.configuration.cache;
  */
 public class StoreAsBinaryConfiguration {
 
-   private final boolean enabled;
+   private boolean enabled;
    private final boolean storeKeysAsBinary;
    private final boolean storeValuesAsBinary;
    
@@ -46,6 +46,11 @@ public class StoreAsBinaryConfiguration {
     */
    public boolean enabled() {
       return enabled;
+   }
+
+   public StoreAsBinaryConfiguration enabled(boolean enabled) {
+      this.enabled = enabled;
+      return this;
    }
 
    /**

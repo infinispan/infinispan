@@ -66,23 +66,15 @@
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
-         <loader class="org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="false"
-                 ignoreModifications="false" purgeOnStartup="false">
-            <properties>
-               <property name="stringsTableNamePrefix" value="ISPN_STRING_TABLE"/>
-               <property name="idColumnName" value="ID_COLUMN"/>
-               <property name="dataColumnName" value="DATA_COLUMN"/>
-               <property name="timestampColumnName" value="TIMESTAMP_COLUMN"/>
-               <property name="timestampColumnType" value="BIGINT"/>
-               <property name="connectionFactoryClass"
-                         value="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"/>
-               <property name="datasourceJndiLocation" value="java:/StringStoreWithManagedConnectionTest/DS"/>
-               <property name="idColumnType" value="VARCHAR(255)"/>
-               <property name="dataColumnType" value="BINARY"/>
-               <property name="dropTableOnExit" value="true"/>
-               <property name="createTableOnStart" value="true"/>
-            </properties>
-         </loader>
+         <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:5.2" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
+            connectionFactoryClass="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory" 
+            datasource="java:/StringStoreWithManagedConnectionTest/DS">
+            <stringKeyedTable prefix="ISPN_STRING_TABLE" createOnStart="true" dropOnExit="true">
+               <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+               <dataColumn name="DATA_COLUMN" type="BINARY" />
+               <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+            </stringKeyedTable>
+         </stringKeyedJdbcStore>
       </loaders>
 
    </default>

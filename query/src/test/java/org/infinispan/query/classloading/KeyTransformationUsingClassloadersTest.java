@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.AdvancedCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -40,15 +40,16 @@ import org.testng.annotations.Test;
 public class KeyTransformationUsingClassloadersTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent()
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(c);
+            .enable()
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @Test

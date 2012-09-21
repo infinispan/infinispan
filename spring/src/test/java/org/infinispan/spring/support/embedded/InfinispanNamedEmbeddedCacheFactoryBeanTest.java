@@ -32,7 +32,6 @@ import java.io.InputStream;
 
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -56,7 +55,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
    private static final ClassPathResource NAMED_ASYNC_CACHE_CONFIG_LOCATION = new ClassPathResource(
             "named-async-cache.xml", InfinispanNamedEmbeddedCacheFactoryBeanTest.class);
 
-   private static final DefaultCacheManager DEFAULT_CACHE_MANAGER = new DefaultCacheManager(false);
+   private static final EmbeddedCacheManager DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
 
    private static final EmbeddedCacheManager PRECONFIGURED_DEFAULT_CACHE_MANAGER;
 

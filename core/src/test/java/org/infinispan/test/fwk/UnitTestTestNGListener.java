@@ -30,10 +30,9 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-import org.testng.annotations.Test;
-import org.testng.internal.annotations.TestAnnotation;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -51,6 +50,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    private AtomicInteger failed = new AtomicInteger(0);
    private AtomicInteger succeeded = new AtomicInteger(0);
    private AtomicInteger skipped = new AtomicInteger(0);
+   private AtomicBoolean oomHandled = new AtomicBoolean();
 
    public void onTestStart(ITestResult res) {
       log.info("Starting test " + getTestDesc(res));
@@ -59,31 +59,44 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    }
 
    private void addOomLoggingSupport() {
+      final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
       Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
          public void uncaughtException(final Thread t, final Throwable e) {
-            printAllTheThreadsInTheJvm(e);
+            try {
+               // we need to ensure we only handle first OOM occurrence (multiple threads could see one) to avoid duplicated thread dumps
+               if (e instanceof OutOfMemoryError && oomHandled.compareAndSet(false, true)) {
+                  printAllTheThreadsInTheJvm();
+               }
+            } finally {
+               if (oldHandler != null) {
+                  // invoke the old handler if any
+                  oldHandler.uncaughtException(t, e);
+               }
+            }
          }
       });
    }
 
    synchronized public void onTestSuccess(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " succeeded.");
-      log.info("Test succeeded " + getTestDesc(arg0) + ".");
+      String message = "Test " + getTestDesc(arg0) + " succeeded.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.info(message);
       succeeded.incrementAndGet();
       printStatus();
    }
 
    synchronized public void onTestFailure(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " failed.");
-      if (arg0.getThrowable() != null) log.error("Test failed " + getTestDesc(arg0), arg0.getThrowable());
+      String message = "Test " + getTestDesc(arg0) + " failed.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.error(message, arg0.getThrowable());
       failed.incrementAndGet();
       printStatus();
    }
 
    synchronized public void onTestSkipped(ITestResult arg0) {
-      System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " skipped.");
-      log.info(" Test " + getTestDesc(arg0) + " skipped.");
-      if (arg0.getThrowable() != null) log.error("Test skipped : " + arg0.getThrowable(), arg0.getThrowable());
+      String message = "Test " + getTestDesc(arg0) + " skipped.";
+      System.out.println(getThreadId() + ' ' + message);
+      log.error(message, arg0.getThrowable());
       skipped.incrementAndGet();
       printStatus();
    }
@@ -95,11 +108,16 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    public void onStart(ITestContext arg0) {
       String fullName = arg0.getName();
       String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
-      TestCacheManagerFactory.testStarted(simpleName, fullName);
+      Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
+      if (!simpleName.equals(testClass.getSimpleName())) {
+         log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
+      }
+      TestCacheManagerFactory.testStarted(testClass.getSimpleName(), testClass.getName());
    }
 
    public void onFinish(ITestContext arg0) {
-      TestCacheManagerFactory.testFinished(arg0.getName());
+      Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
+      TestCacheManagerFactory.testFinished(testClass.getSimpleName());
    }
 
    private String getThreadId() {
@@ -111,7 +129,9 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
    }
 
    private void printStatus() {
-      System.out.println("Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
+      String message = "Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".";
+      System.out.println(message);
+      log.info(message);
    }
 
    @Override
@@ -120,12 +140,16 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    @Override
    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-      if (testResult.getThrowable() != null)
-         log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
+      if (testResult.getThrowable() != null && method.isConfigurationMethod()) {
+         String message = String.format("Configuration method %s threw an exception", getTestDesc(testResult));
+         System.out.println(message);
+         log.error(message, testResult.getThrowable());
+      }
    }
 
-   public static void printAllTheThreadsInTheJvm(Throwable e) {
-      if (e instanceof OutOfMemoryError) {
+   //todo [anistor] this approach can result in more OOM. maybe it's wiser to remove the whole thing and rely on -XX:+HeapDumpOnOutOfMemoryError
+   private void printAllTheThreadsInTheJvm() {
+      if (log.isTraceEnabled()) {
          Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
          log.tracef("Dumping all %s threads in the system.", allStackTraces.size());
          for (Map.Entry<Thread, StackTraceElement[]> s : allStackTraces.entrySet()) {

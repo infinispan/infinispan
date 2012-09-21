@@ -22,12 +22,21 @@
  */
 package org.infinispan.query.blackbox;
 
-import org.apache.lucene.queryParser.ParseException;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.transaction.TransactionManager;
+
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
-import org.infinispan.config.FluentConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -38,15 +47,9 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
-import static org.infinispan.query.helper.TestQueryHelperFactory.*;
-
 /**
  * @author Navin Surtani
+ * @author Sanne Grinovero
  */
 @Test(groups = "functional")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
@@ -67,24 +70,28 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected void enhanceConfig(FluentConfiguration cacheCfg) {
+   protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
       // meant to be overridden
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      FluentConfiguration cacheCfg = getDefaultClusteredConfig(REPL_SYNC).fluent();
-      cacheCfg.indexing().indexLocalOnly(false)
+      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
+      cacheCfg.indexing()
+         .enable()
+         .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram")
          .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg
-               .build());
+      List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
 
-   private void prepareTestData() {
+   private void prepareTestData() throws Exception {
+      TransactionManager transactionManager = null;
+      transactionManager = cache1.getAdvancedCache().getTransactionManager();
+
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
@@ -99,12 +106,18 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       // Put the 3 created objects in the cache1.
 
+      if (transactionsEnabled()) transactionManager.begin();
       cache1.put(key1, person1);
       cache1.put(key2, person2);
       cache1.put(key3, person3);
+      if (transactionsEnabled()) transactionManager.commit();
    }
 
-   public void testSimple() throws ParseException {
+   protected boolean transactionsEnabled() {
+      return false;
+   }
+
+   public void testSimple() throws Exception {
       prepareTestData();
       cacheQuery = createCacheQuery(cache2, "blurb", "playing");
 
@@ -132,7 +145,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
                + c.getAdvancedCache().getInterceptorChain();
    }
 
-   public void testModified() throws ParseException {
+   public void testModified() throws Exception {
       prepareTestData();
       assertQueryInterceptorPresent(cache2);
 
@@ -158,7 +171,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assert found.get(0).equals(person1);
    }
 
-   public void testAdded() throws ParseException {
+   public void testAdded() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
 
@@ -187,7 +200,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assert found.contains(person4) : "This should now contain object person4";
    }
 
-   public void testRemoved() throws ParseException {
+   public void testRemoved() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("eats");
@@ -206,7 +219,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       found = cacheQuery.list();
    }
 
-   public void testGetResultSize() throws ParseException {
+   public void testGetResultSize() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("playing");
@@ -216,7 +229,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assert found.size() == 1;
    }
 
-   public void testPutMap() {
+   public void testPutMap() throws Exception {
       prepareTestData();
       SearchManager searchManager = Search.getSearchManager(cache2);
       QueryBuilder queryBuilder = searchManager
@@ -237,7 +250,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
    }
 
-   public void testClear() throws ParseException {
+   public void testClear() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("eats");

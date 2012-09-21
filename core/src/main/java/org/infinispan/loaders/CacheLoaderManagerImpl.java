@@ -22,55 +22,78 @@
  */
 package org.infinispan.loaders;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import static org.infinispan.context.Flag.SKIP_INDEXING;
+import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.LoadersConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheStoreInterceptor;
 import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.ReflectionUtil;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
+   private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    Configuration configuration;
-   CacheLoaderManagerConfig clmConfig;
+   LoadersConfiguration clmConfig;
    AdvancedCache<Object, Object> cache;
    StreamingMarshaller m;
    CacheLoader loader;
    InvocationContextContainer icc;
-   private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
+   TransactionManager transactionManager;
+   StateTransferManager stateTransferManager;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache,
                       @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                      Configuration configuration, InvocationContextContainer icc) {
+                      Configuration configuration, InvocationContextContainer icc,
+                      TransactionManager transactionManager, StateTransferManager stateTransferManager) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
       this.icc = icc;
+      this.transactionManager = transactionManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Override
@@ -103,8 +126,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          if ((cs instanceof ChainingCacheStore) && !force) {
             ((ChainingCacheStore) loader).purgeIfNecessary();
          } else {
-            CacheStoreConfig first = (CacheStoreConfig) clmConfig.getFirstCacheLoaderConfig();
-            if (force || (first != null && first.isPurgeOnStartup())) {
+            LoaderConfiguration first = clmConfig.cacheLoaders().get(0);
+            if (force || (first != null && first instanceof StoreConfiguration && ((StoreConfiguration)first).purgeOnStartup())) {
                cs.clear();
             }
          }
@@ -113,27 +136,37 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    @Override
    public boolean isUsingPassivation() {
-      return isEnabled() ? clmConfig.isPassivation() : false;
+      return isEnabled() ? clmConfig.passivation() : false;
    }
 
    @Override
    public boolean isShared() {
-      return isEnabled() ? clmConfig.isShared() : false;
+      return isEnabled() ? clmConfig.shared() : false;
    }
 
    @Override
    public boolean isFetchPersistentState() {
-      return isEnabled() ? clmConfig.isFetchPersistentState() : false;
+      return isEnabled() ? clmConfig.fetchPersistentState() : false;
    }
 
    @Override
    @Start(priority = 10)
    public void start() {
-      clmConfig = configuration.getCacheLoaderManagerConfig();
+      clmConfig = configuration.loaders();
       if (clmConfig != null) {
          try {
             loader = createCacheLoader();
-            if (loader != null) loader.start();
+            Transaction xaTx = null;
+            if (transactionManager != null) {
+               xaTx = transactionManager.suspend();
+            }
+            try {
+               if (loader != null) loader.start();
+            } finally {
+               if (transactionManager != null && xaTx != null) {
+                  transactionManager.resume(xaTx);
+               }
+            }
             purgeLoaders(false);
          } catch (Exception e) {
             throw new CacheException("Unable to start cache loaders", e);
@@ -146,14 +179,55 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return clmConfig != null;
    }
 
+   @Override
+   public void disableCacheStore(String loaderType) {
+      if (isEnabled()) {
+         boolean disableInterceptors = false;
+         ComponentRegistry cr = cache.getComponentRegistry();
+         CacheLoaderInterceptor cli = cr.getComponent(CacheLoaderInterceptor.class);
+         CacheStoreInterceptor csi = cr.getComponent(CacheStoreInterceptor.class);
+
+         if (loader instanceof ChainingCacheStore) {
+            ChainingCacheStore ccs = (ChainingCacheStore) loader;
+            ccs.removeCacheLoader(loaderType);
+            if (ccs.getStores().isEmpty()) disableInterceptors = true;
+         } else {
+            if (loader.getClass().getName().equals(loaderType)) {
+               try {
+                  log.debugf("Stopping and removing cache loader %s", loaderType);
+                  loader.stop();
+               } catch (Exception e) {
+                  log.infof("Problems shutting down cache loader %s", loaderType, e);
+               }
+               disableInterceptors = true;
+            }
+         }
+
+         if (disableInterceptors) {
+            cli.disableInterceptor();
+            csi.disableInterceptor();
+            cache.removeInterceptor(cli.getClass());
+            cache.removeInterceptor(csi.getClass());
+            clmConfig = null;
+         }
+      }
+   }
+
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
+    * The preload will happen only on the first node to start this cache in a cluster - the other nodes
+    * will receive this data via state transfer.
     */
    @Override
    @Start(priority = 56)
    public void preload() {
       if (loader != null) {
-         if (clmConfig.isPreload()) {
+         if (clmConfig.preload()) {
+            // Don't preload anything if we're not the first member to start up
+            if (stateTransferManager != null && !stateTransferManager.isLocalNodeFirst()) {
+               log.debugf("We are not the first node to join cache %s, skipping preload", cache.getName());
+               return;
+            }
             long start = 0;
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
@@ -167,17 +241,23 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                throw new CacheException("Unable to preload!", e);
             }
 
-            for (InternalCacheEntry e : state) {
-               if (clmConfig.isShared() || !(loader instanceof ChainingCacheStore)) {
-                  cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
-                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
-               } else {
-                  cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
-                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
-               }
+            List<Flag> flags = new ArrayList(Arrays.asList(
+                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES));
+
+            if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
+               flags.add(SKIP_CACHE_STORE);
+               if (!localIndexingEnabled())
+                  flags.add(SKIP_INDEXING);
+            } else {
+               flags.add(SKIP_INDEXING);
             }
+
+            AdvancedCache<Object, Object> flaggedCache = cache.getAdvancedCache()
+                  .withFlags(flags.toArray(new Flag[]{}));
+
+            for (InternalCacheEntry e : state)
+               flaggedCache.putIfAbsent(e.getKey(), e.getValue(),
+                     e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (debugTiming) {
                final long stop = System.nanoTime();
@@ -187,9 +267,13 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   private boolean localIndexingEnabled() {
+      return configuration.indexing().enabled() && configuration.indexing().indexLocalOnly();
+   }
+
    private Set<InternalCacheEntry> loadState() throws CacheLoaderException {
       int ne = -1;
-      if (configuration.getEvictionStrategy().isEnabled()) ne = configuration.getEvictionMaxEntries();
+      if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
       Set<InternalCacheEntry> state;
       switch (ne) {
          case -1:
@@ -210,14 +294,6 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    public void stop() {
       if (loader != null) {
          try {
-            CacheStore store = getCacheStore();
-            if (store != null) {
-               InvocationContext ctx = icc.getInvocationContext(false);
-               if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
-                  log.trace("Requested removal of data on stop, so clear cache store");
-                  store.clear();
-               }
-            }
             loader.stop();
          } catch (CacheLoaderException e) {
             throw new CacheException(e);
@@ -239,30 +315,28 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
          // only one cache loader may have fetchPersistentState to true.
          int numLoadersWithFetchPersistentState = 0;
-         for (CacheLoaderConfig cfg : clmConfig.getCacheLoaderConfigs()) {
-            if (cfg instanceof CacheStoreConfig) {
-               if (((CacheStoreConfig) cfg).isFetchPersistentState()) numLoadersWithFetchPersistentState++;
-               if (numLoadersWithFetchPersistentState > 1)
-                  throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
-               assertNotSingletonAndShared(((CacheStoreConfig) cfg));
+         for (LoaderConfiguration cfg : clmConfig.cacheLoaders()) {
+            if (cfg instanceof StoreConfiguration) {
+               StoreConfiguration scfg = (StoreConfiguration) cfg;
+               assertNotSingletonAndShared(scfg);
+               if(scfg.fetchPersistentState()) numLoadersWithFetchPersistentState++;
             }
+            if (numLoadersWithFetchPersistentState > 1)
+               throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
 
-            CacheLoader l = createCacheLoader(cfg, cache);
+            CacheLoader l = createCacheLoader(LegacyConfigurationAdaptor.adapt(cfg), cache);
             ccl.addCacheLoader(l, cfg);
          }
       } else {
-         CacheLoaderConfig cfg = clmConfig.getFirstCacheLoaderConfig();
-         if (cfg != null) {
-            tmpLoader = createCacheLoader(cfg, cache);
-            if (cfg instanceof CacheStoreConfig)
-            assertNotSingletonAndShared(((CacheStoreConfig) cfg));
+         if (!clmConfig.cacheLoaders().isEmpty()) {
+            LoaderConfiguration cfg = clmConfig.cacheLoaders().get(0);
+            if (cfg instanceof StoreConfiguration)
+               assertNotSingletonAndShared((StoreConfiguration) cfg);
+            tmpLoader = createCacheLoader(LegacyConfigurationAdaptor.adapt(cfg), cache);
          } else {
             return null;
          }
       }
-
-      // Update the config with those actually used by the loaders
-      ReflectionUtil.setValue(clmConfig, "accessible", true);
 
       return tmpLoader;
    }
@@ -276,7 +350,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             // async?
             CacheStoreConfig cfg2 = (CacheStoreConfig) cfg;
             if (cfg2.getAsyncStoreConfig().isEnabled()) {
-               tmpStore = new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
+               tmpStore = createAsyncStore(tmpStore, cfg2);
                tmpLoader = tmpStore;
             }
 
@@ -300,9 +374,12 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return tmpLoader;
    }
 
-   void assertNotSingletonAndShared(CacheStoreConfig cfg) {
-      SingletonStoreConfig ssc = cfg.getSingletonStoreConfig();
-      if (ssc != null && ssc.isSingletonStoreEnabled() && clmConfig.isShared())
+   protected AsyncStore createAsyncStore(CacheStore tmpStore, CacheStoreConfig cfg2) {
+      return new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
+   }
+
+   void assertNotSingletonAndShared(StoreConfiguration cfg) {
+      if (cfg.singletonStore().enabled() && clmConfig.shared())
          throw new ConfigurationException("Invalid cache loader configuration!!  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
    }
 }

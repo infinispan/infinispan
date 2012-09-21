@@ -87,7 +87,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       return cacheManager;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }

@@ -22,7 +22,16 @@
  */
 package org.infinispan.configuration.global;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Version;
+
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * <p>
@@ -39,6 +48,8 @@ import org.infinispan.Version;
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
  *
  */
+@Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 public class GlobalConfiguration {
 
    /**
@@ -54,13 +65,15 @@ public class GlobalConfiguration {
    private final TransportConfiguration transport;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
-   
+   private final Map<Class<?>, ?> modules;
+   private final SitesConfiguration sites;
    private final ClassLoader cl;
-   
+
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown, ClassLoader cl) {
+         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
+         List<?> modules, SitesConfiguration sites ,ClassLoader cl) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -69,50 +82,67 @@ public class GlobalConfiguration {
       this.transport = transport;
       this.serialization = serialization;
       this.shutdown = shutdown;
+      Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
+      for(Object module : modules) {
+         moduleMap.put(module.getClass(), module);
+      }
+      this.modules = Collections.unmodifiableMap(moduleMap);
+      this.sites = sites;
       this.cl = cl;
    }
-   
+
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
       return asyncListenerExecutor;
    }
-   
+
    public ExecutorFactoryConfiguration asyncTransportExecutor() {
       return asyncTransportExecutor;
    }
-   
+
    public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
-   
+
    public ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor() {
       return replicationQueueScheduledExecutor;
    }
-   
+
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
       return globalJmxStatistics;
    }
-   
+
    public TransportConfiguration transport() {
       return transport;
    }
-   
+
    public SerializationConfiguration serialization() {
       return serialization;
    }
-   
+
    public ShutdownConfiguration shutdown() {
       return shutdown;
    }
-   
+
+   @SuppressWarnings("unchecked")
+   public <T> T module(Class<T> moduleClass) {
+      return (T)modules.get(moduleClass);
+   }
+
+   public Map<Class<?>, ?> modules() {
+      return modules;
+   }
+
    /**
     * Get the classloader in use by this configuration.
-    * 
-    * @return
     */
    public ClassLoader classLoader() {
       return cl;
    }
 
+   public SitesConfiguration sites() {
+      return sites;
+   }
+   
    @Override
    public String toString() {
       return "GlobalConfiguration{" +
@@ -124,10 +154,9 @@ public class GlobalConfiguration {
             ", transport=" + transport +
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
+            ", modules=" + modules +
+            ", sites=" + sites +
             ", cl=" + cl +
             '}';
    }
-
 }
-
-

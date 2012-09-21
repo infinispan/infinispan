@@ -92,7 +92,6 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotRodServer.stop();
    }
 
-   @Test(enabled=false)
    public void testHeavyLoad() throws InterruptedException, ExecutionException {
       List<WorkerThread> workers = new ArrayList<WorkerThread>();
 
@@ -115,11 +114,15 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       }
 
       //now wait for the idle thread to wake up and clean them
-      // the eviction thread cleans up at most 10 connections at a time, so we need to let it run at least 2 times
-      Thread.sleep(500 * 3);
 
-      assertEquals(1, connectionPool.getNumIdle());
-      assertEquals(0, connectionPool.getNumActive());
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            int numIdle = connectionPool.getNumIdle();
+            int numActive = connectionPool.getNumActive();
+            return numIdle == 0 && numActive == 0;
+         }
+      });
    }
 
    public static class ConstantDelayTransportInterceptor extends CommandInterceptor {

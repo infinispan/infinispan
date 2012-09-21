@@ -20,14 +20,8 @@
 package org.infinispan.container.versioning;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.InvocationContextInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -160,26 +154,9 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
       tm(0).begin();
       assert "world".equals(cache0.get("hello"));
       Transaction t = tm(0).suspend();
-      // Set up cache-1 to force the prepare to retry
-      cache(1).getAdvancedCache().addInterceptorAfter(new CommandInterceptor() {
-         boolean used = false;
-         @Override
-         public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand c) throws Throwable {
-            if (!used) {
-               used = true;
-               return CommitCommand.RESEND_PREPARE;
-            } else {
-               return invokeNextInterceptor(ctx, c);
-            }
-         }
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            return super.handleDefault(ctx, command);
-         }
-      }, InvocationContextInterceptor.class);
 
       // Implicit tx.  Prepare should be retried.
-      cache(0).put("hello", "world2");      
+      cache(0).put("hello", "world2");
 
       assert "world2".equals(cache0.get("hello"));
       assert "world2".equals(cache1.get("hello"));
@@ -204,6 +181,12 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
    public void testLocalOnlyPut() {
       localOnlyPut(this.<Integer, String>cache(0), 1, "v1");
       localOnlyPut(this.<Integer, String>cache(1), 2, "v2");
+   }
+
+   @Test(enabled = false, description = "See ISPN-2160")
+   @Override
+   public void testSharedCounter() {
+      super.testSharedCounter();
    }
 
    private void localOnlyPut(Cache<Integer, String> cache, Integer k, String v) {

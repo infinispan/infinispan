@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -15,8 +16,9 @@ public class BatchingAndEnlistment2Test extends BatchingAndEnlistmentTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = new ConfigurationBuilder().invocationBatching().enable().build();
-      return new DefaultCacheManager(c);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.invocationBatching().enable();
+      return TestCacheManagerFactory.createCacheManager(cb);
    }
 }
 

@@ -24,8 +24,8 @@ package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.websocket.OpHandler;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.websocket.MockChannel;
 import org.infinispan.websocket.MockChannelHandlerContext;
 import org.json.JSONException;
@@ -51,7 +51,7 @@ public class MockClient {
 		this.cacheName = cacheName;
 		this.ctx = new MockChannelHandlerContext(mockChannel);
 		
-		cacheContainer = new DefaultCacheManager();
+		cacheContainer = TestCacheManagerFactory.createCacheManager();
 		cache = cacheContainer.getCache(cacheName);
 	}
 	

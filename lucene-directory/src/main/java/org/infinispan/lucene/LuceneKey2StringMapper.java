@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.lucene.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * To configure a JdbcStringBasedCacheStoreConfig for the Lucene Directory, use this
@@ -38,6 +40,8 @@ import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
  */
 @SuppressWarnings("unchecked")
 public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
+
+   private static final Log log = LogFactory.getLog(LuceneKey2StringMapper.class, Log.class);
 
    /**
     * The pipe character was chosen as it's illegal to have a pipe in a filename, so we only have to
@@ -73,7 +77,7 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
       if (key == null) {
          throw new IllegalArgumentException("Not supporting null keys");
       }
-      // ChunkCacheKey: fileName + "|" + chunkId + "|" + indexName;
+      // ChunkCacheKey: fileName + "|" + chunkId + "|" + bufferSize "|" + indexName
       // FileCacheKey : fileName + "|M|"+ indexName;
       // FileListCacheKey : "*|" + indexName;
       // FileReadLockKey : fileName + "|RL|"+ indexName;
@@ -81,19 +85,25 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
          return new FileListCacheKey(key.substring(2));
       } else {
          String[] split = singlePipePattern.split(key);
-         if (split.length != 3) {
-            throw new IllegalArgumentException("Unexpected format of key in String form: " + key);
+         if (split.length != 3 && split.length != 4) {
+            throw log.keyMappperUnexpectedStringFormat(key);
          } else {
             if ("M".equals(split[1])) {
+               if (split.length != 3) {
+                  throw log.keyMappperUnexpectedStringFormat(key);
+               }
                return new FileCacheKey(split[2], split[0]);
             } else if ("RL".equals(split[1])) {
+               if (split.length != 3) throw log.keyMappperUnexpectedStringFormat(key);
                return new FileReadLockKey(split[2], split[0]);
             } else {
+               if (split.length != 4) throw log.keyMappperUnexpectedStringFormat(key);
                try {
-                  int parsedInt = Integer.parseInt(split[1]);
-                  return new ChunkCacheKey(split[2], split[0], parsedInt);
+                  int chunkId = Integer.parseInt(split[1]);
+                  int bufferSize = Integer.parseInt(split[1]);
+                  return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
                } catch (NumberFormatException nfe) {
-                  throw new IllegalArgumentException("Unexpected format of key in String form: " + key, nfe);
+                  throw log.keyMappperUnexpectedStringFormat(key);
                }
             }
          }

@@ -66,28 +66,28 @@ public class KeyTransformationHandler {
             return s.substring(2);
          case 'I':
             // This is an Integer
-            return Integer.parseInt(s.substring(2));
+            return Integer.valueOf(s.substring(2));
          case 'Y':
             // This is a BYTE
-            return Byte.parseByte(s.substring(2));
+            return Byte.valueOf(s.substring(2));
          case 'L':
             // This is a Long
-            return Long.parseLong(s.substring(2));
+            return Long.valueOf(s.substring(2));
          case 'X':
             // This is a SHORT
-            return Short.parseShort(s.substring(2));
+            return Short.valueOf(s.substring(2));
          case 'D':
             // This is a Double
-            return Double.parseDouble(s.substring(2));
+            return Double.valueOf(s.substring(2));
          case 'F':
             // This is a Float
-            return Float.parseFloat(s.substring(2));
+            return Float.valueOf(s.substring(2));
          case 'B':
             // This is a Boolean. This is NOT the case for a BYTE. For a BYTE, see case 'y'.
-            return Boolean.parseBoolean(s.substring(2));
+            return Boolean.valueOf(s.substring(2));
          case 'C':
             // This is a Character
-            return s.charAt(2);
+            return Character.valueOf(s.charAt(2));
          case 'T':
             // this is a custom transformable.
             int indexOfSecondDelimiter = s.indexOf(":", 2);
@@ -242,7 +242,8 @@ public class KeyTransformationHandler {
     * @return a KeyTransformationHandler instance
     */
    public static KeyTransformationHandler getInstance(AdvancedCache<?, ?> cache) {
-      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       return queryInterceptor.getKeyTransformationHandler();
    }
+
 }

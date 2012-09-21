@@ -20,16 +20,10 @@
 package org.infinispan.container.versioning;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.InvocationContextInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -56,7 +50,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache1.put(hello, "world 1");
@@ -95,7 +89,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(0), "hello"); // Owned by cache0 and cache1
+      MagicKey hello = new MagicKey("hello", cache(0)); // Owned by cache0 and cache1
 
       int owners[] = {0, 0};
       int nonOwners[] = {0, 0};
@@ -144,9 +138,9 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
-      MagicKey hello2 = new MagicKey(cache(3), "hello2");
-      MagicKey hello3 = new MagicKey(cache(0), "hello3");
+      MagicKey hello = new MagicKey("hello", cache(2));
+      MagicKey hello2 = new MagicKey("hello2", cache(3));
+      MagicKey hello3 = new MagicKey("hello3", cache(0));
 
       tm(1).begin();
       cache1.put(hello, "world 1");
@@ -195,7 +189,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache0.put(hello, "world");
@@ -233,7 +227,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey(cache(2), "hello");
+      MagicKey hello = new MagicKey("hello", cache(2));
 
       // Auto-commit is true
       cache0.put(hello, "world");
@@ -242,24 +236,6 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       tm(2).begin();
       assert "world".equals(cache2.get(hello));
       Transaction t = tm(2).suspend();
-
-      // Set up cache-3 to force the prepare to retry
-      cache(3).getAdvancedCache().addInterceptorAfter(new CommandInterceptor() {
-         boolean used = false;
-         @Override
-         public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand c) throws Throwable {
-            if (!used) {
-               used = true;
-               return CommitCommand.RESEND_PREPARE;
-            } else {
-               return invokeNextInterceptor(ctx, c);
-            }
-         }
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            return super.handleDefault(ctx, command);
-         }
-      }, InvocationContextInterceptor.class);
 
       // Implicit tx.  Prepare should be retried.
       cache(0).put(hello, "world 2");

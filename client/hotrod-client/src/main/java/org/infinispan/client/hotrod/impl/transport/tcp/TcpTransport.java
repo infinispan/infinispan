@@ -32,8 +32,10 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -84,7 +86,7 @@ public class TcpTransport extends AbstractTransport {
          socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());
       } catch (IOException e) {
          String message = String.format("Could not connect to server: %s", serverAddress);
-         log.couldNotConnectToServer(serverAddress, e);
+         log.tracef(e, "Could not connect to server: %s", serverAddress);
          throw new TransportException(message, e);
       }
    }
@@ -323,4 +325,10 @@ public class TcpTransport extends AbstractTransport {
       }
       return os.toByteArray();
    }
+
+   @Override
+   public SocketAddress getRemoteSocketAddress() {
+      return socket.getRemoteSocketAddress();
+   }
+
 }

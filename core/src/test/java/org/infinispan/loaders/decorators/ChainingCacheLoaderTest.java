@@ -22,6 +22,8 @@
  */
 package org.infinispan.loaders.decorators;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -55,6 +57,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    DummyInMemoryCacheStore[] stores;  // for convenient iteration
    private static final long lifespan = 6000000;
 
+   @Override
    protected CacheStore createCacheStore() throws CacheLoaderException {
       ChainingCacheStore store = new ChainingCacheStore();
       CacheStoreConfig cfg = new DummyInMemoryCacheStore.Cfg()
@@ -64,7 +67,9 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       store1 = new DummyInMemoryCacheStore();
       store1.init(cfg, null, new TestObjectStreamMarshaller());
 
-      store.addCacheLoader(store1, cfg);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(), builder, cfg);
+      store.addCacheLoader(store1, builder.build().loaders().cacheLoaders().get(0));
 
       store2 = new DummyInMemoryCacheStore();
       // set store2 up for streaming
@@ -73,7 +78,10 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          .purgeOnStartup(false)
          .fetchPersistentState(true);
       store2.init(cfg, null, new TestObjectStreamMarshaller());
-      store.addCacheLoader(store2, cfg);
+
+      builder = new ConfigurationBuilder();
+      LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(), builder, cfg);
+      store.addCacheLoader(store2, builder.build().loaders().cacheLoaders().get(0));
 
       stores = new DummyInMemoryCacheStore[]{store1, store2};
 
@@ -82,7 +90,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       return store;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void afterMethod() {
       if (store1 != null)
          store1.clear();

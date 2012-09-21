@@ -26,6 +26,8 @@ import net.jcip.annotations.NotThreadSafe;
 
 import java.io.ByteArrayOutputStream;
 
+import org.jboss.marshalling.ByteOutput;
+
 /**
  * Extends ByteArrayOutputStream, but exposes the internal buffer. Using this, callers don't need to call toByteArray()
  * which copies the internal buffer. <p> Also overrides the superclass' behavior of always doubling the size of the
@@ -40,7 +42,7 @@ import java.io.ByteArrayOutputStream;
  * @since 4.0
  */
 @NotThreadSafe
-public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream implements ByteOutput {
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
     */
