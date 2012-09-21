@@ -77,13 +77,6 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
       return ctx;
    }
 
-   public InvocationContext getInvocationContext() {
-      InvocationContext invocationContext = ctxHolder.get();
-      if (invocationContext == null)
-         throw new IllegalStateException("This method can only be called after associating the current thread with a context");
-      return invocationContext;
-   }
-
    @Override
    public LocalTxInvocationContext createTxInvocationContext() {
       throw exception();

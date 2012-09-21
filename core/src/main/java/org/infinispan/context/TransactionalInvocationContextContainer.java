@@ -110,13 +110,6 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return nonTxInvocationContext;
    }
 
-   public InvocationContext getInvocationContext() {
-      InvocationContext invocationContext = this.ctxHolder.get();
-      if (invocationContext == null)
-         throw new IllegalStateException("This method can only be called after associating the current thread with a context");
-      return invocationContext;
-   }
-
    private Transaction getRunningTx() {
       try {
          return tm.getTransaction();

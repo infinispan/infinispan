@@ -27,7 +27,6 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.Set;
 
 /**
  * Base class for InvocationContextContainer implementations.
