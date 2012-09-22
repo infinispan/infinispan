@@ -31,9 +31,9 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Properties;
 
 import org.infinispan.Cache;
-import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -204,10 +204,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",
-               expectedExposeGlobalJmxStatistics, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .isExposeGlobalJmxStatistics());
+            "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",
+            expectedExposeGlobalJmxStatistics, springEmbeddedCacheManager
+            .getNativeCacheManager().getCacheManagerConfiguration().globalJmxStatistics().enabled());
       springEmbeddedCacheManager.stop();
    }
 
@@ -229,7 +228,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set JmxDomain. However, it didn't.",
                expectedJmxDomain, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getJmxDomain());
+                        .getCacheManagerConfiguration().globalJmxStatistics().domain());
       springEmbeddedCacheManager.stop();
    }
 
@@ -252,7 +251,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerProperties. However, it didn't.",
                expectedMBeanServerProperties, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getMBeanServerProperties());
+                        .getCacheManagerConfiguration().globalJmxStatistics().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -296,7 +295,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertSame(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookup. However, it didn't.",
                expectedMBeanServerLookup.getClass().getName(), springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration().getMBeanServerLookup());
+                        .getNativeCacheManager().getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -318,7 +317,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AllowDuplicateDomains. However, it didn't.",
                expectedAllowDuplicateDomains, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().isAllowDuplicateDomains());
+                        .getCacheManagerConfiguration().globalJmxStatistics().allowDuplicateDomains());
       springEmbeddedCacheManager.stop();
    }
 
@@ -340,7 +339,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",
                expectedCacheManagerName, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getCacheManagerName());
+                        .getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -362,7 +361,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",
                expectedStrictPeerToPeer, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().isStrictPeerToPeer());
+                        .getCacheManagerConfiguration().transport().strictPeerToPeer());
       springEmbeddedCacheManager.stop();
    }
 
@@ -385,8 +384,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorFactoryClass. However, it didn't.",
                expectedAsyncListenerExecutorFactoryClass, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getAsyncListenerExecutorFactoryClass());
+                        .getNativeCacheManager().getCacheManagerConfiguration().asyncListenerExecutor().factory().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -409,8 +407,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",
                expectedAsyncTransportExecutorFactoryClass, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getAsyncTransportExecutorFactoryClass());
+                        .getNativeCacheManager().getCacheManagerConfiguration().asyncTransportExecutor().factory().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -434,8 +431,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",
                expectedEvictionScheduledExecutorFactoryClass, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getEvictionScheduledExecutorFactoryClass());
+                        .getNativeCacheManager().getCacheManagerConfiguration().evictionScheduledExecutor().factory().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -459,8 +455,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorFactoryClass. However, it didn't.",
                expectedReplicationQueueScheduledExecutorFactoryClass, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getReplicationQueueScheduledExecutorFactoryClass());
+                        .getNativeCacheManager().getCacheManagerConfiguration().replicationQueueScheduledExecutor().factory().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -480,9 +475,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",
-               expectedMarshallerClass, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getMarshallerClass());
+            "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",
+            expectedMarshallerClass, springEmbeddedCacheManager.getNativeCacheManager()
+            .getCacheManagerConfiguration().serialization().marshaller().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -502,9 +497,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertEquals(
-               "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportNodeName. However, it didn't.",
-               expectedTransportNodeName, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getTransportNodeName());
+            "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportNodeName. However, it didn't.",
+            expectedTransportNodeName, springEmbeddedCacheManager.getNativeCacheManager()
+            .getCacheManagerConfiguration().transport().nodeName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -526,7 +521,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",
                expectedTransportClass, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getTransportClass());
+                        .getCacheManagerConfiguration().transport().transport().getClass().getName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -549,7 +544,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportProperties. However, it didn't.",
                expectedTransportProperties, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getTransportProperties());
+                        .getCacheManagerConfiguration().transport().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -571,7 +566,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",
                expectedClusterName, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getClusterName());
+                        .getCacheManagerConfiguration().transport().clusterName());
       springEmbeddedCacheManager.stop();
    }
 
@@ -593,7 +588,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MachineId. However, it didn't.",
                expectedMachineId, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getMachineId());
+                        .getCacheManagerConfiguration().transport().machineId());
       springEmbeddedCacheManager.stop();
    }
 
@@ -615,7 +610,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",
                expectedRackId, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getRackId());
+                        .getCacheManagerConfiguration().transport().rackId());
       springEmbeddedCacheManager.stop();
    }
 
@@ -637,7 +632,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set SiteId. However, it didn't.",
                expectedSiteId, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getSiteId());
+                        .getCacheManagerConfiguration().transport().siteId());
       springEmbeddedCacheManager.stop();
    }
 
@@ -657,7 +652,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",
                ShutdownHookBehavior.DONT_REGISTER, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration().getShutdownHookBehavior());
+                        .getNativeCacheManager().getCacheManagerConfiguration().shutdown().hookBehavior());
       springEmbeddedCacheManager.stop();
    }
 
@@ -680,8 +675,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",
                expectedAsyncListenerExecutorProperties, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getAsyncListenerExecutorProperties());
+                        .getNativeCacheManager().getCacheManagerConfiguration().asyncListenerExecutor().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -704,8 +698,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorProperties. However, it didn't.",
                expectedAsyncTransportExecutorProperties, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getAsyncTransportExecutorProperties());
+                        .getNativeCacheManager().getCacheManagerConfiguration().asyncTransportExecutor().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -729,8 +722,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorProperties. However, it didn't.",
                expectedEvictionScheduledExecutorProperties, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getEvictionScheduledExecutorProperties());
+                        .getNativeCacheManager().getCacheManagerConfiguration().evictionScheduledExecutor().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -754,8 +746,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",
                expectedReplicationQueueScheduledExecutorProperties, springEmbeddedCacheManager
-                        .getNativeCacheManager().getGlobalConfiguration()
-                        .getReplicationQueueScheduledExecutorProperties());
+                        .getNativeCacheManager().getCacheManagerConfiguration().replicationQueueScheduledExecutor().properties());
       springEmbeddedCacheManager.stop();
    }
 
@@ -777,7 +768,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
                setMarshallVersion, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getMarshallVersion());
+                        .getCacheManagerConfiguration().serialization().version());
       springEmbeddedCacheManager.stop();
    }
 
@@ -799,7 +790,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       assertEquals(
                "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",
                expectedDistributedSyncTimeout, springEmbeddedCacheManager.getNativeCacheManager()
-                        .getGlobalConfiguration().getDistributedSyncTimeout());
+                        .getCacheManagerConfiguration().transport().distributedSyncTimeout());
       springEmbeddedCacheManager.stop();
    }
 }

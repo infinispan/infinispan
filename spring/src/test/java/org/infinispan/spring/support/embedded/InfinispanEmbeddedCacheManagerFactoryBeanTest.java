@@ -32,9 +32,9 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Properties;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -111,9 +111,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
                   "getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file "
                         + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",
                   cm);
-            final Cache<Object, Object> cacheDefinedInCustomConfiguration = cm
-                  .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-            final Configuration configuration = cacheDefinedInCustomConfiguration.getConfiguration();
+            final Cache<Object, Object> cacheDefinedInCustomConfiguration = cm.getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
+            final Configuration configuration = cacheDefinedInCustomConfiguration.getCacheConfiguration();
             assertEquals(
                   "The cache named ["
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
@@ -121,7 +120,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "
                         + "the configuration file when instantiating EmbeddedCacheManager.",
-                  CacheMode.REPL_ASYNC, configuration.getCacheMode());
+                  CacheMode.REPL_ASYNC, configuration.clustering().cacheMode());
          }
       });
    }
@@ -212,8 +211,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",
-                  expectedExposeGlobalJmxStatistics, cm.getGlobalConfiguration()
-                  .isExposeGlobalJmxStatistics());
+                  expectedExposeGlobalJmxStatistics, cm.getCacheManagerConfiguration().globalJmxStatistics().enabled());
          }
       });
    }
@@ -236,7 +234,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set JmxDomain. However, it didn't.",
-                  expectedJmxDomain, cm.getGlobalConfiguration().getJmxDomain());
+                  expectedJmxDomain, cm.getCacheManagerConfiguration().globalJmxStatistics().domain());
          }
       });
    }
@@ -260,8 +258,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerProperties. However, it didn't.",
-                  expectedMBeanServerProperties, cm.getGlobalConfiguration()
-                  .getMBeanServerProperties());
+                  expectedMBeanServerProperties, cm.getCacheManagerConfiguration().globalJmxStatistics().properties());
          }
       });
    }
@@ -284,8 +281,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",
-                  expectedMBeanServerLookup.getClass().getName(), cm
-                  .getGlobalConfiguration().getMBeanServerLookup());
+                  expectedMBeanServerLookup.getClass().getName(),
+                  cm.getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup().getClass().getName());
          }
       });
    }
@@ -308,8 +305,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertSame(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookup. However, it didn't.",
-                  expectedMBeanServerLookup.getClass().getName(), cm
-                  .getGlobalConfiguration().getMBeanServerLookup());
+                  expectedMBeanServerLookup, cm.getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup());
          }
       });
    }
@@ -332,8 +328,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AllowDuplicateDomains. However, it didn't.",
-                  expectedAllowDuplicateDomains, cm.getGlobalConfiguration()
-                  .isAllowDuplicateDomains());
+                  expectedAllowDuplicateDomains, cm.getCacheManagerConfiguration().globalJmxStatistics().allowDuplicateDomains());
          }
       });
    }
@@ -356,8 +351,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",
-                  expectedCacheManagerName, cm.getGlobalConfiguration()
-                  .getCacheManagerName());
+                  expectedCacheManagerName, cm.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName());
          }
       });
 
@@ -381,8 +375,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",
-                  expectedStrictPeerToPeer, cm.getGlobalConfiguration()
-                  .isStrictPeerToPeer());
+                  expectedStrictPeerToPeer, cm.getCacheManagerConfiguration().transport().strictPeerToPeer());
          }
       });
 
@@ -407,8 +400,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorFactoryClass. However, it didn't.",
-                  expectedAsyncListenerExecutorFactoryClass, cm
-                  .getGlobalConfiguration().getAsyncListenerExecutorFactoryClass());
+                  expectedAsyncListenerExecutorFactoryClass,
+                  cm.getCacheManagerConfiguration().asyncListenerExecutor().factory().getClass().getName());
          }
       });
    }
@@ -432,8 +425,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",
-                  expectedAsyncTransportExecutorFactoryClass, cm
-                  .getGlobalConfiguration().getAsyncTransportExecutorFactoryClass());
+                  expectedAsyncTransportExecutorFactoryClass,
+                  cm.getCacheManagerConfiguration().asyncTransportExecutor().factory().getClass().getName());
          }
       });
    }
@@ -457,8 +450,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",
-                  expectedEvictionScheduledExecutorFactoryClass, cm
-                  .getGlobalConfiguration().getEvictionScheduledExecutorFactoryClass());
+                  expectedEvictionScheduledExecutorFactoryClass,
+                  cm.getCacheManagerConfiguration().evictionScheduledExecutor().factory().getClass().getName());
          }
       });
    }
@@ -482,9 +475,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorFactoryClass. However, it didn't.",
-                  expectedReplicationQueueScheduledExecutorFactoryClass, cm
-                  .getGlobalConfiguration()
-                  .getReplicationQueueScheduledExecutorFactoryClass());
+                  expectedReplicationQueueScheduledExecutorFactoryClass,
+                  cm.getCacheManagerConfiguration().replicationQueueScheduledExecutor().factory().getClass().getName());
          }
       });
    }
@@ -497,7 +489,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldUseMarshallerClassPropIfExplicitlySet()
             throws Exception {
-      final String expectedMarshallerClass = new VersionAwareMarshaller().getClass().getName();
+      final String expectedMarshallerClass = VersionAwareMarshaller.class.getName();
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setMarshallerClass(expectedMarshallerClass);
@@ -507,8 +499,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",
-                  expectedMarshallerClass, cm.getGlobalConfiguration()
-                  .getMarshallerClass());
+                  expectedMarshallerClass,
+                  cm.getCacheManagerConfiguration().serialization().marshaller().getClass().getName());
          }
       });
    }
@@ -531,8 +523,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportNodeName. However, it didn't.",
-                  expectedTransportNodeName, cm.getGlobalConfiguration()
-                  .getTransportNodeName());
+                  expectedTransportNodeName, cm.getCacheManagerConfiguration().transport().nodeName());
          }
       });
    }
@@ -555,8 +546,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",
-                  expectedTransportClass, cm.getGlobalConfiguration()
-                  .getTransportClass());
+                  expectedTransportClass,
+                  cm.getCacheManagerConfiguration().transport().transport().getClass().getName());
          }
       });
    }
@@ -580,8 +571,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportProperties. However, it didn't.",
-                  expectedTransportProperties, cm.getGlobalConfiguration()
-                  .getTransportProperties());
+                  expectedTransportProperties,
+                  cm.getCacheManagerConfiguration().transport().properties());
          }
       });
    }
@@ -604,7 +595,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",
-                  expectedClusterName, cm.getGlobalConfiguration().getClusterName());
+                  expectedClusterName, cm.getCacheManagerConfiguration().transport().clusterName());
          }
       });
    }
@@ -627,7 +618,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MachineId. However, it didn't.",
-                  expectedMachineId, cm.getGlobalConfiguration().getMachineId());
+                  expectedMachineId, cm.getCacheManagerConfiguration().transport().machineId());
          }
       });
    }
@@ -650,7 +641,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",
-                  expectedRackId, cm.getGlobalConfiguration().getRackId());
+                  expectedRackId, cm.getCacheManagerConfiguration().transport().rackId());
          }
       });
    }
@@ -673,7 +664,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set SiteId. However, it didn't.",
-                  expectedSiteId, cm.getGlobalConfiguration().getSiteId());
+                  expectedSiteId, cm.getCacheManagerConfiguration().transport().siteId());
          }
       });
    }
@@ -694,8 +685,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",
-                  ShutdownHookBehavior.DONT_REGISTER, cm.getGlobalConfiguration()
-                  .getShutdownHookBehavior());
+                  ShutdownHookBehavior.DONT_REGISTER,
+                  cm.getCacheManagerConfiguration().shutdown().hookBehavior());
          }
       });
    }
@@ -719,8 +710,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",
-                  expectedAsyncListenerExecutorProperties, cm
-                  .getGlobalConfiguration().getAsyncListenerExecutorProperties());
+                  expectedAsyncListenerExecutorProperties,
+                  cm.getCacheManagerConfiguration().asyncListenerExecutor().properties());
          }
       });
    }
@@ -744,8 +735,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorProperties. However, it didn't.",
-                  expectedAsyncTransportExecutorProperties, cm
-                  .getGlobalConfiguration().getAsyncTransportExecutorProperties());
+                  expectedAsyncTransportExecutorProperties,
+                  cm.getCacheManagerConfiguration().asyncTransportExecutor().properties());
          }
       });
    }
@@ -770,8 +761,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorProperties. However, it didn't.",
-                  expectedEvictionScheduledExecutorProperties, cm
-                  .getGlobalConfiguration().getEvictionScheduledExecutorProperties());
+                  expectedEvictionScheduledExecutorProperties,
+                  cm.getCacheManagerConfiguration().evictionScheduledExecutor().properties());
          }
       });
    }
@@ -796,8 +787,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",
-                  expectedReplicationQueueScheduledExecutorProperties, cm
-                  .getGlobalConfiguration().getReplicationQueueScheduledExecutorProperties());
+                  expectedReplicationQueueScheduledExecutorProperties,
+                  cm.getCacheManagerConfiguration().replicationQueueScheduledExecutor().properties());
          }
       });
    }
@@ -820,8 +811,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallVersion. However, it didn't.",
-                  setMarshallVersion, cm.getGlobalConfiguration()
-                  .getMarshallVersion());
+                  setMarshallVersion,
+                  cm.getCacheManagerConfiguration().serialization().version());
          }
       });
    }
@@ -844,8 +835,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
          public void call() {
             assertEquals(
                   "SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",
-                  expectedDistributedSyncTimeout, cm.getGlobalConfiguration()
-                  .getDistributedSyncTimeout());
+                  expectedDistributedSyncTimeout,
+                  cm.getCacheManagerConfiguration().transport().distributedSyncTimeout());
          }
       });
    }
