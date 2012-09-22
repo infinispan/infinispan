@@ -27,12 +27,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -591,10 +592,11 @@ public class ConfigurationOverridesTest {
    @Test
    public final void configurationOverridesShouldOverrideUseEagerLockingPropIfExplicitlySet()
          throws Exception {
-      final boolean expectedUseEagerLocking = true;
+
+      final LockingMode expectedLockingMode = LockingMode.PESSIMISTIC;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setUseEagerLocking(expectedUseEagerLocking);
+      objectUnderTest.setUseEagerLocking(true);
       final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
       Configuration configuration = defaultConfiguration.build();
@@ -602,8 +604,8 @@ public class ConfigurationOverridesTest {
       AssertJUnit
             .assertEquals(
                   "ConfigurationOverrides should have overridden default value with explicitly set UseEagerLocking property. However, it didn't.",
-                  expectedUseEagerLocking,
-                  configuration.transaction().useEagerLocking());
+                  expectedLockingMode,
+                  configuration.transaction().lockingMode());
    }
 
    @Test
@@ -777,7 +779,7 @@ public class ConfigurationOverridesTest {
       AssertJUnit
             .assertEquals(
                   "ConfigurationOverrides should have overridden default value with explicitly set ConsistentHashClass property. However, it didn't.",
-                  expectedConsistentHashClass, configuration.clustering().hash().consistentHash().getClass().getName());
+                  expectedConsistentHashClass, configuration.clustering().hash().consistentHashFactory().getClass().getName());
    }
 
    @Test
