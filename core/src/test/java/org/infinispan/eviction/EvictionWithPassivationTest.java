@@ -35,6 +35,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "eviction.EvictionWithPassivationTest")
 public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
+   private final int EVICTION_MAX_ENTRIES = 2;
+
    private Configuration buildCfg(EvictionThreadPolicy threadPolicy, EvictionStrategy strategy) {
       Configuration cfg = new Configuration();
       CacheStoreConfig cacheStoreConfig = new DummyInMemoryCacheStore.Cfg();
@@ -43,7 +45,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       cfg.getCacheLoaderManagerConfig().setPassivation(true);
       cfg.setEvictionStrategy(strategy);
       cfg.setEvictionThreadPolicy(threadPolicy);
-      cfg.setEvictionMaxEntries(2);
+      cfg.setEvictionMaxEntries(EVICTION_MAX_ENTRIES);
       cfg.setInvocationBatchingEnabled(true);
       return cfg;
    }
@@ -65,7 +67,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       runTest(EvictionThreadPolicy.PIGGYBACK, EvictionStrategy.LRU);
    }
 
-   
+
    public void testPiggybackLIRS() {
       runTest(EvictionThreadPolicy.PIGGYBACK, EvictionStrategy.LIRS);
    }
@@ -82,7 +84,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       runTest(EvictionThreadPolicy.DEFAULT, EvictionStrategy.LRU);
    }
 
-   
+
    public void testDefaultLIRS() {
       runTest(EvictionThreadPolicy.DEFAULT, EvictionStrategy.LIRS);
    }
@@ -103,23 +105,29 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       testCache.put("Y", "4568");
       testCache.put("Z", "4569");
 
-      assert "4567".equals( testCache.get("X") ) : "Failure on test " + name;
-      assert "4568".equals( testCache.get("Y") ) : "Failure on test " + name;
-      assert "4569".equals( testCache.get("Z") ) : "Failure on test " + name;
+      if (!s.equals(EvictionStrategy.NONE)) {
+         assert EVICTION_MAX_ENTRIES == testCache.size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
+         testCache.get("X");
+         assert EVICTION_MAX_ENTRIES == testCache.size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
+      }
 
-      for (int i=0; i<10; i++) {
+      assert "4567".equals(testCache.get("X")) : "Failure on test " + name;
+      assert "4568".equals(testCache.get("Y")) : "Failure on test " + name;
+      assert "4569".equals(testCache.get("Z")) : "Failure on test " + name;
+
+      for (int i = 0; i < 10; i++) {
          testCache.getAdvancedCache().startBatch();
-         String k = "A"+i;
+         String k = "A" + i;
          testCache.put(k, k);
-         k = "B"+i;
+         k = "B" + i;
          testCache.put(k, k);
          testCache.getAdvancedCache().endBatch(true);
       }
 
-      for (int i=0; i<10; i++) {
-         String k = "A"+i;
+      for (int i = 0; i < 10; i++) {
+         String k = "A" + i;
          assert k.equals(testCache.get(k)) : "Failure on test " + name;
-         k = "B"+i;
+         k = "B" + i;
          assert k.equals(testCache.get(k)) : "Failure on test " + name;
       }
    }

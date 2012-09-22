@@ -63,6 +63,12 @@ public final class Util {
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
    /**
+    * Current Java vendor. This variable is later used to differentiate LRU implementations
+    * for different java vendors.
+    */
+   private static final String javaVendor = SysPropertyActions.getProperty("java.vendor", "");
+
+   /**
     * <p>
     * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
     * classloader.
@@ -586,4 +592,7 @@ public final class Util {
       return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
    }
 
+   public static boolean isIBMJavaVendor() {
+      return javaVendor.toLowerCase().contains("ibm");
+   }
 }
