@@ -1,7 +1,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -25,9 +26,9 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
-            .fluent().expiration().lifespan(2000L).maxIdle(3000L).build();
-      createHotRodServers(1, config);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      builder.expiration().lifespan(2000L).maxIdle(3000L);
+      createHotRodServers(1, builder.build());
    }
 
    public void testGlobalExpiry(Method m) throws Exception {

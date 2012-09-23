@@ -23,7 +23,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -54,7 +55,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    RemoteCache remoteCache;
    private RemoteCacheManager remoteCacheManager;
    private TcpTransportFactory tcpConnectionFactory;
-   private Configuration config;
+   private ConfigurationBuilder config;
 
    @Override
    protected void assertSupportedConfig() {
@@ -83,7 +84,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      config = getDefaultClusteredConfig(getCacheMode());
+      config = getDefaultClusteredCacheConfig(getCacheMode(), false);
       CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
@@ -107,8 +108,8 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
    }
 
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.REPL_SYNC;
+   protected CacheMode getCacheMode() {
+      return CacheMode.REPL_SYNC;
    }
 
 

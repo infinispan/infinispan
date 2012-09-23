@@ -28,7 +28,7 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -51,7 +51,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    RemoteCacheImpl remoteCache;
    protected RemoteCacheManager remoteCacheManager;
    protected TcpTransportFactory tcpConnectionFactory;
-   protected Configuration config;
+   protected ConfigurationBuilder config;
    protected RoundRobinBalancingStrategy strategy;
 
    public AbstractRetryTest() {
@@ -126,5 +126,5 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       }
    }
 
-   protected abstract Configuration getCacheConfig();
+   protected abstract ConfigurationBuilder getCacheConfig();
 }

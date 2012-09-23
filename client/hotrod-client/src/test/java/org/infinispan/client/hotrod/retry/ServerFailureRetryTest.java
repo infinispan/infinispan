@@ -23,7 +23,8 @@
 
 package org.infinispan.client.hotrod.retry;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -46,8 +47,8 @@ import static org.infinispan.test.TestingUtil.v;
 public class ServerFailureRetryTest extends AbstractRetryTest {
 
    @Override
-   protected Configuration getCacheConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+   protected ConfigurationBuilder getCacheConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 
    public void testRetryWithSuspectException(Method m) {

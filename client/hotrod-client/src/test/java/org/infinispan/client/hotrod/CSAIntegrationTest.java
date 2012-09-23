@@ -25,7 +25,8 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -91,12 +92,12 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setNumOwners(1);
-      config.setUnsafeUnreliableReturnValues(true);
-      addClusterEnabledCacheManager(config);
-      addClusterEnabledCacheManager(config);
-      addClusterEnabledCacheManager(config);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.clustering().hash().numOwners(1);
+      builder.unsafe().unreliableReturnValues(true);
+      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(builder);
 
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hrServ2CacheManager.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), manager(0));

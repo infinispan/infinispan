@@ -3,7 +3,8 @@ package org.infinispan.client.hotrod.test;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -44,7 +45,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
                manager(i).getCache(), ComponentStatus.RUNNING, 10000);
       }
 
-      if (defaultCfg.getCacheMode().isSynchronous()) {
+      if (defaultCfg.clustering().cacheMode().isSynchronous()) {
          // Do a put and verify that is present in other nodes
          cache(0).put("k","v");
          for (int i = 0; i < num; i++) assertEquals("v", cache(i).get("k"));
@@ -86,7 +87,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    private HotRodServer addHotRodServer(Configuration cfg) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(cfg);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(LegacyConfigurationAdaptor.adapt(cfg));
       HotRodServer server = TestHelper.startHotRodServer(cm);
       servers.add(server);
       return server;

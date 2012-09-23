@@ -22,7 +22,7 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional" , testName = "client.hotrod.DistTopologyChangeTest")
 public class DistTopologyChangeTest extends ReplTopologyChangeTest {
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.DIST_SYNC;
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
    }
 }

@@ -23,7 +23,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.JBossMarshaller;
@@ -71,9 +71,9 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration standaloneConfig = getDefaultStandaloneConfig(false);
+      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cacheManager.defineConfiguration(CACHE_NAME, standaloneConfig);
+      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
       defaultCache = cacheManager.getCache();
       cache = cacheManager.getCache(CACHE_NAME);
 

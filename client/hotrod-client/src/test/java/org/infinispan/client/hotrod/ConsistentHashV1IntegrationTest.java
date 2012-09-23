@@ -28,7 +28,8 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Address;
@@ -65,16 +66,14 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false);
-      conf.fluent().jmxStatistics();
-      assert conf.isExposeJmxStatistics();
-      conf.fluent().hash().numOwners(2);
-      conf.fluent().hash().rehashEnabled(false);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.jmxStatistics().enable();
+      builder.clustering().hash().numOwners(2).stateTransfer().fetchInMemoryState(false);
 
-      addClusterEnabledCacheManager(conf);
-      addClusterEnabledCacheManager(conf);
-      addClusterEnabledCacheManager(conf);
-      addClusterEnabledCacheManager(conf);
+      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(builder);
 
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));

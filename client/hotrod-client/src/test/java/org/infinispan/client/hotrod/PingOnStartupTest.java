@@ -25,8 +25,8 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -46,8 +46,8 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(CacheMode.DIST_SYNC);
-      createHotRodServers(2, config);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      createHotRodServers(2, builder.build());
    }
 
    public void testTopologyFetched() throws Exception {
