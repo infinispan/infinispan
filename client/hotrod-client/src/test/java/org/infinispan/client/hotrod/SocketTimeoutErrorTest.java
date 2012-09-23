@@ -33,8 +33,8 @@ import java.util.Properties;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.config.CustomInterceptorConfig;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -63,12 +63,12 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
       CustomInterceptorConfig cic = new CustomInterceptorConfig(
             new TimeoutInducingInterceptor(), false, false, -1,
             EntryWrappingInterceptor.class.getName(), "");
-      cfg.setCustomInterceptors(Collections.singletonList(cic));
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      builder.customInterceptors().addInterceptor().interceptor(cic.getInterceptor());
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
    @Override

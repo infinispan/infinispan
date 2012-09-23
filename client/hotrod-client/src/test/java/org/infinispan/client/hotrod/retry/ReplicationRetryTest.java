@@ -29,7 +29,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
@@ -156,7 +157,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    }
 
    @Override
-   protected Configuration getCacheConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+   protected ConfigurationBuilder getCacheConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 }

@@ -23,7 +23,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.api.BasicCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -50,7 +50,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cacheManager.defineConfiguration(CACHE_NAME, new Configuration());
+      cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager("localhost:" + hotrodServer.getPort(), true);
       return cacheManager;

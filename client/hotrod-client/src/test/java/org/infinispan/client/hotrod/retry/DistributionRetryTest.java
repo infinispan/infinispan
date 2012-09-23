@@ -29,7 +29,8 @@ import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
@@ -52,10 +53,10 @@ import static org.testng.Assert.assertEquals;
 public class DistributionRetryTest extends AbstractRetryTest {
 
    @Override
-   protected Configuration getCacheConfig() {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setNumOwners(1);
-      return config;
+   protected ConfigurationBuilder getCacheConfig() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.clustering().hash().numOwners(1);
+      return builder;
    }
 
    public void testGet() throws Exception {

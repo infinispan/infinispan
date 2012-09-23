@@ -22,7 +22,6 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -77,15 +76,5 @@ public class TestHelper {
          builder.append("localhost").append(':').append(server.getPort()).append(";");
       }
       return builder.toString();
-   }
-
-   public static Configuration getMultiNodeConfig() {
-      Configuration result = new Configuration();
-      result.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-      result.setSyncReplTimeout(10000);
-//      result.setFetchInMemoryState(true);
-      result.setSyncCommitPhase(true);
-      result.setSyncRollbackPhase(true);
-      return result;      
    }
 }
