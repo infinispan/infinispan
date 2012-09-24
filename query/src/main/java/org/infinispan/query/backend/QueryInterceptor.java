@@ -114,19 +114,20 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(command, ctx)) {
-         // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
-         // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
-         getLog().debug("Infinispan Query indexing is triggered");
-         Object key = command.getKey();
-         Object value = extractValue(command.getValue());
+      // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
+      // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
+      Object value = extractValue(command.getValue());
 
-         if (updateKnownTypesIfNeeded(value)) {
+      if (updateKnownTypesIfNeeded(value)) {
+         if (shouldModifyIndexes(command, ctx)) {
+            getLog().debug("Infinispan Query indexing is triggered");
             // This means that the entry is just modified so we need to update the indexes and not add to them.
-            updateIndexes(value, extractValue(key));
+            updateIndexes(value, extractValue(command.getKey()));
          }
-         else {
-            if (updateKnownTypesIfNeeded(toReturn)) {
+      }
+      else {
+         if (updateKnownTypesIfNeeded(toReturn)) {
+            if (shouldModifyIndexes(command, ctx)) {
                removeFromIndexes(toReturn, extractValue(command.getKey()));
             }
          }

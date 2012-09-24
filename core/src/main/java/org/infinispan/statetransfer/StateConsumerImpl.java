@@ -294,10 +294,10 @@ public class StateConsumerImpl implements StateConsumer {
          log.tracef("Received keys: %s", keys);
       }
 
+      EnumSet<Flag> flags = EnumSet.of(IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
       for (InternalCacheEntry e : cacheEntries) {
-         InvocationContext ctx = icc.createInvocationContext(false, 1);
+         InvocationContext ctx = icc.createRemoteInvocationContext(sender);
          // locking not necessary as during rehashing we block all transactions
-         EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
          try {
             PutKeyValueCommand put = useVersionedPut ?
                   commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), flags)

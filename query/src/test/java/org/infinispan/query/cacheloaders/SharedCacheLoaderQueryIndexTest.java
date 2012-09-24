@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "query.cacheloaders.SharedCacheLoaderQueryIndexTest", enabled = false,
-      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249")
+      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
    protected void configureCache(ConfigurationBuilder builder) {
@@ -44,8 +44,7 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
       // for dummy store is the same for all nodes
       builder.clustering().stateTransfer().fetchInMemoryState(false)
          .loaders().shared(true).preload(true).addStore()
-            .cacheStore(new DummyInMemoryCacheStore()).addProperty("storeName",
-            SharedCacheLoaderQueryIndexTest.class.getName());
+            .cacheStore(new DummyInMemoryCacheStore()).addProperty("storeName", getClass().getName());
    }
 
    public void testPreloadIndexingAfterAddingNewNode() throws Exception {
@@ -58,7 +57,7 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
          assert dimcs.stats().get("clear") == 0:
                "Cache store should not be cleared, purgeOnStartup is false";
          assert dimcs.stats().get("store") == 4:
-               "Cache store should have been written to just once, but was written to " + dimcs.stats().get("store") + " times";
+               "Cache store should have been written to 4 times, but was written to " + dimcs.stats().get("store") + " times";
       }
 
       // Before adding a node, verify that the query resolves properly
