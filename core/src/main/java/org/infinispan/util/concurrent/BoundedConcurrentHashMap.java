@@ -153,6 +153,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    static final int RETRIES_BEFORE_LOCK = 2;
 
+   /**
+    * Current Java vendor. This variable is later used to differentiate LRU implementations
+    * for different java vendors.
+    */
+   static final String javaVendor = System.getProperty("java.vendor");
+
    /* ---------------- Fields -------------- */
 
    /**
@@ -272,7 +278,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       LRU {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
-            return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
+            boolean isIBMJavaVendor = javaVendor != null && javaVendor.toLowerCase().contains("ibm");
+            if (isIBMJavaVendor) {
+               return new IBMLRU<K, V>(s,capacity,lf,capacity*10,lf);
+            } else {
+               return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
+            }
          }
       },
       LIRS {
@@ -538,7 +549,164 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          return new HashEntry<K, V>(key, hash, next, value);
       }
    }
-   
+
+   /**
+    * A special version of LRU eviction strategy dedicated for use with IBM JDK. This class extends
+    * HashMap instead of LinkedHashMap whose implementation on IBM JDK contains a bug resulting in
+    * wrong cache entries being evicted from memory.
+    */
+   static final class IBMLRU<K, V> extends HashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
+
+      private static final long serialVersionUID = -6475176618082216057L;
+
+      private final ConcurrentLinkedQueue<LRUHashEntry<K, V>> accessQueue;
+      private final Segment<K,V> segment;
+      private final int maxBatchQueueSize;
+      private final int trimDownSize;
+      private final float batchThresholdFactor;
+      private final Set<HashEntry<K, V>> evicted;
+      private LRUHashEntry<K, V> head;
+
+      public IBMLRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+         super(capacity, lf);
+         this.segment = s;
+         this.trimDownSize = capacity;
+         this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
+         this.batchThresholdFactor = batchThresholdFactor;
+         this.accessQueue = new ConcurrentLinkedQueue<LRUHashEntry<K, V>>();
+         this.evicted = new HashSet<HashEntry<K, V>>();
+         this.head = (LRUHashEntry<K, V>) createNewEntry(null,-1, null, null);
+         this.head.previousEntry = this.head.nextEntry = this.head;
+      }
+
+      @Override
+      public Set<HashEntry<K, V>> execute() {
+         Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+         for (HashEntry<K, V> e : accessQueue) {
+            put(e, e.value);
+            addAndRemoveEldest(e);
+         }
+         evictedCopy.addAll(evicted);
+         accessQueue.clear();
+         evicted.clear();
+         return evictedCopy;
+      }
+
+      @Override
+      public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
+         put(e, e.value);
+         addAndRemoveEldest(e);
+         if (!evicted.isEmpty()) {
+            Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+            evictedCopy.addAll(evicted);
+            evicted.clear();
+            return evictedCopy;
+         } else {
+            return Collections.emptySet();
+         }
+      }
+
+      public void addAndRemoveEldest(HashEntry<K, V> entry) {
+         ((LRUHashEntry<K, V>)entry).addBefore(head);
+         if (isAboveThreshold()) {
+            remove(head.nextEntry);
+            LRUHashEntry<K, V> evictedEntry = head.nextEntry;
+            //remove eldest entry from doubly-linked list
+            head.nextEntry.remove();
+            boolean evict = segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+            if (evict) {
+               segment.remove(evictedEntry.key, evictedEntry.hash, null);
+               evicted.add(evictedEntry);
+            }
+         }
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      @Override
+      public boolean onEntryHit(HashEntry<K, V> e) {
+         accessQueue.add((LRUHashEntry<K, V>) e);
+         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      public boolean thresholdExpired() {
+         return accessQueue.size() >= maxBatchQueueSize;
+      }
+
+      @Override
+      public void onEntryRemove(HashEntry<K, V> e) {
+         remove(e);
+         //remove entry from doubly-linked list
+         ((LRUHashEntry<K, V>)e).remove();
+         // we could have multiple instances of e in accessQueue; remove them all
+         while (accessQueue.remove(e)) {
+            continue;
+         }
+      }
+
+      @Override
+      public void clear() {
+         super.clear();
+         head.previousEntry = head.nextEntry = head;
+         accessQueue.clear();
+      }
+
+      @Override
+      public Eviction strategy() {
+         return Eviction.LRU;
+      }
+
+      protected boolean isAboveThreshold(){
+         return size() > trimDownSize;
+      }
+
+      public HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value) {
+         return new LRUHashEntry<K, V>(key, hash, next, value);
+      }
+   }
+
+   /**
+    * Provides IBMLRU class with the capability of linking individual cache entries and thus
+    * creating a doubly-linked list.
+    */
+   private static class LRUHashEntry<K,V> extends HashEntry<K,V> {
+
+      //variables for creating a doubly-linked list
+      LRUHashEntry<K,V> previousEntry, nextEntry;
+
+      LRUHashEntry(K key, int hash, HashEntry<K,V> next, V value) {
+         super(key, hash, next, value);
+      }
+
+      private void remove() {
+         previousEntry.nextEntry = nextEntry;
+         nextEntry.previousEntry = previousEntry;
+      }
+
+      private void addBefore(LRUHashEntry<K,V> entry) {
+         nextEntry = entry;
+         previousEntry = entry.previousEntry;
+         previousEntry.nextEntry = this;
+         nextEntry.previousEntry = this;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) {
+            return true;
+         }
+         if (o == null) {
+            return false;
+         }
+         HashEntry<?, ?> other = (HashEntry<?, ?>) o;
+         return hash == other.hash && key.equals(other.key);
+      }
+   }
+
    /**
     * Adapted to Infinispan BoundedConcurrentHashMap using LIRS implementation ideas from Charles Fry (fry@google.com)   
     * See http://code.google.com/p/concurrentlinkedhashmap/source/browse/trunk/src/test/java/com/googlecode/concurrentlinkedhashmap/caches/LirsMap.java
