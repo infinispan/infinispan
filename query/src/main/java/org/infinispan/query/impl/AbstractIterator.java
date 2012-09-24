@@ -37,7 +37,6 @@ import org.infinispan.query.QueryIterator;
 public abstract class AbstractIterator implements QueryIterator {
 
    protected Object[] buffer;
-   protected AdvancedCache<?, ?> cache;
 
    protected int index = 0;
    protected int bufferIndex = -1;
