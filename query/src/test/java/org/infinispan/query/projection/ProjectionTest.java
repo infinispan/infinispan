@@ -37,6 +37,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -87,6 +88,21 @@ public class ProjectionTest extends SingleCacheManagerTest {
       assertQueryReturns(cacheQuery, new Object[] { foo });
    }
 
+   @Test
+   public void testMixedProjections() throws Exception {
+      Foo foo = new Foo("bar1", "baz4");
+      cache.put("1", foo);
+      CacheQuery cacheQuery = createProjectionQuery(
+            ProjectionConstants.KEY,
+            ProjectionConstants.VALUE,
+            ProjectionConstants.VALUE,
+            org.hibernate.search.ProjectionConstants.OBJECT_CLASS,
+            "baz",
+            "bar"
+            );
+      assertQueryReturns(cacheQuery, new Object[] { "1", foo, foo, foo.getClass(), foo.baz, foo.bar });
+   }
+
    private CacheQuery createProjectionQuery(String... projection) {
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Foo.class).get();
       Query query = queryBuilder.keyword().onField("bar").matching("bar1").createQuery();
@@ -104,7 +120,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    private void assertQueryListContains(List list, Object[] expected) {
       assert list.size() == 1;
       Object[] array = (Object[]) list.get(0);
-      assert Arrays.equals(array, expected);
+      Assert.assertArrayEquals(expected, array);
    }
 
    private void assertQueryIteratorContains(QueryIterator iterator, Object[] expected) {
