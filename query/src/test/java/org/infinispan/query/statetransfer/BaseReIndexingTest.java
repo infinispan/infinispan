@@ -54,9 +54,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
-      // Explicitly disable fetching in-memory state in order
-      // to fetch it from the persistence layer
-      builder.indexing().enable().indexLocalOnly(true)
+      builder.indexing().enable().indexLocalOnly(false)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
 
