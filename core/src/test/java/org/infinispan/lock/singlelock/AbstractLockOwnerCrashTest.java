@@ -93,8 +93,8 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          public void run() {
             try {
                log.trace("This thread runs a different tx");
-               cache(secondTxNode).put(k, "v2");
                tm(secondTxNode).resume(suspend);
+               cache(secondTxNode).put(k, "v2");
                tm(secondTxNode).commit();
             } catch (Exception e) {
                e.printStackTrace();
@@ -102,6 +102,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          }
       }, false);
 
+      // this 'ensures' transaction called 'suspend' has the chance to start the prepare phase and is waiting to acquire the locks on k held by first transaction before it gets resumed
       Thread.sleep(1000);
 
       log.trace("Before completing the transaction!");

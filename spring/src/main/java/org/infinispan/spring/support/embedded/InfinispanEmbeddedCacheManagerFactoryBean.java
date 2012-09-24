@@ -34,7 +34,7 @@ import org.springframework.beans.factory.InitializingBean;
  * A {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>} for creating an
  * {@link org.infinispan.manager.EmbeddedCacheManager <code>Infinispan EmbeddedCacheManager</code>}
  * instance. The location of the Infinispan configuration file used to provide the default
- * {@link org.infinispan.config.Configuration configuration} for the
+ * {@link org.infinispan.configuration.cache.Configuration configuration} for the
  * <code>EmbeddedCacheManager</code> instance created by this <code>FactoryBean</code> is
  * {@link #setConfigurationFileLocation(org.springframework.core.io.Resource) configurable}.
  * </p>
@@ -65,7 +65,7 @@ import org.springframework.beans.factory.InitializingBean;
  * @see #setConfigurationFileLocation(org.springframework.core.io.Resource)
  * @see #destroy()
  * @see org.infinispan.manager.EmbeddedCacheManager
- * @see org.infinispan.config.Configuration
+ * @see org.infinispan.configuration.cache.Configuration
  * 
  */
 public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCacheManagerFactory
@@ -82,11 +82,11 @@ public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedC
     */
    @Override
    public void afterPropertiesSet() throws Exception {
-      this.logger.info("Initializing Infinispan EmbeddedCacheManager instance ...");
+      logger.info("Initializing Infinispan EmbeddedCacheManager instance ...");
 
       this.cacheManager = createBackingEmbeddedCacheManager();
 
-      this.logger.info("Successfully initialized Infinispan EmbeddedCacheManager instance ["
+      logger.info("Successfully initialized Infinispan EmbeddedCacheManager instance ["
                + this.cacheManager + "]");
    }
 

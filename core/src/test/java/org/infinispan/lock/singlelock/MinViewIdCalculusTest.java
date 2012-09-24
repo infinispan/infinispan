@@ -24,6 +24,7 @@
 package org.infinispan.lock.singlelock;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -33,8 +34,7 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
-import javax.transaction.Status;
-
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
 
@@ -60,12 +60,13 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   @Test(enabled = false, description = "See ISPN-2113")
    public void testMinViewId1() throws Exception {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
-      final int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+      StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
+      final int viewId = stateTransferManager0.getCacheTopology().getTopologyId();
+
       assertEquals(tt0.getMinViewId(), viewId);
       assertEquals(tt1.getMinViewId(), viewId);
 
@@ -73,8 +74,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
 
-      final int viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
-      assertEquals(viewId + 1, viewId2);
+      final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      assertTrue(viewId2 > viewId);
 
       assertEquals(tt0.getMinViewId(), viewId2);
       assertEquals(tt1.getMinViewId(), viewId2);
@@ -88,8 +89,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
-
-      final int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+      StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
+      final int viewId = stateTransferManager0.getCacheTopology().getTopologyId();
 
       tm(1).begin();
       cache(1).put(getKeyForCache(0),"v");
@@ -109,8 +110,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
 
-      final int viewId2 = advancedCache(0).getRpcManager().getTransport().getViewId();
-      assertEquals(viewId + 1, viewId2);
+      final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      assertTrue(viewId2 > viewId);
 
       assertEquals(tt0.getMinViewId(), viewId);
       assertEquals(tt1.getMinViewId(), viewId);

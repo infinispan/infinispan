@@ -334,24 +334,25 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyDataRehashed(Collection<Address> oldView, Collection<Address> newView, long newViewId, boolean pre) {
+   public void notifyDataRehashed(Collection<Address> oldView, Collection<Address> newView, int newTopologyId, boolean pre) {
       if (!dataRehashedListeners.isEmpty()) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, DATA_REHASHED);
          e.setPre(pre);
          e.setMembersAtStart(oldView);
          e.setMembersAtEnd(newView);
-         e.setNewViewId(newViewId);
+         e.setNewTopologyId(newTopologyId);
          for (ListenerInvocation listener : dataRehashedListeners) listener.invoke(e);
       }
    }
 
    @Override
-   public void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, boolean pre) {
+   public void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, int newTopologyId, boolean pre) {
       if (!topologyChangedListeners.isEmpty()) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, TOPOLOGY_CHANGED);
          e.setPre(pre);
          e.setConsistentHashAtStart(oldConsistentHash);
          e.setConsistentHashAtEnd(newConsistentHash);
+         e.setNewTopologyId(newTopologyId);
          for (ListenerInvocation listener : topologyChangedListeners) listener.invoke(e);
       }
    }
