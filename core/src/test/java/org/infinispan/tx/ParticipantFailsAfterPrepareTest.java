@@ -43,7 +43,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea Markus
  */
-@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest")
 public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest {
 
    @Override
@@ -73,7 +73,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
          }
       }
 
-      System.out.println("indexToKill = " + indexToKill);
+      log.debug("indexToKill = " + indexToKill);
       assert indexToKill > 0;
 
       Address toKill = address(indexToKill);
@@ -83,6 +83,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       participants = getAliveParticipants(indexToKill);
 
       TestingUtil.blockUntilViewsReceived(60000, false, participants);
+      TestingUtil.waitForRehashToComplete(participants);
 
       //one of the participants must not have a prepare on it
       boolean noLocks = false;

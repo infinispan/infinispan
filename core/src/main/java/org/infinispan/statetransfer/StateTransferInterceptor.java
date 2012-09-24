@@ -124,6 +124,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
                prepareCommand = commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
             }
             commandFactory.initializeReplicableCommand(prepareCommand, true);
+            prepareCommand.setOrigin(ctx.getOrigin());
             prepareCommand.perform(null);
          }
       }
