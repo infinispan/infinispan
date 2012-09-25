@@ -25,9 +25,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -38,6 +38,8 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 @Test(groups = "xsite", testName = "xsite.BackupForConfigTest")
 public class BackupForConfigTest extends SingleCacheManagerTest {
+
+   ConfigurationBuilder nycBackup;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -50,17 +52,18 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
       lon.sites().addBackup()
             .site("NYC")
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
-      ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      nycBackup = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
 
-      EmbeddedCacheManager ecm = new DefaultCacheManager(lonGc.build(), lon.build());
-      ecm.getCache(); //start default cache
-      ecm.defineConfiguration("nycBackup", nycBackup.build());
-      ecm.getCache("nycBackup");
-      return ecm;
+      // Remember to not do nothing else other than
+      // creating the cache manager in order to avoid leaks
+      return TestCacheManagerFactory.createCacheManager(lonGc, lon);
    }
 
    public void testBackupForIsCorrect() {
+      cacheManager.getCache(); //start default cache
+      cacheManager.defineConfiguration("nycBackup", nycBackup.build());
+      cacheManager.getCache("nycBackup");
       SitesConfiguration sitesConfig = cache("nycBackup").getCacheConfiguration().sites();
       assertEquals(CacheContainer.DEFAULT_CACHE_NAME, sitesConfig.backupFor().remoteCache());
       assertEquals("NYC", sitesConfig.backupFor().remoteSite());

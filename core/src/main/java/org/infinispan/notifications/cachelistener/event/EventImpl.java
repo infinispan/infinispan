@@ -53,7 +53,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private V value;
    private Collection<Address> membersAtStart, membersAtEnd;
    private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
-   private long newViewId;
+   private int newTopologyId;
    private Map<Object, Object> entries;
 
    public EventImpl() {
@@ -150,8 +150,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.consistentHashAtEnd = consistentHashAtEnd;
    }
 
-   public void setNewViewId(long newViewId) {
-      this.newViewId = newViewId;
+   public void setNewTopologyId(int newTopologyId) {
+      this.newTopologyId = newTopologyId;
    }
 
    @Override
@@ -189,7 +189,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
       if (!Util.safeEquals(membersAtStart, event.membersAtStart)) return false;
       if (!Util.safeEquals(membersAtEnd, event.membersAtEnd)) return false;
-      if (newViewId != event.newViewId) return false;
+      if (newTopologyId != event.newTopologyId) return false;
 
       return true;
    }
@@ -208,7 +208,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (membersAtEnd != null ? membersAtEnd.hashCode() : 0);
       result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
       result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
-      result = 31 * result + ((int) newViewId);
+      result = 31 * result + ((int) newTopologyId);
       return result;
    }
 
@@ -236,8 +236,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
-   public long getNewViewId() {
-      return newViewId;
+   public int getNewTopologyId() {
+      return newTopologyId;
    }
 
    @Override

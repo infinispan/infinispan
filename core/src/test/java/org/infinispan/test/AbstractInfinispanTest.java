@@ -90,7 +90,7 @@ public class AbstractInfinispanTest {
    protected <T> Future<T> fork(Callable<T> c) {
       final String name = "ForkThread-" + getClass().getSimpleName() + "-" + c.hashCode();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
-      FutureTask future = new FutureTask(c);
+      FutureTask<T> future = new FutureTask<T>(c);
       final Thread t = new Thread(future);
       spawnedThreads.add(t);
       t.start();

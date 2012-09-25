@@ -30,6 +30,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -692,8 +693,7 @@ public final class ConfigurationOverrides {
       }
       if (this.useEagerLocking != null) {
          this.logger.debug("Overriding property [useEagerLocking] with value [" + this.useEagerLocking + "]");
-         //FIXME
-         //.setUseEagerLocking(this.useEagerLocking);
+         configurationToOverride.transaction().lockingMode(useEagerLocking ? LockingMode.PESSIMISTIC : LockingMode.OPTIMISTIC);
       }
       if (this.useReplQueue != null) {
          this.logger.debug("Overriding property [useReplQueue] with value [" + this.useReplQueue + "]");
@@ -751,11 +751,12 @@ public final class ConfigurationOverrides {
       }
       if (this.rehashEnabled != null) {
          this.logger.debug("Overriding property [rehashEnabled] with value [" + this.rehashEnabled + "]");
-         configurationToOverride.clustering().hash().rehashEnabled(this.rehashEnabled);
+         configurationToOverride.clustering().stateTransfer().fetchInMemoryState(this.rehashEnabled);
       }
       if (this.rehashWaitTime != null) {
          this.logger.debug("Overriding property [rehashWaitTime] with value [" + this.rehashWaitTime + "]");
-         configurationToOverride.clustering().hash().rehashWait(this.rehashWaitTime);
+         //FIXME
+         // no longer used
       }
       if (this.useAsyncMarshalling != null) {
          this.logger.debug("Overriding property [useAsyncMarshalling] with value [" + this.useAsyncMarshalling + "]");

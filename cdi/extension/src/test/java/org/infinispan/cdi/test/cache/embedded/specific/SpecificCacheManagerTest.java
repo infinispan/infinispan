@@ -23,6 +23,7 @@
 package org.infinispan.cdi.test.cache.embedded.specific;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -49,7 +50,8 @@ public class SpecificCacheManagerTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(SpecificCacheManagerTest.class.getPackage());
+            .addPackage(SpecificCacheManagerTest.class.getPackage())
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    @Inject

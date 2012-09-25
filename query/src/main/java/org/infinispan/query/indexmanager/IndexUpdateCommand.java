@@ -18,20 +18,12 @@
  */
 package org.infinispan.query.indexmanager;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.hibernate.search.SearchException;
-import org.hibernate.search.backend.AddLuceneWork;
-import org.hibernate.search.backend.DeleteLuceneWork;
-import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.backend.OptimizeLuceneWork;
-import org.hibernate.search.backend.PurgeAllLuceneWork;
-import org.hibernate.search.backend.UpdateLuceneWork;
-import org.hibernate.search.backend.impl.WorkVisitor;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commands.ReplicableCommand;

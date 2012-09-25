@@ -23,6 +23,7 @@
 package org.infinispan.cdi.test.cachemanager.embedded;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -48,7 +49,8 @@ public class DefaultConfigurationTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addClass(DefaultConfigurationTest.class);
+            .addClass(DefaultConfigurationTest.class)
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    @Inject

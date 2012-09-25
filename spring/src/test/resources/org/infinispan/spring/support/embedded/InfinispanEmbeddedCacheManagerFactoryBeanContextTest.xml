@@ -32,16 +32,16 @@
 
    <bean
       id="infinispanEmbeddedCacheManagerWithDefaultConfiguration"
-      class="org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean" />
+      class="org.infinispan.spring.support.embedded.TestInfinispanEmbeddedCacheManagerFactoryBean" />
 
    <bean
       id="infinispanEmbeddedCacheManagerConfiguredFromConfigurationFile"
-      class="org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean"
+      class="org.infinispan.spring.support.embedded.TestInfinispanEmbeddedCacheManagerFactoryBean"
       p:configurationFileLocation="classpath:/org/infinispan/spring/support/embedded/named-async-cache.xml" />
 
    <bean
       id="infinispanEmbeddedCacheManagerConfiguredUsingSetters"
-      class="org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean"
+      class="org.infinispan.spring.support.embedded.TestInfinispanEmbeddedCacheManagerFactoryBean"
       p:machineId="test.machineId"
       p:expirationLifespan="45600"
       p:clusterName="test.clusterName" />

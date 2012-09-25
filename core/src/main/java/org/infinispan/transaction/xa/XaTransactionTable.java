@@ -80,13 +80,6 @@ public class XaTransactionTable extends TransactionTable {
       xid2LocalTx.remove(xid);
    }
 
-   @Override
-   public LocalTransaction removeLocalTransaction(Transaction tx) {
-      final LocalTransaction remove = removeLocalTransactionInternal(tx);
-      if (remove != null) removeXidTxMapping((LocalXaTransaction) remove);
-      return remove;
-   }
-
    public LocalXaTransaction getLocalTransaction(Xid xid) {
       return this.xid2LocalTx.get(xid);
    }

@@ -25,10 +25,12 @@ package org.infinispan.cdi.test.interceptor.config;
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -43,6 +45,7 @@ public class Config {
    @Custom
    @ConfigureCache("custom")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration customConfiguration;
 
    /**
@@ -53,6 +56,7 @@ public class Config {
    @Small
    @ConfigureCache("small")
    @Produces
+   @SuppressWarnings("unused")
    public Configuration smallConfiguration;
 
    /**
@@ -61,9 +65,21 @@ public class Config {
    @Small
    @Produces
    @ApplicationScoped
+   @SuppressWarnings("unused")
    EmbeddedCacheManager smallCacheManager() {
-      return new DefaultCacheManager(new ConfigurationBuilder()
-                                           .eviction().maxEntries(4)
-                                           .build());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.eviction().maxEntries(4);
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
+
+   /**
+    * Stops cache manager.
+    *
+    * @param cacheManager to be stopped
+    */
+   @SuppressWarnings("unused")
+   public void killCacheManager(@Disposes @Small EmbeddedCacheManager cacheManager) {
+      TestingUtil.killCacheManagers(cacheManager);
+   }
+
 }

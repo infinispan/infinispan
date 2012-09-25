@@ -44,6 +44,8 @@ import java.util.UUID;
  */
 public class DistributedIterator extends AbstractIterator {
 
+   protected final AdvancedCache<?, ?> cache;
+
    private int currentIndex = -1;
 
    // this array keeps all values (ordered) fetched by this iterator...

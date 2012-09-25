@@ -30,8 +30,8 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -65,7 +65,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldProduceANonNullInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
          @Override
          public void call() {
             try {
@@ -92,7 +92,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void getObjectTypeShouldReturnTheMostDerivedTypeOfTheProducedInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
          @Override
          public void call() {
             try {
@@ -132,7 +132,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldStopTheCreatedInfinispanCacheWhenItIsDestroyed() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
          @Override
          public void call() {
             try {

@@ -95,7 +95,7 @@ public class StateConsumerImpl implements StateConsumer {
    private AtomicInteger activeTopologyUpdates = new AtomicInteger(0);
 
    /**
-    * Indicates if currently executing topology update is a rabalance.
+    * Indicates if the currently executing topology update is a rebalance.
     */
    private AtomicBoolean rebalanceInProgress = new AtomicBoolean(false);
 
@@ -182,12 +182,11 @@ public class StateConsumerImpl implements StateConsumer {
       stateTransferLock.setTopologyId(cacheTopology.getTopologyId());
 
       try {
-         Set<Integer> addedSegments = null;
+         Set<Integer> addedSegments;
          if (previousCh == null) {
             // we start fresh, without any data, so we need to pull everything we own according to writeCh
-            if (fetchEnabled) {
-               addedSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
-            }
+
+            addedSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
          } else {
             Set<Integer> previousSegments = getOwnedSegments(previousCh);
             Set<Integer> newSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
@@ -197,26 +196,26 @@ public class StateConsumerImpl implements StateConsumer {
             removedSegments.removeAll(newSegments);
 
             // remove inbound transfers and any data for segments we no longer own
-            log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",
-                  removedSegments, newSegments, previousSegments);
+            if (trace) {
+               log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",
+                     removedSegments, newSegments, previousSegments);
+            }
             discardSegments(removedSegments);
 
-            if (fetchEnabled) {
-               Set<Integer> currentSegments = getOwnedSegments(cacheTopology.getReadConsistentHash());
-               addedSegments = new HashSet<Integer>(newSegments);
-               addedSegments.removeAll(currentSegments);
+            Set<Integer> currentSegments = getOwnedSegments(cacheTopology.getReadConsistentHash());
+            addedSegments = new HashSet<Integer>(newSegments);
+            addedSegments.removeAll(currentSegments);
 
-               // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
-               Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
-               synchronized (this) {
-                  for (Address source : transfersBySource.keySet()) {
-                     if (!members.contains(source)) {
-                        List<InboundTransferTask> inboundTransfers = transfersBySource.remove(source);
-                        if (inboundTransfers != null) {
-                           for (InboundTransferTask inboundTransfer : inboundTransfers) {
-                              // these segments will be restarted if they are still in new write CH
-                              transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
-                           }
+            // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
+            Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+            synchronized (this) {
+               for (Address source : transfersBySource.keySet()) {
+                  if (!members.contains(source)) {
+                     List<InboundTransferTask> inboundTransfers = transfersBySource.remove(source);
+                     if (inboundTransfers != null) {
+                        for (InboundTransferTask inboundTransfer : inboundTransfers) {
+                           // these segments will be restarted if they are still in new write CH
+                           transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
                         }
                      }
                   }
@@ -429,11 +428,15 @@ public class StateConsumerImpl implements StateConsumer {
             }
 
             // if requesting the segments fails we need to retry from another source
-            if (!inboundTransfer.requestSegments()) {
-               log.errorf("Failed to request segments %s from node %s (node will be blacklisted)", segmentsFromSource, source);
-               failedSegments.addAll(segmentsFromSource);
-               blacklistedSources.add(source);
-               removeTransfer(inboundTransfer);  // will be retried from another source
+            if (fetchEnabled) {
+               if (!inboundTransfer.requestSegments()) {
+                  log.errorf("Failed to request segments %s from node %s (node will be blacklisted)", segmentsFromSource, source);
+                  failedSegments.addAll(segmentsFromSource);
+                  blacklistedSources.add(source);
+                  removeTransfer(inboundTransfer);  // will be retried from another source
+               }
+            } else {
+               removeTransfer(inboundTransfer);  // we consider it complete
             }
          }
 

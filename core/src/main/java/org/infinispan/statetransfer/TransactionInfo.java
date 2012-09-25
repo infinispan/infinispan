@@ -50,8 +50,11 @@ public class TransactionInfo {
 
    private final Set<Object> lockedKeys;
 
-   public TransactionInfo(GlobalTransaction globalTransaction, WriteCommand[] modifications, Set<Object> lockedKeys) {
+   private final int topologyId;
+
+   public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, WriteCommand[] modifications, Set<Object> lockedKeys) {
       this.globalTransaction = globalTransaction;
+      this.topologyId = topologyId;
       this.modifications = modifications;
       this.lockedKeys = lockedKeys;
    }
@@ -68,10 +71,15 @@ public class TransactionInfo {
       return lockedKeys;
    }
 
+   public int getTopologyId() {
+      return topologyId;
+   }
+
    @Override
    public String toString() {
       return "TransactionInfo{" +
             "globalTransaction=" + globalTransaction +
+            ", topologyId=" + topologyId +
             ", modifications=" + Arrays.asList(modifications) +
             ", lockedKeys=" + lockedKeys +
             '}';
@@ -92,6 +100,7 @@ public class TransactionInfo {
       @Override
       public void writeObject(ObjectOutput output, TransactionInfo object) throws IOException {
          output.writeObject(object.globalTransaction);
+         output.writeInt(object.topologyId);
          output.writeObject(object.modifications);
          output.writeObject(object.lockedKeys);
       }
@@ -100,9 +109,10 @@ public class TransactionInfo {
       @SuppressWarnings("unchecked")
       public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
+         int topologyId = input.readInt();
          WriteCommand[] modifications = (WriteCommand[]) input.readObject();
          Set<Object> lockedKeys = (Set<Object>) input.readObject();
-         return new TransactionInfo(globalTransaction, modifications, lockedKeys);
+         return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys);
       }
    }
 }

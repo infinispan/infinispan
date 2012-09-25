@@ -31,8 +31,6 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -67,6 +65,7 @@ public class StaleTransactionCleanupService {
    private TransactionTable transactionTable;
    private InterceptorChain invoker;
    private String cacheName;
+   private boolean isDistributed;
 
    public StaleTransactionCleanupService(TransactionTable transactionTable) {
       this.transactionTable = transactionTable;
@@ -75,29 +74,32 @@ public class StaleTransactionCleanupService {
    private ExecutorService lockBreakingService; // a thread pool with max. 1 thread
 
    /**
-    * Roll back remote transactions originating on nodes that have left the cluster.
-    */
-   @ViewChanged
-   public void onViewChange(ViewChangedEvent vce) {
-      final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(),
-                                                                        vce.getNewMembers());
-      if (!leavers.isEmpty()) {
-         log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
-         cleanTxForWhichTheOwnerLeft(leavers);
-      }
-   }
-
-   /**
     * Roll back remote transactions that have acquired lock that are no longer valid,
     * either because the main data owner left the cluster or because a node joined
     * the cluster and is the new data owner.
     * This method will only ever be called in distributed mode.
     */
    @TopologyChanged
+   @SuppressWarnings("unused")
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
-      // do all the work AFTER the consistent hash has changed
-      if (tce.isPre())
+      // Roll back remote transactions originating on nodes that have left the cluster.
+      if (tce.isPre()) {
+         ConsistentHash consistentHashAtStart = tce.getConsistentHashAtStart();
+         if (consistentHashAtStart != null) {
+            List<Address> leavers = MembershipArithmetic.getMembersLeft(consistentHashAtStart.getMembers(), tce.getConsistentHashAtEnd().getMembers());
+            if (!leavers.isEmpty()) {
+               log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
+               cleanTxForWhichTheOwnerLeft(leavers);
+            }
+         }
          return;
+      }
+
+      if (!isDistributed) {
+         return;
+      }
+
+      // do all the work AFTER the consistent hash has changed
 
       Address self = transactionTable.rpcManager.getAddress();
       ConsistentHash chOld = tce.getConsistentHashAtStart();
@@ -173,7 +175,7 @@ public class StaleTransactionCleanupService {
       }
    }
 
-   public void start(final String cacheName, final RpcManager rpcManager, InterceptorChain interceptorChain) {
+   public void start(final String cacheName, final RpcManager rpcManager, InterceptorChain interceptorChain, boolean isDistributed) {
       this.invoker = interceptorChain;
       ThreadFactory tf = new ThreadFactory() {
          @Override
@@ -185,8 +187,9 @@ public class StaleTransactionCleanupService {
          }
       };
       this.cacheName = cacheName;
+      this.isDistributed = isDistributed;
       lockBreakingService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), tf,
-                                                   new ThreadPoolExecutor.CallerRunsPolicy());
+                                                   new ThreadPoolExecutor.DiscardOldestPolicy());
    }
 
    public void stop() {

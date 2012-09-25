@@ -41,7 +41,7 @@ public class HBaseCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * @configRef desc="The HBase zookeeper client port."
     */
-   String hbaseZookeeperPropertyClientPort = "2181";
+   int hbaseZookeeperPropertyClientPort = 2181;
 
    /**
     * @configRef desc="The HBase table for storing the cache entries"
@@ -94,7 +94,7 @@ public class HBaseCacheStoreConfig extends LockSupportCacheStoreConfig {
       setCacheLoaderClassName(HBaseCacheStore.class.getName());
    }
 
-   public String getHbaseRootDir() {
+   public String getHbaseZookeeperQuorum() {
       return hbaseZookeeperQuorum;
    }
 
@@ -102,11 +102,11 @@ public class HBaseCacheStoreConfig extends LockSupportCacheStoreConfig {
       this.hbaseZookeeperQuorum = hbaseZookeeperQuorum;
    }
 
-   public String getHbaseZookeeperPropertyClientPort() {
+   public int getHbaseZookeeperPropertyClientPort() {
       return hbaseZookeeperPropertyClientPort;
    }
 
-   public void setHbaseZookeeperPropertyClientPort(String hbaseZookeeperPropertyClientPort) {
+   public void setHbaseZookeeperPropertyClientPort(int hbaseZookeeperPropertyClientPort) {
       this.hbaseZookeeperPropertyClientPort = hbaseZookeeperPropertyClientPort;
    }
 

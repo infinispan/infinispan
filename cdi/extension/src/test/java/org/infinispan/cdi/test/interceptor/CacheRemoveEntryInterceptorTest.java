@@ -24,6 +24,7 @@ package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.DefaultCacheKey;
+import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.test.interceptor.config.Config;
 import org.infinispan.cdi.test.interceptor.config.Custom;
 import org.infinispan.cdi.test.interceptor.service.CacheRemoveEntryService;
@@ -55,7 +56,8 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       return baseDeployment()
             .addClass(CacheRemoveEntryInterceptorTest.class)
             .addClass(CacheRemoveEntryService.class)
-            .addPackage(Config.class.getPackage());
+            .addPackage(Config.class.getPackage())
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
    }
 
    @Inject

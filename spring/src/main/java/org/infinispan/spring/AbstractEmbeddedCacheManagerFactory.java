@@ -24,6 +24,7 @@
 package org.infinispan.spring;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 
@@ -75,7 +76,7 @@ public class AbstractEmbeddedCacheManagerFactory {
    protected EmbeddedCacheManager createBackingEmbeddedCacheManager() throws ConfigurationException, IOException {
       EmbeddedCacheManager cm;
       if (configurationFileLocation != null) {
-         return new DefaultCacheManager(configurationFileLocation.getInputStream());
+         return createCacheManager(configurationFileLocation.getInputStream());
       } else {
          final GlobalConfigurationBuilder globalCfgBuilder = new GlobalConfigurationBuilder();
          final ConfigurationBuilder cacheCfgBuilder = new ConfigurationBuilder();
@@ -84,6 +85,10 @@ public class AbstractEmbeddedCacheManagerFactory {
          cm = createCacheManager(globalCfgBuilder, cacheCfgBuilder);
          return cm;
       }
+   }
+
+   protected EmbeddedCacheManager createCacheManager(InputStream is) throws IOException {
+      return new DefaultCacheManager(is);
    }
 
    protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {

@@ -26,13 +26,16 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.QueryIterator;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
@@ -47,23 +50,29 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public class EagerIteratorTest {
-   List<Object> keys;
+   List<String> keys;
+   List<EntityInfo> entityInfos;
    Map<String, String> dummyResults;
    QueryIterator iterator;
    int fetchSize = 1;
    AdvancedCache<String, String> cache;
+   private KeyTransformationHandler keyTransformationHandler;
 
    @BeforeMethod
    public void setUp() throws Exception {
 
       // create a set of dummy keys
-      keys = new ArrayList<Object>();
+      keys = new ArrayList<String>();
       // create some dummy data
       dummyResults = new HashMap<String, String>();
+
+      entityInfos = new ArrayList<EntityInfo>();
+      keyTransformationHandler = new KeyTransformationHandler();
 
       for (int i = 1; i <= 10; i++) {
          String key = "key" + i;
          keys.add(key);
+         entityInfos.add(new MockEntityInfo(keyTransformationHandler.keyToString(key)));
          dummyResults.put(key, "Result number " + i);
       }
 
@@ -79,7 +88,7 @@ public class EagerIteratorTest {
 
       });
 
-      iterator = new EagerIterator(keys, cache, fetchSize);
+      iterator = new EagerIterator(entityInfos, new EntityLoader(cache, keyTransformationHandler), fetchSize);
    }
 
    @AfterMethod (alwaysRun = true)
@@ -242,4 +251,46 @@ public class EagerIteratorTest {
       assert iterator.previousIndex() == (keys.size() - 2);
    }
 
+   private static class MockEntityInfo implements EntityInfo {
+
+      private final String key;
+
+      public MockEntityInfo(String key) {
+         this.key = key;
+      }
+
+      @Override
+      public Class<?> getClazz() {
+         return null;
+      }
+
+      @Override
+      public Serializable getId() {
+         return key;
+      }
+
+      @Override
+      public String getIdName() {
+         return null;
+      }
+
+      @Override
+      public Object[] getProjection() {
+         return new Object[0];
+      }
+
+      @Override
+      public List<Integer> getIndexesOfThis() {
+         return null;
+      }
+
+      @Override
+      public boolean isProjectThis() {
+         return false;
+      }
+
+      @Override
+      public void populateWithEntityInstance(Object entity) {
+      }
+   }
 }
