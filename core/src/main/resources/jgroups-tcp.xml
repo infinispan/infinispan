@@ -30,7 +30,6 @@
         port_range="30"
         recv_buf_size="20m"
         send_buf_size="640k"
-        discard_incompatible_packets="true"
         max_bundle_size="64000"
         max_bundle_timeout="30"
         enable_bundling="true"
