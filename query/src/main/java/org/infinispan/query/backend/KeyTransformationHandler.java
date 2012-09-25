@@ -33,6 +33,7 @@ import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
@@ -88,6 +89,9 @@ public class KeyTransformationHandler {
          case 'C':
             // This is a Character
             return Character.valueOf(s.charAt(2));
+         case 'U':
+            // This is a java.util.UUID
+            return UUID.fromString(s.substring(2));
          case 'T':
             // this is a custom transformable.
             int indexOfSecondDelimiter = s.indexOf(":", 2);
@@ -154,7 +158,8 @@ public class KeyTransformationHandler {
             prefix = 'Y';
          else if (key instanceof Character)
             prefix = 'C';
-
+         else if (key instanceof UUID)
+            prefix = 'U';
          return prefix + ":" + key;
 
       } else if ((tf = getTransformer(key.getClass())) != null) {
@@ -177,7 +182,8 @@ public class KeyTransformationHandler {
             key instanceof Boolean ||
             key instanceof Short ||
             key instanceof Byte ||
-            key instanceof Character
+            key instanceof Character ||
+            key instanceof UUID
             )
          return true;
 
