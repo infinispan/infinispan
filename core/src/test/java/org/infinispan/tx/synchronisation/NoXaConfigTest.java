@@ -44,14 +44,9 @@ public class NoXaConfigTest extends SingleCacheManagerTest {
 
    public void testConfig() {
       assert cacheManager.getCache("syncEnabled").getConfiguration().isUseSynchronizationForTransactions();
-      assert !cacheManager.getCache("notSpecified").getConfiguration().isUseSynchronizationForTransactions();
+      assert cacheManager.getCache("notSpecified").getConfiguration().isUseSynchronizationForTransactions();
 
-      try {
-         cacheManager.getCache("syncAndRecovery");
-         assert false;
-      } catch (ConfigurationException e) {
-         //expected
-      }
+      cacheManager.getCache("syncAndRecovery");
    }
 
    public void testConfigOverride() {

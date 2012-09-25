@@ -58,8 +58,8 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    @Override
    @SuppressWarnings("unchecked")
    public <RecoveryManager> RecoveryManager construct(Class<RecoveryManager> componentType) {
-      checkAsyncCache(configuration);
-      boolean recoveryEnabled = configuration.transaction().recovery().enabled();
+      boolean recoveryEnabled = configuration.transaction().recovery().enabled()
+            && !configuration.transaction().useSynchronization();
       if (recoveryEnabled) {
          String recoveryCacheName = configuration.transaction().recovery().recoveryInfoCacheName();
          log.tracef("Using recovery cache name %s", recoveryCacheName);
@@ -83,12 +83,6 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
                recoveryCacheName, cm, useDefaultCache);
       } else {
          return null;
-      }
-   }
-
-   private void checkAsyncCache(Configuration configuration) {
-      if (configuration.transaction().recovery().enabled() && !configuration.clustering().cacheMode().isSynchronous()) {
-         throw new ConfigurationException("Recovery for async caches is not supported!");
       }
    }
 
